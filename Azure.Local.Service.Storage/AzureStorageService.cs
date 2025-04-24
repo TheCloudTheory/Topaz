@@ -6,5 +6,7 @@ public class AzureStorageService : IServiceDefinition
 {
     public string Name => "Azure Storage";
 
-    public IReadOnlyCollection<IEndpointDefinition> Endpoints => throw new NotImplementedException();
+    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
+        new TableEndpoint()
+    ];
 }
