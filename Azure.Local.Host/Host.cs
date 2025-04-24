@@ -41,9 +41,9 @@ public class Host
             while(true)
             {
                 var context = listener.GetContext();
-                
-                var response = "hello!";
+                var response = endpoint.GetResponse(context.Request.InputStream);
                 var buffer = Encoding.UTF8.GetBytes(response);
+                
                 context.Response.OutputStream.Write(buffer, 0, buffer.Length);
                 context.Response.OutputStream.Close();
             }    
