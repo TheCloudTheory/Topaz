@@ -14,15 +14,29 @@ public sealed class PrettyLogger
         Log(message, LogLevel.Debug);
     }
 
-    private static void Log(string message, LogLevel logLevel)
+    public static void LogError(Exception ex)
+    {
+        Log(string.Empty, LogLevel.Error, ex);
+    }
+
+    private static void Log(string message, LogLevel logLevel, Exception? exception = null)
     {
         var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-        AnsiConsole.WriteLine($"[{logLevel}][{timestamp}]: {message}");
+
+        if(logLevel == LogLevel.Error && exception != null)
+        {
+            AnsiConsole.WriteException(exception);
+        }
+        else
+        {
+            AnsiConsole.WriteLine($"[{logLevel}][{timestamp}]: {message}");
+        }     
     }
 }
 
 internal enum LogLevel
 {
     Debug,
-    Information
+    Information,
+    Error
 }

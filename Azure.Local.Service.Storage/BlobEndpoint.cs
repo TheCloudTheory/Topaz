@@ -13,7 +13,7 @@ public class BlobEndpoint : IEndpointDefinition
         
     }
 
-    public HttpResponseMessage GetResponse(string path, Stream input)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input)
     {
         var response = new HttpResponseMessage();
 

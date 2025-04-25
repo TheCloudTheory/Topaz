@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Azure.Local.Service.Shared;
+using Azure.Local.Shared;
 
 namespace Azure.Local.Service.Storage;
 
@@ -16,21 +17,54 @@ public class TableEndpoint : IEndpointDefinition
         this.controlPlane = new TableServiceControlPlane();
     }
 
-    public HttpResponseMessage GetResponse(string path, Stream input)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input)
     {
         var response = new HttpResponseMessage();
 
-        switch (path)
+        try
         {
-            case "/Tables":
-                var tables = this.controlPlane.GetTables();
-                response.Content = JsonContent.Create(tables);
-                break;
-            default:
-                response.StatusCode = System.Net.HttpStatusCode.NotFound;
-                break;
+            if (method == "GET")
+            {
+                switch (path)
+                {
+                    case "/Tables":
+                        var tables = this.controlPlane.GetTables(input);
+                        response.Content = JsonContent.Create(tables);
+                        break;
+                    default:
+                        response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                        break;
+                }
+
+                return response;
+            }
+
+            if (method == "POST")
+            {
+                switch (path)
+                {
+                    case "/Tables":
+                        var tables = this.controlPlane.CreateTable(input);
+                        response.Content = JsonContent.Create(tables);
+                        break;
+                    default:
+                        response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                        break;
+                }
+
+                return response;
+            }
         }
-            
-        return response;
+        catch (Exception ex)
+        {
+            PrettyLogger.LogError(ex);
+
+            response.Content = new StringContent(ex.Message);
+            response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+
+            return response;
+        }
+
+        throw new NotSupportedException();
     }
 }

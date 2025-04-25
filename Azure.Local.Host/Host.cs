@@ -48,6 +48,15 @@ public class Host
                 {
                     var hostWithoutPort = context.Request.Host.Host.ToString();
                     var path = context.Request.Path.ToString();
+                    var method = context.Request.Method;
+
+                    if(method == null)
+                    {
+                        PrettyLogger.LogDebug($"Received request with no method.");
+
+                        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                        return;
+                    }
 
                     PrettyLogger.LogDebug($"Received request: {context.Request.Host}{path}");
 
@@ -58,7 +67,7 @@ public class Host
                         return;
                     }
 
-                    var response = endpoint.GetResponse(path, context.Request.Body);
+                    var response = endpoint.GetResponse(path, method, context.Request.Body);
                     context.Response.StatusCode = (int)response.StatusCode;
 
                     await context.Response.WriteAsync(await response.Content.ReadAsStringAsync());
