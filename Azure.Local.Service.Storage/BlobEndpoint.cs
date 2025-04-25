@@ -2,14 +2,14 @@ using Azure.Local.Service.Shared;
 
 namespace Azure.Local.Service.Storage;
 
-public class TableEndpoint : IEndpointDefinition
+public class BlobEndpoint: IEndpointDefinition
 {
     public Protocol Protocol => Protocol.Http;
 
-    public string DnsName => "table.storage";
+    public string DnsName => "blob.storage";
 
     public string GetResponse(Stream input)
     {
-        return "Response from Table Endpoint";
+        return "Response from Blob Endpoint";
     }
 }

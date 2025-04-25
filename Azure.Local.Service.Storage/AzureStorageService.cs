@@ -7,6 +7,7 @@ public class AzureStorageService : IServiceDefinition
     public string Name => "Azure Storage";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new TableEndpoint()
+        new TableEndpoint(),
+        new BlobEndpoint()
     ];
 }

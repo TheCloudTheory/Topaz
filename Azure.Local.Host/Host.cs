@@ -29,20 +29,19 @@ public class Host
 
                 if (endpoint.Protocol == Service.Shared.Protocol.Http || endpoint.Protocol == Service.Shared.Protocol.Https)
                 {
-                    urls.Add($"{endpoint.Protocol}://{endpoint.DnsName}.azure.localhost:{hostPortNumber}");
                     httpEndpoints.Add(endpoint);
                 }
             }
         }
 
-        CreateWebserverForHttpEndpoints([.. urls], [.. httpEndpoints]);
+        CreateWebserverForHttpEndpoints([.. httpEndpoints]);
     }
 
-    private void CreateWebserverForHttpEndpoints(string[] urls, IEndpointDefinition[] httpEndpoints)
+    private void CreateWebserverForHttpEndpoints(IEndpointDefinition[] httpEndpoints)
     {
         var host = new WebHostBuilder()
             .UseKestrel()
-            .UseUrls(urls)
+            .UseUrls($"http://azure.localhost:{hostPortNumber}")
             .Configure(app =>
             {
                 app.Run(async context =>
