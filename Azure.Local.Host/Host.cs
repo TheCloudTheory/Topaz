@@ -68,9 +68,12 @@ public class Host
                     }
 
                     var response = endpoint.GetResponse(path, method, context.Request.Body);
-                    context.Response.StatusCode = (int)response.StatusCode;
+                    var textResponse = await response.Content.ReadAsStringAsync();
 
-                    await context.Response.WriteAsync(await response.Content.ReadAsStringAsync());
+                    PrettyLogger.LogDebug($"Response: [{response.StatusCode}] {textResponse}");
+
+                    context.Response.StatusCode = (int)response.StatusCode;
+                    await context.Response.WriteAsync(textResponse);
                 });
             })
             .Build();
