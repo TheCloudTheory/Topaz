@@ -11,4 +11,8 @@
     <ProjectReference Include="../Azure.Local.Shared/Azure.Local.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.3.0" />
+  </ItemGroup>
+
 </Project>

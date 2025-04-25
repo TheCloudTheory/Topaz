@@ -1,57 +1,71 @@
 ﻿using System.Net;
-using System.Text;
 using Azure.Local.Service.Shared;
 using Azure.Local.Service.Storage;
 using Azure.Local.Shared;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
 namespace Azure.Local.Host;
 
 public class Host
 {
+    private const int hostPortNumber = 8899;
     private static List<Thread> threads = [];
 
     public void Start()
     {
-        var services = new [] { new AzureStorageService() };
+        var services = new[] { new AzureStorageService() };
+        var urls = new List<string>();
+        var httpEndpoints = new List<IEndpointDefinition>();
 
-        foreach(var service in services)
+        foreach (var service in services)
         {
-            PrettyLogger.LogInformation($"Starting {service.Name} service...");
+            PrettyLogger.LogDebug($"Processing {service.Name} service...");
 
-            foreach(var endpoint in service.Endpoints)
+            foreach (var endpoint in service.Endpoints)
             {
-                if(endpoint.Protocol == Service.Shared.Protocol.Http || endpoint.Protocol == Service.Shared.Protocol.Https)
+                PrettyLogger.LogDebug($"Processing {endpoint.DnsName} endpoint...");
+
+                if (endpoint.Protocol == Service.Shared.Protocol.Http || endpoint.Protocol == Service.Shared.Protocol.Https)
                 {
-                    CreateHttpListenerForEndpoint(endpoint);
+                    urls.Add($"{endpoint.Protocol}://{endpoint.DnsName}.azure.localhost:{hostPortNumber}");
+                    httpEndpoints.Add(endpoint);
                 }
             }
         }
+
+        CreateWebserverForHttpEndpoints([.. urls], [.. httpEndpoints]);
     }
 
-    private void CreateHttpListenerForEndpoint(IEndpointDefinition endpoint)
+    private void CreateWebserverForHttpEndpoints(string[] urls, IEndpointDefinition[] httpEndpoints)
     {
-        var action = new ThreadStart(() => {
-            var prefix = $"{endpoint.Protocol}://localhost:{endpoint.PortNumber}/";
-            var listener = new HttpListener();
-            listener.Prefixes.Add(prefix);
-
-            listener.Start();
-            PrettyLogger.LogInformation($"Started listening on {prefix}");
-
-            while(true)
+        var host = new WebHostBuilder()
+            .UseKestrel()
+            .UseUrls(urls)
+            .Configure(app =>
             {
-                var context = listener.GetContext();
-                var response = endpoint.GetResponse(context.Request.InputStream);
-                var buffer = Encoding.UTF8.GetBytes(response);
-                
-                context.Response.OutputStream.Write(buffer, 0, buffer.Length);
-                context.Response.OutputStream.Close();
-            }    
-        });
+                app.Run(async context =>
+                {
+                    var hostWithoutPort = context.Request.Host.Host.ToString();
+                    var path = context.Request.Path.ToString();
 
-        var thread = new Thread(action);
+                    PrettyLogger.LogDebug($"Received request: {context.Request.Host}{path}");
 
-        threads.Add(thread);
-        thread.Start();
+                    var endpoint = httpEndpoints.SingleOrDefault(e => hostWithoutPort.StartsWith(e.DnsName));
+                    if(endpoint == null)
+                    {
+                        context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                        return;
+                    }
+
+                    var response = endpoint.GetResponse(context.Request.Body);
+                    await context.Response.WriteAsync(response);
+                });
+            })
+            .Build();
+
+        threads.Add(new Thread(() => host.Run()));
+        threads.Last().Start();
     }
 }

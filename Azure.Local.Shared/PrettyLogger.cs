@@ -9,6 +9,11 @@ public sealed class PrettyLogger
         Log(message, LogLevel.Information);
     }
 
+    public static void LogDebug(string message)
+    {
+        Log(message, LogLevel.Debug);
+    }
+
     private static void Log(string message, LogLevel logLevel)
     {
         var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
@@ -18,5 +23,6 @@ public sealed class PrettyLogger
 
 internal enum LogLevel
 {
+    Debug,
     Information
 }

@@ -8,6 +8,8 @@ public class TableEndpoint : IEndpointDefinition
 
     public Protocol Protocol => Protocol.Http;
 
+    public string DnsName => "table.storage";
+
     public string GetResponse(Stream input)
     {
         return "Response from Table Endpoint";
