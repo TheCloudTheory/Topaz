@@ -10,4 +10,8 @@
     <ProjectReference Include="../Azure.Local.Service.Shared/Azure.Local.Service.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Azure.Data.Tables" Version="12.10.0" />
+  </ItemGroup>
+
 </Project>

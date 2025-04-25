@@ -4,5 +4,5 @@ public interface IEndpointDefinition
 {
     public Protocol Protocol { get; }
     public string DnsName { get; }
-    public string GetResponse(Stream input);
+    public HttpResponseMessage GetResponse(string path, Stream input);
 }

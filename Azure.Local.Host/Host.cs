@@ -58,8 +58,10 @@ public class Host
                         return;
                     }
 
-                    var response = endpoint.GetResponse(context.Request.Body);
-                    await context.Response.WriteAsync(response);
+                    var response = endpoint.GetResponse(path, context.Request.Body);
+                    context.Response.StatusCode = (int)response.StatusCode;
+
+                    await context.Response.WriteAsync(await response.Content.ReadAsStringAsync());
                 });
             })
             .Build();
