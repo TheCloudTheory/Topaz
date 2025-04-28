@@ -46,37 +46,45 @@ public class Host
             {
                 app.Run(async context =>
                 {
-                    var hostWithoutPort = context.Request.Host.Host.ToString();
-                    var path = context.Request.Path.ToString();
-                    var method = context.Request.Method;
-
-                    if(method == null)
+                    try
                     {
-                        PrettyLogger.LogDebug($"Received request with no method.");
+                        var hostWithoutPort = context.Request.Host.Host.ToString();
+                        var path = context.Request.Path.ToString();
+                        var method = context.Request.Method;
 
+                        if (method == null)
+                        {
+                            PrettyLogger.LogDebug($"Received request with no method.");
+
+                            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                            return;
+                        }
+
+                        PrettyLogger.LogDebug($"Received request: {method} {context.Request.Host}{path}");
+
+                        var endpoint = httpEndpoints.SingleOrDefault(e => path.StartsWith(e.DnsName));
+                        if (endpoint == null)
+                        {
+                            PrettyLogger.LogDebug($"Request {method} {path} has no corresponding endpoint assigned.");
+
+                            context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                            return;
+                        }
+
+                        var servicePath = path.Replace(endpoint.DnsName, string.Empty, StringComparison.InvariantCultureIgnoreCase);
+                        var response = endpoint.GetResponse(servicePath, method, context.Request.Body, context.Request.Headers);
+                        var textResponse = await response.Content.ReadAsStringAsync();
+
+                        PrettyLogger.LogDebug($"Response: [{response.StatusCode}] {textResponse}");
+
+                        context.Response.StatusCode = (int)response.StatusCode;
+                        await context.Response.WriteAsync(textResponse);
+                    }
+                    catch (Exception ex)
+                    {
                         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                        return;
+                        await context.Response.WriteAsync(ex.Message);
                     }
-
-                    PrettyLogger.LogDebug($"Received request: {method} {context.Request.Host}{path}");
-
-                    var endpoint = httpEndpoints.SingleOrDefault(e => path.StartsWith(e.DnsName));
-                    if(endpoint == null)
-                    {
-                        PrettyLogger.LogDebug($"Request {method} {path} has no corresponding endpoint assigned.");
-
-                        context.Response.StatusCode = (int)HttpStatusCode.NotFound;
-                        return;
-                    }
-
-                    var servicePath = path.Replace(endpoint.DnsName, string.Empty, StringComparison.InvariantCultureIgnoreCase);
-                    var response = endpoint.GetResponse(servicePath, method, context.Request.Body, context.Request.Headers);
-                    var textResponse = await response.Content.ReadAsStringAsync();
-
-                    PrettyLogger.LogDebug($"Response: [{response.StatusCode}] {textResponse}");
-
-                    context.Response.StatusCode = (int)response.StatusCode;
-                    await context.Response.WriteAsync(textResponse);
                 });
             })
             .Build();

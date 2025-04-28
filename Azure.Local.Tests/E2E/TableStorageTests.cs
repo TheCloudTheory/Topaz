@@ -16,6 +16,12 @@ namespace Azure.Local.Tests.E2E
         {
             // Arrange
             var tableClient = new TableServiceClient(ConnectionString);
+            var existingTables = tableClient.Query().ToArray();
+
+            foreach(var table in existingTables)
+            {
+                tableClient.DeleteTable(table.Name);
+            }
 
             // Act           
             tableClient.CreateTableIfNotExists("testtable");

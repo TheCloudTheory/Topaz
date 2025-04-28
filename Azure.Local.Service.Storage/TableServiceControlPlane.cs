@@ -29,7 +29,7 @@ internal sealed class TableServiceControlPlane
         }
     }
 
-    public TableItem[] GetTables(Stream input)
+    public TableProperties[] GetTables(Stream input)
     {
         var tables = Directory.EnumerateFiles(TableServiceStoragePath);
 
@@ -38,7 +38,7 @@ internal sealed class TableServiceControlPlane
             var nameWithExtension = fileInfo.Name;
             var nameOnly = nameWithExtension.Split(".")[0];
 
-            return new TableItem(nameOnly);
+            return new TableProperties(nameOnly);
         })];
     }
 
@@ -61,6 +61,33 @@ internal sealed class TableServiceControlPlane
         File.Create(filePath);
 
         return new TableItem(content.TableName);
+    }
+
+    public void DeleteTable(string input)
+    {
+        var filePath = Path.Combine(AzureStorageService.LocalDirectoryPath, "table", input + ".jsonl");
+        if(File.Exists(filePath) == false)
+        {
+            throw new EntityNotFoundException();
+        }
+
+        File.Delete(filePath);
+    }
+}
+
+[Serializable]
+internal class EntityNotFoundException : Exception
+{
+    public EntityNotFoundException()
+    {
+    }
+
+    public EntityNotFoundException(string? message) : base(message)
+    {
+    }
+
+    public EntityNotFoundException(string? message, Exception? innerException) : base(message, innerException)
+    {
     }
 }
 

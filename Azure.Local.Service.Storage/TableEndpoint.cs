@@ -1,12 +1,13 @@
 using System.Net.Http.Json;
-using Azure.Data.Tables.Models;
+using System.Text.RegularExpressions;
 using Azure.Local.Service.Shared;
+using Azure.Local.Service.Storage.Models;
 using Azure.Local.Shared;
 using Microsoft.AspNetCore.Http;
 
 namespace Azure.Local.Service.Storage;
 
-public class TableEndpoint : IEndpointDefinition
+public partial class TableEndpoint : IEndpointDefinition
 {
     private readonly TableServiceControlPlane controlPlane;
 
@@ -84,6 +85,34 @@ public class TableEndpoint : IEndpointDefinition
 
                 return response;
             }
+
+            if(method == "DELETE")
+            {
+                try
+                {
+                    var matches = Regex.Match(path, @"^/Tables\('.*?'\)$", RegexOptions.IgnoreCase);
+                    if(matches.Length == 0)
+                    {
+                        throw new Exception($"Invalid request path {path} for the delete operation.");
+                    }
+
+                    var tableName = matches.Value.Trim('/').Replace("Tables('", "").Replace("')", "");
+                    PrettyLogger.LogDebug($"Attempting to delete table: {tableName}.");
+
+                    this.controlPlane.DeleteTable(tableName);
+
+                    response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                }
+                catch (EntityNotFoundException)
+                {
+                    var error = new ErrorResponse("EntityNotFound", "Table not found.");
+
+                    response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                    response.Headers.Add("x-ms-error-code", "EntityNotFound");
+                    response.Content = JsonContent.Create(error);
+                }
+            }
+  
         }
         catch (Exception ex)
         {
@@ -98,8 +127,8 @@ public class TableEndpoint : IEndpointDefinition
         throw new NotSupportedException();
     }
 
-    private class TableEndpointResponse(TableItem[] tables)
+    private class TableEndpointResponse(TableProperties[] tables)
     {
-        public TableItem[] Value { get; init; } = tables;
+        public TableProperties[] Value { get; init; } = tables;
     }
 }
