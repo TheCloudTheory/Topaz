@@ -1,4 +1,5 @@
 using Azure.Local.Service.Shared;
+using Microsoft.AspNetCore.Http;
 
 namespace Azure.Local.Service.Storage;
 
@@ -13,7 +14,7 @@ public class BlobEndpoint : IEndpointDefinition
         
     }
 
-    public HttpResponseMessage GetResponse(string path, string method, Stream input)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers)
     {
         var response = new HttpResponseMessage();
 

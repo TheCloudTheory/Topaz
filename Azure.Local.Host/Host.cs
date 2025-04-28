@@ -70,7 +70,7 @@ public class Host
                     }
 
                     var servicePath = path.Replace(endpoint.DnsName, string.Empty, StringComparison.InvariantCultureIgnoreCase);
-                    var response = endpoint.GetResponse(servicePath, method, context.Request.Body);
+                    var response = endpoint.GetResponse(servicePath, method, context.Request.Body, context.Request.Headers);
                     var textResponse = await response.Content.ReadAsStringAsync();
 
                     PrettyLogger.LogDebug($"Response: [{response.StatusCode}] {textResponse}");

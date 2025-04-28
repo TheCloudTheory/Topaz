@@ -4,6 +4,8 @@ namespace Azure.Local.Tests.E2E
 {
     public class TableStorageTests
     {
+        private const string ConnectionString = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://table.localhost:8899;QueueEndpoint=http://localhost:8899;TableEndpoint=http://localhost:8899/storage/table;";
+
         [SetUp]
         public void Setup()
         {
@@ -12,15 +14,14 @@ namespace Azure.Local.Tests.E2E
         [Test]
         public void TableStorageTests_WhenTableIsCreatedAndNoOtherTableIsPresent_ItShouldReturnOnlyNewTable()
         {
-            var x = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://table.localhost:8899;QueueEndpoint=http://localhost:8899;TableEndpoint=http://localhost:8899/storage/table;";
             // Arrange
-            var tableClient = new TableServiceClient(x);
+            var tableClient = new TableServiceClient(ConnectionString);
 
             // Act           
-            tableClient.CreateTable("testtable");
+            tableClient.CreateTableIfNotExists("testtable");
 
             // Assert
-            var tables = tableClient.Query();
+            var tables = tableClient.Query().ToArray();
 
             Assert.That(tables.Count(), Is.EqualTo(1));
         }

@@ -51,8 +51,31 @@ internal sealed class TableServiceControlPlane
         {
             PropertyNameCaseInsensitive = true
         }) ?? throw new Exception();
-        File.Create(Path.Combine(AzureStorageService.LocalDirectoryPath, "table", content.TableName + ".jsonl"));
+
+        var filePath = Path.Combine(AzureStorageService.LocalDirectoryPath, "table", content.TableName + ".jsonl");
+        if(File.Exists(filePath))
+        {
+            throw new EntityAlreadyExistsException();
+        }
+
+        File.Create(filePath);
 
         return new TableItem(content.TableName);
+    }
+}
+
+[Serializable]
+internal class EntityAlreadyExistsException : Exception
+{
+    public EntityAlreadyExistsException()
+    {
+    }
+
+    public EntityAlreadyExistsException(string? message) : base(message)
+    {
+    }
+
+    public EntityAlreadyExistsException(string? message, Exception? innerException) : base(message, innerException)
+    {
     }
 }
