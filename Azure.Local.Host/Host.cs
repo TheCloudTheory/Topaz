@@ -58,16 +58,19 @@ public class Host
                         return;
                     }
 
-                    PrettyLogger.LogDebug($"Received request: {context.Request.Host}{path}");
+                    PrettyLogger.LogDebug($"Received request: {method} {context.Request.Host}{path}");
 
-                    var endpoint = httpEndpoints.SingleOrDefault(e => hostWithoutPort.StartsWith(e.DnsName));
+                    var endpoint = httpEndpoints.SingleOrDefault(e => path.StartsWith(e.DnsName));
                     if(endpoint == null)
                     {
+                        PrettyLogger.LogDebug($"Request {method} {path} has no corresponding endpoint assigned.");
+
                         context.Response.StatusCode = (int)HttpStatusCode.NotFound;
                         return;
                     }
 
-                    var response = endpoint.GetResponse(path, method, context.Request.Body);
+                    var servicePath = path.Replace(endpoint.DnsName, string.Empty, StringComparison.InvariantCultureIgnoreCase);
+                    var response = endpoint.GetResponse(servicePath, method, context.Request.Body);
                     var textResponse = await response.Content.ReadAsStringAsync();
 
                     PrettyLogger.LogDebug($"Response: [{response.StatusCode}] {textResponse}");

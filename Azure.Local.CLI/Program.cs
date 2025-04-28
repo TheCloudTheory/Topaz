@@ -4,14 +4,15 @@ using Spectre.Console.Cli;
 
 internal class Program
 {
-    private static async Task Main(string[] args)
+    internal static async Task<int> Main(string[] args)
     {
         PrettyLogger.LogInformation("Azure.Local.CLI - Welcome!");
 
-        await BootstrapCli(args);
+        var result = await BootstrapCli(args);
+        return result;
     }
 
-    private static Task BootstrapCli(string[] args)
+    private static Task<int> BootstrapCli(string[] args)
     {
         var app = new CommandApp();
         

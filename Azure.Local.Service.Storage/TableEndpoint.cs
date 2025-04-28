@@ -10,7 +10,7 @@ public class TableEndpoint : IEndpointDefinition
 
     public Protocol Protocol => Protocol.Http;
 
-    public string DnsName => "table.storage";
+    public string DnsName => "/storage/table";
 
     public TableEndpoint()
     {
