@@ -20,7 +20,9 @@ internal class Program
         app.Configure(config =>
         {
             config.AddCommand<StartCommand>("start");
-            config.AddCommand<CreateStorageAccountCommand>("storage create");
+            config.AddBranch("storage", branch => {
+                branch.AddCommand<CreateStorageAccountCommand>("create");
+            });    
         });
 
         return app.RunAsync(args);
