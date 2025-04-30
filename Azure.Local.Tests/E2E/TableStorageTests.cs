@@ -29,7 +29,31 @@ namespace Azure.Local.Tests.E2E
             // Assert
             var tables = tableClient.Query().ToArray();
 
-            Assert.That(tables.Count(), Is.EqualTo(1));
+            Assert.That(tables, Has.Length.EqualTo(1));
+        }
+
+        [Test]
+        public void TableStorageTests_WhenTableDoesNotExist_ItShouldBeCreatedAndThenDeleted()
+        {
+            // Arrange
+            var tableClient = new TableServiceClient(ConnectionString);
+            var existingTables = tableClient.Query().ToArray();
+
+            // Act
+            tableClient.CreateTable("testtable");
+
+            // Assert
+            Assert.That(existingTables, Is.Empty);
+
+            var tables = tableClient.Query().ToArray();
+
+            Assert.That(tables, Has.Length.EqualTo(1));
+
+            var table = tables.First();
+
+            Assert.That(table.Name, Is.EqualTo("testtable"));
+
+            tableClient.DeleteTable(table.Name);
         }
     }
 }

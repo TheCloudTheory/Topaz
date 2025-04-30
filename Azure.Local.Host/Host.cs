@@ -83,6 +83,9 @@ public class Host
                     catch (Exception ex)
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+
+                        PrettyLogger.LogError(ex);
+
                         await context.Response.WriteAsync(ex.Message);
                     }
                 });

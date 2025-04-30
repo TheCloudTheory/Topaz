@@ -101,7 +101,11 @@ public partial class TableEndpoint : IEndpointDefinition
 
                     this.controlPlane.DeleteTable(tableName);
 
+                    PrettyLogger.LogDebug($"Table {tableName} deleted.");
+
                     response.StatusCode = System.Net.HttpStatusCode.NoContent;
+
+                    return response;
                 }
                 catch (EntityNotFoundException)
                 {
@@ -110,6 +114,8 @@ public partial class TableEndpoint : IEndpointDefinition
                     response.StatusCode = System.Net.HttpStatusCode.NotFound;
                     response.Headers.Add("x-ms-error-code", "EntityNotFound");
                     response.Content = JsonContent.Create(error);
+
+                    return response;
                 }
             }
   
