@@ -13,7 +13,7 @@ public partial class TableEndpoint : IEndpointDefinition
 
     public Protocol Protocol => Protocol.Http;
 
-    public string DnsName => "/storage/table";
+    public string DnsName => "/storage/{storageAccountName}/table";
 
     public TableEndpoint()
     {
@@ -23,6 +23,12 @@ public partial class TableEndpoint : IEndpointDefinition
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers)
     {
         var response = new HttpResponseMessage();
+        
+        if(StorageAccountExists(path) == false)
+        {
+            response.StatusCode = System.Net.HttpStatusCode.NotFound;
+            return response;
+        }
 
         try
         {
@@ -131,6 +137,11 @@ public partial class TableEndpoint : IEndpointDefinition
         }
 
         throw new NotSupportedException();
+    }
+
+    private bool StorageAccountExists(string path)
+    {
+        throw new NotImplementedException();
     }
 
     private class TableEndpointResponse(TableProperties[] tables)

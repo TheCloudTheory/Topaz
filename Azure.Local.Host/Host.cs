@@ -62,7 +62,22 @@ public class Host
 
                         PrettyLogger.LogDebug($"Received request: {method} {context.Request.Host}{path}");
 
-                        var endpoint = httpEndpoints.SingleOrDefault(e => path.StartsWith(e.DnsName));
+                        IEndpointDefinition? endpoint = null;
+                        var pathParts = path.Split('/');
+                        foreach(var httpEndpoint in httpEndpoints)
+                        {
+                            var endpointParts = httpEndpoint.DnsName.Split('/');
+                            for(var i = 0; i < endpointParts.Length; i++)
+                            {
+                                if(endpointParts[i].StartsWith('{') && endpointParts[i].EndsWith('}')) continue;
+                                if(endpointParts[i] != pathParts[i]) continue;
+
+                                endpoint = httpEndpoint;
+                            }
+
+                            if(endpoint != null) break;
+                        }
+
                         if (endpoint == null)
                         {
                             PrettyLogger.LogDebug($"Request {method} {path} has no corresponding endpoint assigned.");
@@ -71,8 +86,7 @@ public class Host
                             return;
                         }
 
-                        var servicePath = path.Replace(endpoint.DnsName, string.Empty, StringComparison.InvariantCultureIgnoreCase);
-                        var response = endpoint.GetResponse(servicePath, method, context.Request.Body, context.Request.Headers);
+                        var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers);
                         var textResponse = await response.Content.ReadAsStringAsync();
 
                         PrettyLogger.LogDebug($"Response: [{response.StatusCode}] {textResponse}");
