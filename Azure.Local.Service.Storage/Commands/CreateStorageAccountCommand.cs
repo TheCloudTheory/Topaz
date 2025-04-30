@@ -1,3 +1,4 @@
+using Azure.Local.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -7,9 +8,12 @@ public sealed class CreateStorageAccountCommand : Command<CreateStorageAccountCo
 {
     public override int Execute(CommandContext context, CreateStorageAccountCommandSettings settings)
     {
-        var rp = new ResourceProvider();
+        PrettyLogger.LogInformation("Creating storage account...");
 
-        rp.Create(settings.Name!);
+        var rp = new ResourceProvider();
+        var sa = rp.Create(settings.Name!);
+
+        PrettyLogger.LogInformation(sa.ToString());
 
         return 0;
     }
