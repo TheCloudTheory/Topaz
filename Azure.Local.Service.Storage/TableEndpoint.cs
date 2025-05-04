@@ -23,7 +23,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 
         var response = new HttpResponseMessage();
         
-        if(StorageAccountExists(path) == false)
+        if(TryGetStorageAccountName(path, out var storageAccountName) == false)
         {
             response.StatusCode = System.Net.HttpStatusCode.NotFound;
             return response;
@@ -38,7 +38,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                 switch (actualPath)
                 {
                     case "Tables":
-                        var tables = this.controlPlane.GetTables(input);
+                        var tables = this.controlPlane.GetTables(input, storageAccountName);
                         var endpointResponse = new TableEndpointResponse(tables);
                         response.Content = JsonContent.Create(endpointResponse);
                         break;
@@ -57,7 +57,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                     case "Tables":
                         try
                         {
-                            var tables = this.controlPlane.CreateTable(input);
+                            var tables = this.controlPlane.CreateTable(input, storageAccountName);
                             response.Content = JsonContent.Create(tables);
 
                             // Depending on the value of the `Prefer` header, the response 
@@ -106,7 +106,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                     var tableName = matches.Value.Trim('/').Replace("Tables('", "").Replace("')", "");
                     this.logger.LogDebug($"Attempting to delete table: {tableName}.");
 
-                    this.controlPlane.DeleteTable(tableName);
+                    this.controlPlane.DeleteTable(tableName, storageAccountName);
 
                     this.logger.LogDebug($"Table {tableName} deleted.");
 
@@ -153,12 +153,13 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
         return newPath;
     }
 
-    private bool StorageAccountExists(string path)
+    private bool TryGetStorageAccountName(string path, out string name)
     {
-        this.logger.LogDebug($"Executing {nameof(StorageAccountExists)}: {path}");
+        this.logger.LogDebug($"Executing {nameof(TryGetStorageAccountName)}: {path}");
 
         var pathParts = path.Split('/');
         var accountName = pathParts[2];
+        name = accountName;
 
         this.logger.LogDebug($"About to check if storage account '{accountName}' exists.");
 

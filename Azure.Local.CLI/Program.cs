@@ -44,6 +44,7 @@ internal class Program
             config.AddCommand<StartCommand>("start");
             config.AddBranch("storage", branch => {
                 branch.AddCommand<CreateStorageAccountCommand>("create");
+                branch.AddCommand<DeleteStorageAccountCommand>("delete");
             });    
         });
 

@@ -5,25 +5,18 @@ using Azure.Local.Shared;
 
 namespace Azure.Local.Service.Storage;
 
-internal sealed class TableServiceControlPlane
+internal sealed class TableServiceControlPlane(ILogger logger)
 {
-    private static readonly string TableServiceStoragePath = Path.Combine(AzureStorageService.LocalDirectoryPath, "table");
-    private readonly ILogger logger;
+    private readonly ILogger logger = logger;
 
-    public TableServiceControlPlane(ILogger logger)
-    {
-        this.logger = logger;
-
-        InitializeLocalDirectory();
-    }
-
-    private void InitializeLocalDirectory()
+    private void InitializeLocalDirectory(string storageAccountName)
     {
         this.logger.LogDebug("Attempting to create Table Service directory...");
+        var path = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName);
 
-        if (Directory.Exists(TableServiceStoragePath) == false)
+        if (Directory.Exists(path) == false)
         {
-            Directory.CreateDirectory(TableServiceStoragePath);
+            Directory.CreateDirectory(path);
             this.logger.LogDebug("Local Table Service directory created.");
         }
         else
@@ -32,9 +25,10 @@ internal sealed class TableServiceControlPlane
         }
     }
 
-    public TableProperties[] GetTables(Stream input)
+    public TableProperties[] GetTables(Stream input, string storageAccountName)
     {
-        var tables = Directory.EnumerateFiles(TableServiceStoragePath);
+        var path = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName);
+        var tables = Directory.EnumerateFiles(path);
 
         return [.. tables.Select(t => {
             var fileInfo = new FileInfo(t);
@@ -45,8 +39,10 @@ internal sealed class TableServiceControlPlane
         })];
     }
 
-    public TableItem CreateTable(Stream input)
+    public TableItem CreateTable(Stream input, string storageAccountName)
     {
+        InitializeLocalDirectory(storageAccountName);
+
         using var sr = new StreamReader(input);
 
         var rawContent = sr.ReadToEnd();
@@ -55,7 +51,7 @@ internal sealed class TableServiceControlPlane
             PropertyNameCaseInsensitive = true
         }) ?? throw new Exception();
 
-        var filePath = Path.Combine(AzureStorageService.LocalDirectoryPath, "table", content.TableName + ".jsonl");
+        var filePath = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, content.TableName + ".jsonl");
         if(File.Exists(filePath))
         {
             throw new EntityAlreadyExistsException();
@@ -66,9 +62,9 @@ internal sealed class TableServiceControlPlane
         return new TableItem(content.TableName);
     }
 
-    public void DeleteTable(string input)
+    public void DeleteTable(string input, string storageAccountName)
     {
-        var filePath = Path.Combine(AzureStorageService.LocalDirectoryPath, "table", input + ".jsonl");
+        var filePath = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, input + ".jsonl");
         if(File.Exists(filePath) == false)
         {
             throw new EntityNotFoundException();

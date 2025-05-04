@@ -1,0 +1,38 @@
+using Azure.Local.Shared;
+using Spectre.Console;
+using Spectre.Console.Cli;
+
+namespace Azure.Local.Service.Storage.Commands;
+
+public class DeleteStorageAccountCommand(ILogger logger) : Command<DeleteStorageAccountCommand.DeleteStorageAccountCommandSettings>
+{
+    private readonly ILogger logger = logger;
+
+    public override int Execute(CommandContext context, DeleteStorageAccountCommandSettings settings)
+    {
+        this.logger.LogInformation("Deleting storage account...");
+
+        var rp = new ResourceProvider(this.logger);
+        rp.Delete(settings.Name!);
+
+        this.logger.LogInformation("Storage account deleted.");
+
+        return 0;
+    }
+
+    public override ValidationResult Validate(CommandContext context, DeleteStorageAccountCommandSettings settings)
+    {
+        if(string.IsNullOrEmpty(settings.Name))
+        {
+            return ValidationResult.Error("Storage account name can't be null.");
+        }
+
+        return base.Validate(context, settings);
+    }
+
+    public sealed class DeleteStorageAccountCommandSettings : CommandSettings
+    {
+        [CommandOption("-n|--name")]
+        public string? Name { get; set; }
+    }
+}

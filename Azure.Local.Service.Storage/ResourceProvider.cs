@@ -27,4 +27,19 @@ internal sealed class ResourceProvider(ILogger logger)
         var accountPath = Path.Combine(AzureStorageService.LocalDirectoryPath, name);
         return Directory.Exists(accountPath);
     }
+
+    internal void Delete(string name)
+    {
+        var accountPath = Path.Combine(AzureStorageService.LocalDirectoryPath, name);
+        if(Directory.Exists(accountPath) == false) 
+        {
+            this.logger.LogDebug($"The storage account '{name}' does not exists, no changes applied.");
+            return;
+        }
+
+        this.logger.LogDebug($"Deleting storage account '{name}'.");
+        Directory.Delete(accountPath, true);
+
+        return;
+    }
 }
