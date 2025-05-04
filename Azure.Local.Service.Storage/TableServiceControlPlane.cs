@@ -8,24 +8,27 @@ namespace Azure.Local.Service.Storage;
 internal sealed class TableServiceControlPlane
 {
     private static readonly string TableServiceStoragePath = Path.Combine(AzureStorageService.LocalDirectoryPath, "table");
+    private readonly ILogger logger;
 
-    public TableServiceControlPlane()
+    public TableServiceControlPlane(ILogger logger)
     {
+        this.logger = logger;
+
         InitializeLocalDirectory();
     }
 
     private void InitializeLocalDirectory()
     {
-        PrettyLogger.LogDebug("Attempting to create Table Service directory...");
+        this.logger.LogDebug("Attempting to create Table Service directory...");
 
         if (Directory.Exists(TableServiceStoragePath) == false)
         {
             Directory.CreateDirectory(TableServiceStoragePath);
-            PrettyLogger.LogDebug("Local Table Service directory created.");
+            this.logger.LogDebug("Local Table Service directory created.");
         }
         else
         {
-            PrettyLogger.LogDebug("Attempting to create Table Service directory - skipped.");
+            this.logger.LogDebug("Attempting to create Table Service directory - skipped.");
         }
     }
 

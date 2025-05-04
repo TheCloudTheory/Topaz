@@ -6,31 +6,34 @@ namespace Azure.Local.Service.Storage;
 public class AzureStorageService : IServiceDefinition
 {
     internal const string LocalDirectoryPath = ".azure-storage";
+    private readonly ILogger logger;
 
     public string Name => "Azure Storage";
 
-    public AzureStorageService()
+    public AzureStorageService(ILogger logger)
     {
+        this.logger = logger;
+        
         InitializeLocalStorage();
     }
 
     private void InitializeLocalStorage()
     {
-        PrettyLogger.LogDebug("Attempting to create Azure Storage directory...");
+        this.logger.LogDebug("Attempting to create Azure Storage directory...");
 
         if(Directory.Exists(LocalDirectoryPath) == false)
         {
             Directory.CreateDirectory(LocalDirectoryPath);
-            PrettyLogger.LogDebug("Local Azure Storage directory created.");
+            this.logger.LogDebug("Local Azure Storage directory created.");
         }
         else
         {
-            PrettyLogger.LogDebug("Attempting to create Azure Storage directory - skipped.");
+            this.logger.LogDebug("Attempting to create Azure Storage directory - skipped.");
         }
     }
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new TableEndpoint(),
+        new TableEndpoint(this.logger),
         new BlobEndpoint()
     ];
 }

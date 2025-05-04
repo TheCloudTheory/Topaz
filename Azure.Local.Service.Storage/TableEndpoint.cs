@@ -7,21 +7,19 @@ using Microsoft.AspNetCore.Http;
 
 namespace Azure.Local.Service.Storage;
 
-public partial class TableEndpoint : IEndpointDefinition
+public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 {
-    private readonly TableServiceControlPlane controlPlane;
+    private readonly TableServiceControlPlane controlPlane = new(logger);
+    private readonly ILogger logger = logger;
 
     public Protocol Protocol => Protocol.Http;
 
     public string DnsName => "/storage/{storageAccountName}/table";
 
-    public TableEndpoint()
-    {
-        this.controlPlane = new TableServiceControlPlane();
-    }
-
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers)
     {
+        this.logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}");
+
         var response = new HttpResponseMessage();
         
         if(StorageAccountExists(path) == false)
@@ -103,11 +101,11 @@ public partial class TableEndpoint : IEndpointDefinition
                     }
 
                     var tableName = matches.Value.Trim('/').Replace("Tables('", "").Replace("')", "");
-                    PrettyLogger.LogDebug($"Attempting to delete table: {tableName}.");
+                    this.logger.LogDebug($"Attempting to delete table: {tableName}.");
 
                     this.controlPlane.DeleteTable(tableName);
 
-                    PrettyLogger.LogDebug($"Table {tableName} deleted.");
+                    this.logger.LogDebug($"Table {tableName} deleted.");
 
                     response.StatusCode = System.Net.HttpStatusCode.NoContent;
 
@@ -128,7 +126,8 @@ public partial class TableEndpoint : IEndpointDefinition
         }
         catch (Exception ex)
         {
-            PrettyLogger.LogError(ex);
+            this.logger.LogError(ex);
+
 
             response.Content = new StringContent(ex.Message);
             response.StatusCode = System.Net.HttpStatusCode.InternalServerError;

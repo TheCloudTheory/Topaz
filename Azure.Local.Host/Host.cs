@@ -8,24 +8,25 @@ using Microsoft.AspNetCore.Http;
 
 namespace Azure.Local.Host;
 
-public class Host
+public class Host(ILogger logger)
 {
     private const int hostPortNumber = 8899;
-    private static List<Thread> threads = [];
+    private static readonly List<Thread> threads = [];
+    private readonly ILogger logger = logger;
 
     public void Start()
     {
-        var services = new[] { new AzureStorageService() };
+        var services = new[] { new AzureStorageService(this.logger) };
         var urls = new List<string>();
         var httpEndpoints = new List<IEndpointDefinition>();
 
         foreach (var service in services)
         {
-            PrettyLogger.LogDebug($"Processing {service.Name} service...");
+            this.logger.LogDebug($"Processing {service.Name} service...");
 
             foreach (var endpoint in service.Endpoints)
             {
-                PrettyLogger.LogDebug($"Processing {endpoint.DnsName} endpoint...");
+                this.logger.LogDebug($"Processing {endpoint.DnsName} endpoint...");
 
                 if (endpoint.Protocol == Service.Shared.Protocol.Http || endpoint.Protocol == Service.Shared.Protocol.Https)
                 {
@@ -54,13 +55,13 @@ public class Host
 
                         if (method == null)
                         {
-                            PrettyLogger.LogDebug($"Received request with no method.");
+                            this.logger.LogDebug($"Received request with no method.");
 
                             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                             return;
                         }
 
-                        PrettyLogger.LogDebug($"Received request: {method} {context.Request.Host}{path}");
+                        this.logger.LogDebug($"Received request: {method} {context.Request.Host}{path}");
 
                         IEndpointDefinition? endpoint = null;
                         var pathParts = path.Split('/');
@@ -80,7 +81,7 @@ public class Host
 
                         if (endpoint == null)
                         {
-                            PrettyLogger.LogDebug($"Request {method} {path} has no corresponding endpoint assigned.");
+                            this.logger.LogDebug($"Request {method} {path} has no corresponding endpoint assigned.");
 
                             context.Response.StatusCode = (int)HttpStatusCode.NotFound;
                             return;
@@ -89,7 +90,7 @@ public class Host
                         var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers);
                         var textResponse = await response.Content.ReadAsStringAsync();
 
-                        PrettyLogger.LogDebug($"Response: [{response.StatusCode}] {textResponse}");
+                        this.logger.LogDebug($"Response: [{response.StatusCode}] {textResponse}");
 
                         context.Response.StatusCode = (int)response.StatusCode;
                         await context.Response.WriteAsync(textResponse);
@@ -98,7 +99,7 @@ public class Host
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-                        PrettyLogger.LogError(ex);
+                        this.logger.LogError(ex);
 
                         await context.Response.WriteAsync(ex.Message);
                     }

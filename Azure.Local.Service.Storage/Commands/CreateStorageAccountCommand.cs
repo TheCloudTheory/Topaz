@@ -4,16 +4,18 @@ using Spectre.Console.Cli;
 
 namespace Azure.Local.Service.Storage.Commands;
 
-public sealed class CreateStorageAccountCommand : Command<CreateStorageAccountCommand.CreateStorageAccountCommandSettings>
+public sealed class CreateStorageAccountCommand(ILogger logger) : Command<CreateStorageAccountCommand.CreateStorageAccountCommandSettings>
 {
+    private readonly ILogger logger = logger;
+
     public override int Execute(CommandContext context, CreateStorageAccountCommandSettings settings)
     {
-        PrettyLogger.LogInformation("Creating storage account...");
+        this.logger.LogInformation("Creating storage account...");
 
-        var rp = new ResourceProvider();
+        var rp = new ResourceProvider(this.logger);
         var sa = rp.Create(settings.Name!);
 
-        PrettyLogger.LogInformation(sa.ToString());
+        this.logger.LogInformation(sa.ToString());
 
         return 0;
     }
