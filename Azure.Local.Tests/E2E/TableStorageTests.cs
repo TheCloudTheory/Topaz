@@ -1,10 +1,12 @@
 using Azure.Data.Tables;
+using Azure.Local.Service.Storage;
+using Azure.Local.Shared;
 
 namespace Azure.Local.Tests.E2E
 {
     public class TableStorageTests
     {
-        private const string ConnectionString = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://table.localhost:8899;QueueEndpoint=http://localhost:8899;TableEndpoint=http://localhost:8899/storage/table;";
+        private const string ConnectionString = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://table.localhost:8899;QueueEndpoint=http://localhost:8899;TableEndpoint=http://localhost:8899/storage/devstoreaccount1;";
 
         [SetUp]
         public void Setup()
@@ -12,9 +14,22 @@ namespace Azure.Local.Tests.E2E
         }
 
         [Test]
-        public void TableStorageTests_WhenTableIsCreatedAndNoOtherTableIsPresent_ItShouldReturnOnlyNewTable()
+        public async Task TableStorageTests_WhenTableIsCreatedAndNoOtherTableIsPresent_ItShouldReturnOnlyNewTable()
         {
             // Arrange
+            await Program.Main([
+                "storage",
+                "create",
+                "--name",
+                "devstoreaccount1"
+            ]);
+
+            await Program.Main([
+                "start"
+            ]);
+
+            await Task.Delay(1000);
+
             var tableClient = new TableServiceClient(ConnectionString);
             var existingTables = tableClient.Query().ToArray();
 
@@ -33,9 +48,22 @@ namespace Azure.Local.Tests.E2E
         }
 
         [Test]
-        public void TableStorageTests_WhenTableDoesNotExist_ItShouldBeCreatedAndThenDeleted()
+        public async Task TableStorageTests_WhenTableDoesNotExist_ItShouldBeCreatedAndThenDeleted()
         {
             // Arrange
+            await Program.Main([
+                "storage",
+                "create",
+                "--name",
+                "devstoreaccount1"
+            ]);
+
+            await Program.Main([
+                "start"
+            ]);
+
+            await Task.Delay(1000);
+
             var tableClient = new TableServiceClient(ConnectionString);
             var existingTables = tableClient.Query().ToArray();
 

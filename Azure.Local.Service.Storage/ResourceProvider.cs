@@ -16,8 +16,15 @@ internal sealed class ResourceProvider(ILogger logger)
             return new StorageAccount(name);
         }
 
+        this.logger.LogDebug($"Creating storage account '{name}'.");
         Directory.CreateDirectory(accountPath);
 
         return new StorageAccount(name);
+    }
+
+    internal bool CheckIfStorageAccountExists(string name)
+    {
+        var accountPath = Path.Combine(AzureStorageService.LocalDirectoryPath, name);
+        return Directory.Exists(accountPath);
     }
 }

@@ -90,7 +90,7 @@ public class Host(ILogger logger)
                         var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers);
                         var textResponse = await response.Content.ReadAsStringAsync();
 
-                        this.logger.LogDebug($"Response: [{response.StatusCode}] {textResponse}");
+                        this.logger.LogDebug($"Response: [{response.StatusCode}] [{path}] {textResponse}");
 
                         context.Response.StatusCode = (int)response.StatusCode;
                         await context.Response.WriteAsync(textResponse);

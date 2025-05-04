@@ -10,6 +10,7 @@ namespace Azure.Local.Service.Storage;
 public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 {
     private readonly TableServiceControlPlane controlPlane = new(logger);
+    private readonly ResourceProvider resourceProvider = new(logger);
     private readonly ILogger logger = logger;
 
     public Protocol Protocol => Protocol.Http;
@@ -28,13 +29,15 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
             return response;
         }
 
+        var actualPath = ClearOriginalPath(path);
+
         try
         {
             if (method == "GET")
             {
-                switch (path)
+                switch (actualPath)
                 {
-                    case "/Tables":
+                    case "Tables":
                         var tables = this.controlPlane.GetTables(input);
                         var endpointResponse = new TableEndpointResponse(tables);
                         response.Content = JsonContent.Create(endpointResponse);
@@ -49,9 +52,9 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 
             if (method == "POST")
             {
-                switch (path)
+                switch (actualPath)
                 {
-                    case "/Tables":
+                    case "Tables":
                         try
                         {
                             var tables = this.controlPlane.CreateTable(input);
@@ -94,10 +97,10 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
             {
                 try
                 {
-                    var matches = Regex.Match(path, @"^/Tables\('.*?'\)$", RegexOptions.IgnoreCase);
+                    var matches = Regex.Match(actualPath, @"^Tables\('.*?'\)$", RegexOptions.IgnoreCase);
                     if(matches.Length == 0)
                     {
-                        throw new Exception($"Invalid request path {path} for the delete operation.");
+                        throw new Exception($"Invalid request path {actualPath} for the delete operation.");
                     }
 
                     var tableName = matches.Value.Trim('/').Replace("Tables('", "").Replace("')", "");
@@ -138,9 +141,28 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
         throw new NotSupportedException();
     }
 
+    private string ClearOriginalPath(string path)
+    {
+        this.logger.LogDebug($"Executing {nameof(ClearOriginalPath)}: {path}");
+
+        var pathParts = path.Split('/');
+        var newPath = string.Join('/', pathParts.Skip(3));
+
+        this.logger.LogDebug($"Executing {nameof(ClearOriginalPath)}: New path: {newPath}");
+
+        return newPath;
+    }
+
     private bool StorageAccountExists(string path)
     {
-        throw new NotImplementedException();
+        this.logger.LogDebug($"Executing {nameof(StorageAccountExists)}: {path}");
+
+        var pathParts = path.Split('/');
+        var accountName = pathParts[2];
+
+        this.logger.LogDebug($"About to check if storage account '{accountName}' exists.");
+
+        return this.resourceProvider.CheckIfStorageAccountExists(accountName);
     }
 
     private class TableEndpointResponse(TableProperties[] tables)
