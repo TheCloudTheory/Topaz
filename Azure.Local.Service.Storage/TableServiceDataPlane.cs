@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Azure.Local.Service.Storage.Exceptions;
 using Azure.Local.Service.Storage.Models;
 using Azure.Local.Shared;
 using Microsoft.AspNetCore.Http;
@@ -31,20 +32,18 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
 
         this.logger.LogDebug($"Executing {nameof(InsertEntity)}: Inserting {rawContent}.");
 
-        var entities = File.ReadAllLines(path);
-        foreach (var rawEntity in entities)
+        var files = Directory.EnumerateFiles(path);
+        var fileName = $"{content.PartitionKey}_{content.RowKey}.json";
+        var entityPath = Path.Combine(path, fileName);
+
+        if(File.Exists(entityPath))
         {
-            var entity = JsonSerializer.Deserialize<GenericTableEntity>(rawEntity, options);
-            if (entity!.PartitionKey == content.PartitionKey && entity.RowKey == content.RowKey)
-            {
-                // Duplicated entry
-                this.logger.LogDebug($"Executing {nameof(InsertEntity)}: Duplicated entry.");
-                throw new EntityAlreadyExistsException();
-            }
+            // Duplicated entry
+            this.logger.LogDebug($"Executing {nameof(InsertEntity)}: Duplicated entry.");
+            throw new EntityAlreadyExistsException();
         }
 
-        var oneLine = Regex.Replace(rawContent, @"\t|\n|\r", "");
-        File.AppendAllLines(path, [oneLine]);
+        File.WriteAllText(entityPath, rawContent);
 
         return rawContent;
     }
@@ -62,8 +61,38 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
         // }
 
         var path = this.controlPlane.GetTablePath(tableName, storageAccountName);
-        var entities = File.ReadAllLines(path).Select(e => JsonSerializer.Deserialize<object>(e)).ToArray();
+        var files = Directory.EnumerateFiles(path);
+        var entities = files.Select(e => {
+            var content = File.ReadAllText(e);
+            return JsonSerializer.Deserialize<object>(content);
+        }).ToArray();
 
         return entities; 
+    }
+
+    internal void UpdateEntity(Stream input, string tableName, string storageAccountName, string partitionKey, string rowKey)
+    {
+        this.logger.LogDebug($"Executing {nameof(InsertEntity)}: {tableName} {storageAccountName}");
+
+        var path = this.controlPlane.GetTablePath(tableName, storageAccountName);
+
+        using var sr = new StreamReader(input);
+
+        var rawContent = sr.ReadToEnd();
+        var content = JsonSerializer.Deserialize<GenericTableEntity>(rawContent, options) ?? throw new Exception();
+
+        var fileName = $"{content.PartitionKey}_{content.RowKey}.json";
+        var entityPath = Path.Combine(path, fileName);
+
+        if(File.Exists(entityPath) == false)
+        {
+            // Not existing  entry
+            this.logger.LogDebug($"Executing {nameof(InsertEntity)}: Not existing entry.");
+            throw new EntityNotFoundException();
+        }
+
+        File.Delete(entityPath);
+
+        File.WriteAllText(entityPath, rawContent);
     }
 }

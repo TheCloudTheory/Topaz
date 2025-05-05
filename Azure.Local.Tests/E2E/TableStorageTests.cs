@@ -106,6 +106,123 @@ namespace Azure.Local.Tests.E2E
             Assert.That(entities, Has.Length.EqualTo(1));
         }
 
+        [Test]
+        public void TableStorageTests_WhenMultipleEntitiesAreInserted_TheyShouldBeAvailableOverEmulator()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(ConnectionString);
+            tableServiceClient.CreateTable("testtable");
+
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            // Act
+            tableClient.AddEntity(new TestEntity()
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo"
+            });
+
+            tableClient.AddEntity(new TestEntity()
+            {
+                PartitionKey = "test",
+                RowKey = "2",
+                Name = "foo"
+            });
+
+            tableClient.AddEntity(new TestEntity()
+            {
+                PartitionKey = "test",
+                RowKey = "3",
+                Name = "foo"
+            });
+
+            // Assert
+            var entities = tableClient.Query<TestEntity>("PartitionKey eq 'test'").ToArray();
+
+            Assert.That(entities, Has.Length.EqualTo(3));
+            Assert.Multiple(() =>
+            {
+                Assert.That(entities[0].RowKey, Is.EqualTo("1"));
+                Assert.That(entities[1].RowKey, Is.EqualTo("2"));
+                Assert.That(entities[2].RowKey, Is.EqualTo("3"));
+            });
+        }
+
+        [Test]
+        public void TableStorageTests_WhenDuplicatedEntityIsInserted_ItShouldNotBeAdded()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(ConnectionString);
+            tableServiceClient.CreateTable("testtable");
+
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            // Act
+            tableClient.AddEntity(new TestEntity()
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo"
+            });
+
+            Assert.Throws<RequestFailedException>(() => tableClient.AddEntity(new TestEntity()
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo"
+            }));
+        }
+
+        [Test]
+        public void TableStorageTests_WhenTableDoesNotExist_ErrorShouldBeReturned()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(ConnectionString);
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            // Assert
+            Assert.Throws<RequestFailedException>(() => tableClient.AddEntity(new TestEntity()
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo"
+            }));
+        }
+
+        [Test]
+        public void TableStorageTests_WhenEntityIsUpdated_ItShouldBeAvailableOverEmulator()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(ConnectionString);
+            tableServiceClient.CreateTable("testtable");
+
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            tableClient.AddEntity(new TestEntity()
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo"
+            });
+
+            var entity = tableClient.Query<TestEntity>().First();
+
+            // Act
+            entity.Name = "bar";
+            tableClient.UpdateEntity(entity, ETag.All);
+
+            // Assert
+            var updatedEntity = tableClient.Query<TestEntity>().ToArray().First();
+            
+            Assert.Multiple(() =>
+            {
+                Assert.That(updatedEntity.Name, Is.EqualTo("bar"));
+                Assert.That(updatedEntity.PartitionKey, Is.EqualTo("test"));
+                Assert.That(updatedEntity.RowKey, Is.EqualTo("1"));
+            });
+        }
+
         private class TestEntity : ITableEntity
         {
             public string? Name { get; set; }

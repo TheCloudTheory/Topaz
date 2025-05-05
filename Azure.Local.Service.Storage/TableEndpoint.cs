@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using Azure.Local.Service.Shared;
+using Azure.Local.Service.Storage.Exceptions;
 using Azure.Local.Service.Storage.Models;
 using Azure.Local.Shared;
 using Microsoft.AspNetCore.Http;
@@ -124,14 +125,28 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                             }
                             catch(EntityAlreadyExistsException)
                             {
-                                var error = new ErrorResponse("TableAlreadyExists", "Table already exists.");
+                                var error = new ErrorResponse("EntityAlreadyExists", "Entity already exists.");
 
                                 response.StatusCode = System.Net.HttpStatusCode.Conflict;
-                                response.Headers.Add("x-ms-error-code", "TableAlreadyExists");
+                                response.Headers.Add("x-ms-error-code", "EntityAlreadyExists");
                                 response.Content = JsonContent.Create(error);
 
                                 break;
                             }
+                        }
+
+                        var matches = Regex.Match(actualPath, @"\w+\(PartitionKey='\w+',RowKey='\w+'\)$", RegexOptions.IgnoreCase);
+                        if(matches.Length > 0)
+                        {
+                            this.logger.LogDebug("Matched the update operation.");
+
+                            var (TableName, PartitionKey, RowKey) = GetOperationDataForUpdateOperation(matches);
+
+                            this.dataPlane.UpdateEntity(input, TableName, storageAccountName, PartitionKey, RowKey);
+
+                            response.StatusCode = System.Net.HttpStatusCode.NoContent;
+
+                            break;
                         }
                         
                         response.StatusCode = System.Net.HttpStatusCode.NotFound;
@@ -152,10 +167,9 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                     }
 
                     var tableName = matches.Value.Trim('/').Replace("Tables('", "").Replace("')", "");
+
                     this.logger.LogDebug($"Attempting to delete table: {tableName}.");
-
                     this.controlPlane.DeleteTable(tableName, storageAccountName);
-
                     this.logger.LogDebug($"Table {tableName} deleted.");
 
                     response.StatusCode = System.Net.HttpStatusCode.NoContent;
@@ -186,6 +200,25 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
         }
 
         throw new NotSupportedException();
+    }
+
+    private (string TableName, string PartitionKey, string RowKey) GetOperationDataForUpdateOperation(Match matches)
+    {
+        this.logger.LogDebug($"Executing {nameof(GetOperationDataForUpdateOperation)}: {matches}");
+
+        var match = matches.Value;
+        var dataMatches = Regex.Match(match, @"^(?<tableName>\w+)\(PartitionKey='(?<partitionKey>\w+)',RowKey='(?<rowKey>\w+)'\)$");
+
+        var tableName = dataMatches.Groups["tableName"].Value;
+        var partitionKey = dataMatches.Groups["partitionKey"].Value;
+        var rowKey = dataMatches.Groups["rowKey"].Value;
+
+        if(string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(partitionKey) || string.IsNullOrEmpty(rowKey))
+        {
+            throw new InvalidInputException();
+        }
+
+        return (TableName: tableName, PartitionKey: partitionKey, RowKey: rowKey);
     }
 
     private bool IsPathReferencingTable(string tableName, string storageAccountName)
@@ -225,8 +258,8 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
         public TableProperties[] Value { get; init; } = tables;
     }
 
-    private class TableDataEndpointResponse(object[] values)
+    private class TableDataEndpointResponse(object?[] values)
     {
-        public object[] Value { get; init; } = values;
+        public object?[] Value { get; init; } = values;
     }
 }

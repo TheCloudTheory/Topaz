@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Azure.Data.Tables.Models;
+using Azure.Local.Service.Storage.Exceptions;
 using Azure.Local.Service.Storage.Models;
 using Azure.Local.Shared;
 
@@ -28,14 +29,11 @@ internal sealed class TableServiceControlPlane(ILogger logger)
     public TableProperties[] GetTables(Stream input, string storageAccountName)
     {
         var path = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName);
-        var tables = Directory.EnumerateFiles(path);
+        var tables = Directory.EnumerateDirectories(path);
 
         return [.. tables.Select(t => {
-            var fileInfo = new FileInfo(t);
-            var nameWithExtension = fileInfo.Name;
-            var nameOnly = nameWithExtension.Split(".")[0];
-
-            return new TableProperties(nameOnly);
+            var di = new DirectoryInfo(t);
+            return new TableProperties(di.Name);
         })];
     }
 
@@ -51,70 +49,37 @@ internal sealed class TableServiceControlPlane(ILogger logger)
             PropertyNameCaseInsensitive = true
         }) ?? throw new Exception();
 
-        var filePath = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, content.TableName + ".jsonl");
-        if(File.Exists(filePath))
+        var directoryPath = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, content.TableName);
+        if(Directory.Exists(directoryPath))
         {
             throw new EntityAlreadyExistsException();
         }
 
-        File.Create(filePath);
+        Directory.CreateDirectory(directoryPath);
 
         return new TableItem(content.TableName);
     }
 
     public void DeleteTable(string tableName, string storageAccountName)
     {
-        var filePath = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, tableName + ".jsonl");
-        if(File.Exists(filePath) == false)
+        var directoryPath = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, tableName);
+        if(Directory.Exists(directoryPath) == false)
         {
             throw new EntityNotFoundException();
         }
 
-        File.Delete(filePath);
+        Directory.Delete(directoryPath);
     }
 
     internal bool CheckIfTableExists(string tableName, string storageAccountName)
     {
-        var path = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName);
-        var tables = Directory.EnumerateFiles(path).Select(t => new FileInfo(t)).Select(t => t.Name);
+        var path = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, tableName);
 
-        return tables.SingleOrDefault(t => t == tableName + ".jsonl") != null;
+        return Directory.Exists(path);
     }
 
     internal string GetTablePath(string tableName, string storageAccountName)
     {
-        return Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, tableName + ".jsonl");
-    }
-}
-
-[Serializable]
-internal class EntityNotFoundException : Exception
-{
-    public EntityNotFoundException()
-    {
-    }
-
-    public EntityNotFoundException(string? message) : base(message)
-    {
-    }
-
-    public EntityNotFoundException(string? message, Exception? innerException) : base(message, innerException)
-    {
-    }
-}
-
-[Serializable]
-internal class EntityAlreadyExistsException : Exception
-{
-    public EntityAlreadyExistsException()
-    {
-    }
-
-    public EntityAlreadyExistsException(string? message) : base(message)
-    {
-    }
-
-    public EntityAlreadyExistsException(string? message, Exception? innerException) : base(message, innerException)
-    {
+        return Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, tableName);
     }
 }
