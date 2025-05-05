@@ -4,12 +4,14 @@ using Azure.Local.Service.Shared;
 using Azure.Local.Service.Storage.Models;
 using Azure.Local.Shared;
 using Microsoft.AspNetCore.Http;
+using Spectre.Console;
 
 namespace Azure.Local.Service.Storage;
 
 public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 {
     private readonly TableServiceControlPlane controlPlane = new(logger);
+    private readonly TableServiceDataPlane dataPlane = new(new TableServiceControlPlane(logger), logger);
     private readonly ResourceProvider resourceProvider = new(logger);
     private readonly ILogger logger = logger;
 
@@ -17,9 +19,9 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 
     public string DnsName => "/storage/{storageAccountName}/table";
 
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
     {
-        this.logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}");
+        this.logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
 
         var response = new HttpResponseMessage();
         
@@ -43,6 +45,18 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                         response.Content = JsonContent.Create(endpointResponse);
                         break;
                     default:
+                        var potentialTableName = actualPath.Replace("()", string.Empty);
+                        if(IsPathReferencingTable(potentialTableName, storageAccountName))
+                        {
+                            var entities = this.dataPlane.QueryEntities(query, potentialTableName, storageAccountName);
+                            var dataEndpointResponse = new TableDataEndpointResponse(entities);
+
+                            response.Content = JsonContent.Create(dataEndpointResponse);
+                            response.StatusCode = System.Net.HttpStatusCode.OK;
+
+                            break;
+                        }
+
                         response.StatusCode = System.Net.HttpStatusCode.NotFound;
                         break;
                 }
@@ -76,16 +90,50 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                         }
                         catch (EntityAlreadyExistsException)
                         {
-                            var error = new ErrorResponse("EntityAlreadyExists", "Table already exists.");
+                            var error = new ErrorResponse("TableAlreadyExists", "Table already exists.");
 
                             response.StatusCode = System.Net.HttpStatusCode.Conflict;
-                            response.Headers.Add("x-ms-error-code", "EntityAlreadyExists");
+                            response.Headers.Add("x-ms-error-code", "TableAlreadyExists");
                             response.Content = JsonContent.Create(error);
-
                         }
 
                         break;
                     default:
+                        if(IsPathReferencingTable(actualPath, storageAccountName))
+                        {
+                            try
+                            {
+                                var payload = this.dataPlane.InsertEntity(input, actualPath, storageAccountName);
+
+                                // Depending on the value of the `Prefer` header, the response 
+                                // given by the emulator should be either 204 or 201
+                                if (headers.TryGetValue("Prefer", out var prefer) == false || prefer != "return-no-content")
+                                {
+                                    // No `Prefer` header or value other than `return-no-content`
+                                    // hence the result will be 201
+                                    response.StatusCode = System.Net.HttpStatusCode.Created;
+                                    response.Content = JsonContent.Create(payload);
+                                }
+
+                                if (prefer == "return-no-content")
+                                {
+                                    response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                                }
+
+                                break;
+                            }
+                            catch(EntityAlreadyExistsException)
+                            {
+                                var error = new ErrorResponse("TableAlreadyExists", "Table already exists.");
+
+                                response.StatusCode = System.Net.HttpStatusCode.Conflict;
+                                response.Headers.Add("x-ms-error-code", "TableAlreadyExists");
+                                response.Content = JsonContent.Create(error);
+
+                                break;
+                            }
+                        }
+                        
                         response.StatusCode = System.Net.HttpStatusCode.NotFound;
                         break;
                 }
@@ -131,7 +179,6 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
         {
             this.logger.LogError(ex);
 
-
             response.Content = new StringContent(ex.Message);
             response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
 
@@ -139,6 +186,13 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
         }
 
         throw new NotSupportedException();
+    }
+
+    private bool IsPathReferencingTable(string tableName, string storageAccountName)
+    {
+        this.logger.LogDebug($"Executing {nameof(IsPathReferencingTable)}: {tableName} {storageAccountName}");
+
+        return this.controlPlane.CheckIfTableExists(tableName, storageAccountName);
     }
 
     private string ClearOriginalPath(string path)
@@ -169,5 +223,10 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
     private class TableEndpointResponse(TableProperties[] tables)
     {
         public TableProperties[] Value { get; init; } = tables;
+    }
+
+    private class TableDataEndpointResponse(object[] values)
+    {
+        public object[] Value { get; init; } = values;
     }
 }

@@ -6,5 +6,5 @@ public interface IEndpointDefinition
 {
     public Protocol Protocol { get; }
     public string DnsName { get; }
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers);
+    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query);
 }

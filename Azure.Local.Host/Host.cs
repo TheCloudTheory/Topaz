@@ -52,6 +52,7 @@ public class Host(ILogger logger)
                         var hostWithoutPort = context.Request.Host.Host.ToString();
                         var path = context.Request.Path.ToString();
                         var method = context.Request.Method;
+                        var query = context.Request.QueryString;
 
                         if (method == null)
                         {
@@ -61,13 +62,16 @@ public class Host(ILogger logger)
                             return;
                         }
 
-                        this.logger.LogDebug($"Received request: {method} {context.Request.Host}{path}");
+                        this.logger.LogDebug($"Received request: {method} {context.Request.Host}{path}{query}");
 
                         IEndpointDefinition? endpoint = null;
                         var pathParts = path.Split('/');
                         foreach(var httpEndpoint in httpEndpoints)
                         {
                             var endpointParts = httpEndpoint.DnsName.Split('/');
+
+                            if(endpointParts.Length > pathParts.Length) continue;
+
                             for(var i = 0; i < endpointParts.Length; i++)
                             {
                                 if(endpointParts[i].StartsWith('{') && endpointParts[i].EndsWith('}')) continue;
@@ -87,7 +91,7 @@ public class Host(ILogger logger)
                             return;
                         }
 
-                        var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers);
+                        var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query);
                         var textResponse = await response.Content.ReadAsStringAsync();
 
                         this.logger.LogDebug($"Response: [{response.StatusCode}] [{path}] {textResponse}");

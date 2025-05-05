@@ -82,5 +82,37 @@ namespace Azure.Local.Tests.E2E
 
             Assert.That(existingTables, Is.Empty);
         }
+
+        [Test]
+        public void TableStorageTests_WhenEntityIsInserted_ItShouldBeAvailableOverEmulator()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(ConnectionString);
+            tableServiceClient.CreateTable("testtable");
+
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            // Act
+            tableClient.AddEntity(new TestEntity()
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo"
+            });
+
+            // Assert
+            var entities = tableClient.Query<TestEntity>("PartitionKey eq 'test'").ToArray();
+
+            Assert.That(entities, Has.Length.EqualTo(1));
+        }
+
+        private class TestEntity : ITableEntity
+        {
+            public string? Name { get; set; }
+            public string? PartitionKey { get; set; }
+            public string? RowKey { get; set; }
+            public DateTimeOffset? Timestamp { get; set; }
+            public ETag ETag { get; set; }
+        }
     }
 }

@@ -62,15 +62,28 @@ internal sealed class TableServiceControlPlane(ILogger logger)
         return new TableItem(content.TableName);
     }
 
-    public void DeleteTable(string input, string storageAccountName)
+    public void DeleteTable(string tableName, string storageAccountName)
     {
-        var filePath = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, input + ".jsonl");
+        var filePath = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, tableName + ".jsonl");
         if(File.Exists(filePath) == false)
         {
             throw new EntityNotFoundException();
         }
 
         File.Delete(filePath);
+    }
+
+    internal bool CheckIfTableExists(string tableName, string storageAccountName)
+    {
+        var path = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName);
+        var tables = Directory.EnumerateFiles(path).Select(t => new FileInfo(t)).Select(t => t.Name);
+
+        return tables.SingleOrDefault(t => t == tableName + ".jsonl") != null;
+    }
+
+    internal string GetTablePath(string tableName, string storageAccountName)
+    {
+        return Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, tableName + ".jsonl");
     }
 }
 

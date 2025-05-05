@@ -14,7 +14,7 @@ public class BlobEndpoint : IEndpointDefinition
         
     }
 
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
     {
         var response = new HttpResponseMessage();
 
