@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Azure.Local.Service.Storage.Exceptions;
 using Azure.Local.Service.Storage.Models;
@@ -12,8 +13,7 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
     private readonly static JsonSerializerOptions options = new()
     {
         PropertyNameCaseInsensitive = true,
-        WriteIndented = false,
-        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        WriteIndented = true
     };
 
     private readonly TableServiceControlPlane controlPlane = controlPlane;
@@ -28,12 +28,15 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
         using var sr = new StreamReader(input);
 
         var rawContent = sr.ReadToEnd();
-        var content = JsonSerializer.Deserialize<GenericTableEntity>(rawContent, options) ?? throw new Exception();
+        var metadata = JsonSerializer.Deserialize<GenericTableEntity>(rawContent, options) ?? throw new Exception();
 
         this.logger.LogDebug($"Executing {nameof(InsertEntity)}: Inserting {rawContent}.");
 
+        var etag = new ETag(DateTimeOffset.Now.Ticks.ToString());
+        var timestamp = DateTimeOffset.Now.ToUniversalTime();
+
         var files = Directory.EnumerateFiles(path);
-        var fileName = $"{content.PartitionKey}_{content.RowKey}.json";
+        var fileName = $"{metadata.PartitionKey}_{metadata.RowKey}.json";
         var entityPath = Path.Combine(path, fileName);
 
         if(File.Exists(entityPath))
@@ -41,9 +44,15 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
             // Duplicated entry
             this.logger.LogDebug($"Executing {nameof(InsertEntity)}: Duplicated entry.");
             throw new EntityAlreadyExistsException();
-        }
+        } 
 
-        File.WriteAllText(entityPath, rawContent);
+        var root = JsonNode.Parse(rawContent);
+        root!["Timestamp"] = timestamp;
+        root!["odata.etag"] = etag.ToString("H");
+
+        var data = root.ToJsonString();
+
+        File.WriteAllText(entityPath, data);
 
         return rawContent;
     }
@@ -64,24 +73,26 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
         var files = Directory.EnumerateFiles(path);
         var entities = files.Select(e => {
             var content = File.ReadAllText(e);
-            return JsonSerializer.Deserialize<object>(content);
+            return JsonSerializer.Deserialize<object>(content, options);
         }).ToArray();
 
         return entities; 
     }
 
-    internal void UpdateEntity(Stream input, string tableName, string storageAccountName, string partitionKey, string rowKey)
+    internal void UpdateEntity(Stream input, string tableName, string storageAccountName, string partitionKey,
+                               string rowKey, IHeaderDictionary headers)
     {
         this.logger.LogDebug($"Executing {nameof(InsertEntity)}: {tableName} {storageAccountName}");
+
+        var etag = headers["If-Match"];
 
         var path = this.controlPlane.GetTablePath(tableName, storageAccountName);
 
         using var sr = new StreamReader(input);
 
         var rawContent = sr.ReadToEnd();
-        var content = JsonSerializer.Deserialize<GenericTableEntity>(rawContent, options) ?? throw new Exception();
 
-        var fileName = $"{content.PartitionKey}_{content.RowKey}.json";
+        var fileName = $"{partitionKey}_{rowKey}.json";
         var entityPath = Path.Combine(path, fileName);
 
         if(File.Exists(entityPath) == false)
@@ -91,8 +102,25 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
             throw new EntityNotFoundException();
         }
 
+        if(etag != "*")
+        {
+            var file = File.ReadAllText(entityPath);
+            var currentData = JsonSerializer.Deserialize<GenericTableEntity>(file, options) ?? 
+                throw new Exception("Cannot proceed if entity data is null.");
+            if (currentData.ETag.ToString() != etag) throw new UpdateConditionNotSatisfiedException();
+        }
+
         File.Delete(entityPath);
 
-        File.WriteAllText(entityPath, rawContent);
+        var root = JsonNode.Parse(rawContent);
+        var newEtag = DateTimeOffset.Now.Ticks;
+        var timestamp = DateTimeOffset.Now.ToUniversalTime();
+
+        root!["Timestamp"] = timestamp;
+        root!["odata.etag"] = newEtag;
+
+        var data = root.ToJsonString();
+
+        File.WriteAllText(entityPath, data);
     }
 }

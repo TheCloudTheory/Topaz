@@ -142,10 +142,29 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 
                             var (TableName, PartitionKey, RowKey) = GetOperationDataForUpdateOperation(matches);
 
-                            this.dataPlane.UpdateEntity(input, TableName, storageAccountName, PartitionKey, RowKey);
+                            try
+                            {
+                                this.dataPlane.UpdateEntity(input, TableName, storageAccountName, PartitionKey, RowKey, headers);
 
-                            response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                                response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                            }
+                            catch(EntityNotFoundException)
+                            {
+                                var error = new ErrorResponse("EntityNotFound", "Entity not found.");
 
+                                response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                                response.Headers.Add("x-ms-error-code", "EntityNotFound");
+                                response.Content = JsonContent.Create(error);
+                            }
+                            catch(UpdateConditionNotSatisfiedException)
+                            {
+                                var error = new ErrorResponse("UpdateConditionNotSatisfied", "The update condition specified in the request was not satisfied.");
+
+                                response.StatusCode = System.Net.HttpStatusCode.PreconditionFailed;
+                                response.Headers.Add("x-ms-error-code", "UpdateConditionNotSatisfied");
+                                response.Content = JsonContent.Create(error);
+                            }
+                            
                             break;
                         }
                         

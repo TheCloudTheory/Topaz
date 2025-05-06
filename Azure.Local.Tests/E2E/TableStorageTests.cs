@@ -214,12 +214,73 @@ namespace Azure.Local.Tests.E2E
 
             // Assert
             var updatedEntity = tableClient.Query<TestEntity>().ToArray().First();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(updatedEntity.Name, Is.EqualTo("bar"));
+                Assert.That(updatedEntity.PartitionKey, Is.EqualTo("test"));
+                Assert.That(updatedEntity.RowKey, Is.EqualTo("1"));
+            });
+        }
+
+        [Test]
+        public void TableStorageTests_WhenEntityIsUpdatedWitETag_ItShouldBeAvailableOverEmulator()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(ConnectionString);
+            tableServiceClient.CreateTable("testtable");
+
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            tableClient.AddEntity(new TestEntity()
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo",
+            });
+
+            var entity = tableClient.Query<TestEntity>().First();
+
+            // Act
+            entity.Name = "bar";
+            tableClient.UpdateEntity(entity, entity.ETag);
+
+            // Assert
+            var updatedEntity = tableClient.Query<TestEntity>().ToArray().First();
             
             Assert.Multiple(() =>
             {
                 Assert.That(updatedEntity.Name, Is.EqualTo("bar"));
                 Assert.That(updatedEntity.PartitionKey, Is.EqualTo("test"));
                 Assert.That(updatedEntity.RowKey, Is.EqualTo("1"));
+            });
+        }
+
+        [Test]
+        public void TableStorageTests_WhenEntityIsInsertedAndFetched_ItMustContainETagAndTimestamp()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(ConnectionString);
+            tableServiceClient.CreateTable("testtable");
+
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            tableClient.AddEntity(new TestEntity()
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo",
+            });
+
+            // Act
+            var entity = tableClient.Query<TestEntity>().First();
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(entity.ETag.ToString(), Is.Not.EqualTo(""));
+                Assert.That(entity.ETag.ToString(), Is.Not.EqualTo("{}"));
+                Assert.That(entity.Timestamp, Is.Not.Null);
             });
         }
 
