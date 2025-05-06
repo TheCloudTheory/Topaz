@@ -224,7 +224,7 @@ namespace Azure.Local.Tests.E2E
         }
 
         [Test]
-        public void TableStorageTests_WhenEntityIsUpdatedWitETag_ItShouldBeAvailableOverEmulator()
+        public void TableStorageTests_WhenEntityIsUpdatedWithETag_ItShouldBeAvailableOverEmulator()
         {
             // Arrange
             var tableServiceClient = new TableServiceClient(ConnectionString);
@@ -281,6 +281,71 @@ namespace Azure.Local.Tests.E2E
                 Assert.That(entity.ETag.ToString(), Is.Not.EqualTo(""));
                 Assert.That(entity.ETag.ToString(), Is.Not.EqualTo("{}"));
                 Assert.That(entity.Timestamp, Is.Not.Null);
+            });
+        }
+
+        [Test]
+        public void TableStorageTests_WhenEntityIsUpdatedConcurrently_ItsETagMustBeRespected()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(ConnectionString);
+            tableServiceClient.CreateTable("testtable");
+
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            tableClient.AddEntity(new TestEntity()
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo",
+            });
+
+            var entity = tableClient.Query<TestEntity>().First();
+            var sameEntity = tableClient.Query<TestEntity>().First();
+
+            // Act
+            entity.Name = "bar";
+            sameEntity.Name = "foobar";
+            tableClient.UpdateEntity(entity, entity.ETag);
+
+            // Assert
+            Assert.Throws<RequestFailedException>(() => {
+                tableClient.UpdateEntity(sameEntity, sameEntity.ETag);
+            });
+        }
+
+        [Test]
+        public void TableStorageTests_WhenEntityIsUpdatedConcurrentlyButIsRequestedToBeUpdatedUnconditionally_ItShouldBeUpdated()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(ConnectionString);
+            tableServiceClient.CreateTable("testtable");
+
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            tableClient.AddEntity(new TestEntity()
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo",
+            });
+
+            var entity = tableClient.Query<TestEntity>().First();
+            var sameEntity = tableClient.Query<TestEntity>().First();
+
+            // Act
+            entity.Name = "bar";
+            sameEntity.Name = "foobar";
+            tableClient.UpdateEntity(entity, entity.ETag);
+            tableClient.UpdateEntity(sameEntity, ETag.All);
+
+            var updatedEntity = tableClient.Query<TestEntity>().ToArray().First();
+            
+            Assert.Multiple(() =>
+            {
+                Assert.That(updatedEntity.Name, Is.EqualTo("foobar"));
+                Assert.That(updatedEntity.PartitionKey, Is.EqualTo("test"));
+                Assert.That(updatedEntity.RowKey, Is.EqualTo("1"));
             });
         }
 
