@@ -3,7 +3,7 @@ using Azure.Local.Shared;
 
 namespace Azure.Local.Service.Storage;
 
-public class AzureStorageService : IServiceDefinition
+public sealed class AzureStorageService : IServiceDefinition
 {
     internal const string LocalDirectoryPath = ".azure-storage";
     private readonly ILogger logger;

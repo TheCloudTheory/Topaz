@@ -17,7 +17,6 @@ public class Host(ILogger logger)
     public void Start()
     {
         var services = new[] { new AzureStorageService(this.logger) };
-        var urls = new List<string>();
         var httpEndpoints = new List<IEndpointDefinition>();
 
         foreach (var service in services)

@@ -1,5 +1,6 @@
 ﻿using Azure.Local.CLI;
 using Azure.Local.CLI.Commands;
+using Azure.Local.Service.ResourceGroup.Commands;
 using Azure.Local.Service.Storage.Commands;
 using Azure.Local.Shared;
 using Microsoft.Extensions.DependencyInjection;
@@ -42,10 +43,15 @@ internal class Program
         app.Configure(config =>
         {
             config.AddCommand<StartCommand>("start");
+
             config.AddBranch("storage", branch => {
                 branch.AddCommand<CreateStorageAccountCommand>("create");
                 branch.AddCommand<DeleteStorageAccountCommand>("delete");
             });    
+
+            config.AddBranch("group", branch => {
+                branch.AddCommand<CreateResourceGroupCommand>("create");
+            });
         });
 
         return app.RunAsync(args);
