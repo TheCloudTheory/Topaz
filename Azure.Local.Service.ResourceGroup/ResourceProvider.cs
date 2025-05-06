@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Azure.Local.Shared;
 
 namespace Azure.Local.Service.ResourceGroup;
@@ -8,7 +9,7 @@ internal sealed class ResourceProvider(ILogger logger)
 
     internal Models.ResourceGroup Create(string name, string location)
     {
-        var fileName = $"{name}_{location}.json";
+        var fileName = $"{name}.json";
         var resourceGroupPath = Path.Combine(ResourceGroupService.LocalDirectoryPath, fileName);
         if(File.Exists(resourceGroupPath)) 
         {
@@ -17,8 +18,28 @@ internal sealed class ResourceProvider(ILogger logger)
         }
 
         this.logger.LogDebug($"Creating storage account '{name}'.");
-        Directory.CreateDirectory(resourceGroupPath);
+
+        var model = new Models.ResourceGroup(name, location);
+        var data = JsonSerializer.Serialize(model);
+        
+        File.WriteAllText(resourceGroupPath, data);
 
         return new Models.ResourceGroup(name, location);
+    }
+
+    internal void Delete(string name)
+    {
+        var fileName = $"{name}.json";
+        var resourceGroupPath = Path.Combine(ResourceGroupService.LocalDirectoryPath, fileName);
+        if(File.Exists(resourceGroupPath) == false) 
+        {
+            this.logger.LogDebug($"The resource group '{name}' does not exists, no changes applied.");
+            return;
+        }
+
+        this.logger.LogDebug($"Deleting resource group '{name}'.");
+        File.Delete(resourceGroupPath);
+
+        return;
     }
 }
