@@ -175,6 +175,45 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                 return response;
             }
 
+            if(method == "PUT")
+            {
+                var matches = Regex.Match(actualPath, @"\w+\(PartitionKey='\w+',RowKey='\w+'\)$", RegexOptions.IgnoreCase);
+                if(matches.Length > 0)
+                {
+                    this.logger.LogDebug("Matched the update operation.");
+
+                    var (TableName, PartitionKey, RowKey) = GetOperationDataForUpdateOperation(matches);
+
+                    try
+                    {
+                        this.dataPlane.UpdateEntity(input, TableName, storageAccountName, PartitionKey, RowKey, headers);
+
+                        response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                    }
+                    catch(EntityNotFoundException)
+                    {
+                        var error = new ErrorResponse("EntityNotFound", "Entity not found.");
+
+                        response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                        response.Headers.Add("x-ms-error-code", "EntityNotFound");
+                        response.Content = JsonContent.Create(error);
+                    }
+                    catch(UpdateConditionNotSatisfiedException)
+                    {
+                        var error = new ErrorResponse("UpdateConditionNotSatisfied", "The update condition specified in the request was not satisfied.");
+
+                        response.StatusCode = System.Net.HttpStatusCode.PreconditionFailed;
+                        response.Headers.Add("x-ms-error-code", "UpdateConditionNotSatisfied");
+                        response.Content = JsonContent.Create(error);
+                    }
+                    
+                    return response;
+                }
+                
+                response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                return response;
+            }
+
             if(method == "DELETE")
             {
                 try
