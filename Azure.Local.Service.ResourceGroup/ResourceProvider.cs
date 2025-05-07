@@ -1,4 +1,6 @@
+using System.Net;
 using System.Text.Json;
+using Azure.Local.Service.ResourceGroup.Models;
 using Azure.Local.Shared;
 
 namespace Azure.Local.Service.ResourceGroup;
@@ -17,14 +19,39 @@ internal sealed class ResourceProvider(ILogger logger)
             return new Models.ResourceGroup(name, location);
         }
 
-        this.logger.LogDebug($"Creating storage account '{name}'.");
+        this.logger.LogDebug($"Creating resource group '{name}'.");
 
         var model = new Models.ResourceGroup(name, location);
         var data = JsonSerializer.Serialize(model);
         
         File.WriteAllText(resourceGroupPath, data);
 
-        return new Models.ResourceGroup(name, location);
+        return model;
+    }
+
+    internal (Models.ResourceGroup data, HttpStatusCode code) CreateOrUpdate(string name, Stream input)
+    {
+        var fileName = $"{name}.json";
+        var resourceGroupPath = Path.Combine(ResourceGroupService.LocalDirectoryPath, fileName);
+        if(File.Exists(resourceGroupPath)) 
+        {
+            this.logger.LogDebug($"The resource group '{name}' already exists, no changes applied.");
+
+            var content = File.ReadAllText(resourceGroupPath);
+            var data = JsonSerializer.Deserialize<Models.ResourceGroup>(content);
+
+            return (data!, code: HttpStatusCode.OK);
+        }
+
+        using var sr = new StreamReader(input);
+
+        var rawContent = sr.ReadToEnd();
+        var request = JsonSerializer.Deserialize<CreateOrUpdateRequest>(rawContent);
+        var newData = new Models.ResourceGroup(name, request!.Location!);
+        
+        File.WriteAllText(resourceGroupPath, JsonSerializer.Serialize(newData));
+
+        return (data: newData, code: HttpStatusCode.Created);
     }
 
     internal void Delete(string name)

@@ -1,6 +1,8 @@
 ﻿using System.Net;
+using Azure.Local.Service.ResourceGroup;
 using Azure.Local.Service.Shared;
 using Azure.Local.Service.Storage;
+using Azure.Local.Service.Subscription;
 using Azure.Local.Shared;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -11,12 +13,17 @@ namespace Azure.Local.Host;
 public class Host(ILogger logger)
 {
     private const int hostPortNumber = 8899;
+    private const int hostPortNumberSecure = 8900;
     private static readonly List<Thread> threads = [];
     private readonly ILogger logger = logger;
 
     public void Start()
     {
-        var services = new[] { new AzureStorageService(this.logger) };
+        var services = new IServiceDefinition[] { 
+            new AzureStorageService(this.logger),
+            new ResourceGroupService(this.logger),
+            new SubscriptionService(this.logger) 
+        };
         var httpEndpoints = new List<IEndpointDefinition>();
 
         foreach (var service in services)
@@ -40,8 +47,13 @@ public class Host(ILogger logger)
     private void CreateWebserverForHttpEndpoints(IEndpointDefinition[] httpEndpoints)
     {
         var host = new WebHostBuilder()
-            .UseKestrel()
-            .UseUrls($"http://azure.localhost:{hostPortNumber}")
+            .UseKestrel((context, options) => {
+                options.Listen(IPAddress.Loopback, hostPortNumber);
+                options.Listen(IPAddress.Loopback, hostPortNumberSecure, listenOptions =>
+                {                    
+                    listenOptions.UseHttps("localhost.pfx", "qwerty");
+                });
+            })
             .Configure(app =>
             {
                 app.Run(async context =>
@@ -74,7 +86,11 @@ public class Host(ILogger logger)
                             for(var i = 0; i < endpointParts.Length; i++)
                             {
                                 if(endpointParts[i].StartsWith('{') && endpointParts[i].EndsWith('}')) continue;
-                                if(endpointParts[i] != pathParts[i]) continue;
+                                if(string.Equals(endpointParts[i], pathParts[i], StringComparison.InvariantCultureIgnoreCase) == false) 
+                                {
+                                    endpoint = null; // We need to reset the endpoint as it doesn't look correct now
+                                    continue;
+                                }
 
                                 endpoint = httpEndpoint;
                             }

@@ -10,6 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.13.2" />
+    <PackageReference Include="Azure.ResourceManager" Version="1.13.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" />
     <PackageReference Include="NUnit" Version="3.13.3" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
@@ -20,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Azure.Local.CLI/Azure.Local.CLI.csproj" />
+    <ProjectReference Include="../Azure.Local.Identity/Azure.Local.Identity.csproj" />
   </ItemGroup>
 
 </Project>

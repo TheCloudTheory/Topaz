@@ -5,7 +5,6 @@ using Azure.Local.Service.Storage.Exceptions;
 using Azure.Local.Service.Storage.Models;
 using Azure.Local.Shared;
 using Microsoft.AspNetCore.Http;
-using Spectre.Console;
 
 namespace Azure.Local.Service.Storage;
 

@@ -10,7 +10,9 @@ public sealed class ResourceGroupService : IServiceDefinition
 
     public string Name => "Resource Group";
 
-    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [];
+    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
+        new ResourceGroupEndpoint(this.logger)
+    ];
 
     public ResourceGroupService(ILogger logger)
     {
