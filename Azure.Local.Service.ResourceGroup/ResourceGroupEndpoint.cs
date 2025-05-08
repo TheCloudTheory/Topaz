@@ -1,3 +1,5 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using Azure.Local.Service.Shared;
 using Azure.Local.Shared;
 using Microsoft.AspNetCore.Http;
@@ -22,11 +24,24 @@ public class ResourceGroupEndpoint(ILogger logger) : IEndpointDefinition
         {
             if(method == "PUT")
             {
-                var requestParts = path.Split('/');
-                var resourceGroupName = requestParts[4];
+                var resourceGroupName = ExtractResourceGroupNameFromPath(path);
                 var rp = new ResourceProvider(this.logger);
 
-                rp.CreateOrUpdate(resourceGroupName, input);
+                var (data, code) = rp.CreateOrUpdate(resourceGroupName, input);
+
+                response.StatusCode = code;
+                response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+            }
+
+            if (method == "GET")
+            {
+                var resourceGroupName = ExtractResourceGroupNameFromPath(path);
+                var rp = new ResourceProvider(this.logger);
+
+                var (data, code) = rp.Get(resourceGroupName);
+
+                response.StatusCode = code;
+                response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
             }
         }
         catch(Exception ex)
@@ -40,5 +55,12 @@ public class ResourceGroupEndpoint(ILogger logger) : IEndpointDefinition
         }
 
         return response;
+    }
+
+    private static string ExtractResourceGroupNameFromPath(string path)
+    {
+        var requestParts = path.Split('/');
+        var resourceGroupName = requestParts[4];
+        return resourceGroupName;
     }
 }

@@ -1,5 +1,4 @@
 using Azure.Core;
-using Azure.Identity;
 using Azure.Local.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
@@ -13,12 +12,23 @@ public class ResourceGroupTests
         Environment = new ArmEnvironment(new Uri("https://localhost:8900"), "https://localhost:8900")
     };
 
+    [SetUp]
+    public async Task SetUp()
+    {
+        await Program.Main([
+                "group",
+                "delete",
+                "--name",
+                "rg-test"
+            ]);
+    }
+
     [Test]
     public void ResourceGroupTests_WhenNewResourceGroupIsCreated_ItShouldReturnBeAvailable()
     {
         // Arrange 
         var credentials = new AzureLocalCredential();
-        var armClient = new ArmClient(credentials, Guid.Empty.ToString(), armClientOptions);   
+        var armClient = new ArmClient(credentials, Guid.Empty.ToString(), armClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroups = subscription.GetResourceGroups();
 
@@ -27,7 +37,10 @@ public class ResourceGroupTests
         var rg = resourceGroups.Get("rg-test");
 
         // Assert
-        Assert.That(rg.Value.Data.Name, Is.EqualTo("rg-test"));
-        Assert.That(operation.Value.Data.Name, Is.EqualTo("rg-test"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(rg.Value.Data.Name, Is.EqualTo("rg-test"));
+            Assert.That(operation.Value.Data.Name, Is.EqualTo("rg-test"));
+        });
     }
 }
