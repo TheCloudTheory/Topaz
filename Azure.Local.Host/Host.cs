@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Text.RegularExpressions;
 using Azure.Local.Service.ResourceGroup;
 using Azure.Local.Service.Shared;
 using Azure.Local.Service.Storage;
@@ -88,6 +89,7 @@ public class Host(ILogger logger)
                                 for (var i = 0; i < endpointParts.Length; i++)
                                 {
                                     if (endpointParts[i].StartsWith('{') && endpointParts[i].EndsWith('}')) continue;
+                                    if (MatchesRegexExpressionForEndpoint(endpointParts[i], pathParts[i])) continue;
                                     if (string.Equals(endpointParts[i], pathParts[i], StringComparison.InvariantCultureIgnoreCase) == false)
                                     {
                                         endpoint = null; // We need to reset the endpoint as it doesn't look correct now
@@ -135,5 +137,24 @@ public class Host(ILogger logger)
 
         threads.Add(new Thread(() => host.Run()));
         threads.Last().Start();
+    }
+
+    /// <summary>
+    /// Determines whether a given path segment matches a specified endpoint segment using a regular expression.
+    /// </summary>
+    /// <param name="endpointSegment">The endpoint segment, which may contain a regular expression.</param>
+    /// <param name="pathSegment">The path segment to compare against the endpoint segment.</param>
+    /// <returns>
+    /// True if the path segment matches the endpoint segment's regular expression; otherwise, false.
+    /// </returns>
+    private bool MatchesRegexExpressionForEndpoint(string endpointSegment, string pathSegment)
+    {
+        if(string.IsNullOrEmpty(endpointSegment) || string.IsNullOrEmpty(pathSegment)) return false;
+        if(endpointSegment.StartsWith('^') == false) return false;
+
+        var matches = Regex.Match(pathSegment, endpointSegment, RegexOptions.IgnoreCase);
+        if(matches.Success == false) return false;
+
+        return true;
     }
 }

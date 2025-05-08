@@ -19,7 +19,8 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 
     public string[] Endpoints => [
         "/storage/{storageAccountName}/Tables",
-        "/storage/{storageAccountName}/Tables(<some>)"
+        @"/storage/{storageAccountName}/^Tables\('.*?'\)$",
+        "/storage/{storageAccountName}/{tableName}"
     ];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
