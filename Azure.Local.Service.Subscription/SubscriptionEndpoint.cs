@@ -11,7 +11,7 @@ public sealed class SubscriptionEndpoint(ILogger logger) : IEndpointDefinition
 
     public Protocol Protocol => Protocol.Https;
 
-    public string DnsName => "/subscriptions/{subscriptionId}";
+    public string[] Endpoints => ["/subscriptions/{subscriptionId}"];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
     {

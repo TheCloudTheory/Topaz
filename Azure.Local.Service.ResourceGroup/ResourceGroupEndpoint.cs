@@ -10,7 +10,7 @@ public class ResourceGroupEndpoint(ILogger logger) : IEndpointDefinition
 
     public Protocol Protocol => Protocol.Http;
 
-    public string DnsName => "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}";
+    public string[] Endpoints => ["/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}"];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
     {

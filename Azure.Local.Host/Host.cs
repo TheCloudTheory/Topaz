@@ -19,10 +19,10 @@ public class Host(ILogger logger)
 
     public void Start()
     {
-        var services = new IServiceDefinition[] { 
+        var services = new IServiceDefinition[] {
             new AzureStorageService(this.logger),
             new ResourceGroupService(this.logger),
-            new SubscriptionService(this.logger) 
+            new SubscriptionService(this.logger)
         };
         var httpEndpoints = new List<IEndpointDefinition>();
 
@@ -32,7 +32,7 @@ public class Host(ILogger logger)
 
             foreach (var endpoint in service.Endpoints)
             {
-                this.logger.LogDebug($"Processing {endpoint.DnsName} endpoint...");
+                this.logger.LogDebug($"Processing {endpoint.Endpoints} endpoint...");
 
                 if (endpoint.Protocol == Service.Shared.Protocol.Http || endpoint.Protocol == Service.Shared.Protocol.Https)
                 {
@@ -47,10 +47,11 @@ public class Host(ILogger logger)
     private void CreateWebserverForHttpEndpoints(IEndpointDefinition[] httpEndpoints)
     {
         var host = new WebHostBuilder()
-            .UseKestrel((context, options) => {
+            .UseKestrel((context, options) =>
+            {
                 options.Listen(IPAddress.Loopback, hostPortNumber);
                 options.Listen(IPAddress.Loopback, hostPortNumberSecure, listenOptions =>
-                {                    
+                {
                     listenOptions.UseHttps("localhost.pfx", "qwerty");
                 });
             })
@@ -77,25 +78,31 @@ public class Host(ILogger logger)
 
                         IEndpointDefinition? endpoint = null;
                         var pathParts = path.Split('/');
-                        foreach(var httpEndpoint in httpEndpoints)
+                        foreach (var httpEndpoint in httpEndpoints)
                         {
-                            var endpointParts = httpEndpoint.DnsName.Split('/');
-
-                            if(endpointParts.Length > pathParts.Length) continue;
-
-                            for(var i = 0; i < endpointParts.Length; i++)
+                            foreach (var endpointUrl in httpEndpoint.Endpoints)
                             {
-                                if(endpointParts[i].StartsWith('{') && endpointParts[i].EndsWith('}')) continue;
-                                if(string.Equals(endpointParts[i], pathParts[i], StringComparison.InvariantCultureIgnoreCase) == false) 
+                                var endpointParts = endpointUrl.Split('/');
+                                if (endpointParts.Length > pathParts.Length) continue;
+
+                                for (var i = 0; i < endpointParts.Length; i++)
                                 {
-                                    endpoint = null; // We need to reset the endpoint as it doesn't look correct now
-                                    continue;
+                                    if (endpointParts[i].StartsWith('{') && endpointParts[i].EndsWith('}')) continue;
+                                    if (string.Equals(endpointParts[i], pathParts[i], StringComparison.InvariantCultureIgnoreCase) == false)
+                                    {
+                                        endpoint = null; // We need to reset the endpoint as it doesn't look correct now
+                                        continue;
+                                    }
+
+                                    endpoint = httpEndpoint;
                                 }
 
-                                endpoint = httpEndpoint;
+                                // If we have endpoint assigned after validating the URL, we don't need to process other endpoints
+                                if (endpoint != null) break;
                             }
 
-                            if(endpoint != null) break;
+                            // If we have endpoint assigned after validating the URL, we don't need to process other endpoints
+                            if (endpoint != null) break;
                         }
 
                         if (endpoint == null)

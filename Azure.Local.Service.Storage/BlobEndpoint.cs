@@ -7,7 +7,7 @@ public class BlobEndpoint : IEndpointDefinition
 {
     public Protocol Protocol => Protocol.Http;
 
-    public string DnsName => "blob.storage";
+    public string[] Endpoints => ["blob.storage"];
 
     public BlobEndpoint()
     {

@@ -17,7 +17,10 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 
     public Protocol Protocol => Protocol.Http;
 
-    public string DnsName => "/storage/{storageAccountName}/table";
+    public string[] Endpoints => [
+        "/storage/{storageAccountName}/Tables",
+        "/storage/{storageAccountName}/Tables(<some>)"
+    ];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
     {
