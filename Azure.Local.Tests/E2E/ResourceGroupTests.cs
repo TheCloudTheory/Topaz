@@ -23,6 +23,11 @@ public class ResourceGroupTests
         var resourceGroups = subscription.GetResourceGroups();
 
         // Act
-        resourceGroups.CreateOrUpdate(WaitUntil.Completed, "rg-test", new ResourceGroupData(AzureLocation.PolandCentral));
+        var operation = resourceGroups.CreateOrUpdate(WaitUntil.Completed, "rg-test", new ResourceGroupData(AzureLocation.PolandCentral));
+        var rg = resourceGroups.Get("rg-test");
+
+        // Assert
+        Assert.That(rg.Value.Data.Name, Is.EqualTo("rg-test"));
+        Assert.That(operation.Value.Data.Name, Is.EqualTo("rg-test"));
     }
 }

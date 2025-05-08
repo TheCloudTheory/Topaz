@@ -5,7 +5,7 @@ public class ResourceGroupTests
     [Test]
     public async Task ResourceGroupTests_WhenNewResourceGroupIsRequested_ItShouldBeCreated()
     {
-        var resourceGroupPath = Path.Combine(".resource-group", "test.json");
+        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".resource-groups", "test.json");
 
         await Program.Main([
             "group",
@@ -26,7 +26,7 @@ public class ResourceGroupTests
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.EqualTo(0));
-            Assert.That(Directory.Exists(resourceGroupPath), Is.True);
+            Assert.That(File.Exists(resourceGroupPath), Is.True);
         });
     }
 }
