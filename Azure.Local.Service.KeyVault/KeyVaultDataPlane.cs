@@ -24,6 +24,6 @@ internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provide
 
         this.logger.LogDebug($"Executing {nameof(SetSecret)}: Processing {rawContent}.");
 
-        
+        return (null, HttpStatusCode.OK);
     }
 }

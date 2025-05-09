@@ -20,7 +20,7 @@ public sealed class KeyVaultEndpoint : IEndpointDefinition
     public KeyVaultEndpoint(ILogger logger)
     {
         this.logger = logger;
-        this.dataPlane = new KeyVaultDataPlane(logger);
+        this.dataPlane = new KeyVaultDataPlane(logger, new ResourceProvider(logger));
     }
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
@@ -34,7 +34,7 @@ public sealed class KeyVaultEndpoint : IEndpointDefinition
             if(method == "PUT")
             {
                 var secretName = ExtractSecretNameFromPath(path);
-                var (data, code) = this.dataPlane.SetSecret(secretName, input);
+                var (data, code) = this.dataPlane.SetSecret(input, "", "");
 
                 response.StatusCode = code;
                 response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);

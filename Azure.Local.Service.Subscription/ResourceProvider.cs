@@ -1,9 +1,8 @@
+using Azure.Local.Service.Shared;
+using Azure.Local.Shared;
+
 namespace Azure.Local.Service.Subscription;
 
-internal sealed class ResourceProvider
+public sealed class ResourceProvider(ILogger logger) : ResourceProviderBase<SubscriptionService>(logger)
 {
-    public Models.Subscription GetSubscription(string subscriptionId)
-    {
-        return new Models.Subscription(subscriptionId, "Azure Local");
-    }
 }

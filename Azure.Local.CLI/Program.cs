@@ -40,6 +40,8 @@ internal class Program
     private static Task<int> BootstrapCli(string[] args, TypeRegistrar registrar)
     {
         var app = new CommandApp(registrar);
+
+        CreateLocalDirectoryForEmulator();
         
         app.Configure(config =>
         {
@@ -62,5 +64,13 @@ internal class Program
         });
 
         return app.RunAsync(args);
+    }
+
+    private static void CreateLocalDirectoryForEmulator()
+    {
+        const string emulatorPath = ".abazure";
+        if(Directory.Exists(emulatorPath)) return;
+        
+        Directory.CreateDirectory(".abazure");
     }
 }

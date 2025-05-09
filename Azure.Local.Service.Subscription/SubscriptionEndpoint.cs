@@ -5,9 +5,16 @@ using Microsoft.AspNetCore.Http;
 
 namespace Azure.Local.Service.Subscription;
 
-public sealed class SubscriptionEndpoint(ILogger logger) : IEndpointDefinition
+public sealed class SubscriptionEndpoint : IEndpointDefinition
 {
-    private readonly ILogger logger = logger;
+    private readonly ILogger logger;
+    private readonly SubscriptionControlPlane controlPlane;
+
+    public SubscriptionEndpoint(ResourceProvider provider, ILogger logger)
+    {
+        this.logger = logger;
+        this.controlPlane = new SubscriptionControlPlane(provider);
+    }
 
     public Protocol Protocol => Protocol.Https;
 
@@ -25,9 +32,7 @@ public sealed class SubscriptionEndpoint(ILogger logger) : IEndpointDefinition
             {
                 var requestParts = path.Split('/');
                 var subscriptionId = requestParts[2];
-
-                var rp = new ResourceProvider();
-                var subscription = rp.GetSubscription(subscriptionId);
+                var subscription = this.controlPlane.Get(subscriptionId);
 
                 response.Content = JsonContent.Create(subscription);
                 response.StatusCode = System.Net.HttpStatusCode.OK;
