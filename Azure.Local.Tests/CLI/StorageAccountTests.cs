@@ -2,13 +2,29 @@ namespace Azure.Local.Tests.CLI
 {
     public class StorageAccountTests
     {
-        [Test]
-        public async Task StorageAccountTests_WhenNewStorageAccountIsRequested_ItShouldBeCreated()
+        [SetUp]
+        public async Task SetUp()
         {
-            var accountDirectoryPath = Path.Combine(".azure-storage", "test");
+            await Program.Main(
+            [
+                "subscription",
+                "delete",
+                "--id",
+                Guid.Empty.ToString()
+            ]);
+
+            await Program.Main(
+            [
+                "subscription",
+                "create",
+                "--id",
+                Guid.Empty.ToString(),
+                "--name",
+                "sub-test"
+            ]);
 
             await Program.Main([
-                "storage",
+                "group",
                 "delete",
                 "--name",
                 "test"
@@ -18,12 +34,21 @@ namespace Azure.Local.Tests.CLI
                 "group",
                 "create",
                 "--name",
-                "rg-test",
+                "test",
                 "--location",
-                "westeurope"
+                "westeurope",
+                "--subscriptionId",
+                Guid.Empty.ToString()
             ]);
 
-            var result = await Program.Main([
+            await Program.Main([
+                "storage",
+                "delete",
+                "--name",
+                "test"
+            ]);
+
+            await Program.Main([
                 "storage",
                 "create",
                 "--name",
@@ -31,20 +56,24 @@ namespace Azure.Local.Tests.CLI
                 "-g",
                 "rg-test",
                 "--location",
-                "westeurope"
+                "westeurope",
+                "--subscriptionId",
+                Guid.Empty.ToString()
             ]);
-            
-            Assert.Multiple(() =>
-            {
-                Assert.That(result, Is.EqualTo(0));
-                Assert.That(Directory.Exists(accountDirectoryPath), Is.True);
-            });
+        }
+
+        [Test]
+        public void StorageAccountTests_WhenNewStorageAccountIsRequested_ItShouldBeCreated()
+        {
+            var accountDirectoryPath = Path.Combine(".abazure", ".azure-storage", "test", "metadata.json");
+
+            Assert.That(File.Exists(accountDirectoryPath), Is.True);
         }
 
         [Test]
         public async Task StorageAccountTests_WhenExistingStorageAccountIsDeleted_ItShouldBeDeleted()
         {
-            var accountDirectoryPath = Path.Combine(".azure-storage", "test");
+            var accountDirectoryPath = Path.Combine(".abazure", ".azure-storage", "test", "metadata.json");
 
             await Program.Main([
                 "storage",
@@ -53,38 +82,7 @@ namespace Azure.Local.Tests.CLI
                 "test"
             ]);
 
-            await Program.Main([
-                "group",
-                "create",
-                "--name",
-                "rg-test",
-                "--location",
-                "westeurope"
-            ]);
-
-            var result = await Program.Main([
-                "storage",
-                "create",
-                "--name",
-                "test",
-                "-g",
-                "rg-test",
-                "--location",
-                "westeurope"
-            ]);
-
-            await Program.Main([
-                "storage",
-                "delete",
-                "--name",
-                "test"
-            ]);
-            
-            Assert.Multiple(() =>
-            {
-                Assert.That(result, Is.EqualTo(0));
-                Assert.That(Directory.Exists(accountDirectoryPath), Is.False);
-            });
+            Assert.That(File.Exists(accountDirectoryPath), Is.False);
         }
     }
 }

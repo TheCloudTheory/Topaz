@@ -12,7 +12,7 @@ public class DeleteStorageAccountCommand(ILogger logger) : Command<DeleteStorage
     {
         this.logger.LogInformation("Deleting storage account...");
 
-        var rp = new ResourceProvider(this.logger);
+        var rp = new AzureStorageControlPlane(new ResourceProvider(this.logger), this.logger);
         rp.Delete(settings.Name!);
 
         this.logger.LogInformation("Storage account deleted.");

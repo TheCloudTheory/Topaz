@@ -2,11 +2,13 @@ using System.Text.Json;
 
 namespace Azure.Local.Service.Storage.Models;
 
-public class StorageAccount(string Name, string ResourceGroup, string Location)
+public class StorageAccount(string Name, string ResourceGroup, string Location, string SubscriptionId)
 {
-    public string Name { get; init; } = Name;
-    public string ResourceGroup {get;init;} = ResourceGroup;
-    public string Location {get;init;} = Location;
+    public string Id => $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroup}/storageAccounts/{Name}";
+    public string Name { get; set; } = Name;
+    public string ResourceGroup { get; set; } = ResourceGroup;
+    public string Location { get; set; } = Location;
+    public string SubscriptionId { get; } = SubscriptionId;
     public EndpointsMetadata Endpoints { get; init; } = new EndpointsMetadata(Name);
 
     public class EndpointsMetadata(string storageAccountName)

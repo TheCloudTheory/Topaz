@@ -2,34 +2,16 @@ using System.Text.Json;
 using Azure.Data.Tables.Models;
 using Azure.Local.Service.Storage.Exceptions;
 using Azure.Local.Service.Storage.Models;
-using Azure.Local.Shared;
 
 namespace Azure.Local.Service.Storage;
 
-internal sealed class TableServiceControlPlane(ILogger logger)
+internal sealed class TableServiceControlPlane(TableResourceProvider provider)
 {
-    private readonly ILogger logger = logger;
-
-    private void InitializeLocalDirectory(string storageAccountName)
-    {
-        this.logger.LogDebug("Attempting to create Table Service directory...");
-        var path = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName);
-
-        if (Directory.Exists(path) == false)
-        {
-            Directory.CreateDirectory(path);
-            this.logger.LogDebug("Local Table Service directory created.");
-        }
-        else
-        {
-            this.logger.LogDebug("Attempting to create Table Service directory - skipped.");
-        }
-    }
+    private readonly TableResourceProvider provider = provider;
 
     public TableProperties[] GetTables(Stream input, string storageAccountName)
     {
-        var path = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName);
-        var tables = Directory.EnumerateDirectories(path);
+        var tables = this.provider.List(storageAccountName);
 
         return [.. tables.Select(t => {
             var di = new DirectoryInfo(t);
@@ -39,8 +21,6 @@ internal sealed class TableServiceControlPlane(ILogger logger)
 
     public TableItem CreateTable(Stream input, string storageAccountName)
     {
-        InitializeLocalDirectory(storageAccountName);
-
         using var sr = new StreamReader(input);
 
         var rawContent = sr.ReadToEnd();

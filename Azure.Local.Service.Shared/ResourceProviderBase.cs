@@ -6,7 +6,7 @@ namespace Azure.Local.Service.Shared;
 
 public abstract class ResourceProviderBase<TService> where TService : IServiceDefinition
 {
-    private const string BaseEmulatorPath = ".abazure";
+    protected const string BaseEmulatorPath = ".abazure";
     private readonly ILogger logger;
     
     protected ResourceProviderBase(ILogger logger)
@@ -58,6 +58,12 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
         if(string.IsNullOrEmpty(content)) throw new InvalidOperationException("Metadata file is null or empty.");
 
         return content;
+    }
+
+    public virtual IEnumerable<string> List(string id)
+    {
+        var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath);
+        return Directory.EnumerateFiles(servicePath);
     }
 
     public void Create<TModel>(string id, TModel model)

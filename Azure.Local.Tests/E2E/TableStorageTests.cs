@@ -9,6 +9,24 @@ namespace Azure.Local.Tests.E2E
         [SetUp]
         public async Task SetUp()
         {
+            await Program.Main(
+            [
+                "subscription",
+                "delete",
+                "--id",
+                Guid.Empty.ToString()
+            ]);
+
+            await Program.Main(
+            [
+                "subscription",
+                "create",
+                "--id",
+                Guid.Empty.ToString(),
+                "--name",
+                "sub-test"
+            ]);
+
             await Program.Main([
                 "storage",
                 "delete",
@@ -22,7 +40,9 @@ namespace Azure.Local.Tests.E2E
                 "--name",
                 "rg-test",
                 "--location",
-                "westeurope"
+                "westeurope",
+                "--subscriptionId",
+                Guid.Empty.ToString()
             ]);
 
             await Program.Main([
@@ -33,18 +53,9 @@ namespace Azure.Local.Tests.E2E
                 "-g",
                 "rg-test",
                 "--location",
-                "westeurope"
-            ]);
-        }
-
-        [TearDown]
-        public async Task TearDown()
-        {
-            await Program.Main([
-                "storage",
-                "delete",
-                "--name",
-                "devstoreaccount1"
+                "westeurope",
+                "--subscriptionId",
+                Guid.Empty.ToString()
             ]);
         }
 

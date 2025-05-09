@@ -12,8 +12,8 @@ public sealed class CreateStorageAccountCommand(ILogger logger) : Command<Create
     {
         this.logger.LogInformation("Creating storage account...");
 
-        var rp = new ResourceProvider(this.logger);
-        var sa = rp.Create(settings.Name!, settings.ResourceGroup!, settings.Location!);
+        var rp = new AzureStorageControlPlane(new ResourceProvider(this.logger), this.logger);
+        var sa = rp.Create(settings.Name!, settings.ResourceGroup!, settings.Location!, settings.SubscriptionId!);
 
         this.logger.LogInformation(sa.ToString());
 
@@ -32,6 +32,11 @@ public sealed class CreateStorageAccountCommand(ILogger logger) : Command<Create
             return ValidationResult.Error("Storage account resource group can't be null.");
         }
 
+        if(string.IsNullOrEmpty(settings.SubscriptionId))
+        {
+            return ValidationResult.Error("Storage account subscription ID can't be null.");
+        }
+
         return base.Validate(context, settings);
     }
 
@@ -45,5 +50,8 @@ public sealed class CreateStorageAccountCommand(ILogger logger) : Command<Create
 
         [CommandOption("-l|--location")]
         public string? Location { get; set; }
+
+        [CommandOption("-s|--subscriptionId")]
+        public string? SubscriptionId { get; set; }
     }
 }
