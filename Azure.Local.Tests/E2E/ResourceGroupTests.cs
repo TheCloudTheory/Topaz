@@ -43,4 +43,22 @@ public class ResourceGroupTests
             Assert.That(operation.Value.Data.Name, Is.EqualTo("rg-test"));
         });
     }
+
+    [Test]
+    public void ResourceGroupTests_WhenResourceGroupIsCheckedForExistence_ItShouldReturnCorrectResult()
+    {
+        // Arrange 
+        var credentials = new AzureLocalCredential();
+        var armClient = new ArmClient(credentials, Guid.Empty.ToString(), armClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroups = subscription.GetResourceGroups();
+        
+        resourceGroups.CreateOrUpdate(WaitUntil.Completed, "rg-test", new ResourceGroupData(AzureLocation.PolandCentral));
+
+        // Act
+        var exist = resourceGroups.Exists("rg-test");
+
+        // Assert
+        Assert.That(exist);
+    }
 }
