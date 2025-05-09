@@ -1,12 +1,16 @@
 ﻿using Azure.Local.Service.Shared;
+using Azure.Local.Shared;
 
 namespace Azure.Local.Service.KeyVault;
 
-public sealed class KeyVaultService : IServiceDefinition
+public sealed class KeyVaultService(ILogger logger) : IServiceDefinition
 {
-    internal const string LocalDirectoryPath = ".azure-key-vault";
+    public static string LocalDirectoryPath => ".azure-key-vault";
+    private readonly ILogger logger = logger;
 
     public string Name => "Azure Key Vault";
 
-    public IReadOnlyCollection<IEndpointDefinition> Endpoints => throw new NotImplementedException();
+    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
+        new KeyVaultEndpoint()
+    ];
 }

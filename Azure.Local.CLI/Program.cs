@@ -1,5 +1,6 @@
 ﻿using Azure.Local.CLI;
 using Azure.Local.CLI.Commands;
+using Azure.Local.Service.KeyVault.Commands;
 using Azure.Local.Service.ResourceGroup.Commands;
 using Azure.Local.Service.Storage.Commands;
 using Azure.Local.Shared;
@@ -52,6 +53,11 @@ internal class Program
             config.AddBranch("group", branch => {
                 branch.AddCommand<CreateResourceGroupCommand>("create");
                 branch.AddCommand<DeleteResourceGroupCommand>("delete");
+            });
+
+            config.AddBranch("keyvault", branch => {
+                branch.AddCommand<CreateKeyVaultCommand>("create");
+                branch.AddCommand<DeleteKeyVaultCommand>("delete");
             });
         });
 

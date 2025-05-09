@@ -7,6 +7,8 @@ public sealed class SubscriptionService(ILogger logger) : IServiceDefinition
 {
     private readonly ILogger logger = logger;
 
+    public static string LocalDirectoryPath => ".subscription";
+
     public string Name => "Subscription";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [

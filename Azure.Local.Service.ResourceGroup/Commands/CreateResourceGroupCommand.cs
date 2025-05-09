@@ -13,9 +13,9 @@ public sealed class CreateResourceGroupCommand(ILogger logger) : Command<CreateR
         this.logger.LogInformation($"Executing {nameof(CreateResourceGroupCommand)}.{nameof(Execute)}.");
 
         var rp = new ResourceProvider(this.logger);
-        var sa = rp.Create(settings.Name!, settings.Location!);
+        var rg = rp.Create(settings.Name!, settings.Location!);
 
-        this.logger.LogInformation(sa.ToString());
+        this.logger.LogInformation(rg.ToString());
 
         return 0;
     }

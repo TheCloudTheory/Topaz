@@ -6,7 +6,7 @@ using Azure.Local.Shared;
 
 namespace Azure.Local.Service.ResourceGroup;
 
-internal sealed class ResourceProvider(ILogger logger)
+internal sealed class ResourceProvider(ILogger logger) : ResourceProviderBase<ResourceGroupService>(logger)
 {
     private readonly ILogger logger = logger;
 
@@ -53,22 +53,6 @@ internal sealed class ResourceProvider(ILogger logger)
         File.WriteAllText(resourceGroupPath, JsonSerializer.Serialize(newData, GlobalSettings.JsonOptions));
 
         return (data: newData, code: HttpStatusCode.Created);
-    }
-
-    internal void Delete(string name)
-    {
-        var fileName = $"{name}.json";
-        var resourceGroupPath = Path.Combine(ResourceGroupService.LocalDirectoryPath, fileName);
-        if(File.Exists(resourceGroupPath) == false) 
-        {
-            this.logger.LogDebug($"The resource group '{name}' does not exists, no changes applied.");
-            return;
-        }
-
-        this.logger.LogDebug($"Deleting resource group '{name}'.");
-        File.Delete(resourceGroupPath);
-
-        return;
     }
 
     internal (Models.ResourceGroup? data, HttpStatusCode code) Get(string name)

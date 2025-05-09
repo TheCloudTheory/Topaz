@@ -5,7 +5,7 @@ namespace Azure.Local.Service.Storage;
 
 public sealed class AzureStorageService : IServiceDefinition
 {
-    internal const string LocalDirectoryPath = ".azure-storage";
+    public static string LocalDirectoryPath => ".azure-storage";
     private readonly ILogger logger;
 
     public string Name => "Azure Storage";
