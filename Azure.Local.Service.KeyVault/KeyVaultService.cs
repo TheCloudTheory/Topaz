@@ -11,6 +11,6 @@ public sealed class KeyVaultService(ILogger logger) : IServiceDefinition
     public string Name => "Azure Key Vault";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new KeyVaultEndpoint()
+        new KeyVaultEndpoint(this.logger)
     ];
 }

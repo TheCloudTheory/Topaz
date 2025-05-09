@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text.RegularExpressions;
+using Azure.Local.Service.KeyVault;
 using Azure.Local.Service.ResourceGroup;
 using Azure.Local.Service.Shared;
 using Azure.Local.Service.Storage;
@@ -23,7 +24,8 @@ public class Host(ILogger logger)
         var services = new IServiceDefinition[] {
             new AzureStorageService(this.logger),
             new ResourceGroupService(this.logger),
-            new SubscriptionService(this.logger)
+            new SubscriptionService(this.logger),
+            new KeyVaultService(this.logger)
         };
         var httpEndpoints = new List<IEndpointDefinition>();
 

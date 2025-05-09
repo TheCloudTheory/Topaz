@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../Azure.Local.Service.KeyVault/Azure.Local.Service.KeyVault.csproj" />
     <ProjectReference Include="../Azure.Local.Service.ResourceGroup/Azure.Local.Service.ResourceGroup.csproj" />
     <ProjectReference Include="../Azure.Local.Service.Storage/Azure.Local.Service.Storage.csproj" />
     <ProjectReference Include="../Azure.Local.Service.Subscription/Azure.Local.Service.Subscription.csproj" />

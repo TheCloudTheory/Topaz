@@ -1,18 +1,63 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using Azure.Local.Service.Shared;
+using Azure.Local.Shared;
 using Microsoft.AspNetCore.Http;
 
 namespace Azure.Local.Service.KeyVault;
 
 public sealed class KeyVaultEndpoint : IEndpointDefinition
 {
+    private readonly ILogger logger;
+    private readonly KeyVaultDataPlane dataPlane;
+
     public Protocol Protocol => Protocol.Https;
 
     public string[] Endpoints => [
-        "subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}"
+        "/secrets/{secretName}"
     ];
+
+    public KeyVaultEndpoint(ILogger logger)
+    {
+        this.logger = logger;
+        this.dataPlane = new KeyVaultDataPlane(logger);
+    }
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
     {
-        throw new NotImplementedException();
+        this.logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
+
+        var response = new HttpResponseMessage();
+
+        try
+        {
+            if(method == "PUT")
+            {
+                var secretName = ExtractSecretNameFromPath(path);
+                var (data, code) = this.dataPlane.SetSecret(secretName, input);
+
+                response.StatusCode = code;
+                response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+            }
+        }
+        catch(Exception ex)
+        {
+            this.logger.LogError(ex);
+
+            response.Content = new StringContent(ex.Message);
+            response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+
+            return response;
+        }
+        
+        return response;
+    }
+
+    private string ExtractSecretNameFromPath(string path)
+    {
+        var requestParts = path.Split('/');
+        var secretName = requestParts[2];
+
+        return secretName;
     }
 }

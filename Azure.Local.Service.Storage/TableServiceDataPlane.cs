@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using Azure.Local.Service.Storage.Exceptions;
 using Azure.Local.Service.Storage.Models;
 using Azure.Local.Shared;

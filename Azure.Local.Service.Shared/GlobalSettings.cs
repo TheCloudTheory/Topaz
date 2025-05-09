@@ -6,6 +6,7 @@ public sealed class GlobalSettings
 {
     public static JsonSerializerOptions JsonOptions = new()
     {
-         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+         PropertyNameCaseInsensitive = true
     };
 }

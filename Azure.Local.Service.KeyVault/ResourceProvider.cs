@@ -10,8 +10,7 @@ internal sealed class ResourceProvider(ILogger logger) : ResourceProviderBase<Ke
 
     internal Models.KeyVault Create(string name, string resourceGroup, string location)
     {
-        var fileName = $"{name}.json";
-        var keyVaultPath = Path.Combine(KeyVaultService.LocalDirectoryPath, fileName);
+        var keyVaultPath = GetKeyVaultPath(name);
         if (File.Exists(keyVaultPath))
         {
             this.logger.LogDebug($"The resource group '{name}' already exists, no changes applied.");
@@ -27,5 +26,13 @@ internal sealed class ResourceProvider(ILogger logger) : ResourceProviderBase<Ke
         File.WriteAllText(keyVaultPath, JsonSerializer.Serialize(newData, GlobalSettings.JsonOptions));
 
         return newData;
+    }
+
+    internal string GetKeyVaultPath(string name)
+    {
+        var fileName = $"{name}.json";
+        var keyVaultPath = Path.Combine(KeyVaultService.LocalDirectoryPath, fileName);
+
+        return keyVaultPath;
     }
 }
