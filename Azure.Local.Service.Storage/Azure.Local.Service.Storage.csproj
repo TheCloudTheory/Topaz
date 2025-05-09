@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../Azure.Local.Service.ResourceGroup/Azure.Local.Service.ResourceGroup.csproj" />
     <ProjectReference Include="../Azure.Local.Service.Shared/Azure.Local.Service.Shared.csproj" />
     <ProjectReference Include="../Azure.Local.Shared/Azure.Local.Shared.csproj" />
   </ItemGroup>

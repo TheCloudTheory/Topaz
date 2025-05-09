@@ -13,7 +13,7 @@ public sealed class CreateStorageAccountCommand(ILogger logger) : Command<Create
         this.logger.LogInformation("Creating storage account...");
 
         var rp = new ResourceProvider(this.logger);
-        var sa = rp.Create(settings.Name!);
+        var sa = rp.Create(settings.Name!, settings.ResourceGroup!, settings.Location!);
 
         this.logger.LogInformation(sa.ToString());
 
@@ -27,6 +27,11 @@ public sealed class CreateStorageAccountCommand(ILogger logger) : Command<Create
             return ValidationResult.Error("Storage account name can't be null.");
         }
 
+        if(string.IsNullOrEmpty(settings.ResourceGroup))
+        {
+            return ValidationResult.Error("Storage account resource group can't be null.");
+        }
+
         return base.Validate(context, settings);
     }
 
@@ -34,5 +39,11 @@ public sealed class CreateStorageAccountCommand(ILogger logger) : Command<Create
     {
         [CommandOption("-n|--name")]
         public string? Name { get; set; }
+
+        [CommandOption("-g|--resource-group")]
+        public string? ResourceGroup { get; set; }
+
+        [CommandOption("-l|--location")]
+        public string? Location { get; set; }
     }
 }

@@ -14,11 +14,24 @@ namespace Azure.Local.Tests.CLI
                 "test"
             ]);
 
+            await Program.Main([
+                "group",
+                "create",
+                "--name",
+                "rg-test",
+                "--location",
+                "westeurope"
+            ]);
+
             var result = await Program.Main([
                 "storage",
                 "create",
                 "--name",
-                "test"
+                "test",
+                "-g",
+                "rg-test",
+                "--location",
+                "westeurope"
             ]);
             
             Assert.Multiple(() =>
@@ -40,11 +53,24 @@ namespace Azure.Local.Tests.CLI
                 "test"
             ]);
 
+            await Program.Main([
+                "group",
+                "create",
+                "--name",
+                "rg-test",
+                "--location",
+                "westeurope"
+            ]);
+
             var result = await Program.Main([
                 "storage",
                 "create",
                 "--name",
-                "test"
+                "test",
+                "-g",
+                "rg-test",
+                "--location",
+                "westeurope"
             ]);
 
             await Program.Main([

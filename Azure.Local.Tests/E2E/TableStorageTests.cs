@@ -17,10 +17,23 @@ namespace Azure.Local.Tests.E2E
             ]);
 
             await Program.Main([
+                "group",
+                "create",
+                "--name",
+                "rg-test",
+                "--location",
+                "westeurope"
+            ]);
+
+            await Program.Main([
                 "storage",
                 "create",
                 "--name",
-                "devstoreaccount1"
+                "devstoreaccount1",
+                "-g",
+                "rg-test",
+                "--location",
+                "westeurope"
             ]);
         }
 
