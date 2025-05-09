@@ -23,4 +23,9 @@ internal sealed class SubscriptionControlPlane(ResourceProvider provider)
 
         return model;
     }
+
+    internal void Delete(string subscriptionId)
+    {
+        this.provider.Delete(subscriptionId);
+    }
 }

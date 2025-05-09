@@ -3,6 +3,7 @@ using Azure.Local.CLI.Commands;
 using Azure.Local.Service.KeyVault.Commands;
 using Azure.Local.Service.ResourceGroup.Commands;
 using Azure.Local.Service.Storage.Commands;
+using Azure.Local.Service.Subscription.Commands;
 using Azure.Local.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
@@ -60,6 +61,11 @@ internal class Program
             config.AddBranch("keyvault", branch => {
                 branch.AddCommand<CreateKeyVaultCommand>("create");
                 branch.AddCommand<DeleteKeyVaultCommand>("delete");
+            });
+
+            config.AddBranch("subscription", branch => {
+                branch.AddCommand<CreateSubscriptionCommand>("create");
+                branch.AddCommand<DeleteSubscriptionCommand>("delete");
             });
         });
 
