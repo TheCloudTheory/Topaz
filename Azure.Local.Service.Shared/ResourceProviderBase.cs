@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Azure.Local.Shared;
 
 namespace Azure.Local.Service.Shared;
@@ -56,5 +57,18 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
         if(string.IsNullOrEmpty(content)) throw new InvalidOperationException("Metadata file is null or empty.");
 
         return content;
+    }
+
+    public void Create<TModel>(string id, TModel model)
+    {
+        var fileName = $"metadata.json";
+        var metadataFile = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id, fileName);
+
+        if(File.Exists(metadataFile) == true) throw new InvalidOperationException($"Metadata file for {typeof(TService)} with ID {id} already exists.");
+
+        var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
+        File.WriteAllText(metadataFile, content);
+
+        return;
     }
 }
