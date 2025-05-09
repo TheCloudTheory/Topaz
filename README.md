@@ -1,5 +1,10 @@
-# azure-local
+# abazure
 Local Azure environment emulation for development
+
+## Installation
+
+### Local certificate
+To be able to interact with HTTPS endpoints provided by the emulator, you will need to install and trust the certificate locally. The certificate (`localhost.pfx`) is available in the `Azure.Local.Host` project.
 
 ## Differences
 
