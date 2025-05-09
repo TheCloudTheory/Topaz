@@ -17,16 +17,17 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
 
     private void InitializeServiceDirectory()
     {
-        this.logger.LogDebug("Attempting to create Azure Key Vault directory...");
+        var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath);
+        this.logger.LogDebug($"Attempting to create {servicePath} directory...");
 
-        if(Directory.Exists(TService.LocalDirectoryPath) == false)
+        if(Directory.Exists(servicePath) == false)
         {
-            Directory.CreateDirectory(TService.LocalDirectoryPath);
-            this.logger.LogDebug("Local rAzure Key Vault directory created.");
+            Directory.CreateDirectory(servicePath);
+            this.logger.LogDebug($"Directory {servicePath} created.");
         }
         else
         {
-            this.logger.LogDebug("Attempting to create Azure Key Vault directory - skipped.");
+            this.logger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
         }
     }
 
@@ -62,12 +63,26 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
     public void Create<TModel>(string id, TModel model)
     {
         var fileName = $"metadata.json";
-        var metadataFile = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id, fileName);
+        var instancePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
+        var metadataFilePath = Path.Combine(instancePath, fileName);
 
-        if(File.Exists(metadataFile) == true) throw new InvalidOperationException($"Metadata file for {typeof(TService)} with ID {id} already exists.");
+        this.logger.LogDebug($"Attempting to create {instancePath} directory.");
+        if(Directory.Exists(instancePath))
+        {
+            this.logger.LogDebug($"Attempting to create {instancePath} directory - skipped.");
+        }
+        else
+        {
+            Directory.CreateDirectory(instancePath);
+            this.logger.LogDebug($"Attempting to create {instancePath} directory - created!");
+        }
+
+        this.logger.LogDebug($"Attempting to create {metadataFilePath} file.");
+
+        if(File.Exists(metadataFilePath) == true) throw new InvalidOperationException($"Metadata file for {typeof(TService)} with ID {id} already exists.");
 
         var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
-        File.WriteAllText(metadataFile, content);
+        File.WriteAllText(metadataFilePath, content);
 
         return;
     }

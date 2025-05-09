@@ -12,6 +12,6 @@ public sealed class SubscriptionService(ILogger logger) : IServiceDefinition
     public string Name => "Subscription";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new SubscriptionEndpoint(this.logger)
+        new SubscriptionEndpoint(new ResourceProvider(this.logger), this.logger)
     ];
 }
