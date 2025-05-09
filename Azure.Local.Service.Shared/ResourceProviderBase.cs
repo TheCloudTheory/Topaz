@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using Azure.Local.Shared;
 
@@ -31,18 +32,17 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
         }
     }
 
-    public void Delete(string name)
+    public void Delete(string id)
     {
-        var fileName = $"{name}.json";
-        var resourceGroupPath = Path.Combine(TService.LocalDirectoryPath, fileName);
-        if(File.Exists(resourceGroupPath) == false) 
+        var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
+        if(Directory.Exists(servicePath) == false) 
         {
-            this.logger.LogDebug($"The resource '{name}' does not exists, no changes applied.");
+            this.logger.LogDebug($"The resource '{servicePath}' does not exists, no changes applied.");
             return;
         }
 
-        this.logger.LogDebug($"Deleting resource '{name}'.");
-        File.Delete(resourceGroupPath);
+        this.logger.LogDebug($"Deleting resource '{servicePath}'.");
+        Directory.Delete(servicePath, true);
 
         return;
     }
@@ -85,5 +85,44 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
         File.WriteAllText(metadataFilePath, content);
 
         return;
+    }
+
+    public (TModel data, HttpStatusCode code) CreateOrUpdate<TModel, TRequest>(string id, Stream input, Func<TRequest, TModel> requestMapper)
+    {
+        var fileName = $"metadata.json";
+        var instancePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
+        var metadataFilePath = Path.Combine(instancePath, fileName);
+
+        this.logger.LogDebug($"Attempting to create {instancePath} directory.");
+        if(Directory.Exists(instancePath))
+        {
+            this.logger.LogDebug($"Attempting to create {instancePath} directory - skipped.");
+        }
+        else
+        {
+            Directory.CreateDirectory(instancePath);
+            this.logger.LogDebug($"Attempting to create {instancePath} directory - created!");
+        }
+
+        this.logger.LogDebug($"Attempting to create {metadataFilePath} file.");
+
+        using var sr = new StreamReader(input);
+
+        var rawContent = sr.ReadToEnd();
+        var request = JsonSerializer.Deserialize<TRequest>(rawContent, GlobalSettings.JsonOptions);
+        var newData = requestMapper(request!);
+        var content = JsonSerializer.Serialize(newData, GlobalSettings.JsonOptions);
+
+        if(File.Exists(metadataFilePath))
+        {
+            this.logger.LogDebug($"Attempting to create {metadataFilePath} file - file exists, it will be overwritten.");
+            File.WriteAllText(metadataFilePath, content);
+
+            return (data: newData, code: HttpStatusCode.OK);
+        }
+
+        File.WriteAllText(metadataFilePath, content);
+
+        return (data: newData, code: HttpStatusCode.Created);
     }
 }

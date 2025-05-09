@@ -15,6 +15,24 @@ public class ResourceGroupTests
     [SetUp]
     public async Task SetUp()
     {
+        await Program.Main(
+        [
+            "subscription",
+            "delete",
+            "--id",
+            Guid.Empty.ToString()
+        ]);
+
+        await Program.Main(
+        [
+            "subscription",
+            "create",
+            "--id",
+            Guid.Empty.ToString(),
+            "--name",
+            "sub-test"
+        ]);
+
         await Program.Main([
                 "group",
                 "delete",

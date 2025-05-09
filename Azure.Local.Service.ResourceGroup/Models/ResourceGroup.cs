@@ -1,19 +1,26 @@
 using System.Text.Json;
+using Azure.Local.Service.Shared;
 
 namespace Azure.Local.Service.ResourceGroup.Models;
 
-public record class ResourceGroup(string Name, string Location)
+public record class ResourceGroup
 {
-    public string Id => $"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/{Name}";
+    public string Id => $"/subscriptions/{SubscriptionId}/resourceGroups/{Name}";
+    public PropertiesData Properties => new();
+    public string Name { get; set; }
+    public string SubscriptionId { get; set; }
+    public string Location { get; set; }
 
-    public static PropertiesData Properties => new();
+    public ResourceGroup(string name, string subscriptionId, string location)
+    {
+        Name = name;
+        SubscriptionId = subscriptionId;
+        Location = location;
+    }
 
     public override string ToString()
     {
-        return JsonSerializer.Serialize(this, new JsonSerializerOptions
-        {
-            WriteIndented = true
-        });
+        return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
     }
 
     public record class PropertiesData

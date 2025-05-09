@@ -1,11 +1,20 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Azure.Local.Service.Shared;
 
 namespace Azure.Local.Service.Subscription.Models;
 
-public record class Subscription(string SubscriptionId, string DisplayName)
+public record class Subscription
 {
     public string Id => $"/subscriptions/{SubscriptionId}";
+    public string SubscriptionId { get; set; }
+    public string DisplayName { get; set; }
+
+    public Subscription(string subscriptionId, string displayName)
+    {
+        SubscriptionId = subscriptionId;
+        DisplayName = displayName;
+    }
 
     public override string ToString()
     {

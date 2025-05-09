@@ -12,8 +12,8 @@ public sealed class CreateResourceGroupCommand(ILogger logger) : Command<CreateR
     {
         this.logger.LogInformation($"Executing {nameof(CreateResourceGroupCommand)}.{nameof(Execute)}.");
 
-        var rp = new ResourceProvider(this.logger);
-        var rg = rp.Create(settings.Name!, settings.Location!);
+        var controlPlane = new ResourceGroupControlPlane(new ResourceProvider(this.logger));
+        var rg = controlPlane.Create(settings.Name!, settings.SubscriptionId!, settings.Location!);
 
         this.logger.LogInformation(rg.ToString());
 
@@ -32,6 +32,11 @@ public sealed class CreateResourceGroupCommand(ILogger logger) : Command<CreateR
             return ValidationResult.Error("Resource group location can't be null.");
         }
 
+        if(string.IsNullOrEmpty(settings.SubscriptionId))
+        {
+            return ValidationResult.Error("Resource group subscription ID can't be null.");
+        }
+
         return base.Validate(context, settings);
     }
 
@@ -42,5 +47,8 @@ public sealed class CreateResourceGroupCommand(ILogger logger) : Command<CreateR
 
         [CommandOption("-l|--location")]
         public string? Location { get; set; }
+
+        [CommandOption("-s|--subscriptionId")]
+        public string? SubscriptionId { get; set; }
     }
 }

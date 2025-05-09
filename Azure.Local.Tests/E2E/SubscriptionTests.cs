@@ -11,9 +11,27 @@ public class SubscriptionTests
     };
 
     [Test]
-    public void SubscriptionTests_WhenSubscriptionIsRequest_ItShouldBeAvailable()
+    public async Task SubscriptionTests_WhenSubscriptionIsRequest_ItShouldBeAvailable()
     {
         // Arrange 
+        await Program.Main(
+        [
+            "subscription",
+            "delete",
+            "--id",
+            Guid.Empty.ToString()
+        ]);
+
+        await Program.Main(
+        [
+            "subscription",
+            "create",
+            "--id",
+            Guid.Empty.ToString(),
+            "--name",
+            "sub-test"
+        ]);
+
         var credentials = new AzureLocalCredential();
         var armClient = new ArmClient(credentials, Guid.Empty.ToString(), armClientOptions);
         
@@ -25,6 +43,7 @@ public class SubscriptionTests
         {
             Assert.That(subscription.Data.Id.ToString(), Is.EqualTo($"/subscriptions/{Guid.Empty}"));
             Assert.That(subscription.Data.SubscriptionId.ToString(), Is.EqualTo(Guid.Empty.ToString()));
+            Assert.That(subscription.Data.DisplayName, Is.EqualTo("sub-test"));
         });
     }
 }

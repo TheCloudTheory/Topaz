@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Azure.Local.Service.ResourceGroup;
 using Azure.Local.Service.Shared;
 using Azure.Local.Service.Storage.Models;
 using Azure.Local.Shared;
@@ -47,8 +48,8 @@ internal sealed class ResourceProvider(ILogger logger)
 
     private bool CheckIfResourceGroupExists(string resourceGroup)
     {
-        var rp = new ResourceGroup.ResourceProvider(this.logger);
-        var (data, _) = rp.Get(resourceGroup);
+        var rp = new ResourceGroupControlPlane(new ResourceGroup.ResourceProvider(this.logger));
+        var data = rp.Get(resourceGroup);
 
         return data != null;
     }

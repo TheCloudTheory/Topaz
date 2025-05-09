@@ -13,7 +13,7 @@ public sealed class CreateSubscriptionCommand(ILogger logger) : Command<CreateSu
         this.logger.LogInformation("Creating subscription...");
 
         var controlPlane = new SubscriptionControlPlane(new ResourceProvider(this.logger));
-        var sa = controlPlane.Create(settings.Name!);
+        var sa = controlPlane.Create(settings.Id, settings.Name!);
 
         this.logger.LogInformation(sa.ToString());
 
@@ -32,6 +32,9 @@ public sealed class CreateSubscriptionCommand(ILogger logger) : Command<CreateSu
 
     public sealed class CreateSubscriptionCommandSettings : CommandSettings
     {
+        [CommandOption("-i|--id")]
+        public string? Id { get; set; }
+
         [CommandOption("-n|--name")]
         public string? Name { get; set; }
     }

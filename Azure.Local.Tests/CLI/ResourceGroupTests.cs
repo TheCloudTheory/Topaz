@@ -2,10 +2,26 @@ namespace Azure.Local.Tests.CLI;
 
 public class ResourceGroupTests
 {
-    [Test]
-    public async Task ResourceGroupTests_WhenNewResourceGroupIsRequested_ItShouldBeCreated()
+    [SetUp]
+    public async Task SetUp()
     {
-        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".resource-groups", "test.json");
+        await Program.Main(
+        [
+            "subscription",
+            "delete",
+            "--id",
+            Guid.Empty.ToString()
+        ]);
+
+        await Program.Main(
+        [
+            "subscription",
+            "create",
+            "--id",
+            Guid.Empty.ToString(),
+            "--name",
+            "sub-test"
+        ]);
 
         await Program.Main([
             "group",
@@ -14,26 +30,30 @@ public class ResourceGroupTests
             "test"
         ]);
 
-        var result = await Program.Main([
+        await Program.Main([
             "group",
             "create",
             "--name",
             "test",
             "--location",
-            "westeurope"
+            "westeurope",
+            "--subscriptionId",
+            Guid.Empty.ToString(),
         ]);
+    }
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(result, Is.EqualTo(0));
-            Assert.That(File.Exists(resourceGroupPath), Is.True);
-        });
+    [Test]
+    public void ResourceGroupTests_WhenNewResourceGroupIsRequested_ItShouldBeCreated()
+    {
+        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".abazure", ".resource-groups", "test", "metadata.json");
+
+        Assert.That(File.Exists(resourceGroupPath), Is.True);
     }
 
     [Test]
     public async Task ResourceGroupTests_WhenNewResourceGroupIsDeleted_ItShouldBeDeleted()
     {
-        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".resource-groups", "test.json");
+        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".abazure", ".resource-groups", "test", "metadata.json");
 
         await Program.Main([
             "group",
@@ -42,26 +62,6 @@ public class ResourceGroupTests
             "test"
         ]);
 
-        var result = await Program.Main([
-            "group",
-            "create",
-            "--name",
-            "test",
-            "--location",
-            "westeurope"
-        ]);
-
-        await Program.Main([
-            "group",
-            "delete",
-            "--name",
-            "test"
-        ]);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result, Is.EqualTo(0));
-            Assert.That(File.Exists(resourceGroupPath), Is.False);
-        });
+        Assert.That(File.Exists(resourceGroupPath), Is.False);
     }
 }

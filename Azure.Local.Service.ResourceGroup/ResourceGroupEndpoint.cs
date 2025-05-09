@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Azure.Local.Service.Shared;
@@ -6,9 +7,10 @@ using Microsoft.AspNetCore.Http;
 
 namespace Azure.Local.Service.ResourceGroup;
 
-public class ResourceGroupEndpoint(ILogger logger) : IEndpointDefinition
+public class ResourceGroupEndpoint(ResourceProvider provider, ILogger logger) : IEndpointDefinition
 {
     private readonly ILogger logger = logger;
+    private readonly ResourceGroupControlPlane controlPlane = new(provider);
 
     public Protocol Protocol => Protocol.Http;
 
@@ -24,10 +26,9 @@ public class ResourceGroupEndpoint(ILogger logger) : IEndpointDefinition
         {
             if(method == "PUT")
             {
+                var subscriptionId = ExtractSubscriptionIdFromPath(path);
                 var resourceGroupName = ExtractResourceGroupNameFromPath(path);
-                var rp = new ResourceProvider(this.logger);
-
-                var (data, code) = rp.CreateOrUpdate(resourceGroupName, input);
+                var (data, code) = this.controlPlane.CreateOrUpdate(resourceGroupName, subscriptionId, input);
 
                 response.StatusCode = code;
                 response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
@@ -36,11 +37,9 @@ public class ResourceGroupEndpoint(ILogger logger) : IEndpointDefinition
             if (method == "GET")
             {
                 var resourceGroupName = ExtractResourceGroupNameFromPath(path);
-                var rp = new ResourceProvider(this.logger);
+                var data = this.controlPlane.Get(resourceGroupName);
 
-                var (data, code) = rp.Get(resourceGroupName);
-
-                response.StatusCode = code;
+                response.StatusCode = HttpStatusCode.OK;
                 response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
             }
         }
@@ -55,6 +54,13 @@ public class ResourceGroupEndpoint(ILogger logger) : IEndpointDefinition
         }
 
         return response;
+    }
+
+    private string ExtractSubscriptionIdFromPath(string path)
+    {
+        var requestParts = path.Split('/');
+        var resourceGroupName = requestParts[2];
+        return resourceGroupName;
     }
 
     private static string ExtractResourceGroupNameFromPath(string path)

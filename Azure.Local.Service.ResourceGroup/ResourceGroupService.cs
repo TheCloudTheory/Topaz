@@ -11,6 +11,6 @@ public sealed class ResourceGroupService(ILogger logger) : IServiceDefinition
     public string Name => "Resource Group";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new ResourceGroupEndpoint(this.logger)
+        new ResourceGroupEndpoint(new ResourceProvider(this.logger), this.logger)
     ];
 }

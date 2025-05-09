@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Azure.Local.Service.Shared;
 using Azure.Local.Shared;
@@ -5,16 +6,10 @@ using Microsoft.AspNetCore.Http;
 
 namespace Azure.Local.Service.Subscription;
 
-public sealed class SubscriptionEndpoint : IEndpointDefinition
+public sealed class SubscriptionEndpoint(ResourceProvider provider, ILogger logger) : IEndpointDefinition
 {
-    private readonly ILogger logger;
-    private readonly SubscriptionControlPlane controlPlane;
-
-    public SubscriptionEndpoint(ResourceProvider provider, ILogger logger)
-    {
-        this.logger = logger;
-        this.controlPlane = new SubscriptionControlPlane(provider);
-    }
+    private readonly ILogger logger = logger;
+    private readonly SubscriptionControlPlane controlPlane = new(provider);
 
     public Protocol Protocol => Protocol.Https;
 
@@ -34,7 +29,7 @@ public sealed class SubscriptionEndpoint : IEndpointDefinition
                 var subscriptionId = requestParts[2];
                 var subscription = this.controlPlane.Get(subscriptionId);
 
-                response.Content = JsonContent.Create(subscription);
+                response.Content = JsonContent.Create(subscription, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
                 response.StatusCode = System.Net.HttpStatusCode.OK;
             }
             else
