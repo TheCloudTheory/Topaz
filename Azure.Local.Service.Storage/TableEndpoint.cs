@@ -10,8 +10,8 @@ namespace Azure.Local.Service.Storage;
 
 public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 {
-    private readonly TableServiceControlPlane controlPlane = new(logger);
-    private readonly TableServiceDataPlane dataPlane = new(new TableServiceControlPlane(logger), logger);
+    private readonly TableServiceControlPlane controlPlane = new(new TableResourceProvider(logger));
+    private readonly TableServiceDataPlane dataPlane = new(new TableServiceControlPlane(new TableResourceProvider(logger)), logger);
     private readonly ResourceProvider resourceProvider = new(logger);
     private readonly ILogger logger = logger;
 
@@ -44,7 +44,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                 switch (actualPath)
                 {
                     case "Tables":
-                        var tables = this.controlPlane.GetTables(input, storageAccountName);
+                        var tables = this.controlPlane.GetTables(storageAccountName);
                         var endpointResponse = new TableEndpointResponse(tables);
                         response.Content = JsonContent.Create(endpointResponse);
                         break;

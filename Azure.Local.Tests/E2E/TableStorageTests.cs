@@ -36,6 +36,13 @@ namespace Azure.Local.Tests.E2E
 
             await Program.Main([
                 "group",
+                "delete",
+                "--name",
+                "rg-test"
+            ]);
+
+            await Program.Main([
+                "group",
                 "create",
                 "--name",
                 "rg-test",

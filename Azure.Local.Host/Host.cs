@@ -23,6 +23,7 @@ public class Host(ILogger logger)
     {
         var services = new IServiceDefinition[] {
             new AzureStorageService(this.logger),
+            new TableStorageService(this.logger),
             new ResourceGroupService(this.logger),
             new SubscriptionService(this.logger),
             new KeyVaultService(this.logger)

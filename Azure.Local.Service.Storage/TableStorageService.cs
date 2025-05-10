@@ -7,7 +7,7 @@ public sealed class TableStorageService(ILogger logger) : IServiceDefinition
 {
     private readonly ILogger logger = logger;
 
-    public static string LocalDirectoryPath => Path.Combine(AzureStorageService.LocalDirectoryPath, ".table");
+    public static string LocalDirectoryPath => ".table";
 
     public string Name => "Table Storage";
 

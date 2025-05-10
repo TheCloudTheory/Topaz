@@ -9,7 +9,7 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider)
 {
     private readonly TableResourceProvider provider = provider;
 
-    public TableProperties[] GetTables(Stream input, string storageAccountName)
+    public TableProperties[] GetTables(string storageAccountName)
     {
         var tables = this.provider.List(storageAccountName);
 
