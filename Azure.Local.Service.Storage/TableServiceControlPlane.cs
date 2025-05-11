@@ -1,7 +1,6 @@
 using System.Text.Json;
 using Azure.Data.Tables.Models;
 using Azure.Local.Service.Shared;
-using Azure.Local.Service.Storage.Exceptions;
 using Azure.Local.Service.Storage.Models;
 
 namespace Azure.Local.Service.Storage;
@@ -41,13 +40,11 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider)
 
     internal bool CheckIfTableExists(string tableName, string storageAccountName)
     {
-        var path = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, tableName);
-
-        return Directory.Exists(path);
+        return this.provider.CheckIfTableExists(tableName, storageAccountName);
     }
 
     internal string GetTablePath(string tableName, string storageAccountName)
     {
-        return Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, tableName);
+        return this.provider.GetTablePath(tableName, storageAccountName);
     }
 }

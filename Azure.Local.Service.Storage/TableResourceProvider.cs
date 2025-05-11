@@ -66,6 +66,7 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
     {
         var fileName = $"metadata.json";
         var tablePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath, tableName);
+        var dataPath = Path.Combine(tablePath, "data");
         var metadataFilePath = Path.Combine(tablePath, fileName);
 
         this.logger.LogDebug($"Attempting to create {tablePath} directory.");
@@ -76,6 +77,7 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
         else
         {
             Directory.CreateDirectory(tablePath);
+            Directory.CreateDirectory(dataPath);
             this.logger.LogDebug($"Attempting to create {tablePath} directory - created!");
         }
 
@@ -87,5 +89,16 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
         File.WriteAllText(metadataFilePath, content);
 
         return;
+    }
+
+    public string GetTablePath(string tableName, string storageAccountName)
+    {
+        return Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath, tableName, "data");
+    }
+
+    public bool CheckIfTableExists(string tableName, string storageAccountName)
+    {
+        var tablePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath, tableName);
+        return Directory.Exists(tablePath);
     }
 }
