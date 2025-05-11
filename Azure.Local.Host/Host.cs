@@ -124,7 +124,11 @@ public class Host(ILogger logger)
                         this.logger.LogDebug($"Response: [{response.StatusCode}] [{path}] {textResponse}");
 
                         context.Response.StatusCode = (int)response.StatusCode;
-                        await context.Response.WriteAsync(textResponse);
+
+                        if(response.StatusCode != HttpStatusCode.NoContent)
+                        {
+                            await context.Response.WriteAsync(textResponse);
+                        }               
                     }
                     catch (Exception ex)
                     {

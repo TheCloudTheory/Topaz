@@ -16,7 +16,7 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
         InitializeServiceDirectory();
     }
 
-    private void InitializeServiceDirectory()
+    protected virtual void InitializeServiceDirectory()
     {
         var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath);
         this.logger.LogDebug($"Attempting to create {servicePath} directory...");
@@ -32,7 +32,7 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
         }
     }
 
-    public void Delete(string id)
+    public virtual void Delete(string id)
     {
         var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
         if(Directory.Exists(servicePath) == false) 
@@ -66,7 +66,7 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
         return Directory.EnumerateFiles(servicePath);
     }
 
-    public void Create<TModel>(string id, TModel model)
+    public virtual void Create<TModel>(string id, TModel model)
     {
         var fileName = $"metadata.json";
         var instancePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);

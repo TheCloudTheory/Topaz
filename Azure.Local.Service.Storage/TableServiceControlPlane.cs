@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Azure.Data.Tables.Models;
+using Azure.Local.Service.Shared;
 using Azure.Local.Service.Storage.Exceptions;
 using Azure.Local.Service.Storage.Models;
 
@@ -24,31 +25,18 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider)
         using var sr = new StreamReader(input);
 
         var rawContent = sr.ReadToEnd();
-        var content = JsonSerializer.Deserialize<TableProperties>(rawContent, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        }) ?? throw new Exception();
+        var content = JsonSerializer.Deserialize<TableProperties>(rawContent, GlobalSettings.JsonOptions) 
+            ?? throw new Exception();
+        var model = new TableItem(content.TableName);;
 
-        var directoryPath = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, content.TableName);
-        if(Directory.Exists(directoryPath))
-        {
-            throw new EntityAlreadyExistsException();
-        }
+        this.provider.Create(content.TableName, storageAccountName, model);
 
-        Directory.CreateDirectory(directoryPath);
-
-        return new TableItem(content.TableName);
+        return model;
     }
 
     public void DeleteTable(string tableName, string storageAccountName)
     {
-        var directoryPath = Path.Combine(AzureStorageService.LocalDirectoryPath, storageAccountName, tableName);
-        if(Directory.Exists(directoryPath) == false)
-        {
-            throw new EntityNotFoundException();
-        }
-
-        Directory.Delete(directoryPath);
+       this.provider.Delete(tableName, storageAccountName);
     }
 
     internal bool CheckIfTableExists(string tableName, string storageAccountName)
