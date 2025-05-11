@@ -55,7 +55,7 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
             throw new EntityNotFoundException();
         }
 
-        Directory.Delete(tablePath);
+        Directory.Delete(tablePath, true);
     }
 
     public override void Create<TModel>(string id, TModel model)
