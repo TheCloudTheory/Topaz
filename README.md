@@ -1,4 +1,4 @@
-# abazure
+# Topaz
 Local Azure environment emulation for development
 
 ## Installation
