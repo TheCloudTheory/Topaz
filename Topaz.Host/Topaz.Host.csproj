@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Topaz.Service.KeyVault/Topaz.Service.KeyVault.csproj" />
+    <ProjectReference Include="../Topaz.Service.ResourceGroup/Topaz.Service.ResourceGroup.csproj" />
+    <ProjectReference Include="../Topaz.Service.Storage/Topaz.Service.Storage.csproj" />
+    <ProjectReference Include="../Topaz.Service.Subscription/Topaz.Service.Subscription.csproj" />
+    <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="thecloudtheory.com.crt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="thecloudtheory.com.key">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="thecloudtheory.com.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="localhost.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

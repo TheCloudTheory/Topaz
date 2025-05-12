@@ -8,7 +8,7 @@
 ## Installation
 
 ### Local certificate
-To be able to interact with HTTPS endpoints provided by the emulator, you will need to install and trust the certificate locally. The certificate (`localhost.pfx`) is available in the `Azure.Local.Host` project.
+To be able to interact with HTTPS endpoints provided by the emulator, you will need to install and trust the certificate locally. The certificate (`localhost.pfx`) is available in the `Topaz.Host` project.
 
 ## Differences
 

@@ -3,4 +3,4 @@
 .azure-storage
 azure-local.sln.DotSettings.user
 /.idea/
-Azure.Local.CLI/.abazure/**
+Topaz.CLI/.abazure/**

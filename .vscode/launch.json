@@ -8,17 +8,17 @@
             "name": ".NET Core Launch (console)",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceFolder}/Azure.Local.CLI/bin/Debug/net8.0/Azure.Local.CLI.dll",
+            "program": "${workspaceFolder}/Topaz.CLI/bin/Debug/net8.0/Topaz.CLI.dll",
             "args": ["start"],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "console": "internalConsole"
         },
         {
-            "name": "C#: Azure.Local.CLI Debug",
+            "name": "C#: Topaz.CLI Debug",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/Azure.Local.CLI/Azure.Local.CLI.csproj"
+            "projectPath": "${workspaceFolder}/Topaz.CLI/Topaz.CLI.csproj"
         }
     ]
 }
