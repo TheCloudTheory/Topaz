@@ -1,4 +1,7 @@
 # Topaz
+
+![Topaz Logo](static/topaz-logo.png)
+
 Local Azure environment emulation for development
 
 ## Installation
