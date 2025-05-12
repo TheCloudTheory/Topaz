@@ -2,13 +2,19 @@ namespace Topaz.Tests.CLI;
 
 public class KeyVaultTests
 {
-    [Test]
-    public async Task KeyVaultTests_WhenNewKeyVaultIsRequested_ItShouldBeCreated()
+    [SetUp]
+    public async Task SetUp()
     {
-        var keyVaultPath = Path.Combine(Directory.GetCurrentDirectory(), ".azure-key-vault", "test.json");
+        await Program.Main(
+        [
+            "subscription",
+            "delete",
+            "--id",
+            Guid.Empty.ToString()
+        ]);
 
         await Program.Main([
-            "keyvault",
+            "group",
             "delete",
             "--name",
             "test"
@@ -18,12 +24,21 @@ public class KeyVaultTests
             "group",
             "create",
             "--name",
-            "rg-test",
+            "test",
             "--location",
-            "westeurope"
+            "westeurope",
+            "--subscriptionId",
+            Guid.Empty.ToString()
         ]);
 
-        var result = await Program.Main([
+        await Program.Main([
+            "keyvault",
+            "delete",
+            "--name",
+            "test"
+        ]);
+        
+        await Program.Main([
             "keyvault",
             "create",
             "--name",
@@ -31,49 +46,26 @@ public class KeyVaultTests
             "-g",
             "rg-test",
             "--location",
-            "westeurope"
+            "westeurope",
+            "--subscriptionId",
+            Guid.Empty.ToString(),
         ]);
+    }
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(result, Is.EqualTo(0));
-            Assert.That(File.Exists(keyVaultPath), Is.True);
-        });
+    [Test]
+    public void KeyVaultTests_WhenNewKeyVaultIsRequested_ItShouldBeCreated()
+    {
+        var keyVaultPath = Path.Combine(Directory.GetCurrentDirectory(), ".azure-key-vault", "test", "metadata.json");
+
+        Assert.That(File.Exists(keyVaultPath), Is.True);
     }
 
     [Test]
     public async Task KeyVaultTests_WhenNewKeyVaultIsDeleted_ItShouldBeDeleted()
     {
-        var keyVaultPath = Path.Combine(Directory.GetCurrentDirectory(), ".azure-key-vault", "test.json");
-
-        await Program.Main([
-            "keyvault",
-            "delete",
-            "--name",
-            "test"
-        ]);
-
-        await Program.Main([
-            "group",
-            "create",
-            "--name",
-            "rg-test",
-            "--location",
-            "westeurope"
-        ]);
+        var keyVaultPath = Path.Combine(Directory.GetCurrentDirectory(), ".azure-key-vault", "test");
 
         var result = await Program.Main([
-            "keyvault",
-            "create",
-            "--name",
-            "test",
-            "-g",
-            "rg-test",
-            "--location",
-            "westeurope"
-        ]);
-
-        await Program.Main([
             "keyvault",
             "delete",
             "--name",
@@ -83,7 +75,7 @@ public class KeyVaultTests
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.EqualTo(0));
-            Assert.That(File.Exists(keyVaultPath), Is.False);
+            Assert.That(Directory.Exists(keyVaultPath), Is.False);
         });
     }
 }

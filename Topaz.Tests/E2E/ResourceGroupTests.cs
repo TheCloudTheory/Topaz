@@ -2,6 +2,7 @@ using Azure.Core;
 using Topaz.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
+using Azure;
 
 namespace Topaz.Tests.E2E;
 

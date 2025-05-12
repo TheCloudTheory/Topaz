@@ -1,6 +1,6 @@
 namespace Topaz.Service.KeyVault.Models;
 
-public record class KeyVault(string Name, string ResourceGroup, string Location)
+public record class KeyVault(string Name, string ResourceGroup, string Location, string SubscriptionId)
 {
 
 }

@@ -4,6 +4,7 @@ using Topaz.Service.Storage.Exceptions;
 using Topaz.Service.Storage.Models;
 using Topaz.Shared;
 using Microsoft.AspNetCore.Http;
+using Azure;
 
 namespace Topaz.Service.Storage;
 

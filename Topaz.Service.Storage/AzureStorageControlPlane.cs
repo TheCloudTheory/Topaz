@@ -40,8 +40,8 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ILogge
         return data != null;
     }
 
-    internal void Delete(string subscriptionId)
+    internal void Delete(string storageAccountName)
     {
-        this.provider.Delete(subscriptionId);
+        this.provider.Delete(storageAccountName);
     }
 }

@@ -1,3 +1,4 @@
+using Azure;
 using Azure.Data.Tables;
 
 namespace Topaz.Tests.E2E

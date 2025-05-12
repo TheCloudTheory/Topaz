@@ -12,8 +12,8 @@ public class CreateKeyVaultCommand(ILogger logger) : Command<CreateKeyVaultComma
     {
         this.logger.LogInformation($"Executing {nameof(CreateKeyVaultCommand)}.{nameof(Execute)}.");
 
-        var rp = new ResourceProvider(this.logger);
-        var kv = rp.Create(settings.Name!, settings.ResourceGroup!, settings.Location!);
+        var controlPlane = new KeyVaultControlPlane(new ResourceProvider(this.logger));
+        var kv = controlPlane.Create(settings.Name!, settings.ResourceGroup!, settings.Location!, settings.SubscriptionId!);
 
         this.logger.LogInformation(kv.ToString());
 
@@ -32,6 +32,11 @@ public class CreateKeyVaultCommand(ILogger logger) : Command<CreateKeyVaultComma
             return ValidationResult.Error("Resource group location can't be null.");
         }
 
+        if(string.IsNullOrEmpty(settings.SubscriptionId))
+        {
+            return ValidationResult.Error("Resource group subscription ID can't be null.");
+        }
+
         return base.Validate(context, settings);
     }
     
@@ -45,5 +50,8 @@ public class CreateKeyVaultCommand(ILogger logger) : Command<CreateKeyVaultComma
 
         [CommandOption("-l|--location")]
         public string? Location { get; set; }
+
+        [CommandOption("-s|--subscriptionId")]
+        public string? SubscriptionId { get; set; }
     }
 }
