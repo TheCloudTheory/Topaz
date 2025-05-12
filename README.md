@@ -1,8 +1,9 @@
 # Topaz
-
-![Topaz Logo](static/topaz-logo-small.png)
-
-Local Azure environment emulation for development
+<div align="center">
+  <img src="https://github.com/TheCloudTheory/Topaz/blob/main/static/topaz-logo-small.png" />
+  
+  <b>Local Azure environment emulation for development</b>
+</div>
 
 ## Installation
 
