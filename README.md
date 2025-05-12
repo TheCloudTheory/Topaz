@@ -1,6 +1,6 @@
 # Topaz
 
-![Topaz Logo](static/topaz-logo.png)
+![Topaz Logo](static/topaz-logo-small.png)
 
 Local Azure environment emulation for development
 
