@@ -10,6 +10,17 @@ Topaz is an Azure emulator, which allows you to develop Azure-based applications
 
 Note that Topaz is in early stage of its development and each new version may introduce breaking changes to the provided interface.
 
+## Supported services
+Service Name|Control Plane|Data Plane
+------------|-------------|----------
+Subscriptions|⚠️|N/A
+Resource Groups|⚠️|N/A
+Azure Storage|⚠️|N/A
+Table Storage|⚠️|⚠️
+Queue Storage|:x:|:x:
+Key Vault|⚠️|⚠️
+
+
 ## Installation
 
 ### Local certificate
