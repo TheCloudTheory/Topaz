@@ -94,4 +94,31 @@ public class KeyVaultTests
         // Assert
         Assert.Throws<RequestFailedException>(() => client.GetSecret("secret-name"));
     }
+    
+    [Test]
+    public void KeyVaultTests_WhenSecretIsCreatedTwice_ItShouldHaveTwoVersions()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential();
+        var client = new SecretClient(vaultUri: new Uri(VaultUrl), credential: credentials, new SecretClientOptions()
+        {
+            DisableChallengeResourceVerification = true
+        });
+
+        // Act
+        var createSecret = client.SetSecret("secret-name", "test");
+        var createSecretSecond = client.SetSecret("secret-name", "test2");
+        var secret = client.GetSecret("secret-name");
+        var originalSecret = client.GetSecret("secret-name", createSecret.Value.Properties.Version);
+        
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(secret.Value.Value, Is.EqualTo("test2"));
+            Assert.That(createSecret.Value.Value, Is.EqualTo("test"));
+            Assert.That(secret.Value.Id, Is.Not.Null);
+            Assert.That(createSecretSecond.Value.Id, Is.Not.Null);
+            Assert.That(originalSecret.Value.Value, Is.EqualTo("test"));
+        });
+    }
 }

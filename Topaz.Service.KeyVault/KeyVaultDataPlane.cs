@@ -36,24 +36,34 @@ internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provide
         {
             // When SetSecret is called for Key Vault, data plane checks if a secret already exists.
             // If it does, it adds a new version instead of throwing an error or replacing it.
-            CreateNewSecretVersion();
+            var newVersion = CreateNewSecretVersion(secretName, data.Value, entityPath);
             
-            return (new Secret(secretName, data.Value), HttpStatusCode.OK);
+            return (newVersion, HttpStatusCode.OK);
         }
         
         // Secret does not exist so we simply create it.
-        var secret = new Secret(secretName, data.Value);
-        File.WriteAllText(entityPath, JsonSerializer.Serialize(secret, GlobalSettings.JsonOptions));
+        var secret = new Secret(secretName, data.Value, Guid.NewGuid());
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(new[] { secret }, GlobalSettings.JsonOptions));
 
         return (secret, HttpStatusCode.OK);
     }
 
-    private void CreateNewSecretVersion()
+    private Secret CreateNewSecretVersion(string secretName, string value, string entityPath)
     {
-        throw new NotImplementedException();
+        this.logger.LogDebug($"Executing {nameof(CreateNewSecretVersion)}: {secretName} {value}");
+        
+        var secret = new Secret(secretName, value, Guid.NewGuid());
+        var data = File.ReadAllText(entityPath);
+        var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions)!.ToList();
+        
+        secrets.Add(secret);
+        
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(secrets.ToArray(), GlobalSettings.JsonOptions));
+
+        return secret;
     }
 
-    public (Secret? data, HttpStatusCode code) GetSecret(string vaultName, string secretName)
+    public (Secret? data, HttpStatusCode code) GetSecret(string vaultName, string secretName, string? version)
     {
         this.logger.LogDebug($"Executing {nameof(GetSecret)}: {secretName} {vaultName}");
         
@@ -71,8 +81,15 @@ internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provide
         this.logger.LogDebug($"Executing {nameof(GetSecret)}: Processing {secretName}.");
         
         var data = File.ReadAllText(entityPath);
-        var secret = JsonSerializer.Deserialize<Secret>(data, GlobalSettings.JsonOptions);
+        var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
+
+        if (string.IsNullOrEmpty(version))
+        {
+            return (secrets!.Last(), HttpStatusCode.OK);
+        }
         
-        return (secret, HttpStatusCode.OK);
+        var secret = secrets!.LastOrDefault(s => s.Name == secretName && s.Id.EndsWith(version!));
+        
+        return (secret, secret == null ? HttpStatusCode.NotFound : HttpStatusCode.OK);
     }
 }

@@ -27,9 +27,9 @@ public sealed class KeyVaultEndpoint(ILogger logger) : IEndpointDefinition
         {
             if(method == "PUT")
             {
-                var vaultName = ExtractVaultNameFromPath(path);
-                var secretName = ExtractSecretNameFromPath(path);
-                var (data, code) = this.dataPlane.SetSecret(input, vaultName, secretName);
+                var vaultName = path.ExtractValueFromPath(1);
+                var secretName = path.ExtractValueFromPath(3);
+                var (data, code) = this.dataPlane.SetSecret(input, vaultName!, secretName!);
 
                 if(code == HttpStatusCode.Unauthorized)
                 {
@@ -44,9 +44,10 @@ public sealed class KeyVaultEndpoint(ILogger logger) : IEndpointDefinition
 
             if (method == "GET")
             {
-                var vaultName = ExtractVaultNameFromPath(path);
-                var secretName = ExtractSecretNameFromPath(path);
-                var (data, code) = this.dataPlane.GetSecret(vaultName, secretName);
+                var vaultName = path.ExtractValueFromPath(1);
+                var secretName = path.ExtractValueFromPath(3);
+                var version = path.ExtractValueFromPath(4);
+                var (data, code) = this.dataPlane.GetSecret(vaultName!, secretName!, version);
 
                 response.StatusCode = code;
                 response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
@@ -57,7 +58,7 @@ public sealed class KeyVaultEndpoint(ILogger logger) : IEndpointDefinition
             this.logger.LogError(ex);
 
             response.Content = new StringContent(ex.Message);
-            response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+            response.StatusCode = HttpStatusCode.InternalServerError;
 
             return response;
         }
@@ -73,21 +74,5 @@ public sealed class KeyVaultEndpoint(ILogger logger) : IEndpointDefinition
     {
         response.Headers.Add("WWW-Authenticate", $"Bearer authorization=\"http://localhost:8898/{Guid.Empty}\", resource=\"https://localhost:8898\"");
         response.StatusCode = code;
-    }
-
-    private string ExtractVaultNameFromPath(string path)
-    {
-        var requestParts = path.Split('/');
-        var secretName = requestParts[1];
-
-        return secretName;
-    }
-
-    private string ExtractSecretNameFromPath(string path)
-    {
-        var requestParts = path.Split('/');
-        var secretName = requestParts[3];
-
-        return secretName;
     }
 }
