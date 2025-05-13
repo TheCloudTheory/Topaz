@@ -7,6 +7,12 @@ namespace Topaz.Service.Storage.Models;
 
 public class TableServiceProperties
 {
+    [Obsolete("This constructor is for serialization only")]
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+    public TableServiceProperties()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+    {
+    }
 
     /// <summary> Initializes a new instance of <see cref="TableServiceProperties"/>. </summary>
     /// <param name="logging"> Azure Analytics Logging settings. </param>

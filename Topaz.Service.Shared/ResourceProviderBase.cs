@@ -134,4 +134,9 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
 
         return (data: newData, code: HttpStatusCode.Created);
     }
+
+    public string GetServiceInstancePath(string id)
+    {
+        return Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
+    }
 }

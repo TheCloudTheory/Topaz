@@ -47,8 +47,8 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
     public void Delete(string tableName, string storageAccountName)
     {
         InitializeServiceDirectory(storageAccountName);
-
-        var tablePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath, tableName);
+        
+        var tablePath = this.GetTablePath(tableName, storageAccountName);
 
         if(Directory.Exists(tablePath) == false)
         {
@@ -64,10 +64,10 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
 
     public void Create(string tableName, string storageAccountName, TableItem model)
     {
-        var fileName = $"metadata.json";
-        var tablePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath, tableName);
+        var metadataFile = $"metadata.json";
+        var tablePath = this.GetTablePath(tableName, storageAccountName);
         var dataPath = Path.Combine(tablePath, "data");
-        var metadataFilePath = Path.Combine(tablePath, fileName);
+        var metadataFilePath = Path.Combine(tablePath, metadataFile);
 
         this.logger.LogDebug($"Attempting to create {tablePath} directory.");
         if(Directory.Exists(tablePath))
@@ -90,8 +90,13 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
 
         return;
     }
+    
+    private string GetTablePath(string tableName, string storageAccountName)
+    {
+        return Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath, tableName);
+    }
 
-    public string GetTablePath(string tableName, string storageAccountName)
+    public string GetTableDataPath(string tableName, string storageAccountName)
     {
         return Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath, tableName, "data");
     }

@@ -5,7 +5,14 @@ namespace Topaz.Service.Storage.Models;
 
 public class TableAnalyticsLoggingSettings
 {
-    public TableAnalyticsLoggingSettings(string version, bool delete, bool read, bool write, TableRetentionPolicy retentionPolicy)
+    [Obsolete("This constructor is for serialization only")]
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+    public TableAnalyticsLoggingSettings()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+    {
+    }
+    
+    internal TableAnalyticsLoggingSettings(string version, bool delete, bool read, bool write, TableRetentionPolicy retentionPolicy)
     {
         Version = version;
         Delete = delete;

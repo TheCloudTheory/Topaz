@@ -5,6 +5,11 @@ namespace Topaz.Service.Storage.Models;
 
 public class TableRetentionPolicy
 {
+    [Obsolete("This constructor is for serialization only")]
+    public TableRetentionPolicy()
+    {
+    }
+    
     public TableRetentionPolicy(bool enabled)
     {
         Enabled = enabled;

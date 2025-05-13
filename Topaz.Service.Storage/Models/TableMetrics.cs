@@ -7,7 +7,17 @@ namespace Topaz.Service.Storage.Models;
 
 public class TableMetrics
 {
+    [Obsolete("This constructor is for serialization only")]
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+    public TableMetrics()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+    {
+    }
+    
+    [Obsolete("This constructor is for serialization only")]
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     public TableMetrics(bool enabled)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     {
         Enabled = enabled;
     }

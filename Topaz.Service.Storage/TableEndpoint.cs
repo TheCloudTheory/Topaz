@@ -13,8 +13,8 @@ namespace Topaz.Service.Storage;
 
 public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 {
-    private readonly TableServiceControlPlane controlPlane = new(new TableResourceProvider(logger));
-    private readonly TableServiceDataPlane dataPlane = new(new TableServiceControlPlane(new TableResourceProvider(logger)), logger);
+    private readonly TableServiceControlPlane controlPlane = new(new TableResourceProvider(logger), logger);
+    private readonly TableServiceDataPlane dataPlane = new(new TableServiceControlPlane(new TableResourceProvider(logger), logger), logger);
     private readonly ResourceProvider resourceProvider = new(logger);
     private readonly ILogger logger = logger;
 
@@ -274,8 +274,9 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 
         var properties = this.controlPlane.GetTableProperties(storageAccountName);
         
+        // TODO: Derive from StringWriter to be able to set encoding
         using var sw = new StringWriter();
-        var serializer = new XmlSerializer(typeof(TableProperties));
+        var serializer = new XmlSerializer(typeof(TableServiceProperties));
         serializer.Serialize(sw, properties);
         
         response.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/xml");

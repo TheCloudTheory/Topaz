@@ -3,13 +3,15 @@ using System.Xml.Linq;
 using Azure.Data.Tables.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Models;
+using Topaz.Shared;
 using TableServiceProperties = Topaz.Service.Storage.Models.TableServiceProperties;
 
 namespace Topaz.Service.Storage;
 
-internal sealed class TableServiceControlPlane(TableResourceProvider provider)
+internal sealed class TableServiceControlPlane(TableResourceProvider provider, ILogger logger)
 {
     private readonly TableResourceProvider provider = provider;
+    private readonly ILogger logger = logger;
 
     public TableProperties[] GetTables(string storageAccountName)
     {
@@ -47,12 +49,13 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider)
 
     internal string GetTablePath(string tableName, string storageAccountName)
     {
-        return this.provider.GetTablePath(tableName, storageAccountName);
+        return this.provider.GetTableDataPath(tableName, storageAccountName);
     }
 
     public TableServiceProperties GetTableProperties(string storageAccountName)
     {
-        var path = this.provider.GetTableServicePath(storageAccountName);
+        var storageControlPlane = new AzureStorageControlPlane(new ResourceProvider(this.logger), this.logger);
+        var path = storageControlPlane.GetServiceInstancePath(storageAccountName);
         var propertiesFilePath = Path.Combine(path, "properties.xml");
 
         if (File.Exists(propertiesFilePath) == false) throw new InvalidOperationException();
