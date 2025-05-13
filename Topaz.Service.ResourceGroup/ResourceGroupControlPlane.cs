@@ -28,15 +28,9 @@ internal sealed class ResourceGroupControlPlane(ResourceProvider provider)
 
     public (Models.ResourceGroup data, HttpStatusCode code) CreateOrUpdate(string name, string subscriptionId, Stream input)
     {
-        var model = this.provider.CreateOrUpdate<Models.ResourceGroup, CreateOrUpdateRequest>(name, input, (req) => {
-            return new Models.ResourceGroup(name, subscriptionId, req.Location!);
-        });
+        var model = this.provider.CreateOrUpdate<Models.ResourceGroup, CreateOrUpdateRequest>(name, input, (req) 
+            => new Models.ResourceGroup(name, subscriptionId, req.Location!));
 
         return model;
-    }
-
-    internal void Delete(string subscriptionId)
-    {
-        this.provider.Delete(subscriptionId);
     }
 }
