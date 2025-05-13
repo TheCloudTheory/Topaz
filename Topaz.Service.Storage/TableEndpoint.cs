@@ -1,5 +1,8 @@
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
+using System.Xml.Serialization;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Exceptions;
 using Topaz.Service.Storage.Models;
@@ -15,12 +18,13 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
     private readonly ResourceProvider resourceProvider = new(logger);
     private readonly ILogger logger = logger;
 
-    public (int Port, Protocol Protocol) PortAndProtocol => (8890, Protocol.Https);
+    public (int Port, Protocol Protocol) PortAndProtocol => (8890, Protocol.Http);
 
     public string[] Endpoints => [
         "/storage/{storageAccountName}/Tables",
         @"/storage/{storageAccountName}/^Tables\('.*?'\)$",
-        "/storage/{storageAccountName}/{tableName}"
+        "/storage/{storageAccountName}/{tableName}",
+        "/storage/{storageAccountName}/",
     ];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
@@ -43,10 +47,11 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
             {
                 switch (actualPath)
                 {
+                    case "":
+                        HandleGetTablePropertiesRequest(storageAccountName, response, query);
+                        break;
                     case "Tables":
-                        var tables = this.controlPlane.GetTables(storageAccountName);
-                        var endpointResponse = new TableEndpointResponse(tables);
-                        response.Content = JsonContent.Create(endpointResponse);
+                        HandleGetTablesRequest(storageAccountName, response);
                         break;
                     default:
                         var potentialTableName = actualPath.Replace("()", string.Empty);
@@ -261,6 +266,42 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
         }
 
         throw new NotSupportedException();
+    }
+
+    private void HandleGetTablePropertiesRequest(string storageAccountName, HttpResponseMessage response, QueryString query)
+    {
+        ThrowIfGetPropertiesRequestIsInvalid(query);
+
+        var properties = this.controlPlane.GetTableProperties(storageAccountName);
+        
+        using var sw = new StringWriter();
+        var serializer = new XmlSerializer(typeof(TableProperties));
+        serializer.Serialize(sw, properties);
+        
+        response.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/xml");
+        response.StatusCode = System.Net.HttpStatusCode.OK;
+    }
+
+    private void ThrowIfGetPropertiesRequestIsInvalid(QueryString query)
+    {
+        if(query.HasValue == false) throw new Exception($"QueryString '{query}' is missing.");
+        
+        var collection = HttpUtility.ParseQueryString(query.Value);
+        if (collection.AllKeys.Contains("restype") == false || collection.AllKeys.Contains("comp") == false)
+            throw new Exception("Query string is missing required fields.");
+        
+        var restype = collection["restype"];
+        var comp = collection["comp"];
+        
+        if(restype != "service") throw new Exception("Invalid value for 'restype'.");
+        if(comp != "properties") throw new Exception("Invalid value for 'comp'.");
+    }
+
+    private void HandleGetTablesRequest(string storageAccountName, HttpResponseMessage response)
+    {
+        var tables = this.controlPlane.GetTables(storageAccountName);
+        var endpointResponse = new TableEndpointResponse(tables);
+        response.Content = JsonContent.Create(endpointResponse);
     }
 
     private (string TableName, string PartitionKey, string RowKey) GetOperationDataForUpdateOperation(Match matches)

@@ -447,6 +447,19 @@ namespace Topaz.Tests.E2E
             });
         }
 
+        [Test]
+        public void TableStorageTests_WhenTablePropertiesAreRequested_TheyMustBeReturned()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(ConnectionString);
+            
+            // Act
+            var properties = tableServiceClient.GetProperties();
+            
+            // Assert
+            Assert.That(properties, Is.Not.Null);
+        }
+
         private class TestEntity : ITableEntity
         {
             public string? Name { get; set; }

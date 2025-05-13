@@ -1,0 +1,35 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using Azure.Data.Tables;
+
+namespace Topaz.Service.Storage.Models;
+
+public class TableMetrics
+{
+    public TableMetrics(bool enabled)
+    {
+        Enabled = enabled;
+    }
+
+    /// <summary> Initializes a new instance of <see cref="TableMetrics"/>. </summary>
+    /// <param name="version"> The version of Analytics to configure. </param>
+    /// <param name="enabled"> Indicates whether metrics are enabled for the Table service. </param>
+    /// <param name="includeApis"> Indicates whether metrics should generate summary statistics for called API operations. </param>
+    /// <param name="retentionPolicy"> The retention policy. </param>
+    internal TableMetrics(string version, bool enabled, bool? includeApis, TableRetentionPolicy retentionPolicy)
+    {
+        Version = version;
+        Enabled = enabled;
+        IncludeApis = includeApis;
+        RetentionPolicy = retentionPolicy;
+    }
+
+    /// <summary> The version of Analytics to configure. </summary>
+    public string Version { get; set; }
+    /// <summary> Indicates whether metrics are enabled for the Table service. </summary>
+    public bool Enabled { get; set; }
+    /// <summary> The retention policy. </summary>
+    public TableRetentionPolicy RetentionPolicy { get; set; }
+    public bool? IncludeApis { get; set; }
+}

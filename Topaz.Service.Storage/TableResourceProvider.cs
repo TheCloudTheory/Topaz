@@ -95,6 +95,11 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
     {
         return Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath, tableName, "data");
     }
+    
+    public string GetTableServicePath(string storageAccountName)
+    {
+        return Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath);
+    }
 
     public bool CheckIfTableExists(string tableName, string storageAccountName)
     {

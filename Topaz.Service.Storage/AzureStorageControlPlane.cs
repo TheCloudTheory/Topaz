@@ -20,7 +20,7 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ILogge
 
     public Models.StorageAccount Create(string name, string resourceGroup, string location, string subscriptionId)
     {
-        if(CheckIfResourceGroupExists(resourceGroup) == false)
+        if(CheckIfStorageAccountExists(resourceGroup) == false)
         {
             throw new InvalidOperationException();
         }
@@ -32,7 +32,7 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ILogge
         return model;
     }
 
-    private bool CheckIfResourceGroupExists(string resourceGroup)
+    private bool CheckIfStorageAccountExists(string resourceGroup)
     {
         var rp = new ResourceGroupControlPlane(new ResourceGroup.ResourceProvider(this.logger));
         var data = rp.Get(resourceGroup);

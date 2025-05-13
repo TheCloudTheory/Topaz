@@ -1,7 +1,9 @@
 using System.Text.Json;
+using System.Xml.Linq;
 using Azure.Data.Tables.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Models;
+using TableServiceProperties = Topaz.Service.Storage.Models.TableServiceProperties;
 
 namespace Topaz.Service.Storage;
 
@@ -46,5 +48,18 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider)
     internal string GetTablePath(string tableName, string storageAccountName)
     {
         return this.provider.GetTablePath(tableName, storageAccountName);
+    }
+
+    public TableServiceProperties GetTableProperties(string storageAccountName)
+    {
+        var path = this.provider.GetTableServicePath(storageAccountName);
+        var propertiesFilePath = Path.Combine(path, "properties.xml");
+
+        if (File.Exists(propertiesFilePath) == false) throw new InvalidOperationException();
+        
+        var document = XDocument.Load(File.OpenRead(propertiesFilePath), LoadOptions.PreserveWhitespace);
+        var properties = TableServicePropertiesSerialization.DeserializeTableServiceProperties(document.Root);
+        
+        return properties;
     }
 }
