@@ -10,10 +10,8 @@ public sealed class SubscriptionEndpoint(ResourceProvider provider, ILogger logg
 {
     private readonly ILogger logger = logger;
     private readonly SubscriptionControlPlane controlPlane = new(provider);
-
-    public Protocol Protocol => Protocol.Https;
-
     public string[] Endpoints => ["/subscriptions/{subscriptionId}"];
+    public (int Port, Protocol Protocol) PortAndProtocol => (8899, Protocol.Https);
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
     {

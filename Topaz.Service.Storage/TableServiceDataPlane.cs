@@ -34,8 +34,6 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
 
         var etag = new ETag(DateTimeOffset.Now.Ticks.ToString());
         var timestamp = DateTimeOffset.Now.ToUniversalTime();
-
-        var files = Directory.EnumerateFiles(path);
         var fileName = $"{metadata.PartitionKey}_{metadata.RowKey}.json";
         var entityPath = Path.Combine(path, fileName);
 

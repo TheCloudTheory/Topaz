@@ -11,8 +11,7 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ILogger logger) : 
 {
     private readonly ILogger logger = logger;
     private readonly ResourceGroupControlPlane controlPlane = new(provider);
-
-    public Protocol Protocol => Protocol.Http;
+    public (int Port, Protocol Protocol) PortAndProtocol => (8899, Protocol.Https);
 
     public string[] Endpoints => ["/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}"];
 

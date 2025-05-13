@@ -71,6 +71,7 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
         var fileName = $"metadata.json";
         var instancePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
         var metadataFilePath = Path.Combine(instancePath, fileName);
+        var dataPath = Path.Combine(instancePath, "data");
 
         this.logger.LogDebug($"Attempting to create {instancePath} directory.");
         if(Directory.Exists(instancePath))
@@ -80,6 +81,8 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
         else
         {
             Directory.CreateDirectory(instancePath);
+            Directory.CreateDirectory(dataPath);
+            
             this.logger.LogDebug($"Attempting to create {instancePath} directory - created!");
         }
 

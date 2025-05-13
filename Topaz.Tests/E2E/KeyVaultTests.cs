@@ -1,3 +1,4 @@
+using Azure;
 using Topaz.Identity;
 using Azure.Security.KeyVault.Secrets;
 
@@ -5,20 +6,92 @@ namespace Topaz.Tests.E2E;
 
 public class KeyVaultTests
 {
-    private const string VaultUrl = "https://localhost:8900";
+    private const string VaultUrl = "https://localhost:8898/test";
+
+    [SetUp]
+    public async Task SetUp()
+    {
+        await Program.Main(
+        [
+            "subscription",
+            "delete",
+            "--id",
+            Guid.Empty.ToString()
+        ]);
+
+        await Program.Main([
+            "group",
+            "delete",
+            "--name",
+            "test"
+        ]);
+
+        await Program.Main([
+            "group",
+            "create",
+            "--name",
+            "test",
+            "--location",
+            "westeurope",
+            "--subscriptionId",
+            Guid.Empty.ToString()
+        ]);
+
+        await Program.Main([
+            "keyvault",
+            "delete",
+            "--name",
+            "test"
+        ]);
+        
+        await Program.Main([
+            "keyvault",
+            "create",
+            "--name",
+            "test",
+            "-g",
+            "rg-test",
+            "--location",
+            "westeurope",
+            "--subscriptionId",
+            Guid.Empty.ToString(),
+        ]);
+    }
 
     [Test]
     public void KeyVaultTests_WhenSecretIsCreated_ItShouldBePossibleToFetch()
     {
         // Arrange
         var credentials = new AzureLocalCredential();
-        var client = new SecretClient(vaultUri: new Uri(VaultUrl), credential: credentials);
+        var client = new SecretClient(vaultUri: new Uri(VaultUrl), credential: credentials, new SecretClientOptions()
+        {
+            DisableChallengeResourceVerification = true
+        });
 
         // Act
         var createSecret = client.SetSecret("secret-name", "test");
         var secret = client.GetSecret("secret-name");
-
+        
         // Assert
-        Assert.That(secret.Value.Value, Is.EqualTo("test"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(secret.Value.Value, Is.EqualTo("test"));
+            Assert.That(createSecret.Value.Value, Is.EqualTo("test"));
+            Assert.That(secret.Value.Id, Is.Not.Null);
+        });
+    }
+    
+    [Test]
+    public void KeyVaultTests_WhenSecretIsNotCreated_ItShouldNotBePossibleToFetch()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential();
+        var client = new SecretClient(vaultUri: new Uri(VaultUrl), credential: credentials, new SecretClientOptions()
+        {
+            DisableChallengeResourceVerification = true
+        });
+        
+        // Assert
+        Assert.Throws<RequestFailedException>(() => client.GetSecret("secret-name"));
     }
 }

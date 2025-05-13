@@ -5,7 +5,7 @@ namespace Topaz.Service.Storage;
 
 public class BlobEndpoint : IEndpointDefinition
 {
-    public Protocol Protocol => Protocol.Http;
+    public (int Port, Protocol Protocol) PortAndProtocol => (8891, Protocol.Https);
 
     public string[] Endpoints => ["blob.storage"];
 

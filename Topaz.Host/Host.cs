@@ -9,6 +9,7 @@ using Topaz.Shared;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 
 namespace Topaz.Host;
 
@@ -38,7 +39,7 @@ public class Host(ILogger logger)
             {
                 this.logger.LogDebug($"Processing {endpoint.Endpoints} endpoint...");
 
-                if (endpoint.Protocol == Service.Shared.Protocol.Http || endpoint.Protocol == Service.Shared.Protocol.Https)
+                if (endpoint.PortAndProtocol.Protocol is Protocol.Http or Protocol.Https)
                 {
                     httpEndpoints.Add(endpoint);
                 }
@@ -53,11 +54,32 @@ public class Host(ILogger logger)
         var host = new WebHostBuilder()
             .UseKestrel((context, options) =>
             {
-                options.Listen(IPAddress.Loopback, hostPortNumber);
-                options.Listen(IPAddress.Loopback, hostPortNumberSecure, listenOptions =>
+                var usedPorts = new List<int>();
+                foreach (var httpEndpoint in httpEndpoints)
                 {
-                    listenOptions.UseHttps("localhost.pfx", "qwerty");
-                });
+                    if (usedPorts.Contains(httpEndpoint.PortAndProtocol.Port))
+                    {
+                        this.logger.LogDebug($"Using port {httpEndpoint.PortAndProtocol.Port} will be skipped as it's already registered.");
+                        continue;
+                    }
+                    
+                    switch (httpEndpoint.PortAndProtocol.Protocol)
+                    {
+                        case Protocol.Http:
+                            options.Listen(IPAddress.Loopback, httpEndpoint.PortAndProtocol.Port);
+                            usedPorts.Add(httpEndpoint.PortAndProtocol.Port);
+                            break;
+                        case Protocol.Https:
+                            options.Listen(IPAddress.Loopback, httpEndpoint.PortAndProtocol.Port, listenOptions =>
+                            {
+                                listenOptions.UseHttps("localhost.pfx", "qwerty");
+                            });
+                            usedPorts.Add(httpEndpoint.PortAndProtocol.Port);
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                }
             })
             .Configure(app =>
             {
@@ -65,7 +87,6 @@ public class Host(ILogger logger)
                 {
                     try
                     {
-                        var hostWithoutPort = context.Request.Host.Host.ToString();
                         var path = context.Request.Path.ToString();
                         var method = context.Request.Method;
                         var query = context.Request.QueryString;
@@ -124,6 +145,12 @@ public class Host(ILogger logger)
                         this.logger.LogDebug($"Response: [{response.StatusCode}] [{path}] {textResponse}");
 
                         context.Response.StatusCode = (int)response.StatusCode;
+
+                        foreach (var header in response.Headers)
+                        {
+                            var value = new StringValues(header.Value.ToArray());
+                            context.Response.Headers.Add(header.Key, new StringValues(header.Value.ToArray()));
+                        }
 
                         if(response.StatusCode != HttpStatusCode.NoContent)
                         {

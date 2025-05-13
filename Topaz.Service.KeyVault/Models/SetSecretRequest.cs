@@ -1,3 +1,3 @@
 namespace Topaz.Service.KeyVault.Models;
 
-public record class SetSecretRequest(string SecretName);
+public record class SetSecretRequest(string Value);

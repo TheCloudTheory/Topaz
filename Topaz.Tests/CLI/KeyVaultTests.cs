@@ -55,7 +55,7 @@ public class KeyVaultTests
     [Test]
     public void KeyVaultTests_WhenNewKeyVaultIsRequested_ItShouldBeCreated()
     {
-        var keyVaultPath = Path.Combine(Directory.GetCurrentDirectory(), ".azure-key-vault", "test", "metadata.json");
+        var keyVaultPath = Path.Combine(Directory.GetCurrentDirectory(), ".abazure", ".azure-key-vault", "test", "metadata.json");
 
         Assert.That(File.Exists(keyVaultPath), Is.True);
     }
@@ -63,7 +63,7 @@ public class KeyVaultTests
     [Test]
     public async Task KeyVaultTests_WhenNewKeyVaultIsDeleted_ItShouldBeDeleted()
     {
-        var keyVaultPath = Path.Combine(Directory.GetCurrentDirectory(), ".azure-key-vault", "test");
+        var keyVaultPath = Path.Combine(Directory.GetCurrentDirectory(), ".abazure", ".azure-key-vault", "test");
 
         var result = await Program.Main([
             "keyvault",

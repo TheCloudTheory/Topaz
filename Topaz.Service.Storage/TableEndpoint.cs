@@ -15,7 +15,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
     private readonly ResourceProvider resourceProvider = new(logger);
     private readonly ILogger logger = logger;
 
-    public Protocol Protocol => Protocol.Http;
+    public (int Port, Protocol Protocol) PortAndProtocol => (8890, Protocol.Https);
 
     public string[] Endpoints => [
         "/storage/{storageAccountName}/Tables",
