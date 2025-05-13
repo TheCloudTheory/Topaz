@@ -5,6 +5,11 @@
   <b>Local Azure environment emulation for development</b>
 </div>
 
+## What is Topaz?
+Topaz is an Azure emulator, which allows you to develop Azure-based applications without a need to connect to cloud services. It mimics popular Azure components such as Azure Storage, Azure Key Vault or Azure Service Bus to provide a robust local environment. 
+
+Note that Topaz is in early stage of its development and each new version may introduce breaking changes to the provided interface.
+
 ## Installation
 
 ### Local certificate
