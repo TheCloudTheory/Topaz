@@ -2,6 +2,7 @@ using System.Text.Json;
 using Azure.Data.Tables.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Exceptions;
+using Topaz.Service.Storage.Services;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage;

@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using Topaz.Service.KeyVault;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using Topaz.Service.Storage.Services;
 
 namespace Topaz.Host;
 
@@ -70,7 +72,7 @@ public class Host(ILogger logger)
                         case Protocol.Https:
                             options.Listen(IPAddress.Loopback, httpEndpoint.PortAndProtocol.Port, listenOptions =>
                             {
-                                if (Environment.OSVersion.Platform == PlatformID.MacOSX)
+                                if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                                 {
                                     listenOptions.UseHttps("localhost.pfx", "qwerty");
                                 }
