@@ -64,7 +64,7 @@ Key Vault|Get Deleted Secret|:x:|-
 Key Vault|Get Deleted Secrets|:x:|-
 Key Vault|Get Secret|✅|-
 Key Vault|Get Secret Versions|:x:|-
-Key Vault|Get Secrets|:x:|-
+Key Vault|Get Secrets|✅|-
 Key Vault|Purge Deleted Secret|:x:|-
 Key Vault|Recover Deleted Secret|:x:|-
 Key Vault|Restore Secret|:x:|-
