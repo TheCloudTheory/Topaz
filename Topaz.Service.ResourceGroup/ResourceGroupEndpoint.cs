@@ -23,23 +23,27 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ILogger logger) : 
 
         try
         {
-            if(method == "PUT")
+            switch (method)
             {
-                var subscriptionId = ExtractSubscriptionIdFromPath(path);
-                var resourceGroupName = ExtractResourceGroupNameFromPath(path);
-                var (data, code) = this.controlPlane.CreateOrUpdate(resourceGroupName, subscriptionId, input);
+                case "PUT":
+                {
+                    var subscriptionId = path.ExtractValueFromPath(2);
+                    var resourceGroupName = path.ExtractValueFromPath(4);
+                    var (data, code) = this.controlPlane.CreateOrUpdate(resourceGroupName!, subscriptionId!, input);
 
-                response.StatusCode = code;
-                response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
-            }
+                    response.StatusCode = code;
+                    response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+                    break;
+                }
+                case "GET":
+                {
+                    var resourceGroupName = path.ExtractValueFromPath(4);
+                    var data = this.controlPlane.Get(resourceGroupName!);
 
-            if (method == "GET")
-            {
-                var resourceGroupName = ExtractResourceGroupNameFromPath(path);
-                var data = this.controlPlane.Get(resourceGroupName);
-
-                response.StatusCode = HttpStatusCode.OK;
-                response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+                    response.StatusCode = HttpStatusCode.OK;
+                    response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+                    break;
+                }
             }
         }
         catch(Exception ex)
@@ -53,13 +57,6 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ILogger logger) : 
         }
 
         return response;
-    }
-
-    private string ExtractSubscriptionIdFromPath(string path)
-    {
-        var requestParts = path.Split('/');
-        var resourceGroupName = requestParts[2];
-        return resourceGroupName;
     }
 
     private static string ExtractResourceGroupNameFromPath(string path)

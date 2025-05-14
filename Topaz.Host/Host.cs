@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using Topaz.Service.EventHub;
 using Topaz.Service.Storage.Services;
 
 namespace Topaz.Host;
@@ -28,7 +29,8 @@ public class Host(ILogger logger)
             new TableStorageService(this.logger),
             new ResourceGroupService(this.logger),
             new SubscriptionService(this.logger),
-            new KeyVaultService(this.logger)
+            new KeyVaultService(this.logger),
+            new EventHubService(this.logger),
         };
         var httpEndpoints = new List<IEndpointDefinition>();
 
@@ -122,7 +124,7 @@ public class Host(ILogger logger)
                             foreach (var endpointUrl in httpEndpoint.Endpoints)
                             {
                                 var endpointParts = endpointUrl.Split('/');
-                                if (endpointParts.Length > pathParts.Length) continue;
+                                if (endpointParts.Length != pathParts.Length) continue;
 
                                 for (var i = 0; i < endpointParts.Length; i++)
                                 {

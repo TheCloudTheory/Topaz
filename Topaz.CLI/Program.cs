@@ -7,6 +7,7 @@ using Topaz.Service.Subscription.Commands;
 using Topaz.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
+using Topaz.Service.EventHub.Commands;
 
 internal class Program
 {
@@ -66,6 +67,15 @@ internal class Program
             config.AddBranch("subscription", branch => {
                 branch.AddCommand<CreateSubscriptionCommand>("create");
                 branch.AddCommand<DeleteSubscriptionCommand>("delete");
+            });
+            
+            config.AddBranch("eventhubs", branch =>
+            {
+                branch.AddBranch("namespace", subbranch =>
+                {
+                    subbranch.AddCommand<CreateEventHubNamespaceCommand>("create");
+                    subbranch.AddCommand<DeleteEventHubNamespaceCommand>("delete");
+                });
             });
         });
 

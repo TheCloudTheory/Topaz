@@ -18,6 +18,16 @@ public class KeyVaultTests
             "--id",
             Guid.Empty.ToString()
         ]);
+        
+        await Program.Main(
+        [
+            "subscription",
+            "create",
+            "--id",
+            Guid.Empty.ToString(),
+            "--name",
+            "sub-test"
+        ]);
 
         await Program.Main([
             "group",
