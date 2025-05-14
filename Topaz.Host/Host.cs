@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using Topaz.Service.KeyVault;
 using Topaz.Service.ResourceGroup;
@@ -15,8 +16,6 @@ namespace Topaz.Host;
 
 public class Host(ILogger logger)
 {
-    private const int hostPortNumber = 8899;
-    private const int hostPortNumberSecure = 8900;
     private static readonly List<Thread> threads = [];
     private readonly ILogger logger = logger;
 
@@ -67,18 +66,30 @@ public class Host(ILogger logger)
                     {
                         case Protocol.Http:
                             options.Listen(IPAddress.Loopback, httpEndpoint.PortAndProtocol.Port);
-                            usedPorts.Add(httpEndpoint.PortAndProtocol.Port);
                             break;
                         case Protocol.Https:
                             options.Listen(IPAddress.Loopback, httpEndpoint.PortAndProtocol.Port, listenOptions =>
                             {
-                                listenOptions.UseHttps("localhost.pfx", "qwerty");
+                                if (Environment.OSVersion.Platform == PlatformID.MacOSX)
+                                {
+                                    listenOptions.UseHttps("localhost.pfx", "qwerty");
+                                }
+                                else
+                                {
+                                    var certPem = File.ReadAllText("localhost.crt");
+                                    var keyPem = File.ReadAllText("localhost.key");
+                                    var x509 = X509Certificate2.CreateFromPem(certPem, keyPem);
+                                    
+                                    listenOptions.UseHttps(x509);
+                                }
                             });
-                            usedPorts.Add(httpEndpoint.PortAndProtocol.Port);
+
                             break;
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
+
+                    usedPorts.Add(httpEndpoint.PortAndProtocol.Port);
                 }
             })
             .Configure(app =>
