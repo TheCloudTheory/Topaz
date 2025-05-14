@@ -70,3 +70,9 @@ Key Vault|Recover Deleted Secret|:x:|-
 Key Vault|Restore Secret|:x:|-
 Key Vault|Set Secret|✅|-
 Key Vault|Update Secret|:x:|-
+
+### Event Hub
+Service Name|Operation|Is supported?|Remarks
+------------|---------|-------------|-------|
+Event Hub Namespace|Create Namespace|✅|Does not support full ARM definition
+Event Hub|Create Hub|✅|Does not support full ARM definition
