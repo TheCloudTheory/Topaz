@@ -49,7 +49,7 @@ public sealed class KeyVaultEndpoint(ILogger logger) : IEndpointDefinition
                 var vaultName = path.ExtractValueFromPath(1);
                 var secretName = path.ExtractValueFromPath(3);
 
-                if (vaultName == null) throw new InvalidOperationException();
+                if (string.IsNullOrEmpty(vaultName)) throw new InvalidOperationException();
                 if (string.IsNullOrEmpty(secretName))
                 {
                     HandleGetSecretsRequest(vaultName, response);
@@ -58,6 +58,21 @@ public sealed class KeyVaultEndpoint(ILogger logger) : IEndpointDefinition
                 {
                     HandleGetSecretRequest(path, vaultName, secretName, response);
                 }
+            }
+
+            if (method == "DELETE")
+            {
+                var vaultName = path.ExtractValueFromPath(1);
+                var secretName = path.ExtractValueFromPath(3);
+
+                if (string.IsNullOrEmpty(vaultName)) throw new InvalidOperationException();
+                if (string.IsNullOrEmpty(secretName))
+                {
+                    response.StatusCode = HttpStatusCode.NotFound;
+                    return response;
+                }
+                
+                HandleDeleteSecretRequest(vaultName, secretName, response);
             }
         }
         catch(Exception ex)
@@ -71,6 +86,21 @@ public sealed class KeyVaultEndpoint(ILogger logger) : IEndpointDefinition
         }
         
         return response;
+    }
+
+    private void HandleDeleteSecretRequest(string vaultName, string secretName, HttpResponseMessage response)
+    {
+        var (data, code) = this.dataPlane.DeleteSecret(vaultName, secretName);
+        if (data == null)
+        {
+            response.StatusCode = code;
+            return;
+        }
+        
+        var content = DeleteSecretResponse.New(data.Id, vaultName, secretName, data.Attributes);
+        
+        response.StatusCode = code;
+        response.Content = JsonContent.Create(content, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
     }
 
     private void HandleGetSecretsRequest(string vaultName, HttpResponseMessage response)

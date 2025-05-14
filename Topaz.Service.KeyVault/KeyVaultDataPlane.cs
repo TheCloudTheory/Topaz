@@ -96,6 +96,8 @@ internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provide
 
     public (Secret[] data, HttpStatusCode code) GetSecrets(string vaultName)
     {
+        this.logger.LogDebug($"Executing {nameof(GetSecrets)}: {vaultName}");
+        
         var path = this.provider.GetKeyVaultPath(vaultName);
         var files = Directory.EnumerateFiles(path, "*.json");
         var secrets = new List<Secret>();
@@ -112,5 +114,33 @@ internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provide
         }
         
         return (secrets.ToArray(), HttpStatusCode.OK);
+    }
+
+    public (Secret? data, HttpStatusCode code) DeleteSecret(string vaultName, string secretName)
+    {
+        this.logger.LogDebug($"Executing {nameof(DeleteSecret)}: {secretName} {vaultName}");
+        
+        var path = this.provider.GetKeyVaultPath(vaultName);
+        var fileName = $"{secretName}.json";
+        var entityPath = Path.Combine(path, fileName);
+        
+        if (File.Exists(entityPath) == false)
+        {
+            this.logger.LogDebug($"Executing {nameof(DeleteSecret)}: Secret {secretName} not found.");
+            
+            return (null, HttpStatusCode.NotFound);
+        }
+        
+        this.logger.LogDebug($"Executing {nameof(DeleteSecret)}: Processing {secretName}.");
+        
+        var data = File.ReadAllText(entityPath);
+        var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
+        var secret = secrets!.Last();
+        
+        this.logger.LogDebug($"Executing {nameof(DeleteSecret)}: Deleting {secretName}.");
+        
+        File.Delete(entityPath);
+        
+        return (secret, HttpStatusCode.OK);
     }
 }

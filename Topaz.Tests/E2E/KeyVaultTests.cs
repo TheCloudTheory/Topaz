@@ -145,4 +145,22 @@ public class KeyVaultTests
             Assert.That(secrets[1].Id, Is.Not.Null);
         });
     }
+    
+    [Test]
+    public void KeyVaultTests_SecretIsRemoved_ThenItShouldNoLongerBeAvailable()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential();
+        var client = new SecretClient(vaultUri: new Uri(VaultUrl), credential: credentials, new SecretClientOptions()
+        {
+            DisableChallengeResourceVerification = true
+        });
+
+        // Act
+        client.SetSecret("secret-one", "test");
+        client.StartDeleteSecret("secret-one");
+        
+        // Assert
+        Assert.Throws<RequestFailedException>(() => client.GetSecret("secret-one"));
+    }
 }

@@ -59,7 +59,7 @@ Table Service|Insert Or Merge Entity|✅|-
 Service Name|Operation|Is supported?|Remarks
 ------------|---------|-------------|-------|
 Key Vault|Backup Secret|:x:|-
-Key Vault|Delete Secret|:x:|-
+Key Vault|Delete Secret|✅|Secrets are immediatelly purged with no way to restore them
 Key Vault|Get Deleted Secret|:x:|-
 Key Vault|Get Deleted Secrets|:x:|-
 Key Vault|Get Secret|✅|-
