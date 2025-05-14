@@ -4,23 +4,24 @@ using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
 
-public sealed class CreateEventHubCommand(ILogger logger) : Command<CreateEventHubCommand.CreateEventHubCommandSettings>
+public class DeleteEventHubCommand(ILogger logger) : Command<DeleteEventHubCommand.DeleteEventHubCommandSettings>
 {
     private readonly ILogger logger = logger;
 
-    public override int Execute(CommandContext context, CreateEventHubCommandSettings settings)
+    public override int Execute(CommandContext context, DeleteEventHubCommandSettings settings)
     {
-        this.logger.LogInformation($"Executing {nameof(CreateEventHubCommand)}.{nameof(Execute)}.");
+        this.logger.LogDebug($"Executing {nameof(CreateEventHubCommand)}.{nameof(Execute)}.");
+        this.logger.LogInformation($"Deleting {settings.Name} event hub...");
 
         var controlPlane = new EventHubControlPlane(new ResourceProvider(this.logger), logger);
-        var eh = controlPlane.Create(settings.Name!, settings.NamespaceName!);
+        controlPlane.Delete(settings.Name!, settings.NamespaceName!);
 
-        this.logger.LogInformation(eh.ToString());
+        this.logger.LogInformation($"Event hub {settings.Name} deleted.");
 
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateEventHubCommandSettings settings)
+    public override ValidationResult Validate(CommandContext context, DeleteEventHubCommandSettings settings)
     {
         if(string.IsNullOrEmpty(settings.Name))
         {
@@ -31,7 +32,7 @@ public sealed class CreateEventHubCommand(ILogger logger) : Command<CreateEventH
             ? ValidationResult.Error("Namespace name can't be null.") : base.Validate(context, settings);
     }
     
-    public sealed class CreateEventHubCommandSettings : CommandSettings
+    public sealed class DeleteEventHubCommandSettings : CommandSettings
     {
         [CommandOption("-n|--name")]
         public string? Name { get; set; }

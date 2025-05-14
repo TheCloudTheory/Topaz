@@ -25,9 +25,14 @@ internal sealed class EventHubControlPlane(ResourceProvider provider, ILogger lo
         return model;
     }
 
-    public object Create(string settingsName, string settingsResourceGroup, string settingsLocation, string settingsSubscriptionId)
+    public Models.EventHub Create(string name, string namespaceName)
     {
-        throw new NotSupportedException();
+        var @namespace = this.GetNamespace(namespaceName);
+        var model = Models.EventHub.New(name, namespaceName, @namespace.ResourceGroup!, @namespace.SubscriptionId!);
+        
+        var hub = this.provider.CreateEventHub(namespaceName, name, model);
+        
+        return hub;
     }
 
     public Namespace GetNamespace(string namespaceName)
@@ -38,11 +43,11 @@ internal sealed class EventHubControlPlane(ResourceProvider provider, ILogger lo
         return @namespace!;
     }
 
-    public Models.EventHub CreateUpdateEventHub(string namespaceName, string eventhubName, Stream input)
+    public Models.EventHub CreateUpdateEventHub(string namespaceName, string name, Stream input)
     {
-        this.logger.LogDebug($"Executing {nameof(CreateUpdateEventHub)}: {namespaceName} {eventhubName}");
+        this.logger.LogDebug($"Executing {nameof(CreateUpdateEventHub)}: {namespaceName} {name}");
         
-        if (this.provider.EventHubExists(namespaceName, eventhubName))
+        if (this.provider.EventHubExists(namespaceName, name))
         {
             throw new NotImplementedException();
         }
@@ -55,9 +60,22 @@ internal sealed class EventHubControlPlane(ResourceProvider provider, ILogger lo
             this.logger.LogDebug($"Executing {nameof(CreateUpdateEventHub)}: Processing {rawContent}.");
             
             var @namespace = this.GetNamespace(namespaceName);
-            var hub = this.provider.CreateEventHub(namespaceName, eventhubName, Models.EventHub.New(eventhubName, namespaceName, @namespace.ResourceGroup, @namespace.Location));
+            var hub = this.provider.CreateEventHub(namespaceName, name, Models.EventHub.New(name, namespaceName, @namespace.ResourceGroup, @namespace.Location));
             
             return hub;
         }
+    }
+
+    public void Delete(string name, string namespaceName)
+    {
+        this.logger.LogDebug($"Executing {nameof(Delete)}: {name} {namespaceName}");
+
+        if (this.provider.EventHubExists(namespaceName, name) == false)
+        {
+            // TODO: Return proper error
+            return;
+        }
+
+        this.provider.DeleteEventHub(name, namespaceName);
     }
 }

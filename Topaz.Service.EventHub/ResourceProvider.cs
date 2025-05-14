@@ -38,4 +38,15 @@ internal sealed class ResourceProvider(ILogger logger) : ResourceProviderBase<Ev
 
         return model;
     }
+
+    public void DeleteEventHub(string name, string namespaceName)
+    {
+        var hubPath = this.GetEventHubPath(namespaceName, name);
+        
+        this.logger.LogDebug($"Attempting to delete {hubPath} directory.");
+        
+        Directory.Delete(hubPath);
+        
+        this.logger.LogDebug($"Attempting to delete {hubPath} directory - deleted!");
+    }
 }

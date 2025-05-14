@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
-namespace Topaz.Service.EventHub;
+namespace Topaz.Service.EventHub.Endpoints;
 
 public sealed class EventHubEndpoint(ILogger logger) : IEndpointDefinition
 {

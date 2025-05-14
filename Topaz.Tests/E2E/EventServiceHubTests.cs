@@ -1,12 +1,18 @@
-using System.Text;
-using Azure.Messaging.EventHubs;
-using Azure.Messaging.EventHubs.Producer;
+using Azure;
+using Azure.ResourceManager;
+using Azure.ResourceManager.EventHubs;
 using Topaz.Identity;
 
 namespace Topaz.Tests.E2E;
 
-public class EventHubTests
+public class EventServiceHubTests
 {
+    private static readonly ArmClientOptions armClientOptions = new ArmClientOptions
+    {
+        Environment = new ArmEnvironment(new Uri("https://localhost:8899"), "https://localhost:8899")
+    };
+    
+    [SetUp]
     public async Task SetUp()
     {
         await Program.Main(
@@ -66,39 +72,22 @@ public class EventHubTests
             "--subscriptionId",
             Guid.Empty.ToString(),
         ]);
-        
-        await Program.Main([
-            "eventhubs",
-            "eventhub",
-            "delete",
-            "--name",
-            "test",
-            "--namespace-name",
-            "test"
-        ]);
-        
-        await Program.Main([
-            "eventhubs",
-            "eventhub",
-            "create",
-            "--name",
-            "test",
-            "--namespace-name",
-            "test"
-        ]);
     }
     
     [Test]
-    public async Task EventHubTests_WhenMessageIsSent_ItShouldBeAvailableInEventHub()
+    public void EventHubTests_WhenNewHubIsRequested_ItShouldBeCreated()
     {
         // Arrange
-        var producer = new EventHubProducerClient(
-            "Endpoint=sb://localhost:8898;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;",
-            "eh-test");
-        
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, Guid.Empty.ToString(), armClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroups = subscription.GetResourceGroup("test");
+        var @namespace = resourceGroups.Value.GetEventHubsNamespace("test");
+
         // Act
-        await producer.SendAsync([
-            new EventData(Encoding.UTF8.GetBytes("Hello World"))
-        ]);        
+        var hub = @namespace.Value.GetEventHubs().CreateOrUpdate(WaitUntil.Completed, "test-eh", new EventHubData());
+
+        // Assert
+        Assert.That(hub.Value.Data.Name, Is.EqualTo("test-eh"));
     }
 }

@@ -1,3 +1,4 @@
+using Topaz.Service.EventHub.Endpoints;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -12,6 +13,7 @@ public class EventHubService(ILogger logger) : IServiceDefinition
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         new EventHubEndpoint(this.logger),
-        new EventHubServiceEndpoint(this.logger)
+        new EventHubServiceEndpoint(this.logger),
+        new EventHubAmqpEndpoint()
     ];
 }

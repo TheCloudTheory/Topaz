@@ -76,6 +76,12 @@ internal class Program
                     subbranch.AddCommand<CreateEventHubNamespaceCommand>("create");
                     subbranch.AddCommand<DeleteEventHubNamespaceCommand>("delete");
                 });
+                
+                branch.AddBranch("eventhub", subbranch =>
+                {
+                    subbranch.AddCommand<CreateEventHubCommand>("create");
+                    subbranch.AddCommand<DeleteEventHubCommand>("delete");
+                });
             });
         });
 
