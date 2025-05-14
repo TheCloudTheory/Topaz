@@ -54,7 +54,7 @@ namespace Topaz.Tests.CLI
                 "--name",
                 "test",
                 "-g",
-                "rg-test",
+                "test",
                 "--location",
                 "westeurope",
                 "--subscriptionId",
