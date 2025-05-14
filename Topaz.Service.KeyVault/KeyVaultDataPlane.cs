@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Topaz.Service.KeyVault.Models;
+using Topaz.Service.KeyVault.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -91,5 +92,25 @@ internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provide
         var secret = secrets!.LastOrDefault(s => s.Name == secretName && s.Id.EndsWith(version!));
         
         return (secret, secret == null ? HttpStatusCode.NotFound : HttpStatusCode.OK);
+    }
+
+    public (Secret[] data, HttpStatusCode code) GetSecrets(string vaultName)
+    {
+        var path = this.provider.GetKeyVaultPath(vaultName);
+        var files = Directory.EnumerateFiles(path, "*.json");
+        var secrets = new List<Secret>();
+
+        foreach (var file in files)
+        {
+            this.logger.LogDebug($"Executing {nameof(GetSecrets)}: {file}");
+            
+            var data = File.ReadAllText(file);
+            var versions = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
+            var lastVersion = versions!.Last();
+            
+            secrets.Add(lastVersion);
+        }
+        
+        return (secrets.ToArray(), HttpStatusCode.OK);
     }
 }

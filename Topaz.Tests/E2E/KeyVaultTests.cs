@@ -121,4 +121,28 @@ public class KeyVaultTests
             Assert.That(originalSecret.Value.Value, Is.EqualTo("test"));
         });
     }
+    
+    [Test]
+    public void KeyVaultTests_WhenListOfSecretsIsRequested_TheyMustBeReturned()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential();
+        var client = new SecretClient(vaultUri: new Uri(VaultUrl), credential: credentials, new SecretClientOptions()
+        {
+            DisableChallengeResourceVerification = true
+        });
+
+        // Act
+        var secret1 = client.SetSecret("secret-one", "test");
+        var secret2 = client.SetSecret("secret-two", "test");
+        var secrets = client.GetPropertiesOfSecrets().ToArray();
+        
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(secrets, Has.Length.EqualTo(2));
+            Assert.That(secrets[0].Id, Is.Not.Null);
+            Assert.That(secrets[1].Id, Is.Not.Null);
+        });
+    }
 }

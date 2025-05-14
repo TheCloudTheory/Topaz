@@ -4,6 +4,7 @@ using Topaz.Service.Shared;
 using Topaz.Shared;
 using Microsoft.AspNetCore.Http;
 using System.Net;
+using Topaz.Service.KeyVault.Models.Responses;
 
 namespace Topaz.Service.KeyVault;
 
@@ -14,7 +15,8 @@ public sealed class KeyVaultEndpoint(ILogger logger) : IEndpointDefinition
     public (int Port, Protocol Protocol) PortAndProtocol => (8898, Protocol.Https);
 
     public string[] Endpoints => [
-        "/{vaultName}/secrets/{secretName}"
+        "/{vaultName}/secrets/{secretName}",
+        "/{vaultName}/secrets/",
     ];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
@@ -46,11 +48,16 @@ public sealed class KeyVaultEndpoint(ILogger logger) : IEndpointDefinition
             {
                 var vaultName = path.ExtractValueFromPath(1);
                 var secretName = path.ExtractValueFromPath(3);
-                var version = path.ExtractValueFromPath(4);
-                var (data, code) = this.dataPlane.GetSecret(vaultName!, secretName!, version);
 
-                response.StatusCode = code;
-                response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+                if (vaultName == null) throw new InvalidOperationException();
+                if (string.IsNullOrEmpty(secretName))
+                {
+                    HandleGetSecretsRequest(vaultName, response);
+                }
+                else
+                {
+                    HandleGetSecretRequest(path, vaultName, secretName, response);
+                }
             }
         }
         catch(Exception ex)
@@ -64,6 +71,37 @@ public sealed class KeyVaultEndpoint(ILogger logger) : IEndpointDefinition
         }
         
         return response;
+    }
+
+    private void HandleGetSecretsRequest(string vaultName, HttpResponseMessage response)
+    {
+        var (data, code) = this.dataPlane.GetSecrets(vaultName);
+        var content = new GetSecretsResponse()
+        {
+            Value = data.Select(s => new GetSecretsResponse.Secret()
+            {
+                Id = s.Id,
+                Attributes = new GetSecretsResponse.Secret.SecretAttributes()
+                {
+                    Created = s.Attributes.Created,
+                    Enabled =  s.Attributes.Enabled,
+                    Updated = s.Attributes.Updated
+                },
+                ContentType = "plainText" // TODO: Add support for setting this value
+            }).ToArray(),
+        };
+        
+        response.StatusCode = code;
+        response.Content = JsonContent.Create(content, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+    }
+
+    private void HandleGetSecretRequest(string path, string vaultName, string? secretName, HttpResponseMessage response)
+    {
+        var version = path.ExtractValueFromPath(4);
+        var (data, code) = this.dataPlane.GetSecret(vaultName, secretName!, version);
+
+        response.StatusCode = code;
+        response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
     }
 
     /// <summary>

@@ -103,6 +103,7 @@ public class Host(ILogger logger)
                         var path = context.Request.Path.ToString();
                         var method = context.Request.Method;
                         var query = context.Request.QueryString;
+                        var port = context.Request.Host.Port;
 
                         if (method == null)
                         {
@@ -116,7 +117,7 @@ public class Host(ILogger logger)
 
                         IEndpointDefinition? endpoint = null;
                         var pathParts = path.Split('/');
-                        foreach (var httpEndpoint in httpEndpoints)
+                        foreach (var httpEndpoint in httpEndpoints.Where(e => e.PortAndProtocol.Port == port))
                         {
                             foreach (var endpointUrl in httpEndpoint.Endpoints)
                             {
