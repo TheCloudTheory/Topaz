@@ -93,7 +93,7 @@ public class EventHubTests
     {
         // Arrange
         var producer = new EventHubProducerClient(
-            "Endpoint=sb://localhost:8898;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;",
+            "Endpoint=sb://localhost:8888;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;",
             "eh-test");
         
         // Act
