@@ -6,7 +6,7 @@ namespace Topaz.Service.Shared;
 
 public abstract class ResourceProviderBase<TService> where TService : IServiceDefinition
 {
-    protected const string BaseEmulatorPath = ".abazure";
+    protected const string BaseEmulatorPath = ".topaz";
     private readonly ILogger logger;
     
     protected ResourceProviderBase(ILogger logger)

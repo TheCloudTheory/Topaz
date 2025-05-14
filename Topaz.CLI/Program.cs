@@ -74,11 +74,11 @@ internal class Program
 
     private static void CreateLocalDirectoryForEmulator()
     {
-        const string emulatorPath = ".abazure";
+        const string emulatorPath = ".topaz";
         if(Directory.Exists(emulatorPath)) return;
         
         Console.WriteLine("Creating local directory for emulator...");
 
-        Directory.CreateDirectory(".abazure");
+        Directory.CreateDirectory(".topaz");
     }
 }

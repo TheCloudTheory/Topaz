@@ -100,7 +100,7 @@ public class KeyVaultTests
     {
         // Arrange
         var credentials = new AzureLocalCredential();
-        var client = new SecretClient(vaultUri: new Uri(VaultUrl), credential: credentials, new SecretClientOptions()
+        var client = new SecretClient(vaultUri: new Uri("https://localhost:8898/test"), credential: credentials, new SecretClientOptions()
         {
             DisableChallengeResourceVerification = true
         });

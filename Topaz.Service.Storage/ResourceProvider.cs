@@ -7,7 +7,7 @@ internal sealed class ResourceProvider(ILogger logger) : ResourceProviderBase<Az
 {
     internal bool CheckIfStorageAccountExists(string name)
     {
-        var accountPath = Path.Combine(".abazure", AzureStorageService.LocalDirectoryPath, name);
+        var accountPath = Path.Combine(".topaz", AzureStorageService.LocalDirectoryPath, name);
         return Directory.Exists(accountPath);
     }
 }

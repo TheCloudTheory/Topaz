@@ -10,7 +10,7 @@ public class ResourceGroupTests
 {
     private static readonly ArmClientOptions armClientOptions = new ArmClientOptions
     {
-        Environment = new ArmEnvironment(new Uri("https://localhost:8900"), "https://localhost:8900")
+        Environment = new ArmEnvironment(new Uri("https://localhost:8899"), "https://localhost:8899")
     };
 
     [SetUp]
