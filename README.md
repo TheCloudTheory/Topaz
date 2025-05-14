@@ -32,3 +32,41 @@ The differences between the emulator and the actual service.
 
 ### Table Service
 * `Update` and `Merge` operations are performed in the same way, i.e. emulator always replaces an entity, even if `Merge` is requested
+
+## Detailed support (REST APIs)
+
+### Table Service
+Service Name|Operation|Is supported?|Remarks
+------------|---------|-------------|-------|
+Table Service|Set Table Service Properties|:x:|-
+Table Service|Get Table Service Properties|✅|-
+Table Service|Preflight Table Request|:x:|-
+Table Service|Get Table Service Stats|:x:|-
+Table Service|Query Tables|✅|Doesn't include limitations for queries
+Table Service|Create Table|✅|-
+Table Service|Delete Table|✅|In emulator deletion is immediate so no HTTP 409 is likely to happen
+Table Service|Get Table ACL|:x:|-
+Table Service|Set Table ACL|:x:|-
+Table Service|Query Entities|✅|Doesn't support OData parameters
+Table Service|Insert Entity|✅|-
+Table Service|Update Entity|✅|-
+Table Service|Merge Entity|✅|-
+Table Service|Delete Entity|✅|-
+Table Service|Insert Or Replace Entity|✅|-
+Table Service|Insert Or Merge Entity|✅|-
+
+### Key Vault
+Service Name|Operation|Is supported?|Remarks
+------------|---------|-------------|-------|
+Key Vault|Backup Secret|:x:|-
+Key Vault|Delete Secret|:x:|-
+Key Vault|Get Deleted Secret|:x:|-
+Key Vault|Get Deleted Secrets|:x:|-
+Key Vault|Get Secret|✅|-
+Key Vault|Get Secret Versions|:x:|-
+Key Vault|Get Secrets|:x:|-
+Key Vault|Purge Deleted Secret|:x:|-
+Key Vault|Recover Deleted Secret|:x:|-
+Key Vault|Restore Secret|:x:|-
+Key Vault|Set Secret|✅|-
+Key Vault|Update Secret|:x:|-
