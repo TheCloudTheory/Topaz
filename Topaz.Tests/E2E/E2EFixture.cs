@@ -7,7 +7,8 @@ public class E2EFixture
     public async Task SetUp()
     {
         await Program.Main([
-                "start"
+                "start",
+                "--log-level=Information",
             ]);
 
         await Task.Delay(1000);
