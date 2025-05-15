@@ -4,7 +4,7 @@ namespace Topaz.Shared;
 
 public sealed class PrettyLogger : ILogger
 {
-    private LogLevel level = LogLevel.Information;
+    public LogLevel LogLevel { get; private set; } = LogLevel.Information;
 
     public void LogInformation(string message)
     {
@@ -23,12 +23,12 @@ public sealed class PrettyLogger : ILogger
 
     public void SetLoggingLevel(LogLevel logLevel)
     {
-        this.level = logLevel;
+        LogLevel = logLevel;
     }
 
     private void Log(string message, LogLevel logLevel, Exception? exception = null)
     {
-        if (this.level > logLevel) return;
+        if (LogLevel > logLevel) return;
         
         var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
 

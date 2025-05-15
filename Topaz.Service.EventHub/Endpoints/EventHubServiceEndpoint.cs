@@ -12,8 +12,8 @@ public sealed class EventHubServiceEndpoint(ILogger logger) : IEndpointDefinitio
     private readonly ILogger logger = logger;
     private readonly EventHubControlPlane controlPlane = new EventHubControlPlane(new ResourceProvider(logger), logger);
     public string[] Endpoints => [
-        "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
-        "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
+        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}"
     ];
     public (int Port, Protocol Protocol) PortAndProtocol => (8899, Protocol.Https);
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)

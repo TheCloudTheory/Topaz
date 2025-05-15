@@ -15,8 +15,12 @@ public sealed class KeyVaultEndpoint(ILogger logger) : IEndpointDefinition
     public (int Port, Protocol Protocol) PortAndProtocol => (8898, Protocol.Https);
 
     public string[] Endpoints => [
-        "/{vaultName}/secrets/{secretName}",
-        "/{vaultName}/secrets/",
+        "PUT /{vaultName}/secrets/{secretName}",
+        "GET /{vaultName}/secrets/{secretName}",
+        "GET /{vaultName}/secrets/{secretName}/",
+        "GET /{vaultName}/secrets/{secretName}/{secretVersion}",
+        "DELETE /{vaultName}/secrets/{secretName}",
+        "GET /{vaultName}/secrets/",
     ];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)

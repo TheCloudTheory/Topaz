@@ -13,7 +13,10 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ILogger logger) : 
     private readonly ResourceGroupControlPlane controlPlane = new(provider);
     public (int Port, Protocol Protocol) PortAndProtocol => (8899, Protocol.Https);
 
-    public string[] Endpoints => ["/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}"];
+    public string[] Endpoints => [
+        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}",
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}"
+    ];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
     {

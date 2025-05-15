@@ -21,10 +21,13 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
     public (int Port, Protocol Protocol) PortAndProtocol => (8890, Protocol.Http);
 
     public string[] Endpoints => [
-        "/storage/{storageAccountName}/Tables",
-        @"/storage/{storageAccountName}/^Tables\('.*?'\)$",
-        "/storage/{storageAccountName}/{tableName}",
-        "/storage/{storageAccountName}/",
+        "GET /storage/{storageAccountName}/Tables",
+        "POST /storage/{storageAccountName}/Tables",
+        //"PUT /storage/{storageAccountName}/Tables",
+        @"DELETE /storage/{storageAccountName}/^Tables\('.*?'\)$",
+        "POST /storage/{storageAccountName}/{tableName}",
+        "GET /storage/{storageAccountName}/{tableName}",
+        "GET /storage/{storageAccountName}/",
     ];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)

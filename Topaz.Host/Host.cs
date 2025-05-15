@@ -59,9 +59,13 @@ public class Host(ILogger logger)
             
             listener.RegisterRequestProcessor("$cbs", new CbsProcessor());
             listener.RegisterLinkProcessor(new LinkProcessor());
-            
-            Trace.TraceLevel = TraceLevel.Frame;
-            Trace.TraceListener = (l, f, a) => Console.WriteLine(DateTime.Now.ToString("[hh:mm:ss.fff]") + " " + string.Format(f, a));
+
+            // Frame traces should be enabled only if LogLevel is set to Debug
+            if (this.logger.LogLevel == LogLevel.Debug)
+            {
+                Trace.TraceLevel = TraceLevel.Frame;
+                Trace.TraceListener = (l, f, a) => Console.WriteLine(DateTime.Now.ToString("[hh:mm:ss.fff]") + " " + string.Format(f, a));
+            }
             
             threads.Add(new Thread(() => listener.Open()));
             threads.Last().Start();
@@ -157,7 +161,13 @@ public class Host(ILogger logger)
                         {
                             foreach (var endpointUrl in httpEndpoint.Endpoints)
                             {
-                                var endpointParts = endpointUrl.Split('/');
+                                var methodAndPath = endpointUrl.Split(" ");
+                                var endpointMethod = methodAndPath[0];
+                                var endpointPath = methodAndPath[1];
+                                
+                                if(method != endpointMethod) continue;
+                                
+                                var endpointParts = endpointPath.Split('/');
                                 if (endpointParts.Length != pathParts.Length) continue;
 
                                 for (var i = 0; i < endpointParts.Length; i++)
