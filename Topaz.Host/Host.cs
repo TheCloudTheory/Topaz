@@ -3,19 +3,18 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using Amqp;
-using Amqp.Framing;
 using Amqp.Listener;
 using Amqp.Types;
 using Topaz.Service.KeyVault;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
-using Topaz.Service.Storage;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using Topaz.Host.AMQP;
 using Topaz.Service.EventHub;
 using Topaz.Service.Storage.Services;
 
@@ -67,53 +66,6 @@ public class Host(ILogger logger)
             threads.Add(new Thread(() => listener.Open()));
             threads.Last().Start();
         }
-    }
-    
-    public class LinkProcessor : ILinkProcessor
-    {
-        public void Process(AttachContext attachContext)
-        {
-            attachContext.Attach.MaxMessageSize = 262144;
-            attachContext.Complete(new IncomingLinkEndpoint(), 300);
-        }
-    }
-    
-    class IncomingLinkEndpoint : LinkEndpoint
-    {
-        public override void OnMessage(MessageContext messageContext)
-        {
-            // this can also be done when an async operation, if required, is done
-            messageContext.Complete();
-        }
-
-        public override void OnFlow(FlowContext flowContext)
-        {
-        }
-
-        public override void OnDisposition(DispositionContext dispositionContext)
-        {
-        }
-    }
-    
-    public class CbsProcessor : IRequestProcessor
-    {
-        public void Process(RequestContext requestContext)
-        {
-            var id = Message.Decode(requestContext.Message.Encode()).Properties.MessageId;
-            var p = new ApplicationProperties
-            {
-                Map =
-                {
-                    ["status-code"] = 202,
-                    ["status-description"] = "Accepted"
-                }
-            };
-            var reply = new Message() { Properties = new Properties { CorrelationId = id }, ApplicationProperties = p };
-            
-            requestContext.Complete(reply);
-        }
-
-        public int Credit => 10;
     }
 
     private void ExtractEndpointsForProtocols(IServiceDefinition[] services, List<IEndpointDefinition> httpEndpoints, Protocol[] protocols)
