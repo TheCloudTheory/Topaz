@@ -23,9 +23,9 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
     public string[] Endpoints => [
         "GET /storage/{storageAccountName}/Tables",
         "POST /storage/{storageAccountName}/Tables",
-        //"PUT /storage/{storageAccountName}/Tables",
         @"DELETE /storage/{storageAccountName}/^Tables\('.*?'\)$",
         "POST /storage/{storageAccountName}/{tableName}",
+        "PUT /storage/{storageAccountName}/{tableName}",
         "GET /storage/{storageAccountName}/{tableName}",
         "GET /storage/{storageAccountName}/",
     ];
