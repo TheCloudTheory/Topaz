@@ -55,6 +55,37 @@ Table Service|Delete Entity|✅|-
 Table Service|Insert Or Replace Entity|✅|-
 Table Service|Insert Or Merge Entity|✅|-
 
+### Blob Service
+Service Name|Operation|Is supported?|Remarks
+------------|---------|-------------|-------|
+Blob Service|List Containers|:x:|-
+Blob Service|Get Blob Service Properties|:x:|-
+Blob Service|Set Blob Service Properties|:x:|-
+Blob Service|Preflight Blob Request|:x:|-
+Blob Service|Get Blob Service Stats|:x:|-
+Blob Service|Get Account Information|:x:|-
+Blob Service|Get User Delegation Key|:x:|-
+Blob Service|Create Container|:x:|-
+Blob Service|Get Container Properties|:x:|-
+Blob Service|Get Container Metadata|:x:|-
+Blob Service|Set Containter Metadata|:x:|-
+Blob Service|Get Container ACL|:x:|-
+Blob Service|Set Container ACL|:x:|-
+Blob Service|Delete Container|:x:|-
+Blob Service|Lease Container|:x:|-
+Blob Service|Restore Container|:x:|-
+Blob Service|List Blobs|:x:|-
+Blob Service|Find Blobs By Tag In Container|:x:|-
+Blob Service|Put Blob|:x:|-
+Blob Service|Put Blob From URL|:x:|-
+Blob Service|Get Blob|:x:|-
+Blob Service|Get Blob Properties|:x:|-
+Blob Service|Set Blob Properties|:x:|-
+Blob Service|Get Blob Metadata|:x:|-
+Blob Service|Set Blob Metadata|:x:|-
+Blob Service|Get Blob Tags|:x:|-
+Blob Service|Set Blob Tags|:x:|-
+
 ### Key Vault
 Service Name|Operation|Is supported?|Remarks
 ------------|---------|-------------|-------|
