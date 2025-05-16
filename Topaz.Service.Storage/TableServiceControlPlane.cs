@@ -1,10 +1,13 @@
+using System.Net;
 using System.Text.Json;
 using System.Xml.Linq;
+using System.Xml.Serialization;
 using Azure.Data.Tables.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Models;
 using Topaz.Shared;
 using TableServiceProperties = Topaz.Service.Storage.Models.TableServiceProperties;
+using TableSignedIdentifier = Topaz.Service.Storage.Serialization.TableSignedIdentifier;
 
 namespace Topaz.Service.Storage;
 
@@ -64,5 +67,40 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         var properties = TableServicePropertiesSerialization.DeserializeTableServiceProperties(document.Root);
         
         return properties;
+    }
+
+    public HttpStatusCode SetAcl(string storageAccountName, string tableName, Stream input)
+    {
+        using var sr = new StreamReader(input);
+        
+        var document = XDocument.Load(input, LoadOptions.PreserveWhitespace);
+        if (document.Element("SignedIdentifiers") is {} signedIdentifiersElement)
+        {
+            var acls = signedIdentifiersElement.Elements("SignedIdentifier")
+                .Select(TableSignedIdentifier.DeserializeTableSignedIdentifier).ToList();
+
+            if (acls.Count > 5) return HttpStatusCode.BadRequest;
+
+            var aclPath = this.provider.GetTableAclPath(tableName, storageAccountName);
+
+            foreach (var acl in acls)
+            {
+                using var sw = new EncodingAwareStringWriter();
+                var serializer = new XmlSerializer(typeof(TableSignedIdentifier));
+                serializer.Serialize(sw, acl);
+                
+                // Note that per Table Service functionality, if a client wants to update
+                // ACL, they should first get it, make the changes and then set it once again.
+                // Below we follow the standard approach for Table Service, which just replaces
+                // ACLs matching the ID
+                File.WriteAllText(Path.Combine(aclPath, acl.Id + ".xml"), sw.ToString());
+            }
+        }
+        else
+        {
+            return HttpStatusCode.BadRequest;
+        }
+
+        return HttpStatusCode.NoContent;
     }
 }

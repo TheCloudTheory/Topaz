@@ -65,9 +65,24 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
 
     public void Create(string tableName, string storageAccountName, TableItem model)
     {
+        var metadataFilePath = CreateTableDirectories(tableName, storageAccountName);
+
+        this.logger.LogDebug($"Attempting to create {metadataFilePath} file.");
+
+        if(File.Exists(metadataFilePath) == true) throw new InvalidOperationException($"Metadata file for {typeof(TableStorageService)} with ID {tableName} already exists.");
+
+        var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
+        File.WriteAllText(metadataFilePath, content);
+
+        return;
+    }
+
+    private string CreateTableDirectories(string tableName, string storageAccountName)
+    {
         var metadataFile = $"metadata.json";
         var tablePath = this.GetTablePath(tableName, storageAccountName);
         var dataPath = Path.Combine(tablePath, "data");
+        var aclPath = Path.Combine(tablePath, "acl");
         var metadataFilePath = Path.Combine(tablePath, metadataFile);
 
         this.logger.LogDebug($"Attempting to create {tablePath} directory.");
@@ -79,19 +94,14 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
         {
             Directory.CreateDirectory(tablePath);
             Directory.CreateDirectory(dataPath);
+            Directory.CreateDirectory(aclPath);
+            
             this.logger.LogDebug($"Attempting to create {tablePath} directory - created!");
         }
 
-        this.logger.LogDebug($"Attempting to create {metadataFilePath} file.");
-
-        if(File.Exists(metadataFilePath) == true) throw new InvalidOperationException($"Metadata file for {typeof(TableStorageService)} with ID {tableName} already exists.");
-
-        var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
-        File.WriteAllText(metadataFilePath, content);
-
-        return;
+        return metadataFilePath;
     }
-    
+
     private string GetTablePath(string tableName, string storageAccountName)
     {
         return Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath, tableName);
@@ -101,10 +111,10 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
     {
         return Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath, tableName, "data");
     }
-    
-    public string GetTableServicePath(string storageAccountName)
+
+    public string GetTableAclPath(string tableName, string storageAccountName)
     {
-        return Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath);
+        return Path.Combine(this.GetTablePath(tableName, storageAccountName), "acl");
     }
 
     public bool CheckIfTableExists(string tableName, string storageAccountName)

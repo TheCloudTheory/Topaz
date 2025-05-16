@@ -28,6 +28,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
         "PUT /storage/{storageAccountName}/{tableName}",
         "GET /storage/{storageAccountName}/{tableName}",
         "GET /storage/{storageAccountName}/",
+        "PUT /storage/{storageAccountName}/{tableName}",
     ];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
@@ -191,33 +192,14 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                 var matches = Regex.Match(actualPath, @"\w+\(PartitionKey='\w+',RowKey='\w+'\)$", RegexOptions.IgnoreCase);
                 if(matches.Length > 0)
                 {
-                    this.logger.LogDebug("Matched the update operation.");
-
-                    var (TableName, PartitionKey, RowKey) = GetOperationDataForUpdateOperation(matches);
-
-                    try
-                    {
-                        this.dataPlane.UpdateEntity(input, TableName, storageAccountName, PartitionKey, RowKey, headers);
-
-                        response.StatusCode = System.Net.HttpStatusCode.NoContent;
-                    }
-                    catch(EntityNotFoundException)
-                    {
-                        var error = new ErrorResponse("EntityNotFound", "Entity not found.");
-
-                        response.StatusCode = System.Net.HttpStatusCode.NotFound;
-                        response.Headers.Add("x-ms-error-code", "EntityNotFound");
-                        response.Content = JsonContent.Create(error);
-                    }
-                    catch(UpdateConditionNotSatisfiedException)
-                    {
-                        var error = new ErrorResponse("UpdateConditionNotSatisfied", "The update condition specified in the request was not satisfied.");
-
-                        response.StatusCode = System.Net.HttpStatusCode.PreconditionFailed;
-                        response.Headers.Add("x-ms-error-code", "UpdateConditionNotSatisfied");
-                        response.Content = JsonContent.Create(error);
-                    }
-                    
+                    HandleUpdateEntityRequest(input, headers, matches, storageAccountName, response);
+                    return response;
+                }
+                
+                var parsedQuery = HttpUtility.ParseQueryString(query.ToString());
+                if (parsedQuery.AllKeys.Contains("comp") && parsedQuery["comp"] == "acl")
+                {
+                    HandleSetAclRequest(storageAccountName, actualPath, input, response);
                     return response;
                 }
                 
@@ -269,6 +251,45 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
         }
 
         throw new NotSupportedException();
+    }
+
+    private void HandleSetAclRequest(string storageAccountName, string tableName, Stream input, HttpResponseMessage response)
+    {
+        this.logger.LogDebug($"Executing {nameof(HandleSetAclRequest)}.");
+        
+        var code = this.controlPlane.SetAcl(storageAccountName, tableName, input);
+        response.StatusCode = code;
+    }
+
+    private void HandleUpdateEntityRequest(Stream input, IHeaderDictionary headers, Match matches,
+        string storageAccountName, HttpResponseMessage response)
+    {
+        this.logger.LogDebug("Matched the update operation.");
+
+        var (tableName, partitionKey, rowKey) = GetOperationDataForUpdateOperation(matches);
+
+        try
+        {
+            this.dataPlane.UpdateEntity(input, tableName, storageAccountName, partitionKey, rowKey, headers);
+
+            response.StatusCode = System.Net.HttpStatusCode.NoContent;
+        }
+        catch(EntityNotFoundException)
+        {
+            var error = new ErrorResponse("EntityNotFound", "Entity not found.");
+
+            response.StatusCode = System.Net.HttpStatusCode.NotFound;
+            response.Headers.Add("x-ms-error-code", "EntityNotFound");
+            response.Content = JsonContent.Create(error);
+        }
+        catch(UpdateConditionNotSatisfiedException)
+        {
+            var error = new ErrorResponse("UpdateConditionNotSatisfied", "The update condition specified in the request was not satisfied.");
+
+            response.StatusCode = System.Net.HttpStatusCode.PreconditionFailed;
+            response.Headers.Add("x-ms-error-code", "UpdateConditionNotSatisfied");
+            response.Content = JsonContent.Create(error);
+        }
     }
 
     private void HandleGetTablePropertiesRequest(string storageAccountName, HttpResponseMessage response, QueryString query)

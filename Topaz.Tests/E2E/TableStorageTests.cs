@@ -1,5 +1,6 @@
 using Azure;
 using Azure.Data.Tables;
+using Azure.Data.Tables.Models;
 
 namespace Topaz.Tests.E2E
 {
@@ -458,6 +459,27 @@ namespace Topaz.Tests.E2E
             
             // Assert
             Assert.That(properties, Is.Not.Null);
+        }
+        
+        [Test]
+        public void TableStorageTests_WhenTableACLsAreRequested_TheyMustBeReturned()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(ConnectionString);
+            tableServiceClient.CreateTable("testtable");
+
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+            
+            // Act
+            tableClient.SetAccessPolicy([
+                new TableSignedIdentifier("some_id",
+                    new TableAccessPolicy(DateTimeOffset.Now, DateTimeOffset.Now.AddHours(1), "raud"))
+            ]);
+            var acls = tableClient.GetAccessPolicies();
+            
+            // Assert
+            Assert.That(acls, Is.Not.Null);
+            Assert.That(acls.Value.Count, Has.Exactly(1).Items);
         }
 
         private class TestEntity : ITableEntity
