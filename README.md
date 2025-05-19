@@ -45,7 +45,7 @@ Table Service|Get Table Service Stats|:x:|-
 Table Service|Query Tables|✅|Doesn't include limitations for queries
 Table Service|Create Table|✅|-
 Table Service|Delete Table|✅|In emulator deletion is immediate so no HTTP 409 is likely to happen
-Table Service|Get Table ACL|:x:|-
+Table Service|Get Table ACL|✅|-
 Table Service|Set Table ACL|✅|-
 Table Service|Query Entities|✅|Doesn't support OData parameters
 Table Service|Insert Entity|✅|-

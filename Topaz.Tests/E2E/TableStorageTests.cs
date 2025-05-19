@@ -479,7 +479,8 @@ namespace Topaz.Tests.E2E
             
             // Assert
             Assert.That(acls, Is.Not.Null);
-            Assert.That(acls.Value.Count, Has.Exactly(1).Items);
+            Assert.That(acls.Value, Has.Count.EqualTo(1));
+            Assert.That(acls.Value[0].Id, Is.EqualTo("some_id"));
         }
 
         private class TestEntity : ITableEntity

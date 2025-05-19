@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Exceptions;
 using Topaz.Service.Storage.Models;
+using Topaz.Service.Storage.Serialization;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints;
@@ -58,6 +60,12 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                         HandleGetTablesRequest(storageAccountName, response);
                         break;
                     default:
+                        if(query.TryGetValueForKey("comp", out var comp) && comp == "acl")
+                        {
+                            HandleGetAclRequest(storageAccountName, actualPath, response);
+                            return response;
+                        }
+                        
                         var potentialTableName = actualPath.Replace("()", string.Empty);
                         if(IsPathReferencingTable(potentialTableName, storageAccountName))
                         {
@@ -196,8 +204,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                     return response;
                 }
                 
-                var parsedQuery = HttpUtility.ParseQueryString(query.ToString());
-                if (parsedQuery.AllKeys.Contains("comp") && parsedQuery["comp"] == "acl")
+                if(query.TryGetValueForKey("comp", out var comp) && comp == "acl")
                 {
                     HandleSetAclRequest(storageAccountName, actualPath, input, response);
                     return response;
@@ -251,6 +258,20 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
         }
 
         throw new NotSupportedException();
+    }
+
+    private void HandleGetAclRequest(string storageAccountName, string tableName, HttpResponseMessage response)
+    {
+        this.logger.LogDebug($"Executing {nameof(HandleGetAclRequest)}.");
+        
+        var acls = this.controlPlane.GetAcl(storageAccountName, tableName);
+        
+        using var sw = new EncodingAwareStringWriter();
+        var serializer = new XmlSerializer(typeof(SignedIdentifiers));
+        serializer.Serialize(sw, acls);
+        
+        response.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/xml");
+        response.StatusCode = HttpStatusCode.OK;
     }
 
     private void HandleSetAclRequest(string storageAccountName, string tableName, Stream input, HttpResponseMessage response)

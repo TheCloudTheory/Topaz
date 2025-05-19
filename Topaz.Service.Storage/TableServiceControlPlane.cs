@@ -5,6 +5,7 @@ using System.Xml.Serialization;
 using Azure.Data.Tables.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Models;
+using Topaz.Service.Storage.Serialization;
 using Topaz.Shared;
 using TableServiceProperties = Topaz.Service.Storage.Models.TableServiceProperties;
 using TableSignedIdentifier = Topaz.Service.Storage.Serialization.TableSignedIdentifier;
@@ -73,15 +74,15 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
     {
         using var sr = new StreamReader(input);
         
+        var aclPath = this.provider.GetTableAclPath(tableName, storageAccountName);
         var document = XDocument.Load(input, LoadOptions.PreserveWhitespace);
+        
         if (document.Element("SignedIdentifiers") is {} signedIdentifiersElement)
         {
             var acls = signedIdentifiersElement.Elements("SignedIdentifier")
                 .Select(TableSignedIdentifier.DeserializeTableSignedIdentifier).ToList();
 
             if (acls.Count > 5) return HttpStatusCode.BadRequest;
-
-            var aclPath = this.provider.GetTableAclPath(tableName, storageAccountName);
 
             foreach (var acl in acls)
             {
@@ -102,5 +103,19 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         }
 
         return HttpStatusCode.NoContent;
+    }
+
+    public SignedIdentifiers GetAcl(string storageAccountName, string tableName)
+    {
+        var aclPath = this.provider.GetTableAclPath(tableName, storageAccountName);
+        var files = Directory.EnumerateFiles(aclPath, "*.xml", SearchOption.TopDirectoryOnly);
+
+        using var sw = new EncodingAwareStringWriter();
+        var serializer = new XmlSerializer(typeof(TableSignedIdentifier));
+
+        var acls = files.Select(file => (TableSignedIdentifier)serializer.Deserialize(File.OpenRead(file))!).ToList();
+        var response = new SignedIdentifiers(acls.ToArray());
+
+        return response;
     }
 }
