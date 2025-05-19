@@ -34,6 +34,7 @@ public class Host(ILogger logger)
             new SubscriptionService(this.logger),
             new KeyVaultService(this.logger),
             new EventHubService(this.logger),
+            new BlobStorageService(this.logger)
         };
         
         var httpEndpoints = new List<IEndpointDefinition>();

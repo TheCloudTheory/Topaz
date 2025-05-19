@@ -10,7 +10,5 @@ public sealed class AzureStorageService(ILogger logger) : IServiceDefinition
 
     public string Name => "Azure Storage";
 
-    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new BlobEndpoint()
-    ];
+    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [];
 }

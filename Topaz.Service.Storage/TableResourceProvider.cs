@@ -65,6 +65,8 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
 
     public void Create(string tableName, string storageAccountName, TableItem model)
     {
+        InitializeServiceDirectory(storageAccountName);
+        
         var metadataFilePath = CreateTableDirectories(tableName, storageAccountName);
 
         this.logger.LogDebug($"Attempting to create {metadataFilePath} file.");

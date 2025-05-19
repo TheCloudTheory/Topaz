@@ -5,17 +5,12 @@ using Topaz.Service.Storage.Models;
 using Topaz.Shared;
 using Microsoft.AspNetCore.Http;
 using Azure;
+using Topaz.Service.Shared;
 
 namespace Topaz.Service.Storage;
 
 internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlane, ILogger logger)
 {
-    private readonly static JsonSerializerOptions options = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        WriteIndented = true
-    };
-
     private readonly TableServiceControlPlane controlPlane = controlPlane;
     private readonly ILogger logger = logger;
 
@@ -28,7 +23,7 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
         using var sr = new StreamReader(input);
 
         var rawContent = sr.ReadToEnd();
-        var metadata = JsonSerializer.Deserialize<GenericTableEntity>(rawContent, options) ?? throw new Exception();
+        var metadata = JsonSerializer.Deserialize<GenericTableEntity>(rawContent, GlobalSettings.JsonOptions) ?? throw new Exception();
 
         this.logger.LogDebug($"Executing {nameof(InsertEntity)}: Inserting {rawContent}.");
 
@@ -71,7 +66,7 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
         var files = Directory.EnumerateFiles(path);
         var entities = files.Select(e => {
             var content = File.ReadAllText(e);
-            return JsonSerializer.Deserialize<object>(content, options);
+            return JsonSerializer.Deserialize<object>(content, GlobalSettings.JsonOptions);
         }).ToArray();
 
         return entities; 
@@ -103,7 +98,7 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
         if(etag != "*")
         {
             var file = File.ReadAllText(entityPath);
-            var currentData = JsonSerializer.Deserialize<GenericTableEntity>(file, options) ?? 
+            var currentData = JsonSerializer.Deserialize<GenericTableEntity>(file, GlobalSettings.JsonOptions) ?? 
                 throw new Exception("Cannot proceed if entity data is null.");
             if (currentData.ETag.ToString() != etag) throw new UpdateConditionNotSatisfiedException();
         }
