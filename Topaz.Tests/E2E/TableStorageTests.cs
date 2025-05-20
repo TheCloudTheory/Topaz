@@ -171,7 +171,7 @@ namespace Topaz.Tests.E2E
             });
 
             // Assert
-            var entities = tableClient.Query<TestEntity>("PartitionKey eq 'test'").ToArray();
+            var entities = tableClient.Query<TestEntity>("PartitionKey eq 'test'").OrderBy(e => e.RowKey).ToArray();
 
             Assert.That(entities, Has.Length.EqualTo(3));
             Assert.Multiple(() =>
