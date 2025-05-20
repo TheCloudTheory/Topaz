@@ -1,5 +1,9 @@
+using System.Net;
+using System.Text;
+using System.Xml.Serialization;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
+using Topaz.Service.Storage.Serialization;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints;
@@ -14,7 +18,8 @@ public class BlobEndpoint(ILogger logger) : IEndpointDefinition
     public (int Port, Protocol Protocol) PortAndProtocol => (8891, Protocol.Http);
 
     public string[] Endpoints => [
-        "PUT /{storageAccountName}/{containerName}"
+        "PUT /{storageAccountName}/{containerName}",
+        "GET /{storageAccountName}/",
     ];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
@@ -43,6 +48,15 @@ public class BlobEndpoint(ILogger logger) : IEndpointDefinition
                     return response;
                 }
             }
+
+            if (method == "GET")
+            {
+                if(query.TryGetValueForKey("comp", out var comp) && comp == "list")
+                {
+                    HandleGetContainersRequest(storageAccountName, response);
+                    return response;
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -53,6 +67,18 @@ public class BlobEndpoint(ILogger logger) : IEndpointDefinition
         }
 
         return response;
+    }
+
+    private void HandleGetContainersRequest(string storageAccountName, HttpResponseMessage response)
+    {
+        var containers = this.controlPlane.ListContainers(storageAccountName);
+
+        using var sw = new EncodingAwareStringWriter();
+        var serializer = new XmlSerializer(typeof(ContainerEnumerationResult));
+        serializer.Serialize(sw, containers);
+        
+        response.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/xml");
+        response.StatusCode = HttpStatusCode.OK;
     }
 
     private void HandleCreateContainerRequest(string storageAccountName, string containerName, HttpResponseMessage response)
@@ -67,7 +93,7 @@ public class BlobEndpoint(ILogger logger) : IEndpointDefinition
         this.logger.LogDebug($"Executing {nameof(GetContainerName)}: {path}");
 
         var pathParts = path.Split('/');
-        var newPath = string.Join('/', pathParts.Skip(3));
+        var newPath = string.Join('/', pathParts.Skip(2));
 
         this.logger.LogDebug($"Executing {nameof(GetContainerName)}: New path: {newPath}");
 
@@ -79,7 +105,7 @@ public class BlobEndpoint(ILogger logger) : IEndpointDefinition
         this.logger.LogDebug($"Executing {nameof(TryGetStorageAccountName)}: {path}");
 
         var pathParts = path.Split('/');
-        var accountName = pathParts[2];
+        var accountName = pathParts[1];
         name = accountName;
 
         this.logger.LogDebug($"About to check if storage account '{accountName}' exists.");

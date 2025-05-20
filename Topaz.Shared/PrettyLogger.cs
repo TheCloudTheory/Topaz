@@ -21,6 +21,11 @@ public sealed class PrettyLogger : ILogger
         Log(string.Empty, LogLevel.Error, ex);
     }
 
+    public void LogError(string message)
+    {
+        Log(message, LogLevel.Error);
+    }
+
     public void SetLoggingLevel(LogLevel logLevel)
     {
         LogLevel = logLevel;

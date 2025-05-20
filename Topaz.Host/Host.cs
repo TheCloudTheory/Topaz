@@ -209,8 +209,12 @@ public class Host(ILogger logger)
 
                         foreach (var header in response.Headers)
                         {
-                            var value = new StringValues(header.Value.ToArray());
                             context.Response.Headers.Add(header.Key, new StringValues(header.Value.ToArray()));
+                        }
+
+                        if (response.StatusCode == HttpStatusCode.InternalServerError)
+                        {
+                            this.logger.LogError(textResponse);
                         }
 
                         if(response.StatusCode != HttpStatusCode.NoContent)

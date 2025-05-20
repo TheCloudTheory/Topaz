@@ -35,7 +35,7 @@ internal sealed class BlobResourceProvider(ILogger logger) : ResourceProviderBas
     {
         InitializeServiceDirectory(storageAccountName);
         
-        var metadataFilePath = CreateTableDirectories(containerName, storageAccountName);
+        var metadataFilePath = CreateBlobDirectories(containerName, storageAccountName);
 
         this.logger.LogDebug($"Attempting to create {metadataFilePath} file.");
 
@@ -47,7 +47,7 @@ internal sealed class BlobResourceProvider(ILogger logger) : ResourceProviderBas
         return;
     }
 
-    private string CreateTableDirectories(string containerName, string storageAccountName)
+    private string CreateBlobDirectories(string containerName, string storageAccountName)
     {
         var metadataFile = $"metadata.json";
         var containerPath = this.GetContainerPath(containerName, storageAccountName);
@@ -68,6 +68,14 @@ internal sealed class BlobResourceProvider(ILogger logger) : ResourceProviderBas
         }
 
         return metadataFilePath;
+    }
+    
+    public override IEnumerable<string> List(string id)
+    {
+        InitializeServiceDirectory(id);
+
+        var servicePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, id, BlobStorageService.LocalDirectoryPath);
+        return Directory.EnumerateDirectories(servicePath);
     }
     
     private string GetContainerPath(string containerName, string storageAccountName)

@@ -58,14 +58,14 @@ Table Service|Insert Or Merge Entity|✅|-
 ### Blob Service
 Service Name|Operation|Is supported?|Remarks
 ------------|---------|-------------|-------|
-Blob Service|List Containers|:x:|-
+Blob Service|List Containers|✅|Doesn't support additional query parameters
 Blob Service|Get Blob Service Properties|:x:|-
 Blob Service|Set Blob Service Properties|:x:|-
 Blob Service|Preflight Blob Request|:x:|-
 Blob Service|Get Blob Service Stats|:x:|-
 Blob Service|Get Account Information|:x:|-
 Blob Service|Get User Delegation Key|:x:|-
-Blob Service|Create Container|:x:|-
+Blob Service|Create Container|✅|Doesn't respect access type and metadata parameters
 Blob Service|Get Container Properties|:x:|-
 Blob Service|Get Container Metadata|:x:|-
 Blob Service|Set Containter Metadata|:x:|-
