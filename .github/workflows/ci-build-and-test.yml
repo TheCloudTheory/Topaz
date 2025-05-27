@@ -53,17 +53,17 @@ jobs:
     - name: Publish macOS
       run: dotnet publish -c Release -r osx-x64 --self-contained true -o ./publish/osx-x64
     - name: Upload Windows artifact
-      uses: actions/upload-artifact@v3.1.0
+      uses: actions/upload-artifact@v4
       with:
         name: win-x64
         path: ./publish/win-x64
     - name: Upload Linux artifact
-      uses: actions/upload-artifact@v3.1.0
+      uses: actions/upload-artifact@v4
       with:
         name: linux-x64
         path: ./publish/linux-x64
     - name: Upload MacOS artifact
-      uses: actions/upload-artifact@v3.1.0
+      uses: actions/upload-artifact@v4
       with:
         name: osx-x64
         path: ./publish/osx-x64
