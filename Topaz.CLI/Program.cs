@@ -16,6 +16,8 @@ internal class Program
         try
         {
             Console.WriteLine("Topaz.CLI - Welcome!");
+            Console.WriteLine($"Version: {ThisAssembly.AssemblyInformationalVersion}");
+            Console.WriteLine("==============================");
 
             var registrations = new ServiceCollection();
             RegisterDependencies(registrations);
