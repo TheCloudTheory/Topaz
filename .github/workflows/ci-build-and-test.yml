@@ -71,3 +71,7 @@ jobs:
       with:
         name: osx-x64
         path: ./publish/osx-x64
+    - name: Stamp pipeline run with a tag
+      run: nbgv tag
+    - name: Push a tag
+      run: git push origin --tags
