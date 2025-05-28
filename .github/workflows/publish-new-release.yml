@@ -1,0 +1,25 @@
+name: Publish new release
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  packages: write
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v4.3.0
+      with:
+        run-id: ${{ github.event.workflow_run.id }}
+    - uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        prerelease: true
+        files: |
+          *.zip
