@@ -62,6 +62,7 @@ internal class Program
                 branch.AddBranch("table", account =>
                 {
                     account.AddCommand<CreateTableCommand>("create");
+                    account.AddCommand<DeleteTableCommand>("delete");
                 });
             });    
 

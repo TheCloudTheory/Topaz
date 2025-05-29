@@ -6,21 +6,21 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
-public sealed class CreateTableCommand(ILogger logger) : Command<CreateTableCommand.CreateTableCommandSettings>
+public sealed class DeleteTableCommand(ILogger logger) : Command<DeleteTableCommand.DeleteTableCommandSettings>
 {
-    public override int Execute(CommandContext context, CreateTableCommandSettings settings)
+    public override int Execute(CommandContext context, DeleteTableCommandSettings settings)
     {
-        logger.LogInformation("Creating table...");
+        logger.LogInformation($"Deleting table {settings.Name}...");
 
         var rp = new TableServiceControlPlane(new TableResourceProvider(logger), logger);
-        var sa = rp.CreateTable(settings.Name, settings.AccountName);
+        rp.DeleteTable(settings.Name, settings.AccountName);
 
-        logger.LogInformation($"Table created: {sa!}");
+        logger.LogInformation("Table deleted.");
 
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateTableCommandSettings settings)
+    public override ValidationResult Validate(CommandContext context, DeleteTableCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
         {
@@ -33,11 +33,10 @@ public sealed class CreateTableCommand(ILogger logger) : Command<CreateTableComm
     }
 
     [UsedImplicitly]
-    public sealed class CreateTableCommandSettings : CommandSettings
+    public sealed class DeleteTableCommandSettings : CommandSettings
     {
         [CommandOption("-n|--name")] public string Name { get; set; } = null!;
 
         [CommandOption("--account-name")] public string AccountName { get; set; } = null!;
-
     }
 }

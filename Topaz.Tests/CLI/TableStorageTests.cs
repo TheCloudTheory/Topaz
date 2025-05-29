@@ -81,4 +81,32 @@ public class TableStorageTests
 
         Assert.That(File.Exists(tableDirectoryPath), Is.True);
     }
+    
+    [Test]
+    public async Task TableStorageTests_WhenNewTableIsDeleted_ItShouldBeDeleted()
+    {
+        var tableDirectoryPath = Path.Combine(".topaz", ".azure-storage", "test", ".table", "test", "metadata.json");
+        
+        await Program.Main([
+            "storage",
+            "table",
+            "create",
+            "--name",
+            "test",
+            "--account-name",
+            "test"
+        ]);
+        
+        await Program.Main([
+            "storage",
+            "table",
+            "delete",
+            "--name",
+            "test",
+            "--account-name",
+            "test"
+        ]);
+
+        Assert.That(File.Exists(tableDirectoryPath), Is.False);
+    }
 }
