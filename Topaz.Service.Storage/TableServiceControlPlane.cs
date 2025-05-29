@@ -5,6 +5,7 @@ using System.Xml.Serialization;
 using Azure.Data.Tables.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Models;
+using Topaz.Service.Storage.Models.Responses;
 using Topaz.Service.Storage.Serialization;
 using Topaz.Shared;
 using TableServiceProperties = Topaz.Service.Storage.Models.TableServiceProperties;
@@ -39,6 +40,18 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         this.provider.Create(content.TableName, storageAccountName, model);
 
         return model;
+    }
+
+    public CreateTableResponse CreateTable(string tableName, string storageAccountName)
+    {
+        var model = new TableItem(tableName);;
+
+        this.provider.Create(tableName, storageAccountName, model);
+
+        return new CreateTableResponse()
+        {
+            Name = model.Name
+        };
     }
 
     public void DeleteTable(string tableName, string storageAccountName)

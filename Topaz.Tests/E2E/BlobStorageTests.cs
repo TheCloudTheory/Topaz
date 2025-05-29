@@ -29,6 +29,7 @@ public class BlobStorageTests
 
         await Program.Main([
             "storage",
+            "account",
             "delete",
             "--name",
             "devstoreaccount1"
@@ -54,6 +55,7 @@ public class BlobStorageTests
 
         await Program.Main([
             "storage",
+            "account",
             "create",
             "--name",
             "devstoreaccount1",

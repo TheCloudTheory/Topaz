@@ -43,6 +43,7 @@ namespace Topaz.Tests.CLI
 
             await Program.Main([
                 "storage",
+                "account",
                 "delete",
                 "--name",
                 "test"
@@ -50,6 +51,7 @@ namespace Topaz.Tests.CLI
 
             await Program.Main([
                 "storage",
+                "account",
                 "create",
                 "--name",
                 "test",
@@ -77,6 +79,7 @@ namespace Topaz.Tests.CLI
 
             await Program.Main([
                 "storage",
+                "account",
                 "delete",
                 "--name",
                 "test"

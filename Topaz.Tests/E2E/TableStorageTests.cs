@@ -31,6 +31,7 @@ namespace Topaz.Tests.E2E
 
             await Program.Main([
                 "storage",
+                "account",
                 "delete",
                 "--name",
                 "devstoreaccount1"
@@ -56,6 +57,7 @@ namespace Topaz.Tests.E2E
 
             await Program.Main([
                 "storage",
+                "account",
                 "create",
                 "--name",
                 "devstoreaccount1",
