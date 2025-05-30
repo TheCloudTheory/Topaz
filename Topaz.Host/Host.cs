@@ -170,19 +170,30 @@ public class Host(ILogger logger)
                                 if(method != endpointMethod) continue;
                                 
                                 var endpointParts = endpointPath.Split('/');
-                                if (endpointParts.Length != pathParts.Length) continue;
+                                if (endpointParts.Length != pathParts.Length && IsEndpointWithDynamicRouting(endpointParts) == false) continue;
 
-                                for (var i = 0; i < endpointParts.Length; i++)
+                                if (IsEndpointWithDynamicRouting(endpointParts))
                                 {
-                                    if (endpointParts[i].StartsWith('{') && endpointParts[i].EndsWith('}')) continue;
-                                    if (MatchesRegexExpressionForEndpoint(endpointParts[i], pathParts[i])) continue;
-                                    if (string.Equals(endpointParts[i], pathParts[i], StringComparison.InvariantCultureIgnoreCase) == false)
+                                    foreach (var part in endpointParts)
                                     {
-                                        endpoint = null; // We need to reset the endpoint as it doesn't look correct now
-                                        continue;
+                                        if (part.StartsWith('{') && part.EndsWith('}')) continue;
+                                        if (part.Equals("...")) endpoint = httpEndpoint;
                                     }
+                                }
+                                else
+                                {
+                                    for (var i = 0; i < endpointParts.Length; i++)
+                                    {
+                                        if (endpointParts[i].StartsWith('{') && endpointParts[i].EndsWith('}')) continue;
+                                        if (MatchesRegexExpressionForEndpoint(endpointParts[i], pathParts[i])) continue;
+                                        if (string.Equals(endpointParts[i], pathParts[i], StringComparison.InvariantCultureIgnoreCase) == false)
+                                        {
+                                            endpoint = null; // We need to reset the endpoint as it doesn't look correct now
+                                            continue;
+                                        }
 
-                                    endpoint = httpEndpoint;
+                                        endpoint = httpEndpoint;
+                                    }
                                 }
 
                                 // If we have endpoint assigned after validating the URL, we don't need to process other endpoints
@@ -240,6 +251,19 @@ public class Host(ILogger logger)
     }
 
     /// <summary>
+    /// Checks if the provided endpoint allows dynamic routing. Dynamic routing is a concept
+    /// when endpoint accepts multiple paths which point to a specific resource. An example
+    /// of such an endpoint is UploadBlob endpoint for Blob Storage where path will differ depending
+    /// on the blob location.
+    /// </summary>
+    /// <param name="endpointParts">An array of parts of the endpoint.</param>
+    /// <returns>True if dynamic routing is allowed.</returns>
+    private bool IsEndpointWithDynamicRouting(string[] endpointParts)
+    {
+        return endpointParts.Contains("...");
+    }
+
+    /// <summary>
     /// Determines whether a given path segment matches a specified endpoint segment using a regular expression.
     /// </summary>
     /// <param name="endpointSegment">The endpoint segment, which may contain a regular expression.</param>
@@ -253,8 +277,6 @@ public class Host(ILogger logger)
         if(endpointSegment.StartsWith('^') == false) return false;
 
         var matches = Regex.Match(pathSegment, endpointSegment, RegexOptions.IgnoreCase);
-        if(matches.Success == false) return false;
-
-        return true;
+        return matches.Success;
     }
 }

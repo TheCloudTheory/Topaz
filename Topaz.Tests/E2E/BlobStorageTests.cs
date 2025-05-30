@@ -106,12 +106,14 @@ public class BlobStorageTests
         var serviceClient = new BlobServiceClient(ConnectionString);
         serviceClient.CreateBlobContainer("test");
         var containerClient = serviceClient.GetBlobContainerClient("test");
+        var blobClient = containerClient.GetBlobClient("test.txt");
+        blobClient.Upload(new BinaryData("some content"));
         
         // Act
         var blobs = containerClient.GetBlobs().ToArray();
         
         // Assert
-        Assert.That(blobs, Has.Length.EqualTo(3));
+        Assert.That(blobs, Has.Length.EqualTo(1));
     }
     
     [Test]

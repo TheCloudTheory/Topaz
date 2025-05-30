@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
@@ -18,6 +19,7 @@ public class BlobEndpoint(ILogger logger) : IEndpointDefinition
 
     public string[] Endpoints => [
         "PUT /{storageAccountName}/{containerName}",
+        "PUT /{storageAccountName}/{containerName}/...",
         "GET /{storageAccountName}/",
         "GET /{storageAccountName}/{containerName}",
     ];
@@ -46,6 +48,11 @@ public class BlobEndpoint(ILogger logger) : IEndpointDefinition
                 {
                     HandleCreateContainerRequest(storageAccountName, containerName, response);
                     return response;
+                }
+
+                if (TryGetBlobName(containerName, out var blobName))
+                {
+                    HandleUploadBlobRequest(storageAccountName, containerName, blobName!, input, response);
                 }
             }
 
@@ -77,13 +84,34 @@ public class BlobEndpoint(ILogger logger) : IEndpointDefinition
         return response;
     }
 
+    private void HandleUploadBlobRequest(string storageAccountName, string containerName, string blobName, Stream input, HttpResponseMessage response)
+    {
+        var code = _dataPlane.PutBlob(storageAccountName, containerName, blobName, input);
+        
+        // TODO: The response must include the response headers from https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob?tabs=microsoft-entra-id#response
+        response.StatusCode = code;
+    }
+
+    private bool TryGetBlobName(string containerName, out string? blobName)
+    {
+        var matches = Regex.Match(containerName, @"[^/]+$", RegexOptions.Compiled);
+        if (matches.Success)
+        {
+            blobName = matches.Groups[0].Value;
+            return true;
+        }
+
+        blobName = null;
+        return false;
+    }
+
     private void HandleListBlobsRequest(string storageAccountName, string containerName, HttpResponseMessage response)
     {
         // TODO: The request may come with additional keys in the query string, e.g.:
         // ?restype=container&comp=list&prefix=localhost/eh-test/$default/ownership/&include=Metadata  
         // We need to handle them as well
         
-        var blobs = this._dataPlane.ListBlobs(storageAccountName, containerName);
+        var blobs = _dataPlane.ListBlobs(storageAccountName, containerName);
 
         using var sw = new EncodingAwareStringWriter();
         var serializer = new XmlSerializer(typeof(BlobEnumerationResult));

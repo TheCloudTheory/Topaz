@@ -35,13 +35,13 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
     {
-        this.logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
+        logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
 
         var response = new HttpResponseMessage();
         
         if(TryGetStorageAccountName(path, out var storageAccountName) == false)
         {
-            response.StatusCode = System.Net.HttpStatusCode.NotFound;
+            response.StatusCode = HttpStatusCode.NotFound;
             return response;
         }
 
@@ -69,16 +69,16 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                         var potentialTableName = actualPath.Replace("()", string.Empty);
                         if(IsPathReferencingTable(potentialTableName, storageAccountName))
                         {
-                            var entities = this.dataPlane.QueryEntities(query, potentialTableName, storageAccountName);
+                            var entities = dataPlane.QueryEntities(query, potentialTableName, storageAccountName);
                             var dataEndpointResponse = new TableDataEndpointResponse(entities);
 
                             response.Content = JsonContent.Create(dataEndpointResponse);
-                            response.StatusCode = System.Net.HttpStatusCode.OK;
+                            response.StatusCode = HttpStatusCode.OK;
 
                             break;
                         }
 
-                        response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                        response.StatusCode = HttpStatusCode.NotFound;
                         break;
                 }
 
@@ -92,7 +92,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                     case "Tables":
                         try
                         {
-                            var tables = this.controlPlane.CreateTable(input, storageAccountName);
+                            var tables = controlPlane.CreateTable(input, storageAccountName);
                             response.Content = JsonContent.Create(tables);
 
                             // Depending on the value of the `Prefer` header, the response 
@@ -101,19 +101,19 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                             {
                                 // No `Prefer` header or value other than `return-no-content`
                                 // hence the result will be 201
-                                response.StatusCode = System.Net.HttpStatusCode.Created;
+                                response.StatusCode = HttpStatusCode.Created;
                             }
 
                             if (prefer == "return-no-content")
                             {
-                                response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                                response.StatusCode = HttpStatusCode.NoContent;
                             }
                         }
                         catch (EntityAlreadyExistsException)
                         {
                             var error = new ErrorResponse("TableAlreadyExists", "Table already exists.");
 
-                            response.StatusCode = System.Net.HttpStatusCode.Conflict;
+                            response.StatusCode = HttpStatusCode.Conflict;
                             response.Headers.Add("x-ms-error-code", "TableAlreadyExists");
                             response.Content = JsonContent.Create(error);
                         }
@@ -124,7 +124,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                         {
                             try
                             {
-                                var payload = this.dataPlane.InsertEntity(input, actualPath, storageAccountName);
+                                var payload = dataPlane.InsertEntity(input, actualPath, storageAccountName);
 
                                 // Depending on the value of the `Prefer` header, the response 
                                 // given by the emulator should be either 204 or 201
@@ -132,13 +132,13 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                                 {
                                     // No `Prefer` header or value other than `return-no-content`
                                     // hence the result will be 201
-                                    response.StatusCode = System.Net.HttpStatusCode.Created;
+                                    response.StatusCode = HttpStatusCode.Created;
                                     response.Content = JsonContent.Create(payload);
                                 }
 
                                 if (prefer == "return-no-content")
                                 {
-                                    response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                                    response.StatusCode = HttpStatusCode.NoContent;
                                 }
 
                                 break;
@@ -147,7 +147,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                             {
                                 var error = new ErrorResponse("EntityAlreadyExists", "Entity already exists.");
 
-                                response.StatusCode = System.Net.HttpStatusCode.Conflict;
+                                response.StatusCode = HttpStatusCode.Conflict;
                                 response.Headers.Add("x-ms-error-code", "EntityAlreadyExists");
                                 response.Content = JsonContent.Create(error);
 
@@ -158,21 +158,21 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                         var matches = Regex.Match(actualPath, @"\w+\(PartitionKey='\w+',RowKey='\w+'\)$", RegexOptions.IgnoreCase);
                         if(matches.Length > 0)
                         {
-                            this.logger.LogDebug("Matched the update operation.");
+                            logger.LogDebug("Matched the update operation.");
 
                             var (TableName, PartitionKey, RowKey) = GetOperationDataForUpdateOperation(matches);
 
                             try
                             {
-                                this.dataPlane.UpdateEntity(input, TableName, storageAccountName, PartitionKey, RowKey, headers);
+                                dataPlane.UpdateEntity(input, TableName, storageAccountName, PartitionKey, RowKey, headers);
 
-                                response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                                response.StatusCode = HttpStatusCode.NoContent;
                             }
                             catch(EntityNotFoundException)
                             {
                                 var error = new ErrorResponse("EntityNotFound", "Entity not found.");
 
-                                response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                                response.StatusCode = HttpStatusCode.NotFound;
                                 response.Headers.Add("x-ms-error-code", "EntityNotFound");
                                 response.Content = JsonContent.Create(error);
                             }
@@ -180,7 +180,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                             {
                                 var error = new ErrorResponse("UpdateConditionNotSatisfied", "The update condition specified in the request was not satisfied.");
 
-                                response.StatusCode = System.Net.HttpStatusCode.PreconditionFailed;
+                                response.StatusCode = HttpStatusCode.PreconditionFailed;
                                 response.Headers.Add("x-ms-error-code", "UpdateConditionNotSatisfied");
                                 response.Content = JsonContent.Create(error);
                             }
@@ -188,7 +188,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                             break;
                         }
                         
-                        response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                        response.StatusCode = HttpStatusCode.NotFound;
                         break;
                 }
 
@@ -210,7 +210,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                     return response;
                 }
                 
-                response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                response.StatusCode = HttpStatusCode.NotFound;
                 return response;
             }
 
@@ -226,11 +226,11 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 
                     var tableName = matches.Value.Trim('/').Replace("Tables('", "").Replace("')", "");
 
-                    this.logger.LogDebug($"Attempting to delete table: {tableName}.");
-                    this.controlPlane.DeleteTable(tableName, storageAccountName);
-                    this.logger.LogDebug($"Table {tableName} deleted.");
+                    logger.LogDebug($"Attempting to delete table: {tableName}.");
+                    controlPlane.DeleteTable(tableName, storageAccountName);
+                    logger.LogDebug($"Table {tableName} deleted.");
 
-                    response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                    response.StatusCode = HttpStatusCode.NoContent;
 
                     return response;
                 }
@@ -238,7 +238,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                 {
                     var error = new ErrorResponse("EntityNotFound", "Table not found.");
 
-                    response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                    response.StatusCode = HttpStatusCode.NotFound;
                     response.Headers.Add("x-ms-error-code", "EntityNotFound");
                     response.Content = JsonContent.Create(error);
 
@@ -249,7 +249,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
         }
         catch (Exception ex)
         {
-            this.logger.LogError(ex);
+            logger.LogError(ex);
 
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
