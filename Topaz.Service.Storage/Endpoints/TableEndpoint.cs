@@ -252,7 +252,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
             this.logger.LogError(ex);
 
             response.Content = new StringContent(ex.Message);
-            response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+            response.StatusCode = HttpStatusCode.InternalServerError;
 
             return response;
         }

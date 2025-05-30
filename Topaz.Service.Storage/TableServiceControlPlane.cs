@@ -64,7 +64,7 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         return this.provider.CheckIfTableExists(tableName, storageAccountName);
     }
 
-    internal string GetTablePath(string tableName, string storageAccountName)
+    internal string GetTableDataPath(string tableName, string storageAccountName)
     {
         return this.provider.GetTableDataPath(tableName, storageAccountName);
     }

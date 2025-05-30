@@ -64,6 +64,11 @@ internal class Program
                     account.AddCommand<CreateTableCommand>("create");
                     account.AddCommand<DeleteTableCommand>("delete");
                 });
+                
+                branch.AddBranch("container", account =>
+                {
+                    account.AddCommand<CreateBlobContainerCommand>("create");
+                });
             });    
 
             config.AddBranch("group", branch => {

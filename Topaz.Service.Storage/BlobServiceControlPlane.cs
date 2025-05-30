@@ -9,18 +9,17 @@ namespace Topaz.Service.Storage;
 
 internal sealed class BlobServiceControlPlane(BlobResourceProvider provider, ILogger logger)
 {
-    private readonly BlobResourceProvider provider = provider;
     private readonly ILogger logger = logger;
 
     public HttpStatusCode CreateContainer(string containerName, string storageAccountName)
     {
-        this.provider.Create(containerName, storageAccountName);
+        provider.Create(containerName, storageAccountName);
         return HttpStatusCode.Created;
     }
 
     public ContainerEnumerationResult ListContainers(string storageAccountName)
     {
-        var rawContainers = this.provider.List(storageAccountName);
+        var rawContainers = provider.List(storageAccountName);
         var containers = new List<Container>();
 
         foreach (var rawContainer in rawContainers)
@@ -30,5 +29,10 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider, ILo
         }
 
         return new ContainerEnumerationResult(storageAccountName, containers.ToArray());
+    }
+
+    public string GetContainerDataPath(string storageAccountName, string containerName)
+    {
+        return provider.GetContainerDataPath(storageAccountName, containerName);
     }
 }

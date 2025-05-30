@@ -18,6 +18,7 @@
   <ItemGroup>
     <PackageReference Include="AMQPNetLite" Version="2.4.11" />
     <PackageReference Include="Microsoft.AspNetCore" Version="2.3.0" />
+    <PackageReference Include="Microsoft.Azure.Amqp" Version="2.6.11" />
   </ItemGroup>
 
   <ItemGroup>

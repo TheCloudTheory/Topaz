@@ -98,4 +98,35 @@ public class BlobStorageTests
         // Assert
         Assert.That(containers, Has.Length.EqualTo(3));
     }
+    
+    [Test]
+    public void BlobStorageTests_WhenContainerBlobsAreListed_TheyShouldReturned()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(ConnectionString);
+        serviceClient.CreateBlobContainer("test");
+        var containerClient = serviceClient.GetBlobContainerClient("test");
+        
+        // Act
+        var blobs = containerClient.GetBlobs().ToArray();
+        
+        // Assert
+        Assert.That(blobs, Has.Length.EqualTo(3));
+    }
+    
+    [Test]
+    public void BlobStorageTests_WhenBlobPropertiesAreRequested_TheyShouldReturned()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(ConnectionString);
+        serviceClient.CreateBlobContainer("test");
+        var containerClient = serviceClient.GetBlobContainerClient("test");
+        var blobClient = containerClient.GetBlobClient("test");
+        
+        // Act
+        var properties = blobClient.GetProperties();
+        
+        // Assert
+        Assert.That(properties, Is.Not.Null);
+    }
 }

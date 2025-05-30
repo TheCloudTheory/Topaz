@@ -11,21 +11,18 @@ namespace Topaz.Service.Storage;
 
 internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlane, ILogger logger)
 {
-    private readonly TableServiceControlPlane controlPlane = controlPlane;
-    private readonly ILogger logger = logger;
-
-    internal object InsertEntity(Stream input, string tableName, string storageAccountName)
+    internal string InsertEntity(Stream input, string tableName, string storageAccountName)
     {
-        this.logger.LogDebug($"Executing {nameof(InsertEntity)}: {tableName} {storageAccountName}");
+        logger.LogDebug($"Executing {nameof(InsertEntity)}: {tableName} {storageAccountName}");
 
-        var path = this.controlPlane.GetTablePath(tableName, storageAccountName);
+        var path = controlPlane.GetTableDataPath(tableName, storageAccountName);
 
         using var sr = new StreamReader(input);
 
         var rawContent = sr.ReadToEnd();
         var metadata = JsonSerializer.Deserialize<GenericTableEntity>(rawContent, GlobalSettings.JsonOptions) ?? throw new Exception();
 
-        this.logger.LogDebug($"Executing {nameof(InsertEntity)}: Inserting {rawContent}.");
+        logger.LogDebug($"Executing {nameof(InsertEntity)}: Inserting {rawContent}.");
 
         var etag = new ETag(DateTimeOffset.Now.Ticks.ToString());
         var timestamp = DateTimeOffset.Now.ToUniversalTime();
@@ -35,7 +32,7 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
         if(File.Exists(entityPath))
         {
             // Duplicated entry
-            this.logger.LogDebug($"Executing {nameof(InsertEntity)}: Duplicated entry.");
+            logger.LogDebug($"Executing {nameof(InsertEntity)}: Duplicated entry.");
             throw new EntityAlreadyExistsException();
         } 
 
@@ -52,7 +49,7 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
 
     internal object?[] QueryEntities(QueryString query, string tableName, string storageAccountName)
     {
-        this.logger.LogDebug($"Executing {nameof(QueryEntities)}: {query} {tableName} {storageAccountName}");
+        logger.LogDebug($"Executing {nameof(QueryEntities)}: {query} {tableName} {storageAccountName}");
 
         // TODO: Add OData parser
         // string? filter = null;
@@ -62,7 +59,7 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
         //     filter = potentialFilter.Replace("$filter=", string.Empty);
         // }
 
-        var path = this.controlPlane.GetTablePath(tableName, storageAccountName);
+        var path = controlPlane.GetTableDataPath(tableName, storageAccountName);
         var files = Directory.EnumerateFiles(path);
         var entities = files.Select(e => {
             var content = File.ReadAllText(e);
@@ -75,11 +72,11 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
     internal void UpdateEntity(Stream input, string tableName, string storageAccountName, string partitionKey,
                                string rowKey, IHeaderDictionary headers)
     {
-        this.logger.LogDebug($"Executing {nameof(InsertEntity)}: {tableName} {storageAccountName}");
+        logger.LogDebug($"Executing {nameof(InsertEntity)}: {tableName} {storageAccountName}");
 
         var etag = headers["If-Match"];
 
-        var path = this.controlPlane.GetTablePath(tableName, storageAccountName);
+        var path = controlPlane.GetTableDataPath(tableName, storageAccountName);
 
         using var sr = new StreamReader(input);
 
@@ -91,7 +88,7 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
         if(File.Exists(entityPath) == false)
         {
             // Not existing  entry
-            this.logger.LogDebug($"Executing {nameof(InsertEntity)}: Not existing entry.");
+            logger.LogDebug($"Executing {nameof(InsertEntity)}: Not existing entry.");
             throw new EntityNotFoundException();
         }
 

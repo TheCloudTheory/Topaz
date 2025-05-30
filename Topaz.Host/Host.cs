@@ -59,6 +59,7 @@ public class Host(ILogger logger)
             listener.Listeners[0].AMQP.MaxFrameSize = 262144;
             
             listener.RegisterRequestProcessor("$cbs", new CbsProcessor());
+            listener.RegisterRequestProcessor("$management", new ManagementProcessor());
             listener.RegisterLinkProcessor(new LinkProcessor());
 
             // Frame traces should be enabled only if LogLevel is set to Debug
