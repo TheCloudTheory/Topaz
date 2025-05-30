@@ -9,9 +9,9 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    permissions:
+      issues: write
     steps:
     - uses: actions/checkout@v4
       with:
@@ -51,11 +51,11 @@ jobs:
         output: both
         thresholds: '60 80'
     - name: Publish Windows
-      run: dotnet publish -c Release -r win-x64 --self-contained true -o ./publish/win-x64
+      run: dotnet publish Topaz.CLI/Topaz.Cli.csproj -c Release -r win-x64 --self-contained true -o ./publish/win-x64
     - name: Publish Linux
-      run: dotnet publish -c Release -r linux-x64 --self-contained true -o ./publish/linux-x64
+      run: dotnet publish Topaz.CLI/Topaz.Cli.csproj -c Release -r linux-x64 --self-contained true -o ./publish/linux-x64
     - name: Publish macOS
-      run: dotnet publish -c Release -r osx-x64 --self-contained true -o ./publish/osx-x64
+      run: dotnet publish Topaz.CLI/Topaz.Cli.csproj -c Release -r osx-x64 --self-contained true -o ./publish/osx-x64
     - name: Upload Windows artifact
       uses: actions/upload-artifact@v4
       with:
