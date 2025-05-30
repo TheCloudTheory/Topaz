@@ -74,9 +74,9 @@ Blob Service|Set Container ACL|:x:|-
 Blob Service|Delete Container|:x:|-
 Blob Service|Lease Container|:x:|-
 Blob Service|Restore Container|:x:|-
-Blob Service|List Blobs|:x:|-
+Blob Service|List Blobs|✅|-
 Blob Service|Find Blobs By Tag In Container|:x:|-
-Blob Service|Put Blob|:x:|-
+Blob Service|Put Blob|✅|Doesn't support yet different semantics of different blob types
 Blob Service|Put Blob From URL|:x:|-
 Blob Service|Get Blob|:x:|-
 Blob Service|Get Blob Properties|:x:|-
