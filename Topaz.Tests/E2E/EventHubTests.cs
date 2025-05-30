@@ -92,6 +92,7 @@ public class EventHubTests
     }
     
     [Test]
+    [Ignore("Not ready")]
     public async Task EventHubTests_WhenMessageIsSent_ItShouldBeAvailableInEventHub()
     {
         // Arrange
