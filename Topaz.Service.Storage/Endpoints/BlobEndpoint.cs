@@ -22,6 +22,7 @@ public class BlobEndpoint(ILogger logger) : IEndpointDefinition
         "PUT /{storageAccountName}/{containerName}/...",
         "GET /{storageAccountName}/",
         "GET /{storageAccountName}/{containerName}",
+        "HEAD /{storageAccountName}/{containerName}/...",
     ];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
@@ -72,6 +73,14 @@ public class BlobEndpoint(ILogger logger) : IEndpointDefinition
                     return response;
                 }
             }
+
+            if (method == "HEAD")
+            {
+                if (TryGetBlobName(containerName, out var blobName))
+                {
+                    HandleGetBlobPropertiesRequest(storageAccountName, containerName, blobName!, response);
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -82,6 +91,18 @@ public class BlobEndpoint(ILogger logger) : IEndpointDefinition
         }
 
         return response;
+    }
+
+    private void HandleGetBlobPropertiesRequest(string storageAccountName, string containerName, string blobName, HttpResponseMessage response)
+    {
+        var properties = _dataPlane.GetBlobProperties(storageAccountName, containerName, blobName);
+
+        response.StatusCode = properties.code;
+
+        if (properties.properties != null)
+        {
+            response.Headers.Add("x-ms-meta-Name", properties.properties.Name);
+        }
     }
 
     private void HandleUploadBlobRequest(string storageAccountName, string containerName, string blobName, Stream input, HttpResponseMessage response)

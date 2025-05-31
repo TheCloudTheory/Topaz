@@ -117,14 +117,14 @@ public class BlobStorageTests
     }
     
     [Test]
-    [Ignore("Not ready")]
     public void BlobStorageTests_WhenBlobPropertiesAreRequested_TheyShouldReturned()
     {
         // Arrange
         var serviceClient = new BlobServiceClient(ConnectionString);
         serviceClient.CreateBlobContainer("test");
         var containerClient = serviceClient.GetBlobContainerClient("test");
-        var blobClient = containerClient.GetBlobClient("test");
+        var blobClient = containerClient.GetBlobClient("test.txt");
+        blobClient.Upload(new BinaryData("some content"));
         
         // Act
         var properties = blobClient.GetProperties();

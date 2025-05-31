@@ -27,14 +27,10 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     public HttpStatusCode PutBlob(string storageAccountName, string blobPath, string blobName, Stream input)
     {
         logger.LogDebug($"Executing {nameof(PutBlob)}: {storageAccountName} {blobPath} {blobName}");
-
-        var containerName = blobPath.Split('/')[0];
-        var path = controlPlane.GetContainerDataPath(storageAccountName, containerName);
         
         using var sr = new StreamReader(input);
         var rawContent = sr.ReadToEnd();
-        var virtualPath = blobPath.Split('/').Skip(1).Aggregate(Path.Combine);
-        var fullPath = Path.Combine(path, virtualPath);
+        var fullPath = GetBlobPath(storageAccountName, blobPath);
         var blobDirectory = Path.GetDirectoryName(fullPath);
 
         if (string.IsNullOrWhiteSpace(blobDirectory))
@@ -52,5 +48,29 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         
         File.WriteAllText(fullPath, rawContent);
         return HttpStatusCode.Created;
+    }
+
+    public (HttpStatusCode code, BlobProperties? properties) GetBlobProperties(string storageAccountName, string blobPath, string blobName)
+    {
+        logger.LogDebug($"Executing {nameof(GetBlobProperties)}: {storageAccountName} {blobPath} {blobName}");
+        
+        var fullPath = GetBlobPath(storageAccountName, blobPath);
+        return File.Exists(fullPath) == false ? 
+            (HttpStatusCode.NotFound, null) : 
+            (HttpStatusCode.OK, new BlobProperties { Name = blobName });
+    }
+
+    /// <summary>
+    /// Returns full physical path for a blob file. 
+    /// </summary>
+    /// <returns>Physical path for a blob</returns>
+    private string GetBlobPath(string storageAccountName, string blobPath)
+    {
+        var containerName = blobPath.Split('/')[0];
+        var path = controlPlane.GetContainerDataPath(storageAccountName, containerName);
+        var virtualPath = blobPath.Split('/').Skip(1).Aggregate(Path.Combine);
+        var fullPath = Path.Combine(path, virtualPath);
+
+        return fullPath;
     }
 }
