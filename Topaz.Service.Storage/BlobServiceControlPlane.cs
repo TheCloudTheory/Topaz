@@ -35,4 +35,9 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider, ILo
     {
         return provider.GetContainerDataPath(storageAccountName, containerName);
     }
+    
+    public string GetContainerBlobMetadataPath(string storageAccountName, string containerName)
+    {
+        return provider.GetContainerMetadataPath(storageAccountName, containerName);
+    }
 }

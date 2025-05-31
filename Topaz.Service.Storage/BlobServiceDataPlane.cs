@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
-using Topaz.Service.Shared;
+using Azure;
+using Microsoft.AspNetCore.Http;
 using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Serialization;
 using Topaz.Shared;
@@ -24,7 +25,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     }
 
     // TODO: This method must support different kinds of blobs
-    public HttpStatusCode PutBlob(string storageAccountName, string blobPath, string blobName, Stream input)
+    public (HttpStatusCode code, BlobProperties? properties) PutBlob(string storageAccountName, string blobPath, string blobName, Stream input)
     {
         logger.LogDebug($"Executing {nameof(PutBlob)}: {storageAccountName} {blobPath} {blobName}");
         
@@ -36,7 +37,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         if (string.IsNullOrWhiteSpace(blobDirectory))
         {
             logger.LogError("Couldn't determine the blob directory.");
-            return HttpStatusCode.BadRequest;
+            return (HttpStatusCode.BadRequest, null);
         }
         
         if (Directory.Exists(blobDirectory) == false)
@@ -45,19 +46,36 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             Directory.CreateDirectory(blobDirectory);
             logger.LogDebug($"Blob directory {blobDirectory} created.");
         }
+
+        var metadata = new BlobProperties
+        {
+            Name = blobName,
+            DateUploaded = DateTimeOffset.UtcNow,
+            ETag = new ETag(DateTimeOffset.Now.Ticks.ToString()),
+            LastModified = DateTimeOffset.UtcNow
+        };
         
+        File.WriteAllText(GetBlobPropertiesPath(storageAccountName, blobPath), JsonSerializer.Serialize(metadata));
         File.WriteAllText(fullPath, rawContent);
-        return HttpStatusCode.Created;
+        
+        return (HttpStatusCode.Created, metadata);
     }
 
     public (HttpStatusCode code, BlobProperties? properties) GetBlobProperties(string storageAccountName, string blobPath, string blobName)
     {
         logger.LogDebug($"Executing {nameof(GetBlobProperties)}: {storageAccountName} {blobPath} {blobName}");
         
-        var fullPath = GetBlobPath(storageAccountName, blobPath);
-        return File.Exists(fullPath) == false ? 
-            (HttpStatusCode.NotFound, null) : 
-            (HttpStatusCode.OK, new BlobProperties { Name = blobName });
+        var fullPath = GetBlobPropertiesPath(storageAccountName, blobPath);
+
+        if (File.Exists(fullPath) == false)
+        {
+            return (HttpStatusCode.NotFound, null);
+        }
+        
+        var content = File.ReadAllText(fullPath);
+        var properties = JsonSerializer.Deserialize<BlobProperties>(content);
+        
+        return (HttpStatusCode.OK, properties);
     }
 
     /// <summary>
@@ -66,11 +84,77 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     /// <returns>Physical path for a blob</returns>
     private string GetBlobPath(string storageAccountName, string blobPath)
     {
-        var containerName = blobPath.Split('/')[0];
+        var containerName = GetContainerNameFromBlobPath(blobPath);
         var path = controlPlane.GetContainerDataPath(storageAccountName, containerName);
         var virtualPath = blobPath.Split('/').Skip(1).Aggregate(Path.Combine);
         var fullPath = Path.Combine(path, virtualPath);
 
         return fullPath;
+    }
+
+    private string GetContainerNameFromBlobPath(string blobPath)
+    {
+        var containerName = blobPath.Split('/')[0];
+        return containerName;
+    }
+
+    private string GetBlobPropertiesPath(string storageAccountName, string blobPath)
+    {
+        var containerName = GetContainerNameFromBlobPath(blobPath);
+        var metadataFileName = blobPath.Replace("/", "_");
+        var path = Path.Combine(controlPlane.GetContainerBlobMetadataPath(storageAccountName, containerName),
+            $"{metadataFileName}.properties.json");
+
+        return path;
+    }
+
+    // TODO: Add support for `snapshot` and `versionid` query params
+    public HttpStatusCode DeleteBlob(string storageAccountName, string blobPath, string blobName)
+    {
+        logger.LogDebug($"Executing {nameof(DeleteBlob)}: {storageAccountName} {blobPath} {blobName}");
+        
+        var fullPath = GetBlobPath(storageAccountName, blobPath);
+
+        if (File.Exists(fullPath) == false)
+        {
+            return HttpStatusCode.NotFound;
+        }
+        
+        var fullPropertiesPathPath = GetBlobPropertiesPath(storageAccountName, blobPath);
+        
+        File.Delete(fullPath);
+        File.Delete(fullPropertiesPathPath);
+        
+        return HttpStatusCode.Accepted;
+    }
+
+    // TODO: Setting metadata should update / append values instead of replacing them
+    public HttpStatusCode SetBlobMetadata(string storageAccountName, string blobPath, IHeaderDictionary headers)
+    {
+        logger.LogDebug($"Executing {nameof(SetBlobMetadata)}: {storageAccountName} {blobPath}");
+        
+        var fullPath = GetBlobPath(storageAccountName, blobPath);
+
+        if (File.Exists(fullPath) == false)
+        {
+            return HttpStatusCode.NotFound;
+        }
+        
+        var metadataHeaders = headers.Where(h => h.Key.StartsWith("x-ms-meta")).ToDictionary(h => h.Key, h => h.Value);
+        var metadata = metadataHeaders.Select(h => $"{h.Key}={h.Value}").ToArray();
+        
+        File.WriteAllLines(GetBlobMetadataPath(storageAccountName, blobPath), metadata);
+        
+        return HttpStatusCode.OK;
+    }
+    
+    private string GetBlobMetadataPath(string storageAccountName, string blobPath)
+    {
+        var containerName = GetContainerNameFromBlobPath(blobPath);
+        var metadataFileName = blobPath.Replace("/", "_");
+        var path = Path.Combine(controlPlane.GetContainerBlobMetadataPath(storageAccountName, containerName),
+            $"{metadataFileName}.metadata.json");
+
+        return path;
     }
 }

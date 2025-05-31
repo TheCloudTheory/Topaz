@@ -10,6 +10,7 @@ namespace Topaz.Tests.E2E;
 
 public class EventHubTests
 {
+    [SetUp]
     public async Task SetUp()
     {
         await Program.Main(
@@ -92,7 +93,6 @@ public class EventHubTests
     }
     
     [Test]
-    [Ignore("Not ready")]
     public async Task EventHubTests_WhenMessageIsSent_ItShouldBeAvailableInEventHub()
     {
         // Arrange
@@ -162,5 +162,6 @@ public class EventHubTests
         
         // Assert
         Assert.That(receivedEvents, Is.Not.Empty);
+        Assert.That(receivedEvents, Has.Count.EqualTo(1));
     }
 }

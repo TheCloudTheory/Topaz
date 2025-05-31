@@ -35,7 +35,7 @@ internal sealed class BlobResourceProvider(ILogger logger) : ResourceProviderBas
     {
         InitializeServiceDirectory(storageAccountName);
         
-        var metadataFilePath = CreateBlobDirectories(containerName, storageAccountName);
+        var metadataFilePath = CreateBlobDirectories(storageAccountName, containerName);
 
         this.logger.LogDebug($"Attempting to create {metadataFilePath} file.");
 
@@ -47,12 +47,14 @@ internal sealed class BlobResourceProvider(ILogger logger) : ResourceProviderBas
         return;
     }
 
-    private string CreateBlobDirectories(string containerName, string storageAccountName)
+    private string CreateBlobDirectories(string storageAccountName, string containerName)
     {
-        var metadataFile = $"metadata.json";
-        var containerPath = this.GetContainerPath(storageAccountName, containerName);
+        const string metadataFile = $"metadata.json";
+        
+        var containerPath = GetContainerPath(storageAccountName, containerName);
         var dataPath = Path.Combine(containerPath, "data");
         var metadataFilePath = Path.Combine(containerPath, metadataFile);
+        var blobMetadataDirectoryPath = GetContainerMetadataPath(storageAccountName, containerName);
 
         this.logger.LogDebug($"Attempting to create {containerPath} directory.");
         if(Directory.Exists(containerPath))
@@ -63,6 +65,7 @@ internal sealed class BlobResourceProvider(ILogger logger) : ResourceProviderBas
         {
             Directory.CreateDirectory(containerPath);
             Directory.CreateDirectory(dataPath);
+            Directory.CreateDirectory(blobMetadataDirectoryPath);
             
             this.logger.LogDebug($"Attempting to create {containerPath} directory - created!");
         }
@@ -86,5 +89,10 @@ internal sealed class BlobResourceProvider(ILogger logger) : ResourceProviderBas
     public string GetContainerDataPath(string storageAccountName, string containerName)
     {
         return Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, BlobStorageService.LocalDirectoryPath, containerName, "data");
+    }
+    
+    public string GetContainerMetadataPath(string storageAccountName, string containerName)
+    {
+        return Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, BlobStorageService.LocalDirectoryPath, containerName, ".metadata");
     }
 }
