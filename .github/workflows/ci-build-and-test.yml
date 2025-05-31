@@ -80,3 +80,5 @@ jobs:
       run: git push origin --tags
     - name: TODO to Issue
       uses: alstr/todo-to-issue-action@v5.1.12
+      with:
+        LANGUAGES: "${{ github.workspace }}/todo.json"
