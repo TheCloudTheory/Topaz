@@ -22,19 +22,18 @@ namespace Topaz.Host;
 
 public class Host(ILogger logger)
 {
-    private static readonly List<Thread> threads = [];
-    private readonly ILogger logger = logger;
+    private static readonly List<Thread> Threads = [];
 
     public void Start()
     {
         var services = new IServiceDefinition[] {
-            new AzureStorageService(this.logger),
-            new TableStorageService(this.logger),
-            new ResourceGroupService(this.logger),
-            new SubscriptionService(this.logger),
-            new KeyVaultService(this.logger),
-            new EventHubService(this.logger),
-            new BlobStorageService(this.logger)
+            new AzureStorageService(logger),
+            new TableStorageService(logger),
+            new ResourceGroupService(logger),
+            new SubscriptionService(logger),
+            new KeyVaultService(logger),
+            new EventHubService(logger),
+            new BlobStorageService(logger)
         };
         
         var httpEndpoints = new List<IEndpointDefinition>();
@@ -60,17 +59,17 @@ public class Host(ILogger logger)
             
             listener.RegisterRequestProcessor("$cbs", new CbsProcessor());
             listener.RegisterRequestProcessor("$management", new ManagementProcessor());
-            listener.RegisterLinkProcessor(new LinkProcessor());
+            listener.RegisterLinkProcessor(new LinkProcessor(logger));
 
             // Frame traces should be enabled only if LogLevel is set to Debug
-            if (this.logger.LogLevel == LogLevel.Debug)
+            if (logger.LogLevel == LogLevel.Debug)
             {
                 Trace.TraceLevel = TraceLevel.Frame;
                 Trace.TraceListener = (l, f, a) => Console.WriteLine(DateTime.Now.ToString("[hh:mm:ss.fff]") + " " + string.Format(f, a));
             }
             
-            threads.Add(new Thread(() => listener.Open()));
-            threads.Last().Start();
+            Threads.Add(new Thread(() => listener.Open()));
+            Threads.Last().Start();
         }
     }
 
@@ -78,15 +77,15 @@ public class Host(ILogger logger)
     {
         foreach (var service in services)
         {
-            this.logger.LogDebug($"Processing {service.Name} service...");
+            logger.LogDebug($"Processing {service.Name} service...");
 
             foreach (var endpoint in service.Endpoints)
             {
-                this.logger.LogDebug($"Processing {service.Name} endpoints...");
+                logger.LogDebug($"Processing {service.Name} endpoints...");
 
                 if (protocols.Contains(endpoint.PortAndProtocol.Protocol) == false) continue;
                 
-                this.logger.LogDebug($"Processing {endpoint.PortAndProtocol} endpoint...");
+                logger.LogDebug($"Processing {endpoint.PortAndProtocol} endpoint...");
                 httpEndpoints.Add(endpoint);
             }
         }
@@ -102,7 +101,7 @@ public class Host(ILogger logger)
                 {
                     if (usedPorts.Contains(httpEndpoint.PortAndProtocol.Port))
                     {
-                        this.logger.LogDebug($"Using port {httpEndpoint.PortAndProtocol.Port} will be skipped as it's already registered.");
+                        logger.LogDebug($"Using port {httpEndpoint.PortAndProtocol.Port} will be skipped as it's already registered.");
                         continue;
                     }
                     
@@ -149,13 +148,13 @@ public class Host(ILogger logger)
 
                         if (method == null)
                         {
-                            this.logger.LogDebug($"Received request with no method.");
+                            logger.LogDebug($"Received request with no method.");
 
                             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                             return;
                         }
 
-                        this.logger.LogDebug($"Received request: {method} {context.Request.Host}{path}{query}");
+                        logger.LogDebug($"Received request: {method} {context.Request.Host}{path}{query}");
 
                         IEndpointDefinition? endpoint = null;
                         var pathParts = path.Split('/');
@@ -206,7 +205,7 @@ public class Host(ILogger logger)
 
                         if (endpoint == null)
                         {
-                            this.logger.LogDebug($"Request {method} {path} has no corresponding endpoint assigned.");
+                            logger.LogDebug($"Request {method} {path} has no corresponding endpoint assigned.");
 
                             context.Response.StatusCode = (int)HttpStatusCode.NotFound;
                             return;
@@ -215,7 +214,7 @@ public class Host(ILogger logger)
                         var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query);
                         var textResponse = await response.Content.ReadAsStringAsync();
 
-                        this.logger.LogDebug($"Response: [{response.StatusCode}] [{path}] {textResponse}");
+                        logger.LogDebug($"Response: [{response.StatusCode}] [{path}] {textResponse}");
 
                         context.Response.StatusCode = (int)response.StatusCode;
 
@@ -226,7 +225,7 @@ public class Host(ILogger logger)
 
                         if (response.StatusCode == HttpStatusCode.InternalServerError)
                         {
-                            this.logger.LogError(textResponse);
+                            logger.LogError(textResponse);
                         }
 
                         if(response.StatusCode != HttpStatusCode.NoContent)
@@ -238,7 +237,7 @@ public class Host(ILogger logger)
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-                        this.logger.LogError(ex);
+                        logger.LogError(ex);
 
                         await context.Response.WriteAsync(ex.Message);
                     }
@@ -246,8 +245,8 @@ public class Host(ILogger logger)
             })
             .Build();
 
-        threads.Add(new Thread(() => host.Run()));
-        threads.Last().Start();
+        Threads.Add(new Thread(() => host.Run()));
+        Threads.Last().Start();
     }
 
     /// <summary>

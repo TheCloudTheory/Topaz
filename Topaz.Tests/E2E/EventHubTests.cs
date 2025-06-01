@@ -154,14 +154,18 @@ public class EventHubTests
         
         // Act
         await producer.SendAsync([
-            new EventData("Hello World"u8.ToArray())
-        ]);        
+            new EventData("Hello World"u8.ToArray()),
+        ]);     
         
-        await Task.Delay(TimeSpan.FromSeconds(10));
+        await producer.SendAsync([
+            new EventData("Hello World 2"u8.ToArray()),
+        ]); 
+        
+        await Task.Delay(TimeSpan.FromSeconds(5));
         await processor.StopProcessingAsync();
         
         // Assert
         Assert.That(receivedEvents, Is.Not.Empty);
-        Assert.That(receivedEvents, Has.Count.EqualTo(1));
+        Assert.That(receivedEvents, Has.Count.EqualTo(2));
     }
 }

@@ -1,8 +1,9 @@
 using Amqp.Listener;
+using Topaz.Shared;
 
 namespace Topaz.Host.AMQP;
 
-internal sealed class LinkProcessor : ILinkProcessor
+internal sealed class LinkProcessor(ILogger logger) : ILinkProcessor
 {
     public void Process(AttachContext attachContext)
     {
@@ -13,6 +14,6 @@ internal sealed class LinkProcessor : ILinkProcessor
         // as the max size. This break communication as SDK thinks the maximum
         // size of a message or a batch is less than 0.
         attachContext.Attach.MaxMessageSize = 262144;
-        attachContext.Complete(new IncomingLinkEndpoint(), 300);
+        attachContext.Complete(new IncomingLinkEndpoint(logger), 300);
     }
 }
