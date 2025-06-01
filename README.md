@@ -17,6 +17,7 @@ Subscriptions|⚠️|N/A
 Resource Groups|⚠️|N/A
 Azure Storage|⚠️|N/A
 Table Storage|⚠️|⚠️
+Blob Storage|⚠️|⚠️
 Queue Storage|:x:|:x:
 Key Vault|⚠️|⚠️
 
@@ -35,56 +36,57 @@ The differences between the emulator and the actual service.
 
 ## Detailed support (REST APIs)
 
-### Table Service
+### Table Storage
 Service Name|Operation|Is supported?|Remarks
 ------------|---------|-------------|-------|
-Table Service|Set Table Service Properties|:x:|-
-Table Service|Get Table Service Properties|✅|-
-Table Service|Preflight Table Request|:x:|-
-Table Service|Get Table Service Stats|:x:|-
-Table Service|Query Tables|✅|Doesn't include limitations for queries
-Table Service|Create Table|✅|-
-Table Service|Delete Table|✅|In emulator deletion is immediate so no HTTP 409 is likely to happen
-Table Service|Get Table ACL|✅|-
-Table Service|Set Table ACL|✅|-
-Table Service|Query Entities|✅|Doesn't support OData parameters
-Table Service|Insert Entity|✅|-
-Table Service|Update Entity|✅|-
-Table Service|Merge Entity|✅|-
-Table Service|Delete Entity|✅|-
-Table Service|Insert Or Replace Entity|✅|-
-Table Service|Insert Or Merge Entity|✅|-
+Table Storage|Set Table Service Properties|:x:|-
+Table Storage|Get Table Service Properties|✅|-
+Table Storage|Preflight Table Request|:x:|-
+Table Storage|Get Table Service Stats|:x:|-
+Table Storage|Query Tables|✅|Doesn't include limitations for queries
+Table Storage|Create Table|✅|-
+Table Storage|Delete Table|✅|In emulator deletion is immediate so no HTTP 409 is likely to happen
+Table Storage|Get Table ACL|✅|-
+Table Storage|Set Table ACL|✅|-
+Table Storage|Query Entities|✅|Doesn't support OData parameters
+Table Storage|Insert Entity|✅|-
+Table Storage|Update Entity|✅|-
+Table Storage|Merge Entity|✅|-
+Table Storage|Delete Entity|✅|-
+Table Storage|Insert Or Replace Entity|✅|-
+Table Storage|Insert Or Merge Entity|✅|-
 
-### Blob Service
+### Blob Storage
 Service Name|Operation|Is supported?|Remarks
 ------------|---------|-------------|-------|
-Blob Service|List Containers|✅|Doesn't support additional query parameters
-Blob Service|Get Blob Service Properties|:x:|-
-Blob Service|Set Blob Service Properties|:x:|-
-Blob Service|Preflight Blob Request|:x:|-
-Blob Service|Get Blob Service Stats|:x:|-
-Blob Service|Get Account Information|:x:|-
-Blob Service|Get User Delegation Key|:x:|-
-Blob Service|Create Container|✅|Doesn't respect access type and metadata parameters
-Blob Service|Get Container Properties|:x:|-
-Blob Service|Get Container Metadata|:x:|-
-Blob Service|Set Containter Metadata|:x:|-
-Blob Service|Get Container ACL|:x:|-
-Blob Service|Set Container ACL|:x:|-
-Blob Service|Delete Container|:x:|-
-Blob Service|Lease Container|:x:|-
-Blob Service|Restore Container|:x:|-
-Blob Service|List Blobs|✅|-
-Blob Service|Find Blobs By Tag In Container|:x:|-
-Blob Service|Put Blob|✅|Doesn't support yet different semantics of different blob types
-Blob Service|Put Blob From URL|:x:|-
-Blob Service|Get Blob|:x:|-
-Blob Service|Get Blob Properties|:x:|-
-Blob Service|Set Blob Properties|:x:|-
-Blob Service|Get Blob Metadata|:x:|-
-Blob Service|Set Blob Metadata|:x:|-
-Blob Service|Get Blob Tags|:x:|-
-Blob Service|Set Blob Tags|:x:|-
+Blob Storage|List Containers|✅|Doesn't support additional query parameters
+Blob Storage|Get Blob Service Properties|:x:|-
+Blob Storage|Set Blob Service Properties|:x:|-
+Blob Storage|Preflight Blob Request|:x:|-
+Blob Storage|Get Blob Service Stats|:x:|-
+Blob Storage|Get Account Information|:x:|-
+Blob Storage|Get User Delegation Key|:x:|-
+Blob Storage|Create Container|✅|Doesn't respect access type and metadata parameters
+Blob Storage|Get Container Properties|:x:|-
+Blob Storage|Get Container Metadata|:x:|-
+Blob Storage|Set Containter Metadata|:x:|-
+Blob Storage|Get Container ACL|:x:|-
+Blob Storage|Set Container ACL|:x:|-
+Blob Storage|Delete Container|:x:|-
+Blob Storage|Lease Container|:x:|-
+Blob Storage|Restore Container|:x:|-
+Blob Storage|List Blobs|✅|-
+Blob Storage|Find Blobs By Tag In Container|:x:|-
+Blob Storage|Put Blob|✅|Doesn't support yet different semantics of different blob types
+Blob Storage|Put Blob From URL|:x:|-
+Blob Storage|Get Blob|:x:|-
+Blob Storage|Get Blob Properties|✅|-
+Blob Storage|Set Blob Properties|:x:|-
+Blob Storage|Get Blob Metadata|:x:|-
+Blob Storage|Set Blob Metadata|✅|-
+Blob Storage|Get Blob Tags|:x:|-
+Blob Storage|Set Blob Tags|:x:|-
+Blob Storage|Delete Blob|✅|-
 
 ### Key Vault
 Service Name|Operation|Is supported?|Remarks
@@ -107,3 +109,4 @@ Service Name|Operation|Is supported?|Remarks
 ------------|---------|-------------|-------|
 Event Hub Namespace|Create Namespace|✅|Does not support full ARM definition
 Event Hub|Create Hub|✅|Does not support full ARM definition
+Event Hub|Send Message (AMQP)|✅|Does not support batches
