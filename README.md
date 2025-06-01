@@ -20,7 +20,7 @@ Table Storage|⚠️|⚠️
 Blob Storage|⚠️|⚠️
 Queue Storage|:x:|:x:
 Key Vault|⚠️|⚠️
-
+Event Hub|⚠️|⚠️
 
 ## Installation
 
