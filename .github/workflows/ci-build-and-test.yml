@@ -1,4 +1,4 @@
-name: "[CI] Build & Test"
+name: Build_Test_And_Publish
 
 on:
   workflow_dispatch:

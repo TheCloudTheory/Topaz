@@ -2,7 +2,7 @@ name: Publish new release
 
 on:
   workflow_run:
-    workflows: ["[CI] Build & Test"]
+    workflows: [Build_Test_And_Publish]
     types: [completed]
 
 permissions:
