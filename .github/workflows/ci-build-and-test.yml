@@ -84,7 +84,6 @@ jobs:
       id: get-tag
       run: |
         TAG=$(git describe --tags --abbrev=0)
-        echo $TAG >> $GITHUB_OUTPUT
         echo "Generated tag: $TAG"
         echo $TAG > tag-info.txt
     - name: Upload tag info artifact

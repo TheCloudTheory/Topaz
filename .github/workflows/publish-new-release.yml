@@ -22,7 +22,7 @@ jobs:
       id: read-tag
       run: |
         TAG=$(cat tag-info/tag-info.txt)
-        echo $TAG >> $GITHUB_OUTPUT
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
         echo "Using release tag: $TAG"
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
