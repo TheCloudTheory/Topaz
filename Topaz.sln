@@ -25,6 +25,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Subscription"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.EventHub", "Topaz.Service.EventHub\Topaz.Service.EventHub.csproj", "{388A3C0C-2C83-44B1-B51B-B8EA7831C5EA}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{421A7F1B-9656-4A7E-B209-B1E8811D3E28}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Example.Dotnet", "Examples\Topaz.Example.Dotnet\Topaz.Example.Dotnet.csproj", "{1DA9278A-2B35-46E1-8688-8CC4EE7612FF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,11 +79,18 @@ Global
 		{388A3C0C-2C83-44B1-B51B-B8EA7831C5EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{388A3C0C-2C83-44B1-B51B-B8EA7831C5EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{388A3C0C-2C83-44B1-B51B-B8EA7831C5EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DA9278A-2B35-46E1-8688-8CC4EE7612FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DA9278A-2B35-46E1-8688-8CC4EE7612FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DA9278A-2B35-46E1-8688-8CC4EE7612FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DA9278A-2B35-46E1-8688-8CC4EE7612FF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {76B3D1AF-3328-49A8-BFD0-ED7FA3933EB0}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1DA9278A-2B35-46E1-8688-8CC4EE7612FF} = {421A7F1B-9656-4A7E-B209-B1E8811D3E28}
 	EndGlobalSection
 EndGlobal

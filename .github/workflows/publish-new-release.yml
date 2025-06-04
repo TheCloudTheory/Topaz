@@ -11,15 +11,23 @@ permissions:
 
 jobs:
   build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
     - name: Download a Build Artifact
       uses: actions/download-artifact@v4.3.0
       with:
         run-id: ${{ github.event.workflow_run.id }}
+    - name: Read tag info
+      id: read-tag
+      run: |
+        TAG=$(cat tag-info/tag-info.txt)
+        echo $TAG >> $GITHUB_OUTPUT
+        echo "Using release tag: $TAG"
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: ${{ steps.read-tag.outputs.tag }}
         prerelease: true
         files: |
           *.zip

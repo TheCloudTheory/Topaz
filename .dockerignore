@@ -1,0 +1,11 @@
+.config
+.github
+.vscode
+certificate
+static
+**/bin/**
+**/obj**
+.gitignore
+LICENSE
+README.md
+todo.js

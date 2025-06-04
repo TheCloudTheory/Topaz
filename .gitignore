@@ -8,3 +8,4 @@ Topaz.Tests/E2E/KeyVaultTests.cs
 .gitignore
 Topaz.sln.DotSettings.user
 .DS_Store
+/publish/**

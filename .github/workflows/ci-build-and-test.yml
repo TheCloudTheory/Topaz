@@ -56,11 +56,11 @@ jobs:
         output: both
         thresholds: '60 80'
     - name: Publish Windows
-      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r win-x64 --self-contained true -o ./publish/win-x64
+      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r win-x64 -o ./publish/win-x64
     - name: Publish Linux
-      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r linux-x64 --self-contained true -o ./publish/linux-x64
+      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r linux-x64 -o ./publish/linux-x64
     - name: Publish macOS
-      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r osx-x64 --self-contained true -o ./publish/osx-x64
+      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r osx-x64 -o ./publish/osx-x64
     - name: Upload Windows artifact
       uses: actions/upload-artifact@v4
       with:
@@ -80,6 +80,19 @@ jobs:
       run: nbgv tag
     - name: Push a tag
       run: git push origin --tags
+    - name: Get the generated tag
+      id: get-tag
+      run: |
+        TAG=$(git describe --tags --abbrev=0)
+        echo $TAG >> $GITHUB_OUTPUT
+        echo "Generated tag: $TAG"
+        echo $TAG > tag-info.txt
+    - name: Upload tag info artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: tag-info
+        path: tag-info.txt
+        retention-days: 1
     - name: TODO to Issue
       uses: alstr/todo-to-issue-action@v5.1.12
       with:
