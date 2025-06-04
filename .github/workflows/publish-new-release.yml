@@ -1,6 +1,12 @@
 name: Publish new release
 
 on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'The workflow run ID to download artifacts from'
+        required: true
+        type: string
   workflow_run:
     workflows: [Build_Test_And_Publish]
     types: [completed]
@@ -17,7 +23,8 @@ jobs:
     - name: Download a Build Artifact
       uses: actions/download-artifact@v4.3.0
       with:
-        run-id: ${{ github.event.workflow_run.id }}
+        github-token: ${{ github.token }}
+        run-id: ${{ github.event.inputs.run_id }} || ${{ github.event.workflow_run.id }}
     - name: Read tag info
       id: read-tag
       run: |
