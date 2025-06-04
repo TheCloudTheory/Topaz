@@ -47,4 +47,6 @@ jobs:
         name: ${{ steps.read-tag.outputs.tag }}
         prerelease: true
         files: |
-          *.zip
+          **/osx-x64/**/*
+          **/linux-x64/**
+          **/win-x64/**/*
