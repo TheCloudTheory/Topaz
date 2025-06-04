@@ -17,14 +17,23 @@ permissions:
 
 jobs:
   build:
-    if: ${{ github.event.workflow_run.conclusion == 'success'  || github.event.inputs.run_id != ''}} 
     runs-on: ubuntu-latest
     steps:
+    - name: Set run ID
+      id: set-run-id
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "RUN_ID=${{ github.event.inputs.run_id }}" >> $GITHUB_OUTPUT
+          echo "Using manually provided run ID: ${{ github.event.inputs.run_id }}"
+        else
+          echo "RUN_ID=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
+          echo "Using workflow_run event run ID: ${{ github.event.workflow_run.id }}"
+        fi
     - name: Download a Build Artifact
       uses: actions/download-artifact@v4.3.0
       with:
         github-token: ${{ github.token }}
-        run-id: ${{ github.event.inputs.run_id }} || ${{ github.event.workflow_run.id }}
+        run-id: ${{ steps.set-run-id.outputs.RUN_ID }}
     - name: Read tag info
       id: read-tag
       run: |
