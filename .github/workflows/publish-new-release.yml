@@ -43,6 +43,7 @@ jobs:
         echo "Using release tag: $TAG"
     - uses: softprops/action-gh-release@v2
       with:
+        tag_name: ${{ steps.read-tag.outputs.tag }}
         name: ${{ steps.read-tag.outputs.tag }}
         prerelease: true
         files: |
