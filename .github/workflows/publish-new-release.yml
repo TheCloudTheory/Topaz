@@ -66,7 +66,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5.7.0
       with:
-        images: thecloudtheory/topaz/cli
+        images: thecloudtheory/topaz-cli
         tags: |
           type=raw,value=${{ steps.read-tag.outputs.tag }}
     - name: Build and push Docker image
