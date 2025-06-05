@@ -47,15 +47,15 @@ jobs:
         name: ${{ steps.read-tag.outputs.tag }}
         prerelease: true
         files: |
-          **/osx-x64/topaz-osx-64
-          **/linux-x64/topaz-linux-64
+          **/osx-x64/topaz-osx-x64
+          **/linux-x64/topaz-linux-x64
           **/win-x64/topaz-win-x64.exe
           **/win-x64/localhost.crt
           **/win-x64/localhost.pfx
     - name: Copy artifact for Docker
       run: |
         mkdir publish
-        cp ./linux-x64 publish 
+        cp ./linux-x64/* publish/
     - name: Log in to Docker Hub
       uses: docker/login-action@3.4.0
       with:
