@@ -15,6 +15,8 @@ permissions:
   packages: write
   contents: write
   actions: read
+  id-token: write
+  attestations: write
 
 jobs:
   build:
@@ -81,6 +83,6 @@ jobs:
     - name: Generate artifact attestation
       uses: actions/attest-build-provenance@v2
       with:
-        subject-name: index.docker.io/thecloudtheory/topaz
+        subject-name: index.docker.io/thecloudtheory/topaz-cli
         subject-digest: ${{ steps.push.outputs.digest }}
         push-to-registry: true
