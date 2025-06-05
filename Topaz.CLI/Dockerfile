@@ -2,6 +2,7 @@ FROM mcr.microsoft.com/dotnet/runtime-deps:8.0-noble-chiseled
 WORKDIR /app
 
 COPY ./publish .
+RUN chmod +x ./topaz-linux-x64
 
 # Set environment variables
 ENV ASPNETCORE_URLS="http://*:80;https://*:443"
