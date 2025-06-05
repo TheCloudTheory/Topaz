@@ -20,6 +20,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v4
     - name: Set run ID
       id: set-run-id
       run: |
