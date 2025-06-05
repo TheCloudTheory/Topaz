@@ -59,6 +59,7 @@ jobs:
       run: |
         mkdir publish
         cp ./linux-x64/* publish/
+        chmod +x ./publish/topaz-linux-x64
     - name: Log in to Docker Hub
       uses: docker/login-action@3.4.0
       with:
