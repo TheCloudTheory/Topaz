@@ -6,4 +6,4 @@ COPY ./publish .
 # Set environment variables
 ENV ASPNETCORE_URLS="http://*:80;https://*:443"
 
-CMD ["./Topaz.CLI", "start", "--log-level", "Information"]
+CMD ["./topaz-linux-x64", "start", "--log-level", "Information"]
