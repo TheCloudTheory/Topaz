@@ -60,13 +60,15 @@ jobs:
     - name: Log in to Docker Hub
       uses: docker/login-action@3.4.0
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
+        username: thecloudtheory
         password: ${{ secrets.DOCKER_PASSWORD }}
     - name: Extract metadata (tags, labels) for Docker
       id: meta
       uses: docker/metadata-action@v5.7.0
       with:
         images: thecloudtheory/topaz/cli
+        tags: |
+          type=raw,value=${{ steps.read-tag.outputs.tag }}
     - name: Build and push Docker image
       id: push
       uses: docker/build-push-action@v6.18.0
