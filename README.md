@@ -10,6 +10,9 @@ Topaz is an Azure emulator, which allows you to develop Azure-based applications
 
 Note that Topaz is in early stage of its development and each new version may introduce breaking changes to the provided interface.
 
+## Is Topaz free?
+Yes, currently Topaz is free of any charges and doesn't require registration. This will change in the future, though you'll be notified about that fact several releases prior to it coming into life.
+
 ## Supported services
 Service Name|Control Plane|Data Plane
 ------------|-------------|----------
