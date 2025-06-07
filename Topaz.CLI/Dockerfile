@@ -1,4 +1,4 @@
-FROM --platform=$TARGETPLATFORM alpine AS base
+FROM alpine AS base
 ARG TARGETPLATFORM
 WORKDIR /app
 

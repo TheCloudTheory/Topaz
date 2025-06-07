@@ -67,6 +67,10 @@ jobs:
       with:
         username: thecloudtheory
         password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
     - name: Set up Docker
       uses: docker/setup-docker-action@v4
       with:
