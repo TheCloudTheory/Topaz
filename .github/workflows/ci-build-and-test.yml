@@ -77,6 +77,11 @@ jobs:
       with:
         name: osx-x64
         path: ./publish/osx-x64
+    - name: Upload Arm64 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-arm64
+        path: ./publish/linux-arm64
     - name: Stamp pipeline run with a tag
       run: nbgv tag
     - name: Push a tag
