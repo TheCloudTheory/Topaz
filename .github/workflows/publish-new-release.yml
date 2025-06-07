@@ -61,6 +61,7 @@ jobs:
         mkdir publish
         cp ./linux-x64/* publish/
         cp ./linux-arm64/* publish/
+        ls -la publish/
     - name: Log in to Docker Hub
       uses: docker/login-action@3.4.0
       with:
