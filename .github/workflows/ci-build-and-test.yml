@@ -60,6 +60,8 @@ jobs:
       run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r linux-x64 -o ./publish/linux-x64
     - name: Publish macOS
       run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r osx-x64 -o ./publish/osx-x64
+    - name: Publish Arm64
+      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r linux-arm64 -o ./publish/linux-arm64
     - name: Upload Windows artifact
       uses: actions/upload-artifact@v4
       with:

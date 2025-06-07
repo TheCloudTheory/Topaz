@@ -53,13 +53,14 @@ jobs:
           **/osx-x64/topaz-osx-x64
           **/linux-x64/topaz-linux-x64
           **/win-x64/topaz-win-x64.exe
+          **/linux-arm64/topaz-linux-arm64
           **/win-x64/localhost.crt
           **/win-x64/localhost.pfx
     - name: Copy artifact for Docker
       run: |
         mkdir publish
         cp ./linux-x64/* publish/
-        chmod +x ./publish/topaz-linux-x64
+        cp ./linux-arm64/* publish/
     - name: Log in to Docker Hub
       uses: docker/login-action@3.4.0
       with:
