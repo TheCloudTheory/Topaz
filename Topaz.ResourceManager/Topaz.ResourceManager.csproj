@@ -12,7 +12,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Topaz.Shared\Topaz.Shared.csproj" />
+      <ProjectReference Include="..\Topaz.Shared\Topaz.Shared.csproj">
+        <PrivateAssets>all</PrivateAssets>
+      </ProjectReference>
     </ItemGroup>
 
     <Target Name="SetNuGetManifestProperties" DependsOnTargets="GetBuildVersion">
