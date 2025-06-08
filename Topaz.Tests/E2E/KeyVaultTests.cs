@@ -73,7 +73,7 @@ public class KeyVaultTests
     {
         // Arrange
         var credentials = new AzureLocalCredential();
-        var client = new SecretClient(vaultUri: new Uri(VaultUrl), credential: credentials, new SecretClientOptions()
+        var client = new SecretClient(vaultUri: new Uri(VaultUrl), credential: credentials, new SecretClientOptions
         {
             DisableChallengeResourceVerification = true
         });
@@ -173,4 +173,6 @@ public class KeyVaultTests
         // Assert
         Assert.Throws<RequestFailedException>(() => client.GetSecret("secret-one"));
     }
+
+    
 }

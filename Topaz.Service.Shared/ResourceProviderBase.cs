@@ -4,32 +4,14 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Shared;
 
-public abstract class ResourceProviderBase<TService> where TService : IServiceDefinition
+public class ResourceProviderBase<TService> where TService : IServiceDefinition
 {
     protected const string BaseEmulatorPath = ".topaz";
-    private readonly ILogger logger;
-    
+    private readonly ILogger _logger;
+
     protected ResourceProviderBase(ILogger logger)
     {
-        this.logger = logger;
-
-        InitializeServiceDirectory();
-    }
-
-    protected virtual void InitializeServiceDirectory()
-    {
-        var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath);
-        this.logger.LogDebug($"Attempting to create {servicePath} directory...");
-
-        if(Directory.Exists(servicePath) == false)
-        {
-            Directory.CreateDirectory(servicePath);
-            this.logger.LogDebug($"Directory {servicePath} created.");
-        }
-        else
-        {
-            this.logger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
-        }
+        _logger = logger;
     }
 
     public virtual void Delete(string id)
@@ -37,11 +19,11 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
         var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
         if(Directory.Exists(servicePath) == false) 
         {
-            this.logger.LogDebug($"The resource '{servicePath}' does not exists, no changes applied.");
+            _logger.LogDebug($"The resource '{servicePath}' does not exists, no changes applied.");
             return;
         }
 
-        this.logger.LogDebug($"Deleting resource '{servicePath}'.");
+        _logger.LogDebug($"Deleting resource '{servicePath}'.");
         Directory.Delete(servicePath, true);
 
         return;
@@ -66,27 +48,11 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
         return Directory.EnumerateFiles(servicePath);
     }
 
-    public virtual void Create<TModel>(string id, TModel model)
+    public void Create<TModel>(string id, TModel model)
     {
-        var fileName = $"metadata.json";
-        var instancePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
-        var metadataFilePath = Path.Combine(instancePath, fileName);
-        var dataPath = Path.Combine(instancePath, "data");
+        var metadataFilePath = InitializeServiceDirectories(id);
 
-        this.logger.LogDebug($"Attempting to create {instancePath} directory.");
-        if(Directory.Exists(instancePath))
-        {
-            this.logger.LogDebug($"Attempting to create {instancePath} directory - skipped.");
-        }
-        else
-        {
-            Directory.CreateDirectory(instancePath);
-            Directory.CreateDirectory(dataPath);
-            
-            this.logger.LogDebug($"Attempting to create {instancePath} directory - created!");
-        }
-
-        this.logger.LogDebug($"Attempting to create {metadataFilePath} file.");
+        _logger.LogDebug($"Attempting to create {metadataFilePath} file.");
 
         if(File.Exists(metadataFilePath) == true) throw new InvalidOperationException($"Metadata file for {typeof(TService)} with ID {id} already exists.");
 
@@ -96,24 +62,45 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
         return;
     }
 
-    public (TModel data, HttpStatusCode code) CreateOrUpdate<TModel, TRequest>(string id, Stream input, Func<TRequest, TModel> requestMapper)
+    private string InitializeServiceDirectories(string id)
     {
-        var fileName = $"metadata.json";
+        var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath);
+        _logger.LogDebug($"Attempting to create {servicePath} directory...");
+
+        if(Directory.Exists(servicePath) == false)
+        {
+            Directory.CreateDirectory(servicePath);
+            _logger.LogDebug($"Directory {servicePath} created.");
+        }
+        else
+        {
+            _logger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
+        }
+        
+        const string fileName = $"metadata.json";
         var instancePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
         var metadataFilePath = Path.Combine(instancePath, fileName);
+        var dataPath = Path.Combine(instancePath, "data");
 
-        this.logger.LogDebug($"Attempting to create {instancePath} directory.");
+        _logger.LogDebug($"Attempting to create {instancePath} directory.");
         if(Directory.Exists(instancePath))
         {
-            this.logger.LogDebug($"Attempting to create {instancePath} directory - skipped.");
+            _logger.LogDebug($"Attempting to create {instancePath} directory - skipped.");
         }
         else
         {
             Directory.CreateDirectory(instancePath);
-            this.logger.LogDebug($"Attempting to create {instancePath} directory - created!");
+            Directory.CreateDirectory(dataPath);
+            
+            _logger.LogDebug($"Attempting to create {instancePath} directory - created!");
         }
 
-        this.logger.LogDebug($"Attempting to create {metadataFilePath} file.");
+        return metadataFilePath;
+    }
+
+    public (TModel data, HttpStatusCode code) CreateOrUpdate<TModel, TRequest>(string id, Stream input, Func<TRequest, TModel> requestMapper)
+    {
+        var metadataFilePath = InitializeServiceDirectories(id);
 
         using var sr = new StreamReader(input);
 
@@ -124,7 +111,7 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
 
         if(File.Exists(metadataFilePath))
         {
-            this.logger.LogDebug($"Attempting to create {metadataFilePath} file - file exists, it will be overwritten.");
+            _logger.LogDebug($"Attempting to create {metadataFilePath} file - file exists, it will be overwritten.");
             File.WriteAllText(metadataFilePath, content);
 
             return (data: newData, code: HttpStatusCode.OK);
@@ -137,23 +124,7 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
 
     public void CreateOrUpdate<TModel>(string id, TModel model)
     {
-        var fileName = $"metadata.json";
-        var instancePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
-        var metadataFilePath = Path.Combine(instancePath, fileName);
-
-        this.logger.LogDebug($"Attempting to create {instancePath} directory.");
-        if(Directory.Exists(instancePath))
-        {
-            this.logger.LogDebug($"Attempting to create {instancePath} directory - skipped.");
-        }
-        else
-        {
-            Directory.CreateDirectory(instancePath);
-            this.logger.LogDebug($"Attempting to create {instancePath} directory - created!");
-        }
-
-        this.logger.LogDebug($"Attempting to create {metadataFilePath} file.");
-        
+        var metadataFilePath = InitializeServiceDirectories(id);
         var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
 
         File.WriteAllText(metadataFilePath, content);

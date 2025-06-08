@@ -8,12 +8,6 @@ namespace Topaz.Service.Storage;
 internal sealed class BlobResourceProvider(ILogger logger) : ResourceProviderBase<BlobStorageService>(logger)
 {
     private readonly ILogger logger = logger;
-
-    protected override void InitializeServiceDirectory()
-    {
-        // Just discard the base implementation as Blob Storage is a service inside a service
-        // and requires slightly different initialization
-    }
     
     private void InitializeServiceDirectory(string storageAccountName)
     {

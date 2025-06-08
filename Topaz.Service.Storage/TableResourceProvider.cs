@@ -11,12 +11,6 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
 {
     private readonly ILogger logger = logger;
 
-    protected override void InitializeServiceDirectory()
-    {
-        // Just discard the base implementation as Table Storage is a service inside a service
-        // and requires slightly different initialization
-    }
-
     private void InitializeServiceDirectory(string storageAccountName)
     {
         var servicePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath);
@@ -57,10 +51,6 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
         }
 
         Directory.Delete(tablePath, true);
-    }
-
-    public override void Create<TModel>(string id, TModel model)
-    {
     }
 
     public void Create(string tableName, string storageAccountName, TableItem model)

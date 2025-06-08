@@ -1,7 +1,10 @@
 ﻿using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
+using Azure.ResourceManager.KeyVault;
+using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.Resources;
+using Azure.Security.KeyVault.Secrets;
 using DotNet.Testcontainers.Builders;
 using JetBrains.Annotations;
 using Topaz.Identity;
@@ -33,6 +36,7 @@ internal class Program
             var subscriptionId = Guid.NewGuid();
             const string subscriptionName = "topaz.example";
             const string resourceGroupName = "rg-topaz-example";
+            const string keyVaultName = "kvtopazexample";
     
             await container.StartAsync()
                 .ConfigureAwait(false);
@@ -47,7 +51,10 @@ internal class Program
             var credentials = new AzureLocalCredential();
             var armClient = new ArmClient(credentials, subscriptionId.ToString(), TopazArmClientOptions.New);
             
-            CreateResourceGroup(armClient, resourceGroupName);
+            var resourceGroup = await CreateResourceGroup(armClient, resourceGroupName);
+            
+            await CreateKeyVault(resourceGroup.Value, keyVaultName);
+            await CreateKeyVaultSecrets(keyVaultName);
         }
         finally
         {
@@ -55,14 +62,45 @@ internal class Program
         }
     }
 
-    private static void CreateResourceGroup(ArmClient armClient, string resourceGroupName)
+    private static async Task CreateKeyVaultSecrets(string keyVaultName)
     {
-        var subscription = armClient.GetDefaultSubscription();
+        var credentials = new AzureLocalCredential();
+        
+        // TODO: Add helper method which can be used to generated URIs / URLs of resources
+        var client = new SecretClient(vaultUri: new Uri($"https://localhost:8898/{keyVaultName}"), credential: credentials, new SecretClientOptions
+        {
+            DisableChallengeResourceVerification = true
+        });
+        
+        await client.SetSecretAsync("secret-name", "test");
+        await client.SetSecretAsync("secret-name2", "test2");
+        await client.SetSecretAsync("secret-name3", "test3");
+        
+        Console.WriteLine($"Azure Key Vault secrets created successfully!");
+    }
+
+    private static async Task CreateKeyVault(ResourceGroupResource resourceGroup, string keyVaultName)
+    {
+        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+        
+        _ = await resourceGroup.GetKeyVaults()
+            .CreateOrUpdateAsync(WaitUntil.Completed, keyVaultName, operation, CancellationToken.None);
+        
+        Console.WriteLine($"Azure Key Vault [{keyVaultName}] created successfully!");
+    }
+
+    private static async Task<Response<ResourceGroupResource>> CreateResourceGroup(ArmClient armClient, string resourceGroupName)
+    {
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroups = subscription.GetResourceGroups();
         
-        _ = resourceGroups.CreateOrUpdate(WaitUntil.Completed, resourceGroupName, new ResourceGroupData(AzureLocation.WestEurope));
+        _ = await resourceGroups.CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName, new ResourceGroupData(AzureLocation.WestEurope));
         
         Console.WriteLine($"Resource group [{resourceGroupName}] created successfully!");
+        
+        var resourceGroup = await resourceGroups.GetAsync(resourceGroupName);
+        return resourceGroup;
     }
 
     private static async Task CreateSubscription(Guid subscriptionId, string subscriptionName)
