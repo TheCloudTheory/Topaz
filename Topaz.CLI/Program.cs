@@ -1,13 +1,13 @@
-﻿using Topaz.CLI;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Spectre.Console.Cli;
+using Topaz.CLI;
 using Topaz.CLI.Commands;
+using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
 using Topaz.Service.ResourceGroup.Commands;
 using Topaz.Service.Storage.Commands;
 using Topaz.Service.Subscription.Commands;
 using Topaz.Shared;
-using Microsoft.Extensions.DependencyInjection;
-using Spectre.Console.Cli;
-using Topaz.Service.EventHub.Commands;
 
 internal class Program
 {

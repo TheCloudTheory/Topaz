@@ -108,10 +108,10 @@ public class Host(ILogger logger)
                     switch (httpEndpoint.PortAndProtocol.Protocol)
                     {
                         case Protocol.Http:
-                            options.Listen(IPAddress.Loopback, httpEndpoint.PortAndProtocol.Port);
+                            options.Listen(IPAddress.Any, httpEndpoint.PortAndProtocol.Port);
                             break;
                         case Protocol.Https:
-                            options.Listen(IPAddress.Loopback, httpEndpoint.PortAndProtocol.Port, listenOptions =>
+                            options.Listen(IPAddress.Any, httpEndpoint.PortAndProtocol.Port, listenOptions =>
                             {
                                 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                                 {

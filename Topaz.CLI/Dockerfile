@@ -12,7 +12,4 @@ WORKDIR /app
 
 COPY --from=base /app .
 
-# Set environment variables
-ENV ASPNETCORE_URLS="http://*:80;https://*:443"
-
 CMD ["./topaz-cli", "start", "--log-level", "Information"]

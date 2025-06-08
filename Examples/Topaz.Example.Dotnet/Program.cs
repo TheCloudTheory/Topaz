@@ -1,5 +1,6 @@
 ﻿using DotNet.Testcontainers.Builders;
 using JetBrains.Annotations;
+using Topaz.ResourceManager;
 
 namespace Topaz.Example.Dotnet;
 
@@ -9,6 +10,9 @@ internal class Program
     public static async Task Main(string[] args)
     {
         Console.WriteLine("Topaz Example - .NET");
+        
+        var subscriptionId = Guid.NewGuid();
+        var subscriptionName = "topaz.example";
 
         // Create a builder for Topaz container image and all the ports
         // which are exposed by the emulator. Note you don't need to expose
@@ -26,17 +30,18 @@ internal class Program
         await container.StartAsync()
             .ConfigureAwait(false);
 
-        CreateSubscription();
+        await CreateSubscription(subscriptionId, subscriptionName);
         CreateResourceGroup();
     }
 
     private static void CreateResourceGroup()
     {
-        throw new NotImplementedException();
     }
 
-    private static void CreateSubscription()
+    private static async Task CreateSubscription(Guid subscriptionId, string subscriptionName)
     {
-        throw new NotImplementedException();
+        using var topaz = new TopazArmClient();
+        
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
     }
 }
