@@ -1,14 +1,12 @@
 using Topaz.Identity;
 using Azure.ResourceManager;
+using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E;
 
 public class SubscriptionTests
 {
-    private static readonly ArmClientOptions armClientOptions = new ArmClientOptions
-    {
-        Environment = new ArmEnvironment(new Uri("https://localhost:8899"), "https://localhost:8899")
-    };
+    private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
 
     [Test]
     public async Task SubscriptionTests_WhenSubscriptionIsRequest_ItShouldBeAvailable()
@@ -33,7 +31,7 @@ public class SubscriptionTests
         ]);
 
         var credentials = new AzureLocalCredential();
-        var armClient = new ArmClient(credentials, Guid.Empty.ToString(), armClientOptions);
+        var armClient = new ArmClient(credentials, Guid.Empty.ToString(), ArmClientOptions);
         
         // Act
         var subscription = armClient.GetDefaultSubscription();

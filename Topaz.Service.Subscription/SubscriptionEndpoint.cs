@@ -1,50 +1,95 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 using Microsoft.AspNetCore.Http;
+using Topaz.Service.Subscription.Models.Requests;
 
 namespace Topaz.Service.Subscription;
 
 public sealed class SubscriptionEndpoint(ResourceProvider provider, ILogger logger) : IEndpointDefinition
 {
-    private readonly ILogger logger = logger;
-    private readonly SubscriptionControlPlane controlPlane = new(provider);
-    public string[] Endpoints => ["GET /subscriptions/{subscriptionId}"];
+    private readonly SubscriptionControlPlane _controlPlane = new(provider);
+    public string[] Endpoints => [
+        "GET /subscriptions/{subscriptionId}",
+        "POST /subscriptions/{subscriptionId}"
+    ];
     public (int Port, Protocol Protocol) PortAndProtocol => (8899, Protocol.Https);
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
     {
-        this.logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
+        logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
 
         var response = new HttpResponseMessage();
 
         try
         {
-            if(method == "GET")
+            var subscriptionId = path.ExtractValueFromPath(2);
+            if (subscriptionId == null)
             {
-                var requestParts = path.Split('/');
-                var subscriptionId = requestParts[2];
-                var subscription = this.controlPlane.Get(subscriptionId);
-
-                response.Content = JsonContent.Create(subscription, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
-                response.StatusCode = System.Net.HttpStatusCode.OK;
+                response.StatusCode = HttpStatusCode.BadRequest;
+                return response;
             }
-            else
+            
+            switch (method)
             {
-                response.StatusCode = System.Net.HttpStatusCode.NotFound;
-            }   
+                case "GET":
+                    HandleGetSubscriptionRequest(subscriptionId, response);
+                    break;
+                case "POST":
+                    HandleCreateSubscriptionRequest(subscriptionId, input, response);
+                    break;
+                default:
+                    response.StatusCode = HttpStatusCode.NotFound;
+                    break;
+            }
         }
         catch(Exception ex)
         {
-            this.logger.LogError(ex);
+            logger.LogError(ex);
 
             response.Content = new StringContent(ex.Message);
-            response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+            response.StatusCode = HttpStatusCode.InternalServerError;
 
             return response;
         }
         
         return response;
+    }
+
+    private void HandleCreateSubscriptionRequest(string subscriptionId, Stream input, HttpResponseMessage response)
+    {
+        var subscription = _controlPlane.Get(subscriptionId);
+        if (subscription is not null)
+        {
+            response.StatusCode = HttpStatusCode.BadRequest;
+            response.Content = new StringContent($"Subscription with ID {subscriptionId} already exists.");
+
+            return;
+        }
+        
+        using var reader = new StreamReader(input);
+        
+        var content = reader.ReadToEnd();
+        var request = JsonSerializer.Deserialize<CreateSubscriptionRequest>(content, GlobalSettings.JsonOptions);
+
+        if (request?.SubscriptionId == null || string.IsNullOrWhiteSpace(request.SubscriptionName))
+        {
+            response.StatusCode = HttpStatusCode.BadRequest;
+            return;
+        }
+
+        _controlPlane.Create(subscriptionId, request.SubscriptionName);
+        response.StatusCode = HttpStatusCode.Created;
+    }
+
+    private void HandleGetSubscriptionRequest(string subscriptionId, HttpResponseMessage response)
+    {
+        var subscription = _controlPlane.Get(subscriptionId);
+
+        response.Content = JsonContent.Create(subscription, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+        response.StatusCode = HttpStatusCode.OK;
     }
 }

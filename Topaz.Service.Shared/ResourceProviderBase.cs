@@ -47,12 +47,12 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
         return;
     }
 
-    public string Get(string id)
+    public string? Get(string id)
     {
-        var fileName = $"metadata.json";
+        const string fileName = $"metadata.json";
         var metadataFile = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id, fileName);
 
-        if(File.Exists(metadataFile) == false) throw new FileNotFoundException($"Metadata file for {typeof(TService)} with ID {id} doesn't exist.");
+        if (File.Exists(metadataFile) == false) return null;
 
         var content = File.ReadAllText(metadataFile);
         if(string.IsNullOrEmpty(content)) throw new InvalidOperationException("Metadata file is null or empty.");
