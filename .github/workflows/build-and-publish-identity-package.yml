@@ -1,4 +1,4 @@
-name: Build_Test_And_Publish
+name: Build and publish identity package
 
 on:
   workflow_dispatch:
@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
