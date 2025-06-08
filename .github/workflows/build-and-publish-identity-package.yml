@@ -1,0 +1,22 @@
+name: Build_Test_And_Publish
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'Topaz.Identity/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Pack NuGet package
+      run: dotnet pack ./Topaz.Identity/Topaz.Identity.csproj -c Release --include-symbols -o ./publish
+    - name: Push NuGet package
+      run: dotnet nuget push ./publish/Topaz.Identity.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json
