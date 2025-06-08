@@ -1,4 +1,5 @@
-# Topaz ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/TheCloudTheory/Topaz/ci-build-and-test.yml)
+# Topaz ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/TheCloudTheory/Topaz/ci-build-and-test.yml) ![GitHub Release](https://img.shields.io/github/v/release/TheCloudTheory/Topaz?include_prereleases)
+
 
 <div align="center">
   <img src="https://github.com/TheCloudTheory/Topaz/blob/main/static/topaz-logo-small.png" />
