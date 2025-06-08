@@ -5,7 +5,14 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AssemblyName>TheCloudTheory.Topaz.ResourceManager</AssemblyName>
+        <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
     </PropertyGroup>
+
+    <Target DependsOnTargets="ResolveReferences" Name="CopyProjectReferencesToPackage">
+      <ItemGroup>
+        <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))"/>
+      </ItemGroup>
+    </Target>
 
     <ItemGroup>
       <PackageReference Include="Azure.ResourceManager" Version="1.13.1" />
@@ -13,7 +20,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Topaz.Shared\Topaz.Shared.csproj">
-        <PrivateAssets>all</PrivateAssets>
+        <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+        <IncludeAssets>Topaz.Shared.dll</IncludeAssets>
       </ProjectReference>
     </ItemGroup>
 
