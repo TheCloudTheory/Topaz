@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Topaz.Service.ResourceGroup.Models;
 using Topaz.Service.Shared;
+using Topaz.Shared;
 
 namespace Topaz.Service.ResourceGroup;
 

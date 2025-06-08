@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Topaz.Service.Shared;
+using Topaz.Shared;
 
 namespace Topaz.Service.Subscription.Models;
 

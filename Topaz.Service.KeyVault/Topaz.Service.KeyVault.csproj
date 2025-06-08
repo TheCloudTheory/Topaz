@@ -9,6 +9,11 @@
   <ItemGroup>
     <ProjectReference Include="../Topaz.Service.Shared/Topaz.Service.Shared.csproj" />
     <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
+    <ProjectReference Include="..\Topaz.ResourceManager\Topaz.ResourceManager.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
   </ItemGroup>
 
 </Project>

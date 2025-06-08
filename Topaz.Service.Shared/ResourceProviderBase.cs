@@ -135,6 +135,30 @@ public abstract class ResourceProviderBase<TService> where TService : IServiceDe
         return (data: newData, code: HttpStatusCode.Created);
     }
 
+    public void CreateOrUpdate<TModel>(string id, TModel model)
+    {
+        var fileName = $"metadata.json";
+        var instancePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
+        var metadataFilePath = Path.Combine(instancePath, fileName);
+
+        this.logger.LogDebug($"Attempting to create {instancePath} directory.");
+        if(Directory.Exists(instancePath))
+        {
+            this.logger.LogDebug($"Attempting to create {instancePath} directory - skipped.");
+        }
+        else
+        {
+            Directory.CreateDirectory(instancePath);
+            this.logger.LogDebug($"Attempting to create {instancePath} directory - created!");
+        }
+
+        this.logger.LogDebug($"Attempting to create {metadataFilePath} file.");
+        
+        var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
+
+        File.WriteAllText(metadataFilePath, content);
+    }
+
     public string GetServiceInstancePath(string id)
     {
         return Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);

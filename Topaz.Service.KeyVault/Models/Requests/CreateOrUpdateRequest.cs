@@ -1,9 +1,23 @@
-using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 
 namespace Topaz.Service.KeyVault.Models.Requests;
 
-internal record class CreateOrUpdateRequest
+// TODO: There should be a way to validate requests
+internal record class CreateOrUpdateKeyVaultRequest
 {
-    [JsonPropertyName("location")]
-    public string? Location { get; set; }
+    public string? Location { get; init; }
+    public KeyVaultProperties? Properties { get; init; }
+
+    internal class KeyVaultProperties
+    {
+        public Guid TenantId { get; set; }
+        public KeyVaultSku? Sku { get; set; }
+
+        [UsedImplicitly]
+        internal class KeyVaultSku
+        {
+            public string? Family { get; set; }
+            public string? Name { get; set; }
+        }
+    }
 }

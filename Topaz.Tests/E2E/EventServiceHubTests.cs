@@ -2,15 +2,13 @@ using Azure;
 using Azure.ResourceManager;
 using Azure.ResourceManager.EventHubs;
 using Topaz.Identity;
+using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E;
 
 public class EventServiceHubTests
 {
-    private static readonly ArmClientOptions armClientOptions = new ArmClientOptions
-    {
-        Environment = new ArmEnvironment(new Uri("https://localhost:8899"), "https://localhost:8899")
-    };
+    private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
     
     [SetUp]
     public async Task SetUp()
@@ -79,10 +77,10 @@ public class EventServiceHubTests
     {
         // Arrange
         var credential = new AzureLocalCredential();
-        var armClient = new ArmClient(credential, Guid.Empty.ToString(), armClientOptions);
+        var armClient = new ArmClient(credential, Guid.Empty.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
-        var resourceGroups = subscription.GetResourceGroup("test");
-        var @namespace = resourceGroups.Value.GetEventHubsNamespace("test");
+        var resourceGroup = subscription.GetResourceGroup("test");
+        var @namespace = resourceGroup.Value.GetEventHubsNamespace("test");
 
         // Act
         var hub = @namespace.Value.GetEventHubs().CreateOrUpdate(WaitUntil.Completed, "test-eh", new EventHubData());

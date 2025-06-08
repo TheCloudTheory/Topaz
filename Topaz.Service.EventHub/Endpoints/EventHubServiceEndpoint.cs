@@ -9,8 +9,7 @@ namespace Topaz.Service.EventHub.Endpoints;
 
 public sealed class EventHubServiceEndpoint(ILogger logger) : IEndpointDefinition
 {
-    private readonly ILogger logger = logger;
-    private readonly EventHubControlPlane controlPlane = new EventHubControlPlane(new ResourceProvider(logger), logger);
+    private readonly EventHubControlPlane _controlPlane = new(new ResourceProvider(logger), logger);
     public string[] Endpoints => [
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}"
@@ -18,7 +17,7 @@ public sealed class EventHubServiceEndpoint(ILogger logger) : IEndpointDefinitio
     public (int Port, Protocol Protocol) PortAndProtocol => (8899, Protocol.Https);
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
     {
-        this.logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
+        logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
 
         var response = new HttpResponseMessage();
 
@@ -40,12 +39,10 @@ public sealed class EventHubServiceEndpoint(ILogger logger) : IEndpointDefinitio
         }
         catch(Exception ex)
         {
-            this.logger.LogError(ex);
+            logger.LogError(ex);
 
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
-
-            return response;
         }
 
         return response;
@@ -56,7 +53,7 @@ public sealed class EventHubServiceEndpoint(ILogger logger) : IEndpointDefinitio
         var namespaceName = path.ExtractValueFromPath(8);
         var eventhubName = path.ExtractValueFromPath(10);
                     
-        var data = this.controlPlane.CreateUpdateEventHub(namespaceName!, eventhubName!, input);
+        var data = this._controlPlane.CreateUpdateEventHub(namespaceName!, eventhubName!, input);
                     
         response.StatusCode = HttpStatusCode.OK;
         response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
@@ -65,7 +62,7 @@ public sealed class EventHubServiceEndpoint(ILogger logger) : IEndpointDefinitio
     private void HandleGetEventHubNamespaceRequest(string path, HttpResponseMessage response)
     {
         var namespaceName = path.ExtractValueFromPath(8);
-        var data = this.controlPlane.GetNamespace(namespaceName!);
+        var data = this._controlPlane.GetNamespace(namespaceName!);
 
         response.StatusCode = HttpStatusCode.OK;
         response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Topaz.Service.Shared;
+using Topaz.Shared;
 
 namespace Topaz.Service.Subscription;
 
