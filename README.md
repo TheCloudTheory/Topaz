@@ -15,6 +15,26 @@ Note that Topaz is in early stage of its development and each new version may in
 ## Is Topaz free?
 Yes, currently Topaz is free of any charges and doesn't require registration. This will change in the future, though you'll be notified about that fact several releases prior to it coming into life.
 
+## Why Topaz?
+Topaz offers a simplified DevEx by tightly integrating with moderns and popular tools used in development. You no longer need multiple emulators to start integrating with Azure services locally - all you need is a single executable (or Docker container). The set of capabilities offered by Topaz can be compiled into this short list:
+* Support for both control & data plane of services
+* Full portability
+* Seamless integration with Azure SDK
+* One-tool-to-rule-them-all
+* Dedicated helpers for simplified connection and authentication
+* Emulation of Azure resources' hierarchy including subscriptions and resource groups
+
+There's also a backlog of features planned for future releases:
+* UI for easier management of resources
+* Emulation of Azure RBAC
+* Emulation of ARM deployments using ARM Templates / Bicep
+
+## Alternatives
+If you want to work with emulators for Azure services, you have a couple of options:
+* Azurite - https://github.com/Azure/Azurite
+* Azure Cosmos DB Emulator - https://github.com/Azure/azure-cosmos-db-emulator-docker
+* Azure Service Bus Emulator - https://github.com/Azure/azure-service-bus-emulator-installer
+
 ## Supported services
 Service Name|Control Plane|Data Plane
 ------------|-------------|----------
