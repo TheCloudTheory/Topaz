@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Example.Dotnet", "Exa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.ResourceManager", "Topaz.ResourceManager\Topaz.ResourceManager.csproj", "{36EBC887-1A69-4AE8-BC0A-821F4E8299E5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Example.Dotnet.Web", "Examples\Topaz.Example.Dotnet.Web\Topaz.Example.Dotnet.Web.csproj", "{1C9E5C5B-3259-4A6A-B63E-54AAA0322A57}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -89,6 +91,10 @@ Global
 		{36EBC887-1A69-4AE8-BC0A-821F4E8299E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{36EBC887-1A69-4AE8-BC0A-821F4E8299E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{36EBC887-1A69-4AE8-BC0A-821F4E8299E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C9E5C5B-3259-4A6A-B63E-54AAA0322A57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C9E5C5B-3259-4A6A-B63E-54AAA0322A57}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C9E5C5B-3259-4A6A-B63E-54AAA0322A57}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C9E5C5B-3259-4A6A-B63E-54AAA0322A57}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -98,5 +104,6 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{1DA9278A-2B35-46E1-8688-8CC4EE7612FF} = {421A7F1B-9656-4A7E-B209-B1E8811D3E28}
+		{1C9E5C5B-3259-4A6A-B63E-54AAA0322A57} = {421A7F1B-9656-4A7E-B209-B1E8811D3E28}
 	EndGlobalSection
 EndGlobal

@@ -65,9 +65,7 @@ internal class Program
     private static async Task CreateKeyVaultSecrets(string keyVaultName)
     {
         var credentials = new AzureLocalCredential();
-        
-        // TODO: Add helper method which can be used to generated URIs / URLs of resources
-        var client = new SecretClient(vaultUri: new Uri($"https://localhost:8898/{keyVaultName}"), credential: credentials, new SecretClientOptions
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(keyVaultName), credential: credentials, new SecretClientOptions
         {
             DisableChallengeResourceVerification = true
         });
