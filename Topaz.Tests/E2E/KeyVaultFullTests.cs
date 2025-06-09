@@ -79,7 +79,7 @@ public class KeyVaultFullTests
         var resourceGroup = subscription.GetResourceGroup("test");
         var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
             new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
-        var client = new SecretClient(vaultUri: new Uri($"https://localhost:8898/{TestKeyVaultName}"), credential: credential, new SecretClientOptions()
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(TestKeyVaultName), credential: credential, new SecretClientOptions()
         {
             DisableChallengeResourceVerification = true
         });

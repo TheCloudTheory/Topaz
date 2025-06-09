@@ -1,13 +1,12 @@
 using Azure;
 using Topaz.Identity;
 using Azure.Security.KeyVault.Secrets;
+using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E;
 
 public class KeyVaultTests
 {
-    private const string VaultUrl = "https://localhost:8898/test";
-
     [SetUp]
     public async Task SetUp()
     {
@@ -73,7 +72,7 @@ public class KeyVaultTests
     {
         // Arrange
         var credentials = new AzureLocalCredential();
-        var client = new SecretClient(vaultUri: new Uri(VaultUrl), credential: credentials, new SecretClientOptions
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions
         {
             DisableChallengeResourceVerification = true
         });
@@ -96,7 +95,7 @@ public class KeyVaultTests
     {
         // Arrange
         var credentials = new AzureLocalCredential();
-        var client = new SecretClient(vaultUri: new Uri(VaultUrl), credential: credentials, new SecretClientOptions()
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions()
         {
             DisableChallengeResourceVerification = true
         });
@@ -110,7 +109,7 @@ public class KeyVaultTests
     {
         // Arrange
         var credentials = new AzureLocalCredential();
-        var client = new SecretClient(vaultUri: new Uri("https://localhost:8898/test"), credential: credentials, new SecretClientOptions()
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions()
         {
             DisableChallengeResourceVerification = true
         });
@@ -137,7 +136,7 @@ public class KeyVaultTests
     {
         // Arrange
         var credentials = new AzureLocalCredential();
-        var client = new SecretClient(vaultUri: new Uri(VaultUrl), credential: credentials, new SecretClientOptions()
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions()
         {
             DisableChallengeResourceVerification = true
         });
@@ -161,7 +160,7 @@ public class KeyVaultTests
     {
         // Arrange
         var credentials = new AzureLocalCredential();
-        var client = new SecretClient(vaultUri: new Uri(VaultUrl), credential: credentials, new SecretClientOptions()
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions()
         {
             DisableChallengeResourceVerification = true
         });

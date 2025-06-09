@@ -16,7 +16,7 @@ public sealed class SubscriptionEndpoint(ResourceProvider provider, ILogger logg
         "GET /subscriptions/{subscriptionId}",
         "POST /subscriptions/{subscriptionId}"
     ];
-    public (int Port, Protocol Protocol) PortAndProtocol => (8899, Protocol.Https);
+    public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
     {

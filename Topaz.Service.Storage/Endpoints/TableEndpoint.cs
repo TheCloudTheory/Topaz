@@ -13,14 +13,13 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints;
 
-public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
+public class TableEndpoint(ILogger logger) : IEndpointDefinition
 {
-    private readonly TableServiceControlPlane controlPlane = new(new TableResourceProvider(logger), logger);
-    private readonly TableServiceDataPlane dataPlane = new(new TableServiceControlPlane(new TableResourceProvider(logger), logger), logger);
-    private readonly ResourceProvider resourceProvider = new(logger);
-    private readonly ILogger logger = logger;
+    private readonly TableServiceControlPlane _controlPlane = new(new TableResourceProvider(logger), logger);
+    private readonly TableServiceDataPlane _dataPlane = new(new TableServiceControlPlane(new TableResourceProvider(logger), logger), logger);
+    private readonly ResourceProvider _resourceProvider = new(logger);
 
-    public (int Port, Protocol Protocol) PortAndProtocol => (8890, Protocol.Http);
+    public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultTableStoragePort, Protocol.Http);
 
     public string[] Endpoints => [
         "GET /storage/{storageAccountName}/Tables",
@@ -69,7 +68,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                         var potentialTableName = actualPath.Replace("()", string.Empty);
                         if(IsPathReferencingTable(potentialTableName, storageAccountName))
                         {
-                            var entities = dataPlane.QueryEntities(query, potentialTableName, storageAccountName);
+                            var entities = _dataPlane.QueryEntities(query, potentialTableName, storageAccountName);
                             var dataEndpointResponse = new TableDataEndpointResponse(entities);
 
                             response.Content = JsonContent.Create(dataEndpointResponse);
@@ -92,7 +91,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                     case "Tables":
                         try
                         {
-                            var tables = controlPlane.CreateTable(input, storageAccountName);
+                            var tables = _controlPlane.CreateTable(input, storageAccountName);
                             response.Content = JsonContent.Create(tables);
 
                             // Depending on the value of the `Prefer` header, the response 
@@ -124,7 +123,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                         {
                             try
                             {
-                                var payload = dataPlane.InsertEntity(input, actualPath, storageAccountName);
+                                var payload = _dataPlane.InsertEntity(input, actualPath, storageAccountName);
 
                                 // Depending on the value of the `Prefer` header, the response 
                                 // given by the emulator should be either 204 or 201
@@ -164,7 +163,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 
                             try
                             {
-                                dataPlane.UpdateEntity(input, TableName, storageAccountName, PartitionKey, RowKey, headers);
+                                _dataPlane.UpdateEntity(input, TableName, storageAccountName, PartitionKey, RowKey, headers);
 
                                 response.StatusCode = HttpStatusCode.NoContent;
                             }
@@ -227,7 +226,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
                     var tableName = matches.Value.Trim('/').Replace("Tables('", "").Replace("')", "");
 
                     logger.LogDebug($"Attempting to delete table: {tableName}.");
-                    controlPlane.DeleteTable(tableName, storageAccountName);
+                    _controlPlane.DeleteTable(tableName, storageAccountName);
                     logger.LogDebug($"Table {tableName} deleted.");
 
                     response.StatusCode = HttpStatusCode.NoContent;
@@ -262,9 +261,9 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 
     private void HandleGetAclRequest(string storageAccountName, string tableName, HttpResponseMessage response)
     {
-        this.logger.LogDebug($"Executing {nameof(HandleGetAclRequest)}.");
+        logger.LogDebug($"Executing {nameof(HandleGetAclRequest)}.");
         
-        var acls = this.controlPlane.GetAcl(storageAccountName, tableName);
+        var acls = this._controlPlane.GetAcl(storageAccountName, tableName);
         
         using var sw = new EncodingAwareStringWriter();
         var serializer = new XmlSerializer(typeof(SignedIdentifiers));
@@ -276,22 +275,22 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 
     private void HandleSetAclRequest(string storageAccountName, string tableName, Stream input, HttpResponseMessage response)
     {
-        this.logger.LogDebug($"Executing {nameof(HandleSetAclRequest)}.");
+        logger.LogDebug($"Executing {nameof(HandleSetAclRequest)}.");
         
-        var code = this.controlPlane.SetAcl(storageAccountName, tableName, input);
+        var code = this._controlPlane.SetAcl(storageAccountName, tableName, input);
         response.StatusCode = code;
     }
 
     private void HandleUpdateEntityRequest(Stream input, IHeaderDictionary headers, Match matches,
         string storageAccountName, HttpResponseMessage response)
     {
-        this.logger.LogDebug("Matched the update operation.");
+        logger.LogDebug("Matched the update operation.");
 
         var (tableName, partitionKey, rowKey) = GetOperationDataForUpdateOperation(matches);
 
         try
         {
-            this.dataPlane.UpdateEntity(input, tableName, storageAccountName, partitionKey, rowKey, headers);
+            this._dataPlane.UpdateEntity(input, tableName, storageAccountName, partitionKey, rowKey, headers);
 
             response.StatusCode = System.Net.HttpStatusCode.NoContent;
         }
@@ -317,7 +316,7 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
     {
         ThrowIfGetPropertiesRequestIsInvalid(query);
 
-        var properties = this.controlPlane.GetTableProperties(storageAccountName);
+        var properties = this._controlPlane.GetTableProperties(storageAccountName);
         
         using var sw = new EncodingAwareStringWriter();
         var serializer = new XmlSerializer(typeof(TableServiceProperties));
@@ -344,14 +343,14 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 
     private void HandleGetTablesRequest(string storageAccountName, HttpResponseMessage response)
     {
-        var tables = this.controlPlane.GetTables(storageAccountName);
+        var tables = this._controlPlane.GetTables(storageAccountName);
         var endpointResponse = new TableEndpointResponse(tables);
         response.Content = JsonContent.Create(endpointResponse);
     }
 
     private (string TableName, string PartitionKey, string RowKey) GetOperationDataForUpdateOperation(Match matches)
     {
-        this.logger.LogDebug($"Executing {nameof(GetOperationDataForUpdateOperation)}: {matches}");
+        logger.LogDebug($"Executing {nameof(GetOperationDataForUpdateOperation)}: {matches}");
 
         var match = matches.Value;
         var dataMatches = Regex.Match(match, @"^(?<tableName>\w+)\(PartitionKey='(?<partitionKey>\w+)',RowKey='(?<rowKey>\w+)'\)$");
@@ -370,34 +369,34 @@ public partial class TableEndpoint(ILogger logger) : IEndpointDefinition
 
     private bool IsPathReferencingTable(string tableName, string storageAccountName)
     {
-        this.logger.LogDebug($"Executing {nameof(IsPathReferencingTable)}: {tableName} {storageAccountName}");
+        logger.LogDebug($"Executing {nameof(IsPathReferencingTable)}: {tableName} {storageAccountName}");
 
-        return this.controlPlane.CheckIfTableExists(tableName, storageAccountName);
+        return this._controlPlane.CheckIfTableExists(tableName, storageAccountName);
     }
 
     private string ClearOriginalPath(string path)
     {
-        this.logger.LogDebug($"Executing {nameof(ClearOriginalPath)}: {path}");
+        logger.LogDebug($"Executing {nameof(ClearOriginalPath)}: {path}");
 
         var pathParts = path.Split('/');
         var newPath = string.Join('/', pathParts.Skip(3));
 
-        this.logger.LogDebug($"Executing {nameof(ClearOriginalPath)}: New path: {newPath}");
+        logger.LogDebug($"Executing {nameof(ClearOriginalPath)}: New path: {newPath}");
 
         return newPath;
     }
 
     private bool TryGetStorageAccountName(string path, out string name)
     {
-        this.logger.LogDebug($"Executing {nameof(TryGetStorageAccountName)}: {path}");
+        logger.LogDebug($"Executing {nameof(TryGetStorageAccountName)}: {path}");
 
         var pathParts = path.Split('/');
         var accountName = pathParts[2];
         name = accountName;
 
-        this.logger.LogDebug($"About to check if storage account '{accountName}' exists.");
+        logger.LogDebug($"About to check if storage account '{accountName}' exists.");
 
-        return this.resourceProvider.CheckIfStorageAccountExists(accountName);
+        return this._resourceProvider.CheckIfStorageAccountExists(accountName);
     }
 
     private class TableEndpointResponse(TableProperties[] tables)

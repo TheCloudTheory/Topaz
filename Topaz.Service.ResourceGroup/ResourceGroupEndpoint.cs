@@ -9,9 +9,8 @@ namespace Topaz.Service.ResourceGroup;
 
 public class ResourceGroupEndpoint(ResourceProvider provider, ILogger logger) : IEndpointDefinition
 {
-    private readonly ILogger logger = logger;
-    private readonly ResourceGroupControlPlane controlPlane = new(provider);
-    public (int Port, Protocol Protocol) PortAndProtocol => (8899, Protocol.Https);
+    private readonly ResourceGroupControlPlane _controlPlane = new(provider);
+    public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
 
     public string[] Endpoints => [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}",
@@ -20,7 +19,7 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ILogger logger) : 
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
     {
-        this.logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
+        logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
 
         var response = new HttpResponseMessage();
 
@@ -32,7 +31,7 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ILogger logger) : 
                 {
                     var subscriptionId = path.ExtractValueFromPath(2);
                     var resourceGroupName = path.ExtractValueFromPath(4);
-                    var (data, code) = this.controlPlane.CreateOrUpdate(resourceGroupName!, subscriptionId!, input);
+                    var (data, code) = this._controlPlane.CreateOrUpdate(resourceGroupName!, subscriptionId!, input);
 
                     response.StatusCode = code;
                     response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
@@ -41,7 +40,7 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ILogger logger) : 
                 case "GET":
                 {
                     var resourceGroupName = path.ExtractValueFromPath(4);
-                    var data = this.controlPlane.Get(resourceGroupName!);
+                    var data = this._controlPlane.Get(resourceGroupName!);
 
                     response.StatusCode = HttpStatusCode.OK;
                     response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
@@ -51,7 +50,7 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ILogger logger) : 
         }
         catch(Exception ex)
         {
-            this.logger.LogError(ex);
+            logger.LogError(ex);
 
             response.Content = new StringContent(ex.Message);
             response.StatusCode = System.Net.HttpStatusCode.InternalServerError;

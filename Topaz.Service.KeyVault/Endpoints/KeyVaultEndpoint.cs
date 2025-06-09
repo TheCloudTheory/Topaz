@@ -11,7 +11,7 @@ namespace Topaz.Service.KeyVault.Endpoints;
 public sealed class KeyVaultEndpoint(ILogger logger) : IEndpointDefinition
 {
     private readonly KeyVaultDataPlane _dataPlane = new(logger, new ResourceProvider(logger));
-    public (int Port, Protocol Protocol) PortAndProtocol => (8898, Protocol.Https);
+    public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultKeyVaultPort, Protocol.Https);
 
     public string[] Endpoints => [
         "PUT /{vaultName}/secrets/{secretName}",

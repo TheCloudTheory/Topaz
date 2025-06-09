@@ -17,7 +17,7 @@ public class BlobEndpoint(ILogger logger) : IEndpointDefinition
     private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger), logger);
     private readonly BlobServiceDataPlane _dataPlane = new(new BlobServiceControlPlane(new BlobResourceProvider(logger), logger), logger);
     
-    public (int Port, Protocol Protocol) PortAndProtocol => (8891, Protocol.Http);
+    public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultBlobStoragePort, Protocol.Http);
 
     public string[] Endpoints => [
         "PUT /{storageAccountName}/{containerName}",
