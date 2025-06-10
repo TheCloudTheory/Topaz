@@ -10,7 +10,7 @@ using Topaz.ResourceManager;
 
 namespace Topaz.AspNetCore.Extensions;
 
-internal static class TopazConfigurationExtensions
+public static class TopazConfigurationExtensions
 {
     public static TopazEnvironmentBuilder AddTopaz(this IConfigurationBuilder builder, Guid defaultSubscriptionId)
     {
