@@ -13,6 +13,7 @@
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.16"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
         <PackageReference Include="Testcontainers" Version="4.5.0" />
+        <PackageReference Include="TheCloudTheory.Topaz.AspNetCore.Extensions" Version="1.0.85-alpha" />
         <PackageReference Include="TheCloudTheory.Topaz.Identity" Version="1.0.70-alpha" />
         <PackageReference Include="TheCloudTheory.Topaz.ResourceManager" Version="1.0.81-alpha" />
     </ItemGroup>

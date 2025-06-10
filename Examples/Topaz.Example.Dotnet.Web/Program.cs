@@ -1,6 +1,7 @@
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
-using Topaz.Example.Dotnet.Web;
+using Microsoft.AspNetCore.Mvc;
+using Topaz.AspNetCore.Extensions;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 
@@ -30,9 +31,9 @@ if (builder.Environment.IsDevelopment())
     await builder.Configuration.AddTopaz(subscriptionId)
         .AddSubscription(subscriptionId, "topaz-webapp-example")
         .AddResourceGroup(subscriptionId, resourceGroupName)
-        .AddKeyVault(resourceGroupName, keyVaultName, new Dictionary<string, string>
+        .AddKeyVault(resourceGroupName, keyVaultName, secrets: new Dictionary<string, string>
         {
-            { "secret", "value" }
+            { "secrets-generic-secret", "This is just example secret!" }
         });
 }
 
@@ -43,24 +44,14 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", (IConfiguration configuration) =>
+app.MapGet("/secret", ([FromQuery] string key, IConfiguration configuration) =>
     {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
+        // You can call that endpoint as e.g. /secret?key=secrets-generic-secret
+        // to see the secret value.
+        var secret = configuration.GetValue<string>(key);
+        return secret;
     })
-    .WithName("GetWeatherForecast")
+    .WithName("GetSecretValue")
     .WithOpenApi();
 
 app.Run();
@@ -68,9 +59,4 @@ app.Run();
 if (app.Environment.IsDevelopment() && container != null)
 {
     await container.DisposeAsync();
-}
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
