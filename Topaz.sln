@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.ResourceManager", "To
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Example.Dotnet.Web", "Examples\Topaz.Example.Dotnet.Web\Topaz.Example.Dotnet.Web.csproj", "{1C9E5C5B-3259-4A6A-B63E-54AAA0322A57}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.AspNetCore.Extensions", "Topaz.AspNetCore.Extensions\Topaz.AspNetCore.Extensions.csproj", "{EBEAF9D8-48B7-4D75-A404-56A3E10DA657}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -95,6 +97,10 @@ Global
 		{1C9E5C5B-3259-4A6A-B63E-54AAA0322A57}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C9E5C5B-3259-4A6A-B63E-54AAA0322A57}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C9E5C5B-3259-4A6A-B63E-54AAA0322A57}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBEAF9D8-48B7-4D75-A404-56A3E10DA657}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBEAF9D8-48B7-4D75-A404-56A3E10DA657}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBEAF9D8-48B7-4D75-A404-56A3E10DA657}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBEAF9D8-48B7-4D75-A404-56A3E10DA657}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
