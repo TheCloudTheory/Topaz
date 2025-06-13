@@ -4,6 +4,7 @@ using Azure.Data.Tables.Models;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Models;
+using Topaz.Service.Storage.Models.Requests;
 using Topaz.Shared;
 using TableAnalyticsLoggingSettings = Topaz.Service.Storage.Models.TableAnalyticsLoggingSettings;
 using TableMetrics = Topaz.Service.Storage.Models.TableMetrics;
@@ -13,18 +14,20 @@ namespace Topaz.Service.Storage;
 
 internal sealed class AzureStorageControlPlane(ResourceProvider provider, ILogger logger)
 {
-    private readonly ResourceProvider provider = provider;
-    private readonly ILogger logger = logger;
-
-    public Models.StorageAccount Get(string name)
+    public (OperationResult result, StorageAccountResource? resource) Get(string keyVaultName)
     {
-        var data = this.provider.Get(name);
-        var model = JsonSerializer.Deserialize<Models.StorageAccount>(data, GlobalSettings.JsonOptions);
+        var content = provider.Get(keyVaultName);
+        if (string.IsNullOrEmpty(content))
+        {
+            return (OperationResult.Failed, null);
+        }
+        
+        var resource = JsonSerializer.Deserialize<StorageAccountResource>(content, GlobalSettings.JsonOptions);
 
-        return model!;
+        return resource == null ? (OperationResult.Failed, null) : (OperationResult.Created, resource);
     }
 
-    public Models.StorageAccount Create(string name, string resourceGroup, string location, string subscriptionId)
+    public StorageAccount Create(string name, string resourceGroup, string location, string subscriptionId)
     {
         if(CheckIfStorageAccountExists(resourceGroup) == false)
         {
@@ -33,7 +36,7 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ILogge
 
         var model = new StorageAccount(name, resourceGroup, location, subscriptionId);
 
-        this.provider.Create(name, model);
+        provider.Create(name, model);
         
         InitializeServicePropertiesFiles(name);
 
@@ -43,9 +46,9 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ILogge
     private void InitializeServicePropertiesFiles(string storageAccountName)
     {
         var propertiesFile = $"properties.xml";
-        var propertiesFilePath = Path.Combine(this.provider.GetServiceInstancePath(storageAccountName), propertiesFile);
+        var propertiesFilePath = Path.Combine(provider.GetServiceInstancePath(storageAccountName), propertiesFile);
 
-        this.logger.LogDebug($"Attempting to create {propertiesFilePath} file.");
+        logger.LogDebug($"Attempting to create {propertiesFilePath} file.");
         
         if (File.Exists(propertiesFilePath) == false)
         {
@@ -65,12 +68,12 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ILogge
         }
         else
         {
-            this.logger.LogDebug($"Attempting to create {propertiesFilePath} file - skipped.");
+            logger.LogDebug($"Attempting to create {propertiesFilePath} file - skipped.");
         }
     }
     private bool CheckIfStorageAccountExists(string resourceGroup)
     {
-        var rp = new ResourceGroupControlPlane(new ResourceGroup.ResourceProvider(this.logger));
+        var rp = new ResourceGroupControlPlane(new ResourceGroup.ResourceProvider(logger));
         var data = rp.Get(resourceGroup);
 
         return data != null;
@@ -78,11 +81,21 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ILogge
 
     internal void Delete(string storageAccountName)
     {
-        this.provider.Delete(storageAccountName);
+        provider.Delete(storageAccountName);
     }
 
     public string GetServiceInstancePath(string storageAccountName)
     {
-        return this.provider.GetServiceInstancePath(storageAccountName);
+        return provider.GetServiceInstancePath(storageAccountName);
+    }
+    
+    public (OperationResult result, StorageAccountResource resource) CreateOrUpdate(string subscriptionId, string resourceGroupName, string storageAccountName, CreateOrUpdateStorageAccountRequest request)
+    {
+        var existingAccount = provider.Get(storageAccountName);
+        var resource = new StorageAccountResource(subscriptionId, resourceGroupName, storageAccountName, request.Location!, request.Sku!, request.Kind!, request.Properties!);
+        
+        provider.CreateOrUpdate(storageAccountName, resource);
+        
+        return (string.IsNullOrWhiteSpace(existingAccount) ? OperationResult.Created : OperationResult.Updated, resource);
     }
 }

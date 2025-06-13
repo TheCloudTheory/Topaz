@@ -41,6 +41,11 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
     {
         // TODO: There should get `GetAs<T>` method to get deserialized values
         var content = provider.Get(keyVaultName);
+        if (string.IsNullOrEmpty(content))
+        {
+            return (OperationResult.Failed, null);
+        }
+        
         var resource = JsonSerializer.Deserialize<KeyVaultResource>(content, GlobalSettings.JsonOptions);
 
         return resource == null ? (OperationResult.Failed, null) : (OperationResult.Created, resource);

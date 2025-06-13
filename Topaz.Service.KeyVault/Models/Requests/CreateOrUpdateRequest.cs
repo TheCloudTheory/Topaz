@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 namespace Topaz.Service.KeyVault.Models.Requests;
 
 // TODO: There should be a way to validate requests
-internal record class CreateOrUpdateKeyVaultRequest
+internal record CreateOrUpdateKeyVaultRequest
 {
     public string? Location { get; init; }
     public KeyVaultProperties? Properties { get; init; }

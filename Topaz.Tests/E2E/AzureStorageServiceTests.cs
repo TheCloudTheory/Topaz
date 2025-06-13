@@ -1,14 +1,14 @@
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
-using Azure.ResourceManager.KeyVault;
-using Azure.ResourceManager.KeyVault.Models;
+using Azure.ResourceManager.Storage;
+using Azure.ResourceManager.Storage.Models;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E;
 
-public class KeyVaultServiceTests
+public class AzureStorageServiceTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
     private static readonly Guid SubscriptionId = Guid.NewGuid();
@@ -57,31 +57,27 @@ public class KeyVaultServiceTests
     }
 
     [Test]
-    public void KeyVaultTests_WhenKeyVaultIsCreatedUsingSDK_ItShouldBeAvailable()
+    public void AzureStorageServiceTests_WhenStorageIsCreated_ItShouldBeAvailable()
     {
         // Arrange
+        const string storageAccountName = "test";
         var credential = new AzureLocalCredential();
-        var armClient = new ArmClient(credential, Guid.Empty.ToString(), ArmClientOptions);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
-        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
-            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
-        const string testKeyVaultName = "testkv";
+        var sku = new StorageSku(StorageSkuName.StandardLrs);
+        var operation = new StorageAccountCreateOrUpdateContent(sku,
+            StorageKind.StorageV2, AzureLocation.WestEurope);
         
         // Act
-        resourceGroup.Value.GetKeyVaults()
-            .CreateOrUpdate(WaitUntil.Completed, testKeyVaultName, operation, CancellationToken.None);
-        var kv = resourceGroup.Value.GetKeyVault(testKeyVaultName);
+        _ = resourceGroup.Value.GetStorageAccounts()
+            .CreateOrUpdate(WaitUntil.Completed, storageAccountName, operation);
+        var storageAccount = resourceGroup.Value.GetStorageAccount(storageAccountName);
         
         // Assert
-        Assert.That(kv, Is.Not.Null);
-        Assert.Multiple(() =>
-        {
-            Assert.That(kv.Value.Data.Name, Is.EqualTo(testKeyVaultName));
-            Assert.That(kv.Value.Data.ResourceType, Is.EqualTo(new ResourceType("Microsoft.KeyVault/vaults")));
-            Assert.That(kv.Value.Data.Properties.TenantId, Is.EqualTo(operation.Properties.TenantId));
-            Assert.That(kv.Value.Data.Properties.Sku.Family, Is.EqualTo(operation.Properties.Sku.Family));
-            Assert.That(kv.Value.Data.Properties.Sku.Name, Is.EqualTo(operation.Properties.Sku.Name));
-        });
+        Assert.That(storageAccount, Is.Not.Null);
+        Assert.That(storageAccount.Value.Data.Name, Is.EqualTo(storageAccountName));
+        Assert.That(storageAccount.Value.Data.Kind, Is.EqualTo(StorageKind.StorageV2));
+        Assert.That(storageAccount.Value.Data.Sku.Name, Is.EqualTo(StorageSkuName.StandardLrs));
     }
 }

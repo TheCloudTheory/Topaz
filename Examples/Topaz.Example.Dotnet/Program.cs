@@ -4,6 +4,8 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Storage;
+using Azure.ResourceManager.Storage.Models;
 using Azure.Security.KeyVault.Secrets;
 using DotNet.Testcontainers.Builders;
 using JetBrains.Annotations;
@@ -37,6 +39,7 @@ internal class Program
             const string subscriptionName = "topaz.example";
             const string resourceGroupName = "rg-topaz-example";
             const string keyVaultName = "kvtopazexample";
+            const string storageAccountName = "storagetopazexample";
     
             await container.StartAsync()
                 .ConfigureAwait(false);
@@ -54,12 +57,24 @@ internal class Program
             var resourceGroup = await CreateResourceGroup(armClient, resourceGroupName);
             
             await CreateKeyVault(resourceGroup.Value, keyVaultName);
+            await CreateAzureStorageAccount(resourceGroup.Value, storageAccountName);
             await CreateKeyVaultSecrets(keyVaultName);
         }
         finally
         {
             await container.StopAsync();
         }
+    }
+
+    private static async Task CreateAzureStorageAccount(ResourceGroupResource resourceGroup, string storageAccountName)
+    {
+        var operation = new StorageAccountCreateOrUpdateContent(new StorageSku(StorageSkuName.StandardLrs),
+            StorageKind.StorageV2, AzureLocation.WestEurope);
+
+        _ = await resourceGroup.GetStorageAccounts()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storageAccountName, operation);
+        
+        Console.WriteLine($"Azure Storage created successfully!");
     }
 
     private static async Task CreateKeyVaultSecrets(string keyVaultName)

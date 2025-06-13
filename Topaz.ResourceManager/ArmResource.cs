@@ -10,6 +10,8 @@ public abstract class ArmResource<T>
     public abstract string Type { get; }
     public abstract string Location { get; init; }
     public abstract IDictionary<string, string> Tags { get; }
+    public abstract ResourceSku? Sku { get; init; }
+    public abstract string? Kind { get; init; }
     public abstract T Properties { get; init; }
 
     public override string ToString()

@@ -154,7 +154,7 @@ public class Host(ILogger logger)
                             return;
                         }
 
-                        logger.LogDebug($"Received request: {method} {context.Request.Host}{path}{query}");
+                        logger.LogInformation($"Received request: {method} {context.Request.Host}{path}{query}");
 
                         IEndpointDefinition? endpoint = null;
                         var pathParts = path.Split('/');
