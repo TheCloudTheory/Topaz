@@ -1,12 +1,10 @@
 using Azure.Storage.Blobs;
+using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E;
 
 public class BlobStorageTests
 {
-    private const string ConnectionString =
-        "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:8891/devstoreaccount1;QueueEndpoint=http://localhost:8899;TableEndpoint=http://localhost:8890/storage/devstoreaccount1;";
-
     [SetUp]
     public async Task SetUp()
     {
@@ -73,7 +71,7 @@ public class BlobStorageTests
     public void BlobStorageTests_WhenNewBlobContainerIsRequested_ItShouldBeCreated()
     {
         // Arrange
-        var blobClient = new BlobServiceClient(ConnectionString);
+        var blobClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
 
         // Act
         var response = blobClient.CreateBlobContainer("test");
@@ -87,7 +85,7 @@ public class BlobStorageTests
     public void BlobStorageTests_WhenNewBlobContainersAreCreated_TheyShouldBeCreatedAndAvailable()
     {
         // Arrange
-        var blobClient = new BlobServiceClient(ConnectionString);
+        var blobClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
 
         // Act
         blobClient.CreateBlobContainer("test");
@@ -104,7 +102,7 @@ public class BlobStorageTests
     public void BlobStorageTests_WhenContainerBlobsAreListed_TheyShouldReturned()
     {
         // Arrange
-        var serviceClient = new BlobServiceClient(ConnectionString);
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
         serviceClient.CreateBlobContainer("test");
         var containerClient = serviceClient.GetBlobContainerClient("test");
         var blobClient = containerClient.GetBlobClient("test.txt");
@@ -121,7 +119,7 @@ public class BlobStorageTests
     public void BlobStorageTests_WhenBlobPropertiesAreRequested_TheyShouldReturned()
     {
         // Arrange
-        var serviceClient = new BlobServiceClient(ConnectionString);
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
         serviceClient.CreateBlobContainer("test");
         var containerClient = serviceClient.GetBlobContainerClient("test");
         var blobClient = containerClient.GetBlobClient("test.txt");
@@ -138,7 +136,7 @@ public class BlobStorageTests
     public void BlobStorageTests_WhenBlobMetadataAreSet_TheyShouldAccepted()
     {
         // Arrange
-        var serviceClient = new BlobServiceClient(ConnectionString);
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
         serviceClient.CreateBlobContainer("test");
         var containerClient = serviceClient.GetBlobContainerClient("test");
         var blobClient = containerClient.GetBlobClient("test.txt");
