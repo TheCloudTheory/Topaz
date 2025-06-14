@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Models.Requests;
+using Topaz.Service.Storage.Models.Responses;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints;
@@ -15,7 +16,8 @@ public class AzureStorageEndpoint(ITopazLogger logger) : IEndpointDefinition
     [
         "PUT /subscriptions/{subscriptionId/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}",
         "GET /subscriptions/{subscriptionId/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}",
-        "DELETE /subscriptions/{subscriptionId/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}"
+        "DELETE /subscriptions/{subscriptionId/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}",
+        "POST /subscriptions/{subscriptionId/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/listKeys"
     ];
     
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
@@ -51,6 +53,9 @@ public class AzureStorageEndpoint(ITopazLogger logger) : IEndpointDefinition
                 case "DELETE":
                     HandleDeleteStorageAccount(response, storageAccountName);
                     break;
+                case "POST":
+                    HandleListKeysRequest(response, resourceGroupName, storageAccountName);
+                    break;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
                     break;
@@ -65,6 +70,23 @@ public class AzureStorageEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
         
         return response;
+    }
+
+    private void HandleListKeysRequest(HttpResponseMessage response, string resourceGroupName, string storageAccountName)
+    {
+        var storageAccount = _controlPlane.Get(storageAccountName);
+        if (storageAccount.result == OperationResult.NotFound || storageAccount.resource == null)
+        {
+            logger.LogInformation($"Storage account [{storageAccountName}] not found.");
+            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode, $"Microsoft.Storage/storageAccounts/{storageAccountName}", resourceGroupName);
+            
+            return;
+        }
+        
+        var keys = new ListKeysResponse(storageAccount.resource.Keys);
+        
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(keys.ToString());
     }
 
     private void HandleDeleteStorageAccount(HttpResponseMessage response, string storageAccountName)

@@ -5,7 +5,7 @@ namespace Topaz.ResourceManager;
 
 public sealed class TopazArmClient : IDisposable
 {
-    private const short EmulatorPort = 8899;
+    private const ushort EmulatorPort = GlobalSettings.DefaultResourceManagerPort;
 
     private readonly HttpClient _httpClient = new()
     {

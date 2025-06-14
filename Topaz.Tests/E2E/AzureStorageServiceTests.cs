@@ -91,4 +91,38 @@ public class AzureStorageServiceTests
         Assert.Throws<RequestFailedException>(() => resourceGroup.Value.GetStorageAccount(storageAccountName),
             "The Resource 'Microsoft.Storage/storageAccounts/test' under resource group 'test' was not found");
     }
+
+    [Test]
+    public void AzureStorageServiceTests_WhenStorageAccountIsCreated_ItShouldHaveTwoAccesKeysAvailable()
+    {
+        // Arrange
+        const string storageAccountName = "test";
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var sku = new StorageSku(StorageSkuName.StandardLrs);
+        var operation = new StorageAccountCreateOrUpdateContent(sku,
+            StorageKind.StorageV2, AzureLocation.WestEurope);
+        
+        // Act
+        _ = resourceGroup.Value.GetStorageAccounts()
+            .CreateOrUpdate(WaitUntil.Completed, storageAccountName, operation);
+        var storageAccount = resourceGroup.Value.GetStorageAccount(storageAccountName);
+        var keys = storageAccount.Value.GetKeys().ToArray();
+        
+        // Assert
+        Assert.That(keys, Has.Length.EqualTo(2));
+        Assert.Multiple(() =>
+        {
+            Assert.That(keys[0].Value, Is.Not.Null);
+            Assert.That(keys[0].KeyName, Is.Not.Null);
+            Assert.That(keys[0].Permissions, Is.Not.Null);
+            Assert.That(keys[0].CreatedOn, Is.Not.Null);
+            Assert.That(keys[1].Value, Is.Not.Null);
+            Assert.That(keys[1].KeyName, Is.Not.Null);
+            Assert.That(keys[1].Permissions, Is.Not.Null);
+            Assert.That(keys[1].CreatedOn, Is.Not.Null);
+        });
+    }
 }

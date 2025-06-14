@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
+using Azure.ResourceManager.Storage.Models;
 using Topaz.ResourceManager;
-using Topaz.Service.Shared;
 
 namespace Topaz.Service.Storage.Models;
 
@@ -28,6 +28,11 @@ internal sealed class StorageAccountResource
         Sku = sku;
         Kind = kind;
         Properties = properties;
+        Keys =
+        [
+            new TopazStorageAccountKey("key1", Guid.NewGuid().ToString(), nameof(StorageAccountKeyPermission.Full), DateTimeOffset.Now),
+            new TopazStorageAccountKey("key2", Guid.NewGuid().ToString(), nameof(StorageAccountKeyPermission.Full), DateTimeOffset.Now)
+        ];
     }
     
     public override string Id { get; init; }
@@ -38,4 +43,5 @@ internal sealed class StorageAccountResource
     public override ResourceSku? Sku { get; init; }
     public override string? Kind { get; init; }
     public override StorageAccountProperties Properties { get; init; }
+    public TopazStorageAccountKey[] Keys { get; init; }
 }

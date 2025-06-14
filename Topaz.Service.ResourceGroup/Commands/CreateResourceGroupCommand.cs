@@ -6,16 +6,14 @@ namespace Topaz.Service.ResourceGroup.Commands;
 
 public sealed class CreateResourceGroupCommand(ITopazLogger logger) : Command<CreateResourceGroupCommand.CreateResourceGroupCommandSettings>
 {
-    private readonly ITopazLogger _topazLogger = logger;
-
     public override int Execute(CommandContext context, CreateResourceGroupCommandSettings settings)
     {
-        this._topazLogger.LogInformation($"Executing {nameof(CreateResourceGroupCommand)}.{nameof(Execute)}.");
+        logger.LogInformation($"Executing {nameof(CreateResourceGroupCommand)}.{nameof(Execute)}.");
 
-        var controlPlane = new ResourceGroupControlPlane(new ResourceProvider(this._topazLogger));
+        var controlPlane = new ResourceGroupControlPlane(new ResourceProvider(logger));
         var rg = controlPlane.Create(settings.Name!, settings.SubscriptionId!, settings.Location!);
 
-        this._topazLogger.LogInformation(rg.ToString());
+        logger.LogInformation(rg.ToString());
 
         return 0;
     }
