@@ -14,12 +14,12 @@ namespace Topaz.Service.Storage;
 
 internal sealed class AzureStorageControlPlane(ResourceProvider provider, ILogger logger)
 {
-    public (OperationResult result, StorageAccountResource? resource) Get(string keyVaultName)
+    public (OperationResult result, StorageAccountResource? resource) Get(string storageAccountName)
     {
-        var content = provider.Get(keyVaultName);
+        var content = provider.Get(storageAccountName);
         if (string.IsNullOrEmpty(content))
         {
-            return (OperationResult.Failed, null);
+            return (OperationResult.NotFound, null);
         }
         
         var resource = JsonSerializer.Deserialize<StorageAccountResource>(content, GlobalSettings.JsonOptions);

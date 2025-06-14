@@ -4,5 +4,6 @@ public enum OperationResult
 {
     Created,
     Updated,
-    Failed
+    Failed,
+    NotFound
 }

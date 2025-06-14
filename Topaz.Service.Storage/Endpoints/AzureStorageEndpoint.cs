@@ -14,7 +14,8 @@ public class AzureStorageEndpoint(ILogger logger) : IEndpointDefinition
     public string[] Endpoints =>
     [
         "PUT /subscriptions/{subscriptionId/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}",
-        "GET /subscriptions/{subscriptionId/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}"
+        "GET /subscriptions/{subscriptionId/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}",
+        "DELETE /subscriptions/{subscriptionId/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}"
     ];
     
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
@@ -28,10 +29,10 @@ public class AzureStorageEndpoint(ILogger logger) : IEndpointDefinition
         {
             var subscriptionId = path.ExtractValueFromPath(2);
             var resourceGroupName = path.ExtractValueFromPath(4);
-            var accountName = path.ExtractValueFromPath(8);
+            var storageAccountName = path.ExtractValueFromPath(8);
             
             if (string.IsNullOrWhiteSpace(subscriptionId) || string.IsNullOrWhiteSpace(resourceGroupName) ||
-                string.IsNullOrWhiteSpace(accountName))
+                string.IsNullOrWhiteSpace(storageAccountName))
             {
                 logger.LogDebug($"Executing {nameof(GetResponse)}: No subscription ID, resource group name or account name provided.");
                 
@@ -42,10 +43,13 @@ public class AzureStorageEndpoint(ILogger logger) : IEndpointDefinition
             switch (method)
             {
                 case "PUT":
-                    HandleCreateOrUpdateStorageAccount(response, subscriptionId, resourceGroupName, accountName, input);
+                    HandleCreateOrUpdateStorageAccount(response, subscriptionId, resourceGroupName, storageAccountName, input);
                     break;
                 case "GET":
-                    HandleGetStorageAccount(response, accountName);
+                    HandleGetStorageAccount(response, resourceGroupName, storageAccountName);
+                    break;
+                case "DELETE":
+                    HandleDeleteStorageAccount(response, storageAccountName);
                     break;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
@@ -63,13 +67,33 @@ public class AzureStorageEndpoint(ILogger logger) : IEndpointDefinition
         return response;
     }
 
-    private void HandleGetStorageAccount(HttpResponseMessage response, string accountName)
+    private void HandleDeleteStorageAccount(HttpResponseMessage response, string storageAccountName)
     {
-        var storageAccount = _controlPlane.Get(accountName);
-        if (storageAccount.result == OperationResult.Failed || storageAccount.resource == null)
+        var storageAccount = _controlPlane.Get(storageAccountName);
+        if (storageAccount.result == OperationResult.NotFound || storageAccount.resource == null)
         {
-            logger.LogError("There was an error getting the Storage Account.");
-            response.StatusCode = HttpStatusCode.InternalServerError;
+            logger.LogInformation($"Storage account [{storageAccountName}] not found.");
+            
+            // That maybe be strange, but according to the documentation, when a user tries to 
+            // remove Storage Account which doesn't exist, they should receive HTTP 204 instead
+            // of HTTP 404.
+            response.StatusCode = HttpStatusCode.NoContent;
+            return;
+        }
+        
+        _controlPlane.Delete(storageAccountName);
+        
+        response.StatusCode = HttpStatusCode.OK;
+    }
+
+    private void HandleGetStorageAccount(HttpResponseMessage response, string resourceGroupName, string storageAccountName)
+    {
+        var storageAccount = _controlPlane.Get(storageAccountName);
+        if (storageAccount.result == OperationResult.NotFound || storageAccount.resource == null)
+        {
+            logger.LogInformation($"Storage account [{storageAccountName}] not found.");
+            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode, $"Microsoft.Storage/storageAccounts/{storageAccountName}", resourceGroupName);
+            
             return;
         }
         
@@ -77,7 +101,7 @@ public class AzureStorageEndpoint(ILogger logger) : IEndpointDefinition
         response.Content = new StringContent(storageAccount.resource.ToString());
     }
 
-    private void HandleCreateOrUpdateStorageAccount(HttpResponseMessage response, string subscriptionId, string resourceGroupName, string accountName, Stream input)
+    private void HandleCreateOrUpdateStorageAccount(HttpResponseMessage response, string subscriptionId, string resourceGroupName, string storageAccountName, Stream input)
     {
         using var reader = new StreamReader(input);
         
@@ -92,7 +116,7 @@ public class AzureStorageEndpoint(ILogger logger) : IEndpointDefinition
             return;
         }
         
-        var result = _controlPlane.CreateOrUpdate(subscriptionId, resourceGroupName, accountName, request);
+        var result = _controlPlane.CreateOrUpdate(subscriptionId, resourceGroupName, storageAccountName, request);
 
         response.Content = new StringContent(result.resource.ToString());
         response.StatusCode = HttpStatusCode.OK;

@@ -57,7 +57,7 @@ public class AzureStorageServiceTests
     }
 
     [Test]
-    public void AzureStorageServiceTests_WhenStorageIsCreated_ItShouldBeAvailable()
+    public void AzureStorageServiceTests_WhenStorageIsCreated_ItShouldBeAvailableAndThenDeleted()
     {
         // Arrange
         const string storageAccountName = "test";
@@ -76,8 +76,18 @@ public class AzureStorageServiceTests
         
         // Assert
         Assert.That(storageAccount, Is.Not.Null);
-        Assert.That(storageAccount.Value.Data.Name, Is.EqualTo(storageAccountName));
-        Assert.That(storageAccount.Value.Data.Kind, Is.EqualTo(StorageKind.StorageV2));
-        Assert.That(storageAccount.Value.Data.Sku.Name, Is.EqualTo(StorageSkuName.StandardLrs));
+        Assert.Multiple(() =>
+        {
+            Assert.That(storageAccount.Value.Data.Name, Is.EqualTo(storageAccountName));
+            Assert.That(storageAccount.Value.Data.Kind, Is.EqualTo(StorageKind.StorageV2));
+            Assert.That(storageAccount.Value.Data.Sku.Name, Is.EqualTo(StorageSkuName.StandardLrs));
+        });
+        
+        // Act 2
+        storageAccount.Value.Delete(WaitUntil.Completed);
+        
+        // Assert 2
+        Assert.Throws<RequestFailedException>(() => resourceGroup.Value.GetStorageAccount(storageAccountName),
+            "The Resource 'Microsoft.Storage/storageAccounts/test' under resource group 'test' was not found");
     }
 }
