@@ -4,18 +4,18 @@ using Spectre.Console.Cli;
 
 namespace Topaz.Service.Storage.Commands;
 
-public sealed class CreateStorageAccountCommand(ILogger logger) : Command<CreateStorageAccountCommand.CreateStorageAccountCommandSettings>
+public sealed class CreateStorageAccountCommand(ITopazLogger logger) : Command<CreateStorageAccountCommand.CreateStorageAccountCommandSettings>
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     public override int Execute(CommandContext context, CreateStorageAccountCommandSettings settings)
     {
-        this.logger.LogInformation("Creating storage account...");
+        this._topazLogger.LogInformation("Creating storage account...");
 
-        var rp = new AzureStorageControlPlane(new ResourceProvider(this.logger), this.logger);
+        var rp = new AzureStorageControlPlane(new ResourceProvider(this._topazLogger), this._topazLogger);
         var sa = rp.Create(settings.Name!, settings.ResourceGroup!, settings.Location!, settings.SubscriptionId!);
 
-        this.logger.LogInformation(sa.ToString());
+        this._topazLogger.LogInformation(sa.ToString());
 
         return 0;
     }

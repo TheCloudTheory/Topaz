@@ -13,10 +13,10 @@ using TableSignedIdentifier = Topaz.Service.Storage.Serialization.TableSignedIde
 
 namespace Topaz.Service.Storage;
 
-internal sealed class TableServiceControlPlane(TableResourceProvider provider, ILogger logger)
+internal sealed class TableServiceControlPlane(TableResourceProvider provider, ITopazLogger logger)
 {
     private readonly TableResourceProvider provider = provider;
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     public TableProperties[] GetTables(string storageAccountName)
     {
@@ -71,7 +71,7 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
 
     public TableServiceProperties GetTableProperties(string storageAccountName)
     {
-        var storageControlPlane = new AzureStorageControlPlane(new ResourceProvider(this.logger), this.logger);
+        var storageControlPlane = new AzureStorageControlPlane(new ResourceProvider(this._topazLogger), this._topazLogger);
         var path = storageControlPlane.GetServiceInstancePath(storageAccountName);
         var propertiesFilePath = Path.Combine(path, "properties.xml");
 

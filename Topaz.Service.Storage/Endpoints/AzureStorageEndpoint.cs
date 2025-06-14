@@ -7,7 +7,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints;
 
-public class AzureStorageEndpoint(ILogger logger) : IEndpointDefinition
+public class AzureStorageEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly AzureStorageControlPlane _controlPlane = new(new ResourceProvider(logger), logger);
     

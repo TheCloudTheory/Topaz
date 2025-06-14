@@ -7,11 +7,11 @@ namespace Topaz.Service.Shared;
 public class ResourceProviderBase<TService> where TService : IServiceDefinition
 {
     protected const string BaseEmulatorPath = ".topaz";
-    private readonly ILogger _logger;
+    private readonly ITopazLogger _topazLogger;
 
-    protected ResourceProviderBase(ILogger logger)
+    protected ResourceProviderBase(ITopazLogger logger)
     {
-        _logger = logger;
+        _topazLogger = logger;
     }
 
     public virtual void Delete(string id)
@@ -19,11 +19,11 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
         if(Directory.Exists(servicePath) == false) 
         {
-            _logger.LogDebug($"The resource '{servicePath}' does not exists, no changes applied.");
+            _topazLogger.LogDebug($"The resource '{servicePath}' does not exists, no changes applied.");
             return;
         }
 
-        _logger.LogDebug($"Deleting resource '{servicePath}'.");
+        _topazLogger.LogDebug($"Deleting resource '{servicePath}'.");
         Directory.Delete(servicePath, true);
 
         return;
@@ -52,7 +52,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     {
         var metadataFilePath = InitializeServiceDirectories(id);
 
-        _logger.LogDebug($"Attempting to create {metadataFilePath} file.");
+        _topazLogger.LogDebug($"Attempting to create {metadataFilePath} file.");
 
         if(File.Exists(metadataFilePath) == true) throw new InvalidOperationException($"Metadata file for {typeof(TService)} with ID {id} already exists.");
 
@@ -65,16 +65,16 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     private string InitializeServiceDirectories(string id)
     {
         var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath);
-        _logger.LogDebug($"Attempting to create {servicePath} directory...");
+        _topazLogger.LogDebug($"Attempting to create {servicePath} directory...");
 
         if(Directory.Exists(servicePath) == false)
         {
             Directory.CreateDirectory(servicePath);
-            _logger.LogDebug($"Directory {servicePath} created.");
+            _topazLogger.LogDebug($"Directory {servicePath} created.");
         }
         else
         {
-            _logger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
+            _topazLogger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
         }
         
         const string fileName = $"metadata.json";
@@ -82,17 +82,17 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var metadataFilePath = Path.Combine(instancePath, fileName);
         var dataPath = Path.Combine(instancePath, "data");
 
-        _logger.LogDebug($"Attempting to create {instancePath} directory.");
+        _topazLogger.LogDebug($"Attempting to create {instancePath} directory.");
         if(Directory.Exists(instancePath))
         {
-            _logger.LogDebug($"Attempting to create {instancePath} directory - skipped.");
+            _topazLogger.LogDebug($"Attempting to create {instancePath} directory - skipped.");
         }
         else
         {
             Directory.CreateDirectory(instancePath);
             Directory.CreateDirectory(dataPath);
             
-            _logger.LogDebug($"Attempting to create {instancePath} directory - created!");
+            _topazLogger.LogDebug($"Attempting to create {instancePath} directory - created!");
         }
 
         return metadataFilePath;
@@ -111,7 +111,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
         if(File.Exists(metadataFilePath))
         {
-            _logger.LogDebug($"Attempting to create {metadataFilePath} file - file exists, it will be overwritten.");
+            _topazLogger.LogDebug($"Attempting to create {metadataFilePath} file - file exists, it will be overwritten.");
             File.WriteAllText(metadataFilePath, content);
 
             return (data: newData, code: HttpStatusCode.OK);

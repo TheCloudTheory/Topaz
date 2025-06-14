@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Topaz.Service.ResourceGroup;
 
-public class ResourceGroupEndpoint(ResourceProvider provider, ILogger logger) : IEndpointDefinition
+public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly ResourceGroupControlPlane _controlPlane = new(provider);
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);

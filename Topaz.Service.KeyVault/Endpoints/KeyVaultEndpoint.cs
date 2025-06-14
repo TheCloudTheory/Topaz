@@ -8,7 +8,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Endpoints;
 
-public sealed class KeyVaultEndpoint(ILogger logger) : IEndpointDefinition
+public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly KeyVaultDataPlane _dataPlane = new(logger, new ResourceProvider(logger));
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultKeyVaultPort, Protocol.Https);

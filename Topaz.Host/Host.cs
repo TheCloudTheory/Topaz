@@ -5,22 +5,22 @@ using System.Text.RegularExpressions;
 using Amqp;
 using Amqp.Listener;
 using Amqp.Types;
-using Topaz.Service.KeyVault;
-using Topaz.Service.ResourceGroup;
-using Topaz.Service.Shared;
-using Topaz.Service.Subscription;
-using Topaz.Shared;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using Topaz.Host.AMQP;
 using Topaz.Service.EventHub;
+using Topaz.Service.KeyVault;
+using Topaz.Service.ResourceGroup;
+using Topaz.Service.Shared;
 using Topaz.Service.Storage.Services;
+using Topaz.Service.Subscription;
+using Topaz.Shared;
 
 namespace Topaz.Host;
 
-public class Host(ILogger logger)
+public class Host(ITopazLogger logger)
 {
     private static readonly List<Thread> Threads = [];
 
@@ -48,6 +48,16 @@ public class Host(ILogger logger)
 
         CreateWebserverForHttpEndpoints([.. httpEndpoints]);
         CreateAmqpListenersForAmpqEndpoints([.. amqpEndpoints]);
+
+        Console.WriteLine("Enabled services:");
+        
+        foreach (var service in services)
+        {
+            Console.WriteLine($"- {service.Name}: {string.Join(", ", service.Endpoints.Select(e => $"{e.PortAndProtocol.Protocol} -> {e.PortAndProtocol.Port}"))}");
+        }
+        
+        Console.WriteLine();
+        Console.WriteLine("Topaz.Host listening to incoming requests...");
     }
 
     private void CreateAmqpListenersForAmpqEndpoints(IEndpointDefinition[] endpoints)
@@ -108,7 +118,7 @@ public class Host(ILogger logger)
                         logger.LogDebug($"Using port {httpEndpoint.PortAndProtocol.Port} will be skipped as it's already registered.");
                         continue;
                     }
-                    
+
                     switch (httpEndpoint.PortAndProtocol.Protocol)
                     {
                         case Protocol.Http:
@@ -126,7 +136,7 @@ public class Host(ILogger logger)
                                     var certPem = File.ReadAllText("localhost.crt");
                                     var keyPem = File.ReadAllText("localhost.key");
                                     var x509 = X509Certificate2.CreateFromPem(certPem, keyPem);
-                                    
+
                                     listenOptions.UseHttps(x509);
                                 }
                             });
@@ -139,6 +149,7 @@ public class Host(ILogger logger)
                     usedPorts.Add(httpEndpoint.PortAndProtocol.Port);
                 }
             })
+            .UseSetting(WebHostDefaults.SuppressStatusMessagesKey, "True")
             .Configure(app =>
             {
                 app.Run(async context =>

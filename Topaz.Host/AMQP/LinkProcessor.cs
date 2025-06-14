@@ -3,7 +3,7 @@ using Topaz.Shared;
 
 namespace Topaz.Host.AMQP;
 
-internal sealed class LinkProcessor(ILogger logger) : ILinkProcessor
+internal sealed class LinkProcessor(ITopazLogger logger) : ILinkProcessor
 {
     public void Process(AttachContext attachContext)
     {

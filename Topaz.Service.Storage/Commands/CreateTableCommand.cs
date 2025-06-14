@@ -6,7 +6,7 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
-public sealed class CreateTableCommand(ILogger logger) : Command<CreateTableCommand.CreateTableCommandSettings>
+public sealed class CreateTableCommand(ITopazLogger logger) : Command<CreateTableCommand.CreateTableCommandSettings>
 {
     public override int Execute(CommandContext context, CreateTableCommandSettings settings)
     {

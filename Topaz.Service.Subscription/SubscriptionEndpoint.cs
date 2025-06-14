@@ -9,7 +9,7 @@ using Topaz.Service.Subscription.Models.Requests;
 
 namespace Topaz.Service.Subscription;
 
-public sealed class SubscriptionEndpoint(ResourceProvider provider, ILogger logger) : IEndpointDefinition
+public sealed class SubscriptionEndpoint(ResourceProvider provider, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly SubscriptionControlPlane _controlPlane = new(provider);
     public string[] Endpoints => [

@@ -4,7 +4,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Services;
 
-public sealed class TableStorageService(ILogger logger) : IServiceDefinition
+public sealed class TableStorageService(ITopazLogger logger) : IServiceDefinition
 {
     public static string LocalDirectoryPath => ".table";
 

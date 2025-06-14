@@ -4,7 +4,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault;
 
-public sealed class KeyVaultService(ILogger logger) : IServiceDefinition
+public sealed class KeyVaultService(ITopazLogger logger) : IServiceDefinition
 {
     public static string LocalDirectoryPath => ".azure-key-vault";
     public string Name => "Azure Key Vault";

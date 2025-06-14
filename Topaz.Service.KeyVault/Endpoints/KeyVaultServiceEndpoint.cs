@@ -7,7 +7,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Endpoints;
 
-public class KeyVaultServiceEndpoint(ILogger logger) : IEndpointDefinition
+public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly KeyVaultControlPlane _controlPlane = new(new ResourceProvider(logger));
     public string[] Endpoints => [

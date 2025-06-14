@@ -4,18 +4,18 @@ using Spectre.Console.Cli;
 
 namespace Topaz.Service.Subscription.Commands;
 
-public sealed class CreateSubscriptionCommand(ILogger logger) : Command<CreateSubscriptionCommand.CreateSubscriptionCommandSettings>
+public sealed class CreateSubscriptionCommand(ITopazLogger logger) : Command<CreateSubscriptionCommand.CreateSubscriptionCommandSettings>
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     public override int Execute(CommandContext context, CreateSubscriptionCommandSettings settings)
     {
-        this.logger.LogInformation("Creating subscription...");
+        this._topazLogger.LogInformation("Creating subscription...");
 
-        var controlPlane = new SubscriptionControlPlane(new ResourceProvider(this.logger));
+        var controlPlane = new SubscriptionControlPlane(new ResourceProvider(this._topazLogger));
         var sa = controlPlane.Create(settings.Id, settings.Name!);
 
-        this.logger.LogInformation(sa.ToString());
+        this._topazLogger.LogInformation(sa.ToString());
 
         return 0;
     }

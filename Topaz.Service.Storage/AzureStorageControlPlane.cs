@@ -12,7 +12,7 @@ using TableServiceProperties = Topaz.Service.Storage.Models.TableServiceProperti
 
 namespace Topaz.Service.Storage;
 
-internal sealed class AzureStorageControlPlane(ResourceProvider provider, ILogger logger)
+internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopazLogger logger)
 {
     public (OperationResult result, StorageAccountResource? resource) Get(string storageAccountName)
     {

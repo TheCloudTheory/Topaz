@@ -7,7 +7,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Endpoints;
 
-public sealed class EventHubServiceEndpoint(ILogger logger) : IEndpointDefinition
+public sealed class EventHubServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly EventHubControlPlane _controlPlane = new(new ResourceProvider(logger), logger);
     public string[] Endpoints => [

@@ -37,7 +37,7 @@ internal class Program
 
     private static void RegisterDependencies(ServiceCollection registrations)
     {
-        registrations.AddSingleton<ILogger, PrettyLogger>();
+        registrations.AddSingleton<ITopazLogger, PrettyTopazLogger>();
     }
 
     private static Task<int> BootstrapCli(string[] args, TypeRegistrar registrar)

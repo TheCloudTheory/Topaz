@@ -3,6 +3,6 @@ using Topaz.Shared;
 
 namespace Topaz.Service.ResourceGroup;
 
-public sealed class ResourceProvider(ILogger logger) : ResourceProviderBase<ResourceGroupService>(logger)
+public sealed class ResourceProvider(ITopazLogger logger) : ResourceProviderBase<ResourceGroupService>(logger)
 {
 }

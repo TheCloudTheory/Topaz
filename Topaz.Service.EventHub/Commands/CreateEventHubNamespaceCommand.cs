@@ -4,18 +4,18 @@ using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
 
-public sealed class CreateEventHubNamespaceCommand(ILogger logger) : Command<CreateEventHubNamespaceCommand.CreateEventHubCommandSettings>
+public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Command<CreateEventHubNamespaceCommand.CreateEventHubCommandSettings>
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     public override int Execute(CommandContext context, CreateEventHubCommandSettings settings)
     {
-        this.logger.LogInformation($"Executing {nameof(CreateEventHubNamespaceCommand)}.{nameof(Execute)}.");
+        this._topazLogger.LogInformation($"Executing {nameof(CreateEventHubNamespaceCommand)}.{nameof(Execute)}.");
 
-        var controlPlane = new EventHubControlPlane(new ResourceProvider(this.logger), logger);
+        var controlPlane = new EventHubControlPlane(new ResourceProvider(this._topazLogger), _topazLogger);
         var ns = controlPlane.CreateNamespace(settings.Name!, settings.ResourceGroup!, settings.Location!, settings.SubscriptionId!);
 
-        this.logger.LogInformation(ns.ToString());
+        this._topazLogger.LogInformation(ns.ToString());
 
         return 0;
     }

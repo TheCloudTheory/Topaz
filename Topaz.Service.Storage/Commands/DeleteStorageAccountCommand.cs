@@ -4,18 +4,18 @@ using Spectre.Console.Cli;
 
 namespace Topaz.Service.Storage.Commands;
 
-public class DeleteStorageAccountCommand(ILogger logger) : Command<DeleteStorageAccountCommand.DeleteStorageAccountCommandSettings>
+public class DeleteStorageAccountCommand(ITopazLogger logger) : Command<DeleteStorageAccountCommand.DeleteStorageAccountCommandSettings>
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     public override int Execute(CommandContext context, DeleteStorageAccountCommandSettings settings)
     {
-        this.logger.LogInformation("Deleting storage account...");
+        this._topazLogger.LogInformation("Deleting storage account...");
 
-        var rp = new AzureStorageControlPlane(new ResourceProvider(this.logger), this.logger);
+        var rp = new AzureStorageControlPlane(new ResourceProvider(this._topazLogger), this._topazLogger);
         rp.Delete(settings.Name!);
 
-        this.logger.LogInformation("Storage account deleted.");
+        this._topazLogger.LogInformation("Storage account deleted.");
 
         return 0;
     }

@@ -4,7 +4,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Services;
 
-public sealed class AzureStorageService(ILogger logger) : IServiceDefinition
+public sealed class AzureStorageService(ITopazLogger logger) : IServiceDefinition
 {
     public static string LocalDirectoryPath => ".azure-storage";
 

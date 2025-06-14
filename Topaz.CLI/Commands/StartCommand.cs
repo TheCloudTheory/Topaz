@@ -4,18 +4,18 @@ using Spectre.Console.Cli;
 namespace Topaz.CLI.Commands;
 
 // ReSharper disable once ClassNeverInstantiated.Global
-internal sealed class StartCommand(ILogger logger) : Command<StartCommand.StartCommandSettings>
+internal sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.StartCommandSettings>
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     public override int Execute(CommandContext context, StartCommandSettings settings)
     {
         if (settings.LogLevel != null)
         {
-            this.logger.SetLoggingLevel(settings.LogLevel.Value);    
+            this._topazLogger.SetLoggingLevel(settings.LogLevel.Value);    
         }
         
-        var host = new Topaz.Host.Host(this.logger);
+        var host = new Topaz.Host.Host(this._topazLogger);
         host.Start();
 
         return 0;

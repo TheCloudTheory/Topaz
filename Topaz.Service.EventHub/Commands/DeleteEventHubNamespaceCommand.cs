@@ -5,18 +5,18 @@ using Topaz.Shared;
 namespace Topaz.Service.EventHub.Commands;
 
 // ReSharper disable once ClassNeverInstantiated.Global
-public class DeleteEventHubNamespaceCommand(ILogger logger) : Command<DeleteEventHubNamespaceCommand.DeleteEventHubNamespaceCommandSettings>
+public class DeleteEventHubNamespaceCommand(ITopazLogger logger) : Command<DeleteEventHubNamespaceCommand.DeleteEventHubNamespaceCommandSettings>
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     public override int Execute(CommandContext context, DeleteEventHubNamespaceCommandSettings settings)
     {
-        this.logger.LogInformation("Deleting Azure Event Hub Namespace...");
+        this._topazLogger.LogInformation("Deleting Azure Event Hub Namespace...");
 
-        var rp = new ResourceProvider(this.logger);
+        var rp = new ResourceProvider(this._topazLogger);
         rp.Delete(settings.Name!);
 
-        this.logger.LogInformation("Azure Event Hub Namespace deleted.");
+        this._topazLogger.LogInformation("Azure Event Hub Namespace deleted.");
 
         return 0;
     }

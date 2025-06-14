@@ -7,23 +7,23 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage;
 
-internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBase<TableStorageService>(logger)
+internal sealed class TableResourceProvider(ITopazLogger logger) : ResourceProviderBase<TableStorageService>(logger)
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     private void InitializeServiceDirectory(string storageAccountName)
     {
         var servicePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath);
-        this.logger.LogDebug($"Attempting to create {servicePath} directory...");
+        this._topazLogger.LogDebug($"Attempting to create {servicePath} directory...");
 
         if(Directory.Exists(servicePath) == false)
         {
             Directory.CreateDirectory(servicePath);
-            this.logger.LogDebug($"Directory {servicePath} created.");
+            this._topazLogger.LogDebug($"Directory {servicePath} created.");
         }
         else
         {
-            this.logger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
+            this._topazLogger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
         }
     }
 
@@ -59,7 +59,7 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
         
         var metadataFilePath = CreateTableDirectories(tableName, storageAccountName);
 
-        this.logger.LogDebug($"Attempting to create {metadataFilePath} file.");
+        this._topazLogger.LogDebug($"Attempting to create {metadataFilePath} file.");
 
         if(File.Exists(metadataFilePath) == true) throw new InvalidOperationException($"Metadata file for {typeof(TableStorageService)} with ID {tableName} already exists.");
 
@@ -77,10 +77,10 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
         var aclPath = Path.Combine(tablePath, "acl");
         var metadataFilePath = Path.Combine(tablePath, metadataFile);
 
-        this.logger.LogDebug($"Attempting to create {tablePath} directory.");
+        this._topazLogger.LogDebug($"Attempting to create {tablePath} directory.");
         if(Directory.Exists(tablePath))
         {
-            this.logger.LogDebug($"Attempting to create {tablePath} directory - skipped.");
+            this._topazLogger.LogDebug($"Attempting to create {tablePath} directory - skipped.");
         }
         else
         {
@@ -88,7 +88,7 @@ internal sealed class TableResourceProvider(ILogger logger) : ResourceProviderBa
             Directory.CreateDirectory(dataPath);
             Directory.CreateDirectory(aclPath);
             
-            this.logger.LogDebug($"Attempting to create {tablePath} directory - created!");
+            this._topazLogger.LogDebug($"Attempting to create {tablePath} directory - created!");
         }
 
         return metadataFilePath;

@@ -4,18 +4,18 @@ using Spectre.Console.Cli;
 
 namespace Topaz.Service.KeyVault.Commands;
 
-public class CreateKeyVaultCommand(ILogger logger) : Command<CreateKeyVaultCommand.CreatekeyVaultCommandSettings>
+public class CreateKeyVaultCommand(ITopazLogger logger) : Command<CreateKeyVaultCommand.CreatekeyVaultCommandSettings>
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     public override int Execute(CommandContext context, CreatekeyVaultCommandSettings settings)
     {
-        this.logger.LogInformation($"Executing {nameof(CreateKeyVaultCommand)}.{nameof(Execute)}.");
+        this._topazLogger.LogInformation($"Executing {nameof(CreateKeyVaultCommand)}.{nameof(Execute)}.");
 
-        var controlPlane = new KeyVaultControlPlane(new ResourceProvider(this.logger));
+        var controlPlane = new KeyVaultControlPlane(new ResourceProvider(this._topazLogger));
         var kv = controlPlane.Create(settings.Name!, settings.ResourceGroup!, settings.Location!, settings.SubscriptionId!);
 
-        this.logger.LogInformation(kv.ToString());
+        this._topazLogger.LogInformation(kv.ToString());
 
         return 0;
     }

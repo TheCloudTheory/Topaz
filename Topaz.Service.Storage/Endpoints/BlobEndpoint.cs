@@ -11,7 +11,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints;
 
-public class BlobEndpoint(ILogger logger) : IEndpointDefinition
+public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly ResourceProvider _resourceProvider = new(logger);
     private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger), logger);

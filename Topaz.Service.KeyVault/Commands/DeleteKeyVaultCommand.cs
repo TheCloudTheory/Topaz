@@ -4,18 +4,18 @@ using Spectre.Console.Cli;
 
 namespace Topaz.Service.KeyVault.Commands;
 
-public sealed class DeleteKeyVaultCommand(ILogger logger) : Command<DeleteKeyVaultCommand.DeleteKeyVaultCommandSettings>
+public sealed class DeleteKeyVaultCommand(ITopazLogger logger) : Command<DeleteKeyVaultCommand.DeleteKeyVaultCommandSettings>
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     public override int Execute(CommandContext context, DeleteKeyVaultCommandSettings settings)
     {
-        this.logger.LogInformation("Deleting Azure Key Vault...");
+        this._topazLogger.LogInformation("Deleting Azure Key Vault...");
 
-        var rp = new ResourceProvider(this.logger);
+        var rp = new ResourceProvider(this._topazLogger);
         rp.Delete(settings.Name!);
 
-        this.logger.LogInformation("Azure Key Vault deleted.");
+        this._topazLogger.LogInformation("Azure Key Vault deleted.");
 
         return 0;
     }

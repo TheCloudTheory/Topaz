@@ -4,19 +4,19 @@ using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
 
-public class DeleteEventHubCommand(ILogger logger) : Command<DeleteEventHubCommand.DeleteEventHubCommandSettings>
+public class DeleteEventHubCommand(ITopazLogger logger) : Command<DeleteEventHubCommand.DeleteEventHubCommandSettings>
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     public override int Execute(CommandContext context, DeleteEventHubCommandSettings settings)
     {
-        this.logger.LogDebug($"Executing {nameof(CreateEventHubCommand)}.{nameof(Execute)}.");
-        this.logger.LogInformation($"Deleting {settings.Name} event hub...");
+        this._topazLogger.LogDebug($"Executing {nameof(CreateEventHubCommand)}.{nameof(Execute)}.");
+        this._topazLogger.LogInformation($"Deleting {settings.Name} event hub...");
 
-        var controlPlane = new EventHubControlPlane(new ResourceProvider(this.logger), logger);
+        var controlPlane = new EventHubControlPlane(new ResourceProvider(this._topazLogger), _topazLogger);
         controlPlane.Delete(settings.Name!, settings.NamespaceName!);
 
-        this.logger.LogInformation($"Event hub {settings.Name} deleted.");
+        this._topazLogger.LogInformation($"Event hub {settings.Name} deleted.");
 
         return 0;
     }

@@ -8,7 +8,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage;
 
-internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane, ILogger logger)
+internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane, ITopazLogger logger)
 {
     public BlobEnumerationResult ListBlobs(string storageAccountName, string containerName)
     {

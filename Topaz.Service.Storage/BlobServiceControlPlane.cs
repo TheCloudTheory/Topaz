@@ -7,9 +7,9 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage;
 
-internal sealed class BlobServiceControlPlane(BlobResourceProvider provider, ILogger logger)
+internal sealed class BlobServiceControlPlane(BlobResourceProvider provider, ITopazLogger logger)
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     public HttpStatusCode CreateContainer(string containerName, string storageAccountName)
     {

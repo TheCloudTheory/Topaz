@@ -6,7 +6,7 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
-public sealed class DeleteTableCommand(ILogger logger) : Command<DeleteTableCommand.DeleteTableCommandSettings>
+public sealed class DeleteTableCommand(ITopazLogger logger) : Command<DeleteTableCommand.DeleteTableCommandSettings>
 {
     public override int Execute(CommandContext context, DeleteTableCommandSettings settings)
     {

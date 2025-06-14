@@ -5,10 +5,10 @@ using Topaz.Shared;
 
 namespace Topaz.Service.EventHub;
 
-internal sealed class EventHubControlPlane(ResourceProvider provider, ILogger logger)
+internal sealed class EventHubControlPlane(ResourceProvider provider, ITopazLogger logger)
 {
     private readonly ResourceProvider provider = provider;
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     public object CreateNamespace(string name, string resourceGroup, string location, string subscriptionId)
     {
@@ -45,7 +45,7 @@ internal sealed class EventHubControlPlane(ResourceProvider provider, ILogger lo
 
     public Models.EventHub CreateUpdateEventHub(string namespaceName, string name, Stream input)
     {
-        this.logger.LogDebug($"Executing {nameof(CreateUpdateEventHub)}: {namespaceName} {name}");
+        this._topazLogger.LogDebug($"Executing {nameof(CreateUpdateEventHub)}: {namespaceName} {name}");
         
         if (this.provider.EventHubExists(namespaceName, name))
         {
@@ -57,7 +57,7 @@ internal sealed class EventHubControlPlane(ResourceProvider provider, ILogger lo
             
             var rawContent = sr.ReadToEnd();
 
-            this.logger.LogDebug($"Executing {nameof(CreateUpdateEventHub)}: Processing {rawContent}.");
+            this._topazLogger.LogDebug($"Executing {nameof(CreateUpdateEventHub)}: Processing {rawContent}.");
             
             var @namespace = this.GetNamespace(namespaceName);
             var hub = this.provider.CreateEventHub(namespaceName, name, Models.EventHub.New(name, namespaceName, @namespace.ResourceGroup, @namespace.Location));
@@ -68,7 +68,7 @@ internal sealed class EventHubControlPlane(ResourceProvider provider, ILogger lo
 
     public void Delete(string name, string namespaceName)
     {
-        this.logger.LogDebug($"Executing {nameof(Delete)}: {name} {namespaceName}");
+        this._topazLogger.LogDebug($"Executing {nameof(Delete)}: {name} {namespaceName}");
 
         if (this.provider.EventHubExists(namespaceName, name) == false)
         {

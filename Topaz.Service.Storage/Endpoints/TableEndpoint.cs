@@ -13,7 +13,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints;
 
-public class TableEndpoint(ILogger logger) : IEndpointDefinition
+public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly TableServiceControlPlane _controlPlane = new(new TableResourceProvider(logger), logger);
     private readonly TableServiceDataPlane _dataPlane = new(new TableServiceControlPlane(new TableResourceProvider(logger), logger), logger);

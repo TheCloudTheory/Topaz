@@ -4,18 +4,18 @@ using Spectre.Console.Cli;
 
 namespace Topaz.Service.Subscription.Commands;
 
-public class DeleteSubscriptionCommand(ILogger logger) : Command<DeleteSubscriptionCommand.DeleteSubscriptionCommandSettings>
+public class DeleteSubscriptionCommand(ITopazLogger logger) : Command<DeleteSubscriptionCommand.DeleteSubscriptionCommandSettings>
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     public override int Execute(CommandContext context, DeleteSubscriptionCommandSettings settings)
     {
-        this.logger.LogInformation("Deleting subscription...");
+        this._topazLogger.LogInformation("Deleting subscription...");
 
-        var controlPlane = new SubscriptionControlPlane(new ResourceProvider(this.logger));
+        var controlPlane = new SubscriptionControlPlane(new ResourceProvider(this._topazLogger));
         controlPlane.Delete(settings.Id!);
 
-        this.logger.LogInformation("Subscription deleted.");
+        this._topazLogger.LogInformation("Subscription deleted.");
 
         return 0;
     }

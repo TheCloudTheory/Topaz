@@ -4,18 +4,18 @@ using Spectre.Console.Cli;
 
 namespace Topaz.Service.ResourceGroup.Commands;
 
-public sealed class DeleteResourceGroupCommand(ILogger logger) : Command<DeleteResourceGroupCommand.DeleteResourceGroupCommandSettings>
+public sealed class DeleteResourceGroupCommand(ITopazLogger logger) : Command<DeleteResourceGroupCommand.DeleteResourceGroupCommandSettings>
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
 
     public override int Execute(CommandContext context, DeleteResourceGroupCommandSettings settings)
     {
-        this.logger.LogInformation("Deleting resource group...");
+        this._topazLogger.LogInformation("Deleting resource group...");
 
-        var rp = new ResourceProvider(this.logger);
+        var rp = new ResourceProvider(this._topazLogger);
         rp.Delete(settings.Name!);
 
-        this.logger.LogInformation("Resource group deleted.");
+        this._topazLogger.LogInformation("Resource group deleted.");
 
         return 0;
     }

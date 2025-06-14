@@ -5,7 +5,7 @@ using Topaz.Shared;
 
 namespace Topaz.Host.AMQP;
 
-public class IncomingLinkEndpoint(ILogger logger) : LinkEndpoint
+public class IncomingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
 {
     private const uint BatchFormat = 0x80013700;
     private static readonly List<Message> Messages = [];

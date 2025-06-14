@@ -4,9 +4,9 @@ using Topaz.Shared;
 
 namespace Topaz.Service.EventHub;
 
-internal sealed class ResourceProvider(ILogger logger) : ResourceProviderBase<EventHubService>(logger) 
+internal sealed class ResourceProvider(ITopazLogger logger) : ResourceProviderBase<EventHubService>(logger) 
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
     
     public bool EventHubExists(string namespaceName, string eventhubName)
     {
@@ -25,13 +25,13 @@ internal sealed class ResourceProvider(ILogger logger) : ResourceProviderBase<Ev
         var dataPath = Path.Combine(hubPath, "data");
         var metadataFilePath = Path.Combine(hubPath, metadataFile);
         
-        this.logger.LogDebug($"Attempting to create {hubPath} directory.");
+        this._topazLogger.LogDebug($"Attempting to create {hubPath} directory.");
         
         Directory.CreateDirectory(hubPath);
         Directory.CreateDirectory(dataPath);
         
-        this.logger.LogDebug($"Attempting to create {hubPath} directory - created!");
-        this.logger.LogDebug($"Attempting to create {metadataFilePath} file.");
+        this._topazLogger.LogDebug($"Attempting to create {hubPath} directory - created!");
+        this._topazLogger.LogDebug($"Attempting to create {metadataFilePath} file.");
         
         var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
         File.WriteAllText(metadataFilePath, content);
@@ -43,10 +43,10 @@ internal sealed class ResourceProvider(ILogger logger) : ResourceProviderBase<Ev
     {
         var hubPath = this.GetEventHubPath(namespaceName, name);
         
-        this.logger.LogDebug($"Attempting to delete {hubPath} directory.");
+        this._topazLogger.LogDebug($"Attempting to delete {hubPath} directory.");
         
         Directory.Delete(hubPath);
         
-        this.logger.LogDebug($"Attempting to delete {hubPath} directory - deleted!");
+        this._topazLogger.LogDebug($"Attempting to delete {hubPath} directory - deleted!");
     }
 }

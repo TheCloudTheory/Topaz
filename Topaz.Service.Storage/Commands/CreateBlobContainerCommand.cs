@@ -6,7 +6,7 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
-public sealed class CreateBlobContainerCommand(ILogger logger) : Command<CreateBlobContainerCommand.CreateBlobContainerCommandSettings>
+public sealed class CreateBlobContainerCommand(ITopazLogger logger) : Command<CreateBlobContainerCommand.CreateBlobContainerCommandSettings>
 {
     public override int Execute(CommandContext context, CreateBlobContainerCommandSettings settings)
     {

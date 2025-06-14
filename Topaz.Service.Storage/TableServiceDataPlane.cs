@@ -9,7 +9,7 @@ using Topaz.Service.Shared;
 
 namespace Topaz.Service.Storage;
 
-internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlane, ILogger logger)
+internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlane, ITopazLogger logger)
 {
     internal string InsertEntity(Stream input, string tableName, string storageAccountName)
     {

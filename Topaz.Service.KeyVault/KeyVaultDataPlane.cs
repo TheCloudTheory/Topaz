@@ -7,14 +7,14 @@ using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault;
 
-internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provider)
+internal sealed class KeyVaultDataPlane(ITopazLogger logger, ResourceProvider provider)
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
     private readonly ResourceProvider provider = provider;
 
     internal (Secret? data, HttpStatusCode code) SetSecret(Stream input, string vaultName, string secretName)
     {
-        this.logger.LogDebug($"Executing {nameof(SetSecret)}: {secretName} {vaultName}");
+        this._topazLogger.LogDebug($"Executing {nameof(SetSecret)}: {secretName} {vaultName}");
         
         using var sr = new StreamReader(input);
 
@@ -27,7 +27,7 @@ internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provide
 
         var data = JsonSerializer.Deserialize<SetSecretRequest>(rawContent, GlobalSettings.JsonOptions) ?? throw new Exception();
 
-        this.logger.LogDebug($"Executing {nameof(SetSecret)}: Processing {rawContent}.");
+        this._topazLogger.LogDebug($"Executing {nameof(SetSecret)}: Processing {rawContent}.");
         
         var path = this.provider.GetKeyVaultPath(vaultName);
         var fileName = $"{secretName}.json";
@@ -51,7 +51,7 @@ internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provide
 
     private Secret CreateNewSecretVersion(string secretName, string value, string entityPath)
     {
-        this.logger.LogDebug($"Executing {nameof(CreateNewSecretVersion)}: {secretName} {value}");
+        this._topazLogger.LogDebug($"Executing {nameof(CreateNewSecretVersion)}: {secretName} {value}");
         
         var secret = new Secret(secretName, value, Guid.NewGuid());
         var data = File.ReadAllText(entityPath);
@@ -66,7 +66,7 @@ internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provide
 
     public (Secret? data, HttpStatusCode code) GetSecret(string vaultName, string secretName, string? version)
     {
-        this.logger.LogDebug($"Executing {nameof(GetSecret)}: {secretName} {vaultName}");
+        this._topazLogger.LogDebug($"Executing {nameof(GetSecret)}: {secretName} {vaultName}");
         
         var path = this.provider.GetKeyVaultPath(vaultName);
         var fileName = $"{secretName}.json";
@@ -74,12 +74,12 @@ internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provide
         
         if (File.Exists(entityPath) == false)
         {
-            this.logger.LogDebug($"Executing {nameof(GetSecret)}: Secret {secretName} not found.");
+            this._topazLogger.LogDebug($"Executing {nameof(GetSecret)}: Secret {secretName} not found.");
             
             return (null, HttpStatusCode.NotFound);
         }
         
-        this.logger.LogDebug($"Executing {nameof(GetSecret)}: Processing {secretName}.");
+        this._topazLogger.LogDebug($"Executing {nameof(GetSecret)}: Processing {secretName}.");
         
         var data = File.ReadAllText(entityPath);
         var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
@@ -96,7 +96,7 @@ internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provide
 
     public (Secret[] data, HttpStatusCode code) GetSecrets(string vaultName)
     {
-        this.logger.LogDebug($"Executing {nameof(GetSecrets)}: {vaultName}");
+        this._topazLogger.LogDebug($"Executing {nameof(GetSecrets)}: {vaultName}");
         
         var path = this.provider.GetKeyVaultPath(vaultName);
         var files = Directory.EnumerateFiles(path, "*.json");
@@ -104,7 +104,7 @@ internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provide
 
         foreach (var file in files)
         {
-            this.logger.LogDebug($"Executing {nameof(GetSecrets)}: {file}");
+            this._topazLogger.LogDebug($"Executing {nameof(GetSecrets)}: {file}");
             
             var data = File.ReadAllText(file);
             var versions = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
@@ -118,7 +118,7 @@ internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provide
 
     public (Secret? data, HttpStatusCode code) DeleteSecret(string vaultName, string secretName)
     {
-        this.logger.LogDebug($"Executing {nameof(DeleteSecret)}: {secretName} {vaultName}");
+        this._topazLogger.LogDebug($"Executing {nameof(DeleteSecret)}: {secretName} {vaultName}");
         
         var path = this.provider.GetKeyVaultPath(vaultName);
         var fileName = $"{secretName}.json";
@@ -126,18 +126,18 @@ internal sealed class KeyVaultDataPlane(ILogger logger, ResourceProvider provide
         
         if (File.Exists(entityPath) == false)
         {
-            this.logger.LogDebug($"Executing {nameof(DeleteSecret)}: Secret {secretName} not found.");
+            this._topazLogger.LogDebug($"Executing {nameof(DeleteSecret)}: Secret {secretName} not found.");
             
             return (null, HttpStatusCode.NotFound);
         }
         
-        this.logger.LogDebug($"Executing {nameof(DeleteSecret)}: Processing {secretName}.");
+        this._topazLogger.LogDebug($"Executing {nameof(DeleteSecret)}: Processing {secretName}.");
         
         var data = File.ReadAllText(entityPath);
         var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
         var secret = secrets!.Last();
         
-        this.logger.LogDebug($"Executing {nameof(DeleteSecret)}: Deleting {secretName}.");
+        this._topazLogger.LogDebug($"Executing {nameof(DeleteSecret)}: Deleting {secretName}.");
         
         File.Delete(entityPath);
         

@@ -5,23 +5,23 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage;
 
-internal sealed class BlobResourceProvider(ILogger logger) : ResourceProviderBase<BlobStorageService>(logger)
+internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProviderBase<BlobStorageService>(logger)
 {
-    private readonly ILogger logger = logger;
+    private readonly ITopazLogger _topazLogger = logger;
     
     private void InitializeServiceDirectory(string storageAccountName)
     {
         var servicePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, BlobStorageService.LocalDirectoryPath);
-        this.logger.LogDebug($"Attempting to create {servicePath} directory...");
+        this._topazLogger.LogDebug($"Attempting to create {servicePath} directory...");
 
         if(Directory.Exists(servicePath) == false)
         {
             Directory.CreateDirectory(servicePath);
-            this.logger.LogDebug($"Directory {servicePath} created.");
+            this._topazLogger.LogDebug($"Directory {servicePath} created.");
         }
         else
         {
-            this.logger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
+            this._topazLogger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
         }
     }
     
@@ -31,7 +31,7 @@ internal sealed class BlobResourceProvider(ILogger logger) : ResourceProviderBas
         
         var metadataFilePath = CreateBlobDirectories(storageAccountName, containerName);
 
-        this.logger.LogDebug($"Attempting to create {metadataFilePath} file.");
+        this._topazLogger.LogDebug($"Attempting to create {metadataFilePath} file.");
 
         if(File.Exists(metadataFilePath) == true) throw new InvalidOperationException($"Metadata file for {typeof(BlobStorageService)} with ID {containerName} already exists.");
 
@@ -50,10 +50,10 @@ internal sealed class BlobResourceProvider(ILogger logger) : ResourceProviderBas
         var metadataFilePath = Path.Combine(containerPath, metadataFile);
         var blobMetadataDirectoryPath = GetContainerMetadataPath(storageAccountName, containerName);
 
-        this.logger.LogDebug($"Attempting to create {containerPath} directory.");
+        this._topazLogger.LogDebug($"Attempting to create {containerPath} directory.");
         if(Directory.Exists(containerPath))
         {
-            this.logger.LogDebug($"Attempting to create {containerPath} directory - skipped.");
+            this._topazLogger.LogDebug($"Attempting to create {containerPath} directory - skipped.");
         }
         else
         {
@@ -61,7 +61,7 @@ internal sealed class BlobResourceProvider(ILogger logger) : ResourceProviderBas
             Directory.CreateDirectory(dataPath);
             Directory.CreateDirectory(blobMetadataDirectoryPath);
             
-            this.logger.LogDebug($"Attempting to create {containerPath} directory - created!");
+            this._topazLogger.LogDebug($"Attempting to create {containerPath} directory - created!");
         }
 
         return metadataFilePath;

@@ -4,7 +4,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage;
 
-internal sealed class ResourceProvider(ILogger logger) : ResourceProviderBase<AzureStorageService>(logger)
+internal sealed class ResourceProvider(ITopazLogger logger) : ResourceProviderBase<AzureStorageService>(logger)
 {
     internal bool CheckIfStorageAccountExists(string name)
     {

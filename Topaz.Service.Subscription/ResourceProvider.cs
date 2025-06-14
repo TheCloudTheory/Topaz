@@ -3,6 +3,6 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Subscription;
 
-public sealed class ResourceProvider(ILogger logger) : ResourceProviderBase<SubscriptionService>(logger)
+public sealed class ResourceProvider(ITopazLogger logger) : ResourceProviderBase<SubscriptionService>(logger)
 {
 }
