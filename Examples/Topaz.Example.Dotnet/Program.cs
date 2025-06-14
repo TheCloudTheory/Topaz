@@ -23,7 +23,7 @@ internal class Program
         // which are exposed by the emulator. Note you don't need to expose
         // every port available.
         var container = new ContainerBuilder()
-            .WithImage("thecloudtheory/topaz-cli:v1.0.79-alpha")
+            .WithImage("thecloudtheory/topaz-cli:v1.0.90-alpha")
             .WithPortBinding(8890)
             .WithPortBinding(8899)
             .WithPortBinding(8898)
