@@ -209,7 +209,7 @@ public class Host(ILogger logger)
 
                         if (endpoint == null)
                         {
-                            logger.LogDebug($"Request {method} {path} has no corresponding endpoint assigned.");
+                            logger.LogError($"Request {method} {path} has no corresponding endpoint assigned.");
 
                             context.Response.StatusCode = (int)HttpStatusCode.NotFound;
                             return;
@@ -218,7 +218,7 @@ public class Host(ILogger logger)
                         var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query);
                         var textResponse = await response.Content.ReadAsStringAsync();
 
-                        logger.LogDebug($"Response: [{response.StatusCode}] [{path}] {textResponse}");
+                        logger.LogInformation($"Response: [{response.StatusCode}] [{path}] {textResponse}");
 
                         context.Response.StatusCode = (int)response.StatusCode;
 
