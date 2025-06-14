@@ -12,4 +12,5 @@ WORKDIR /app
 
 COPY --from=base /app .
 
-CMD ["./topaz-cli", "start", "--log-level", "Information"]
+ENTRYPOINT [ "./topaz-cli" ]
+CMD ["start", "--log-level", "Information"]
