@@ -1,3 +1,6 @@
+using Azure.Core;
+using Azure.ResourceManager.KeyVault.Models;
+using Azure.ResourceManager.Storage.Models;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +15,7 @@ IContainer? container = null;
 if (builder.Environment.IsDevelopment())
 {
     container = new ContainerBuilder()
-        .WithImage("thecloudtheory/topaz-cli:v1.0.79-alpha")
+        .WithImage("thecloudtheory/topaz-cli:v1.0.97-alpha")
         .WithPortBinding(8890)
         .WithPortBinding(8899)
         .WithPortBinding(8898)
@@ -30,11 +33,17 @@ if (builder.Environment.IsDevelopment())
 
     await builder.Configuration.AddTopaz(subscriptionId)
         .AddSubscription(subscriptionId, "topaz-webapp-example")
-        .AddResourceGroup(subscriptionId, resourceGroupName)
-        .AddKeyVault(resourceGroupName, keyVaultName, secrets: new Dictionary<string, string>
-        {
-            { "secrets-generic-secret", "This is just example secret!" }
-        });
+        .AddResourceGroup(subscriptionId, resourceGroupName, AzureLocation.WestEurope)
+        .AddStorageAccount(resourceGroupName, "storagetopazweb",
+            new StorageAccountCreateOrUpdateContent(new StorageSku(StorageSkuName.StandardLrs), StorageKind.StorageV2,
+                AzureLocation.WestEurope))
+        .AddKeyVault(resourceGroupName, keyVaultName,
+            new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+                new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))),
+            secrets: new Dictionary<string, string>
+            {
+                { "secrets-generic-secret", "This is just example secret!" }
+            });
 }
 
 builder.Configuration.AddAzureKeyVault(
