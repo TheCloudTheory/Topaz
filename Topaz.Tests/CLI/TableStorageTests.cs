@@ -1,3 +1,5 @@
+using Topaz.CLI;
+
 namespace Topaz.Tests.CLI;
 
 public class TableStorageTests

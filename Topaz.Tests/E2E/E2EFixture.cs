@@ -1,3 +1,5 @@
+using Topaz.CLI;
+
 namespace Topaz.Tests.E2E;
 
 [SetUpFixture]

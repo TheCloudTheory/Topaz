@@ -1,6 +1,7 @@
 using Azure;
 using Azure.Data.Tables;
 using Azure.Data.Tables.Models;
+using Topaz.CLI;
 using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E

@@ -4,6 +4,7 @@ using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Consumer;
 using Azure.Messaging.EventHubs.Producer;
 using Azure.Storage.Blobs;
+using Topaz.CLI;
 using Topaz.Identity;
 
 namespace Topaz.Tests.E2E;

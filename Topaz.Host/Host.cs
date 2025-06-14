@@ -26,6 +26,10 @@ public class Host(ILogger logger)
 
     public void Start()
     {
+        Console.WriteLine("Topaz.Host - Welcome!");
+        Console.WriteLine($"Version: {ThisAssembly.AssemblyInformationalVersion}");
+        Console.WriteLine("==============================");
+        
         var services = new IServiceDefinition[] {
             new AzureStorageService(logger),
             new TableStorageService(logger),

@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using JetBrains.Annotations;
+using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
-using Topaz.CLI;
 using Topaz.CLI.Commands;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
@@ -9,16 +9,15 @@ using Topaz.Service.Storage.Commands;
 using Topaz.Service.Subscription.Commands;
 using Topaz.Shared;
 
+namespace Topaz.CLI;
+
+[UsedImplicitly]
 internal class Program
 {
     internal static async Task<int> Main(string[] args)
     {
         try
         {
-            Console.WriteLine("Topaz.CLI - Welcome!");
-            Console.WriteLine($"Version: {ThisAssembly.AssemblyInformationalVersion}");
-            Console.WriteLine("==============================");
-
             var registrations = new ServiceCollection();
             RegisterDependencies(registrations);
 
@@ -29,8 +28,8 @@ internal class Program
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine(ex.Message);
-            Console.Error.WriteLine(ex.StackTrace);
+            await Console.Error.WriteLineAsync(ex.Message);
+            await Console.Error.WriteLineAsync(ex.StackTrace);
 
             return 1;
         }

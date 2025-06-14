@@ -1,4 +1,5 @@
 using Azure.Storage.Blobs;
+using Topaz.CLI;
 using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E;

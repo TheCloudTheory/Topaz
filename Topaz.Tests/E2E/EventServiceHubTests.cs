@@ -1,6 +1,7 @@
 using Azure;
 using Azure.ResourceManager;
 using Azure.ResourceManager.EventHubs;
+using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 
