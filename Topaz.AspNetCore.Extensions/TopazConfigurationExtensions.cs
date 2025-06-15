@@ -131,4 +131,32 @@ public static class TopazConfigurationExtensions
         
         return concrete;
     }
+
+    public static async Task<TopazEnvironmentBuilder> AddStorageAccountConnectionStringAsSecret(
+        this Task<TopazEnvironmentBuilder> builder, string resourceGroupName, string storageAccountName, string keyVaultName, string secretName, ushort keyIndex = 0)
+    {
+        var concrete = await builder;
+        var subscription = await concrete.ArmClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupName);
+        var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(storageAccountName);
+        var keys = new List<StorageAccountKey>();
+        
+        await foreach (var key in storageAccount.Value.GetKeysAsync())
+        {
+            keys.Add(key);
+        }
+        
+        var credentials = new AzureLocalCredential();
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(keyVaultName),
+            credential: credentials, new SecretClientOptions
+            {
+                DisableChallengeResourceVerification = true
+            });
+
+        var selectedKey = keys[keyIndex];
+        await client.SetSecretAsync(new KeyVaultSecret(secretName,
+            TopazResourceHelpers.GetAzureStorageConnectionString(storageAccountName, selectedKey.Value)));
+        
+        return concrete;
+    }
 }

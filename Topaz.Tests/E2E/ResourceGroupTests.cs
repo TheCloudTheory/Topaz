@@ -1,9 +1,9 @@
+using Azure;
 using Azure.Core;
-using Topaz.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
-using Azure;
 using Topaz.CLI;
+using Topaz.Identity;
 
 namespace Topaz.Tests.E2E;
 

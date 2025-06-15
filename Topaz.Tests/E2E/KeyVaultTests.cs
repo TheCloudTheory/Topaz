@@ -1,7 +1,7 @@
 using Azure;
-using Topaz.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Topaz.CLI;
+using Topaz.Identity;
 using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E;
