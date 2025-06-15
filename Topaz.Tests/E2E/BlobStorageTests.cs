@@ -53,7 +53,7 @@ public class BlobStorageTests
             ResourceGroupName,
             "--location",
             "westeurope",
-            "--subscriptionId",
+            "--subscription-id",
             SubscriptionId.ToString()
         ]);
         
@@ -75,7 +75,7 @@ public class BlobStorageTests
             ResourceGroupName,
             "--location",
             "westeurope",
-            "--subscriptionId",
+            "--subscription-id",
             Guid.Empty.ToString()
         ]);
         

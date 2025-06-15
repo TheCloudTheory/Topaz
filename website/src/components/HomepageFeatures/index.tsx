@@ -12,7 +12,7 @@ type FeatureItem = {
 const FeatureList: FeatureItem[] = [
   {
     title: 'Seamless integration',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
+    Svg: require('@site/static/img/topaz-integration.svg').default,
     description: (
       <>
         Topaz doesn't require custom SDKs or hacks. It integrates with Azure SDKs without complex
@@ -22,7 +22,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Single tool for all services',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    Svg: require('@site/static/img/topaz-single-tool.svg').default,
     description: (
       <>
         Tired of setting all the Azure emulators one by one? Not anymore! Topaz comes with
@@ -32,7 +32,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Platform agnostic',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    Svg: require('@site/static/img/topaz-tech-agnostic.svg').default,
     description: (
       <>
         You can run Topaz anywhere and anytime. Select between a single executable or a container,

@@ -1,27 +1,32 @@
+using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace Topaz.Service.Subscription.Commands;
 
+[UsedImplicitly]
 public sealed class CreateSubscriptionCommand(ITopazLogger logger) : Command<CreateSubscriptionCommand.CreateSubscriptionCommandSettings>
 {
-    private readonly ITopazLogger _topazLogger = logger;
-
     public override int Execute(CommandContext context, CreateSubscriptionCommandSettings settings)
     {
-        this._topazLogger.LogInformation("Creating subscription...");
+        logger.LogInformation("Creating subscription...");
 
-        var controlPlane = new SubscriptionControlPlane(new ResourceProvider(this._topazLogger));
+        var controlPlane = new SubscriptionControlPlane(new ResourceProvider(logger));
         var sa = controlPlane.Create(settings.Id, settings.Name!);
 
-        this._topazLogger.LogInformation(sa.ToString());
+        logger.LogInformation(sa.ToString());
 
         return 0;
     }
 
     public override ValidationResult Validate(CommandContext context, CreateSubscriptionCommandSettings settings)
     {
+        if(string.IsNullOrEmpty(settings.Id))
+        {
+            return ValidationResult.Error("Subscription ID can't be null.");
+        }
+        
         if(string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Subscription name can't be null.");
@@ -30,6 +35,7 @@ public sealed class CreateSubscriptionCommand(ITopazLogger logger) : Command<Cre
         return base.Validate(context, settings);
     }
 
+    [UsedImplicitly]
     public sealed class CreateSubscriptionCommandSettings : CommandSettings
     {
         [CommandOption("-i|--id")]

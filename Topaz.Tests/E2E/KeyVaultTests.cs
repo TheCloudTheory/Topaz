@@ -43,7 +43,7 @@ public class KeyVaultTests
             "test",
             "--location",
             "westeurope",
-            "--subscriptionId",
+            "--subscription-id",
             Guid.Empty.ToString()
         ]);
 
@@ -63,7 +63,7 @@ public class KeyVaultTests
             "rg-test",
             "--location",
             "westeurope",
-            "--subscriptionId",
+            "--subscription-id",
             Guid.Empty.ToString(),
         ]);
     }

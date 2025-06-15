@@ -52,7 +52,7 @@ public class AzureStorageServiceTests
             ResourceGroupName,
             "--location",
             "westeurope",
-            "--subscriptionId",
+            "--subscription-id",
             SubscriptionId.ToString()
         ]);
     }

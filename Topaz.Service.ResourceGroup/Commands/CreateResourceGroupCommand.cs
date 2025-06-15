@@ -1,9 +1,11 @@
+using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace Topaz.Service.ResourceGroup.Commands;
 
+[UsedImplicitly]
 public sealed class CreateResourceGroupCommand(ITopazLogger logger) : Command<CreateResourceGroupCommand.CreateResourceGroupCommandSettings>
 {
     public override int Execute(CommandContext context, CreateResourceGroupCommandSettings settings)
@@ -38,6 +40,7 @@ public sealed class CreateResourceGroupCommand(ITopazLogger logger) : Command<Cr
         return base.Validate(context, settings);
     }
 
+    [UsedImplicitly]
     public sealed class CreateResourceGroupCommandSettings : CommandSettings
     {
         [CommandOption("-n|--name")]
@@ -46,7 +49,7 @@ public sealed class CreateResourceGroupCommand(ITopazLogger logger) : Command<Cr
         [CommandOption("-l|--location")]
         public string? Location { get; set; }
 
-        [CommandOption("-s|--subscriptionId")]
+        [CommandOption("-s|--subscription-id")]
         public string? SubscriptionId { get; set; }
     }
 }

@@ -49,7 +49,7 @@ public class KeyVaultTests
             "rg-test",
             "--location",
             "westeurope",
-            "--subscriptionId",
+            "--subscription-id",
             Guid.Empty.ToString(),
         ]);
     }

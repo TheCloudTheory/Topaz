@@ -61,7 +61,7 @@ namespace Topaz.Tests.CLI
                 "test",
                 "--location",
                 "westeurope",
-                "--subscriptionId",
+                "--subscription-id",
                 Guid.Empty.ToString()
             ]);
         }

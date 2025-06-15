@@ -54,7 +54,7 @@ public class KeyVaultFullTests
             ResourceGroupName,
             "--location",
             "westeurope",
-            "--subscriptionId",
+            "--subscription-id",
             SubscriptionId.ToString()
         ]);
     }

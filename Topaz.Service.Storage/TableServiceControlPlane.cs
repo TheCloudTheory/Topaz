@@ -15,12 +15,9 @@ namespace Topaz.Service.Storage;
 
 internal sealed class TableServiceControlPlane(TableResourceProvider provider, ITopazLogger logger)
 {
-    private readonly TableResourceProvider provider = provider;
-    private readonly ITopazLogger _topazLogger = logger;
-
     public TableProperties[] GetTables(string storageAccountName)
     {
-        var tables = this.provider.List(storageAccountName);
+        var tables = provider.List(storageAccountName);
 
         return [.. tables.Select(t => {
             var di = new DirectoryInfo(t);
@@ -37,7 +34,7 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
             ?? throw new Exception();
         var model = new TableItem(content.TableName);;
 
-        this.provider.Create(content.TableName, storageAccountName, model);
+        provider.Create(content.TableName, storageAccountName, model);
 
         return model;
     }
@@ -46,7 +43,7 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
     {
         var model = new TableItem(tableName);;
 
-        this.provider.Create(tableName, storageAccountName, model);
+        provider.Create(tableName, storageAccountName, model);
 
         return new CreateTableResponse()
         {
@@ -56,22 +53,22 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
 
     public void DeleteTable(string tableName, string storageAccountName)
     {
-       this.provider.Delete(tableName, storageAccountName);
+       provider.Delete(tableName, storageAccountName);
     }
 
     internal bool CheckIfTableExists(string tableName, string storageAccountName)
     {
-        return this.provider.CheckIfTableExists(tableName, storageAccountName);
+        return provider.CheckIfTableExists(tableName, storageAccountName);
     }
 
     internal string GetTableDataPath(string tableName, string storageAccountName)
     {
-        return this.provider.GetTableDataPath(tableName, storageAccountName);
+        return provider.GetTableDataPath(tableName, storageAccountName);
     }
 
     public TableServiceProperties GetTableProperties(string storageAccountName)
     {
-        var storageControlPlane = new AzureStorageControlPlane(new ResourceProvider(this._topazLogger), this._topazLogger);
+        var storageControlPlane = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
         var path = storageControlPlane.GetServiceInstancePath(storageAccountName);
         var propertiesFilePath = Path.Combine(path, "properties.xml");
 
@@ -87,7 +84,7 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
     {
         using var sr = new StreamReader(input);
         
-        var aclPath = this.provider.GetTableAclPath(tableName, storageAccountName);
+        var aclPath = provider.GetTableAclPath(tableName, storageAccountName);
         var document = XDocument.Load(input, LoadOptions.PreserveWhitespace);
         
         if (document.Element("SignedIdentifiers") is {} signedIdentifiersElement)
@@ -120,7 +117,7 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
 
     public SignedIdentifiers GetAcl(string storageAccountName, string tableName)
     {
-        var aclPath = this.provider.GetTableAclPath(tableName, storageAccountName);
+        var aclPath = provider.GetTableAclPath(tableName, storageAccountName);
         var files = Directory.EnumerateFiles(aclPath, "*.xml", SearchOption.TopDirectoryOnly);
 
         using var sw = new EncodingAwareStringWriter();

@@ -46,7 +46,7 @@ public class EventHubTests
             "test",
             "--location",
             "westeurope",
-            "--subscriptionId",
+            "--subscription-id",
             Guid.Empty.ToString()
         ]);
         

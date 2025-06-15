@@ -10,6 +10,12 @@ Let's discover what is Topaz and how you may benefit from it.
 
 Topaz is an Azure emulator, which allows you to develop Azure-based applications without a need to connect to cloud services. It mimics popular Azure components such as Azure Storage, Azure Key Vault or Azure Service Bus to provide a robust local environment.
 
+:::danger[Important]
+
+Topaz is still in an early stage of development. Feel free to use it in any of your projects, but asses for possible breaking changes which may be introduced in upcoming releases. 
+
+:::
+
 ### What you'll need
 
 Topaz is distributed as a self-container binary meaning the only thing you need is downloading the selected release package from the [releases page](https://github.com/TheCloudTheory/Topaz/releases). However, if you prefer to run as a containerized service, you will need a container runtime such as Docker.

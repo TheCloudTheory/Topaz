@@ -1,21 +1,21 @@
+using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace Topaz.Service.ResourceGroup.Commands;
 
+[UsedImplicitly]
 public sealed class DeleteResourceGroupCommand(ITopazLogger logger) : Command<DeleteResourceGroupCommand.DeleteResourceGroupCommandSettings>
 {
-    private readonly ITopazLogger _topazLogger = logger;
-
     public override int Execute(CommandContext context, DeleteResourceGroupCommandSettings settings)
     {
-        this._topazLogger.LogInformation("Deleting resource group...");
+        logger.LogInformation("Deleting resource group...");
 
-        var rp = new ResourceProvider(this._topazLogger);
+        var rp = new ResourceProvider(logger);
         rp.Delete(settings.Name!);
 
-        this._topazLogger.LogInformation("Resource group deleted.");
+        logger.LogInformation("Resource group deleted.");
 
         return 0;
     }
@@ -30,6 +30,7 @@ public sealed class DeleteResourceGroupCommand(ITopazLogger logger) : Command<De
         return base.Validate(context, settings);
     }
 
+    [UsedImplicitly]
     public sealed class DeleteResourceGroupCommandSettings : CommandSettings
     {
         [CommandOption("-n|--name")]

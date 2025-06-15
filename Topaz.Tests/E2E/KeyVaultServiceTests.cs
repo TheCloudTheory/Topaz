@@ -52,7 +52,7 @@ public class KeyVaultServiceTests
             ResourceGroupName,
             "--location",
             "westeurope",
-            "--subscriptionId",
+            "--subscription-id",
             SubscriptionId.ToString()
         ]);
     }

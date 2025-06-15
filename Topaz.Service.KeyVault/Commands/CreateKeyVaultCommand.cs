@@ -1,26 +1,26 @@
+using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace Topaz.Service.KeyVault.Commands;
 
-public class CreateKeyVaultCommand(ITopazLogger logger) : Command<CreateKeyVaultCommand.CreatekeyVaultCommandSettings>
+[UsedImplicitly]
+public class CreateKeyVaultCommand(ITopazLogger logger) : Command<CreateKeyVaultCommand.CreateKeyVaultCommandSettings>
 {
-    private readonly ITopazLogger _topazLogger = logger;
-
-    public override int Execute(CommandContext context, CreatekeyVaultCommandSettings settings)
+    public override int Execute(CommandContext context, CreateKeyVaultCommandSettings settings)
     {
-        this._topazLogger.LogInformation($"Executing {nameof(CreateKeyVaultCommand)}.{nameof(Execute)}.");
+        logger.LogInformation($"Executing {nameof(CreateKeyVaultCommand)}.{nameof(Execute)}.");
 
-        var controlPlane = new KeyVaultControlPlane(new ResourceProvider(this._topazLogger));
+        var controlPlane = new KeyVaultControlPlane(new ResourceProvider(logger));
         var kv = controlPlane.Create(settings.Name!, settings.ResourceGroup!, settings.Location!, settings.SubscriptionId!);
 
-        this._topazLogger.LogInformation(kv.ToString());
+        logger.LogInformation(kv.ToString());
 
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreatekeyVaultCommandSettings settings)
+    public override ValidationResult Validate(CommandContext context, CreateKeyVaultCommandSettings settings)
     {
         if(string.IsNullOrEmpty(settings.Name))
         {
@@ -40,7 +40,8 @@ public class CreateKeyVaultCommand(ITopazLogger logger) : Command<CreateKeyVault
         return base.Validate(context, settings);
     }
     
-    public sealed class CreatekeyVaultCommandSettings : CommandSettings
+    [UsedImplicitly]
+    public sealed class CreateKeyVaultCommandSettings : CommandSettings
     {
         [CommandOption("-n|--name")]
         public string? Name { get; set; }
@@ -51,7 +52,7 @@ public class CreateKeyVaultCommand(ITopazLogger logger) : Command<CreateKeyVault
         [CommandOption("-l|--location")]
         public string? Location { get; set; }
 
-        [CommandOption("-s|--subscriptionId")]
+        [CommandOption("-s|--subscription-id")]
         public string? SubscriptionId { get; set; }
     }
 }

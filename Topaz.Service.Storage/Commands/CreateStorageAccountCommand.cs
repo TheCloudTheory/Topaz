@@ -37,6 +37,11 @@ public sealed class CreateStorageAccountCommand(ITopazLogger logger) : Command<C
         {
             return ValidationResult.Error("Storage account resource group can't be null.");
         }
+        
+        if(string.IsNullOrEmpty(settings.Location))
+        {
+            return ValidationResult.Error("Storage account location can't be null.");
+        }
 
         if(string.IsNullOrEmpty(settings.SubscriptionId))
         {
@@ -46,6 +51,7 @@ public sealed class CreateStorageAccountCommand(ITopazLogger logger) : Command<C
         return base.Validate(context, settings);
     }
 
+    [UsedImplicitly]
     public sealed class CreateStorageAccountCommandSettings : CommandSettings
     {
         [CommandOption("-n|--name")]
@@ -57,7 +63,7 @@ public sealed class CreateStorageAccountCommand(ITopazLogger logger) : Command<C
         [CommandOption("-l|--location")]
         public string? Location { get; set; }
 
-        [CommandOption("-s|--subscriptionId")]
+        [CommandOption("-s|--subscription-id")]
         public string? SubscriptionId { get; set; }
     }
 }

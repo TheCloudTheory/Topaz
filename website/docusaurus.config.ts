@@ -65,7 +65,7 @@ const config: Config = {
       title: 'Topaz',
       logo: {
         alt: 'Topaz - Azure emulator',
-        src: 'img/logo.svg',
+        src: 'img/topaz-logo-no-text.svg',
       },
       items: [
         {

@@ -24,7 +24,7 @@ public sealed class CreateBlobContainerCommand(ITopazLogger logger) : Command<Cr
     {
         if (string.IsNullOrEmpty(settings.Name))
         {
-            return ValidationResult.Error("Table name can't be null.");
+            return ValidationResult.Error("Container name can't be null.");
         }
 
         return string.IsNullOrEmpty(settings.AccountName) ? 

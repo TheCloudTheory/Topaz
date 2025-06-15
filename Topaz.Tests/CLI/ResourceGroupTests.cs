@@ -39,7 +39,7 @@ public class ResourceGroupTests
             "test",
             "--location",
             "westeurope",
-            "--subscriptionId",
+            "--subscription-id",
             Guid.Empty.ToString(),
         ]);
     }

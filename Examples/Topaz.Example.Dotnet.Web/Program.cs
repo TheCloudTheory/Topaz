@@ -11,10 +11,9 @@ using Topaz.ResourceManager;
 var builder = WebApplication.CreateBuilder(args);
 var keyVaultName = builder.Configuration["Azure:KeyVaultName"]!;
 
-IContainer? container = null;
 if (builder.Environment.IsDevelopment())
 {
-    container = new ContainerBuilder()
+    var container = new ContainerBuilder()
         .WithImage("thecloudtheory/topaz-cli:v1.0.102-alpha")
         .WithPortBinding(8890)
         .WithPortBinding(8899)
