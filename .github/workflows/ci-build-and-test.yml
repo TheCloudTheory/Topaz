@@ -1,4 +1,4 @@
-name: Build_Test_And_Publish
+name: CI Topaz
 
 on:
   workflow_dispatch:
@@ -57,50 +57,6 @@ jobs:
         indicators: true
         output: both
         thresholds: '60 80'
-    - name: Publish Windows
-      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r win-x64 -o ./publish/win-x64
-    - name: Publish Linux
-      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r linux-x64 -o ./publish/linux-x64
-    - name: Publish macOS
-      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r osx-x64 -o ./publish/osx-x64
-    - name: Publish Arm64
-      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r linux-arm64 -o ./publish/linux-arm64
-    - name: Upload Windows artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: win-x64
-        path: ./publish/win-x64
-    - name: Upload Linux artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-x64
-        path: ./publish/linux-x64
-    - name: Upload MacOS artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: osx-x64
-        path: ./publish/osx-x64
-    - name: Upload Arm64 artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-arm64
-        path: ./publish/linux-arm64
-    - name: Stamp pipeline run with a tag
-      run: nbgv tag
-    - name: Push a tag
-      run: git push origin --tags
-    - name: Get the generated tag
-      id: get-tag
-      run: |
-        TAG=$(git describe --tags --abbrev=0)
-        echo "Generated tag: $TAG"
-        echo $TAG > tag-info.txt
-    - name: Upload tag info artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: tag-info
-        path: tag-info.txt
-        retention-days: 1
     - name: TODO to Issue
       uses: alstr/todo-to-issue-action@v5.1.12
       with:
