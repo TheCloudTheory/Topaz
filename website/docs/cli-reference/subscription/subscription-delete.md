@@ -13,7 +13,7 @@ Deletes a subscription.
 
 ### Delete a subscription
 ```bash
-topaz subscription delete --id 36a28ebb-9370-46d8-981c-84efe02048ae
+$ topaz subscription delete --id 36a28ebb-9370-46d8-981c-84efe02048ae
 ```
 
 ## Remarks

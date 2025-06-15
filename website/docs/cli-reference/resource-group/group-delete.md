@@ -13,7 +13,7 @@ Deletes a resource group.
 
 ### Delete a resource group
 ```bash
-topaz group delete --name "rg-local"
+$ topaz group delete --name "rg-local"
 ```
 
 ## Remarks

@@ -14,5 +14,5 @@ Creates a new table in Azure Storage.
 
 ### Create new table
 ```bash
-topaz storage table create --account-name "salocal" --name "mydata"
+$ topaz storage table create --account-name "salocal" --name "mydata"
 ```

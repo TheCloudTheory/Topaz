@@ -14,5 +14,5 @@ Deletes a table from Azure Storage.
 
 ### Delete a table
 ```bash
-topaz storage table delete --account-name "salocal" --name "mydata"
+$ topaz storage table delete --account-name "salocal" --name "mydata"
 ```

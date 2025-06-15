@@ -14,5 +14,5 @@ Creates a new blob container in Azure Storage.
 
 ### Create new container
 ```bash
-topaz storage container create --account-name "salocal" --name "mydata"
+$ topaz storage container create --account-name "salocal" --name "mydata"
 ```

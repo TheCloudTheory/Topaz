@@ -14,5 +14,5 @@ Creates a new subscription.
 
 ### Create a subscription
 ```bash
-topaz subscription create --id 36a28ebb-9370-46d8-981c-84efe02048ae --name "sub-local"
+$ topaz subscription create --id 36a28ebb-9370-46d8-981c-84efe02048ae --name "sub-local"
 ```

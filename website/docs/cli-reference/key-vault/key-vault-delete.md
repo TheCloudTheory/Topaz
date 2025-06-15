@@ -13,5 +13,5 @@ Deletes a vault.
 
 ### Delete a vault
 ```bash
-topaz keyvault delete --name "kv-local"
+$ topaz keyvault delete --name "kv-local"
 ```

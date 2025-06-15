@@ -50,6 +50,38 @@ chmod +x <executable-name>
 
 Make sure you downloaded the correct binary depending on the architecture of your processor.
 
+### Setting up an alias
+Referencing the original executable name may be cumbersome if you're planning to use the CLI extensively. To help you with that, you may consider creating an alias for Topaz.
+
+#### macOS / Linux
+Using the shell configuration file:
+```bash
+# For Bash users
+echo 'alias topaz="/path/to/your/topaz-executable"' >> ~/.bashrc
+source ~/.bashrc
+
+# For Zsh users (macOS default)
+echo 'alias topaz="/path/to/your/topaz-executable"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+Moving to `/usr/local/bin` or by using a symlink:
+```bash
+# Option 1: Move to /usr/local/bin
+sudo mv /path/to/your/topaz-executable /usr/local/bin/topaz
+sudo chmod +x /usr/local/bin/topaz
+
+# Option 2: Create a symlink
+sudo ln -s /path/to/your/topaz-executable /usr/local/bin/topaz
+```
+
+#### Windows
+Using PowerShell:
+```powershell
+echo 'Set-Alias -Name topaz -Value "C:\path\to\your\topaz-win-x64.exe"' >> $PROFILE
+```
+Alternatively, you can just rename the executable to `topaz.exe` and then add it to PATH.
+
 ### Running Topaz as a container
 ```bash
 docker run --rm -p 8899:8899 thecloudtheory/topaz-cli:<tag> start --log-level Information

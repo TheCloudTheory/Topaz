@@ -16,7 +16,7 @@ Creates a new Azure Key Vault.
 
 ### Create new vault
 ```bash
-topaz keyvault create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \
+$ topaz keyvault create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \
     --name "kv-local" \
     --location "westeurope" \
     --resource-group "rg-local"

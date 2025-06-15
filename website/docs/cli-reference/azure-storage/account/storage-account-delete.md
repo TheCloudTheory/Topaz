@@ -13,7 +13,7 @@ Deletes a storage account.
 
 ### Delete a storage account
 ```bash
-topaz storage account delete --name "salocal"
+$ topaz storage account delete --name "salocal"
 ```
 
 ## Remarks
