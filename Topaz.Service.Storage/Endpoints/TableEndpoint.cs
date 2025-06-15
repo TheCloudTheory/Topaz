@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Xml.Serialization;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Exceptions;
 using Topaz.Service.Storage.Models;
+using Topaz.Service.Storage.Models.Requests;
 using Topaz.Service.Storage.Serialization;
 using Topaz.Shared;
 
@@ -91,22 +93,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
                     case "Tables":
                         try
                         {
-                            var tables = _controlPlane.CreateTable(input, storageAccountName);
-                            response.Content = JsonContent.Create(tables);
-
-                            // Depending on the value of the `Prefer` header, the response 
-                            // given by the emulator should be either 204 or 201
-                            if (headers.TryGetValue("Prefer", out var prefer) == false || prefer != "return-no-content")
-                            {
-                                // No `Prefer` header or value other than `return-no-content`
-                                // hence the result will be 201
-                                response.StatusCode = HttpStatusCode.Created;
-                            }
-
-                            if (prefer == "return-no-content")
-                            {
-                                response.StatusCode = HttpStatusCode.NoContent;
-                            }
+                            HandleCreateTable(input, headers, storageAccountName, response);
                         }
                         catch (EntityAlreadyExistsException)
                         {
@@ -259,6 +246,48 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         throw new NotSupportedException();
     }
 
+    private void HandleCreateTable(Stream input, IHeaderDictionary headers, string storageAccountName,
+        HttpResponseMessage response)
+    {
+        using var sr = new StreamReader(input);
+
+        var rawContent = sr.ReadToEnd();
+        var request = JsonSerializer.Deserialize<CreateTableRequest>(rawContent, GlobalSettings.JsonOptions);
+
+        if (request == null || string.IsNullOrEmpty(request.TableName))
+        {
+            response.StatusCode = HttpStatusCode.BadRequest;
+            return;
+        }
+        
+        // Depending on the value of the `Prefer` header, the response 
+        // given by the emulator should be either 204 or 201. The header
+        // is also instructing the server to ignore creating a table if
+        // it already exists
+        if (headers.TryGetValue("Prefer", out var prefer) == false || prefer != "return-no-content")
+        {
+            var tables = _controlPlane.CreateTable(storageAccountName, request);
+            response.Content = JsonContent.Create(tables);
+            
+            // No `Prefer` header or value other than `return-no-content`
+            // hence the result will be 201
+            response.StatusCode = HttpStatusCode.Created;
+            response.Headers.Add("Preference-Applied", "return-content");
+        }
+
+        if (prefer == "return-no-content")
+        {
+            var tableExists = _controlPlane.CheckIfTableExists(storageAccountName, request.TableName);
+            if (tableExists == false)
+            {
+                _controlPlane.CreateTable(storageAccountName, request);
+            }
+            
+            response.StatusCode = HttpStatusCode.NoContent;
+            response.Headers.Add("Preference-Applied", "return-no-content");
+        }
+    }
+
     private void HandleGetAclRequest(string storageAccountName, string tableName, HttpResponseMessage response)
     {
         logger.LogDebug($"Executing {nameof(HandleGetAclRequest)}.");
@@ -371,7 +400,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
     {
         logger.LogDebug($"Executing {nameof(IsPathReferencingTable)}: {tableName} {storageAccountName}");
 
-        return this._controlPlane.CheckIfTableExists(tableName, storageAccountName);
+        return _controlPlane.CheckIfTableExists(storageAccountName, tableName);
     }
 
     private string ClearOriginalPath(string path)

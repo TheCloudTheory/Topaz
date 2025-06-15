@@ -506,6 +506,31 @@ namespace Topaz.Tests.E2E
             Assert.That(acls.Value[0].Id, Is.EqualTo("some_id"));
         }
 
+        [Test]
+        public void TableStorageTests_WhenCreateTableIfNotExistsIsCalledMultipleTimes_ItShouldWork()
+        {
+            // Arrange
+            const string tableName = "testtable";
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            
+            // Act
+            tableServiceClient.CreateTableIfNotExists(tableName);
+            var tableClient = tableServiceClient.GetTableClient(tableName);
+            tableClient.AddEntity(new TestEntity
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo"
+            });
+            
+            tableServiceClient.CreateTableIfNotExists(tableName);
+            tableClient = tableServiceClient.GetTableClient(tableName);
+            var query = tableClient.Query<TestEntity>().ToArray();
+            
+            // Assert
+            Assert.That(query, Has.Length.EqualTo(1));
+        }
+
         private class TestEntity : ITableEntity
         {
             public string? Name { get; set; }

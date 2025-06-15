@@ -5,6 +5,7 @@ using System.Xml.Serialization;
 using Azure.Data.Tables.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Models;
+using Topaz.Service.Storage.Models.Requests;
 using Topaz.Service.Storage.Models.Responses;
 using Topaz.Service.Storage.Serialization;
 using Topaz.Shared;
@@ -25,16 +26,11 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         })];
     }
 
-    public TableItem CreateTable(Stream input, string storageAccountName)
+    public TableItem CreateTable(string storageAccountName, CreateTableRequest request)
     {
-        using var sr = new StreamReader(input);
+        var model = new TableItem(request.TableName);;
 
-        var rawContent = sr.ReadToEnd();
-        var content = JsonSerializer.Deserialize<TableProperties>(rawContent, GlobalSettings.JsonOptions) 
-            ?? throw new Exception();
-        var model = new TableItem(content.TableName);;
-
-        provider.Create(content.TableName, storageAccountName, model);
+        provider.Create(request.TableName!, storageAccountName, model);
 
         return model;
     }
@@ -56,7 +52,7 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
        provider.Delete(tableName, storageAccountName);
     }
 
-    internal bool CheckIfTableExists(string tableName, string storageAccountName)
+    internal bool CheckIfTableExists(string storageAccountName, string tableName)
     {
         return provider.CheckIfTableExists(tableName, storageAccountName);
     }
