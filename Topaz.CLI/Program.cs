@@ -56,6 +56,11 @@ internal class Program
                 {
                     account.AddCommand<CreateStorageAccountCommand>("create");
                     account.AddCommand<DeleteStorageAccountCommand>("delete");
+                    
+                    account.AddBranch("keys", keys =>
+                    {
+                        keys.AddCommand<ListStorageAccountKeysCommand>("list");
+                    });
                 });
 
                 branch.AddBranch("table", account =>

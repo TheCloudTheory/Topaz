@@ -4,6 +4,12 @@ namespace Topaz.Tests.CLI
 {
     public class StorageAccountTests
     {
+        private static readonly Guid SubscriptionId = Guid.NewGuid();
+    
+        private const string SubscriptionName = "sub-test";
+        private const string ResourceGroupName = "test";
+        private const string StorageAccountName = "testsa";
+        
         [SetUp]
         public async Task SetUp()
         {
@@ -12,7 +18,7 @@ namespace Topaz.Tests.CLI
                 "subscription",
                 "delete",
                 "--id",
-                Guid.Empty.ToString()
+                SubscriptionId.ToString()
             ]);
 
             await Program.Main(
@@ -20,56 +26,56 @@ namespace Topaz.Tests.CLI
                 "subscription",
                 "create",
                 "--id",
-                Guid.Empty.ToString(),
+                SubscriptionId.ToString(),
                 "--name",
-                "sub-test"
+                SubscriptionName
             ]);
 
             await Program.Main([
                 "group",
                 "delete",
                 "--name",
-                "test"
+                ResourceGroupName
             ]);
 
             await Program.Main([
                 "group",
                 "create",
                 "--name",
-                "test",
-                "--location",
-                "westeurope",
-                "--subscriptionId",
-                Guid.Empty.ToString()
-            ]);
-
-            await Program.Main([
-                "storage",
-                "account",
-                "delete",
-                "--name",
-                "test"
-            ]);
-
-            await Program.Main([
-                "storage",
-                "account",
-                "create",
-                "--name",
-                "test",
-                "-g",
-                "test",
+                ResourceGroupName,
                 "--location",
                 "westeurope",
                 "--subscription-id",
-                Guid.Empty.ToString()
+                SubscriptionId.ToString()
+            ]);
+
+            await Program.Main([
+                "storage",
+                "account",
+                "delete",
+                "--name",
+                StorageAccountName
+            ]);
+
+            await Program.Main([
+                "storage",
+                "account",
+                "create",
+                "--name",
+                StorageAccountName,
+                "-g",
+                ResourceGroupName,
+                "--location",
+                "westeurope",
+                "--subscription-id",
+                SubscriptionId.ToString()
             ]);
         }
 
         [Test]
         public void StorageAccountTests_WhenNewStorageAccountIsRequested_ItShouldBeCreated()
         {
-            var accountDirectoryPath = Path.Combine(".topaz", ".azure-storage", "test", "metadata.json");
+            var accountDirectoryPath = Path.Combine(".topaz", ".azure-storage", StorageAccountName, "metadata.json");
 
             Assert.That(File.Exists(accountDirectoryPath), Is.True);
         }
@@ -77,17 +83,34 @@ namespace Topaz.Tests.CLI
         [Test]
         public async Task StorageAccountTests_WhenExistingStorageAccountIsDeleted_ItShouldBeDeleted()
         {
-            var accountDirectoryPath = Path.Combine(".topaz", ".azure-storage", "test", "metadata.json");
+            var accountDirectoryPath = Path.Combine(".topaz", ".azure-storage", StorageAccountName, "metadata.json");
 
             await Program.Main([
                 "storage",
                 "account",
                 "delete",
                 "--name",
-                "test"
+                StorageAccountName
             ]);
 
             Assert.That(File.Exists(accountDirectoryPath), Is.False);
+        }
+
+        [Test]
+        public async Task StorageAccountTests_WhenStorageAccountExists_ItShouldBePossibleToListItsKeys()
+        {
+            var result = await Program.Main([
+                "storage",
+                "account",
+                "keys",
+                "list",
+                "--account-name",
+                StorageAccountName,
+                "--resource-group",
+                ResourceGroupName
+            ]);
+            
+            Assert.That(result, Is.EqualTo(0));
         }
     }
 }
