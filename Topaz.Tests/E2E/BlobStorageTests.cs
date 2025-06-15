@@ -1,11 +1,23 @@
+using Azure.ResourceManager;
+using Azure.ResourceManager.Storage;
 using Azure.Storage.Blobs;
 using Topaz.CLI;
+using Topaz.Identity;
 using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E;
 
 public class BlobStorageTests
 {
+    private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
+    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    
+    private const string SubscriptionName = "sub-test";
+    private const string ResourceGroupName = "test";
+    private const string StorageAccountName = "devstoreaccount1";
+
+    private string _key = null!;
+    
     [SetUp]
     public async Task SetUp()
     {
@@ -14,43 +26,43 @@ public class BlobStorageTests
             "subscription",
             "delete",
             "--id",
-            Guid.Empty.ToString()
+            SubscriptionId.ToString()
         ]);
-
+        
         await Program.Main(
         [
             "subscription",
             "create",
             "--id",
-            Guid.Empty.ToString(),
+            SubscriptionId.ToString(),
             "--name",
-            "sub-test"
-        ]);
-
-        await Program.Main([
-            "storage",
-            "account",
-            "delete",
-            "--name",
-            "devstoreaccount1"
+            SubscriptionName
         ]);
 
         await Program.Main([
             "group",
             "delete",
             "--name",
-            "rg-test"
+            ResourceGroupName
         ]);
 
         await Program.Main([
             "group",
             "create",
             "--name",
-            "rg-test",
+            ResourceGroupName,
             "--location",
             "westeurope",
             "--subscriptionId",
-            Guid.Empty.ToString()
+            SubscriptionId.ToString()
+        ]);
+        
+        await Program.Main([
+            "storage",
+            "account",
+            "delete",
+            "--name",
+            StorageAccountName
         ]);
 
         await Program.Main([
@@ -58,21 +70,30 @@ public class BlobStorageTests
             "account",
             "create",
             "--name",
-            "devstoreaccount1",
+            StorageAccountName,
             "-g",
-            "rg-test",
+            ResourceGroupName,
             "--location",
             "westeurope",
             "--subscriptionId",
             Guid.Empty.ToString()
         ]);
+        
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(StorageAccountName);
+        var keys = storageAccount.Value.GetKeys().ToArray();
+
+        _key = keys[0].Value;
     }
 
     [Test]
     public void BlobStorageTests_WhenNewBlobContainerIsRequested_ItShouldBeCreated()
     {
         // Arrange
-        var blobClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+        var blobClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
 
         // Act
         var response = blobClient.CreateBlobContainer("test");
@@ -86,7 +107,7 @@ public class BlobStorageTests
     public void BlobStorageTests_WhenNewBlobContainersAreCreated_TheyShouldBeCreatedAndAvailable()
     {
         // Arrange
-        var blobClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+        var blobClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
 
         // Act
         blobClient.CreateBlobContainer("test");
@@ -103,7 +124,7 @@ public class BlobStorageTests
     public void BlobStorageTests_WhenContainerBlobsAreListed_TheyShouldReturned()
     {
         // Arrange
-        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
         serviceClient.CreateBlobContainer("test");
         var containerClient = serviceClient.GetBlobContainerClient("test");
         var blobClient = containerClient.GetBlobClient("test.txt");
@@ -120,7 +141,7 @@ public class BlobStorageTests
     public void BlobStorageTests_WhenBlobPropertiesAreRequested_TheyShouldReturned()
     {
         // Arrange
-        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
         serviceClient.CreateBlobContainer("test");
         var containerClient = serviceClient.GetBlobContainerClient("test");
         var blobClient = containerClient.GetBlobClient("test.txt");
@@ -137,7 +158,7 @@ public class BlobStorageTests
     public void BlobStorageTests_WhenBlobMetadataAreSet_TheyShouldAccepted()
     {
         // Arrange
-        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
         serviceClient.CreateBlobContainer("test");
         var containerClient = serviceClient.GetBlobContainerClient("test");
         var blobClient = containerClient.GetBlobClient("test.txt");

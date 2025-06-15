@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Xml.Serialization;
 using Azure.Data.Tables.Models;
+using Azure.ResourceManager.Storage.Models;
+using Topaz.ResourceManager;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Models;
@@ -16,36 +18,43 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
 {
     public (OperationResult result, StorageAccountResource? resource) Get(string storageAccountName)
     {
-        var content = provider.Get(storageAccountName);
-        if (string.IsNullOrEmpty(content))
+        var storageAccount = provider.Get(storageAccountName);
+        if (string.IsNullOrEmpty(storageAccount))
         {
             return (OperationResult.NotFound, null);
         }
         
-        var resource = JsonSerializer.Deserialize<StorageAccountResource>(content, GlobalSettings.JsonOptions);
+        var resource = JsonSerializer.Deserialize<StorageAccountResource>(storageAccount, GlobalSettings.JsonOptions);
 
         return resource == null ? (OperationResult.Failed, null) : (OperationResult.Created, resource);
     }
 
-    public StorageAccount Create(string name, string resourceGroup, string location, string subscriptionId)
+    public (OperationResult result, StorageAccountResource? resource) Create(string storageAccountName, string resourceGroupName, string location, string subscriptionId)
     {
-        if(CheckIfStorageAccountExists(resourceGroup) == false)
+        var storageAccount = provider.Get(storageAccountName);
+        if (string.IsNullOrEmpty(storageAccount) == false)
         {
-            throw new InvalidOperationException();
+            logger.LogError($"Storage account '{storageAccountName}' already exists.");
+            return (OperationResult.Failed, null);
         }
 
-        var model = new StorageAccount(name, resourceGroup, location, subscriptionId);
+        var sku = new ResourceSku
+        {
+            Name = StorageSkuName.StandardLrs.ToString()
+        };
+        var properties = new StorageAccountProperties();
+        var resource = new StorageAccountResource(subscriptionId, resourceGroupName, storageAccountName, location, sku, StorageKind.StorageV2.ToString(), properties);
 
-        provider.Create(name, model);
+        provider.Create(storageAccountName, resource);
         
-        InitializeServicePropertiesFiles(name);
+        InitializeServicePropertiesFiles(storageAccountName);
 
-        return model;
+        return (OperationResult.Created, resource);
     }
 
     private void InitializeServicePropertiesFiles(string storageAccountName)
     {
-        var propertiesFile = $"properties.xml";
+        const string propertiesFile = $"properties.xml";
         var propertiesFilePath = Path.Combine(provider.GetServiceInstancePath(storageAccountName), propertiesFile);
 
         logger.LogDebug($"Attempting to create {propertiesFilePath} file.");
@@ -71,13 +80,6 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
             logger.LogDebug($"Attempting to create {propertiesFilePath} file - skipped.");
         }
     }
-    private bool CheckIfStorageAccountExists(string resourceGroup)
-    {
-        var rp = new ResourceGroupControlPlane(new ResourceGroup.ResourceProvider(logger));
-        var data = rp.Get(resourceGroup);
-
-        return data != null;
-    }
 
     internal void Delete(string storageAccountName)
     {
@@ -95,6 +97,8 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         var resource = new StorageAccountResource(subscriptionId, resourceGroupName, storageAccountName, request.Location!, request.Sku!, request.Kind!, request.Properties!);
         
         provider.CreateOrUpdate(storageAccountName, resource);
+        
+        InitializeServicePropertiesFiles(storageAccountName);
         
         return (string.IsNullOrWhiteSpace(existingAccount) ? OperationResult.Created : OperationResult.Updated, resource);
     }

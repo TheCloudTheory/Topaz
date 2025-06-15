@@ -1,13 +1,25 @@
 using Azure;
 using Azure.Data.Tables;
 using Azure.Data.Tables.Models;
+using Azure.ResourceManager;
+using Azure.ResourceManager.Storage;
 using Topaz.CLI;
+using Topaz.Identity;
 using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E
 {
     public class TableStorageTests
     {
+        private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
+        private static readonly Guid SubscriptionId = Guid.NewGuid();
+    
+        private const string SubscriptionName = "sub-test";
+        private const string ResourceGroupName = "test";
+        private const string StorageAccountName = "devstoreaccount1";
+
+        private string _key = null!;
+        
         [SetUp]
         public async Task SetUp()
         {
@@ -16,43 +28,43 @@ namespace Topaz.Tests.E2E
                 "subscription",
                 "delete",
                 "--id",
-                Guid.Empty.ToString()
+                SubscriptionId.ToString()
             ]);
-
+        
             await Program.Main(
             [
                 "subscription",
                 "create",
                 "--id",
-                Guid.Empty.ToString(),
+                SubscriptionId.ToString(),
                 "--name",
-                "sub-test"
-            ]);
-
-            await Program.Main([
-                "storage",
-                "account",
-                "delete",
-                "--name",
-                "devstoreaccount1"
+                SubscriptionName
             ]);
 
             await Program.Main([
                 "group",
                 "delete",
                 "--name",
-                "rg-test"
+                ResourceGroupName
             ]);
 
             await Program.Main([
                 "group",
                 "create",
                 "--name",
-                "rg-test",
+                ResourceGroupName,
                 "--location",
                 "westeurope",
                 "--subscriptionId",
-                Guid.Empty.ToString()
+                SubscriptionId.ToString()
+            ]);
+        
+            await Program.Main([
+                "storage",
+                "account",
+                "delete",
+                "--name",
+                StorageAccountName
             ]);
 
             await Program.Main([
@@ -60,21 +72,30 @@ namespace Topaz.Tests.E2E
                 "account",
                 "create",
                 "--name",
-                "devstoreaccount1",
+                StorageAccountName,
                 "-g",
-                "rg-test",
+                ResourceGroupName,
                 "--location",
                 "westeurope",
                 "--subscriptionId",
                 Guid.Empty.ToString()
             ]);
+        
+            var credential = new AzureLocalCredential();
+            var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+            var subscription = await armClient.GetDefaultSubscriptionAsync();
+            var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+            var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(StorageAccountName);
+            var keys = storageAccount.Value.GetKeys().ToArray();
+
+            _key = keys[0].Value;
         }
         
         [Test]
         public void TableStorageTests_WhenTableIsCreatedAndNoOtherTableIsPresent_ItShouldReturnOnlyNewTable()
         {
             // Arrange
-            var tableClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             var existingTables = tableClient.Query().ToArray();
 
             foreach(var table in existingTables)
@@ -95,7 +116,7 @@ namespace Topaz.Tests.E2E
         public void TableStorageTests_WhenTableDoesNotExist_ItShouldBeCreatedAndThenDeleted()
         {
             // Arrange
-            var tableClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             var existingTables = tableClient.Query().ToArray();
 
             // Act
@@ -122,7 +143,7 @@ namespace Topaz.Tests.E2E
         public void TableStorageTests_WhenEntityIsInserted_ItShouldBeAvailableOverEmulator()
         {
             // Arrange
-            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             tableServiceClient.CreateTable("testtable");
 
             var tableClient = tableServiceClient.GetTableClient("testtable");
@@ -145,7 +166,7 @@ namespace Topaz.Tests.E2E
         public void TableStorageTests_WhenMultipleEntitiesAreInserted_TheyShouldBeAvailableOverEmulator()
         {
             // Arrange
-            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             tableServiceClient.CreateTable("testtable");
 
             var tableClient = tableServiceClient.GetTableClient("testtable");
@@ -188,7 +209,7 @@ namespace Topaz.Tests.E2E
         public void TableStorageTests_WhenDuplicatedEntityIsInserted_ItShouldNotBeAdded()
         {
             // Arrange
-            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             tableServiceClient.CreateTable("testtable");
 
             var tableClient = tableServiceClient.GetTableClient("testtable");
@@ -213,7 +234,7 @@ namespace Topaz.Tests.E2E
         public void TableStorageTests_WhenTableDoesNotExist_ErrorShouldBeReturned()
         {
             // Arrange
-            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             var tableClient = tableServiceClient.GetTableClient("testtable");
 
             // Assert
@@ -229,7 +250,7 @@ namespace Topaz.Tests.E2E
         public void TableStorageTests_WhenEntityIsUpdated_ItShouldBeAvailableOverEmulator()
         {
             // Arrange
-            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             tableServiceClient.CreateTable("testtable");
 
             var tableClient = tableServiceClient.GetTableClient("testtable");
@@ -262,7 +283,7 @@ namespace Topaz.Tests.E2E
         public void TableStorageTests_WhenEntityIsUpdatedWithETag_ItShouldBeAvailableOverEmulator()
         {
             // Arrange
-            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             tableServiceClient.CreateTable("testtable");
 
             var tableClient = tableServiceClient.GetTableClient("testtable");
@@ -295,7 +316,7 @@ namespace Topaz.Tests.E2E
         public void TableStorageTests_WhenEntityIsInsertedAndFetched_ItMustContainETagAndTimestamp()
         {
             // Arrange
-            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             tableServiceClient.CreateTable("testtable");
 
             var tableClient = tableServiceClient.GetTableClient("testtable");
@@ -323,7 +344,7 @@ namespace Topaz.Tests.E2E
         public void TableStorageTests_WhenEntityIsUpdatedConcurrently_ItsETagMustBeRespected()
         {
             // Arrange
-            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             tableServiceClient.CreateTable("testtable");
 
             var tableClient = tableServiceClient.GetTableClient("testtable");
@@ -353,7 +374,7 @@ namespace Topaz.Tests.E2E
         public void TableStorageTests_WhenEntityIsUpdatedConcurrentlyButIsRequestedToBeUpdatedUnconditionally_ItShouldBeUpdated()
         {
             // Arrange
-            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             tableServiceClient.CreateTable("testtable");
 
             var tableClient = tableServiceClient.GetTableClient("testtable");
@@ -388,7 +409,7 @@ namespace Topaz.Tests.E2E
         public void TableStorageTests_WhenMergeOperationIsPerformed_ItMustBeSupported()
         {
             // Arrange
-            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             tableServiceClient.CreateTable("testtable");
 
             var tableClient = tableServiceClient.GetTableClient("testtable");
@@ -421,7 +442,7 @@ namespace Topaz.Tests.E2E
         public void TableStorageTests_WhenReplaceOperationIsPerformed_ItMustBeSupported()
         {
             // Arrange
-            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             tableServiceClient.CreateTable("testtable");
 
             var tableClient = tableServiceClient.GetTableClient("testtable");
@@ -454,7 +475,7 @@ namespace Topaz.Tests.E2E
         public void TableStorageTests_WhenTablePropertiesAreRequested_TheyMustBeReturned()
         {
             // Arrange
-            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             
             // Act
             var properties = tableServiceClient.GetProperties();
@@ -467,7 +488,7 @@ namespace Topaz.Tests.E2E
         public void TableStorageTests_WhenTableACLsAreRequested_TheyMustBeReturned()
         {
             // Arrange
-            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString("devstoreaccount1"));
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             tableServiceClient.CreateTable("testtable");
 
             var tableClient = tableServiceClient.GetTableClient("testtable");

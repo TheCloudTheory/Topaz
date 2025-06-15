@@ -1,21 +1,27 @@
+using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
+[UsedImplicitly]
 public sealed class CreateStorageAccountCommand(ITopazLogger logger) : Command<CreateStorageAccountCommand.CreateStorageAccountCommandSettings>
 {
-    private readonly ITopazLogger _topazLogger = logger;
-
     public override int Execute(CommandContext context, CreateStorageAccountCommandSettings settings)
     {
-        this._topazLogger.LogInformation("Creating storage account...");
+        logger.LogInformation("Creating storage account...");
 
-        var rp = new AzureStorageControlPlane(new ResourceProvider(this._topazLogger), this._topazLogger);
-        var sa = rp.Create(settings.Name!, settings.ResourceGroup!, settings.Location!, settings.SubscriptionId!);
+        var controlPlane = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
+        var sa = controlPlane.Create(settings.Name!, settings.ResourceGroup!, settings.Location!, settings.SubscriptionId!);
 
-        this._topazLogger.LogInformation(sa.ToString());
+        if (sa.result == OperationResult.Failed || sa.resource == null)
+        {
+            return 1;
+        }
+
+        logger.LogInformation(sa.resource.ToString());
 
         return 0;
     }
