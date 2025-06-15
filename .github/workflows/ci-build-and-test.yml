@@ -9,6 +9,7 @@ on:
       - '.github/workflows/**'
       - 'Examples/**'
       - 'website/**'
+      - 'static/**'
 
 jobs:
   build:

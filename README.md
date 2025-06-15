@@ -2,7 +2,7 @@
 
 
 <div align="center">
-  <img src="https://github.com/TheCloudTheory/Topaz/blob/main/static/topaz-logo-small.png" />
+  <img src="./static/topaz-logo.png" />
   
   <b>Local Azure environment emulation for development</b>
 </div>

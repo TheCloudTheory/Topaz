@@ -112,8 +112,8 @@
         <mxCell id="HvibITh8hkulVOcytFVN-14" value="" style="triangle;whiteSpace=wrap;html=1;sketch=1;curveFitting=1;jiggle=2;rotation=-155;strokeColor=#60B2E5;fillColor=#53F4FF;" vertex="1" parent="1">
           <mxGeometry x="358" y="429" width="16.56" height="5.4" as="geometry" />
         </mxCell>
-        <mxCell id="HvibITh8hkulVOcytFVN-15" value="TOPAZ" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Victor Mono;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DVictor%2BMono;fontStyle=0;fontSize=34;" vertex="1" parent="1">
-          <mxGeometry x="414" y="385" width="60" height="30" as="geometry" />
+        <mxCell id="HvibITh8hkulVOcytFVN-15" value="TOPAZ" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Victor Mono;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DVictor%2BMono;fontStyle=0;fontSize=34;textShadow=0;labelBorderColor=none;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="414" y="380" width="60" height="35" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
