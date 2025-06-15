@@ -15,7 +15,7 @@ IContainer? container = null;
 if (builder.Environment.IsDevelopment())
 {
     container = new ContainerBuilder()
-        .WithImage("thecloudtheory/topaz-cli:v1.0.97-alpha")
+        .WithImage("thecloudtheory/topaz-cli:v1.0.102-alpha")
         .WithPortBinding(8890)
         .WithPortBinding(8899)
         .WithPortBinding(8898)
@@ -30,11 +30,12 @@ if (builder.Environment.IsDevelopment())
 
     var subscriptionId = Guid.NewGuid();
     const string resourceGroupName = "rg-topaz-webapp-example";
+    const string storageAccountName = "storagetopazweb";
 
     await builder.Configuration.AddTopaz(subscriptionId)
         .AddSubscription(subscriptionId, "topaz-webapp-example")
         .AddResourceGroup(subscriptionId, resourceGroupName, AzureLocation.WestEurope)
-        .AddStorageAccount(resourceGroupName, "storagetopazweb",
+        .AddStorageAccount(resourceGroupName, storageAccountName,
             new StorageAccountCreateOrUpdateContent(new StorageSku(StorageSkuName.StandardLrs), StorageKind.StorageV2,
                 AzureLocation.WestEurope))
         .AddKeyVault(resourceGroupName, keyVaultName,
@@ -43,7 +44,9 @@ if (builder.Environment.IsDevelopment())
             secrets: new Dictionary<string, string>
             {
                 { "secrets-generic-secret", "This is just example secret!" }
-            });
+            })
+        .AddStorageAccountConnectionStringAsSecret(resourceGroupName, storageAccountName, keyVaultName,
+            "connectionstring-storageaccount");
 }
 
 builder.Configuration.AddAzureKeyVault(
@@ -64,8 +67,3 @@ app.MapGet("/secret", ([FromQuery] string key, IConfiguration configuration) =>
     .WithOpenApi();
 
 app.Run();
-
-if (app.Environment.IsDevelopment() && container != null)
-{
-    await container.DisposeAsync();
-}
