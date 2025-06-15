@@ -8,6 +8,7 @@ on:
       - 'README.md'
       - '.github/workflows/**'
       - 'Examples/**'
+      - 'website/**'
 
 jobs:
   build:
