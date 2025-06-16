@@ -74,7 +74,7 @@ app.MapGet("/secret", ([FromQuery] string key, IConfiguration configuration) =>
 app.MapPost("/todoitem", async ([FromBody] ToDoItem item, IConfiguration configuration) =>
     {
         var serviceClient = new TableServiceClient(configuration.GetValue<string>("connectionstring-storageaccount"));
-
+        
         await serviceClient.CreateTableIfNotExistsAsync("testtable");
         
         var tableClient = serviceClient.GetTableClient("testtable");

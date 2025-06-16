@@ -260,14 +260,27 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
             return;
         }
         
+        var tableExists = _controlPlane.CheckIfTableExists(storageAccountName, request.TableName);
+        if (tableExists)
+        {
+            var error = new ErrorResponse("TableAlreadyExists", "Table already exists.");
+
+            response.StatusCode = HttpStatusCode.Conflict;
+            response.Headers.Add("x-ms-error-code", "TableAlreadyExists");
+            response.Content = JsonContent.Create(error);
+
+            return;
+        }
+        
+        var table = _controlPlane.CreateTable(storageAccountName, request);
+        
         // Depending on the value of the `Prefer` header, the response 
         // given by the emulator should be either 204 or 201. The header
         // is also instructing the server to ignore creating a table if
         // it already exists
         if (headers.TryGetValue("Prefer", out var prefer) == false || prefer != "return-no-content")
         {
-            var tables = _controlPlane.CreateTable(storageAccountName, request);
-            response.Content = JsonContent.Create(tables);
+            response.Content = JsonContent.Create(table);
             
             // No `Prefer` header or value other than `return-no-content`
             // hence the result will be 201
@@ -277,12 +290,6 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         if (prefer == "return-no-content")
         {
-            var tableExists = _controlPlane.CheckIfTableExists(storageAccountName, request.TableName);
-            if (tableExists == false)
-            {
-                _controlPlane.CreateTable(storageAccountName, request);
-            }
-            
             response.StatusCode = HttpStatusCode.NoContent;
             response.Headers.Add("Preference-Applied", "return-no-content");
         }
