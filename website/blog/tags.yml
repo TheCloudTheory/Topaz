@@ -2,3 +2,8 @@ general:
   label: General
   permalink: /general
   description: General accouncements
+
+storage:
+  label: Azure Storage
+  permalink: /storage
+  description: Azure Storage related posts
