@@ -1,5 +1,6 @@
 ﻿using Azure;
 using Azure.Core;
+using Azure.Data.Tables;
 using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
@@ -23,7 +24,7 @@ internal class Program
         // which are exposed by the emulator. Note you don't need to expose
         // every port available.
         var container = new ContainerBuilder()
-            .WithImage("thecloudtheory/topaz-cli:v1.0.90-alpha")
+            .WithImage("thecloudtheory/topaz-cli:v1.0.116-alpha")
             .WithPortBinding(8890)
             .WithPortBinding(8899)
             .WithPortBinding(8898)
@@ -59,11 +60,26 @@ internal class Program
             await CreateKeyVault(resourceGroup.Value, keyVaultName);
             await CreateAzureStorageAccount(resourceGroup.Value, storageAccountName);
             await CreateKeyVaultSecrets(keyVaultName);
+            await CreateAzureStorageTable(resourceGroup, storageAccountName);
         }
         finally
         {
             await container.StopAsync();
         }
+    }
+
+    private static async Task CreateAzureStorageTable(Response<ResourceGroupResource> resourceGroup,
+        string storageAccountName)
+    {
+        var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(storageAccountName);
+        var keys = storageAccount.Value.GetKeys().ToArray();
+        
+        const string tableName = "testtable";
+        var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(storageAccountName, keys[0].Value));
+        
+        await tableServiceClient.CreateTableIfNotExistsAsync(tableName);
+        
+        Console.WriteLine($"Table [{tableName}] created successfully!");
     }
 
     private static async Task CreateAzureStorageAccount(ResourceGroupResource resourceGroup, string storageAccountName)
