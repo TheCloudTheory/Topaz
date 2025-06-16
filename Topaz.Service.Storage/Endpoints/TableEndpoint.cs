@@ -51,7 +51,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         var actualPath = ClearOriginalPath(path);
 
-        if (_securityProvider.RequestIsAuthorized(storageAccountName, headers, path) == false)
+        if (_securityProvider.RequestIsAuthorized(storageAccountName, headers, path, query) == false)
         {
             response.StatusCode = HttpStatusCode.Unauthorized;
             return response;

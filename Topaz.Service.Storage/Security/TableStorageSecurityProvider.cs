@@ -10,7 +10,8 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
 {
     private readonly AzureStorageControlPlane _controlPlane = new(new ResourceProvider(logger), logger);
     
-    public bool RequestIsAuthorized(string storageAccountName, IHeaderDictionary headers, string actualPath)
+    public bool RequestIsAuthorized(string storageAccountName, IHeaderDictionary headers, string absolutePath,
+        QueryString query)
     {
         if (headers.ContainsKey("Authorization") == false)
         {
@@ -26,7 +27,7 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
         switch (scheme)
         {
             case "SharedKeyLite":
-                return IsAuthorizedForSharedKeyLiteScheme(storageAccountName, parts[1], headers, actualPath);
+                return IsAuthorizedForSharedKeyLiteScheme(storageAccountName, parts[1], headers, absolutePath, query);
             default:
                 logger.LogError($"Authentication failure for {scheme}. Scheme is not supported.");
                 return false;
@@ -34,7 +35,7 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
     }
 
     private bool IsAuthorizedForSharedKeyLiteScheme(string storageAccountName, string headerValue,
-        IHeaderDictionary headers, string actualPath)
+        IHeaderDictionary headers, string absolutePath, QueryString query)
     {
         // SharedKeyLite authorization header value looks like this:
         // Authorization: SharedKeyLite myaccount:ctzMq410TV3wS7upTBcunJTDLEJwMAZuFPfr0mrrA08=
@@ -74,7 +75,7 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
             throw new InvalidOperationException($"Storage account {storageAccountName} does not exist.");
         }
 
-        var stringToSign = BuildStringToSign(storageAccountName, actualPath, headers);
+        var stringToSign = BuildStringToSign(storageAccountName, absolutePath, headers, query);
         
         // Calculate hashes for both keys as we don't know which key was used for 
         // sending a request
@@ -85,18 +86,19 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
         return hash2 == signature;
     }
     
-    private string BuildStringToSign(string storageAccountName, string actualPath, IHeaderDictionary headers)
+    private string BuildStringToSign(string storageAccountName, string absolutePath, IHeaderDictionary headers,
+        QueryString query)
     {
         headers.TryGetValue("x-ms-date", out var date);
 
         var stringToSign = string.Join("\n",
             date,
-            BuildCanonicalizedResource(storageAccountName, actualPath));
+            BuildCanonicalizedResource(storageAccountName, absolutePath, query));
         
         return stringToSign;
     }
 
-    private string BuildCanonicalizedResource(string storageAccountName, string actualPath)
+    private string BuildCanonicalizedResource(string storageAccountName, string actualPath, QueryString query)
     {
         // To calculate `CanonicalizedResource` for Table Storage we need to do a bunch of additional steps:
         // 1. Beginning with an empty string (""), append a forward slash (/), followed by the name of the account
@@ -107,6 +109,11 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
         
         var canonicalizedResource = "/" + storageAccountName;
         canonicalizedResource += actualPath;
+        
+        if (query.TryGetValueForKey("comp", out var comp))
+        {
+            canonicalizedResource += "?comp=" + comp;
+        }
         
         return canonicalizedResource;
     }
