@@ -48,7 +48,7 @@ One of the best options to run Topaz is to leverage [Testcontainers](https://tes
 Topaz provides a set of NuGet packages, which can be used to simplify configuration, authenticate to your local environment and integrate with certain types of applications (e.g. ASP.NET Core):
 * [TheCloudTheory.Topaz.Identity](https://www.nuget.org/packages/TheCloudTheory.Topaz.Identity/)
 * [TheCloudTheory.Topaz.ResourceManager](https://www.nuget.org/packages/TheCloudTheory.Topaz.ResourceManager/)
-* [TheCloudTheory.Topaz.AspNetCore.Extensions](https://www.nuget.org/packages/TheCloudTheory.Topaz.ResourceManager/)
+* [TheCloudTheory.Topaz.AspNetCore.Extensions](https://www.nuget.org/packages/TheCloudTheory.Topaz.AspNetCore.Extensions/)
 
 Once installed, they enable to you get started with the emulator without much of a hassle:
 ```
