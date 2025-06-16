@@ -1,8 +1,9 @@
+using Azure;
 using Azure.Core;
+using Azure.Data.Tables;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.Storage.Models;
 using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.Mvc;
 using Topaz.AspNetCore.Extensions;
 using Topaz.Identity;
@@ -10,11 +11,12 @@ using Topaz.ResourceManager;
 
 var builder = WebApplication.CreateBuilder(args);
 var keyVaultName = builder.Configuration["Azure:KeyVaultName"]!;
+var storageAccountName = builder.Configuration["Azure:StorageAccountName"]!;
 
 if (builder.Environment.IsDevelopment())
 {
     var container = new ContainerBuilder()
-        .WithImage("thecloudtheory/topaz-cli:v1.0.102-alpha")
+        .WithImage("thecloudtheory/topaz-cli:v1.0.116-alpha")
         .WithPortBinding(8890)
         .WithPortBinding(8899)
         .WithPortBinding(8898)
@@ -29,7 +31,6 @@ if (builder.Environment.IsDevelopment())
 
     var subscriptionId = Guid.NewGuid();
     const string resourceGroupName = "rg-topaz-webapp-example";
-    const string storageAccountName = "storagetopazweb";
 
     await builder.Configuration.AddTopaz(subscriptionId)
         .AddSubscription(subscriptionId, "topaz-webapp-example")
@@ -48,12 +49,17 @@ if (builder.Environment.IsDevelopment())
             "connectionstring-storageaccount");
 }
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 builder.Configuration.AddAzureKeyVault(
     TopazResourceHelpers.GetKeyVaultEndpoint(keyVaultName), new AzureLocalCredential());
 
 var app = builder.Build();
 
 app.UseHttpsRedirection();
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.MapGet("/secret", ([FromQuery] string key, IConfiguration configuration) =>
     {
@@ -65,4 +71,53 @@ app.MapGet("/secret", ([FromQuery] string key, IConfiguration configuration) =>
     .WithName("GetSecretValue")
     .WithOpenApi();
 
+app.MapPost("/todoitem", async ([FromBody] ToDoItem item, IConfiguration configuration) =>
+    {
+        var serviceClient = new TableServiceClient(configuration.GetValue<string>("connectionstring-storageaccount"));
+
+        await serviceClient.CreateTableIfNotExistsAsync("testtable");
+        
+        var tableClient = serviceClient.GetTableClient("testtable");
+
+        await tableClient.AddEntityAsync(new ToDoItemEntity()
+        {
+            Name = item.Name
+        });
+    })
+    .WithName("AddToDoItem")
+    .WithOpenApi();
+
+app.MapGet("/todoitem", async (IConfiguration configuration) =>
+    {
+        var serviceClient = new TableServiceClient(configuration.GetValue<string>("connectionstring-storageaccount"));
+
+        await serviceClient.CreateTableIfNotExistsAsync("testtable");
+        
+        var tableClient = serviceClient.GetTableClient("testtable");
+        
+        var query = tableClient.QueryAsync<ToDoItemEntity>();
+        var items = new List<ToDoItem>();
+
+        await foreach (var item in query)
+        {
+            items.Add(new ToDoItem(item.Name));
+        }
+        
+        return items;
+        
+    })
+    .WithName("GetToDoItems")
+    .WithOpenApi();
+
 app.Run();
+
+public record ToDoItem(string Name);
+
+public record ToDoItemEntity : ITableEntity
+{
+    public string PartitionKey { get; set; } = "todoitem";
+    public string RowKey { get; set; } = Guid.NewGuid().ToString();
+    public DateTimeOffset? Timestamp { get; set; }
+    public ETag ETag { get; set; }
+    public string Name { get; set; }
+}
