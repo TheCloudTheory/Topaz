@@ -1,3 +1,4 @@
+using System.Text;
 using Azure;
 using Azure.Data.Tables;
 using Azure.Data.Tables.Models;
@@ -529,6 +530,18 @@ namespace Topaz.Tests.E2E
             
             // Assert
             Assert.That(query, Has.Length.EqualTo(1));
+        }
+
+        [Test]
+        public void TableStorageTest_WhenInvalidKeyIsProvidedInConnectionString_ItShouldFail()
+        {
+            // Arrange
+            const string tableName = "testtable";
+            var invalidKey = Convert.ToBase64String("invalid-key"u8.ToArray());
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, invalidKey));
+            
+            // Assert
+            Assert.Throws<RequestFailedException>(() => tableServiceClient.CreateTableIfNotExists(tableName));
         }
 
         private class TestEntity : ITableEntity

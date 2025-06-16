@@ -6,10 +6,12 @@ using System.Text.RegularExpressions;
 using System.Web;
 using System.Xml.Serialization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Exceptions;
 using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Models.Requests;
+using Topaz.Service.Storage.Security;
 using Topaz.Service.Storage.Serialization;
 using Topaz.Shared;
 
@@ -20,6 +22,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
     private readonly TableServiceControlPlane _controlPlane = new(new TableResourceProvider(logger), logger);
     private readonly TableServiceDataPlane _dataPlane = new(new TableServiceControlPlane(new TableResourceProvider(logger), logger), logger);
     private readonly ResourceProvider _resourceProvider = new(logger);
+    private readonly TableStorageSecurityProvider _securityProvider = new(logger); 
 
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultTableStoragePort, Protocol.Http);
 
@@ -47,6 +50,12 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
 
         var actualPath = ClearOriginalPath(path);
+
+        if (_securityProvider.RequestIsAuthorized(storageAccountName, headers, path) == false)
+        {
+            response.StatusCode = HttpStatusCode.Unauthorized;
+            return response;
+        }
 
         try
         {

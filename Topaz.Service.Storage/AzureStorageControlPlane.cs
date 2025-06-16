@@ -26,7 +26,7 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         
         var resource = JsonSerializer.Deserialize<StorageAccountResource>(storageAccount, GlobalSettings.JsonOptions);
 
-        return resource == null ? (OperationResult.Failed, null) : (OperationResult.Created, resource);
+        return resource == null ? (OperationResult.Failed, null) : (OperationResult.Success, resource);
     }
 
     public (OperationResult result, StorageAccountResource? resource) Create(string storageAccountName, string resourceGroupName, string location, string subscriptionId)
