@@ -56,6 +56,7 @@ internal class Program
                 {
                     account.AddCommand<CreateStorageAccountCommand>("create");
                     account.AddCommand<DeleteStorageAccountCommand>("delete");
+                    account.AddCommand<ShowStorageAccountConnectionStringCommand>("show-connection-string");
                     
                     account.AddBranch("keys", keys =>
                     {

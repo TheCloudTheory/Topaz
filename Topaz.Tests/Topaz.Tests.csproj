@@ -30,8 +30,7 @@
   <ItemGroup>
     <ProjectReference Include="../Topaz.CLI/Topaz.CLI.csproj" />
     <ProjectReference Include="../Topaz.Identity/Topaz.Identity.csproj" />
-    <ProjectReference Include="..\Topaz.AspNetCore.Extensions\Topaz.AspNetCore.Extensions.csproj" />
-    <ProjectReference Include="..\Topaz.ResourceManager\Topaz.ResourceManager.csproj" />
+    <ProjectReference Include="../Topaz.ResourceManager/Topaz.ResourceManager.csproj" />
   </ItemGroup>
 
 </Project>

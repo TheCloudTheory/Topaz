@@ -1,16 +1,17 @@
-using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.Storage;
 using Azure.ResourceManager.Storage.Models;
 using Azure.Security.KeyVault.Secrets;
+using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Containers;
 using Microsoft.Extensions.Configuration;
 using Topaz.AspNetCore.Extensions;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 
-namespace Topaz.Tests.E2E;
+namespace Topaz.Tests.Isolated;
 
 public class AspNetCoreExtensionTests
 {
@@ -21,6 +22,30 @@ public class AspNetCoreExtensionTests
     private const string ResourceGroupName = "test";
     private const string StorageAccountName = "testsatopaz";
     private const string KeyVaultName = "kvtesttopaz";
+
+    private IContainer? _container;
+
+    [OneTimeSetUp]
+    public async Task OneTimeSetUp()
+    {
+        _container = new ContainerBuilder()
+            .WithImage("thecloudtheory/topaz-cli:v1.0.116-alpha")
+            .WithPortBinding(8890)
+            .WithPortBinding(8899)
+            .WithPortBinding(8898)
+            .WithPortBinding(8897)
+            .WithPortBinding(8891)
+            .Build();
+
+        await _container.StartAsync()
+            .ConfigureAwait(false);
+    }
+
+    [OneTimeTearDown]
+    public async Task OneTimeTearDown()
+    {
+        await _container!.DisposeAsync();
+    }
 
     [Test]
     public async Task WhenStorageAccountConnectionStringIsAddedAsSecret_ItMustBeAvailable()

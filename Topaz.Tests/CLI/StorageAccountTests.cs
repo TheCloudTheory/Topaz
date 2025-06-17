@@ -112,5 +112,19 @@ namespace Topaz.Tests.CLI
             
             Assert.That(result, Is.EqualTo(0));
         }
+        
+        [Test]
+        public async Task StorageAccountTests_WhenStorageAccountExists_ItShouldBePossibleToGetConnectionString()
+        {
+            var result = await Program.Main([
+                "storage",
+                "account",
+                "show-connection-string",
+                "--name",
+                StorageAccountName,
+            ]);
+            
+            Assert.That(result, Is.EqualTo(0));
+        }
     }
 }

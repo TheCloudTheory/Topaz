@@ -9,6 +9,13 @@ public static class GlobalSettings
          PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
          PropertyNameCaseInsensitive = true
     };
+    
+    public static readonly JsonSerializerOptions JsonOptionsCli = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true
+    };
 
     public const ushort DefaultEventHubAmqpPort = 8888;
     public const ushort DefaultTableStoragePort = 8890;
