@@ -7,11 +7,11 @@ namespace Topaz.Service.Shared;
 public class ResourceProviderBase<TService> where TService : IServiceDefinition
 {
     protected const string BaseEmulatorPath = ".topaz";
-    private readonly ITopazLogger _topazLogger;
+    private readonly ITopazLogger _logger;
 
     protected ResourceProviderBase(ITopazLogger logger)
     {
-        _topazLogger = logger;
+        _logger = logger;
     }
 
     public virtual void Delete(string id)
@@ -19,11 +19,11 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
         if(Directory.Exists(servicePath) == false) 
         {
-            _topazLogger.LogDebug($"The resource '{servicePath}' does not exists, no changes applied.");
+            _logger.LogDebug($"The resource '{servicePath}' does not exists, no changes applied.");
             return;
         }
 
-        _topazLogger.LogDebug($"Deleting resource '{servicePath}'.");
+        _logger.LogDebug($"Deleting resource '{servicePath}'.");
         Directory.Delete(servicePath, true);
 
         return;
@@ -45,6 +45,12 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     public virtual IEnumerable<string> List()
     {
         var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath);
+        if (Directory.Exists(servicePath) == false)
+        {
+            _logger.LogWarning("Trying to list resources for a non-existing service. If you see this warning, make sure you created a service (e.g subscription) before accessing its data.");
+            return [];
+        }
+        
         var metadataFiles = Directory.EnumerateFiles(servicePath, "metadata.json", SearchOption.AllDirectories);
 
         return metadataFiles.Select(File.ReadAllText);
@@ -54,7 +60,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     {
         var metadataFilePath = InitializeServiceDirectories(id);
 
-        _topazLogger.LogDebug($"Attempting to create {metadataFilePath} file.");
+        _logger.LogDebug($"Attempting to create {metadataFilePath} file.");
 
         if(File.Exists(metadataFilePath) == true) throw new InvalidOperationException($"Metadata file for {typeof(TService)} with ID {id} already exists.");
 
@@ -67,16 +73,16 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     private string InitializeServiceDirectories(string id)
     {
         var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath);
-        _topazLogger.LogDebug($"Attempting to create {servicePath} directory...");
+        _logger.LogDebug($"Attempting to create {servicePath} directory...");
 
         if(Directory.Exists(servicePath) == false)
         {
             Directory.CreateDirectory(servicePath);
-            _topazLogger.LogDebug($"Directory {servicePath} created.");
+            _logger.LogDebug($"Directory {servicePath} created.");
         }
         else
         {
-            _topazLogger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
+            _logger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
         }
         
         const string fileName = $"metadata.json";
@@ -84,17 +90,17 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var metadataFilePath = Path.Combine(instancePath, fileName);
         var dataPath = Path.Combine(instancePath, "data");
 
-        _topazLogger.LogDebug($"Attempting to create {instancePath} directory.");
+        _logger.LogDebug($"Attempting to create {instancePath} directory.");
         if(Directory.Exists(instancePath))
         {
-            _topazLogger.LogDebug($"Attempting to create {instancePath} directory - skipped.");
+            _logger.LogDebug($"Attempting to create {instancePath} directory - skipped.");
         }
         else
         {
             Directory.CreateDirectory(instancePath);
             Directory.CreateDirectory(dataPath);
             
-            _topazLogger.LogDebug($"Attempting to create {instancePath} directory - created!");
+            _logger.LogDebug($"Attempting to create {instancePath} directory - created!");
         }
 
         return metadataFilePath;
@@ -113,7 +119,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
         if(File.Exists(metadataFilePath))
         {
-            _topazLogger.LogDebug($"Attempting to create {metadataFilePath} file - file exists, it will be overwritten.");
+            _logger.LogDebug($"Attempting to create {metadataFilePath} file - file exists, it will be overwritten.");
             File.WriteAllText(metadataFilePath, content);
 
             return (data: newData, code: HttpStatusCode.OK);

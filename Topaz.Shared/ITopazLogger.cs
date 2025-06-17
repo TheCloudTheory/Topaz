@@ -8,5 +8,6 @@ public interface ITopazLogger
     void LogDebug(string message);
     void LogError(Exception ex);
     void LogError(string message);
+    void LogWarning(string message);
     void SetLoggingLevel(LogLevel level);
 }

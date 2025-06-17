@@ -37,7 +37,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         "PUT /storage/{storageAccountName}/{tableName}",
     ];
 
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query, GlobalOptions options)
     {
         logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
 

@@ -1,0 +1,6 @@
+{
+  "endpoints":{
+    "resourceManager": "https://localhost:8899",
+    "activeDirectoryGraphResourceId": "https://localhost:8899/"
+  }
+}

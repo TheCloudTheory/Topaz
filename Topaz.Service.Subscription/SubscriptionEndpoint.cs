@@ -6,6 +6,7 @@ using Topaz.Service.Shared;
 using Topaz.Shared;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Subscription.Models.Requests;
+using Topaz.Service.Subscription.Models.Responses;
 
 namespace Topaz.Service.Subscription;
 
@@ -14,11 +15,12 @@ public sealed class SubscriptionEndpoint(ResourceProvider provider, ITopazLogger
     private readonly SubscriptionControlPlane _controlPlane = new(provider);
     public string[] Endpoints => [
         "GET /subscriptions/{subscriptionId}",
-        "POST /subscriptions/{subscriptionId}"
+        "POST /subscriptions/{subscriptionId}",
+        "GET /subscriptions"
     ];
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
 
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query, GlobalOptions options)
     {
         logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
 
@@ -26,20 +28,22 @@ public sealed class SubscriptionEndpoint(ResourceProvider provider, ITopazLogger
 
         try
         {
-            var subscriptionId = path.ExtractValueFromPath(2);
-            if (subscriptionId == null)
-            {
-                response.StatusCode = HttpStatusCode.BadRequest;
-                return response;
-            }
-            
             switch (method)
             {
                 case "GET":
-                    HandleGetSubscriptionRequest(subscriptionId, response);
+                    var subscriptionId = path.ExtractValueFromPath(2);
+                    if (string.IsNullOrEmpty(subscriptionId))
+                    {
+                        HandleListSubscriptionsRequest(response);
+                    }
+                    else
+                    {
+                        HandleGetSubscriptionRequest(path, response);
+                    }
+                    
                     break;
                 case "POST":
-                    HandleCreateSubscriptionRequest(subscriptionId, input, response);
+                    HandleCreateSubscriptionRequest(path, input, response);
                     break;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
@@ -59,8 +63,30 @@ public sealed class SubscriptionEndpoint(ResourceProvider provider, ITopazLogger
         return response;
     }
 
-    private void HandleCreateSubscriptionRequest(string subscriptionId, Stream input, HttpResponseMessage response)
+    private void HandleListSubscriptionsRequest(HttpResponseMessage response)
     {
+        var operation = _controlPlane.List();
+        if (operation.result == OperationResult.Failed)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        var subscriptions = new ListSubscriptionsResponse(operation.resource);
+        
+        response.Content = new StringContent(subscriptions.ToString());
+        response.StatusCode = HttpStatusCode.OK;
+    }
+
+    private void HandleCreateSubscriptionRequest(string path, Stream input, HttpResponseMessage response)
+    {
+        var subscriptionId = path.ExtractValueFromPath(2);
+        if (subscriptionId == null)
+        {
+            response.StatusCode = HttpStatusCode.BadRequest;
+            return;
+        }
+        
         var subscription = _controlPlane.Get(subscriptionId);
         if (subscription is not null)
         {
@@ -85,8 +111,15 @@ public sealed class SubscriptionEndpoint(ResourceProvider provider, ITopazLogger
         response.StatusCode = HttpStatusCode.Created;
     }
 
-    private void HandleGetSubscriptionRequest(string subscriptionId, HttpResponseMessage response)
+    private void HandleGetSubscriptionRequest(string path, HttpResponseMessage response)
     {
+        var subscriptionId = path.ExtractValueFromPath(2);
+        if (subscriptionId == null)
+        {
+            response.StatusCode = HttpStatusCode.BadRequest;
+            return;
+        }
+        
         var subscription = _controlPlane.Get(subscriptionId);
 
         response.Content = JsonContent.Create(subscription, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);

@@ -8,7 +8,7 @@ public sealed class EventHubAmqpEndpoint : IEndpointDefinition
 {
     public string[] Endpoints { get; }
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultEventHubAmqpPort, Protocol.Amqp);
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query, GlobalOptions options)
     {
         throw new NotImplementedException();
     }

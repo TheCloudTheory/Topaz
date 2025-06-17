@@ -17,7 +17,7 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}"
     ];
 
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query, GlobalOptions options)
     {
         logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
 

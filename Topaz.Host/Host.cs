@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using Topaz.CloudEnvironment;
 using Topaz.Host.AMQP;
 using Topaz.Service.EventHub;
 using Topaz.Service.KeyVault;
@@ -20,7 +21,7 @@ using Topaz.Shared;
 
 namespace Topaz.Host;
 
-public class Host(ITopazLogger logger)
+public class Host(GlobalOptions options, ITopazLogger logger)
 {
     private static readonly List<Thread> Threads = [];
 
@@ -37,7 +38,8 @@ public class Host(ITopazLogger logger)
             new SubscriptionService(logger),
             new KeyVaultService(logger),
             new EventHubService(logger),
-            new BlobStorageService(logger)
+            new BlobStorageService(logger),
+            new TopazCloudEnvironmentService()
         };
         
         var httpEndpoints = new List<IEndpointDefinition>();
@@ -226,7 +228,7 @@ public class Host(ITopazLogger logger)
                             return;
                         }
 
-                        var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query);
+                        var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query, options);
                         var textResponse = await response.Content.ReadAsStringAsync();
 
                         logger.LogInformation($"Response: [{response.StatusCode}] [{path}] {textResponse}");

@@ -26,6 +26,11 @@ public sealed class PrettyTopazLogger : ITopazLogger
         Log(message, LogLevel.Error);
     }
 
+    public void LogWarning(string message)
+    {
+        Log(message, LogLevel.Warning);
+    }
+
     public void SetLoggingLevel(LogLevel logLevel)
     {
         LogLevel = logLevel;
