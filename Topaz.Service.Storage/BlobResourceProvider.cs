@@ -67,7 +67,7 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
         return metadataFilePath;
     }
     
-    public override IEnumerable<string> List(string id)
+    public IEnumerable<string> List(string id)
     {
         InitializeServiceDirectory(id);
 

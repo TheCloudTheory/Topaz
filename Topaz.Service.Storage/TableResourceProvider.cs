@@ -27,7 +27,7 @@ internal sealed class TableResourceProvider(ITopazLogger logger) : ResourceProvi
         }
     }
 
-    public override IEnumerable<string> List(string id)
+    public IEnumerable<string> List(string id)
     {
         InitializeServiceDirectory(id);
 

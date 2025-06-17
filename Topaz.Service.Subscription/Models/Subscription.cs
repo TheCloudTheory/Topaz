@@ -5,7 +5,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Subscription.Models;
 
-public record class Subscription
+public record Subscription
 {
     public string Id => $"/subscriptions/{SubscriptionId}";
     public string SubscriptionId { get; set; }
@@ -19,6 +19,6 @@ public record class Subscription
 
     public override string ToString()
     {
-        return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
+        return JsonSerializer.Serialize(this, GlobalSettings.JsonOptionsCli);
     }
 }

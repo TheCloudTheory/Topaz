@@ -42,10 +42,12 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return content;
     }
 
-    public virtual IEnumerable<string> List(string id)
+    public virtual IEnumerable<string> List()
     {
         var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath);
-        return Directory.EnumerateFiles(servicePath);
+        var metadataFiles = Directory.EnumerateFiles(servicePath, "metadata.json", SearchOption.AllDirectories);
+
+        return metadataFiles.Select(File.ReadAllText);
     }
 
     public void Create<TModel>(string id, TModel model)

@@ -30,4 +30,13 @@ internal sealed class SubscriptionControlPlane(ResourceProvider provider)
     {
         provider.Delete(subscriptionId);
     }
+
+    internal (OperationResult result, Models.Subscription[] resource) List()
+    {
+        var rawSubscriptions = provider.List();
+        var subscriptions = rawSubscriptions
+            .Select(s => JsonSerializer.Deserialize<Models.Subscription>(s, GlobalSettings.JsonOptions)!).ToArray();
+        
+        return (OperationResult.Success, subscriptions);
+    }
 }

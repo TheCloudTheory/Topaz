@@ -89,6 +89,7 @@ internal class Program
             config.AddBranch("subscription", branch => {
                 branch.AddCommand<CreateSubscriptionCommand>("create");
                 branch.AddCommand<DeleteSubscriptionCommand>("delete");
+                branch.AddCommand<ListSubscriptionsCommand>("list");
             });
             
             config.AddBranch("eventhubs", branch =>

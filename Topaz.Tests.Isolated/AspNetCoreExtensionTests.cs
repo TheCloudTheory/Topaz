@@ -39,6 +39,8 @@ public class AspNetCoreExtensionTests
 
         await _container.StartAsync()
             .ConfigureAwait(false);
+        
+        await Task.Delay(TimeSpan.FromSeconds(5));
     }
 
     [OneTimeTearDown]
