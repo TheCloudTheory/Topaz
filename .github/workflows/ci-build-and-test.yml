@@ -62,18 +62,12 @@ jobs:
       with:
         files: |
           ${{ github.workspace }}/**/*.trx
-    - name: Code Coverage Report
-      uses: irongut/CodeCoverageSummary@v1.3.0
+    - name: ReportGenerator
+      uses: danielpalme/ReportGenerator-GitHub-Action@5.4.8
       with:
-        filename: ./TestResults/**/coverage.cobertura.xml
-        badge: true
-        fail_below_min: true
-        format: markdown
-        hide_branch_rate: false
-        hide_complexity: true
-        indicators: true
-        output: both
-        thresholds: '60 80'
+        reports: ./TestResults/**/coverage.cobertura.xml
+        targetdir: coveragereport
+        reporttypes: Html;Badges
     - name: TODO to Issue
       uses: alstr/todo-to-issue-action@v5.1.12
       with:
