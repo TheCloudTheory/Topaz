@@ -39,6 +39,8 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
+    - name: Publish Linux
+      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r linux-x64 -o ./publish
     - name: Build interim Docker image
       id: push
       uses: docker/build-push-action@v6.18.0
