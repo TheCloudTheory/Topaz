@@ -52,7 +52,7 @@ jobs:
         TOPAZ_TENANT_ID: ${{ secrets.TOPAZ_TENANT_ID }}
         TOPAZ_CLIENT_ID: ${{ secrets.TOPAZ_CLIENT_ID }}
         TOPAZ_CLIENT_SECRET: ${{ secrets.TOPAZ_CLIENT_SECRET }}
-      run: dotnet test --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults
+      run: dotnet test -m:1 --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always()
