@@ -2,7 +2,7 @@
 sidebar_position: 3
 ---
 
-# Using CLI
+# Using Topaz CLI
 
 Topaz comes in a form of a single tool, which combines the capabilities of an underlying emulator and CLI. Whether you downloaded the Topaz executable or pulled its container image, you have the choice of running it in one of the available modes.
 
