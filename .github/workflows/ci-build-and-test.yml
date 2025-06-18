@@ -67,7 +67,21 @@ jobs:
       with:
         reports: ./TestResults/**/coverage.cobertura.xml
         targetdir: coveragereport
-        reporttypes: Html;Badges
+        reporttypes: Html;MarkdownSummaryGithub;Badges
+    - name: Upload coverage report artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: CoverageReport        
+        path: coveragereport
+    - name: Add comment to PR
+      if: github.event_name == 'pull_request'
+      run: gh pr comment $PR_NUMBER --body-file coveragereport/SummaryGithub.md
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR_NUMBER: ${{ github.event.number }}
+    - name: Publish coverage in build summary
+      run: cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+      shell: bash
     - name: TODO to Issue
       uses: alstr/todo-to-issue-action@v5.1.12
       with:
