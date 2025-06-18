@@ -21,9 +21,11 @@ internal sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.S
                 "No tenant specified. Using --tenant-id options required if you want to use Topaz with Azure CLI.");
         }
 
-        var host = new Topaz.Host.Host(new GlobalOptions()
+        var host = new Topaz.Host.Host(new GlobalOptions
         {
-            TenantId = settings.TenantId
+            TenantId = settings.TenantId,
+            CertificateFile = settings.CertificateFile,
+            CertificateKey = settings.CertificateKey
         }, logger);
 
         host.Start();
@@ -37,5 +39,9 @@ internal sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.S
         [CommandOption("-l|--log-level")] public LogLevel? LogLevel { get; set; }
 
         [CommandOption("--tenant-id")] public Guid? TenantId { get; set; }
+        
+        [CommandOption("--certificate-file")] public string? CertificateFile { get; set; }
+        
+        [CommandOption("--certificate-key")] public string? CertificateKey { get; set; }
     }
 }
