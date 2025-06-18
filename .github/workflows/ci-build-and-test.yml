@@ -39,7 +39,19 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
+    - name: Build interim Docker image
+      id: push
+      uses: docker/build-push-action@v6.18.0
+      with:
+        context: .
+        file: ./Topaz.CLI/Dockerfile
+        push: false
+        tags: topaz/cli
     - name: Test
+      env:
+        TOPAZ_TENANT_ID: ${{ secrets.TOPAZ_TENANT_ID }}
+        TOPAZ_CLIENT_ID: ${{ secrets.TOPAZ_CLIENT_ID }}
+        TOPAZ_CLIENT_SECRET: ${{ secrets.TOPAZ_CLIENT_SECRET }}
       run: dotnet test --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
