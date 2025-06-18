@@ -2,6 +2,8 @@ name: CI Topaz
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [ "main" ]
   push:
     branches: [ "main" ]
     paths-ignore:
@@ -37,26 +39,49 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
+    - name: Publish Linux
+      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r linux-x64 -o ./publish
+    - name: Build interim Docker image
+      id: push
+      uses: docker/build-push-action@v6.18.0
+      with:
+        context: .
+        file: ./Topaz.CLI/Dockerfile
+        push: false
+        tags: topaz/cli
+        platforms: linux/amd64
     - name: Test
-      run: dotnet test --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults
+      env:
+        TOPAZ_TENANT_ID: ${{ secrets.TOPAZ_TENANT_ID }}
+        TOPAZ_CLIENT_ID: ${{ secrets.TOPAZ_CLIENT_ID }}
+        TOPAZ_CLIENT_SECRET: ${{ secrets.TOPAZ_CLIENT_SECRET }}
+      run: dotnet test -m:1 --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always()
       with:
         files: |
           ${{ github.workspace }}/**/*.trx
-    - name: Code Coverage Report
-      uses: irongut/CodeCoverageSummary@v1.3.0
+    - name: ReportGenerator
+      uses: danielpalme/ReportGenerator-GitHub-Action@5.4.8
       with:
-        filename: ./TestResults/**/coverage.cobertura.xml
-        badge: true
-        fail_below_min: true
-        format: markdown
-        hide_branch_rate: false
-        hide_complexity: true
-        indicators: true
-        output: both
-        thresholds: '60 80'
+        reports: ./TestResults/**/coverage.cobertura.xml
+        targetdir: coveragereport
+        reporttypes: Html;MarkdownSummaryGithub;Badges
+    - name: Upload coverage report artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: CoverageReport        
+        path: coveragereport
+    - name: Add comment to PR
+      if: github.event_name == 'pull_request'
+      run: gh pr comment $PR_NUMBER --body-file coveragereport/SummaryGithub.md
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR_NUMBER: ${{ github.event.number }}
+    - name: Publish coverage in build summary
+      run: cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+      shell: bash
     - name: TODO to Issue
       uses: alstr/todo-to-issue-action@v5.1.12
       with:
