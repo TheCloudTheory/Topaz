@@ -110,7 +110,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
     private void CreateWebserverForHttpEndpoints(IEndpointDefinition[] httpEndpoints)
     {
         var host = new WebHostBuilder()
-            .UseKestrel((context, options) =>
+            .UseKestrel((context, hostOptions) =>
             {
                 var usedPorts = new List<int>();
                 foreach (var httpEndpoint in httpEndpoints)
@@ -124,10 +124,10 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                     switch (httpEndpoint.PortAndProtocol.Protocol)
                     {
                         case Protocol.Http:
-                            options.Listen(IPAddress.Any, httpEndpoint.PortAndProtocol.Port);
+                            hostOptions.Listen(IPAddress.Any, httpEndpoint.PortAndProtocol.Port);
                             break;
                         case Protocol.Https:
-                            options.Listen(IPAddress.Any, httpEndpoint.PortAndProtocol.Port, listenOptions =>
+                            hostOptions.Listen(IPAddress.Any, httpEndpoint.PortAndProtocol.Port, listenOptions =>
                             {
                                 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                                 {
@@ -135,8 +135,23 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                                 }
                                 else
                                 {
-                                    var certPem = File.ReadAllText("localhost.crt");
-                                    var keyPem = File.ReadAllText("localhost.key");
+                                    string? certPem = null;
+                                    string? keyPem = null;
+                                    
+                                    if (string.IsNullOrEmpty(options.CertificateFile) == false &&
+                                        string.IsNullOrEmpty(options.CertificateKey) == false)
+                                    {
+                                        logger.LogInformation("Using provided certificate file instead of the default one.");
+                                        
+                                        certPem = File.ReadAllText(options.CertificateFile);
+                                        keyPem = File.ReadAllText(options.CertificateKey);
+                                    }
+                                    else
+                                    {
+                                        certPem = File.ReadAllText("localhost.crt");
+                                        keyPem = File.ReadAllText("localhost.key");
+                                    }
+                                    
                                     var x509 = X509Certificate2.CreateFromPem(certPem, keyPem);
 
                                     listenOptions.UseHttps(x509);
