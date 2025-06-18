@@ -47,6 +47,7 @@ jobs:
         file: ./Topaz.CLI/Dockerfile
         push: false
         tags: topaz/cli
+        platforms: linux/amd64
     - name: Test
       env:
         TOPAZ_TENANT_ID: ${{ secrets.TOPAZ_TENANT_ID }}
