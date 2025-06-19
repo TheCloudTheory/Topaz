@@ -6,5 +6,6 @@ public enum OperationResult
     Updated,
     Failed,
     NotFound,
-    Success
+    Success,
+    Deleted
 }

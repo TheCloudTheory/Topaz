@@ -9,12 +9,12 @@ namespace Topaz.Service.ResourceGroup;
 
 internal sealed class ResourceGroupControlPlane(ResourceProvider provider, ITopazLogger logger)
 {
-    public Models.ResourceGroup Get(string name)
+    public (OperationResult result, ResourceGroupResource? resource) Get(string name)
     {
-        var data = provider.Get(name);
-        var model = JsonSerializer.Deserialize<Models.ResourceGroup>(data, GlobalSettings.JsonOptions);
-
-        return model!;
+        var resource = provider.GetAs<ResourceGroupResource>(name);
+        return resource == null ? 
+            (OperationResult.NotFound,  null) : 
+            (OperationResult.Success, resource);
     }
 
     public (OperationResult result, ResourceGroupResource resource) Create(string resourceGroupName, string subscriptionId, string location)
@@ -50,5 +50,11 @@ internal sealed class ResourceGroupControlPlane(ResourceProvider provider, ITopa
             .Where(g => g.Id.Contains(subscriptionId)).ToArray();
         
         return (OperationResult.Success,  groups);
+    }
+
+    public OperationResult Delete(string resourceGroupName)
+    {
+        provider.Delete(resourceGroupName);
+        return OperationResult.Deleted;
     }
 }

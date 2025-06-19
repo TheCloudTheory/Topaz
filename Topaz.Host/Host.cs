@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Amqp;
 using Amqp.Listener;
@@ -8,6 +9,7 @@ using Amqp.Types;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Primitives;
 using Topaz.CloudEnvironment;
 using Topaz.Host.AMQP;
@@ -135,26 +137,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                                 }
                                 else
                                 {
-                                    string? certPem = null;
-                                    string? keyPem = null;
-                                    
-                                    if (string.IsNullOrEmpty(options.CertificateFile) == false &&
-                                        string.IsNullOrEmpty(options.CertificateKey) == false)
-                                    {
-                                        logger.LogInformation("Using provided certificate file instead of the default one.");
-                                        
-                                        certPem = File.ReadAllText(options.CertificateFile);
-                                        keyPem = File.ReadAllText(options.CertificateKey);
-                                    }
-                                    else
-                                    {
-                                        certPem = File.ReadAllText("localhost.crt");
-                                        keyPem = File.ReadAllText("localhost.key");
-                                    }
-                                    
-                                    var x509 = X509Certificate2.CreateFromPem(certPem, keyPem);
-
-                                    listenOptions.UseHttps(x509);
+                                    ConfigurePemCertificate(listenOptions);
                                 }
                             });
 
@@ -239,7 +222,13 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                         {
                             logger.LogError($"Request {method} {path} has no corresponding endpoint assigned.");
 
+                            var failedResponse = new HttpResponseMessage();
+                            failedResponse.CreateErrorResponse(
+                                HttpResponseMessageExtensions.EndpointNotFoundCode, method, path);
+                            
                             context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                            await context.Response.WriteAsync(await failedResponse.Content.ReadAsStringAsync());
+                            
                             return;
                         }
 
@@ -279,6 +268,30 @@ public class Host(GlobalOptions options, ITopazLogger logger)
 
         Threads.Add(new Thread(() => host.Run()));
         Threads.Last().Start();
+    }
+
+    private void ConfigurePemCertificate(ListenOptions listenOptions)
+    {
+        string? certPem;
+        string? keyPem;
+                                    
+        if (string.IsNullOrEmpty(options.CertificateFile) == false &&
+            string.IsNullOrEmpty(options.CertificateKey) == false)
+        {
+            logger.LogInformation("Using provided certificate file instead of the default one.");
+                                        
+            certPem = File.ReadAllText(options.CertificateFile);
+            keyPem = File.ReadAllText(options.CertificateKey);
+        }
+        else
+        {
+            certPem = File.ReadAllText("localhost.crt");
+            keyPem = File.ReadAllText("localhost.key");
+        }
+                                    
+        var x509 = X509Certificate2.CreateFromPem(certPem, keyPem);
+
+        listenOptions.UseHttps(x509);
     }
 
     /// <summary>
