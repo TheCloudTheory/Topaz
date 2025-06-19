@@ -8,3 +8,6 @@ Topaz.Tests/E2E/KeyVaultTests.cs
 Topaz.sln.DotSettings.user
 .DS_Store
 /publish/**
+
+**/.docusaurus/**
+**/node_modules/**
