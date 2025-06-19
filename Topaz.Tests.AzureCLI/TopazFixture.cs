@@ -5,7 +5,7 @@ using DotNet.Testcontainers.Networks;
 
 namespace Topaz.Tests.AzureCLI;
 
-public class CloudEnvironmentSetupTests
+public class TopazFixture
 {
     private const string AzureCliContainerImage = "mcr.microsoft.com/azure-cli:2.62.0-cbl-mariner2.0";
     private const string CloudEnvironmentConfiguration = """
@@ -29,6 +29,7 @@ public class CloudEnvironmentSetupTests
     
     private IContainer? _containerTopaz;
     private INetwork? _network;
+    private IContainer? _containerAzureCli;
     
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
@@ -55,20 +56,8 @@ public class CloudEnvironmentSetupTests
             .ConfigureAwait(false);
         
         await Task.Delay(TimeSpan.FromSeconds(3));
-    }
-
-    [OneTimeTearDown]
-    public async Task OneTimeTearDown()
-    {
-        await _containerTopaz!.DisposeAsync();
-        await _network!.DisposeAsync();
-    }
-
-    [Test]
-    public async Task CloudEnvironmentSetupTests_WhenCloudEnvironmentIsRequested_ItShouldBeAvailable()
-    {
-        // Arrange
-        var container = new ContainerBuilder()
+        
+        _containerAzureCli = new ContainerBuilder()
             .WithImage(AzureCliContainerImage)
             .WithNetwork(_network)
             .WithEntrypoint("/bin/sh")
@@ -77,56 +66,45 @@ public class CloudEnvironmentSetupTests
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
             .WithEnvironment("REQUESTS_CA_BUNDLE", "/usr/lib64/az/lib/python3.9/site-packages/certifi/cacert.pem")
             .Build();
+        
+        // Act
+        await _containerAzureCli.StartAsync();
+        
+        var appendCertResult = await _containerAzureCli.ExecAsync(new List<string>
+        {
+            "/bin/sh",
+            "-c",
+            "cat /tmp/topaz.crt >> /usr/lib64/az/lib/python3.9/site-packages/certifi/cacert.pem"
+        });
+        
+        Assert.That(appendCertResult.ExitCode, Is.EqualTo(0), 
+            $"Appending a self-signed certificate failed. STDOUT: {appendCertResult.Stdout}, STDERR: {appendCertResult.Stderr}");
 
-        try
+        await RunAzureCliCommand("az cloud register -n Topaz --cloud-config @\"cloud.json\"");
+        await RunAzureCliCommand("az cloud set -n Topaz");
+        await RunAzureCliCommand($"az login --service-principal --username {ClientId} --password {ClientSecret} --tenant {TenantId} --allow-no-subscriptions");
+    }
+
+    [OneTimeTearDown]
+    public async Task OneTimeTearDown()
+    {
+        await _containerTopaz!.DisposeAsync();
+        await _containerAzureCli!.DisposeAsync();
+        await _network!.DisposeAsync();
+    }
+
+    protected async Task RunAzureCliCommand(string command)
+    {
+        var result = await _containerAzureCli!.ExecAsync(new List<string>()
         {
-            // Act
-            await container.StartAsync();
-            
-            var appendCertResult = await container.ExecAsync(new List<string>
-            {
-                "/bin/sh",
-                "-c",
-                "cat /tmp/topaz.crt >> /usr/lib64/az/lib/python3.9/site-packages/certifi/cacert.pem"
-            });
-            
-            Assert.That(appendCertResult.ExitCode, Is.EqualTo(0), 
-                $"Appending a self-signed certificate failed. STDOUT: {appendCertResult.Stdout}, STDERR: {appendCertResult.Stderr}");
-            
-            var registerResult = await container.ExecAsync(new List<string>()
-            {
-                "/bin/sh",
-                "-c",
-                "az cloud register -n Topaz --cloud-config @\"cloud.json\""
-            });
-            
-            Assert.That(registerResult.ExitCode, Is.EqualTo(0), 
-                $"`az cloud register` command failed. STDOUT: {registerResult.Stdout}, STDERR: {registerResult.Stderr}");
-            
-            var showResult = await container.ExecAsync(new List<string>()
-            {
-                "/bin/sh",
-                "-c",
-                "az cloud set -n Topaz"
-            });
-            
-            Assert.That(showResult.ExitCode, Is.EqualTo(0), 
-                $"`az cloud show` command failed. STDOUT: {showResult.Stdout}, STDERR: {showResult.Stderr}");
-            
-            var loginResult = await container.ExecAsync(new List<string>()
-            {
-                "/bin/sh",
-                "-c",
-                $"az login --service-principal --username {ClientId} --password {ClientSecret} --tenant {TenantId} --allow-no-subscriptions"
-            });
-            
-            Assert.That(loginResult.ExitCode, Is.EqualTo(0), 
-                $"`az login` command failed. STDOUT: {loginResult.Stdout}, STDERR: {loginResult.Stderr}");
-        }
-        finally
-        {
-            // Assert
-            await container.DisposeAsync();
-        }
+            "/bin/sh",
+            "-c",
+            command
+        });
+        
+        Assert.That(result.ExitCode, Is.EqualTo(0), 
+            $"`{command}` command failed. STDOUT: {result.Stdout}, STDERR: {result.Stderr}");
+        
+        Console.WriteLine(result.Stdout);
     }
 }
