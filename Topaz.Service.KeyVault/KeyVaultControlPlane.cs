@@ -18,7 +18,7 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
         return model;
     }
     
-    public (OperationResult result, KeyVaultResource resource) CreateOrUpdate(string subscriptionId, string resourceGroupName, string keyVaultName, CreateOrUpdateKeyVaultRequest? request)
+    public (OperationResult result, KeyVaultResource resource) CreateOrUpdate(string subscriptionId, string resourceGroupName, string keyVaultName, CreateOrUpdateKeyVaultRequest request)
     {
         var properties = new KeyVaultResourceProperties
         {
@@ -39,15 +39,7 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
 
     public (OperationResult result, KeyVaultResource? resource) Get(string keyVaultName)
     {
-        // TODO: There should get `GetAs<T>` method to get deserialized values
-        var content = provider.Get(keyVaultName);
-        if (string.IsNullOrEmpty(content))
-        {
-            return (OperationResult.Failed, null);
-        }
-        
-        var resource = JsonSerializer.Deserialize<KeyVaultResource>(content, GlobalSettings.JsonOptions);
-
+        var resource = provider.GetAs<KeyVaultResource>(keyVaultName);
         return resource == null ? (OperationResult.Failed, null) : (OperationResult.Created, resource);
     }
 }

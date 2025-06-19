@@ -1,15 +1,17 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 using Microsoft.AspNetCore.Http;
+using Topaz.Service.ResourceGroup.Models.Requests;
 
 namespace Topaz.Service.ResourceGroup;
 
 public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly ResourceGroupControlPlane _controlPlane = new(provider);
+    private readonly ResourceGroupControlPlane _controlPlane = new(provider, logger);
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
 
     public string[] Endpoints => [
@@ -29,21 +31,12 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
             {
                 case "PUT":
                 {
-                    var subscriptionId = path.ExtractValueFromPath(2);
-                    var resourceGroupName = path.ExtractValueFromPath(4);
-                    var (data, code) = this._controlPlane.CreateOrUpdate(resourceGroupName!, subscriptionId!, input);
-
-                    response.StatusCode = code;
-                    response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+                    HandleCreateOrUpdateResourceGroup(path, input, response);
                     break;
                 }
                 case "GET":
                 {
-                    var resourceGroupName = path.ExtractValueFromPath(4);
-                    var data = this._controlPlane.Get(resourceGroupName!);
-
-                    response.StatusCode = HttpStatusCode.OK;
-                    response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+                    HandleGetResourceGroup(path, response);
                     break;
                 }
             }
@@ -53,7 +46,7 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
             logger.LogError(ex);
 
             response.Content = new StringContent(ex.Message);
-            response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+            response.StatusCode = HttpStatusCode.InternalServerError;
 
             return response;
         }
@@ -61,10 +54,45 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
         return response;
     }
 
-    private static string ExtractResourceGroupNameFromPath(string path)
+    private void HandleGetResourceGroup(string path, HttpResponseMessage response)
     {
-        var requestParts = path.Split('/');
-        var resourceGroupName = requestParts[4];
-        return resourceGroupName;
+        var resourceGroupName = path.ExtractValueFromPath(4);
+        var data = _controlPlane.Get(resourceGroupName!);
+
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+    }
+
+    private void HandleCreateOrUpdateResourceGroup(string path, Stream input, HttpResponseMessage response)
+    {
+        var subscriptionId = path.ExtractValueFromPath(2);
+        var resourceGroupName = path.ExtractValueFromPath(4);
+
+        if (string.IsNullOrEmpty(subscriptionId) || string.IsNullOrEmpty(resourceGroupName))
+        {
+            response.StatusCode = HttpStatusCode.BadRequest;
+            return;
+        }
+        
+        using var reader = new StreamReader(input);
+        
+        var content = reader.ReadToEnd();
+        var request = JsonSerializer.Deserialize<CreateOrUpdateResourceGroupRequest>(content, GlobalSettings.JsonOptions);
+        
+        if (request == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+        
+        var operation = _controlPlane.CreateOrUpdate(resourceGroupName, subscriptionId, request);
+        if (operation.result == OperationResult.Failed)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+        
+        response.StatusCode = operation.result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
+        response.Content = new StringContent(operation.resource.ToString());
     }
 }

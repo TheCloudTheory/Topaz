@@ -79,6 +79,7 @@ internal class Program
             config.AddBranch("group", branch => {
                 branch.AddCommand<CreateResourceGroupCommand>("create");
                 branch.AddCommand<DeleteResourceGroupCommand>("delete");
+                branch.AddCommand<ListResourceGroupCommand>("list");
             });
 
             config.AddBranch("keyvault", branch => {
