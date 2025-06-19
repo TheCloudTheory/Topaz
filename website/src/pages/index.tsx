@@ -24,6 +24,7 @@ function HomepageHeader() {
             Getting started with Topaz
           </Link>
         </div>
+        <img alt="GitHub Release" className={styles.hero__image} src="https://img.shields.io/github/v/release/TheCloudTheory/Topaz?include_prereleases" />
       </div>
     </header>
   );
