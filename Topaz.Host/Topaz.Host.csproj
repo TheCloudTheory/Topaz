@@ -14,6 +14,7 @@
     <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
     <ProjectReference Include="..\Topaz.CloudEnvironment\Topaz.CloudEnvironment.csproj" />
     <ProjectReference Include="..\Topaz.Service.EventHub\Topaz.Service.EventHub.csproj" />
+    <ProjectReference Include="..\Topaz.Service.ServiceBus\Topaz.Service.ServiceBus.csproj" />
   </ItemGroup>
 
   <ItemGroup>

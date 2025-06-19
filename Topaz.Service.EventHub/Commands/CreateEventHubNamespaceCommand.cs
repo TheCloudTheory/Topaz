@@ -1,21 +1,21 @@
+using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
 
+[UsedImplicitly]
 public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Command<CreateEventHubNamespaceCommand.CreateEventHubCommandSettings>
 {
-    private readonly ITopazLogger _topazLogger = logger;
-
     public override int Execute(CommandContext context, CreateEventHubCommandSettings settings)
     {
-        this._topazLogger.LogInformation($"Executing {nameof(CreateEventHubNamespaceCommand)}.{nameof(Execute)}.");
+        logger.LogDebug($"Executing {nameof(CreateEventHubNamespaceCommand)}.{nameof(Execute)}.");
 
-        var controlPlane = new EventHubControlPlane(new ResourceProvider(this._topazLogger), _topazLogger);
+        var controlPlane = new EventHubControlPlane(new ResourceProvider(logger), logger);
         var ns = controlPlane.CreateNamespace(settings.Name!, settings.ResourceGroup!, settings.Location!, settings.SubscriptionId!);
 
-        this._topazLogger.LogInformation(ns.ToString());
+        logger.LogInformation(ns.ToString());
 
         return 0;
     }
@@ -40,6 +40,7 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
         return base.Validate(context, settings);
     }
     
+    [UsedImplicitly]
     public sealed class CreateEventHubCommandSettings : CommandSettings
     {
         [CommandOption("-n|--name")]

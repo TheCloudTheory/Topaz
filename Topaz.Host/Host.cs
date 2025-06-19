@@ -16,6 +16,7 @@ using Topaz.Host.AMQP;
 using Topaz.Service.EventHub;
 using Topaz.Service.KeyVault;
 using Topaz.Service.ResourceGroup;
+using Topaz.Service.ServiceBus;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Services;
 using Topaz.Service.Subscription;
@@ -41,7 +42,8 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             new KeyVaultService(logger),
             new EventHubService(logger),
             new BlobStorageService(logger),
-            new TopazCloudEnvironmentService()
+            new TopazCloudEnvironmentService(),
+            new ServiceBusService()
         };
         
         var httpEndpoints = new List<IEndpointDefinition>();
