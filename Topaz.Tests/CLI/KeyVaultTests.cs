@@ -4,6 +4,8 @@ namespace Topaz.Tests.CLI;
 
 public class KeyVaultTests
 {
+    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    
     [SetUp]
     public async Task SetUp()
     {
@@ -12,7 +14,7 @@ public class KeyVaultTests
             "subscription",
             "delete",
             "--id",
-            Guid.Empty.ToString()
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
@@ -29,8 +31,8 @@ public class KeyVaultTests
             "test",
             "--location",
             "westeurope",
-            "--subscriptionId",
-            Guid.Empty.ToString()
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
@@ -50,7 +52,7 @@ public class KeyVaultTests
             "--location",
             "westeurope",
             "--subscription-id",
-            Guid.Empty.ToString(),
+            SubscriptionId.ToString(),
         ]);
     }
 

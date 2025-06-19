@@ -10,12 +10,12 @@ public sealed class CreateResourceGroupCommand(ITopazLogger logger) : Command<Cr
 {
     public override int Execute(CommandContext context, CreateResourceGroupCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(CreateResourceGroupCommand)}.{nameof(Execute)}.");
+        logger.LogDebug("Creating a resource group...");
 
-        var controlPlane = new ResourceGroupControlPlane(new ResourceProvider(logger));
+        var controlPlane = new ResourceGroupControlPlane(new ResourceProvider(logger), logger);
         var rg = controlPlane.Create(settings.Name!, settings.SubscriptionId!, settings.Location!);
 
-        logger.LogInformation(rg.ToString());
+        logger.LogInformation(rg.resource.ToString());
 
         return 0;
     }

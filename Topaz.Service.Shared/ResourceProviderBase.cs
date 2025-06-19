@@ -42,6 +42,15 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return content;
     }
 
+    public T? GetAs<T>(string id)
+    {
+        var raw = Get(id);
+        if(string.IsNullOrEmpty(raw)) return default;
+        var json = JsonSerializer.Deserialize<T>(raw, GlobalSettings.JsonOptions);
+
+        return json;
+    }
+
     public virtual IEnumerable<string> List()
     {
         var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath);

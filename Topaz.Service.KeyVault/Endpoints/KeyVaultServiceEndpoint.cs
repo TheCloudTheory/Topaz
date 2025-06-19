@@ -87,6 +87,12 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
         
         var content = reader.ReadToEnd();
         var request = JsonSerializer.Deserialize<CreateOrUpdateKeyVaultRequest>(content, GlobalSettings.JsonOptions);
+
+        if (request == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
         
         var result = _controlPlane.CreateOrUpdate(subscriptionId, resourceGroupName, keyVaultName, request);
 
