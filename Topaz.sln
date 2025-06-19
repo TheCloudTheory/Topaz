@@ -42,6 +42,7 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.AzureCLI", "Topaz.Tests.AzureCLI\Topaz.Tests.AzureCLI.csproj", "{8F85AFEB-935A-4AED-AE10-EC4907D94941}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ServiceBus", "Topaz.Service.ServiceBus\Topaz.Service.ServiceBus.csproj", "{AAF64707-AB3D-42F1-A890-86C9082DE4F0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Examples.MassTransit", "Examples\Topaz.Examples.MassTransit\Topaz.Examples.MassTransit.csproj", "{B5721FE5-FD9B-411E-9A2A-8BEEB842F37B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -125,6 +126,10 @@ Global
 		{AAF64707-AB3D-42F1-A890-86C9082DE4F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AAF64707-AB3D-42F1-A890-86C9082DE4F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AAF64707-AB3D-42F1-A890-86C9082DE4F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5721FE5-FD9B-411E-9A2A-8BEEB842F37B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5721FE5-FD9B-411E-9A2A-8BEEB842F37B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5721FE5-FD9B-411E-9A2A-8BEEB842F37B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5721FE5-FD9B-411E-9A2A-8BEEB842F37B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -135,5 +140,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{1DA9278A-2B35-46E1-8688-8CC4EE7612FF} = {421A7F1B-9656-4A7E-B209-B1E8811D3E28}
 		{1C9E5C5B-3259-4A6A-B63E-54AAA0322A57} = {421A7F1B-9656-4A7E-B209-B1E8811D3E28}
+		{B5721FE5-FD9B-411E-9A2A-8BEEB842F37B} = {421A7F1B-9656-4A7E-B209-B1E8811D3E28}
 	EndGlobalSection
 EndGlobal

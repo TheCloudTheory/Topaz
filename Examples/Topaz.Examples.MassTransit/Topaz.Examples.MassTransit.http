@@ -1,0 +1,6 @@
+@Topaz.Examples.MassTransit_HostAddress = http://localhost:5178
+
+GET {{Topaz.Examples.MassTransit_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
