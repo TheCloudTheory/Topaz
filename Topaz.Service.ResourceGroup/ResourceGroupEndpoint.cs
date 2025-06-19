@@ -2,10 +2,11 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Topaz.Service.Shared;
-using Topaz.Shared;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.ResourceGroup.Models.Requests;
+using Topaz.Service.ResourceGroup.Models.Responses;
+using Topaz.Service.Shared;
+using Topaz.Shared;
 
 namespace Topaz.Service.ResourceGroup;
 
@@ -16,7 +17,9 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
 
     public string[] Endpoints => [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}",
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}",
+        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}",
+        "GET /subscriptions/{subscriptionId}/resourceGroups"
     ];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query, GlobalOptions options)
@@ -24,6 +27,9 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
         logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
 
         var response = new HttpResponseMessage();
+        
+        var subscriptionId = path.ExtractValueFromPath(2);
+        var resourceGroupName = path.ExtractValueFromPath(4);
 
         try
         {
@@ -31,14 +37,43 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
             {
                 case "PUT":
                 {
-                    HandleCreateOrUpdateResourceGroup(path, input, response);
+                    if (string.IsNullOrEmpty(subscriptionId) || string.IsNullOrEmpty(resourceGroupName))
+                    {
+                        response.StatusCode = HttpStatusCode.BadRequest;
+                        break;
+                    }
+                    
+                    HandleCreateOrUpdateResourceGroup(subscriptionId, resourceGroupName, input, response);
                     break;
                 }
                 case "GET":
                 {
-                    HandleGetResourceGroup(path, response);
+                    if (string.IsNullOrEmpty(subscriptionId))
+                    {
+                        response.StatusCode = HttpStatusCode.BadRequest;
+                        break;
+                    }
+
+                    if (string.IsNullOrEmpty(resourceGroupName))
+                    {
+                        HandleListResourceGroup(subscriptionId, response);
+                    }
+                    else
+                    {
+                        HandleGetResourceGroup(resourceGroupName, response);
+                    }
+                    
                     break;
                 }
+                case "DELETE":
+                    if (string.IsNullOrEmpty(resourceGroupName))
+                    {
+                        response.StatusCode = HttpStatusCode.BadRequest;
+                        break;
+                    }
+                    
+                    HandleDeleteResourceGroup(resourceGroupName, response);
+                    break;
             }
         }
         catch(Exception ex)
@@ -54,26 +89,47 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
         return response;
     }
 
-    private void HandleGetResourceGroup(string path, HttpResponseMessage response)
+    private void HandleDeleteResourceGroup(string resourceGroupName, HttpResponseMessage response)
     {
-        var resourceGroupName = path.ExtractValueFromPath(4);
-        var data = _controlPlane.Get(resourceGroupName!);
-
-        response.StatusCode = HttpStatusCode.OK;
-        response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
-    }
-
-    private void HandleCreateOrUpdateResourceGroup(string path, Stream input, HttpResponseMessage response)
-    {
-        var subscriptionId = path.ExtractValueFromPath(2);
-        var resourceGroupName = path.ExtractValueFromPath(4);
-
-        if (string.IsNullOrEmpty(subscriptionId) || string.IsNullOrEmpty(resourceGroupName))
+        var existingResourceGroup = _controlPlane.Get(resourceGroupName);
+        if (existingResourceGroup.result == OperationResult.NotFound)
         {
-            response.StatusCode = HttpStatusCode.BadRequest;
+            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceGroupNotFoundCode, resourceGroupName);
             return;
         }
-        
+
+        _controlPlane.Delete(resourceGroupName);
+        response.StatusCode = HttpStatusCode.OK;
+    }
+
+    private void HandleListResourceGroup(string subscriptionId, HttpResponseMessage response)
+    {
+        var operation = _controlPlane.List(subscriptionId);
+        if (operation.result == OperationResult.Failed)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content =  new StringContent(new ListResourceGroupsResponse(operation.resources).ToString());
+    }
+
+    private void HandleGetResourceGroup(string resourceGroupName, HttpResponseMessage response)
+    {
+        var operation = _controlPlane.Get(resourceGroupName!);
+        if (operation.result == OperationResult.NotFound || operation.resource == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(operation.resource.ToString());
+    }
+
+    private void HandleCreateOrUpdateResourceGroup(string subscriptionId, string resourceGroupName, Stream input, HttpResponseMessage response)
+    {
         using var reader = new StreamReader(input);
         
         var content = reader.ReadToEnd();
