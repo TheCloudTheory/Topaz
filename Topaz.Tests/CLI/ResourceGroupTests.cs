@@ -5,6 +5,7 @@ namespace Topaz.Tests.CLI;
 public class ResourceGroupTests
 {
     private static readonly Guid SubscriptionId = Guid.NewGuid();
+    private static readonly string ResourceGroupName = "test";
     
     [SetUp]
     public async Task SetUp()
@@ -31,14 +32,14 @@ public class ResourceGroupTests
             "group",
             "delete",
             "--name",
-            "test"
+            ResourceGroupName
         ]);
 
         await Program.Main([
             "group",
             "create",
             "--name",
-            "test",
+            ResourceGroupName,
             "--location",
             "westeurope",
             "--subscription-id",
@@ -49,7 +50,7 @@ public class ResourceGroupTests
     [Test]
     public void ResourceGroupTests_WhenNewResourceGroupIsRequested_ItShouldBeCreated()
     {
-        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".resource-groups", "test", "metadata.json");
+        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".resource-groups", ResourceGroupName, "metadata.json");
 
         Assert.That(File.Exists(resourceGroupPath), Is.True);
     }
@@ -57,13 +58,13 @@ public class ResourceGroupTests
     [Test]
     public async Task ResourceGroupTests_WhenNewResourceGroupIsDeleted_ItShouldBeDeleted()
     {
-        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".resource-groups", "test", "metadata.json");
+        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".resource-groups", ResourceGroupName, "metadata.json");
 
         var code = await Program.Main([
             "group",
             "delete",
             "--name",
-            "test"
+            ResourceGroupName
         ]);
         
         Assert.Multiple(() =>
@@ -71,6 +72,19 @@ public class ResourceGroupTests
             Assert.That(File.Exists(resourceGroupPath), Is.False);
             Assert.That(code, Is.EqualTo(0));
         });
+    }
+    
+    [Test]
+    public async Task ResourceGroupTests_WhenDeletedResourceGroupDoesNotExists_ItShouldReportError()
+    {
+        var code = await Program.Main([
+            "group",
+            "delete",
+            "--name",
+            "invalid-resource-group"
+        ]);
+        
+        Assert.That(code, Is.EqualTo(1));
     }
 
     [Test]

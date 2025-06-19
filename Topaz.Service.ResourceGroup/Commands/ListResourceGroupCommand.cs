@@ -14,9 +14,9 @@ public sealed class ListResourceGroupCommand(ITopazLogger logger) : Command<List
         logger.LogDebug($"Executing {nameof(ListResourceGroupCommand)}.{nameof(Execute)}.");
 
         var controlPlane = new ResourceGroupControlPlane(new ResourceProvider(logger), logger);
-        var rg = controlPlane.List(settings.SubscriptionId);
+        var operation = controlPlane.List(settings.SubscriptionId);
 
-        logger.LogInformation(JsonSerializer.Serialize(rg.resources, GlobalSettings.JsonOptionsCli));
+        logger.LogInformation(JsonSerializer.Serialize(operation.resources, GlobalSettings.JsonOptionsCli));
 
         return 0;
     }
