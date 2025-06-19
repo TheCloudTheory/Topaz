@@ -33,8 +33,8 @@ export default function Home(): ReactNode {
   const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
+      title={`Azure emulator for local development and learning`}
+      description="Topaz is an open-source Azure emulator that allows you to run Azure services locally for development and testing. It supports a wide range of Azure services, including Azure Storage, Azure Resource Manager and Azure Key Vault. Topaz is designed to be easy to use and integrate into your existing development workflow.">
       <HomepageHeader />
       <main>
         <HomepageFeatures />
