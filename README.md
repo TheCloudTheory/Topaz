@@ -12,6 +12,8 @@ Topaz is an Azure emulator, which allows you to develop Azure-based applications
 
 Note that Topaz is in early stage of its development and each new version may introduce breaking changes to the provided interface.
 
+Check [documentation](http://topaz.thecloudtheory.com/) for the guides, recipes and knowledge base about the project.
+
 ## Is Topaz free?
 Yes, currently Topaz is free of any charges and doesn't require registration. This will change in the future, though you'll be notified about that fact several releases prior to it coming into life.
 
@@ -62,24 +64,3 @@ var client = new SecretClient(
 });
 ```
 Check the `Examples` directory in the repository for other use cases and scenarios.
-
-## Supported services
-Topaz is in an early stage of development so currently it provides a limited support for a subset of Azure services. You can find current status of development below:
-Service Name|Control Plane|Data Plane
-------------|-------------|----------
-Subscriptions|⚠️|N/A
-Resource Groups|⚠️|N/A
-Azure Storage|⚠️|⚠️
-Table Storage|⚠️|✅
-Blob Storage|⚠️|⚠️
-Queue Storage|:x:|:x:
-Key Vault|⚠️|⚠️
-Event Hub|⚠️|⚠️
-
-✅ - fully supported (stable)
-
-⚠️ - partially supported (unstable)
-
-:x: - not supported
-
-`N/A` - not provided by Azure
