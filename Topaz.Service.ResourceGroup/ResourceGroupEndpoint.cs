@@ -6,13 +6,14 @@ using Microsoft.AspNetCore.Http;
 using Topaz.Service.ResourceGroup.Models.Requests;
 using Topaz.Service.ResourceGroup.Models.Responses;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.ResourceGroup;
 
-public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logger) : IEndpointDefinition
+public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourceProvider, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly ResourceGroupControlPlane _controlPlane = new(provider, logger);
+    private readonly ResourceGroupControlPlane _controlPlane = new(groupResourceProvider, logger);
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
 
     public string[] Endpoints => [
@@ -43,7 +44,7 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
                         break;
                     }
                     
-                    HandleCreateOrUpdateResourceGroup(subscriptionId, resourceGroupName, input, response);
+                    HandleCreateOrUpdateResourceGroup(subscriptionId, ResourceGroupIdentifier.From(resourceGroupName), input, response);
                     break;
                 }
                 case "GET":
@@ -60,7 +61,7 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
                     }
                     else
                     {
-                        HandleGetResourceGroup(resourceGroupName, response);
+                        HandleGetResourceGroup(ResourceGroupIdentifier.From(resourceGroupName), response);
                     }
                     
                     break;
@@ -72,7 +73,7 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
                         break;
                     }
                     
-                    HandleDeleteResourceGroup(resourceGroupName, response);
+                    HandleDeleteResourceGroup(ResourceGroupIdentifier.From(resourceGroupName), response);
                     break;
             }
         }
@@ -89,16 +90,16 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
         return response;
     }
 
-    private void HandleDeleteResourceGroup(string resourceGroupName, HttpResponseMessage response)
+    private void HandleDeleteResourceGroup(ResourceGroupIdentifier resourceGroup, HttpResponseMessage response)
     {
-        var existingResourceGroup = _controlPlane.Get(resourceGroupName);
+        var existingResourceGroup = _controlPlane.Get(resourceGroup);
         if (existingResourceGroup.result == OperationResult.NotFound)
         {
-            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceGroupNotFoundCode, resourceGroupName);
+            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceGroupNotFoundCode, resourceGroup);
             return;
         }
 
-        _controlPlane.Delete(resourceGroupName);
+        _controlPlane.Delete(resourceGroup);
         response.StatusCode = HttpStatusCode.OK;
     }
 
@@ -115,9 +116,9 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
         response.Content =  new StringContent(new ListResourceGroupsResponse(operation.resources).ToString());
     }
 
-    private void HandleGetResourceGroup(string resourceGroupName, HttpResponseMessage response)
+    private void HandleGetResourceGroup(ResourceGroupIdentifier resourceGroup, HttpResponseMessage response)
     {
-        var operation = _controlPlane.Get(resourceGroupName!);
+        var operation = _controlPlane.Get(resourceGroup!);
         if (operation.result == OperationResult.NotFound || operation.resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;
@@ -128,7 +129,7 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
         response.Content = new StringContent(operation.resource.ToString());
     }
 
-    private void HandleCreateOrUpdateResourceGroup(string subscriptionId, string resourceGroupName, Stream input, HttpResponseMessage response)
+    private void HandleCreateOrUpdateResourceGroup(string subscriptionId, ResourceGroupIdentifier resourceGroup, Stream input, HttpResponseMessage response)
     {
         using var reader = new StreamReader(input);
         
@@ -141,7 +142,7 @@ public class ResourceGroupEndpoint(ResourceProvider provider, ITopazLogger logge
             return;
         }
         
-        var operation = _controlPlane.CreateOrUpdate(resourceGroupName, subscriptionId, request);
+        var operation = _controlPlane.CreateOrUpdate(resourceGroup, subscriptionId, request);
         if (operation.result == OperationResult.Failed)
         {
             response.StatusCode = HttpStatusCode.InternalServerError;

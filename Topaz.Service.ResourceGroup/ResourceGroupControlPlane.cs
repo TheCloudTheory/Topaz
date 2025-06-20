@@ -3,15 +3,16 @@ using System.Text.Json;
 using Topaz.Service.ResourceGroup.Models;
 using Topaz.Service.ResourceGroup.Models.Requests;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.ResourceGroup;
 
-internal sealed class ResourceGroupControlPlane(ResourceProvider provider, ITopazLogger logger)
+public sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider groupResourceProvider, ITopazLogger logger)
 {
-    public (OperationResult result, ResourceGroupResource? resource) Get(string name)
+    public (OperationResult result, ResourceGroupResource? resource) Get(ResourceGroupIdentifier resourceGroup)
     {
-        var resource = provider.GetAs<ResourceGroupResource>(name);
+        var resource = groupResourceProvider.GetAs<ResourceGroupResource>(resourceGroup.Value);
         return resource == null ? 
             (OperationResult.NotFound,  null) : 
             (OperationResult.Success, resource);
@@ -21,30 +22,30 @@ internal sealed class ResourceGroupControlPlane(ResourceProvider provider, ITopa
     {
         var model = new ResourceGroupResource(subscriptionId, resourceGroupName, location, new ResourceGroupProperties());
 
-        provider.Create(resourceGroupName, model);
+        groupResourceProvider.Create(resourceGroupName, model);
 
         return (OperationResult.Created, model);
     }
 
-    public (OperationResult result, ResourceGroupResource resource) CreateOrUpdate(string resourceGroupName, string subscriptionId, CreateOrUpdateResourceGroupRequest request)
+    public (OperationResult result, ResourceGroupResource resource) CreateOrUpdate(ResourceGroupIdentifier resourceGroup, string subscriptionId, CreateOrUpdateResourceGroupRequest request)
     {
-        var resource = provider.GetAs<ResourceGroupResource>(resourceGroupName);
+        var resource = groupResourceProvider.GetAs<ResourceGroupResource>(resourceGroup.Value);
         if (resource != null)
         {
-            logger.LogDebug($"Resource group {resourceGroupName} already exists.");
+            logger.LogDebug($"Resource group {resourceGroup} already exists.");
             return (OperationResult.Updated, resource);
         }
         
-        logger.LogDebug($"Creating resource group {resourceGroupName} because it doesn't exist.");
-        var newResource = new ResourceGroupResource(subscriptionId, resourceGroupName, request.Location!, new ResourceGroupProperties());
-        provider.CreateOrUpdate(resourceGroupName, newResource);
+        logger.LogDebug($"Creating resource group {resourceGroup} because it doesn't exist.");
+        var newResource = new ResourceGroupResource(subscriptionId, resourceGroup.Value, request.Location!, new ResourceGroupProperties());
+        groupResourceProvider.CreateOrUpdate(resourceGroup.Value, newResource);
             
         return (OperationResult.Created, newResource);
     }
     
     public (OperationResult result, ResourceGroupResource[] resources) List(string subscriptionId)
     {
-        var resources = provider.List();
+        var resources = groupResourceProvider.List();
         var groups = resources
             .Select(r => JsonSerializer.Deserialize<ResourceGroupResource>(r, GlobalSettings.JsonOptions)!)
             .Where(g => g.Id.Contains(subscriptionId)).ToArray();
@@ -52,9 +53,9 @@ internal sealed class ResourceGroupControlPlane(ResourceProvider provider, ITopa
         return (OperationResult.Success,  groups);
     }
 
-    public OperationResult Delete(string resourceGroupName)
+    public OperationResult Delete(ResourceGroupIdentifier resourceGroup)
     {
-        provider.Delete(resourceGroupName);
+        groupResourceProvider.Delete(resourceGroup.Value);
         return OperationResult.Deleted;
     }
 }

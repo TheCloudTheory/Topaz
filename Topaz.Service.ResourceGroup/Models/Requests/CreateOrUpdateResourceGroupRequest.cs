@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Topaz.Service.ResourceGroup.Models.Requests;
 
-internal record CreateOrUpdateResourceGroupRequest
+public record CreateOrUpdateResourceGroupRequest
 {
     [JsonPropertyName("location")]
     public string? Location { get; set; }

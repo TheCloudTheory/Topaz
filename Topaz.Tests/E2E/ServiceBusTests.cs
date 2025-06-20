@@ -1,4 +1,3 @@
-using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using Topaz.CLI;
 

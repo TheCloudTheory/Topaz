@@ -12,7 +12,7 @@ public sealed class CreateResourceGroupCommand(ITopazLogger logger) : Command<Cr
     {
         logger.LogDebug("Creating a resource group...");
 
-        var controlPlane = new ResourceGroupControlPlane(new ResourceProvider(logger), logger);
+        var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
         var rg = controlPlane.Create(settings.Name!, settings.SubscriptionId!, settings.Location!);
 
         logger.LogInformation(rg.resource.ToString());

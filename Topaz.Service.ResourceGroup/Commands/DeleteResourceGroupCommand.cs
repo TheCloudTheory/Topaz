@@ -3,6 +3,7 @@ using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ResourceGroup.Commands;
 
@@ -14,15 +15,16 @@ public sealed class DeleteResourceGroupCommand(ITopazLogger logger) : Command<De
         logger.LogDebug($"Executing {nameof(DeleteResourceGroupCommand)}.{nameof(Execute)}.");
         logger.LogInformation("Deleting resource group...");
 
-        var controlPlane = new ResourceGroupControlPlane(new ResourceProvider(logger), logger);
-        var existingResource = controlPlane.Get(settings.Name!);
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.Name!);
+        var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
+        var existingResource = controlPlane.Get(resourceGroupIdentifier);
         if (existingResource.result == OperationResult.NotFound)
         {
             logger.LogError($"Resource group '{settings.Name}' could not be found.");
             return 1;
         }
         
-        _= controlPlane.Delete(settings.Name!);
+        _= controlPlane.Delete(resourceGroupIdentifier);
         
         logger.LogInformation("Resource group deleted.");
 
