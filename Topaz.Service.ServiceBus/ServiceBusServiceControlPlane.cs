@@ -8,9 +8,9 @@ namespace Topaz.Service.ServiceBus;
 internal sealed class ServiceBusServiceControlPlane(ResourceProvider provider, ITopazLogger logger)
 {
     public (OperationResult result, ServiceBusNamespaceResource? resource) CreateOrUpdateNamespace(SubscriptionIdentifier subscription, ResourceGroupIdentifier resourceGroup, string location,
-        string name)
+        string namespaceName)
     {
-        var existingNamespace = provider.GetAs<ServiceBusNamespaceResource>(name);
+        var existingNamespace = provider.GetAs<ServiceBusNamespaceResource>(namespaceName);
         if (existingNamespace == null)
         {
             var properties = new ServiceBusNamespaceResourceProperties
@@ -18,12 +18,24 @@ internal sealed class ServiceBusServiceControlPlane(ResourceProvider provider, I
                 CreatedAt = DateTimeOffset.Now
             };
 
-            var resource = new ServiceBusNamespaceResource(subscription, resourceGroup, location, name, properties);
-            provider.CreateOrUpdate(name, resource);
+            var resource = new ServiceBusNamespaceResource(subscription, resourceGroup, location, namespaceName, properties);
+            provider.CreateOrUpdate(namespaceName, resource);
             
             return (OperationResult.Created, resource);
         }
 
         return (OperationResult.Updated, existingNamespace);
+    }
+
+    public OperationResult DeleteNamespace(string namespaceName)
+    {
+        var existingNamespace = provider.GetAs<ServiceBusNamespaceResource>(namespaceName);
+        if (existingNamespace == null)
+        {
+            return OperationResult.NotFound;
+        }
+        
+        provider.Delete(namespaceName);
+        return OperationResult.Deleted;
     }
 }

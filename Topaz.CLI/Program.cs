@@ -5,6 +5,7 @@ using Topaz.CLI.Commands;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
 using Topaz.Service.ResourceGroup.Commands;
+using Topaz.Service.ServiceBus.Commands;
 using Topaz.Service.Storage.Commands;
 using Topaz.Service.Subscription.Commands;
 using Topaz.Shared;
@@ -76,35 +77,44 @@ internal class Program
                 });
             });    
 
-            config.AddBranch("group", branch => {
-                branch.AddCommand<CreateResourceGroupCommand>("create");
-                branch.AddCommand<DeleteResourceGroupCommand>("delete");
-                branch.AddCommand<ListResourceGroupCommand>("list");
+            config.AddBranch("group", group => {
+                group.AddCommand<CreateResourceGroupCommand>("create");
+                group.AddCommand<DeleteResourceGroupCommand>("delete");
+                group.AddCommand<ListResourceGroupCommand>("list");
             });
 
-            config.AddBranch("keyvault", branch => {
-                branch.AddCommand<CreateKeyVaultCommand>("create");
-                branch.AddCommand<DeleteKeyVaultCommand>("delete");
+            config.AddBranch("keyvault", keyVault => {
+                keyVault.AddCommand<CreateKeyVaultCommand>("create");
+                keyVault.AddCommand<DeleteKeyVaultCommand>("delete");
             });
 
-            config.AddBranch("subscription", branch => {
-                branch.AddCommand<CreateSubscriptionCommand>("create");
-                branch.AddCommand<DeleteSubscriptionCommand>("delete");
-                branch.AddCommand<ListSubscriptionsCommand>("list");
+            config.AddBranch("subscription", subscription => {
+                subscription.AddCommand<CreateSubscriptionCommand>("create");
+                subscription.AddCommand<DeleteSubscriptionCommand>("delete");
+                subscription.AddCommand<ListSubscriptionsCommand>("list");
             });
             
             config.AddBranch("eventhubs", branch =>
             {
-                branch.AddBranch("namespace", subbranch =>
+                branch.AddBranch("namespace", @namespace =>
                 {
-                    subbranch.AddCommand<CreateEventHubNamespaceCommand>("create");
-                    subbranch.AddCommand<DeleteEventHubNamespaceCommand>("delete");
+                    @namespace.AddCommand<CreateEventHubNamespaceCommand>("create");
+                    @namespace.AddCommand<DeleteEventHubNamespaceCommand>("delete");
                 });
                 
-                branch.AddBranch("eventhub", subbranch =>
+                branch.AddBranch("eventhub", eventHub =>
                 {
-                    subbranch.AddCommand<CreateEventHubCommand>("create");
-                    subbranch.AddCommand<DeleteEventHubCommand>("delete");
+                    eventHub.AddCommand<CreateEventHubCommand>("create");
+                    eventHub.AddCommand<DeleteEventHubCommand>("delete");
+                });
+            });
+            
+            config.AddBranch("servicebus", branch =>
+            {
+                branch.AddBranch("namespace", @namespace =>
+                {
+                    @namespace.AddCommand<CreateServiceBusNamespaceCommand>("create");
+                    @namespace.AddCommand<DeleteServiceBusNamespaceCommand>("delete");
                 });
             });
         });
