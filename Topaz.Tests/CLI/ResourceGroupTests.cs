@@ -2,7 +2,7 @@ using Topaz.CLI;
 
 namespace Topaz.Tests.CLI;
 
-public class ResourceGroupIdentifierTests
+public class ResourceGroupTests
 {
     private static readonly Guid SubscriptionId = Guid.NewGuid();
     private static readonly string ResourceGroupName = "test";
