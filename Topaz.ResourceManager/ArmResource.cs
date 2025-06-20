@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.ResourceManager;
@@ -13,6 +14,11 @@ public abstract class ArmResource<T>
     public abstract ResourceSku? Sku { get; init; }
     public abstract string? Kind { get; init; }
     public abstract T Properties { get; init; }
+
+    public SubscriptionIdentifier GetSubscription()
+    {
+        return SubscriptionIdentifier.From(Guid.Parse(Id.Split("/")[2]));
+    }
 
     public override string ToString()
     {

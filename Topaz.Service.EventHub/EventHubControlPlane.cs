@@ -7,9 +7,6 @@ namespace Topaz.Service.EventHub;
 
 internal sealed class EventHubControlPlane(ResourceProvider provider, ITopazLogger logger)
 {
-    private readonly ResourceProvider provider = provider;
-    private readonly ITopazLogger _topazLogger = logger;
-
     public object CreateNamespace(string name, string resourceGroup, string location, string subscriptionId)
     {
         var model = new Namespace()
@@ -20,7 +17,7 @@ internal sealed class EventHubControlPlane(ResourceProvider provider, ITopazLogg
             SubscriptionId = subscriptionId
         };
 
-        this.provider.Create(name, model);
+        provider.Create(name, model);
 
         return model;
     }
@@ -30,14 +27,14 @@ internal sealed class EventHubControlPlane(ResourceProvider provider, ITopazLogg
         var @namespace = this.GetNamespace(namespaceName);
         var model = Models.EventHub.New(name, namespaceName, @namespace.ResourceGroup!, @namespace.SubscriptionId!);
         
-        var hub = this.provider.CreateEventHub(namespaceName, name, model);
+        var hub = provider.CreateEventHub(namespaceName, name, model);
         
         return hub;
     }
 
     public Namespace GetNamespace(string namespaceName)
     {
-        var rawData = this.provider.Get(namespaceName);
+        var rawData = provider.Get(namespaceName);
         var @namespace = JsonSerializer.Deserialize<Namespace>(rawData, GlobalSettings.JsonOptions);
         
         return @namespace!;
@@ -45,9 +42,9 @@ internal sealed class EventHubControlPlane(ResourceProvider provider, ITopazLogg
 
     public Models.EventHub CreateUpdateEventHub(string namespaceName, string name, Stream input)
     {
-        this._topazLogger.LogDebug($"Executing {nameof(CreateUpdateEventHub)}: {namespaceName} {name}");
+        logger.LogDebug($"Executing {nameof(CreateUpdateEventHub)}: {namespaceName} {name}");
         
-        if (this.provider.EventHubExists(namespaceName, name))
+        if (provider.EventHubExists(namespaceName, name))
         {
             throw new NotImplementedException();
         }
@@ -57,10 +54,10 @@ internal sealed class EventHubControlPlane(ResourceProvider provider, ITopazLogg
             
             var rawContent = sr.ReadToEnd();
 
-            this._topazLogger.LogDebug($"Executing {nameof(CreateUpdateEventHub)}: Processing {rawContent}.");
+            logger.LogDebug($"Executing {nameof(CreateUpdateEventHub)}: Processing {rawContent}.");
             
             var @namespace = this.GetNamespace(namespaceName);
-            var hub = this.provider.CreateEventHub(namespaceName, name, Models.EventHub.New(name, namespaceName, @namespace.ResourceGroup, @namespace.Location));
+            var hub = provider.CreateEventHub(namespaceName, name, Models.EventHub.New(name, namespaceName, @namespace.ResourceGroup, @namespace.Location));
             
             return hub;
         }
@@ -68,14 +65,14 @@ internal sealed class EventHubControlPlane(ResourceProvider provider, ITopazLogg
 
     public void Delete(string name, string namespaceName)
     {
-        this._topazLogger.LogDebug($"Executing {nameof(Delete)}: {name} {namespaceName}");
+        logger.LogDebug($"Executing {nameof(Delete)}: {name} {namespaceName}");
 
-        if (this.provider.EventHubExists(namespaceName, name) == false)
+        if (provider.EventHubExists(namespaceName, name) == false)
         {
             // TODO: Return proper error
             return;
         }
 
-        this.provider.DeleteEventHub(name, namespaceName);
+        provider.DeleteEventHub(name, namespaceName);
     }
 }

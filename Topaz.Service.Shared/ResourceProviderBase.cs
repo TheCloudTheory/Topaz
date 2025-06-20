@@ -1,4 +1,3 @@
-using System.Net;
 using System.Text.Json;
 using Topaz.Shared;
 
@@ -113,30 +112,6 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         }
 
         return metadataFilePath;
-    }
-
-    public (TModel data, HttpStatusCode code) CreateOrUpdate<TModel, TRequest>(string id, Stream input, Func<TRequest, TModel> requestMapper)
-    {
-        var metadataFilePath = InitializeServiceDirectories(id);
-
-        using var sr = new StreamReader(input);
-
-        var rawContent = sr.ReadToEnd();
-        var request = JsonSerializer.Deserialize<TRequest>(rawContent, GlobalSettings.JsonOptions);
-        var newData = requestMapper(request!);
-        var content = JsonSerializer.Serialize(newData, GlobalSettings.JsonOptions);
-
-        if(File.Exists(metadataFilePath))
-        {
-            _logger.LogDebug($"Attempting to create {metadataFilePath} file - file exists, it will be overwritten.");
-            File.WriteAllText(metadataFilePath, content);
-
-            return (data: newData, code: HttpStatusCode.OK);
-        }
-
-        File.WriteAllText(metadataFilePath, content);
-
-        return (data: newData, code: HttpStatusCode.Created);
     }
 
     public void CreateOrUpdate<TModel>(string id, TModel model)
