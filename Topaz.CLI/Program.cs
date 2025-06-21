@@ -116,6 +116,11 @@ internal class Program
                     @namespace.AddCommand<CreateServiceBusNamespaceCommand>("create");
                     @namespace.AddCommand<DeleteServiceBusNamespaceCommand>("delete");
                 });
+                
+                branch.AddBranch("queue", queue =>
+                {
+                    queue.AddCommand<CreateServiceBusQueueCommand>("create");
+                });
             });
         });
 

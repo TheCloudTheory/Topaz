@@ -7,6 +7,7 @@ namespace Topaz.Service.KeyVault;
 public sealed class KeyVaultService(ITopazLogger logger) : IServiceDefinition
 {
     public static string LocalDirectoryPath => ".azure-key-vault";
+    public static IReadOnlyCollection<string>? Subresources => null;
     public string Name => "Azure Key Vault";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [

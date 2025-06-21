@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Topaz.Service.EventHub.Models;
-using Topaz.Service.Shared;
 using Topaz.Shared;
 
 namespace Topaz.Service.EventHub;

@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Service.ResourceGroup;
+using Topaz.Service.ServiceBus.Domain;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -9,9 +10,9 @@ using Topaz.Shared;
 namespace Topaz.Service.ServiceBus.Commands;
 
 [UsedImplicitly]
-public sealed class CreateServiceBusNamespaceCommand(ITopazLogger logger) : Command<CreateServiceBusNamespaceCommand.CreateServiceBusCommandSettings>
+public sealed class CreateServiceBusNamespaceCommand(ITopazLogger logger) : Command<CreateServiceBusNamespaceCommand.CreateServiceBusNamespaceCommandSettings>
 {
-    public override int Execute(CommandContext context, CreateServiceBusCommandSettings settings)
+    public override int Execute(CommandContext context, CreateServiceBusNamespaceCommandSettings settings)
     {
         logger.LogDebug($"Executing {nameof(CreateServiceBusNamespaceCommand)}.{nameof(Execute)}.");
 
@@ -25,15 +26,22 @@ public sealed class CreateServiceBusNamespaceCommand(ITopazLogger logger) : Comm
             return 1;
         }
 
+        var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(settings.Name!);
         var controlPlane = new ServiceBusServiceControlPlane(new ResourceProvider(logger), logger);
-        var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.resource.GetSubscription(), resourceGroupIdentifier, resourceGroup.resource.Location, settings.Name!);
+        var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.resource.GetSubscription(), resourceGroupIdentifier, resourceGroup.resource.Location, namespaceIdentifier);
 
-        logger.LogInformation(ns.ToString());
+        if (ns.result == OperationResult.Failed || ns.resource == null)
+        {
+            logger.LogError($"There was a problem creating namespace '{namespaceIdentifier}'.");
+            return 1;
+        }
+        
+        logger.LogInformation(ns.resource.ToString());
 
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateServiceBusCommandSettings settings)
+    public override ValidationResult Validate(CommandContext context, CreateServiceBusNamespaceCommandSettings settings)
     {
         if(string.IsNullOrEmpty(settings.Name))
         {
@@ -49,7 +57,7 @@ public sealed class CreateServiceBusNamespaceCommand(ITopazLogger logger) : Comm
     }
     
     [UsedImplicitly]
-    public sealed class CreateServiceBusCommandSettings : CommandSettings
+    public sealed class CreateServiceBusNamespaceCommandSettings : CommandSettings
     {
         [CommandOption("-n|--name")]
         public string? Name { get; set; }

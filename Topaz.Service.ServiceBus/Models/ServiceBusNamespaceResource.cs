@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Topaz.ResourceManager;
+using Topaz.Service.ServiceBus.Domain;
 using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ServiceBus.Models;
@@ -17,11 +18,11 @@ internal sealed class ServiceBusNamespaceResource
     public ServiceBusNamespaceResource(SubscriptionIdentifier subscription,
         ResourceGroupIdentifier resourceGroup,
         string location,
-        string name,
+        ServiceBusNamespaceIdentifier identifier,
         ServiceBusNamespaceResourceProperties properties)
     {
-        Id = $"/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.ServiceBus/namespaces/{name}";
-        Name = name;
+        Id = $"/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.ServiceBus/namespaces/{identifier}";
+        Name = identifier.Value;
         Location = location;
         Properties = properties;
     }
