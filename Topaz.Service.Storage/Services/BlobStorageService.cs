@@ -8,6 +8,7 @@ public class BlobStorageService(ITopazLogger logger) : IServiceDefinition
 {
     public string Name => "Blob Storage";
     public static string LocalDirectoryPath => ".blob";
+    public static IReadOnlyCollection<string>? Subresources => null;
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [

@@ -126,4 +126,89 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     {
         return Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
     }
+    
+    public void CreateOrUpdateSubresource<TModel>(string id, string parentId, string subresource, TModel model)
+    {
+        if (TService.Subresources == null)
+        {
+            throw new  InvalidOperationException("You can't create a subresource for a parent service which defines not subresources.");    
+        }
+        
+        if (TService.Subresources.Contains(subresource) == false)
+        {
+            throw new  InvalidOperationException($"You can't create a subresource '{subresource}' for a parent service which doesn't define that subresource.");  
+        }
+        
+        var metadataFilePath = InitializeSubresourceDirectories(id, parentId, subresource);
+
+        var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
+        File.WriteAllText(metadataFilePath, content);
+    }
+
+    private string InitializeSubresourceDirectories(string id, string parentId, string subresource)
+    {
+        var metadataFile = "metadata.json";
+        var subresourcePath = GetSubresourcePath(parentId, id, subresource);
+        var dataPath = Path.Combine(subresourcePath, "data");
+        var metadataFilePath = Path.Combine(subresourcePath, metadataFile);
+        
+        _logger.LogDebug($"Attempting to create {subresourcePath} directory.");
+        if (Directory.Exists(subresourcePath) == false)
+        {
+            Directory.CreateDirectory(subresourcePath);
+            _logger.LogDebug($"Attempting to create {subresourcePath} directory - created!");
+        }
+        else
+        {
+            _logger.LogDebug($"Attempting to create {subresourcePath} directory - skipped.");
+        }
+        
+        _logger.LogDebug($"Attempting to create {metadataFilePath} file.");
+        if (Directory.Exists(metadataFilePath) == false)
+        {
+            Directory.CreateDirectory(dataPath);
+        }
+        else
+        {
+            _logger.LogDebug($"Attempting to create {metadataFilePath} directory - skipped.");
+        }
+        
+        return metadataFilePath;
+    }
+
+    private string? GetSubresource(string id, string parentId, string subresource)
+    {
+        if (TService.Subresources == null)
+        {
+            throw new  InvalidOperationException("You can't get a subresource for a parent service which defines not subresources.");    
+        }
+        
+        if (TService.Subresources.Contains(subresource) == false)
+        {
+            throw new  InvalidOperationException($"You can't get a subresource '{subresource}' for a parent service which doesn't define that subresource.");  
+        }
+        
+        var metadataFilePath = InitializeSubresourceDirectories(id, parentId, subresource);
+
+        if (File.Exists(metadataFilePath) == false) return null;
+
+        var content = File.ReadAllText(metadataFilePath);
+        if(string.IsNullOrEmpty(content)) throw new InvalidOperationException("Metadata file is null or empty.");
+
+        return content;
+    }
+    
+    public T? GetSubresourceAs<T>(string id, string parentId, string subresource)
+    {
+        var raw = GetSubresource(id, parentId, subresource);
+        if(string.IsNullOrEmpty(raw)) return default;
+        var json = JsonSerializer.Deserialize<T>(raw, GlobalSettings.JsonOptions);
+
+        return json;
+    }
+    
+    private string GetSubresourcePath(string parentId, string subresourceId, string subresource)
+    {
+        return Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, parentId, subresource, subresourceId);
+    }
 }

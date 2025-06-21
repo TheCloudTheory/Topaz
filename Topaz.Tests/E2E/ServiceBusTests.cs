@@ -9,6 +9,7 @@ public class ServiceBusTests
     
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
+    private const string NamespaceName = "sb-test";
     
     [SetUp]
     public async Task SetUp()
@@ -47,6 +48,24 @@ public class ServiceBusTests
             "westeurope",
             "--subscription-id",
             SubscriptionId.ToString()
+        ]);
+        
+        await Program.Main([
+            "servicebus",
+            "namespace",
+            "delete",
+            "--name",
+            NamespaceName
+        ]);
+        
+        await Program.Main([
+            "servicebus",
+            "namespace",
+            "create",
+            "--name",
+            NamespaceName,
+            "--resource-group",
+            ResourceGroupName
         ]);
     }
 

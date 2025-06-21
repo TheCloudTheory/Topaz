@@ -7,4 +7,5 @@ public interface IServiceDefinition
     static abstract string LocalDirectoryPath { get; }
 
     IReadOnlyCollection<IEndpointDefinition> Endpoints { get; }
+    static abstract IReadOnlyCollection<string>? Subresources { get; }
 }

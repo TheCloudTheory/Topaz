@@ -1,3 +1,4 @@
+using Topaz.Service.ServiceBus.Domain;
 using Topaz.Service.ServiceBus.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -8,9 +9,9 @@ namespace Topaz.Service.ServiceBus;
 internal sealed class ServiceBusServiceControlPlane(ResourceProvider provider, ITopazLogger logger)
 {
     public (OperationResult result, ServiceBusNamespaceResource? resource) CreateOrUpdateNamespace(SubscriptionIdentifier subscription, ResourceGroupIdentifier resourceGroup, string location,
-        string namespaceName)
+        ServiceBusNamespaceIdentifier @namespace)
     {
-        var existingNamespace = provider.GetAs<ServiceBusNamespaceResource>(namespaceName);
+        var existingNamespace = provider.GetAs<ServiceBusNamespaceResource>(@namespace.Value);
         if (existingNamespace == null)
         {
             var properties = new ServiceBusNamespaceResourceProperties
@@ -18,8 +19,8 @@ internal sealed class ServiceBusServiceControlPlane(ResourceProvider provider, I
                 CreatedAt = DateTimeOffset.Now
             };
 
-            var resource = new ServiceBusNamespaceResource(subscription, resourceGroup, location, namespaceName, properties);
-            provider.CreateOrUpdate(namespaceName, resource);
+            var resource = new ServiceBusNamespaceResource(subscription, resourceGroup, location, @namespace, properties);
+            provider.CreateOrUpdate(@namespace.Value, resource);
             
             return (OperationResult.Created, resource);
         }
@@ -37,5 +38,29 @@ internal sealed class ServiceBusServiceControlPlane(ResourceProvider provider, I
         
         provider.Delete(namespaceName);
         return OperationResult.Deleted;
+    }
+
+    public (OperationResult result, ServiceBusNamespaceResource? resource) GetNamespace(
+        ServiceBusNamespaceIdentifier namespaceIdentifier)
+    {
+        var existingNamespace = provider.GetAs<ServiceBusNamespaceResource>(namespaceIdentifier.Value);
+        return existingNamespace == null ? (OperationResult.NotFound, null) : (OperationResult.Success, existingNamespace);
+    }
+
+    public (OperationResult result, ServiceBusQueueResource? resource) CreateOrUpdateQueue(
+        SubscriptionIdentifier subscription, ResourceGroupIdentifier resourceGroup,
+        ServiceBusNamespaceIdentifier @namespace, string queueName)
+    {
+        var existingQueue = provider.GetSubresourceAs<ServiceBusQueueResource>(queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
+        if (existingQueue == null)
+        {
+            var properties = new ServiceBusQueueResourceProperties();
+            var resource = new ServiceBusQueueResource(subscription, resourceGroup, @namespace, queueName, properties);
+            provider.CreateOrUpdateSubresource(queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant(), resource);
+            
+            return (OperationResult.Created, resource);
+        }
+        
+        return (OperationResult.Updated, existingQueue);
     }
 }

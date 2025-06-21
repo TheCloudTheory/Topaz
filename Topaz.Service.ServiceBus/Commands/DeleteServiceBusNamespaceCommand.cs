@@ -9,9 +9,9 @@ using Topaz.Shared;
 namespace Topaz.Service.ServiceBus.Commands;
 
 [UsedImplicitly]
-public sealed class DeleteServiceBusNamespaceCommand(ITopazLogger logger) : Command<DeleteServiceBusNamespaceCommand.DeleteServiceBusCommandSettings>
+public sealed class DeleteServiceBusNamespaceCommand(ITopazLogger logger) : Command<DeleteServiceBusNamespaceCommand.DeleteServiceBusNamespaceCommandSettings>
 {
-    public override int Execute(CommandContext context, DeleteServiceBusCommandSettings settings)
+    public override int Execute(CommandContext context, DeleteServiceBusNamespaceCommandSettings settings)
     {
         logger.LogDebug($"Executing {nameof(DeleteServiceBusNamespaceCommand)}.{nameof(Execute)}.");
         
@@ -23,7 +23,7 @@ public sealed class DeleteServiceBusNamespaceCommand(ITopazLogger logger) : Comm
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteServiceBusCommandSettings settings)
+    public override ValidationResult Validate(CommandContext context, DeleteServiceBusNamespaceCommandSettings settings)
     {
         if(string.IsNullOrEmpty(settings.Name))
         {
@@ -34,7 +34,7 @@ public sealed class DeleteServiceBusNamespaceCommand(ITopazLogger logger) : Comm
     }
     
     [UsedImplicitly]
-    public sealed class DeleteServiceBusCommandSettings : CommandSettings
+    public sealed class DeleteServiceBusNamespaceCommandSettings : CommandSettings
     {
         [CommandOption("-n|--name")]
         public string? Name { get; set; }

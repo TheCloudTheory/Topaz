@@ -6,11 +6,11 @@ namespace Topaz.Service.ResourceGroup;
 public sealed class ResourceGroupService(ITopazLogger logger) : IServiceDefinition
 {
     public static string LocalDirectoryPath => ".resource-groups";
-    private readonly ITopazLogger _topazLogger = logger;
+    public static IReadOnlyCollection<string>? Subresources => null;
 
     public string Name => "Resource Group";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new ResourceGroupEndpoint(new ResourceGroupResourceProvider(this._topazLogger), this._topazLogger)
+        new ResourceGroupEndpoint(new ResourceGroupResourceProvider(logger), logger)
     ];
 }

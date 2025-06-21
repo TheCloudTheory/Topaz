@@ -7,6 +7,7 @@ public class ServiceBusTests
     private static readonly Guid SubscriptionId = Guid.NewGuid();
     private static readonly string ResourceGroupName = "test";
     private static readonly string NamespaceName = "test";
+    private static readonly string QueueName = "queue-test";
     
     [SetUp]
     public async Task SetUp()
@@ -64,10 +65,22 @@ public class ServiceBusTests
             "--resource-group",
             ResourceGroupName
         ]);
+        
+        await Program.Main([
+            "servicebus",
+            "queue",
+            "create",
+            "--queue-name",
+            QueueName,
+            "--namespace-name",
+            NamespaceName,
+            "--resource-group",
+            ResourceGroupName
+        ]);
     }
     
     [Test]
-    public void StorageAccountTests_WhenNewStorageAccountIsRequested_ItShouldBeCreated()
+    public void ServiceBusTests_WhenNewNamespacesIsRequested_ItShouldBeCreated()
     {
         var namespacePath = Path.Combine(".topaz", ".service-bus", NamespaceName, "metadata.json");
 
@@ -75,7 +88,7 @@ public class ServiceBusTests
     }
     
     [Test]
-    public async Task StorageAccountTests_WhenExistingStorageAccountIsDeleted_ItShouldBeDeleted()
+    public async Task ServiceBusTests_WhenExistingNamespaceIsDeleted_ItShouldBeDeleted()
     {
         var namespacePath = Path.Combine(".topaz", ".service-bus", NamespaceName, "metadata.json");
 
@@ -92,5 +105,13 @@ public class ServiceBusTests
             Assert.That(File.Exists(namespacePath), Is.False);
             Assert.That(code, Is.EqualTo(0));
         });
+    }
+    
+    [Test]
+    public void ServiceBusTests_WhenNewQueueIsRequested_ItShouldBeCreated()
+    {
+        var queuePath = Path.Combine(".topaz", ".service-bus", NamespaceName, "queues", QueueName, "metadata.json");
+
+        Assert.That(File.Exists(queuePath), Is.True);
     }
 }
