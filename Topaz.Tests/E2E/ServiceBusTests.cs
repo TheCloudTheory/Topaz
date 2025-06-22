@@ -98,35 +98,45 @@ public class ServiceBusTests
     public async Task ServiceBusTests_WhenMessageIsSentOntoQueue_ItShouldBeReceived()
     {
         // Arrange
-        const string queueName = "test-queue";
-        var client = new ServiceBusClient("Endpoint=sb://localhost:8887;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;");
-        var sender = client.CreateSender(queueName);
+        var client = new ServiceBusClient("Endpoint=sb://localhost:8889;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;");
+        var sender = client.CreateSender(QueueName);
         var message = new ServiceBusMessage("test message");
-        var processor = client.CreateProcessor(queueName, new ServiceBusProcessorOptions());
+        var processorOptions = new ServiceBusProcessorOptions()
+        {
+            ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete,
+            MaxConcurrentCalls = 1
+        };
+        var processor = client.CreateProcessor(QueueName, processorOptions);
         var receivedMessage = new List<string>();
+        
+        processor.ProcessMessageAsync += args =>
+        {
+            receivedMessage.Add(args.Message.Body.ToString());
+            return Task.CompletedTask;
+        };
+
+        processor.ProcessErrorAsync += args =>
+        {
+            Console.WriteLine($"Error when processing a message: {args.Exception.Message}");
+            return Task.CompletedTask;
+        };
+
         
         // Act
         try
         {
             await sender.SendMessageAsync(message);
+            await processor.StartProcessingAsync();
+            
+            await Task.Delay(2000);
         }
         finally
         {
             await sender.DisposeAsync();
-            
         }
-        
-        await Task.Delay(TimeSpan.FromSeconds(5));
 
         try
         {
-            processor.ProcessMessageAsync += async args =>
-            {
-                receivedMessage.Add(args.Message.Body.ToString());
-                await args.CompleteMessageAsync(args.Message);
-            };
-            
-            await processor.StartProcessingAsync();
             await processor.StopProcessingAsync();
         }
         finally
