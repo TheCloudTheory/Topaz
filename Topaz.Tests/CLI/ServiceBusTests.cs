@@ -114,4 +114,28 @@ public class ServiceBusTests
 
         Assert.That(File.Exists(queuePath), Is.True);
     }
+    
+    [Test]
+    public async Task ServiceBusTests_WhenNewQueueIsDeleted_ItShouldBeDeleted()
+    {
+        var queuePath = Path.Combine(".topaz", ".service-bus", NamespaceName, "queues", QueueName, "metadata.json");
+        
+        var code = await Program.Main([
+            "servicebus",
+            "queue",
+            "delete",
+            "--queue-name",
+            QueueName,
+            "--namespace-name",
+            NamespaceName,
+            "--resource-group",
+            ResourceGroupName
+        ]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(File.Exists(queuePath), Is.False);
+            Assert.That(code, Is.EqualTo(0));
+        });
+    }
 }

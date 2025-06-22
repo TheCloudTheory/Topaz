@@ -24,8 +24,6 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
         _logger.LogDebug($"Deleting resource '{servicePath}'.");
         Directory.Delete(servicePath, true);
-
-        return;
     }
 
     public string? Get(string id)
@@ -210,5 +208,18 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     private string GetSubresourcePath(string parentId, string subresourceId, string subresource)
     {
         return Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, parentId, subresource, subresourceId);
+    }
+
+    public void DeleteSubresource(string id, string parentId, string subresource)
+    {
+        var subresourcePath = GetSubresourcePath(parentId, id, subresource);
+        if(Directory.Exists(subresourcePath) == false) 
+        {
+            _logger.LogDebug($"The subresource '{subresourcePath}' does not exists, no changes applied.");
+            return;
+        }
+
+        _logger.LogDebug($"Deleting subresource '{subresourcePath}'.");
+        Directory.Delete(subresourcePath, true);
     }
 }

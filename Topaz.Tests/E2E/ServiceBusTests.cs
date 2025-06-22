@@ -10,6 +10,7 @@ public class ServiceBusTests
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
     private const string NamespaceName = "sb-test";
+    private const string QueueName = "queue-test";
     
     [SetUp]
     public async Task SetUp()
@@ -63,6 +64,30 @@ public class ServiceBusTests
             "namespace",
             "create",
             "--name",
+            NamespaceName,
+            "--resource-group",
+            ResourceGroupName
+        ]);
+        
+        await Program.Main([
+            "servicebus",
+            "queue",
+            "delete",
+            "--queue-name",
+            QueueName,
+            "--namespace-name",
+            NamespaceName,
+            "--resource-group",
+            ResourceGroupName
+        ]);
+        
+        await Program.Main([
+            "servicebus",
+            "queue",
+            "create",
+            "--queue-name",
+            QueueName,
+            "--namespace-name",
             NamespaceName,
             "--resource-group",
             ResourceGroupName

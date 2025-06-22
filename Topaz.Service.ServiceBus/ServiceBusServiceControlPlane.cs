@@ -63,4 +63,16 @@ internal sealed class ServiceBusServiceControlPlane(ResourceProvider provider, I
         
         return (OperationResult.Updated, existingQueue);
     }
+
+    public OperationResult DeleteQueue(ServiceBusNamespaceIdentifier @namespace, string queueName)
+    {
+        var existingQueue = provider.GetSubresourceAs<ServiceBusQueueResource>(queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
+        if (existingQueue == null)
+        {
+            return OperationResult.NotFound;
+        }
+        
+        provider.DeleteSubresource(queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
+        return OperationResult.Deleted;
+    }
 }
