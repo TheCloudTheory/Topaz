@@ -120,6 +120,7 @@ internal class Program
                 branch.AddBranch("queue", queue =>
                 {
                     queue.AddCommand<CreateServiceBusQueueCommand>("create");
+                    queue.AddCommand<DeleteServiceBusQueueCommand>("delete");
                 });
             });
         });
