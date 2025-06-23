@@ -21,6 +21,7 @@ Blob Storage|⚠️|⚠️
 Queue Storage|:x:|:x:
 Key Vault|⚠️|⚠️
 Event Hub|⚠️|⚠️
+Service Bus|⚠️|⚠️
 
 ✅ - fully supported (stable)
 
