@@ -1,16 +1,18 @@
 using Azure.Messaging.ServiceBus;
 using Topaz.CLI;
+using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E;
 
 public class ServiceBusTests
 {
-    private static readonly Guid SubscriptionId = Guid.NewGuid();
-    
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
     private const string NamespaceName = "sb-test";
     private const string QueueName = "queue-test";
+    
+    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    private static readonly string ConnectionString = TopazResourceHelpers.GetServiceBusConnectionString();
     
     [SetUp]
     public async Task SetUp()
@@ -98,7 +100,7 @@ public class ServiceBusTests
     public async Task ServiceBusTests_WhenMessageIsSentOntoQueue_ItShouldBeReceived()
     {
         // Arrange
-        var client = new ServiceBusClient("Endpoint=sb://localhost:8889;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;");
+        var client = new ServiceBusClient(ConnectionString);
         var sender = client.CreateSender(QueueName);
         var message = new ServiceBusMessage("test message");
         var processorOptions = new ServiceBusProcessorOptions()
@@ -120,7 +122,6 @@ public class ServiceBusTests
             Console.WriteLine($"Error when processing a message: {args.Exception.Message}");
             return Task.CompletedTask;
         };
-
         
         // Act
         try
