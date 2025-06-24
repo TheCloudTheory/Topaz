@@ -29,6 +29,17 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
+    - name: Publish Linux (interim)
+      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r linux-x64 -o ./publish
+    - name: Build interim Docker image
+      id: push
+      uses: docker/build-push-action@v6.18.0
+      with:
+        context: .
+        file: ./Topaz.CLI/Dockerfile
+        push: false
+        tags: topaz/cli
+        platforms: linux/amd64
     - name: Test
       run: dotnet test -m:1 --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults
     - name: Publish Test Results
