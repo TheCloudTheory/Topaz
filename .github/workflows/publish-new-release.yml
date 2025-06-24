@@ -38,6 +38,7 @@ jobs:
       with:
         github-token: ${{ github.token }}
         run-id: ${{ steps.set-run-id.outputs.RUN_ID }}
+        pattern: "!*.dockerbuild"
     - name: Read tag info
       id: read-tag
       run: |
