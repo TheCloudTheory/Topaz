@@ -7,7 +7,7 @@ internal sealed class CreateOrUpdateServiceBusNamespaceRequest
 {
     public ResourceSku? Sku { get; init; }
     public string? Location { get; init; }
-    public CreateOrUpdateServiceBusNamespaceRequestProperties? Properties { get; init; }
+    public CreateOrUpdateServiceBusNamespaceRequestProperties? Properties { get; init; } = new();
 
     [UsedImplicitly]
     internal class CreateOrUpdateServiceBusNamespaceRequestProperties

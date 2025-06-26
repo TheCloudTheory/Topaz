@@ -11,8 +11,8 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly KeyVaultControlPlane _controlPlane = new(new ResourceProvider(logger));
     public string[] Endpoints => [
-        "PUT /subscriptions/{subscriptionId/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
-        "GET /subscriptions/{subscriptionId/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}"
+        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}"
     ];
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query, GlobalOptions options)
