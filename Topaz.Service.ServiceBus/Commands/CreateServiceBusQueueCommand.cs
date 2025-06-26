@@ -2,7 +2,7 @@ using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Service.ResourceGroup;
-using Topaz.Service.ServiceBus.Domain;
+using Topaz.Service.ServiceBus.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -35,7 +35,7 @@ public class CreateServiceBusQueueCommand(ITopazLogger logger) : Command<CreateS
             return 1;
         }
         
-        var queue = controlPlane.CreateOrUpdateQueue(resourceGroup.resource.GetSubscription(), resourceGroupIdentifier, namespaceIdentifier, settings.Name!);
+        var queue = controlPlane.CreateOrUpdateQueue(resourceGroup.resource.GetSubscription(), resourceGroupIdentifier, namespaceIdentifier, settings.Name!, new CreateOrUpdateServiceBusQueueRequest());
         if (queue.result == OperationResult.Failed || queue.resource == null)
         {
             logger.LogError($"There was a problem creating queue '{settings.Name!}'.");

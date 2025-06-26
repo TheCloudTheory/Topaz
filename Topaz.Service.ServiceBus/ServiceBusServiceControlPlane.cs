@@ -1,4 +1,3 @@
-using Topaz.Service.ServiceBus.Domain;
 using Topaz.Service.ServiceBus.Models;
 using Topaz.Service.ServiceBus.Models.Requests;
 using Topaz.Service.Shared;
@@ -53,17 +52,23 @@ internal sealed class ServiceBusServiceControlPlane(ResourceProvider provider, I
 
     public (OperationResult result, ServiceBusQueueResource? resource) CreateOrUpdateQueue(
         SubscriptionIdentifier subscription, ResourceGroupIdentifier resourceGroup,
-        ServiceBusNamespaceIdentifier @namespace, string queueName)
+        ServiceBusNamespaceIdentifier @namespace, string queueName,  CreateOrUpdateServiceBusQueueRequest request)
     {
         var existingQueue = provider.GetSubresourceAs<ServiceBusQueueResource>(queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
+        var properties = ServiceBusQueueResourceProperties.From(request);
         if (existingQueue == null)
         {
-            var properties = new ServiceBusQueueResourceProperties();
+            properties.CreatedOn = DateTime.UtcNow;
+            properties.UpdatedOn = DateTime.UtcNow;
+            
             var resource = new ServiceBusQueueResource(subscription, resourceGroup, @namespace, queueName, properties);
             provider.CreateOrUpdateSubresource(queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant(), resource);
             
             return (OperationResult.Created, resource);
         }
+        
+        properties.UpdatedOn = DateTime.UtcNow;
+        provider.CreateOrUpdate(@namespace.Value, properties);
         
         return (OperationResult.Updated, existingQueue);
     }
@@ -78,5 +83,11 @@ internal sealed class ServiceBusServiceControlPlane(ResourceProvider provider, I
         
         provider.DeleteSubresource(queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
         return OperationResult.Deleted;
+    }
+
+    public (OperationResult result, ServiceBusQueueResource? resource) GetQueue(ServiceBusNamespaceIdentifier @namespace, string queueName)
+    {
+        var existingQueue = provider.GetSubresourceAs<ServiceBusQueueResource>(queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
+        return existingQueue == null ? (OperationResult.NotFound, null) : (OperationResult.Success, existingQueue);
     }
 }

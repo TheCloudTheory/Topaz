@@ -1,4 +1,4 @@
-namespace Topaz.Service.ServiceBus.Domain;
+namespace Topaz.Service.Shared.Domain;
 
 public sealed record ServiceBusNamespaceIdentifier(string Value)
 {

@@ -2,7 +2,6 @@ using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Service.ResourceGroup;
-using Topaz.Service.ServiceBus.Domain;
 using Topaz.Service.ServiceBus.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;

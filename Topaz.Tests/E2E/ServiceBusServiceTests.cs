@@ -16,6 +16,7 @@ public class ServiceBusServiceTests
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
     private const string NamespaceName = "sb-test";
+    private const string QueueName = "sb-test-queue";
     
     [SetUp]
     public async Task SetUp()
@@ -84,5 +85,28 @@ public class ServiceBusServiceTests
         Assert.That(@namespace, Is.Not.Null);
         Assert.That(@namespace.Value, Is.Not.Null);
         Assert.That(@namespace.Value.Data.Name, Is.EqualTo(NamespaceName));
+    }
+    
+    [Test]
+    public async Task ServiceBusServiceTests_WhenQueueIsCreatedUsingSDK_ItShouldBeAvailable()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, Guid.Empty.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var data = new ServiceBusNamespaceData(AzureLocation.WestEurope);
+        
+        // Act
+        _ = await resourceGroup.Value.GetServiceBusNamespaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, NamespaceName, data);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaces().GetAsync(NamespaceName);
+        _ = await @namespace.Value.GetServiceBusQueues().CreateOrUpdateAsync(WaitUntil.Completed, QueueName, new ServiceBusQueueData());
+        var queue =  await @namespace.Value.GetServiceBusQueues().GetAsync(QueueName);
+        
+        // Assert
+        Assert.That(queue, Is.Not.Null);
+        Assert.That(queue.Value, Is.Not.Null);
+        Assert.That(queue.Value.Data.Name, Is.EqualTo(QueueName));
     }
 }

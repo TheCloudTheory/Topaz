@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 using Topaz.ResourceManager;
-using Topaz.Service.ServiceBus.Domain;
 using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ServiceBus.Models;
