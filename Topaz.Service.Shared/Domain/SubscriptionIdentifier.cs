@@ -6,6 +6,16 @@ public record SubscriptionIdentifier(Guid Value)
     {
         return new SubscriptionIdentifier(value);
     }
+    
+    public static SubscriptionIdentifier From(string? value)
+    {
+        if (Guid.TryParse(value, out var id) == false)
+        {
+            throw new ArgumentException($"Invalid subscription identifier value '{value}'", nameof(value));
+        }
+        
+        return new SubscriptionIdentifier(id);
+    }
 
     public override string ToString()
     {

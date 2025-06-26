@@ -1,9 +1,10 @@
 ﻿using Topaz.Service.ServiceBus.Endpoints;
 using Topaz.Service.Shared;
+using Topaz.Shared;
 
 namespace Topaz.Service.ServiceBus;
 
-public sealed class ServiceBusService : IServiceDefinition
+public sealed class ServiceBusService(ITopazLogger logger) : IServiceDefinition
 {
     public string Name => "Azure Service Bus";
     public static string LocalDirectoryPath => ".service-bus";
@@ -11,6 +12,7 @@ public sealed class ServiceBusService : IServiceDefinition
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new ServiceBusEndpoint()
+        new ServiceBusEndpoint(),
+        new ServiceBusServiceEndpoint(logger)
     ];
 }

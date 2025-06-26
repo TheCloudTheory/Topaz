@@ -1,5 +1,6 @@
 using Topaz.Service.ServiceBus.Domain;
 using Topaz.Service.ServiceBus.Models;
+using Topaz.Service.ServiceBus.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -9,21 +10,24 @@ namespace Topaz.Service.ServiceBus;
 internal sealed class ServiceBusServiceControlPlane(ResourceProvider provider, ITopazLogger logger)
 {
     public (OperationResult result, ServiceBusNamespaceResource? resource) CreateOrUpdateNamespace(SubscriptionIdentifier subscription, ResourceGroupIdentifier resourceGroup, string location,
-        ServiceBusNamespaceIdentifier @namespace)
+        ServiceBusNamespaceIdentifier @namespace, CreateOrUpdateServiceBusNamespaceRequest request)
     {
         var existingNamespace = provider.GetAs<ServiceBusNamespaceResource>(@namespace.Value);
+        var properties = ServiceBusNamespaceResourceProperties.From(request);
+        
         if (existingNamespace == null)
         {
-            var properties = new ServiceBusNamespaceResourceProperties
-            {
-                CreatedAt = DateTimeOffset.Now
-            };
+            properties.CreatedOn = DateTime.UtcNow;
+            properties.UpdatedOn = DateTime.UtcNow;
 
             var resource = new ServiceBusNamespaceResource(subscription, resourceGroup, location, @namespace, properties);
             provider.CreateOrUpdate(@namespace.Value, resource);
             
             return (OperationResult.Created, resource);
         }
+        
+        properties.UpdatedOn = DateTime.UtcNow;
+        provider.CreateOrUpdate(@namespace.Value, properties);
 
         return (OperationResult.Updated, existingNamespace);
     }

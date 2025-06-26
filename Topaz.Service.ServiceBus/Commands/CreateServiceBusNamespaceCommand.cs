@@ -3,6 +3,7 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ServiceBus.Domain;
+using Topaz.Service.ServiceBus.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -28,7 +29,8 @@ public sealed class CreateServiceBusNamespaceCommand(ITopazLogger logger) : Comm
 
         var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(settings.Name!);
         var controlPlane = new ServiceBusServiceControlPlane(new ResourceProvider(logger), logger);
-        var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.resource.GetSubscription(), resourceGroupIdentifier, resourceGroup.resource.Location, namespaceIdentifier);
+        var request = new CreateOrUpdateServiceBusNamespaceRequest();
+        var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.resource.GetSubscription(), resourceGroupIdentifier, resourceGroup.resource.Location, namespaceIdentifier, request);
 
         if (ns.result == OperationResult.Failed || ns.resource == null)
         {
