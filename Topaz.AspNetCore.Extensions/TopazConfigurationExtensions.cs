@@ -3,12 +3,14 @@ using Azure.Core;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.ServiceBus;
 using Azure.ResourceManager.Storage;
 using Azure.ResourceManager.Storage.Models;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Configuration;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Service.Shared.Domain;
 
 namespace Topaz.AspNetCore.Extensions;
 
@@ -64,15 +66,15 @@ public static class TopazConfigurationExtensions
     /// Creates or updates an Azure Key Vault in the specified resource group.
     /// </summary>
     /// <param name="builder">The task containing the TopazEnvironmentBuilder instance.</param>
-    /// <param name="resourceGroupName">The name of the resource group where the Key Vault will be created.</param>
+    /// <param name="resourceGroupIdentifier">The resource group where the Key Vault will be created.</param>
     /// <param name="keyVaultName">The name of the Key Vault to create or update.</param>
     /// <param name="operation">The Key Vault creation or update configuration.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the updated TopazEnvironmentBuilder.</returns>
-    public static async Task<TopazEnvironmentBuilder> AddKeyVault(this Task<TopazEnvironmentBuilder> builder, string resourceGroupName, string keyVaultName, KeyVaultCreateOrUpdateContent operation)
+    public static async Task<TopazEnvironmentBuilder> AddKeyVault(this Task<TopazEnvironmentBuilder> builder, ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName, KeyVaultCreateOrUpdateContent operation)
     {
         var concrete = await builder;
         var subscription = await concrete.ArmClient.GetDefaultSubscriptionAsync();
-        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupName);
+        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupIdentifier.Value);
         
         _ = await resourceGroup.Value.GetKeyVaults()
             .CreateOrUpdateAsync(WaitUntil.Completed, keyVaultName, operation, CancellationToken.None);
@@ -84,16 +86,16 @@ public static class TopazConfigurationExtensions
     /// Creates or updates an Azure Key Vault in the specified resource group and populates it with the provided secrets.
     /// </summary>
     /// <param name="builder">The task containing the TopazEnvironmentBuilder instance.</param>
-    /// <param name="resourceGroupName">The name of the resource group where the Key Vault will be created.</param>
+    /// <param name="resourceGroupIdentifier">The resource group where the Key Vault will be created.</param>
     /// <param name="keyVaultName">The name of the Key Vault to create or update.</param>
     /// <param name="operation">The Key Vault creation or update configuration.</param>
     /// <param name="secrets">A dictionary of secret names and values to store in the Key Vault.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the updated TopazEnvironmentBuilder.</returns>
     /// <remarks>This method first creates the Key Vault, then adds all the specified secrets to it.</remarks>
-    public static async Task<TopazEnvironmentBuilder> AddKeyVault(this Task<TopazEnvironmentBuilder> builder, string resourceGroupName, string keyVaultName,
+    public static async Task<TopazEnvironmentBuilder> AddKeyVault(this Task<TopazEnvironmentBuilder> builder, ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName,
         KeyVaultCreateOrUpdateContent operation, IDictionary<string, string> secrets)
     {
-        await builder.AddKeyVault(resourceGroupName, keyVaultName, operation);
+        await builder.AddKeyVault(resourceGroupIdentifier, keyVaultName, operation);
         
         var concrete = await builder;
         var credentials = new AzureLocalCredential();
@@ -115,16 +117,16 @@ public static class TopazConfigurationExtensions
     /// Creates or updates an Azure Storage Account in the specified resource group.
     /// </summary>
     /// <param name="builder">The task containing the TopazEnvironmentBuilder instance.</param>
-    /// <param name="resourceGroupName">The name of the resource group where the Storage Account will be created.</param>
+    /// <param name="resourceGroupIdentifier">The resource group where the Storage Account will be created.</param>
     /// <param name="storageAccountName">The name of the Storage Account to create or update.</param>
     /// <param name="operation">The Storage Account creation or update configuration.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the updated TopazEnvironmentBuilder.</returns>
     public static async Task<TopazEnvironmentBuilder> AddStorageAccount(this Task<TopazEnvironmentBuilder> builder,
-        string resourceGroupName, string storageAccountName, StorageAccountCreateOrUpdateContent operation)
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, StorageAccountCreateOrUpdateContent operation)
     {
         var concrete = await builder;
         var subscription = await concrete.ArmClient.GetDefaultSubscriptionAsync();
-        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupName);
+        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupIdentifier.Value);
         
         _ = await resourceGroup.Value.GetStorageAccounts()
             .CreateOrUpdateAsync(WaitUntil.Completed, storageAccountName, operation);
@@ -133,11 +135,11 @@ public static class TopazConfigurationExtensions
     }
 
     public static async Task<TopazEnvironmentBuilder> AddStorageAccountConnectionStringAsSecret(
-        this Task<TopazEnvironmentBuilder> builder, string resourceGroupName, string storageAccountName, string keyVaultName, string secretName, ushort keyIndex = 0)
+        this Task<TopazEnvironmentBuilder> builder, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string keyVaultName, string secretName, ushort keyIndex = 0)
     {
         var concrete = await builder;
         var subscription = await concrete.ArmClient.GetDefaultSubscriptionAsync();
-        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupName);
+        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupIdentifier.Value);
         var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(storageAccountName);
         var keys = new List<StorageAccountKey>();
         
@@ -156,6 +158,32 @@ public static class TopazConfigurationExtensions
         var selectedKey = keys[keyIndex];
         await client.SetSecretAsync(new KeyVaultSecret(secretName,
             TopazResourceHelpers.GetAzureStorageConnectionString(storageAccountName, selectedKey.Value)));
+        
+        return concrete;
+    }
+
+    public static async Task<TopazEnvironmentBuilder> AddServiceBusNamespace(this Task<TopazEnvironmentBuilder> builder,
+        ResourceGroupIdentifier resourceGroupIdentifier, string namespaceName, ServiceBusNamespaceData data)
+    {
+        var concrete = await builder;
+        var subscription = await concrete.ArmClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupIdentifier.Value);
+
+        _ = await resourceGroup.Value.GetServiceBusNamespaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, namespaceName, data);
+        
+        return concrete;
+    }
+    
+    public static async Task<TopazEnvironmentBuilder> AddServiceBusQueue(this Task<TopazEnvironmentBuilder> builder,
+        ResourceGroupIdentifier resourceGroupIdentifier, string namespaceName, string queueName, ServiceBusQueueData data)
+    {
+        var concrete = await builder;
+        var subscription = await concrete.ArmClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupIdentifier.Value);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaceAsync(namespaceName);
+
+        _ = await @namespace.Value.GetServiceBusQueues().CreateOrUpdateAsync(WaitUntil.Completed, queueName, data);
         
         return concrete;
     }
