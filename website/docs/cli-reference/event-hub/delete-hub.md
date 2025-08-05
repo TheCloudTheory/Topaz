@@ -2,21 +2,21 @@
 sidebar_position: 4
 ---
 
-# servicebus queue delete
+# eventhubs eventhub delete
 
-Deletes a Bus queue.
+Deletes Event Hub.
 
 ## Options
-* `-n|--queue-name` - (Required) queue name
+* `-n|--name` - (Required) hub name
 * `--namespace-name` - (Required) namespace name
 * `-g|--resource-group` - (Required) resource group name
 
 ## Examples
 
-### Delete a queue
+### Delete a hub
 ```bash
-$ topaz servicebus queue delete \
+$ topaz eventhubs eventhub delete \
     --resource-group rg-test \
     --namespace-name "sb-namespace" \
-    --queue-name "queue-test"
+    --name "ehtest"
 ```
