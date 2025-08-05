@@ -1,21 +1,47 @@
+using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.EventHub.Models.Requests;
+using Topaz.Service.ResourceGroup;
+using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
 
+[UsedImplicitly]
 public sealed class CreateEventHubCommand(ITopazLogger logger) : Command<CreateEventHubCommand.CreateEventHubCommandSettings>
 {
-    private readonly ITopazLogger _topazLogger = logger;
-
     public override int Execute(CommandContext context, CreateEventHubCommandSettings settings)
     {
-        this._topazLogger.LogInformation($"Executing {nameof(CreateEventHubCommand)}.{nameof(Execute)}.");
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
+        var resourceGroupControlPlane =
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
+        var resourceGroup = resourceGroupControlPlane.Get(resourceGroupIdentifier);
+        if (resourceGroup.result == OperationResult.NotFound || resourceGroup.resource == null)
+        {
+            logger.LogError($"Resource group {resourceGroupIdentifier} not found.");
+            return 1;
+        }
+        
+        var controlPlane = new EventHubServiceControlPlane(new ResourceProvider(logger), logger);
+        var namespaceIdentifier = EventHubNamespaceIdentifier.From(settings.NamespaceName!);
+        var @namespace = controlPlane.GetNamespace(namespaceIdentifier);
+        if (@namespace.result == OperationResult.NotFound || @namespace.resource == null)
+        {
+            logger.LogError($"Namespace {namespaceIdentifier} not found.");
+            return 1;
+        }
 
-        var controlPlane = new EventHubControlPlane(new ResourceProvider(this._topazLogger), _topazLogger);
-        var eh = controlPlane.Create(settings.Name!, settings.NamespaceName!);
-
-        this._topazLogger.LogInformation(eh.ToString());
+        var queue = controlPlane.CreateOrUpdateEventHub(resourceGroup.resource.GetSubscription(),
+            resourceGroupIdentifier, namespaceIdentifier, settings.Name!, new CreateOrUpdateEventHubRequest());
+        if (queue.result == OperationResult.Failed || queue.resource == null)
+        {
+            logger.LogError($"There was a problem creating queue '{settings.Name!}'.");
+            return 1;
+        }
+        
+        logger.LogInformation(queue.resource.ToString());
 
         return 0;
     }
@@ -24,13 +50,23 @@ public sealed class CreateEventHubCommand(ITopazLogger logger) : Command<CreateE
     {
         if(string.IsNullOrEmpty(settings.Name))
         {
-            return ValidationResult.Error("Name can't be null.");
+            return ValidationResult.Error("Event Hub hub name can't be null.");
         }
         
-        return string.IsNullOrEmpty(settings.NamespaceName) 
-            ? ValidationResult.Error("Namespace name can't be null.") : base.Validate(context, settings);
+        if(string.IsNullOrEmpty(settings.NamespaceName))
+        {
+            return ValidationResult.Error("Event Hub namespace name can't be null.");
+        }
+
+        if(string.IsNullOrEmpty(settings.ResourceGroup))
+        {
+            return ValidationResult.Error("Event Hub namespace resource group can't be null.");
+        }
+
+        return base.Validate(context, settings);
     }
     
+    [UsedImplicitly]
     public sealed class CreateEventHubCommandSettings : CommandSettings
     {
         [CommandOption("-n|--name")]
@@ -38,5 +74,8 @@ public sealed class CreateEventHubCommand(ITopazLogger logger) : Command<CreateE
         
         [CommandOption("--namespace-name")]
         public string? NamespaceName { get; set; }
+        
+        [CommandOption("-g|--resource-group")]
+        public string? ResourceGroup { get; set; }
     }
 }

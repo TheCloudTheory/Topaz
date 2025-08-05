@@ -1,6 +1,10 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.EventHub.Models.Requests;
+using Topaz.Service.ResourceGroup;
+using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
@@ -11,9 +15,21 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
     public override int Execute(CommandContext context, CreateEventHubCommandSettings settings)
     {
         logger.LogDebug($"Executing {nameof(CreateEventHubNamespaceCommand)}.{nameof(Execute)}.");
+        
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
+        var resourceGroupControlPlane =
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
+        var resourceGroup = resourceGroupControlPlane.Get(resourceGroupIdentifier);
+        if (resourceGroup.result == OperationResult.NotFound || resourceGroup.resource == null)
+        {
+            logger.LogError($"ResourceGroup {resourceGroupIdentifier} not found.");
+            return 1;
+        }
 
-        var controlPlane = new EventHubControlPlane(new ResourceProvider(logger), logger);
-        var ns = controlPlane.CreateNamespace(settings.Name!, settings.ResourceGroup!, settings.Location!, settings.SubscriptionId!);
+        var controlPlane = new EventHubServiceControlPlane(new ResourceProvider(logger), logger);
+        var request = new CreateOrUpdateEventHubNamespaceRequest();
+        var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.resource.GetSubscription(), resourceGroupIdentifier,
+            settings.Location!, EventHubNamespaceIdentifier.From(settings.Name!), request);
 
         logger.LogInformation(ns.ToString());
 
@@ -32,11 +48,6 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
             return ValidationResult.Error("Resource group location can't be null.");
         }
 
-        if(string.IsNullOrEmpty(settings.SubscriptionId))
-        {
-            return ValidationResult.Error("Resource group subscription ID can't be null.");
-        }
-
         return base.Validate(context, settings);
     }
     
@@ -51,8 +62,5 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
 
         [CommandOption("-l|--location")]
         public string? Location { get; set; }
-
-        [CommandOption("-s|--subscriptionId")]
-        public string? SubscriptionId { get; set; }
     }
 }

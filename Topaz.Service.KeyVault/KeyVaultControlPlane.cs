@@ -1,9 +1,6 @@
-using System.Text.Json;
-using Topaz.ResourceManager;
 using Topaz.Service.KeyVault.Models;
 using Topaz.Service.KeyVault.Models.Requests;
 using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault;
 

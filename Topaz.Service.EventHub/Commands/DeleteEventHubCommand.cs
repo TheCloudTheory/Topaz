@@ -13,7 +13,7 @@ public class DeleteEventHubCommand(ITopazLogger logger) : Command<DeleteEventHub
         this._topazLogger.LogDebug($"Executing {nameof(CreateEventHubCommand)}.{nameof(Execute)}.");
         this._topazLogger.LogInformation($"Deleting {settings.Name} event hub...");
 
-        var controlPlane = new EventHubControlPlane(new ResourceProvider(this._topazLogger), _topazLogger);
+        var controlPlane = new EventHubServiceControlPlane(new ResourceProvider(this._topazLogger), _topazLogger);
         controlPlane.Delete(settings.Name!, settings.NamespaceName!);
 
         this._topazLogger.LogInformation($"Event hub {settings.Name} deleted.");
