@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.KeyVault.Commands;
 
@@ -13,7 +14,7 @@ public class CreateKeyVaultCommand(ITopazLogger logger) : Command<CreateKeyVault
         logger.LogInformation($"Executing {nameof(CreateKeyVaultCommand)}.{nameof(Execute)}.");
 
         var controlPlane = new KeyVaultControlPlane(new ResourceProvider(logger));
-        var kv = controlPlane.Create(settings.Name!, settings.ResourceGroup!, settings.Location!, settings.SubscriptionId!);
+        var kv = controlPlane.Create(settings.Name!, ResourceGroupIdentifier.From(settings.ResourceGroup!), settings.Location!, SubscriptionIdentifier.From(settings.SubscriptionId!));
 
         logger.LogInformation(kv.ToString());
 

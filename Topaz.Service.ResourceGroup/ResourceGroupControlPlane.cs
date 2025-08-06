@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Azure.Core;
 using Topaz.Service.ResourceGroup.Models;
 using Topaz.Service.ResourceGroup.Models.Requests;
 using Topaz.Service.Shared;
@@ -18,16 +19,16 @@ public sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider grou
             (OperationResult.Success, resource);
     }
 
-    public (OperationResult result, ResourceGroupResource resource) Create(string resourceGroupName, string subscriptionId, string location)
+    public (OperationResult result, ResourceGroupResource resource) Create(ResourceGroupIdentifier resourceGroup, SubscriptionIdentifier subscriptionId, AzureLocation location)
     {
-        var model = new ResourceGroupResource(subscriptionId, resourceGroupName, location, new ResourceGroupProperties());
+        var model = new ResourceGroupResource(subscriptionId, resourceGroup.Value, location, new ResourceGroupProperties());
 
-        groupResourceProvider.Create(resourceGroupName, model);
+        groupResourceProvider.Create(resourceGroup.Value, model);
 
         return (OperationResult.Created, model);
     }
 
-    public (OperationResult result, ResourceGroupResource resource) CreateOrUpdate(ResourceGroupIdentifier resourceGroup, string subscriptionId, CreateOrUpdateResourceGroupRequest request)
+    public (OperationResult result, ResourceGroupResource resource) CreateOrUpdate(ResourceGroupIdentifier resourceGroup, SubscriptionIdentifier subscriptionId, CreateOrUpdateResourceGroupRequest request)
     {
         var resource = groupResourceProvider.GetAs<ResourceGroupResource>(resourceGroup.Value);
         if (resource != null)
@@ -43,12 +44,12 @@ public sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider grou
         return (OperationResult.Created, newResource);
     }
     
-    public (OperationResult result, ResourceGroupResource[] resources) List(string subscriptionId)
+    public (OperationResult result, ResourceGroupResource[] resources) List(SubscriptionIdentifier subscriptionId)
     {
         var resources = groupResourceProvider.List();
         var groups = resources
             .Select(r => JsonSerializer.Deserialize<ResourceGroupResource>(r, GlobalSettings.JsonOptions)!)
-            .Where(g => g.Id.Contains(subscriptionId)).ToArray();
+            .Where(g => g.Id.Contains(subscriptionId.Value.ToString())).ToArray();
         
         return (OperationResult.Success,  groups);
     }

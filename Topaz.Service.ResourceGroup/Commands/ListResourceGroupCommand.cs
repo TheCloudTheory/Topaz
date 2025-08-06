@@ -2,6 +2,7 @@ using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.ResourceGroup.Commands;
@@ -14,7 +15,7 @@ public sealed class ListResourceGroupCommand(ITopazLogger logger) : Command<List
         logger.LogDebug($"Executing {nameof(ListResourceGroupCommand)}.{nameof(Execute)}.");
 
         var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
-        var operation = controlPlane.List(settings.SubscriptionId);
+        var operation = controlPlane.List(SubscriptionIdentifier.From(settings.SubscriptionId));
 
         logger.LogInformation(JsonSerializer.Serialize(operation.resources, GlobalSettings.JsonOptionsCli));
 

@@ -1,10 +1,12 @@
 using System.Text.Json;
 using System.Xml.Serialization;
+using Azure.Core;
 using Azure.Data.Tables.Models;
 using Azure.ResourceManager.Storage.Models;
 using Topaz.ResourceManager;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Models.Requests;
 using Topaz.Shared;
@@ -29,7 +31,7 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         return resource == null ? (OperationResult.Failed, null) : (OperationResult.Success, resource);
     }
 
-    public (OperationResult result, StorageAccountResource? resource) Create(string storageAccountName, string resourceGroupName, string location, string subscriptionId)
+    public (OperationResult result, StorageAccountResource? resource) Create(string storageAccountName, ResourceGroupIdentifier resourceGroup, AzureLocation location, SubscriptionIdentifier subscriptionId)
     {
         var storageAccount = provider.Get(storageAccountName);
         if (string.IsNullOrEmpty(storageAccount) == false)
@@ -43,7 +45,7 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
             Name = StorageSkuName.StandardLrs.ToString()
         };
         var properties = new StorageAccountProperties();
-        var resource = new StorageAccountResource(subscriptionId, resourceGroupName, storageAccountName, location, sku, StorageKind.StorageV2.ToString(), properties);
+        var resource = new StorageAccountResource(subscriptionId, resourceGroup, storageAccountName, location, sku, StorageKind.StorageV2.ToString(), properties);
 
         provider.Create(storageAccountName, resource);
         
@@ -90,16 +92,20 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
     {
         return provider.GetServiceInstancePath(storageAccountName);
     }
-    
-    public (OperationResult result, StorageAccountResource resource) CreateOrUpdate(string subscriptionId, string resourceGroupName, string storageAccountName, CreateOrUpdateStorageAccountRequest request)
+
+    public (OperationResult result, StorageAccountResource resource) CreateOrUpdate(
+        SubscriptionIdentifier subscriptionId, ResourceGroupIdentifier resourceGroup, string storageAccountName,
+        CreateOrUpdateStorageAccountRequest request)
     {
         var existingAccount = provider.Get(storageAccountName);
-        var resource = new StorageAccountResource(subscriptionId, resourceGroupName, storageAccountName, request.Location!, request.Sku!, request.Kind!, request.Properties!);
-        
+        var resource = new StorageAccountResource(subscriptionId, resourceGroup, storageAccountName, request.Location!,
+            request.Sku!, request.Kind!, request.Properties!);
+
         provider.CreateOrUpdate(storageAccountName, resource);
-        
+
         InitializeServicePropertiesFiles(storageAccountName);
-        
-        return (string.IsNullOrWhiteSpace(existingAccount) ? OperationResult.Created : OperationResult.Updated, resource);
+
+        return (string.IsNullOrWhiteSpace(existingAccount) ? OperationResult.Created : OperationResult.Updated,
+            resource);
     }
 }

@@ -29,7 +29,7 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
 
         var response = new HttpResponseMessage();
         
-        var subscriptionId = path.ExtractValueFromPath(2);
+        var subscriptionId = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
         var resourceGroupName = path.ExtractValueFromPath(4);
 
         try
@@ -38,23 +38,11 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
             {
                 case "PUT":
                 {
-                    if (string.IsNullOrEmpty(subscriptionId) || string.IsNullOrEmpty(resourceGroupName))
-                    {
-                        response.StatusCode = HttpStatusCode.BadRequest;
-                        break;
-                    }
-                    
                     HandleCreateOrUpdateResourceGroup(subscriptionId, ResourceGroupIdentifier.From(resourceGroupName), input, response);
                     break;
                 }
                 case "GET":
                 {
-                    if (string.IsNullOrEmpty(subscriptionId))
-                    {
-                        response.StatusCode = HttpStatusCode.BadRequest;
-                        break;
-                    }
-
                     if (string.IsNullOrEmpty(resourceGroupName))
                     {
                         HandleListResourceGroup(subscriptionId, response);
@@ -103,7 +91,7 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
         response.StatusCode = HttpStatusCode.OK;
     }
 
-    private void HandleListResourceGroup(string subscriptionId, HttpResponseMessage response)
+    private void HandleListResourceGroup(SubscriptionIdentifier subscriptionId, HttpResponseMessage response)
     {
         var operation = _controlPlane.List(subscriptionId);
         if (operation.result == OperationResult.Failed)
@@ -129,7 +117,7 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
         response.Content = new StringContent(operation.resource.ToString());
     }
 
-    private void HandleCreateOrUpdateResourceGroup(string subscriptionId, ResourceGroupIdentifier resourceGroup, Stream input, HttpResponseMessage response)
+    private void HandleCreateOrUpdateResourceGroup(SubscriptionIdentifier subscriptionId, ResourceGroupIdentifier resourceGroup, Stream input, HttpResponseMessage response)
     {
         using var reader = new StreamReader(input);
         

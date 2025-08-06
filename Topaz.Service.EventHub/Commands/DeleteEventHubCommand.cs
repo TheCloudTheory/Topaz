@@ -1,22 +1,22 @@
+using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
 
+[UsedImplicitly]
 public class DeleteEventHubCommand(ITopazLogger logger) : Command<DeleteEventHubCommand.DeleteEventHubCommandSettings>
 {
-    private readonly ITopazLogger _topazLogger = logger;
-
     public override int Execute(CommandContext context, DeleteEventHubCommandSettings settings)
     {
-        this._topazLogger.LogDebug($"Executing {nameof(CreateEventHubCommand)}.{nameof(Execute)}.");
-        this._topazLogger.LogInformation($"Deleting {settings.Name} event hub...");
+        logger.LogDebug($"Executing {nameof(CreateEventHubCommand)}.{nameof(Execute)}.");
+        logger.LogInformation($"Deleting {settings.Name} event hub...");
 
-        var controlPlane = new EventHubServiceControlPlane(new ResourceProvider(this._topazLogger), _topazLogger);
+        var controlPlane = new EventHubServiceControlPlane(new ResourceProvider(logger), logger);
         controlPlane.Delete(settings.Name!, settings.NamespaceName!);
 
-        this._topazLogger.LogInformation($"Event hub {settings.Name} deleted.");
+        logger.LogInformation($"Event hub {settings.Name} deleted.");
 
         return 0;
     }
@@ -32,6 +32,7 @@ public class DeleteEventHubCommand(ITopazLogger logger) : Command<DeleteEventHub
             ? ValidationResult.Error("Namespace name can't be null.") : base.Validate(context, settings);
     }
     
+    [UsedImplicitly]
     public sealed class DeleteEventHubCommandSettings : CommandSettings
     {
         [CommandOption("-n|--name")]
