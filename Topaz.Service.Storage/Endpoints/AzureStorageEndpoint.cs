@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models.Requests;
 using Topaz.Service.Storage.Models.Responses;
 using Topaz.Shared;
@@ -29,14 +30,13 @@ public class AzureStorageEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         try
         {
-            var subscriptionId = path.ExtractValueFromPath(2);
-            var resourceGroupName = path.ExtractValueFromPath(4);
+            var subscriptionId = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
+            var resourceGroupName = ResourceGroupIdentifier.From(path.ExtractValueFromPath(4));
             var storageAccountName = path.ExtractValueFromPath(8);
             
-            if (string.IsNullOrWhiteSpace(subscriptionId) || string.IsNullOrWhiteSpace(resourceGroupName) ||
-                string.IsNullOrWhiteSpace(storageAccountName))
+            if (string.IsNullOrWhiteSpace(storageAccountName))
             {
-                logger.LogDebug($"Executing {nameof(GetResponse)}: No subscription ID, resource group name or account name provided.");
+                logger.LogDebug($"Executing {nameof(GetResponse)}: No account name provided.");
                 
                 response.StatusCode = HttpStatusCode.BadRequest;
                 return response;
@@ -72,13 +72,13 @@ public class AzureStorageEndpoint(ITopazLogger logger) : IEndpointDefinition
         return response;
     }
 
-    private void HandleListKeysRequest(HttpResponseMessage response, string resourceGroupName, string storageAccountName)
+    private void HandleListKeysRequest(HttpResponseMessage response, ResourceGroupIdentifier resourceGroup, string storageAccountName)
     {
         var storageAccount = _controlPlane.Get(storageAccountName);
         if (storageAccount.result == OperationResult.NotFound || storageAccount.resource == null)
         {
             logger.LogInformation($"Storage account [{storageAccountName}] not found.");
-            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode, $"Microsoft.Storage/storageAccounts/{storageAccountName}", resourceGroupName);
+            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode, $"Microsoft.Storage/storageAccounts/{storageAccountName}", resourceGroup);
             
             return;
         }
@@ -108,13 +108,13 @@ public class AzureStorageEndpoint(ITopazLogger logger) : IEndpointDefinition
         response.StatusCode = HttpStatusCode.OK;
     }
 
-    private void HandleGetStorageAccount(HttpResponseMessage response, string resourceGroupName, string storageAccountName)
+    private void HandleGetStorageAccount(HttpResponseMessage response, ResourceGroupIdentifier resourceGroup, string storageAccountName)
     {
         var storageAccount = _controlPlane.Get(storageAccountName);
         if (storageAccount.result == OperationResult.NotFound || storageAccount.resource == null)
         {
             logger.LogInformation($"Storage account [{storageAccountName}] not found.");
-            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode, $"Microsoft.Storage/storageAccounts/{storageAccountName}", resourceGroupName);
+            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode, $"Microsoft.Storage/storageAccounts/{storageAccountName}", resourceGroup);
             
             return;
         }
@@ -123,7 +123,7 @@ public class AzureStorageEndpoint(ITopazLogger logger) : IEndpointDefinition
         response.Content = new StringContent(storageAccount.resource.ToString());
     }
 
-    private void HandleCreateOrUpdateStorageAccount(HttpResponseMessage response, string subscriptionId, string resourceGroupName, string storageAccountName, Stream input)
+    private void HandleCreateOrUpdateStorageAccount(HttpResponseMessage response, SubscriptionIdentifier subscriptionId, ResourceGroupIdentifier resourceGroup, string storageAccountName, Stream input)
     {
         using var reader = new StreamReader(input);
         
@@ -138,7 +138,7 @@ public class AzureStorageEndpoint(ITopazLogger logger) : IEndpointDefinition
             return;
         }
         
-        var result = _controlPlane.CreateOrUpdate(subscriptionId, resourceGroupName, storageAccountName, request);
+        var result = _controlPlane.CreateOrUpdate(subscriptionId, resourceGroup, storageAccountName, request);
 
         response.Content = new StringContent(result.resource.ToString());
         response.StatusCode = HttpStatusCode.OK;

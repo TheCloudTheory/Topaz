@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
+using Azure.Core;
 using Topaz.ResourceManager;
+using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ResourceGroup.Models;
 
@@ -13,9 +15,9 @@ public sealed class ResourceGroupResource
     {
     }
     
-    public ResourceGroupResource(string subscriptionId,
+    public ResourceGroupResource(SubscriptionIdentifier subscriptionId,
         string name,
-        string location,
+        AzureLocation location,
         ResourceGroupProperties properties)
     {
         Id = $"/subscriptions/{subscriptionId}/resourceGroups/{name}";

@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.KeyVault.Models.Requests;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Endpoints;
@@ -23,17 +24,16 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         try
         {
-            var subscriptionId = path.ExtractValueFromPath(2);
-            var resourceGroupName = path.ExtractValueFromPath(4);
+            var subscriptionId = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
+            var resourceGroupName = ResourceGroupIdentifier.From(path.ExtractValueFromPath(4));
             var keyVaultName = path.ExtractValueFromPath(8);
             
             switch (method)
             {
                 case "PUT":
-                    if (string.IsNullOrWhiteSpace(subscriptionId) || string.IsNullOrWhiteSpace(resourceGroupName) ||
-                        string.IsNullOrWhiteSpace(keyVaultName))
+                    if (string.IsNullOrWhiteSpace(keyVaultName))
                     {
-                        logger.LogDebug($"Executing {nameof(GetResponse)}: Can't process request if subscriptionId, resource group name or Key Vault name is empty.");
+                        logger.LogDebug($"Executing {nameof(GetResponse)}: Can't process request if Key Vault name is empty.");
                         response.StatusCode = HttpStatusCode.BadRequest;
                         break;
                     }
@@ -41,10 +41,9 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
                     HandleCreateUpdateKeyVaultRequest(response, subscriptionId, resourceGroupName, keyVaultName, input);
                     break;
                 case "GET":
-                    if (string.IsNullOrWhiteSpace(subscriptionId) || string.IsNullOrWhiteSpace(resourceGroupName) ||
-                        string.IsNullOrWhiteSpace(keyVaultName))
+                    if (string.IsNullOrWhiteSpace(keyVaultName))
                     {
-                        logger.LogDebug($"Executing {nameof(GetResponse)}: Can't process request if subscriptionId, resource group name or Key Vault name is empty.");
+                        logger.LogDebug($"Executing {nameof(GetResponse)}: Can't process request if Key Vault name is empty.");
                         response.StatusCode = HttpStatusCode.BadRequest;
                         break;
                     }
@@ -81,10 +80,11 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
         response.Content = new StringContent(vault.resource.ToString());
     }
 
-    private void HandleCreateUpdateKeyVaultRequest(HttpResponseMessage response, string subscriptionId, string resourceGroupName, string keyVaultName, Stream input)
+    private void HandleCreateUpdateKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionId,
+        ResourceGroupIdentifier resourceGroup, string keyVaultName, Stream input)
     {
         using var reader = new StreamReader(input);
-        
+
         var content = reader.ReadToEnd();
         var request = JsonSerializer.Deserialize<CreateOrUpdateKeyVaultRequest>(content, GlobalSettings.JsonOptions);
 
@@ -93,13 +93,12 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
             response.StatusCode = HttpStatusCode.InternalServerError;
             return;
         }
-        
-        var result = _controlPlane.CreateOrUpdate(subscriptionId, resourceGroupName, keyVaultName, request);
+
+        var result = _controlPlane.CreateOrUpdate(subscriptionId, resourceGroup, keyVaultName, request);
 
         response.StatusCode = result.result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
-        
+
         // TODO: Once Key Vault is created, response should include full ARM response
         response.Content = new StringContent(result.resource.ToString());
-        
     }
 }

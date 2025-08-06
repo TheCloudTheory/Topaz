@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Azure.Core;
 using Topaz.Service.EventHub.Models;
 using Topaz.Service.EventHub.Models.Requests;
 using Topaz.Service.Shared;
@@ -10,7 +11,7 @@ namespace Topaz.Service.EventHub;
 internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITopazLogger logger)
 {
     public (OperationResult result, EventHubNamespaceResource? resource) CreateOrUpdateNamespace(
-        SubscriptionIdentifier subscription, ResourceGroupIdentifier resourceGroup, string location,
+        SubscriptionIdentifier subscription, ResourceGroupIdentifier resourceGroup, AzureLocation location,
         EventHubNamespaceIdentifier @namespace, CreateOrUpdateEventHubNamespaceRequest request)
     {
         var existingNamespace = provider.GetAs<EventHubNamespaceResource>(@namespace.Value);

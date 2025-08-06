@@ -1,3 +1,4 @@
+using Azure.Core;
 using Topaz.Service.ServiceBus.Models;
 using Topaz.Service.ServiceBus.Models.Requests;
 using Topaz.Service.Shared;
@@ -8,7 +9,7 @@ namespace Topaz.Service.ServiceBus;
 
 internal sealed class ServiceBusServiceControlPlane(ResourceProvider provider, ITopazLogger logger)
 {
-    public (OperationResult result, ServiceBusNamespaceResource? resource) CreateOrUpdateNamespace(SubscriptionIdentifier subscription, ResourceGroupIdentifier resourceGroup, string location,
+    public (OperationResult result, ServiceBusNamespaceResource? resource) CreateOrUpdateNamespace(SubscriptionIdentifier subscription, ResourceGroupIdentifier resourceGroup, AzureLocation location,
         ServiceBusNamespaceIdentifier @namespace, CreateOrUpdateServiceBusNamespaceRequest request)
     {
         var existingNamespace = provider.GetAs<ServiceBusNamespaceResource>(@namespace.Value);

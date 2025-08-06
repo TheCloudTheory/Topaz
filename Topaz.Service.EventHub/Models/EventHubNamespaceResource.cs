@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Azure.Core;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
 
@@ -16,7 +17,7 @@ internal sealed class EventHubNamespaceResource
     
     public EventHubNamespaceResource(SubscriptionIdentifier subscription,
         ResourceGroupIdentifier resourceGroup,
-        string location,
+        AzureLocation location,
         EventHubNamespaceIdentifier identifier,
         EventHubNamespaceResourceProperties properties)
     {

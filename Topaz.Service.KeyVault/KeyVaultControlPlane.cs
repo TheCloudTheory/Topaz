@@ -1,21 +1,24 @@
+using Azure.Core;
 using Topaz.Service.KeyVault.Models;
 using Topaz.Service.KeyVault.Models.Requests;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.KeyVault;
 
 internal sealed class KeyVaultControlPlane(ResourceProvider provider)
 {
-    public Models.KeyVault Create(string name, string resourceGroup, string location, string subscriptionId)
+    public Models.KeyVault Create(string name, ResourceGroupIdentifier resourceGroup, AzureLocation location, SubscriptionIdentifier subscriptionId)
     {
-        var model = new Models.KeyVault(name, resourceGroup, location, subscriptionId);
+        var model = new Models.KeyVault(name, resourceGroup.Value, location, subscriptionId.Value.ToString());
 
         provider.Create(name, model);
 
         return model;
     }
-    
-    public (OperationResult result, KeyVaultResource resource) CreateOrUpdate(string subscriptionId, string resourceGroupName, string keyVaultName, CreateOrUpdateKeyVaultRequest request)
+
+    public (OperationResult result, KeyVaultResource resource) CreateOrUpdate(SubscriptionIdentifier subscriptionId,
+        ResourceGroupIdentifier resourceGroup, string keyVaultName, CreateOrUpdateKeyVaultRequest request)
     {
         var properties = new KeyVaultResourceProperties
         {
@@ -26,8 +29,8 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
             },
             TenantId = request.Properties.TenantId
         };
-        
-        var resource = new KeyVaultResource(subscriptionId, resourceGroupName, keyVaultName, request.Location, properties);
+
+        var resource = new KeyVaultResource(subscriptionId, resourceGroup, keyVaultName, request.Location, properties);
         provider.CreateOrUpdate(keyVaultName, resource);
 
         // This operation must also support handling operation result when Key Vault was updated

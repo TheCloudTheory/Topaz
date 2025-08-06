@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
+using Azure.Core;
 using Azure.ResourceManager.Storage.Models;
 using Topaz.ResourceManager;
+using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.Storage.Models;
 
@@ -14,10 +16,10 @@ internal sealed class StorageAccountResource
     {
     }
 
-    public StorageAccountResource(string subscriptionId,
-        string resourceGroupName,
+    public StorageAccountResource(SubscriptionIdentifier subscriptionId,
+        ResourceGroupIdentifier resourceGroupName,
         string name,
-        string location,
+        AzureLocation location,
         ResourceSku sku,
         string kind,
         StorageAccountProperties properties)

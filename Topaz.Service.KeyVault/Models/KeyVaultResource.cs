@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
+using Azure.Core;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.KeyVault.Models;
 
@@ -14,13 +16,13 @@ internal sealed class KeyVaultResource
     {
     }
 
-    public KeyVaultResource(string subscriptionId,
-        string resourceGroupName,
+    public KeyVaultResource(SubscriptionIdentifier subscriptionId,
+        ResourceGroupIdentifier resourceGroup,
         string name,
-        string location,
+        AzureLocation location,
         KeyVaultResourceProperties properties)
     {
-        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{name}";
+        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.KeyVault/vaults/{name}";
         Name = name;
         Location = location;
         Properties = properties;

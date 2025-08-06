@@ -3,6 +3,7 @@ using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.Storage.Commands;
 
@@ -14,7 +15,8 @@ public sealed class CreateStorageAccountCommand(ITopazLogger logger) : Command<C
         logger.LogInformation("Creating storage account...");
 
         var controlPlane = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
-        var sa = controlPlane.Create(settings.Name!, settings.ResourceGroup!, settings.Location!, settings.SubscriptionId!);
+        var sa = controlPlane.Create(settings.Name!, ResourceGroupIdentifier.From(settings.ResourceGroup!),
+            settings.Location!, SubscriptionIdentifier.From(settings.SubscriptionId!));
 
         if (sa.result == OperationResult.Failed || sa.resource == null)
         {
