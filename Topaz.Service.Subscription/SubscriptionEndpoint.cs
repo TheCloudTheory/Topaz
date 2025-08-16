@@ -84,6 +84,7 @@ public sealed class SubscriptionEndpoint(ResourceProvider provider, ITopazLogger
         if (subscriptionId == null)
         {
             response.StatusCode = HttpStatusCode.BadRequest;
+            response.Content = new StringContent($"Subscription ID can't be null.");
             return;
         }
         

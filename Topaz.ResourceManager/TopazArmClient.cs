@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using Topaz.Shared;
 
@@ -26,6 +27,14 @@ public sealed class TopazArmClient : IDisposable
         var content = new StringContent(JsonSerializer.Serialize(payload, GlobalSettings.JsonOptions));
         request.Content = content;
         var response = await _httpClient.SendAsync(request);
+        
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            // Throw a meaningful exception rather than a vague `Response status code does not indicate success: 400 (Bad Request).`
+            // This helps in debugging.
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(message);
+        }
         
         response.EnsureSuccessStatusCode();
     }
