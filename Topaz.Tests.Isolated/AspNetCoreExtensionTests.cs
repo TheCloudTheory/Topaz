@@ -18,7 +18,6 @@ namespace Topaz.Tests.Isolated;
 public class AspNetCoreExtensionTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
-    private static readonly Guid SubscriptionId = Guid.NewGuid();
     
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
@@ -58,6 +57,7 @@ public class AspNetCoreExtensionTests
     {
         // Arrange
         const string secretName = "connectionString-storageAccount";
+        var subscriptionId = Guid.NewGuid();
         var builder = new ConfigurationBuilder();
         var credentials = new AzureLocalCredential();
         var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(KeyVaultName), credential: credentials, new SecretClientOptions
@@ -66,9 +66,9 @@ public class AspNetCoreExtensionTests
         });
         
         // Act
-        await builder.AddTopaz(SubscriptionId)
-            .AddSubscription(SubscriptionId, SubscriptionName)
-            .AddResourceGroup(SubscriptionId, ResourceGroupName, AzureLocation.WestEurope)
+        await builder.AddTopaz(subscriptionId)
+            .AddSubscription(subscriptionId, SubscriptionName)
+            .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope)
             .AddStorageAccount(ResourceGroupIdentifier.From(ResourceGroupName), StorageAccountName,
                 new StorageAccountCreateOrUpdateContent(new StorageSku(StorageSkuName.StandardLrs),
                     StorageKind.StorageV2, AzureLocation.WestEurope))
@@ -80,7 +80,7 @@ public class AspNetCoreExtensionTests
                 secretName);
         
         var secret = await client.GetSecretAsync(secretName);
-        var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
         var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(StorageAccountName);
@@ -98,15 +98,16 @@ public class AspNetCoreExtensionTests
         // Arrange
         var builder = new ConfigurationBuilder();
         var credentials = new AzureLocalCredential();
+        var subscriptionId = Guid.NewGuid();
         
         // Act
-        await builder.AddTopaz(SubscriptionId)
-            .AddSubscription(SubscriptionId, SubscriptionName)
-            .AddResourceGroup(SubscriptionId, ResourceGroupName, AzureLocation.WestEurope)
+        await builder.AddTopaz(subscriptionId)
+            .AddSubscription(subscriptionId, SubscriptionName)
+            .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope)
             .AddServiceBusNamespace(ResourceGroupIdentifier.From(ResourceGroupName), ServiceBusNamespaceIdentifier.From(ServiceBusNamespaceName),
                 new ServiceBusNamespaceData(AzureLocation.WestEurope));
         
-        var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
         var @namespace = await resourceGroup.Value.GetServiceBusNamespaceAsync(ServiceBusNamespaceName);
