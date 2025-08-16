@@ -63,7 +63,7 @@ jobs:
         cp ./linux-x64/* publish/
         cp ./linux-arm64/* publish/
     - name: Log in to Docker Hub
-      uses: docker/login-action@3.4.0
+      uses: docker/login-action@3.5.0
       with:
         username: thecloudtheory
         password: ${{ secrets.DOCKER_PASSWORD }}
