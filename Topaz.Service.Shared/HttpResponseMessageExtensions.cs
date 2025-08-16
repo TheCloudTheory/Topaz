@@ -12,7 +12,7 @@ public static class HttpResponseMessageExtensions
     
     private const string ResourceNotFoundMessage = "Resource '{0}' under resource group '{1}' was not found";
     private const string ResourceGroupNotFoundMessage = "Resource group '{0}' was not found";
-    private const string EndpointNotFoundMessage = "Endpoint was not found for the request request '{0}' '{1}'";
+    private const string EndpointNotFoundMessage = "Endpoint was not found for the request '{0}' '{1}'";
     private const string InternalErrorMessage = "Internal error: {0}";
     
     public static void CreateErrorResponse(this HttpResponseMessage response, string code, params object[] args)

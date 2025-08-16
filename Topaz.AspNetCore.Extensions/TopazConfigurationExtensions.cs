@@ -134,6 +134,20 @@ public static class TopazConfigurationExtensions
         return concrete;
     }
 
+    /// <summary>
+    /// Stores an Azure Storage Account connection string as a secret in the specified Key Vault.
+    /// </summary>
+    /// <param name="builder">The task containing the TopazEnvironmentBuilder instance.</param>
+    /// <param name="resourceGroupIdentifier">The resource group containing the storage account and key vault.</param>
+    /// <param name="storageAccountName">The name of the storage account to get the connection string for.</param>
+    /// <param name="keyVaultName">The name of the Key Vault where the secret will be stored.</param>
+    /// <param name="secretName">The name of the secret that will contain the connection string.</param>
+    /// <param name="keyIndex">The index of the storage account key to use (default is 0 for primary key).</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the updated TopazEnvironmentBuilder.</returns>
+    /// <remarks>
+    /// This method retrieves the storage account keys, selects the key at the specified index,
+    /// generates a connection string using TopazResourceHelpers, and stores it as a Key Vault secret.
+    /// </remarks>
     public static async Task<TopazEnvironmentBuilder> AddStorageAccountConnectionStringAsSecret(
         this Task<TopazEnvironmentBuilder> builder, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string keyVaultName, string secretName, ushort keyIndex = 0)
     {
@@ -162,26 +176,43 @@ public static class TopazConfigurationExtensions
         return concrete;
     }
 
+    /// <summary>
+    /// Creates or updates an Azure Service Bus namespace in the specified resource group.
+    /// </summary>
+    /// <param name="builder">The task containing the TopazEnvironmentBuilder instance.</param>
+    /// <param name="resourceGroupIdentifier">The resource group where the Service Bus namespace will be created.</param>
+    /// <param name="namespaceIdentifier">The Service Bus namespace where the queue will be created.</param>
+    /// <param name="data">The Service Bus namespace configuration data.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the updated TopazEnvironmentBuilder.</returns>
     public static async Task<TopazEnvironmentBuilder> AddServiceBusNamespace(this Task<TopazEnvironmentBuilder> builder,
-        ResourceGroupIdentifier resourceGroupIdentifier, string namespaceName, ServiceBusNamespaceData data)
+        ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier, ServiceBusNamespaceData data)
     {
         var concrete = await builder;
         var subscription = await concrete.ArmClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupIdentifier.Value);
 
         _ = await resourceGroup.Value.GetServiceBusNamespaces()
-            .CreateOrUpdateAsync(WaitUntil.Completed, namespaceName, data);
+            .CreateOrUpdateAsync(WaitUntil.Completed, namespaceIdentifier.Value, data);
         
         return concrete;
     }
     
+    /// <summary>
+    /// Creates or updates an Azure Service Bus queue within the specified Service Bus namespace.
+    /// </summary>
+    /// <param name="builder">The task containing the TopazEnvironmentBuilder instance.</param>
+    /// <param name="resourceGroupIdentifier">The resource group containing the Service Bus namespace.</param>
+    /// <param name="namespaceIdentifier">The Service Bus namespace where the queue will be created.</param>
+    /// <param name="queueName">The name of the Service Bus queue to create or update.</param>
+    /// <param name="data">The Service Bus queue configuration data.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the updated TopazEnvironmentBuilder.</returns>
     public static async Task<TopazEnvironmentBuilder> AddServiceBusQueue(this Task<TopazEnvironmentBuilder> builder,
-        ResourceGroupIdentifier resourceGroupIdentifier, string namespaceName, string queueName, ServiceBusQueueData data)
+        ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier, string queueName, ServiceBusQueueData data)
     {
         var concrete = await builder;
         var subscription = await concrete.ArmClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupIdentifier.Value);
-        var @namespace = await resourceGroup.Value.GetServiceBusNamespaceAsync(namespaceName);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaceAsync(namespaceIdentifier.Value);
 
         _ = await @namespace.Value.GetServiceBusQueues().CreateOrUpdateAsync(WaitUntil.Completed, queueName, data);
         

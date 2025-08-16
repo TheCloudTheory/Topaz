@@ -25,6 +25,7 @@ public class AspNetCoreExtensionTests
     private const string StorageAccountName = "testsatopaz";
     private const string KeyVaultName = "kvtesttopaz";
     private const string ServiceBusNamespaceName = "sb-test";
+    private const string ServiceBusQueueName = "sb-queue-test";
 
     private IContainer? _container;
 
@@ -102,7 +103,7 @@ public class AspNetCoreExtensionTests
         await builder.AddTopaz(SubscriptionId)
             .AddSubscription(SubscriptionId, SubscriptionName)
             .AddResourceGroup(SubscriptionId, ResourceGroupName, AzureLocation.WestEurope)
-            .AddServiceBusNamespace(ResourceGroupIdentifier.From(ResourceGroupName), ServiceBusNamespaceName,
+            .AddServiceBusNamespace(ResourceGroupIdentifier.From(ResourceGroupName), ServiceBusNamespaceIdentifier.From(ServiceBusNamespaceName),
                 new ServiceBusNamespaceData(AzureLocation.WestEurope));
         
         var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
@@ -115,4 +116,31 @@ public class AspNetCoreExtensionTests
         Assert.That(@namespace.Value, Is.Not.Null);
         Assert.That(@namespace.Value.Data.Name, Is.EqualTo(ServiceBusNamespaceName));
     }
+    
+    /*[Test]
+    public async Task WhenServiceBusQueueIsCreated_ItMustBeAvailable()
+    {
+        // Arrange
+        var builder = new ConfigurationBuilder();
+        var credentials = new AzureLocalCredential();
+        
+        // Act
+        await builder.AddTopaz(SubscriptionId)
+            .AddSubscription(SubscriptionId, SubscriptionName)
+            .AddResourceGroup(SubscriptionId, ResourceGroupName, AzureLocation.WestEurope)
+            .AddServiceBusNamespace(ResourceGroupIdentifier.From(ResourceGroupName), ServiceBusNamespaceIdentifier.From(ServiceBusNamespaceName),
+                new ServiceBusNamespaceData(AzureLocation.WestEurope))
+            .AddServiceBusQueue(ResourceGroupIdentifier.From(ResourceGroupName), ServiceBusNamespaceIdentifier.From(ServiceBusNamespaceName), ServiceBusQueueName, new ServiceBusQueueData());
+        
+        var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaceAsync(ServiceBusNamespaceName);
+        var queue = await @namespace.Value.GetServiceBusQueueAsync(ServiceBusQueueName);
+
+        // Assert
+        Assert.That(queue, Is.Not.Null);
+        Assert.That(queue.Value, Is.Not.Null);
+        Assert.That(queue.Value.Data.Name, Is.EqualTo(ServiceBusQueueName));
+    }*/
 }
