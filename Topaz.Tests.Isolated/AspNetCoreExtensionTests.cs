@@ -32,7 +32,7 @@ public class AspNetCoreExtensionTests
     public async Task OneTimeSetUp()
     {
         _container = new ContainerBuilder()
-            .WithImage("thecloudtheory/topaz-cli:v1.0.155-alpha")
+            .WithImage("thecloudtheory/topaz-cli:v1.0.168-alpha")
             .WithPortBinding(8890)
             .WithPortBinding(8899)
             .WithPortBinding(8898)
@@ -118,30 +118,32 @@ public class AspNetCoreExtensionTests
         Assert.That(@namespace.Value.Data.Name, Is.EqualTo(ServiceBusNamespaceName));
     }
     
-    /*[Test]
+    [Test]
     public async Task WhenServiceBusQueueIsCreated_ItMustBeAvailable()
     {
         // Arrange
         var builder = new ConfigurationBuilder();
         var credentials = new AzureLocalCredential();
+        var subscriptionId = Guid.NewGuid();
+        const string namespaceName = "sb-test2";
         
         // Act
-        await builder.AddTopaz(SubscriptionId)
-            .AddSubscription(SubscriptionId, SubscriptionName)
-            .AddResourceGroup(SubscriptionId, ResourceGroupName, AzureLocation.WestEurope)
-            .AddServiceBusNamespace(ResourceGroupIdentifier.From(ResourceGroupName), ServiceBusNamespaceIdentifier.From(ServiceBusNamespaceName),
+        await builder.AddTopaz(subscriptionId)
+            .AddSubscription(subscriptionId, SubscriptionName)
+            .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope)
+            .AddServiceBusNamespace(ResourceGroupIdentifier.From(ResourceGroupName), ServiceBusNamespaceIdentifier.From(namespaceName),
                 new ServiceBusNamespaceData(AzureLocation.WestEurope))
-            .AddServiceBusQueue(ResourceGroupIdentifier.From(ResourceGroupName), ServiceBusNamespaceIdentifier.From(ServiceBusNamespaceName), ServiceBusQueueName, new ServiceBusQueueData());
+            .AddServiceBusQueue(ResourceGroupIdentifier.From(ResourceGroupName), ServiceBusNamespaceIdentifier.From(namespaceName), ServiceBusQueueName, new ServiceBusQueueData());
         
-        var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
-        var @namespace = await resourceGroup.Value.GetServiceBusNamespaceAsync(ServiceBusNamespaceName);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaceAsync(namespaceName);
         var queue = await @namespace.Value.GetServiceBusQueueAsync(ServiceBusQueueName);
 
         // Assert
         Assert.That(queue, Is.Not.Null);
         Assert.That(queue.Value, Is.Not.Null);
         Assert.That(queue.Value.Data.Name, Is.EqualTo(ServiceBusQueueName));
-    }*/
+    }
 }
