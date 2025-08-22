@@ -8,7 +8,13 @@ internal sealed class GetMetadataEndpointResponse
     public IReadOnlyDictionary<string, string> Endpoints => new Dictionary<string, string>
     {
         { "resourceManager", "https://localhost:8899" },
-        { "graphEndpoint", "https://localhost:8899" }
+        { "graphEndpoint", "https://localhost:8899" },
+        { "microsoftGraphResourceId", "https://localhost:8899" }
+    };
+    
+    public IReadOnlyDictionary<string, string> Suffixes => new Dictionary<string, string>
+    {
+        { "keyvaultDns", "https://localhost:8899" }
     };
 
     public AuthenticationMetadata Authentication => new AuthenticationMetadata();

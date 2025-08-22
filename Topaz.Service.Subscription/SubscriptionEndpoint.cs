@@ -15,6 +15,7 @@ public sealed class SubscriptionEndpoint(ResourceProvider provider, ITopazLogger
     private readonly SubscriptionControlPlane _controlPlane = new(provider);
     public string[] Endpoints => [
         "GET /subscriptions/{subscriptionId}",
+        "GET /subscriptions/{subscriptionId}/resources",
         "POST /subscriptions/{subscriptionId}",
         "GET /subscriptions"
     ];
