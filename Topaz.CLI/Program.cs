@@ -86,6 +86,7 @@ internal class Program
             config.AddBranch("keyvault", keyVault => {
                 keyVault.AddCommand<CreateKeyVaultCommand>("create");
                 keyVault.AddCommand<DeleteKeyVaultCommand>("delete");
+                keyVault.AddCommand<CheckKeyVaultNameCommand>("check-name");
             });
 
             config.AddBranch("subscription", subscription => {

@@ -13,7 +13,9 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
     private readonly KeyVaultControlPlane _controlPlane = new(new ResourceProvider(logger));
     public string[] Endpoints => [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
+        "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkNameAvailability",
+        "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkMhsmNameAvailability"
     ];
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query, GlobalOptions options)
@@ -50,6 +52,9 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
                     
                     HandleGetKeyVaultRequest(response, keyVaultName);
                     break;
+                case "POST":
+                    HandleCheckNameRequest(response, input);
+                    break;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
                     break;
@@ -64,6 +69,25 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
         
         return response;
+    }
+
+    private void HandleCheckNameRequest(HttpResponseMessage response, Stream input)
+    {
+        using var reader = new StreamReader(input);
+
+        var content = reader.ReadToEnd();
+        var request = JsonSerializer.Deserialize<CheckNameKeyVaultRequest>(content, GlobalSettings.JsonOptions);
+
+        if (request == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        var result = _controlPlane.CheckName(request.Name, request.Type);
+        
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(JsonSerializer.Serialize(result.response, GlobalSettings.JsonOptions));
     }
 
     private void HandleGetKeyVaultRequest(HttpResponseMessage response, string keyVaultName)
@@ -97,8 +121,6 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
         var result = _controlPlane.CreateOrUpdate(subscriptionId, resourceGroup, keyVaultName, request);
 
         response.StatusCode = result.result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
-
-        // TODO: Once Key Vault is created, response should include full ARM response
         response.Content = new StringContent(result.resource.ToString());
     }
 }

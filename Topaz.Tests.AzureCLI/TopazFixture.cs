@@ -12,7 +12,11 @@ public class TopazFixture
                                                          {
                                                            "endpoints":{
                                                              "resourceManager": "https://topaz:8899",
-                                                             "activeDirectoryGraphResourceId": "https://topaz:8899/"
+                                                             "activeDirectoryGraphResourceId": "https://topaz:8899/",
+                                                             "microsoft_graph_resource_id": "https://topaz:8899/"
+                                                           },
+                                                           "suffixes": {
+                                                             "keyvault_dns": "https://topaz:8899/",
                                                            }
                                                          }
                                                          """;
