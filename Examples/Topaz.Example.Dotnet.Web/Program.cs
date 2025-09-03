@@ -16,7 +16,7 @@ var storageAccountName = builder.Configuration["Azure:StorageAccountName"]!;
 if (builder.Environment.IsDevelopment())
 {
     var container = new ContainerBuilder()
-        .WithImage("thecloudtheory/topaz-cli:v1.0.116-alpha")
+        .WithImage("thecloudtheory/topaz-cli:v1.0.168-alpha")
         .WithPortBinding(8890)
         .WithPortBinding(8899)
         .WithPortBinding(8898)
