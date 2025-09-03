@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MassTransit;
 
 namespace Topaz.Examples.MassTransit;
@@ -8,9 +9,19 @@ public class Worker(IBus bus) : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await bus.Publish(new ExampleMessage(DateTimeOffset.Now), stoppingToken);
-
-            await Task.Delay(1000, stoppingToken);
+            try
+            {
+                var message = new ExampleMessage(DateTimeOffset.Now);
+                await bus.Publish(message, stoppingToken);
+                await Task.Delay(1000, stoppingToken);
+                
+                Console.WriteLine($"Message dispatched: {JsonSerializer.Serialize(message)}");
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine(e);
+                throw;
+            }
         }
     }
 }

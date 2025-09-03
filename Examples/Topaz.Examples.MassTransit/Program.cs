@@ -1,19 +1,28 @@
+using Azure.Core;
+using Azure.ResourceManager.ServiceBus;
+using DotNet.Testcontainers.Builders;
 using MassTransit;
+using Topaz.AspNetCore.Extensions;
+using Topaz.Examples.MassTransit;
+using Topaz.ResourceManager;
+using Topaz.Service.Shared.Domain;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
 builder.Services.AddMassTransit(x =>
 {
     x.UsingAzureServiceBus((context,cfg) =>
     {
-        cfg.Host("your connection string");
-
+        cfg.Host(TopazResourceHelpers.GetServiceBusConnectionString());
         cfg.ConfigureEndpoints(context);
     });
+    
+    x.AddHostedService<Worker>();
+    x.AddConsumer<MessageConsumer>();
 });
+
 
 var app = builder.Build();
 
@@ -22,6 +31,31 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    
+    var container = new ContainerBuilder()
+        .WithImage("thecloudtheory/topaz-cli:v1.0.168-alpha")
+        .WithPortBinding(8890)
+        .WithPortBinding(8899)
+        .WithPortBinding(8898)
+        .WithPortBinding(8897)
+        .WithPortBinding(8891)
+        .WithPortBinding(8889)
+        .Build();
+
+    await container.StartAsync()
+        .ConfigureAwait(false);
+
+    await Task.Delay(5000);
+    
+    var subscriptionId = Guid.NewGuid();
+    const string resourceGroupName = "rg-topaz-masstransit-example";
+    
+    await builder.Configuration.AddTopaz(subscriptionId)
+        .AddSubscription(subscriptionId, "topaz-masstransit-example")
+        .AddResourceGroup(subscriptionId, resourceGroupName, AzureLocation.WestEurope)
+        .AddServiceBusNamespace(ResourceGroupIdentifier.From(resourceGroupName), ServiceBusNamespaceIdentifier.From("sbnamespace"),
+            new ServiceBusNamespaceData(AzureLocation.WestEurope))
+        .AddServiceBusQueue(ResourceGroupIdentifier.From(resourceGroupName), ServiceBusNamespaceIdentifier.From("sbnamespace"), "sbqueue", new ServiceBusQueueData());
 }
 
 app.UseHttpsRedirection();
