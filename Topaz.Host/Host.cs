@@ -48,13 +48,20 @@ public class Host(GlobalOptions options, ITopazLogger logger)
 
         // Topaz requires elevated permissions to run as there may be operations (like modifying entries
         // in the hosts file), which will require them to function properly.
-        if (!Environment.IsPrivilegedProcess)
+        if (!Environment.IsPrivilegedProcess && !options.SkipRegistrationOfDnsEntries)
         {
-            Console.Error.WriteLine("Topaz.Host - Not Privileged! You must run Topaz with elevated permissions in order for it to work properly.");
+            Console.Error.WriteLine("Topaz.Host - Not Privileged! You must run Topaz with elevated permissions in order for it to work properly. If you want to run Topaz without elevated permissions, use `--skip-dns-registration` option and set it to `true`.");
             return;
         }
-        
-        _dnsManager.ConfigureEntries();
+
+        if (!options.SkipRegistrationOfDnsEntries)
+        {
+            _dnsManager.ConfigureEntries();
+        }
+        else
+        {
+            Console.WriteLine("Registration of DNS entries is disabled. Make sure you've added those entries manually before running Topaz.");
+        }
         
         var httpEndpoints = new List<IEndpointDefinition>();
         var amqpEndpoints = new List<IEndpointDefinition>();

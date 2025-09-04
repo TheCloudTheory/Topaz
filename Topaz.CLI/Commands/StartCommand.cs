@@ -25,7 +25,8 @@ internal sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.S
         {
             TenantId = settings.TenantId,
             CertificateFile = settings.CertificateFile,
-            CertificateKey = settings.CertificateKey
+            CertificateKey = settings.CertificateKey,
+            SkipRegistrationOfDnsEntries = settings.SkipRegistrationOfDnsEntries
         }, logger);
 
         host.Start();
@@ -37,11 +38,9 @@ internal sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.S
     public sealed class StartCommandSettings : CommandSettings
     {
         [CommandOption("-l|--log-level")] public LogLevel? LogLevel { get; set; }
-
         [CommandOption("--tenant-id")] public Guid? TenantId { get; set; }
-        
         [CommandOption("--certificate-file")] public string? CertificateFile { get; set; }
-        
         [CommandOption("--certificate-key")] public string? CertificateKey { get; set; }
+        [CommandOption("--skip-dns-registration")] public bool SkipRegistrationOfDnsEntries { get; set; }
     }
 }
