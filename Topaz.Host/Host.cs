@@ -45,6 +45,14 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             new TopazCloudEnvironmentService(),
             new ServiceBusService(logger)
         };
+
+        // Topaz requires elevated permissions to run as there may be operations (like modifying entries
+        // in the hosts file), which will require them to function properly.
+        if (!Environment.IsPrivilegedProcess)
+        {
+            Console.Error.WriteLine("Topaz.Host - Not Privileged! You must run Topaz with elevated permissions in order for it to work properly.");
+            return;
+        }
         
         _dnsManager.ConfigureEntries();
         
