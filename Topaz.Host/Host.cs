@@ -26,6 +26,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
     private static readonly List<Thread> Threads = [];
 
     private readonly Router _router = new(options, logger);
+    private readonly DnsManager _dnsManager = new DnsManager();
 
     public void Start()
     {
@@ -44,6 +45,8 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             new TopazCloudEnvironmentService(),
             new ServiceBusService(logger)
         };
+        
+        _dnsManager.ConfigureEntries();
         
         var httpEndpoints = new List<IEndpointDefinition>();
         var amqpEndpoints = new List<IEndpointDefinition>();
