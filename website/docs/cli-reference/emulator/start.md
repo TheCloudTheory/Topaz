@@ -11,6 +11,7 @@ Starts the emulator.
 * `--tenant-id` - Configures the tenant ID used when providing metadata endpoints
 * `--certificate-file` - Allows you to bring your own certificate (BYOC). Must be an RFC 7468 PEM-encoded certificate.
 * `--certificate-key` - Allows you to bring your own certificate (BYOC)
+* `--skip-dns-registration` - Allows you to skip DNS entries registration in the `hosts` file so you can run Topaz without elevated permissions
 
 ## Examples
 
