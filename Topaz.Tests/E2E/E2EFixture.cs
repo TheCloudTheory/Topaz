@@ -11,6 +11,7 @@ public class E2EFixture
         await Program.Main([
                 "start",
                 "--log-level=Information",
+                "--skip-dns-registration"
             ]);
 
         await Task.Delay(1000);
