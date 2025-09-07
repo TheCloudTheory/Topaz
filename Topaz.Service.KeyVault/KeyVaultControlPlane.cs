@@ -61,4 +61,16 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
         
         return (OperationResult.Success, new CheckNameResponse { NameAvailable = false });
     }
+    
+    public (OperationResult result, KeyVaultResource?[]? resource) ListBySubscription(SubscriptionIdentifier subscriptionId)
+    {
+        var resources = provider.ListAs<KeyVaultResource>();
+        if (resources == null)
+        {
+            return (OperationResult.Failed,null);
+        }
+        
+        var filteredResources = resources.Where(resource => resource != null && resource.Id.Contains(subscriptionId.Value.ToString()));
+        return  (OperationResult.Success, filteredResources.ToArray());
+    }
 }

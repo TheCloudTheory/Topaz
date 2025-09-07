@@ -16,7 +16,7 @@ public class TopazFixture
                                                              "microsoft_graph_resource_id": "https://topaz:8899/"
                                                            },
                                                            "suffixes": {
-                                                             "keyvault_dns": "https://topaz:8899/",
+                                                             "keyvault_dns": "https://topaz:8899/"
                                                            }
                                                          }
                                                          """;
@@ -53,7 +53,7 @@ public class TopazFixture
             .WithName("topaz")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateKey), "/app/topaz.key")
-            .WithCommand("start", "--tenant-id", TenantId, "--certificate-file", "topaz.crt", "--certificate-key", "topaz.key")
+            .WithCommand("start", "--tenant-id", TenantId, "--certificate-file", "topaz.crt", "--certificate-key", "topaz.key", "--skip-dns-registration")
             .Build();
 
         await _containerTopaz.StartAsync()

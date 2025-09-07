@@ -35,7 +35,7 @@ public class SubscriptionTests
         var armClient = new ArmClient(credentials, Guid.Empty.ToString(), ArmClientOptions);
         
         // Act
-        var subscription = armClient.GetDefaultSubscription();
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
 
         // Assert
         Assert.Multiple(() =>

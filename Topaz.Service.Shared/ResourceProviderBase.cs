@@ -48,10 +48,10 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return json;
     }
 
-    public virtual IEnumerable<string> List()
+    public IEnumerable<string> List()
     {
         var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath);
-        if (Directory.Exists(servicePath) == false)
+        if (!Directory.Exists(servicePath))
         {
             _logger.LogWarning("Trying to list resources for a non-existing service. If you see this warning, make sure you created a service (e.g subscription) before accessing its data.");
             return [];
@@ -60,6 +60,12 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var metadataFiles = Directory.EnumerateFiles(servicePath, "metadata.json", SearchOption.AllDirectories);
 
         return metadataFiles.Select(File.ReadAllText);
+    }
+
+    public IEnumerable<T?>? ListAs<T>()
+    {
+        var contents = List();
+        return contents.Select(file => JsonSerializer.Deserialize<T>(file, GlobalSettings.JsonOptions));
     }
 
     public void Create<TModel>(string id, TModel model)

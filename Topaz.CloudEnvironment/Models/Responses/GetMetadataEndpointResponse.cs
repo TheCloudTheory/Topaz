@@ -17,6 +17,8 @@ internal sealed class GetMetadataEndpointResponse
         { "keyvaultDns", "https://localhost:8899" }
     };
 
+    public string Name => "Topaz";
+
     public AuthenticationMetadata Authentication => new AuthenticationMetadata();
 
     internal class AuthenticationMetadata
