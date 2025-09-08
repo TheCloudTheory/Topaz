@@ -1,3 +1,3 @@
 #!/bin/bash
 
-openssl pkcs12 -inkey localhost.key -in localhost.crt -export -out localhost.pfx
+openssl pkcs12 -inkey topaz.key -in topaz.crt -export -out topaz.pfx

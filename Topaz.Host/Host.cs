@@ -23,10 +23,16 @@ namespace Topaz.Host;
 
 public class Host(GlobalOptions options, ITopazLogger logger)
 {
+    /// <summary>
+    /// IP address used by Topaz to listen to incoming requests. Note that address is controlled by the
+    /// host itself while ports and protocols are the responsibility of appropriate services.
+    /// </summary>
+    private const string TopazIpAddress = "127.0.2.1";
+    
     private static readonly List<Thread> Threads = [];
 
     private readonly Router _router = new(options, logger);
-    private readonly DnsManager _dnsManager = new DnsManager();
+    private readonly DnsManager _dnsManager = new();
 
     public void Start()
     {
@@ -87,7 +93,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
     {
         foreach (var endpoint in endpoints)
         {
-            var address = new Address($"amqp://localhost:{endpoint.PortAndProtocol.Port}");
+            var address = new Address($"amqp://{TopazIpAddress}:{endpoint.PortAndProtocol.Port}");
             var listener = new ContainerHost(address);
             
             // TODO: Support other authentication mechanism besides CBS
@@ -145,14 +151,14 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                     switch (httpEndpoint.PortAndProtocol.Protocol)
                     {
                         case Protocol.Http:
-                            hostOptions.Listen(IPAddress.Any, httpEndpoint.PortAndProtocol.Port);
+                            hostOptions.Listen(IPAddress.Parse(TopazIpAddress), httpEndpoint.PortAndProtocol.Port);
                             break;
                         case Protocol.Https:
-                            hostOptions.Listen(IPAddress.Any, httpEndpoint.PortAndProtocol.Port, listenOptions =>
+                            hostOptions.Listen(IPAddress.Parse(TopazIpAddress), httpEndpoint.PortAndProtocol.Port, listenOptions =>
                             {
                                 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                                 {
-                                    listenOptions.UseHttps("localhost.pfx", "qwerty");
+                                    listenOptions.UseHttps("topaz.pfx", "qwerty");
                                 }
                                 else
                                 {
@@ -209,8 +215,8 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         }
         else
         {
-            certPem = File.ReadAllText("localhost.crt");
-            keyPem = File.ReadAllText("localhost.key");
+            certPem = File.ReadAllText("topaz.crt");
+            keyPem = File.ReadAllText("topaz.key");
         }
                                     
         var x509 = X509Certificate2.CreateFromPem(certPem, keyPem);

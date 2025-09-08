@@ -12,7 +12,7 @@ public static class TopazResourceHelpers
     /// <remarks>
     /// The endpoint uses the localhost address with the default Key Vault port defined in GlobalSettings.
     /// </remarks>
-    public static Uri GetKeyVaultEndpoint(string vaultName) => new($"https://localhost:{GlobalSettings.DefaultKeyVaultPort}/{vaultName}");
+    public static Uri GetKeyVaultEndpoint(string vaultName) => new($"https://topaz.local.dev:{GlobalSettings.DefaultKeyVaultPort}/{vaultName}");
 
      /// <summary>
     /// Generates an Azure Storage connection string for local development/testing.
@@ -24,7 +24,7 @@ public static class TopazResourceHelpers
     /// All endpoints use HTTP protocol for local development.
     /// </remarks>
     public static string GetAzureStorageConnectionString(string storageAccountName, string accountKey) =>
-        $"DefaultEndpointsProtocol=http;AccountName={storageAccountName};AccountKey={accountKey};BlobEndpoint=http://127.0.0.1:{GlobalSettings.DefaultBlobStoragePort}/{storageAccountName};QueueEndpoint=http://localhost:8899;TableEndpoint=http://localhost:{GlobalSettings.DefaultTableStoragePort}/storage/{storageAccountName};";
+        $"DefaultEndpointsProtocol=http;AccountName={storageAccountName};AccountKey={accountKey};BlobEndpoint=http://topaz.storage.blob.local.dev:{GlobalSettings.DefaultBlobStoragePort}/{storageAccountName};QueueEndpoint=http://topaz.storage.queue.local.dev:8899;TableEndpoint=http://topaz.storage.table.local.dev:{GlobalSettings.DefaultTableStoragePort}/storage/{storageAccountName};";
 
     /// <summary>
     /// Gets the Service Bus connection string for the local development emulator.
@@ -36,5 +36,5 @@ public static class TopazResourceHelpers
     /// - Development emulator flag set to true
     /// - Default localhost endpoint on port 8889
     /// </remarks>
-    public static string GetServiceBusConnectionString() => "Endpoint=sb://localhost:8889;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
+    public static string GetServiceBusConnectionString() => "Endpoint=sb://topaz.servicebus.local.dev:8889;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
 }

@@ -10,7 +10,7 @@ public sealed class TopazArmClient : IDisposable
 
     private readonly HttpClient _httpClient = new()
     {
-        BaseAddress = new Uri($"https://localhost:{EmulatorPort}/"),
+        BaseAddress = new Uri($"https://topaz.local.dev:{EmulatorPort}/"),
     };
 
     /// <summary>

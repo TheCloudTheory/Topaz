@@ -1,6 +1,7 @@
 #!/bin/bash
 
-PARENT="localhost"
+PARENT="topaz"
+SUFFIX=".local.dev"
 openssl req \
 -x509 \
 -newkey rsa:4096 \
@@ -23,8 +24,14 @@ openssl req \
   echo 'keyUsage = nonRepudiation, digitalSignature, keyEncipherment'; \
   echo 'subjectAltName = @alt_names'; \
   echo '[ alt_names ]'; \
-  echo "DNS.1 = www.${PARENT}"; \
-  echo "DNS.2 = ${PARENT}"; \
+  echo "DNS.1 = www.${PARENT}${SUFFIX}"; \
+  echo "DNS.2 = ${PARENT}${SUFFIX}"; \
+  echo "DNS.3 = ${PARENT}.storage.table${SUFFIX}"; \
+  echo "DNS.4 = ${PARENT}.storage.blob${SUFFIX}"; \
+  echo "DNS.5 = ${PARENT}.storage.queue${SUFFIX}"; \
+  echo "DNS.6 = ${PARENT}.servicebus${SUFFIX}"; \
+  echo "DNS.7 = ${PARENT}.eventhub${SUFFIX}"; \
+  echo "DNS.8 = ${PARENT}.keyvault${SUFFIX}"; \
   echo '[ v3_ca ]'; \
   echo 'subjectKeyIdentifier=hash'; \
   echo 'authorityKeyIdentifier=keyid:always,issuer'; \

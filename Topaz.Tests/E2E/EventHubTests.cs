@@ -98,7 +98,7 @@ public class EventHubTests
     {
         // Arrange
         var producer = new EventHubProducerClient(
-            "Endpoint=sb://localhost:8888;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;",
+            "Endpoint=sb://topaz.eventhub.local.dev:8888;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;",
             "eh-test");
         
         await Program.Main([
@@ -119,7 +119,7 @@ public class EventHubTests
             "test",
             "--location",
             "westeurope",
-            "--subscriptionId",
+            "--subscription-id",
             Guid.Empty.ToString()
         ]);
         
@@ -134,11 +134,11 @@ public class EventHubTests
         ]);
         
         var storageClient = new BlobContainerClient(
-            "DefaultEndpointsProtocol=http;AccountName=test;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:8891/test;QueueEndpoint=http://localhost:8899/test;TableEndpoint=http://localhost:8890/test;",
+            "DefaultEndpointsProtocol=http;AccountName=test;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://topaz.storage.blob.local.dev:8891/test;QueueEndpoint=http://topaz.storage.queue.local.dev:8899/test;TableEndpoint=http://topaz.storage.table.local.dev:8890/test;",
             "test");
 
         var processor = new EventProcessorClient(storageClient, EventHubConsumerClient.DefaultConsumerGroupName,
-            "Endpoint=sb://localhost:8888;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;",
+            "Endpoint=sb://topaz.eventhub.local.dev:8888;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;",
             "eh-test");
         
         var receivedEvents = new List<EventData>();
