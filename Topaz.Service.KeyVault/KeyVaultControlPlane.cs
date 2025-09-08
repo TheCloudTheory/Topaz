@@ -73,4 +73,21 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
         var filteredResources = resources.Where(resource => resource != null && resource.Id.Contains(subscriptionId.Value.ToString()));
         return  (OperationResult.Success, filteredResources.ToArray());
     }
+
+    public OperationResult Delete(SubscriptionIdentifier subscriptionId, string keyVaultName)
+    {
+        var resource = provider.GetAs<KeyVaultResource>(keyVaultName);
+        if (resource == null)
+        {
+            return OperationResult.NotFound;
+        }
+
+        if (!resource.Id.Contains(subscriptionId.Value.ToString()))
+        {
+            return OperationResult.Failed;
+        }
+        
+        provider.Delete(keyVaultName);
+        return OperationResult.Deleted;
+    }
 }

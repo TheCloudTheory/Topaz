@@ -15,7 +15,8 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
         "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkNameAvailability",
-        "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkMhsmNameAvailability"
+        "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkMhsmNameAvailability",
+        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}"
     ];
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query, GlobalOptions options)
@@ -55,6 +56,16 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
                 case "POST":
                     HandleCheckNameRequest(response, input);
                     break;
+                case "DELETE":
+                    if (string.IsNullOrWhiteSpace(keyVaultName))
+                    {
+                        logger.LogDebug($"Executing {nameof(GetResponse)}: Can't process request if Key Vault name is empty.");
+                        response.StatusCode = HttpStatusCode.BadRequest;
+                        break;
+                    }
+                    
+                    HandleDeleteKeyVaultRequest(response, subscriptionId, keyVaultName);
+                    break;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
                     break;
@@ -69,6 +80,24 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
         
         return response;
+    }
+
+    private void HandleDeleteKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionId, string keyVaultName)
+    {
+        var existingKeyVault = _controlPlane.Get(keyVaultName);
+        switch (existingKeyVault.result)
+        {
+            case OperationResult.NotFound:
+                response.StatusCode = HttpStatusCode.NotFound;
+                return;
+            case OperationResult.Failed:
+                response.StatusCode = HttpStatusCode.InternalServerError;
+                return;
+            default:
+                _controlPlane.Delete(subscriptionId, keyVaultName);
+                response.StatusCode = HttpStatusCode.OK;
+                break;
+        }
     }
 
     private void HandleCheckNameRequest(HttpResponseMessage response, Stream input)
