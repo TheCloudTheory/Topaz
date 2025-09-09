@@ -3,9 +3,6 @@
 # This script modifies `/etc/hosts` to add DNS entries for local development.
 # It requires sudo privileges to run.
 
-# Check if sudo is enabled
-
-
 # Define the DNS entries to be added
 DNS_ENTRIES=(
     "127.0.2.1   topaz.local.dev"

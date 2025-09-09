@@ -15,11 +15,14 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly ResourceProvider _resourceProvider = new(logger);
     private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger), logger);
-    private readonly BlobServiceDataPlane _dataPlane = new(new BlobServiceControlPlane(new BlobResourceProvider(logger), logger), logger);
-    
+
+    private readonly BlobServiceDataPlane _dataPlane =
+        new(new BlobServiceControlPlane(new BlobResourceProvider(logger), logger), logger);
+
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultBlobStoragePort, Protocol.Http);
 
-    public string[] Endpoints => [
+    public string[] Endpoints =>
+    [
         "PUT /{storageAccountName}/{containerName}",
         "PUT /{storageAccountName}/{containerName}/...",
         "GET /{storageAccountName}/",
@@ -28,13 +31,14 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         "DELETE /{storageAccountName}/{containerName}/...",
     ];
 
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query, GlobalOptions options)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
+        QueryString query, GlobalOptions options)
     {
         logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
-        
+
         var response = new HttpResponseMessage();
-        
-        if(TryGetStorageAccountName(path, out var storageAccountName) == false)
+
+        if (TryGetStorageAccountName(headers, out var storageAccountName) == false)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return response;
@@ -43,12 +47,12 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         try
         {
             var containerName = GetContainerName(path);
-            
+
             logger.LogDebug($"Executing {nameof(GetResponse)}: Found container: {containerName}");
 
             if (method == "PUT")
             {
-                if(query.TryGetValueForKey("restype", out var restype) && restype == "container")
+                if (query.TryGetValueForKey("restype", out var restype) && restype == "container")
                 {
                     HandleCreateContainerRequest(storageAccountName, containerName, response);
                     return response;
@@ -56,7 +60,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 
                 if (TryGetBlobName(containerName, out var blobName))
                 {
-                    if(query.TryGetValueForKey("comp", out var comp) && comp == "metadata")
+                    if (query.TryGetValueForKey("comp", out var comp) && comp == "metadata")
                     {
                         HandleSetBlobMetadataRequest(storageAccountName, containerName, headers, response);
                     }
@@ -69,7 +73,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 
             if (method == "GET")
             {
-                if(query.TryGetValueForKey("comp", out var comp) && comp == "list")
+                if (query.TryGetValueForKey("comp", out var comp) && comp == "list")
                 {
                     if (query.TryGetValueForKey("restype", out var restype) && restype == "container")
                     {
@@ -109,10 +113,11 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         return response;
     }
 
-    private void HandleSetBlobMetadataRequest(string storageAccountName, string containerName, IHeaderDictionary headers, HttpResponseMessage response)
+    private void HandleSetBlobMetadataRequest(string storageAccountName, string containerName,
+        IHeaderDictionary headers, HttpResponseMessage response)
     {
         var result = _dataPlane.SetBlobMetadata(storageAccountName, containerName, headers);
-        
+
         if (result == HttpStatusCode.NotFound)
         {
             response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Blob not found", HttpStatusCode.NotFound);
@@ -123,7 +128,8 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
     }
 
-    private void HandleDeleteBlobRequest(string storageAccountName, string containerName, string blobName, HttpResponseMessage response)
+    private void HandleDeleteBlobRequest(string storageAccountName, string containerName, string blobName,
+        HttpResponseMessage response)
     {
         var result = _dataPlane.DeleteBlob(storageAccountName, containerName, blobName);
 
@@ -137,7 +143,8 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
     }
 
-    private void HandleGetBlobPropertiesRequest(string storageAccountName, string containerName, string blobName, HttpResponseMessage response)
+    private void HandleGetBlobPropertiesRequest(string storageAccountName, string containerName, string blobName,
+        HttpResponseMessage response)
     {
         var properties = _dataPlane.GetBlobProperties(storageAccountName, containerName, blobName);
 
@@ -156,15 +163,16 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
     }
 
-    private void HandleUploadBlobRequest(string storageAccountName, string containerName, string blobName, Stream input, HttpResponseMessage response)
+    private void HandleUploadBlobRequest(string storageAccountName, string containerName, string blobName, Stream input,
+        HttpResponseMessage response)
     {
         var result = _dataPlane.PutBlob(storageAccountName, containerName, blobName, input);
-        
+
         // TODO: The response must include the response headers from https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob?tabs=microsoft-entra-id#response
         response.StatusCode = result.code;
 
         if (result.properties == null) return;
-        
+
         // Note we're enclosing ETag header explicitly with double quotes to align it 
         // with RFC description stating this tag is "nn entity tag consists of an opaque quoted string, possibly prefixed by a weakness indicator"
         response.Headers.Add("ETag", $"\"{result.properties.ETag.ToString()}\"");
@@ -177,7 +185,6 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         var emptyContent = new StringContent(string.Empty);
         emptyContent.Headers.LastModified = result.properties.LastModified;
         response.Content = emptyContent;
-
     }
 
     private bool TryGetBlobName(string containerName, out string? blobName)
@@ -198,13 +205,13 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         // TODO: The request may come with additional keys in the query string, e.g.:
         // ?restype=container&comp=list&prefix=localhost/eh-test/$default/ownership/&include=Metadata  
         // We need to handle them as well
-        
+
         var blobs = _dataPlane.ListBlobs(storageAccountName, containerName);
 
         using var sw = new EncodingAwareStringWriter();
         var serializer = new XmlSerializer(typeof(BlobEnumerationResult));
         serializer.Serialize(sw, blobs);
-        
+
         response.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/xml");
         response.StatusCode = HttpStatusCode.OK;
     }
@@ -216,15 +223,16 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         using var sw = new EncodingAwareStringWriter();
         var serializer = new XmlSerializer(typeof(ContainerEnumerationResult));
         serializer.Serialize(sw, containers);
-        
+
         response.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/xml");
         response.StatusCode = HttpStatusCode.OK;
     }
 
-    private void HandleCreateContainerRequest(string storageAccountName, string containerName, HttpResponseMessage response)
+    private void HandleCreateContainerRequest(string storageAccountName, string containerName,
+        HttpResponseMessage response)
     {
         var code = _controlPlane.CreateContainer(containerName, storageAccountName);
-        
+
         response.StatusCode = code;
     }
 
@@ -233,19 +241,26 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         logger.LogDebug($"Executing {nameof(GetContainerName)}: {path}");
 
         var pathParts = path.Split('/');
-        var newPath = string.Join('/', pathParts.Skip(2));
 
-        logger.LogDebug($"Executing {nameof(GetContainerName)}: New path: {newPath}");
+        logger.LogDebug($"Executing {nameof(GetContainerName)}: New path: {pathParts}");
 
-        return newPath;
+        return pathParts[1];
     }
-    
-    private bool TryGetStorageAccountName(string path, out string name)
-    {
-        logger.LogDebug($"Executing {nameof(TryGetStorageAccountName)}: {path}");
 
-        var pathParts = path.Split('/');
-        var accountName = pathParts[1];
+    private bool TryGetStorageAccountName(IHeaderDictionary headers, out string? name)
+    {
+        logger.LogDebug($"Executing {nameof(TryGetStorageAccountName)}");
+
+        if (!headers.TryGetValue("Host", out var host))
+        {
+            logger.LogError("`Host` header not found - it's required for storage account creation.");
+            
+            name = null;
+            return false;
+        }
+        
+        var pathParts = host.ToString().Split('.');
+        var accountName = pathParts[0];
         name = accountName;
 
         logger.LogDebug($"About to check if storage account '{accountName}' exists.");

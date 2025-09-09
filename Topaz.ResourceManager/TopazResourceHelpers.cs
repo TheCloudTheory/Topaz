@@ -24,7 +24,7 @@ public static class TopazResourceHelpers
     /// All endpoints use HTTP protocol for local development.
     /// </remarks>
     public static string GetAzureStorageConnectionString(string storageAccountName, string accountKey) =>
-        $"DefaultEndpointsProtocol=http;AccountName={storageAccountName};AccountKey={accountKey};BlobEndpoint=http://topaz.storage.blob.local.dev:{GlobalSettings.DefaultBlobStoragePort}/{storageAccountName};QueueEndpoint=http://topaz.storage.queue.local.dev:8899;TableEndpoint=http://topaz.storage.table.local.dev:{GlobalSettings.DefaultTableStoragePort}/storage/{storageAccountName};";
+        $"DefaultEndpointsProtocol=http;AccountName={storageAccountName};AccountKey={accountKey};BlobEndpoint=http://{storageAccountName}.topaz.storage.blob.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;QueueEndpoint=http://{storageAccountName}.topaz.storage.queue.local.dev:8899;TableEndpoint=http://{storageAccountName}.topaz.storage.table.local.dev:{GlobalSettings.DefaultTableStoragePort};";
 
     /// <summary>
     /// Gets the Service Bus connection string for the local development emulator.

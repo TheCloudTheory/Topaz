@@ -86,7 +86,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     {
         var containerName = GetContainerNameFromBlobPath(blobPath);
         var path = controlPlane.GetContainerDataPath(storageAccountName, containerName);
-        var virtualPath = blobPath.Split('/').Skip(1).Aggregate(Path.Combine);
+        var virtualPath = blobPath.Split('/').Aggregate(Path.Combine);
         var fullPath = Path.Combine(path, virtualPath);
 
         return fullPath;
