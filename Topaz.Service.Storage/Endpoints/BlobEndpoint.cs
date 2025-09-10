@@ -23,12 +23,12 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 
     public string[] Endpoints =>
     [
-        "PUT /{storageAccountName}/{containerName}",
-        "PUT /{storageAccountName}/{containerName}/...",
-        "GET /{storageAccountName}/",
-        "GET /{storageAccountName}/{containerName}",
-        "HEAD /{storageAccountName}/{containerName}/...",
-        "DELETE /{storageAccountName}/{containerName}/...",
+        "PUT /{containerName}",
+        "PUT /{containerName}/...",
+        "GET /{containerName}",
+        "GET /",
+        "HEAD /{containerName}/...",
+        "DELETE /{containerName}/...",
     ];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
@@ -38,7 +38,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         var response = new HttpResponseMessage();
 
-        if (TryGetStorageAccountName(headers, out var storageAccountName) == false)
+        if (!TryGetStorageAccountName(headers, out var storageAccountName))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return response;
@@ -265,6 +265,6 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         logger.LogDebug($"About to check if storage account '{accountName}' exists.");
 
-        return this._resourceProvider.CheckIfStorageAccountExists(accountName);
+        return _resourceProvider.CheckIfStorageAccountExists(accountName);
     }
 }
