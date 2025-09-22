@@ -4,6 +4,8 @@ namespace Topaz.Shared;
 
 public sealed class PrettyTopazLogger : ITopazLogger
 {
+    private const string LogFilePath = "topaz.log";
+    private bool IsLoggingToFileEnabled { get; set; }
     public LogLevel LogLevel { get; private set; } = LogLevel.Information;
 
     public void LogInformation(string message)
@@ -36,6 +38,11 @@ public sealed class PrettyTopazLogger : ITopazLogger
         LogLevel = logLevel;
     }
 
+    public void EnableLoggingToFile()
+    {
+        IsLoggingToFileEnabled = true;
+    }
+
     private void Log(string message, LogLevel logLevel, Exception? exception = null)
     {
         if (LogLevel > logLevel) return;
@@ -45,10 +52,27 @@ public sealed class PrettyTopazLogger : ITopazLogger
         if(logLevel == LogLevel.Error && exception != null)
         {
             AnsiConsole.WriteException(exception);
+            TryWriteToFile(exception, timestamp, logLevel);
         }
         else
         {
-            AnsiConsole.WriteLine($"[{logLevel}][{timestamp}]: {message}");
+            var log = $"[{logLevel}][{timestamp}]: {message}";
+            
+            AnsiConsole.WriteLine(log);
+            TryWriteToFile(log);
         }     
+    }
+
+    private void TryWriteToFile(string log)
+    {
+        if (!IsLoggingToFileEnabled) return;
+        
+        File.WriteAllText(LogFilePath, log);
+    }
+
+    private void TryWriteToFile(Exception exception, string timestamp, LogLevel logLevel)
+    {
+        var log = $"[{logLevel}][{timestamp}]: {exception.Message}: {exception.StackTrace}";
+        TryWriteToFile(log);
     }
 }

@@ -11,6 +11,13 @@ namespace Topaz.Tests.E2E;
 
 public class EventHubTests
 {
+    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    
+    private const string SubscriptionName = "sub-test";
+    private const string ResourceGroupName = "test";
+    private const string EventHubNamespaceName = "test";
+    private const string EventHubName = "test";
+    
     [SetUp]
     public async Task SetUp()
     {
@@ -19,7 +26,7 @@ public class EventHubTests
             "subscription",
             "delete",
             "--id",
-            Guid.Empty.ToString()
+            SubscriptionId.ToString()
         ]);
         
         await Program.Main(
@@ -27,27 +34,27 @@ public class EventHubTests
             "subscription",
             "create",
             "--id",
-            Guid.Empty.ToString(),
+            SubscriptionId.ToString(),
             "--name",
-            "sub-test"
+            SubscriptionName
         ]);
 
         await Program.Main([
             "group",
             "delete",
             "--name",
-            "test"
+            ResourceGroupName
         ]);
 
         await Program.Main([
             "group",
             "create",
             "--name",
-            "test",
+            ResourceGroupName,
             "--location",
             "westeurope",
             "--subscription-id",
-            Guid.Empty.ToString()
+            SubscriptionId.ToString()
         ]);
         
         await Program.Main([
@@ -55,7 +62,7 @@ public class EventHubTests
             "namespace",
             "delete",
             "--name",
-            "test"
+            EventHubNamespaceName
         ]);
         
         await Program.Main([
@@ -63,13 +70,13 @@ public class EventHubTests
             "namespace",
             "create",
             "--name",
-            "test",
+            EventHubNamespaceName,
             "-g",
-            "rg-test",
+            ResourceGroupName,
             "--location",
             "westeurope",
             "--subscriptionId",
-            Guid.Empty.ToString(),
+            SubscriptionId.ToString()
         ]);
         
         await Program.Main([
@@ -77,9 +84,11 @@ public class EventHubTests
             "eventhub",
             "delete",
             "--name",
-            "test",
+            EventHubName,
+            "-g",
+            ResourceGroupName,
             "--namespace-name",
-            "test"
+            EventHubNamespaceName
         ]);
         
         await Program.Main([
@@ -87,9 +96,11 @@ public class EventHubTests
             "eventhub",
             "create",
             "--name",
-            "test",
+            EventHubName,
+            "-g",
+            ResourceGroupName,
             "--namespace-name",
-            "test"
+            EventHubNamespaceName
         ]);
     }
     

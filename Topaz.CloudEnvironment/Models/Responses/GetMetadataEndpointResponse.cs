@@ -7,14 +7,14 @@ internal sealed class GetMetadataEndpointResponse
 {
     public IReadOnlyDictionary<string, string> Endpoints => new Dictionary<string, string>
     {
-        { "resourceManager", "https://localhost:8899" },
-        { "graphEndpoint", "https://localhost:8899" },
-        { "microsoftGraphResourceId", "https://localhost:8899" }
+        { "resourceManager", "https://topaz.local.dev:8899" },
+        { "graphEndpoint", "https://topaz.local.dev:8899" },
+        { "microsoftGraphResourceId", "https://topaz.local.dev:8899" }
     };
     
     public IReadOnlyDictionary<string, string> Suffixes => new Dictionary<string, string>
     {
-        { "keyvaultDns", "https://localhost:8899" }
+        { "keyvaultDns", "https://topaz.local.dev:8899" }
     };
 
     public string Name => "Topaz";

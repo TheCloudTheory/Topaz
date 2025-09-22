@@ -5,5 +5,6 @@ public sealed class GlobalOptions
     public Guid? TenantId { get; init; }
     public string? CertificateFile { get; init; }
     public string? CertificateKey { get; init; }
-    public bool SkipRegistrationOfDnsEntries { get; set; }
+    public bool SkipRegistrationOfDnsEntries { get; init; }
+    public bool EnableLoggingToFile { get; set; }
 }

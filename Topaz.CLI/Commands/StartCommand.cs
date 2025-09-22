@@ -21,12 +21,19 @@ internal sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.S
                 "No tenant specified. Using --tenant-id options required if you want to use Topaz with Azure CLI.");
         }
 
+        if (settings.EnableLoggingToFile)
+        {
+            logger.EnableLoggingToFile();
+            logger.LogInformation("Enabled logging to file.");
+        }
+
         var host = new Topaz.Host.Host(new GlobalOptions
         {
             TenantId = settings.TenantId,
             CertificateFile = settings.CertificateFile,
             CertificateKey = settings.CertificateKey,
-            SkipRegistrationOfDnsEntries = settings.SkipRegistrationOfDnsEntries
+            SkipRegistrationOfDnsEntries = settings.SkipRegistrationOfDnsEntries,
+            EnableLoggingToFile = settings.EnableLoggingToFile
         }, logger);
 
         host.Start();
@@ -42,5 +49,6 @@ internal sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.S
         [CommandOption("--certificate-file")] public string? CertificateFile { get; set; }
         [CommandOption("--certificate-key")] public string? CertificateKey { get; set; }
         [CommandOption("--skip-dns-registration")] public bool SkipRegistrationOfDnsEntries { get; set; }
+        [CommandOption("--enable-logging-to-file")] public bool EnableLoggingToFile { get; set; }
     }
 }
