@@ -13,7 +13,7 @@ public class E2EFixture
     {
         _topaz = Program.Main([
             "start",
-            "--log-level=Information",
+            "--log-level=Debug",
             "--skip-dns-registration",
             "--enable-logging-to-file"
         ]);

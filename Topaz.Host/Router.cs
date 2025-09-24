@@ -75,19 +75,20 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
 
         if (endpoint == null)
         {
-            logger.LogError($"Request {method} {path} has no corresponding endpoint assigned.");
-
-            var failedResponse = new HttpResponseMessage();
-            failedResponse.CreateErrorResponse(
-                HttpResponseMessageExtensions.EndpointNotFoundCode, method, path);
-                            
-            context.Response.StatusCode = (int)HttpStatusCode.NotFound;
-            await context.Response.WriteAsync(await failedResponse.Content.ReadAsStringAsync());
-                            
+            await CreateNotFoundResponse(context, method, path);
             return;
         }
 
         var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query, options);
+        
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            // Just returns and let an endpoint prepare a correct response. The reason why there's no
+            // generic handler for that kind of situation is because in some scenarios (like when
+            // Evert Hub SDK validates a checkpoint), a specific error code is checked.
+            return;
+        }
+        
         var textResponse = await response.Content.ReadAsStringAsync();
 
         logger.LogInformation($"Response: [{response.StatusCode}] [{path}] {textResponse}");
@@ -109,7 +110,19 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
             await context.Response.WriteAsync(textResponse);
         }
     }
-    
+
+    private async Task CreateNotFoundResponse(HttpContext context, string method, string path)
+    {
+        logger.LogError($"Request {method} {path} has no corresponding endpoint assigned.");
+
+        var failedResponse = new HttpResponseMessage();
+        failedResponse.CreateErrorResponse(
+            HttpResponseMessageExtensions.EndpointNotFoundCode, method, path);
+                            
+        context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+        await context.Response.WriteAsync(await failedResponse.Content.ReadAsStringAsync());
+    }
+
     /// <summary>
     /// Checks if the provided endpoint allows dynamic routing. Dynamic routing is a concept
     /// when endpoint accepts multiple paths which point to a specific resource. An example

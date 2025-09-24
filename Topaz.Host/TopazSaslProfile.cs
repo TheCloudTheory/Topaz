@@ -16,22 +16,18 @@ public class TopazSaslProfile(Symbol mechanism) : SaslProfile(mechanism)
     {
         return new SaslInit()
         {
-            Mechanism = this.Mechanism,
-            InitialResponse = Encoding.UTF8.GetBytes("hello"),
+            Mechanism = Mechanism,
+            InitialResponse = "hello"u8.ToArray(),
         };
     }
 
-    protected override DescribedList OnCommand(DescribedList command)
+    protected override DescribedList? OnCommand(DescribedList command)
     {
         if (command.Descriptor.Code == 0x0000000000000041)
         {
             return new SaslOutcome() { Code = SaslCode.Ok };
         }
-        else if (command.Descriptor.Code == 0x0000000000000040)
-        {
-            return null;
-        }
 
-        throw new AmqpException(ErrorCode.NotAllowed, command.ToString());
+        return command.Descriptor.Code == 0x0000000000000040 ? null : throw new AmqpException(ErrorCode.NotAllowed, command.ToString());
     }
 }

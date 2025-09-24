@@ -108,7 +108,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             if (logger.LogLevel == LogLevel.Debug)
             {
                 Trace.TraceLevel = TraceLevel.Frame;
-                Trace.TraceListener = (l, f, a) => Console.WriteLine(DateTime.Now.ToString("[hh:mm:ss.fff]") + " " + string.Format(f, a));
+                Trace.TraceListener = (l, f, a) => logger.LogDebug(string.Format(f, a));
             }
             
             Threads.Add(new Thread(() => listener.Open()));

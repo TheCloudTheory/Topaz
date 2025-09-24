@@ -37,4 +37,16 @@ public static class TopazResourceHelpers
     /// - Default localhost endpoint on port 8889
     /// </remarks>
     public static string GetServiceBusConnectionString() => "Endpoint=sb://topaz.servicebus.local.dev:8889;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
+
+    /// <summary>
+    /// Gets the Event Hub connection string for the local development emulator.
+    /// </summary>
+    /// <returns>A connection string configured to connect to Topaz on port 8889.</returns>
+    /// <remarks>
+    /// The connection string uses:
+    /// - Root management shared access key for authentication
+    /// - Development emulator flag set to true
+    /// - Default localhost endpoint on port 8888
+    /// </remarks>
+    public static string GetEventHubConnectionString() => "Endpoint=sb://topaz.eventhub.local.dev:8888;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
 }

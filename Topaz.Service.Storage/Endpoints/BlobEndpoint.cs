@@ -88,9 +88,9 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 
             if (method == "HEAD")
             {
-                if (TryGetBlobName(containerName, out var blobName))
+                if (TryGetBlobName(path, out var blobName))
                 {
-                    HandleGetBlobPropertiesRequest(storageAccountName, containerName, blobName!, response);
+                    HandleGetBlobPropertiesRequest(storageAccountName, path, blobName!, response);
                 }
             }
 
@@ -143,10 +143,10 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
     }
 
-    private void HandleGetBlobPropertiesRequest(string storageAccountName, string containerName, string blobName,
+    private void HandleGetBlobPropertiesRequest(string storageAccountName, string blobPath, string blobName,
         HttpResponseMessage response)
     {
-        var properties = _dataPlane.GetBlobProperties(storageAccountName, containerName, blobName);
+        var properties = _dataPlane.GetBlobProperties(storageAccountName, blobPath, blobName);
 
         if (properties.code == HttpStatusCode.NotFound)
         {
@@ -187,9 +187,9 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         response.Content = emptyContent;
     }
 
-    private bool TryGetBlobName(string containerName, out string? blobName)
+    private bool TryGetBlobName(string blobPath, out string? blobName)
     {
-        var matches = Regex.Match(containerName, @"[^/]+$", RegexOptions.Compiled);
+        var matches = Regex.Match(blobPath, @"[^/]+$", RegexOptions.Compiled);
         if (matches.Success)
         {
             blobName = matches.Groups[0].Value;
@@ -242,7 +242,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         var pathParts = path.Split('/');
 
-        logger.LogDebug($"Executing {nameof(GetContainerName)}: New path: {pathParts}");
+        logger.LogDebug($"Executing {nameof(GetContainerName)}: Returning: {pathParts[1]}");
 
         return pathParts[1];
     }

@@ -67,12 +67,12 @@ public sealed class PrettyTopazLogger : ITopazLogger
     {
         if (!IsLoggingToFileEnabled) return;
         
-        File.WriteAllText(LogFilePath, log);
+        File.AppendAllText(LogFilePath, $"{log}{Environment.NewLine}");
     }
 
     private void TryWriteToFile(Exception exception, string timestamp, LogLevel logLevel)
     {
-        var log = $"[{logLevel}][{timestamp}]: {exception.Message}: {exception.StackTrace}";
+        var log = $"[{logLevel}][{timestamp}]: {exception.Message}: {exception.StackTrace}{Environment.NewLine}";
         TryWriteToFile(log);
     }
 }

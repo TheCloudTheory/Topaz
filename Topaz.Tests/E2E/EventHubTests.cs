@@ -1,22 +1,29 @@
-using System.Text;
-using Azure.Identity;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Consumer;
 using Azure.Messaging.EventHubs.Producer;
+using Azure.ResourceManager;
+using Azure.ResourceManager.Storage;
 using Azure.Storage.Blobs;
 using Topaz.CLI;
 using Topaz.Identity;
+using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E;
 
 public class EventHubTests
 {
+    private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
     private static readonly Guid SubscriptionId = Guid.NewGuid();
     
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
     private const string EventHubNamespaceName = "test";
     private const string EventHubName = "test";
+    private const string StorageAccountName = "devstoreaccount1";
+    private const string ContainerName = "test";
+    private static readonly string ConnectionString = TopazResourceHelpers.GetEventHubConnectionString();
+    
+    private string _key = null!;
     
     [SetUp]
     public async Task SetUp()
@@ -102,6 +109,15 @@ public class EventHubTests
             "--namespace-name",
             EventHubNamespaceName
         ]);
+        
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(StorageAccountName);
+        var keys = storageAccount.Value.GetKeys().ToArray();
+
+        _key = keys[0].Value;
     }
     
     [Test]
@@ -109,15 +125,15 @@ public class EventHubTests
     {
         // Arrange
         var producer = new EventHubProducerClient(
-            "Endpoint=sb://topaz.eventhub.local.dev:8888;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;",
-            "eh-test");
+            ConnectionString,
+            EventHubName);
         
         await Program.Main([
             "storage",
             "account",
             "delete",
             "--name",
-            "test"
+            StorageAccountName
         ]);
 
         await Program.Main([
@@ -125,13 +141,13 @@ public class EventHubTests
             "account",
             "create",
             "--name",
-            "test",
+            StorageAccountName,
             "-g",
-            "test",
+            ResourceGroupName,
             "--location",
             "westeurope",
             "--subscription-id",
-            Guid.Empty.ToString()
+            SubscriptionId.ToString()
         ]);
         
         await Program.Main([
@@ -139,18 +155,18 @@ public class EventHubTests
             "container",
             "create",
             "--name",
-            "test",
+            ContainerName,
             "--account-name",
-            "test"
+            StorageAccountName
         ]);
         
         var storageClient = new BlobContainerClient(
-            "DefaultEndpointsProtocol=http;AccountName=test;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://topaz.storage.blob.local.dev:8891/test;QueueEndpoint=http://topaz.storage.queue.local.dev:8899/test;TableEndpoint=http://topaz.storage.table.local.dev:8890/test;",
-            "test");
+            TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key),
+            ContainerName);
 
         var processor = new EventProcessorClient(storageClient, EventHubConsumerClient.DefaultConsumerGroupName,
-            "Endpoint=sb://topaz.eventhub.local.dev:8888;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;",
-            "eh-test");
+            ConnectionString,
+            EventHubName);
         
         var receivedEvents = new List<EventData>();
 
@@ -160,9 +176,7 @@ public class EventHubTests
             return Task.CompletedTask;
         };
 
-        processor.ProcessErrorAsync += args => Task.CompletedTask;
-
-        await processor.StartProcessingAsync();
+        processor.ProcessErrorAsync += _ => Task.CompletedTask;
         
         // Act
         await producer.SendAsync([
@@ -173,6 +187,7 @@ public class EventHubTests
             new EventData("Hello World 2"u8.ToArray()),
         ]); 
         
+        await processor.StartProcessingAsync();
         await Task.Delay(TimeSpan.FromSeconds(5));
         await processor.StopProcessingAsync();
         

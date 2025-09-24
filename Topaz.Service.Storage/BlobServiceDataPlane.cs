@@ -67,7 +67,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         
         var fullPath = GetBlobPropertiesPath(storageAccountName, blobPath);
 
-        if (File.Exists(fullPath) == false)
+        if (!File.Exists(fullPath))
         {
             return (HttpStatusCode.NotFound, null);
         }
