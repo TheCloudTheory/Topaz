@@ -14,10 +14,10 @@ namespace Topaz.Service.Storage.Endpoints;
 public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly ResourceProvider _resourceProvider = new(logger);
-    private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger), logger);
+    private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger));
 
     private readonly BlobServiceDataPlane _dataPlane =
-        new(new BlobServiceControlPlane(new BlobResourceProvider(logger), logger), logger);
+        new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultBlobStoragePort, Protocol.Http);
 
@@ -58,7 +58,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
                     return response;
                 }
 
-                if (TryGetBlobName(containerName, out var blobName))
+                if (TryGetBlobName(path, out var blobName))
                 {
                     if (query.TryGetValueForKey("comp", out var comp) && comp == "metadata")
                     {
@@ -66,7 +66,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
                     }
                     else
                     {
-                        HandleUploadBlobRequest(storageAccountName, containerName, blobName!, input, response);
+                        HandleUploadBlobRequest(storageAccountName, path, blobName!, input, response);
                     }
                 }
             }
@@ -163,10 +163,10 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
     }
 
-    private void HandleUploadBlobRequest(string storageAccountName, string containerName, string blobName, Stream input,
+    private void HandleUploadBlobRequest(string storageAccountName, string blobPath, string blobName, Stream input,
         HttpResponseMessage response)
     {
-        var result = _dataPlane.PutBlob(storageAccountName, containerName, blobName, input);
+        var result = _dataPlane.PutBlob(storageAccountName, blobPath, blobName, input);
 
         // TODO: The response must include the response headers from https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob?tabs=microsoft-entra-id#response
         response.StatusCode = result.code;

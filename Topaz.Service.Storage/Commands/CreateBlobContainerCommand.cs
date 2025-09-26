@@ -12,7 +12,7 @@ public sealed class CreateBlobContainerCommand(ITopazLogger logger) : Command<Cr
     {
         logger.LogInformation("Creating blob container...");
 
-        var rp = new BlobServiceControlPlane(new BlobResourceProvider(logger), logger);
+        var rp = new BlobServiceControlPlane(new BlobResourceProvider(logger));
         _ = rp.CreateContainer(settings.Name, settings.AccountName);
 
         logger.LogInformation("Container created.");

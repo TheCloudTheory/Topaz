@@ -12,48 +12,46 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
     private void InitializeServiceDirectory(string storageAccountName)
     {
         var servicePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, BlobStorageService.LocalDirectoryPath);
-        this._topazLogger.LogDebug($"Attempting to create {servicePath} directory...");
+        _topazLogger.LogDebug($"Attempting to create {servicePath} directory...");
 
-        if(Directory.Exists(servicePath) == false)
+        if(!Directory.Exists(servicePath))
         {
             Directory.CreateDirectory(servicePath);
-            this._topazLogger.LogDebug($"Directory {servicePath} created.");
+            _topazLogger.LogDebug($"Directory {servicePath} created.");
         }
         else
         {
-            this._topazLogger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
+            _topazLogger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
         }
     }
     
-    public void Create(string containerName, string storageAccountName)
+    public void Create(string storageAccountName, string containerName)
     {
         InitializeServiceDirectory(storageAccountName);
         
         var metadataFilePath = CreateBlobDirectories(storageAccountName, containerName);
 
-        this._topazLogger.LogDebug($"Attempting to create {metadataFilePath} file.");
+        _topazLogger.LogDebug($"Attempting to create {metadataFilePath} file.");
 
-        if(File.Exists(metadataFilePath) == true) throw new InvalidOperationException($"Metadata file for {typeof(BlobStorageService)} with ID {containerName} already exists.");
+        if(File.Exists(metadataFilePath)) throw new InvalidOperationException($"Metadata file for {typeof(BlobStorageService)} with ID {containerName} already exists.");
 
         var content = JsonSerializer.Serialize(new Models.Container() { Name = containerName }, GlobalSettings.JsonOptions);
         File.WriteAllText(metadataFilePath, content);
-
-        return;
     }
 
     private string CreateBlobDirectories(string storageAccountName, string containerName)
     {
-        const string metadataFile = $"metadata.json";
+        const string metadataFile = "metadata.json";
         
         var containerPath = GetContainerPath(storageAccountName, containerName);
         var dataPath = Path.Combine(containerPath, "data");
         var metadataFilePath = Path.Combine(containerPath, metadataFile);
         var blobMetadataDirectoryPath = GetContainerMetadataPath(storageAccountName, containerName);
 
-        this._topazLogger.LogDebug($"Attempting to create {containerPath} directory.");
+        _topazLogger.LogDebug($"Attempting to create {containerPath} directory.");
         if(Directory.Exists(containerPath))
         {
-            this._topazLogger.LogDebug($"Attempting to create {containerPath} directory - skipped.");
+            _topazLogger.LogDebug($"Attempting to create {containerPath} directory - skipped.");
         }
         else
         {
@@ -61,7 +59,7 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
             Directory.CreateDirectory(dataPath);
             Directory.CreateDirectory(blobMetadataDirectoryPath);
             
-            this._topazLogger.LogDebug($"Attempting to create {containerPath} directory - created!");
+            _topazLogger.LogDebug($"Attempting to create {containerPath} directory - created!");
         }
 
         return metadataFilePath;

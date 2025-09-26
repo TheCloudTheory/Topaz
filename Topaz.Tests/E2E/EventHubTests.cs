@@ -110,24 +110,6 @@ public class EventHubTests
             EventHubNamespaceName
         ]);
         
-        var credential = new AzureLocalCredential();
-        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
-        var subscription = await armClient.GetDefaultSubscriptionAsync();
-        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
-        var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(StorageAccountName);
-        var keys = storageAccount.Value.GetKeys().ToArray();
-
-        _key = keys[0].Value;
-    }
-    
-    [Test]
-    public async Task EventHubTests_WhenMessageIsSent_ItShouldBeAvailableInEventHub()
-    {
-        // Arrange
-        var producer = new EventHubProducerClient(
-            ConnectionString,
-            EventHubName);
-        
         await Program.Main([
             "storage",
             "account",
@@ -160,6 +142,24 @@ public class EventHubTests
             StorageAccountName
         ]);
         
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(StorageAccountName);
+        var keys = storageAccount.Value.GetKeys().ToArray();
+
+        _key = keys[0].Value;
+    }
+    
+    [Test]
+    public async Task EventHubTests_WhenMessageIsSent_ItShouldBeAvailableInEventHub()
+    {
+        // Arrange
+        var producer = new EventHubProducerClient(
+            ConnectionString,
+            EventHubName);
+        
         var storageClient = new BlobContainerClient(
             TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key),
             ContainerName);
@@ -176,7 +176,11 @@ public class EventHubTests
             return Task.CompletedTask;
         };
 
-        processor.ProcessErrorAsync += _ => Task.CompletedTask;
+        processor.ProcessErrorAsync += args =>
+        {
+            Console.WriteLine($"Error when processing a message: {args.Exception.Message}");
+            return Task.CompletedTask;
+        };
         
         // Act
         await producer.SendAsync([

@@ -4,6 +4,7 @@ using Azure;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Serialization;
+using Topaz.Service.Storage.Services;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage;
@@ -15,13 +16,19 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         logger.LogDebug($"Executing {nameof(ListBlobs)}: {storageAccountName} {containerName}");
         
         var path = controlPlane.GetContainerDataPath(storageAccountName, containerName);
-        var files = Directory.EnumerateFiles(path);
-        var entities = files.Select(file => {
-            var fi = new FileInfo(file);
-            return new Blob { Name = fi.Name };
-        }).ToArray();
+        var files = Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories);
+        var entities = files.Select(file => new Blob { Name = file, Properties = GetDeserializedBlobProperties(storageAccountName, file)}).ToArray();
 
         return new BlobEnumerationResult(storageAccountName, entities); 
+    }
+
+    private BlobProperties? GetDeserializedBlobProperties(string storageAccountName, string localBlobPath)
+    {
+        var prefix = $".topaz/{AzureStorageService.LocalDirectoryPath}/{storageAccountName}/{BlobStorageService.LocalDirectoryPath}";
+        var filePath = GetBlobPropertiesPath(storageAccountName, localBlobPath.Replace(prefix, string.Empty));
+        var content = File.ReadAllText(filePath);
+        
+        return JsonSerializer.Deserialize<BlobProperties>(content);
     }
 
     // TODO: This method must support different kinds of blobs
@@ -94,7 +101,13 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
     private string GetContainerNameFromBlobPath(string blobPath)
     {
-        var containerName = blobPath.Split('/')[0];
+        var segments = blobPath.Split('/');
+        if (segments.Length == 1 && !blobPath.StartsWith($"/"))
+        {
+            return blobPath;
+        }
+        
+        var containerName = segments[1];
         return containerName;
     }
 
