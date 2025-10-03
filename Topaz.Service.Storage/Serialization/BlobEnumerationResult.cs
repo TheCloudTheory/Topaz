@@ -49,6 +49,15 @@ public class BlobEnumerationResult : IXmlSerializable
             {
                 writer.WriteStartElement("Blob");
                 writer.WriteElementString("Name", blob.Name);
+
+                if (blob.Properties is not null)
+                {
+                    writer.WriteStartElement("Properties");
+                    writer.WriteElementString("Last-Modified", blob.Properties.LastModified.ToString());
+                    writer.WriteElementString("Etag", blob.Properties.ETag.ToString());
+                    writer.WriteEndElement();
+                }
+                
                 writer.WriteEndElement();
             }
             

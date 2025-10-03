@@ -14,6 +14,14 @@ internal sealed class LinkProcessor(ITopazLogger logger) : ILinkProcessor
         // as the max size. This break communication as SDK thinks the maximum
         // size of a message or a batch is less than 0.
         attachContext.Attach.MaxMessageSize = 262144;
-        attachContext.Complete(new IncomingLinkEndpoint(logger), 300);
+
+        if (attachContext.Attach.Role)
+        {
+            attachContext.Complete(new OutgoingLinkEndpoint(logger), 300);
+        }
+        else
+        {
+            attachContext.Complete(new IncomingLinkEndpoint(logger), 300);
+        }
     }
 }

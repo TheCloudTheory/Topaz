@@ -24,8 +24,11 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
     private BlobProperties? GetDeserializedBlobProperties(string storageAccountName, string localBlobPath)
     {
+        // Note that we will perform a 2-step cleanup for the file path. The reason for that 
+        // is that physical file path is a completely different concept than a virtual
+        // path used on a service level
         var prefix = $".topaz/{AzureStorageService.LocalDirectoryPath}/{storageAccountName}/{BlobStorageService.LocalDirectoryPath}";
-        var filePath = GetBlobPropertiesPath(storageAccountName, localBlobPath.Replace(prefix, string.Empty));
+        var filePath = GetBlobPropertiesPath(storageAccountName, localBlobPath.Replace(prefix, string.Empty).Replace("data/", string.Empty));
         var content = File.ReadAllText(filePath);
         
         return JsonSerializer.Deserialize<BlobProperties>(content);
@@ -93,7 +96,11 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     {
         var containerName = GetContainerNameFromBlobPath(blobPath);
         var path = controlPlane.GetContainerDataPath(storageAccountName, containerName);
-        var virtualPath = blobPath.Split('/').Aggregate(Path.Combine);
+        
+        // We will skip two initial elements being /<container-name> so a blob
+        // path doesn't contain a duplicated value
+        var segments = blobPath.Split('/');
+        var virtualPath = segments.Length > 2 ? segments.Skip(2).Aggregate(Path.Combine) : segments.Aggregate(Path.Combine);
         var fullPath = Path.Combine(path, virtualPath);
 
         return fullPath;

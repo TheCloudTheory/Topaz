@@ -1,5 +1,6 @@
 using System.Text;
 using Amqp;
+using Amqp.Framing;
 using Amqp.Listener;
 using Topaz.Shared;
 
@@ -8,7 +9,7 @@ namespace Topaz.Host.AMQP;
 public class IncomingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
 {
     private const uint BatchFormat = 0x80013700;
-    private static readonly List<Message> Messages = [];
+    public static readonly List<Message> Messages = [];
     
     public override void OnMessage(MessageContext messageContext)
     {
@@ -36,25 +37,14 @@ public class IncomingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
     public override void OnFlow(FlowContext flowContext)
     {
         logger.LogDebug($"Executing {nameof(IncomingLinkEndpoint)}.{nameof(OnFlow)}: There will be a maximum of {flowContext.Messages} to process with {Messages.Count} messages available.");
-        
-        var messagesToSend = Messages.Take(flowContext.Messages);
-        foreach (var message in messagesToSend)
-        {
-            flowContext.Link.SendMessage(message);
-            Messages.Remove(message);
-        }
-
-        if (flowContext.Link.IsDraining)
-        {
-            logger.LogDebug($"Executing {nameof(IncomingLinkEndpoint)}.{nameof(OnFlow)}: Completing draining.");
-            flowContext.Link.CompleteDrain();
-            logger.LogDebug($"Executing {nameof(IncomingLinkEndpoint)}.{nameof(OnFlow)}: Draining complete.");
-        }
-        
-        logger.LogDebug($"Executing {nameof(IncomingLinkEndpoint)}.{nameof(OnFlow)}: Finished processing messages.");
     }
 
     public override void OnDisposition(DispositionContext dispositionContext)
     {
+    }
+
+    public override void OnLinkClosed(ListenerLink link, Error error)
+    {
+        base.OnLinkClosed(link, error);
     }
 }

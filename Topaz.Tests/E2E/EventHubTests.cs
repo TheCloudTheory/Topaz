@@ -181,18 +181,43 @@ public class EventHubTests
             Console.WriteLine($"Error when processing a message: {args.Exception.Message}");
             return Task.CompletedTask;
         };
+
+        processor.PartitionInitializingAsync += args =>
+        {
+            if (args.CancellationToken.IsCancellationRequested)
+            {
+                return Task.CompletedTask;
+            }
+
+            // If no checkpoint was found, start processing
+            // events enqueued now or in the future.
+
+            var startPositionWhenNoCheckpoint =
+                EventPosition.FromEnqueuedTime(DateTimeOffset.UtcNow);
+
+            args.DefaultStartingPosition = startPositionWhenNoCheckpoint;
+
+            return Task.CompletedTask;
+        };
         
         // Act
-        await producer.SendAsync([
-            new EventData("Hello World"u8.ToArray()),
-        ]);     
+        try
+        {
+            await producer.SendAsync([
+                new EventData("Hello World"u8.ToArray()),
+            ]);     
         
-        await producer.SendAsync([
-            new EventData("Hello World 2"u8.ToArray()),
-        ]); 
+            await producer.SendAsync([
+                new EventData("Hello World 2"u8.ToArray()),
+            ]); 
+        }
+        finally
+        {
+            await producer.DisposeAsync();
+        }
         
         await processor.StartProcessingAsync();
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        await Task.Delay(TimeSpan.FromSeconds(30));
         await processor.StopProcessingAsync();
         
         // Assert
