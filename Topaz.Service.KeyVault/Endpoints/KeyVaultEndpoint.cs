@@ -93,7 +93,7 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
 
     private void HandleDeleteSecretRequest(string vaultName, string secretName, HttpResponseMessage response)
     {
-        var (data, code) = this._dataPlane.DeleteSecret(vaultName, secretName);
+        var (data, code) = _dataPlane.DeleteSecret(vaultName, secretName);
         if (data == null)
         {
             response.StatusCode = code;
@@ -108,7 +108,7 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
 
     private void HandleGetSecretsRequest(string vaultName, HttpResponseMessage response)
     {
-        var (data, code) = this._dataPlane.GetSecrets(vaultName);
+        var (data, code) = _dataPlane.GetSecrets(vaultName);
         var content = new GetSecretsResponse()
         {
             Value = data.Select(s => new GetSecretsResponse.Secret()
@@ -131,7 +131,7 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
     private void HandleGetSecretRequest(string path, string vaultName, string? secretName, HttpResponseMessage response)
     {
         var version = path.ExtractValueFromPath(4);
-        var (data, code) = this._dataPlane.GetSecret(vaultName, secretName!, version);
+        var (data, code) = _dataPlane.GetSecret(vaultName, secretName!, version);
 
         response.StatusCode = code;
         response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);

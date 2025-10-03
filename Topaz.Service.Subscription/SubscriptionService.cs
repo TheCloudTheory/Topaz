@@ -12,6 +12,6 @@ public sealed class SubscriptionService(ITopazLogger logger) : IServiceDefinitio
     public string Name => "Subscription";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new SubscriptionEndpoint(new ResourceProvider(logger), logger)
+        new SubscriptionEndpoint(new SubscriptionResourceProvider(logger), logger)
     ];
 }

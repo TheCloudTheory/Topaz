@@ -101,7 +101,7 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
         }
 
         response.StatusCode = HttpStatusCode.OK;
-        response.Content =  new StringContent(new ListResourceGroupsResponse(operation.resources).ToString());
+        response.Content = new StringContent(new ListResourceGroupsResponse(operation.resources).ToString());
     }
 
     private void HandleGetResourceGroup(ResourceGroupIdentifier resourceGroup, HttpResponseMessage response)

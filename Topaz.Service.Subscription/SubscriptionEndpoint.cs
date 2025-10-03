@@ -12,7 +12,7 @@ using Topaz.Service.Subscription.Models.Responses;
 
 namespace Topaz.Service.Subscription;
 
-public sealed class SubscriptionEndpoint(ResourceProvider provider, ITopazLogger logger) : IEndpointDefinition
+public sealed class SubscriptionEndpoint(SubscriptionResourceProvider provider, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly SubscriptionControlPlane _controlPlane = new(provider);
     private readonly KeyVaultControlPlane _keyVaultControlPlane = new(new KeyVault.ResourceProvider(logger));
@@ -120,8 +120,8 @@ public sealed class SubscriptionEndpoint(ResourceProvider provider, ITopazLogger
             return;
         }
         
-        var subscription = _controlPlane.Get(subscriptionId);
-        if (subscription is not null)
+        var subscription = _controlPlane.Get(SubscriptionIdentifier.From(subscriptionId));
+        if (subscription.result is not OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.BadRequest;
             response.Content = new StringContent($"Subscription with ID {subscriptionId} already exists.");
@@ -153,9 +153,9 @@ public sealed class SubscriptionEndpoint(ResourceProvider provider, ITopazLogger
             return;
         }
         
-        var subscription = _controlPlane.Get(subscriptionId);
+        var subscription = _controlPlane.Get(SubscriptionIdentifier.From(subscriptionId));
 
-        response.Content = JsonContent.Create(subscription, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+        response.Content = JsonContent.Create(subscription.resource, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
         response.StatusCode = HttpStatusCode.OK;
     }
 }

@@ -1,19 +1,20 @@
 using System.Text.Json;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.Subscription;
 
-internal sealed class SubscriptionControlPlane(ResourceProvider provider)
+internal sealed class SubscriptionControlPlane(SubscriptionResourceProvider provider)
 {
-    public Models.Subscription? Get(string subscriptionId)
+    public (OperationResult result, Models.Subscription? resource) Get(SubscriptionIdentifier subscriptionIdentifier)
     {
-        var data = provider.Get(subscriptionId);
-        if (data == null) return null;
+        var data = provider.Get(subscriptionIdentifier.ToString());
+        if (data == null) return (OperationResult.NotFound, null);
         
         var model = JsonSerializer.Deserialize<Models.Subscription>(data, GlobalSettings.JsonOptions);
 
-        return model;
+        return (OperationResult.Success, model);
     }
 
     public Models.Subscription Create(string? id, string name)

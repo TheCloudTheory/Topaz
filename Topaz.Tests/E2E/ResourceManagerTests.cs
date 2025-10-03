@@ -1,4 +1,8 @@
+using Azure;
+using Azure.Core;
 using Azure.ResourceManager;
+using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Resources.Models;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 
@@ -28,6 +32,38 @@ public class ResourceManagerTests
             Assert.That(subscription.Data.Id.ToString(), Is.EqualTo($"/subscriptions/{subscriptionId}"));
             Assert.That(subscription.Data.SubscriptionId, Is.EqualTo(subscriptionId.ToString()));
             Assert.That(subscription.Data.DisplayName, Is.EqualTo(subscriptionName));
+        });
+    }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenDeploymentIsRequested_ItShouldBeAvailable()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub";
+        const string resourceGroupName = "rg-deployment";
+        const string deploymentName = "deployment";
+        
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential();
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient();
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        // Act
+        await rg.Value.GetArmDeployments().CreateOrUpdateAsync(WaitUntil.Completed, deploymentName,
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment1.json"))
+            }));
+        var deployment = await rg.Value.GetArmDeploymentAsync(deploymentName);
+        
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(deployment.Value.Data.Name, Is.EqualTo(deploymentName));
         });
     }
 }

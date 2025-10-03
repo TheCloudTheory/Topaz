@@ -12,7 +12,7 @@ public sealed class CreateSubscriptionCommand(ITopazLogger logger) : Command<Cre
     {
         logger.LogInformation("Creating subscription...");
 
-        var controlPlane = new SubscriptionControlPlane(new ResourceProvider(logger));
+        var controlPlane = new SubscriptionControlPlane(new SubscriptionResourceProvider(logger));
         var sa = controlPlane.Create(settings.Id, settings.Name!);
 
         logger.LogInformation(sa.ToString());

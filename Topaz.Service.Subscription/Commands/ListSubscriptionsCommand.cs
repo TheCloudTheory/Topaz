@@ -13,7 +13,7 @@ public sealed class ListSubscriptionsCommand(ITopazLogger logger) : Command
     {
         logger.LogInformation("Listing available subscriptions...");
 
-        var controlPlane = new SubscriptionControlPlane(new ResourceProvider(logger));
+        var controlPlane = new SubscriptionControlPlane(new SubscriptionResourceProvider(logger));
         var operation = controlPlane.List();
 
         if (operation.result == OperationResult.Failed)

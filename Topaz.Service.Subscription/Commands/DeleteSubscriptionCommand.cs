@@ -12,7 +12,7 @@ public class DeleteSubscriptionCommand(ITopazLogger logger) : Command<DeleteSubs
     {
         this._topazLogger.LogInformation("Deleting subscription...");
 
-        var controlPlane = new SubscriptionControlPlane(new ResourceProvider(this._topazLogger));
+        var controlPlane = new SubscriptionControlPlane(new SubscriptionResourceProvider(this._topazLogger));
         controlPlane.Delete(settings.Id!);
 
         this._topazLogger.LogInformation("Subscription deleted.");

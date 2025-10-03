@@ -13,6 +13,7 @@ using Topaz.Host.AMQP;
 using Topaz.Service.EventHub;
 using Topaz.Service.KeyVault;
 using Topaz.Service.ResourceGroup;
+using Topaz.Service.ResourceManager;
 using Topaz.Service.ServiceBus;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Services;
@@ -49,7 +50,8 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             new EventHubService(logger),
             new BlobStorageService(logger),
             new TopazCloudEnvironmentService(),
-            new ServiceBusService(logger)
+            new ServiceBusService(logger),
+            new ResourceManagerService(logger)
         };
 
         // Topaz requires elevated permissions to run as there may be operations (like modifying entries
