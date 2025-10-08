@@ -20,6 +20,18 @@ public abstract class ArmResource<T>
         return SubscriptionIdentifier.From(Guid.Parse(Id.Split("/")[2]));
     }
 
+    public bool IsInSubscription(SubscriptionIdentifier subscriptionIdentifier)
+    {
+        var segments = Id.Split("/");
+        return segments[2] == subscriptionIdentifier.Value.ToString();
+    }
+
+    public bool IsInResourceGroup(ResourceGroupIdentifier resourceGroupIdentifier)
+    {
+        var segments = Id.Split("/");
+        return segments[4] == resourceGroupIdentifier.Value.ToString();
+    }
+
     public override string ToString()
     {
         return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);

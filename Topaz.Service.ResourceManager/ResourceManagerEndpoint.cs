@@ -1,10 +1,9 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using Azure.ResourceManager.Resources.Models;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.ResourceGroup;
-using Topaz.Service.ResourceManager.Models;
+using Topaz.Service.ResourceManager.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
@@ -16,12 +15,12 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
 {
     private readonly SubscriptionControlPlane _subscriptionControlPlane = new(new SubscriptionResourceProvider(logger));
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane = new(new ResourceGroupResourceProvider(logger), logger);
-    private readonly ArmTemplateParser _templateParser = new();
-    private readonly ResourceManagerResourceProvider _resourceProvider = new(logger);
+    private readonly ResourceManagerControlPlane _controlPlane = new(new ResourceManagerResourceProvider(logger));
     
     public string[] Endpoints =>
     [
-        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}"
+        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}",
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}"
     ];
 
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
@@ -47,6 +46,12 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
                         HandleCreateOrUpdateDeployment(response, subscriptionIdentifier, resourceGroupIdentifier, deploymentName, input);
                     }
                     break;
+                case "GET":
+                    if (!string.IsNullOrWhiteSpace(deploymentName))
+                    {
+                        HandleGetDeployment(response, subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
+                    }
+                    break;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
                     break;
@@ -60,6 +65,33 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
         }
         
         return response;
+    }
+
+    private void HandleGetDeployment(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string deploymentName)
+    {
+        var subscription = _subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscription.result == OperationResult.NotFound)
+        {
+            response.StatusCode =  HttpStatusCode.NotFound;
+            return;
+        }
+
+        var resourceGroup = _resourceGroupControlPlane.Get(resourceGroupIdentifier);
+        if (resourceGroup.result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        var deployment = _controlPlane.GetDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
+        if (deployment.result == OperationResult.NotFound || deployment.resource == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(deployment.resource.ToString());
     }
 
     private void HandleCreateOrUpdateDeployment(HttpResponseMessage response,
@@ -83,26 +115,16 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
         using var reader = new StreamReader(input);
         
         var content = reader.ReadToEnd();
-        var payload = JsonSerializer.Deserialize<Deployment>(content, GlobalSettings.JsonOptions);
-        if (payload == null)
+        var request = JsonSerializer.Deserialize<CreateDeploymentRequest>(content, GlobalSettings.JsonOptions);
+        if (request?.Properties == null || string.IsNullOrWhiteSpace(request.Properties.Mode))
         {
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
         
-        var templateProperty = JsonDocument.Parse(content).RootElement.GetProperty("properties").GetProperty("template");
-        var rawTemplate = JsonSerializer.Serialize(templateProperty, GlobalSettings.JsonOptions);
-        var template = _templateParser.Parse(rawTemplate);
-        var deploymentResource = new Models.DeploymentResource(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, resourceGroup.resource!.Location, new DeploymentResourceProperties()
-        {
-            CorrelationId = Guid.NewGuid().ToString(),
-            Mode = payload.Properties!.Mode,
-            TemplateHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(template)))
-        });
-        
-        _resourceProvider.CreateOrUpdate(deploymentName, deploymentResource);
+        var result = _controlPlane.CreateOrUpdateDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, content, resourceGroup.resource!.Location, request.Properties.Mode);
         
         response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(JsonSerializer.Serialize(deploymentResource, GlobalSettings.JsonOptions), Encoding.UTF8, "application/json");
+        response.Content = new StringContent(JsonSerializer.Serialize(result.resource, GlobalSettings.JsonOptions), Encoding.UTF8, "application/json");
     }
 }

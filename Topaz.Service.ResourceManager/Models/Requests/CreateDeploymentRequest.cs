@@ -1,6 +1,6 @@
-namespace Topaz.Service.ResourceManager.Models;
+namespace Topaz.Service.ResourceManager.Models.Requests;
 
-internal record Deployment
+internal record CreateDeploymentRequest
 {
     public DeploymentProperties? Properties { get; set; }
 
