@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Topaz.AspNetCore.Extensions;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Service.Shared.Domain;
 
 var builder = WebApplication.CreateBuilder(args);
 var keyVaultName = builder.Configuration["Azure:KeyVaultName"]!;
@@ -35,17 +36,17 @@ if (builder.Environment.IsDevelopment())
     await builder.Configuration.AddTopaz(subscriptionId)
         .AddSubscription(subscriptionId, "topaz-webapp-example")
         .AddResourceGroup(subscriptionId, resourceGroupName, AzureLocation.WestEurope)
-        .AddStorageAccount(resourceGroupName, storageAccountName,
+        .AddStorageAccount(ResourceGroupIdentifier.From(resourceGroupName), storageAccountName,
             new StorageAccountCreateOrUpdateContent(new StorageSku(StorageSkuName.StandardLrs), StorageKind.StorageV2,
                 AzureLocation.WestEurope))
-        .AddKeyVault(resourceGroupName, keyVaultName,
+        .AddKeyVault(ResourceGroupIdentifier.From(resourceGroupName), keyVaultName,
             new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
                 new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))),
             secrets: new Dictionary<string, string>
             {
                 { "secrets-generic-secret", "This is just example secret!" }
             })
-        .AddStorageAccountConnectionStringAsSecret(resourceGroupName, storageAccountName, keyVaultName,
+        .AddStorageAccountConnectionStringAsSecret(ResourceGroupIdentifier.From(resourceGroupName), storageAccountName, keyVaultName,
             "connectionstring-storageaccount");
 }
 

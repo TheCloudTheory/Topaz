@@ -66,4 +66,37 @@ public class ResourceManagerTests
             Assert.That(deployment.Value.Data.Name, Is.EqualTo(deploymentName));
         });
     }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenDeploymentIsDeleted_ItShouldNotBeAvailable()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub";
+        const string resourceGroupName = "rg-deployment";
+        const string deploymentName = "deployment-to-delete";
+        
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential();
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient();
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(AzureLocation.WestEurope));
+        await rg.Value.GetArmDeployments().CreateOrUpdateAsync(WaitUntil.Completed, deploymentName,
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment1.json"))
+            }));
+
+        // Act
+        await (await rg.Value.GetArmDeploymentAsync(deploymentName)).Value.DeleteAsync(WaitUntil.Completed);
+        var deployments = rg.Value.GetArmDeployments();
+        
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(deployments.Count, Is.EqualTo(0));
+        });
+    }
 }
