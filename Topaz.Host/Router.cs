@@ -1,4 +1,5 @@
 using System.Net;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
@@ -91,7 +92,7 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
         
         var textResponse = await response.Content.ReadAsStringAsync();
 
-        logger.LogInformation($"Response: [{response.StatusCode}] [{path}] {textResponse}");
+        logger.LogInformation($"Response: [{endpoint.GetType()}][{response.StatusCode}] [{path}] {textResponse}");
 
         context.Response.StatusCode = (int)response.StatusCode;
 

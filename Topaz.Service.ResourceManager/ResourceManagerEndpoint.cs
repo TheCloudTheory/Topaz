@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ResourceManager.Models.Requests;
+using Topaz.Service.ResourceManager.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
@@ -20,7 +21,9 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
     public string[] Endpoints =>
     [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}",
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}",
+        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}",
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments",
     ];
 
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
@@ -51,6 +54,16 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
                     {
                         HandleGetDeployment(response, subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
                     }
+                    else
+                    {
+                        HandleGetDeployments(response, subscriptionIdentifier, resourceGroupIdentifier);
+                    }
+                    break;
+                case "DELETE":
+                    if (!string.IsNullOrWhiteSpace(deploymentName))
+                    {
+                        HandleDeleteDeployment(response, subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
+                    }
                     break;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
@@ -65,6 +78,61 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
         }
         
         return response;
+    }
+
+    private void HandleGetDeployments(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
+    {
+        var subscription = _subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscription.result == OperationResult.NotFound)
+        {
+            response.StatusCode =  HttpStatusCode.NotFound;
+            return;
+        }
+
+        var resourceGroup = _resourceGroupControlPlane.Get(resourceGroupIdentifier);
+        if (resourceGroup.result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
+        var result = _controlPlane.GetDeployments(subscriptionIdentifier, resourceGroupIdentifier);
+        
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(new DeploymentListResult(result.resource!).ToString());
+    }
+
+    private void HandleDeleteDeployment(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string deploymentName)
+    {
+        var subscription = _subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscription.result == OperationResult.NotFound)
+        {
+            response.StatusCode =  HttpStatusCode.NotFound;
+            return;
+        }
+
+        var resourceGroup = _resourceGroupControlPlane.Get(resourceGroupIdentifier);
+        if (resourceGroup.result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        var deployment = _controlPlane.GetDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
+        if (deployment.result == OperationResult.NotFound || deployment.resource == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
+        var result = _controlPlane.DeleteDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
+        if (result != OperationResult.Deleted)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+        
+        response.StatusCode = HttpStatusCode.NoContent;
     }
 
     private void HandleGetDeployment(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string deploymentName)

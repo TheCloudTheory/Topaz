@@ -21,7 +21,7 @@ internal sealed class DeploymentResource
         AzureLocation location,
         DeploymentResourceProperties properties)
     {
-        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/Microsoft.Resources/deployments/{name}";
+        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Resources/deployments/{name}";
         Name = name;
         Location = location;
         Properties = properties;

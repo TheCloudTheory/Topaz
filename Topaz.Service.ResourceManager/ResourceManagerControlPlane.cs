@@ -46,4 +46,36 @@ internal sealed class ResourceManagerControlPlane(ResourceManagerResourceProvide
 
         return (OperationResult.Success, resource);
     }
+    
+    public OperationResult DeleteDeployment(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string deploymentName)
+    {
+        var resource = provider.GetAs<DeploymentResource>(deploymentName);
+        if (resource == null ||
+            !resource.IsInSubscription(subscriptionIdentifier) ||
+            !resource.IsInResourceGroup(resourceGroupIdentifier))
+        {
+            return OperationResult.NotFound;
+        }
+
+        provider.Delete(deploymentName);
+        return OperationResult.Deleted;
+    }
+
+    public (OperationResult result, DeploymentResource?[] resource) GetDeployments(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
+    {
+        var resources = provider.ListAs<DeploymentResource>();
+        if (resources == null)
+        {
+            return (OperationResult.Success, []);
+        }
+
+        var filteredBySubscriptionAndResourceGroup = resources.Where(deployment =>
+            deployment != null &&
+            deployment.IsInSubscription(subscriptionIdentifier) &&
+            deployment.IsInResourceGroup(resourceGroupIdentifier));
+        
+        return (OperationResult.Success,  filteredBySubscriptionAndResourceGroup.ToArray());
+    }
 }
