@@ -17,10 +17,9 @@ internal sealed class ResourceManagerControlPlane(ResourceManagerResourceProvide
     {
         var templateProperty =
             JsonDocument.Parse(content).RootElement.GetProperty("properties").GetProperty("template");
-        var rawTemplate = JsonSerializer.Serialize(templateProperty, GlobalSettings.JsonOptions);
-        var template = _templateParser.Parse(rawTemplate);
+        var template = _templateParser.Parse(templateProperty.GetRawText());
         var deploymentResource = new DeploymentResource(subscriptionIdentifier, resourceGroupIdentifier, deploymentName,
-            location, new DeploymentResourceProperties()
+            location, new DeploymentResourceProperties
             {
                 CorrelationId = Guid.NewGuid().ToString(),
                 Mode = deploymentMode,

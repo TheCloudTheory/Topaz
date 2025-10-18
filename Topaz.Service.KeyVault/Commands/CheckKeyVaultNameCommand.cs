@@ -16,19 +16,14 @@ public class CheckKeyVaultNameCommand(ITopazLogger logger) : Command<CheckKeyVau
         var controlPlane = new KeyVaultControlPlane(new ResourceProvider(logger));
         var kv = controlPlane.CheckName(settings.Name!, settings.ResourceType);
 
-        logger.LogInformation(kv.ToString());
+        logger.LogInformation(kv.response.ToString());
 
         return 0;
     }
 
     public override ValidationResult Validate(CommandContext context, CheckKeyVaultNameCommandSettings settings)
     {
-        if(string.IsNullOrEmpty(settings.Name))
-        {
-            return ValidationResult.Error("Key vault name can't be null.");
-        }
-
-        return base.Validate(context, settings);
+        return string.IsNullOrEmpty(settings.Name) ? ValidationResult.Error("Key vault name can't be null.") : base.Validate(context, settings);
     }
     
     [UsedImplicitly]

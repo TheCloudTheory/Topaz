@@ -17,4 +17,11 @@
       <PackageReference Include="Azure.ResourceManager.Resources" Version="1.11.1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="empty-template.json" />
+      <Resource Include="empty-template.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Resource>
+    </ItemGroup>
+
 </Project>

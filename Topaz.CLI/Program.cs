@@ -5,6 +5,7 @@ using Topaz.CLI.Commands;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
 using Topaz.Service.ResourceGroup.Commands;
+using Topaz.Service.ResourceManager.Commands;
 using Topaz.Service.ServiceBus.Commands;
 using Topaz.Service.Storage.Commands;
 using Topaz.Service.Subscription.Commands;
@@ -122,6 +123,14 @@ internal class Program
                 {
                     queue.AddCommand<CreateServiceBusQueueCommand>("create");
                     queue.AddCommand<DeleteServiceBusQueueCommand>("delete");
+                });
+            });
+            
+            config.AddBranch("deployment", branch =>
+            {
+                branch.AddBranch("group", groupDeployment =>
+                {
+                    groupDeployment.AddCommand<CreateGroupDeploymentCommand>("create");
                 });
             });
         });

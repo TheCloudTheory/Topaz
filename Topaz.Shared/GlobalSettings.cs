@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -8,7 +9,8 @@ public static class GlobalSettings
     public static readonly JsonSerializerOptions JsonOptions = new()
     {
          PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-         PropertyNameCaseInsensitive = true
+         PropertyNameCaseInsensitive = true,
+         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
     
     public static readonly JsonSerializerOptions JsonOptionsCli = new()
