@@ -40,8 +40,10 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
                 Template = GetEmptyTemplate(),
             }
         };
+
+        var deploymentName = string.IsNullOrWhiteSpace(settings.Name) ? "empty-template" : settings.Name;
         var deployment = controlPlane.CreateOrUpdateDeployment(resourceGroup.resource.GetSubscription(),
-            resourceGroupIdentifier, settings.Name!, JsonSerializer.Serialize(fakeRequest, GlobalSettings.JsonOptions),
+            resourceGroupIdentifier, deploymentName, JsonSerializer.Serialize(fakeRequest, GlobalSettings.JsonOptions),
             resourceGroup.resource.Location, settings.Mode.ToString());
 
         logger.LogInformation(deployment.resource.ToString());

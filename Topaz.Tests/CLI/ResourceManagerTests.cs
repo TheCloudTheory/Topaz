@@ -55,4 +55,20 @@ public class ResourceManagerTests
 
         Assert.That(File.Exists(deploymentPath), Is.True);
     }
+    
+    [Test]
+    public async Task ResourceManagerTests_WhenNewDeploymentIsCreatedWithNoExplicitNameAndNoTemplate_ItShouldBeCreatedAndNameShouldBeGeneratedAutomatically()
+    {
+        await Program.Main([
+            "deployment",
+            "group",
+            "create",
+            "--resource-group",
+            ResourceGroupName
+        ]);
+        
+        var deploymentPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".resource-manager", "empty-template", "metadata.json");
+
+        Assert.That(File.Exists(deploymentPath), Is.True);
+    }
 }
