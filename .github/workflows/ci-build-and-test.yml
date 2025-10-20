@@ -35,6 +35,9 @@ jobs:
       run: |
         cd certificate
         ./ubuntu-install.sh
+    - name: Register DNS entries
+      run: |
+        ./scripts/register-dns-entries.sh
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
