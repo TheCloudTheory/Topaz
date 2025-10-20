@@ -38,6 +38,9 @@ jobs:
     - name: Register DNS entries
       run: |
         ./scripts/register-dns-entries.sh
+    - name: Register DNS entries for test storage
+      run: |
+        ./scripts/register-dns-storage-entry.sh devstoreaccount1
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
