@@ -81,20 +81,20 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
         }
 
         var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query, options);
+        var textResponse = await response.Content.ReadAsStringAsync();
+
+        logger.LogInformation($"Response: [{endpoint.GetType()}][{response.StatusCode}] [{path}] {textResponse}");
+        
+        context.Response.StatusCode = (int)response.StatusCode;
         
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             // Just returns and let an endpoint prepare a correct response. The reason why there's no
             // generic handler for that kind of situation is because in some scenarios (like when
             // Evert Hub SDK validates a checkpoint), a specific error code is checked.
+            await context.Response.WriteAsync(textResponse);
             return;
         }
-        
-        var textResponse = await response.Content.ReadAsStringAsync();
-
-        logger.LogInformation($"Response: [{endpoint.GetType()}][{response.StatusCode}] [{path}] {textResponse}");
-
-        context.Response.StatusCode = (int)response.StatusCode;
 
         foreach (var header in response.Headers)
         {

@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Topaz.Service.KeyVault.Models;
 using Topaz.Service.KeyVault.Models.Requests;
+using Topaz.Service.KeyVault.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -69,7 +70,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, ResourceProvider pr
         var fileName = $"{secretName}.json";
         var entityPath = Path.Combine(path, fileName);
         
-        if (File.Exists(entityPath) == false)
+        if (!File.Exists(entityPath))
         {
             logger.LogDebug($"Executing {nameof(GetSecret)}: Secret {secretName} not found.");
             

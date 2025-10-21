@@ -173,6 +173,4 @@ public class KeyVaultTests
         // Assert
         Assert.Throws<RequestFailedException>(() => client.GetSecret("secret-one"));
     }
-
-    
 }

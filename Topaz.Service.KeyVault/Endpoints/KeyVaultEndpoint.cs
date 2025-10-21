@@ -133,8 +133,26 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
         var version = path.ExtractValueFromPath(4);
         var (data, code) = _dataPlane.GetSecret(vaultName, secretName!, version);
 
+        if (code == HttpStatusCode.NotFound)
+        {
+            response.StatusCode = code;
+            response.Content = CreateErrorResponse($"Secret {secretName} not found.");
+            return;
+        }
+
         response.StatusCode = code;
         response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+    }
+    
+    private static JsonContent CreateErrorResponse(string errorMessage)
+    {
+        return JsonContent.Create(new ErrorResponse
+        {
+            Error = new ErrorResponse.ErrorData()
+            {
+                Message = errorMessage
+            }
+        }, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
     }
 
     /// <summary>
@@ -143,7 +161,7 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
     /// </summary>
     private static void EnforceAuthenticationChallenge(HttpResponseMessage response, HttpStatusCode code)
     {
-        response.Headers.Add("WWW-Authenticate", $"Bearer authorization=\"http://localhost:8898/{Guid.Empty}\", resource=\"https://localhost:8898\"");
+        response.Headers.Add("WWW-Authenticate", $"Bearer authorization=\"http://topaz.local.dev:8898/{Guid.Empty}\", resource=\"https://topaz.local.dev:8898\"");
         response.StatusCode = code;
     }
 }
