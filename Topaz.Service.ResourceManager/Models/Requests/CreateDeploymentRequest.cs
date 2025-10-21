@@ -1,4 +1,3 @@
-using Azure.Deployments.Core.Definitions.Schema;
 
 namespace Topaz.Service.ResourceManager.Models.Requests;
 
@@ -9,6 +8,6 @@ internal record CreateDeploymentRequest
     internal record DeploymentProperties
     {
         public string? Mode { get; init; }
-        public string? Template { get; set; }
+        public object? Template { get; set; }
     }
 }

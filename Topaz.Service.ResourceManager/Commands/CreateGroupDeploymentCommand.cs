@@ -1,5 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
+using Azure.Deployments.Core.Definitions.Schema;
+using Azure.Deployments.Core.Entities;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -32,14 +34,7 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
         }
         
         var controlPlane = new ResourceManagerControlPlane(new ResourceManagerResourceProvider(logger));
-        var fakeRequest = new CreateDeploymentRequest
-        {
-            Properties = new CreateDeploymentRequest.DeploymentProperties
-            {
-                Mode = settings.Mode.ToString(),
-                Template = GetEmptyTemplate(),
-            }
-        };
+        var fakeRequest = GetEmptyTemplate();
 
         var deploymentName = string.IsNullOrWhiteSpace(settings.Name) ? "empty-template" : settings.Name;
         var deployment = controlPlane.CreateOrUpdateDeployment(resourceGroup.resource.GetSubscription(),
