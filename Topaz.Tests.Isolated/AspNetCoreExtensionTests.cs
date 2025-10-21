@@ -1,3 +1,4 @@
+using System.Text;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault.Models;
@@ -18,6 +19,8 @@ namespace Topaz.Tests.Isolated;
 public class AspNetCoreExtensionTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
+    private static readonly string CertificateFile = File.ReadAllText("topaz.crt");
+    private static readonly string CertificateKey = File.ReadAllText("topaz.key");
     
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
@@ -32,12 +35,16 @@ public class AspNetCoreExtensionTests
     public async Task OneTimeSetUp()
     {
         _container = new ContainerBuilder()
-            .WithImage("thecloudtheory/topaz-cli:v1.0.168-alpha")
+            .WithImage("thecloudtheory/topaz-cli:v1.0.183-alpha")
             .WithPortBinding(8890)
             .WithPortBinding(8899)
             .WithPortBinding(8898)
             .WithPortBinding(8897)
             .WithPortBinding(8891)
+            .WithHostname("topaz.local.dev")
+            .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
+            .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateKey), "/app/topaz.key")
+            .WithCommand("start", "--certificate-file", "topaz.crt", "--certificate-key", "topaz.key", "--skip-dns-registration")
             .Build();
 
         await _container.StartAsync()

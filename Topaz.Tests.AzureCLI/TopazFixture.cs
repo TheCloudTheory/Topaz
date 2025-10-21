@@ -11,12 +11,12 @@ public class TopazFixture
     private const string CloudEnvironmentConfiguration = """
                                                          {
                                                            "endpoints":{
-                                                             "resourceManager": "https://topaz:8899",
-                                                             "activeDirectoryGraphResourceId": "https://topaz:8899/",
-                                                             "microsoft_graph_resource_id": "https://topaz:8899/"
+                                                             "resourceManager": "https://topaz.local.dev:8899",
+                                                             "activeDirectoryGraphResourceId": "https://topaz.local.dev:8899/",
+                                                             "microsoft_graph_resource_id": "https://topaz.local.dev:8899/"
                                                            },
                                                            "suffixes": {
-                                                             "keyvault_dns": "https://topaz:8899/"
+                                                             "keyvault_dns": "https://topaz.local.dev:8899/"
                                                            }
                                                          }
                                                          """;
@@ -51,6 +51,7 @@ public class TopazFixture
             .WithPortBinding(8891)
             .WithNetwork(_network)
             .WithName("topaz")
+            .WithHostname("topaz.local.dev")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateKey), "/app/topaz.key")
             .WithCommand("start", "--tenant-id", TenantId, "--certificate-file", "topaz.crt", "--certificate-key", "topaz.key", "--skip-dns-registration")
