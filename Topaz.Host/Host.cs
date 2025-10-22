@@ -28,8 +28,14 @@ public class Host(GlobalOptions options, ITopazLogger logger)
     /// IP address used by Topaz to listen to incoming requests. Note that address is controlled by the
     /// host itself while ports and protocols are the responsibility of appropriate services.
     /// </summary>
-    private const string TopazIpAddress = "127.0.2.1";
-    
+    private static readonly string TopazIpAddress = IsRunningInsideContainer() ? "0.0.0.0" : "127.0.2.1";
+
+    private static bool IsRunningInsideContainer()
+    {
+        var env = Environment.GetEnvironmentVariable("TOPAZ_CONTAINERIZED");
+        return env == "true";
+    }
+
     private static readonly List<Thread> Threads = [];
 
     private readonly Router _router = new(options, logger);
@@ -80,6 +86,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         CreateWebserverForHttpEndpoints([.. httpEndpoints]);
         CreateAmqpListenersForAmpqEndpoints([.. amqpEndpoints]);
 
+        Console.WriteLine();
         Console.WriteLine("Enabled services:");
         
         foreach (var service in services)
@@ -89,6 +96,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         
         Console.WriteLine();
         Console.WriteLine("Topaz.Host listening to incoming requests...");
+        Console.WriteLine();
     }
 
     private void CreateAmqpListenersForAmpqEndpoints(IEndpointDefinition[] endpoints)
@@ -139,7 +147,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
     private void CreateWebserverForHttpEndpoints(IEndpointDefinition[] httpEndpoints)
     {
         var host = new WebHostBuilder()
-            .UseKestrel((context, hostOptions) =>
+            .UseKestrel((_, hostOptions) =>
             {
                 var usedPorts = new List<int>();
                 foreach (var httpEndpoint in httpEndpoints)
@@ -153,9 +161,11 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                     switch (httpEndpoint.PortAndProtocol.Protocol)
                     {
                         case Protocol.Http:
+                            logger.LogInformation($"Starting HTTP endpoint: {TopazIpAddress}:{httpEndpoint.PortAndProtocol.Port}");
                             hostOptions.Listen(IPAddress.Parse(TopazIpAddress), httpEndpoint.PortAndProtocol.Port);
                             break;
                         case Protocol.Https:
+                            logger.LogInformation($"Starting HTTPS endpoint: {TopazIpAddress}:{httpEndpoint.PortAndProtocol.Port}");
                             hostOptions.Listen(IPAddress.Parse(TopazIpAddress), httpEndpoint.PortAndProtocol.Port, listenOptions =>
                             {
                                 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
@@ -207,8 +217,8 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         string? certPem;
         string? keyPem;
                                     
-        if (string.IsNullOrEmpty(options.CertificateFile) == false &&
-            string.IsNullOrEmpty(options.CertificateKey) == false)
+        if (!string.IsNullOrEmpty(options.CertificateFile) &&
+            !string.IsNullOrEmpty(options.CertificateKey))
         {
             logger.LogInformation("Using provided certificate file instead of the default one.");
                                         

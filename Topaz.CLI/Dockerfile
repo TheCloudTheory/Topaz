@@ -10,6 +10,8 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then chmod +x topaz-linux-arm64 &&
 FROM mcr.microsoft.com/dotnet/runtime-deps:8.0-noble-chiseled AS final
 WORKDIR /app
 
+ENV TOPAZ_CONTAINERIZED=true
+
 COPY --from=base /app .
 
 ENTRYPOINT [ "./topaz-cli" ]
