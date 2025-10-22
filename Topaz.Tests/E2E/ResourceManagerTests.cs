@@ -91,7 +91,7 @@ public class ResourceManagerTests
 
         // Act
         await (await rg.Value.GetArmDeploymentAsync(deploymentName)).Value.DeleteAsync(WaitUntil.Completed);
-        var deployments = rg.Value.GetArmDeployments();
+        var deployments = rg.Value.GetArmDeployments().Where(deployment => deployment.Data.Name.Equals(deploymentName));
         
         // Assert
         Assert.Multiple(() =>
