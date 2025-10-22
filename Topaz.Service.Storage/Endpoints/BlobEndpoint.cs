@@ -50,55 +50,60 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 
             logger.LogDebug($"Executing {nameof(GetResponse)}: Found container: {containerName}");
 
-            if (method == "PUT")
+            switch (method)
             {
-                if (query.TryGetValueForKey("restype", out var restype) && restype == "container")
-                {
-                    HandleCreateContainerRequest(storageAccountName, containerName, response);
+                case "PUT" when query.TryGetValueForKey("restype", out var restype) && restype == "container":
+                    HandleCreateContainerRequest(storageAccountName!, containerName, response);
                     return response;
-                }
-
-                if (TryGetBlobName(path, out var blobName))
+                case "PUT":
                 {
-                    if (query.TryGetValueForKey("comp", out var comp) && comp == "metadata")
+                    if (TryGetBlobName(path, out var blobName))
                     {
-                        HandleSetBlobMetadataRequest(storageAccountName, containerName, headers, response);
+                        if (query.TryGetValueForKey("comp", out var comp) && comp == "metadata")
+                        {
+                            HandleSetBlobMetadataRequest(storageAccountName!, path, headers, response);
+                        }
+                        else
+                        {
+                            HandleUploadBlobRequest(storageAccountName!, path, blobName!, input, response);
+                        }
                     }
-                    else
-                    {
-                        HandleUploadBlobRequest(storageAccountName, path, blobName!, input, response);
-                    }
-                }
-            }
 
-            if (method == "GET")
-            {
-                if (query.TryGetValueForKey("comp", out var comp) && comp == "list")
-                {
-                    if (query.TryGetValueForKey("restype", out var restype) && restype == "container")
-                    {
-                        HandleListBlobsRequest(storageAccountName, containerName, response);
-                    }
-                    else
-                    {
-                        HandleGetContainersRequest(storageAccountName, response);
-                    }
+                    break;
                 }
-            }
-
-            if (method == "HEAD")
-            {
-                if (TryGetBlobName(path, out var blobName))
+                case "GET":
                 {
-                    HandleGetBlobPropertiesRequest(storageAccountName, path, blobName!, response);
+                    if (query.TryGetValueForKey("comp", out var comp) && comp == "list")
+                    {
+                        if (query.TryGetValueForKey("restype", out var restype) && restype == "container")
+                        {
+                            HandleListBlobsRequest(storageAccountName!, containerName, response);
+                        }
+                        else
+                        {
+                            HandleGetContainersRequest(storageAccountName!, response);
+                        }
+                    }
+
+                    break;
                 }
-            }
-
-            if (method == "DELETE")
-            {
-                if (TryGetBlobName(containerName, out var blobName))
+                case "HEAD":
                 {
-                    HandleDeleteBlobRequest(storageAccountName, containerName, blobName!, response);
+                    if (TryGetBlobName(path, out var blobName))
+                    {
+                        HandleGetBlobPropertiesRequest(storageAccountName!, path, blobName!, response);
+                    }
+
+                    break;
+                }
+                case "DELETE":
+                {
+                    if (TryGetBlobName(containerName, out var blobName))
+                    {
+                        HandleDeleteBlobRequest(storageAccountName!, containerName, blobName!, response);
+                    }
+
+                    break;
                 }
             }
         }
