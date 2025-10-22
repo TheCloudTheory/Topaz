@@ -3,7 +3,6 @@ using System.Text.Json;
 using Topaz.Service.ResourceManager.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.ResourceManager;
 
@@ -15,9 +14,7 @@ internal sealed class ResourceManagerControlPlane(ResourceManagerResourceProvide
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string deploymentName, string content, string location, string deploymentMode)
     {
-        var templateProperty =
-            JsonDocument.Parse(content).RootElement.GetProperty("properties").GetProperty("template");
-        var template = _templateParser.Parse(templateProperty.GetRawText());
+        var template = _templateParser.Parse(content);
         var deploymentResource = new DeploymentResource(subscriptionIdentifier, resourceGroupIdentifier, deploymentName,
             location, new DeploymentResourceProperties
             {

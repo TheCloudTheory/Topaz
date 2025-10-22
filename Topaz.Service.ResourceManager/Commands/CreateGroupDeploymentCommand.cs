@@ -17,7 +17,7 @@ namespace Topaz.Service.ResourceManager.Commands;
 public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateGroupDeploymentCommand.CreateGroupDeploymentCommandSettings>
 {
     private static readonly Stream? EmptyTemplate =
-        Assembly.GetExecutingAssembly()?.GetManifestResourceStream("empty-template.json");
+        Assembly.GetExecutingAssembly()?.GetManifestResourceStream("Topaz.Service.ResourceManager.empty-template.json");
     
     public override int Execute(CommandContext context, CreateGroupDeploymentCommandSettings settings)
     {

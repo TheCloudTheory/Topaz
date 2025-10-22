@@ -19,9 +19,9 @@
 
     <ItemGroup>
       <None Remove="empty-template.json" />
-      <Resource Include="empty-template.json">
+      <EmbeddedResource Include="empty-template.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Resource>
+      </EmbeddedResource>
     </ItemGroup>
 
 </Project>

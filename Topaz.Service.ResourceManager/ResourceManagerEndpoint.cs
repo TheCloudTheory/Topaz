@@ -189,8 +189,10 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
-        
-        var result = _controlPlane.CreateOrUpdateDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, content, resourceGroup.resource!.Location, request.Properties.Mode);
+
+        var result = _controlPlane.CreateOrUpdateDeployment(subscriptionIdentifier, resourceGroupIdentifier,
+            deploymentName, JsonSerializer.Serialize(request.Properties.Template), resourceGroup.resource!.Location,
+            request.Properties.Mode);
         
         response.StatusCode = HttpStatusCode.OK;
         response.Content = new StringContent(JsonSerializer.Serialize(result.resource, GlobalSettings.JsonOptions), Encoding.UTF8, "application/json");
