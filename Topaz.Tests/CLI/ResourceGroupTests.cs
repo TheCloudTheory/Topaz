@@ -5,8 +5,9 @@ namespace Topaz.Tests.CLI;
 public class ResourceGroupTests
 {
     private static readonly Guid SubscriptionId = Guid.NewGuid();
-    private static readonly string ResourceGroupName = "test";
-    
+    private const string SusbcriptionName = "sub-test";
+    private const string ResourceGroupName = "test";
+
     [SetUp]
     public async Task SetUp()
     {
@@ -25,7 +26,7 @@ public class ResourceGroupTests
             "--id",
             SubscriptionId.ToString(),
             "--name",
-            "sub-test"
+            SusbcriptionName
         ]);
 
         await Program.Main([

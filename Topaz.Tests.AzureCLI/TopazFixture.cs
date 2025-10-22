@@ -1,4 +1,6 @@
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
@@ -97,7 +99,7 @@ public class TopazFixture
         await _network!.DisposeAsync();
     }
 
-    protected async Task RunAzureCliCommand(string command)
+    protected async Task RunAzureCliCommand(string command, Action<JsonNode>? assertion = null)
     {
         var result = await _containerAzureCli!.ExecAsync(new List<string>()
         {
@@ -110,5 +112,7 @@ public class TopazFixture
             $"`{command}` command failed. STDOUT: {result.Stdout}, STDERR: {result.Stderr}");
         
         Console.WriteLine(result.Stdout);
+
+        assertion?.Invoke(JsonNode.Parse(result.Stdout)!);
     }
 }
