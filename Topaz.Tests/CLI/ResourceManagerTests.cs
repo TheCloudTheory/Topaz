@@ -41,7 +41,7 @@ public class ResourceManagerTests
     [Test]
     public async Task ResourceManagerTests_WhenNewDeploymentIsCreatedWithExplicitName_ItShouldBeCreated()
     {
-        await Program.Main([
+        var result = await Program.Main([
             "deployment",
             "group",
             "create",
@@ -52,14 +52,18 @@ public class ResourceManagerTests
         ]);
         
         var deploymentPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".resource-manager", DeploymentName, "metadata.json");
-
-        Assert.That(File.Exists(deploymentPath), Is.True);
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.EqualTo(0));
+            Assert.That(File.Exists(deploymentPath), Is.True);
+        });
     }
-    
+
     [Test]
     public async Task ResourceManagerTests_WhenNewDeploymentIsCreatedWithNoExplicitNameAndNoTemplate_ItShouldBeCreatedAndNameShouldBeGeneratedAutomatically()
     {
-        await Program.Main([
+        var result = await Program.Main([
             "deployment",
             "group",
             "create",
@@ -68,7 +72,11 @@ public class ResourceManagerTests
         ]);
         
         var deploymentPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".resource-manager", "empty-template", "metadata.json");
-
-        Assert.That(File.Exists(deploymentPath), Is.True);
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.EqualTo(0));
+            Assert.That(File.Exists(deploymentPath), Is.True);
+        });
     }
 }

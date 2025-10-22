@@ -38,7 +38,7 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
 
         var deploymentName = string.IsNullOrWhiteSpace(settings.Name) ? "empty-template" : settings.Name;
         var deployment = controlPlane.CreateOrUpdateDeployment(resourceGroup.resource.GetSubscription(),
-            resourceGroupIdentifier, deploymentName, JsonSerializer.Serialize(fakeRequest, GlobalSettings.JsonOptions),
+            resourceGroupIdentifier, deploymentName, fakeRequest,
             resourceGroup.resource.Location, settings.Mode.ToString());
 
         logger.LogInformation(deployment.resource.ToString());
@@ -46,9 +46,9 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
         return 0;
     }
 
-    private static string? GetEmptyTemplate()
+    private static string GetEmptyTemplate()
     {
-        if (EmptyTemplate is null) return null;
+        if (EmptyTemplate is null) throw new InvalidOperationException();
 
         using var reader = new StreamReader(EmptyTemplate);
         return reader.ReadToEnd();
