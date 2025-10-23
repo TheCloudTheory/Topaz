@@ -8,7 +8,7 @@ public sealed class ResourceManagerService(ITopazLogger logger) : IServiceDefini
 {
     public string Name => "Resource Manager";
     public static bool IsGlobalService => false;
-    public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, "{resourceGroup}", ".resource-manager");
+    public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".resource-manager");
     public static IReadOnlyCollection<string>? Subresources => [];
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>

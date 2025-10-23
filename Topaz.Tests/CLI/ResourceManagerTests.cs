@@ -48,10 +48,13 @@ public class ResourceManagerTests
             "--resource-group",
             ResourceGroupName,
             "--name",
-            DeploymentName
+            DeploymentName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
-        var deploymentPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".resource-manager", DeploymentName, "metadata.json");
+        var deploymentPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".resource-manager", DeploymentName, "metadata.json");
         
         Assert.Multiple(() =>
         {
@@ -68,10 +71,13 @@ public class ResourceManagerTests
             "group",
             "create",
             "--resource-group",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
-        var deploymentPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".resource-manager", "empty-template", "metadata.json");
+        var deploymentPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".resource-manager", "empty-template", "metadata.json");
         
         Assert.Multiple(() =>
         {

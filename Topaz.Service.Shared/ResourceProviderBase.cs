@@ -34,7 +34,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     {
         const string fileName = $"metadata.json";
         var metadataFile = string.IsNullOrWhiteSpace(id) ? 
-            Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier)) :
+            Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), fileName) :
             Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id, fileName);
 
         if (!File.Exists(metadataFile)) return null;

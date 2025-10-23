@@ -54,7 +54,8 @@ public class ResourceGroupTests
     [Test]
     public void ResourceGroupTests_WhenNewResourceGroupIsRequested_ItShouldBeCreated()
     {
-        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".resource-groups", ResourceGroupName, "metadata.json");
+        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, "metadata.json");
 
         Assert.That(File.Exists(resourceGroupPath), Is.True);
     }
@@ -62,7 +63,8 @@ public class ResourceGroupTests
     [Test]
     public async Task ResourceGroupTests_WhenNewResourceGroupIsDeleted_ItShouldBeDeleted()
     {
-        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".resource-groups", ResourceGroupName, "metadata.json");
+        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, "metadata.json");
 
         var code = await Program.Main([
             "group",
