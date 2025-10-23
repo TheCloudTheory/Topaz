@@ -54,7 +54,11 @@ namespace Topaz.Tests.CLI
                 "account",
                 "delete",
                 "--name",
-                StorageAccountName
+                StorageAccountName,
+                "--resource-group",
+                ResourceGroupName,
+                "--subscription-id",
+                SubscriptionId.ToString()
             ]);
 
             await Program.Main([
@@ -75,7 +79,8 @@ namespace Topaz.Tests.CLI
         [Test]
         public void StorageAccountTests_WhenNewStorageAccountIsRequested_ItShouldBeCreated()
         {
-            var accountDirectoryPath = Path.Combine(".topaz", ".azure-storage", StorageAccountName, "metadata.json");
+            var accountDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+                SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".azure-storage", StorageAccountName, "metadata.json");
 
             Assert.That(File.Exists(accountDirectoryPath), Is.True);
         }
@@ -83,14 +88,19 @@ namespace Topaz.Tests.CLI
         [Test]
         public async Task StorageAccountTests_WhenExistingStorageAccountIsDeleted_ItShouldBeDeleted()
         {
-            var accountDirectoryPath = Path.Combine(".topaz", ".azure-storage", StorageAccountName, "metadata.json");
+            var accountDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+                SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".azure-storage", StorageAccountName, "metadata.json");
 
             await Program.Main([
                 "storage",
                 "account",
                 "delete",
                 "--name",
-                StorageAccountName
+                StorageAccountName,
+                "--resource-group",
+                ResourceGroupName,
+                "--subscription-id",
+                SubscriptionId.ToString()
             ]);
 
             Assert.That(File.Exists(accountDirectoryPath), Is.False);
@@ -107,7 +117,9 @@ namespace Topaz.Tests.CLI
                 "--account-name",
                 StorageAccountName,
                 "--resource-group",
-                ResourceGroupName
+                ResourceGroupName,
+                "--subscription-id",
+                SubscriptionId.ToString()
             ]);
             
             Assert.That(result, Is.EqualTo(0));
@@ -122,6 +134,10 @@ namespace Topaz.Tests.CLI
                 "show-connection-string",
                 "--name",
                 StorageAccountName,
+                "--resource-group",
+                ResourceGroupName,
+                "--subscription-id",
+                SubscriptionId.ToString()
             ]);
             
             Assert.That(result, Is.EqualTo(0));

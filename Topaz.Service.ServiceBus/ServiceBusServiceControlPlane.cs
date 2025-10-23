@@ -61,7 +61,8 @@ internal sealed class ServiceBusServiceControlPlane(ResourceProvider provider, I
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         ServiceBusNamespaceIdentifier @namespace, string queueName,  CreateOrUpdateServiceBusQueueRequest request)
     {
-        var existingQueue = provider.GetSubresourceAs<ServiceBusQueueResource>(queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
+        var existingQueue = provider.GetSubresourceAs<ServiceBusQueueResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
         var properties = ServiceBusQueueResourceProperties.From(request);
         if (existingQueue == null)
         {
@@ -69,7 +70,8 @@ internal sealed class ServiceBusServiceControlPlane(ResourceProvider provider, I
             properties.UpdatedOn = DateTime.UtcNow;
             
             var resource = new ServiceBusQueueResource(subscriptionIdentifier, resourceGroupIdentifier, @namespace, queueName, properties);
-            provider.CreateOrUpdateSubresource(queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant(), resource);
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, queueName,
+                @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant(), resource);
             
             return (OperationResult.Created, resource);
         }
@@ -80,21 +82,24 @@ internal sealed class ServiceBusServiceControlPlane(ResourceProvider provider, I
         return (OperationResult.Updated, existingQueue);
     }
 
-    public OperationResult DeleteQueue(ServiceBusNamespaceIdentifier @namespace, string queueName)
+    public OperationResult DeleteQueue(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier @namespace, string queueName)
     {
-        var existingQueue = provider.GetSubresourceAs<ServiceBusQueueResource>(queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
+        var existingQueue = provider.GetSubresourceAs<ServiceBusQueueResource>(subscriptionIdentifier, resourceGroupIdentifier, queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
         if (existingQueue == null)
         {
             return OperationResult.NotFound;
         }
         
-        provider.DeleteSubresource(queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
         return OperationResult.Deleted;
     }
 
-    public (OperationResult result, ServiceBusQueueResource? resource) GetQueue(ServiceBusNamespaceIdentifier @namespace, string queueName)
+    public (OperationResult result, ServiceBusQueueResource? resource) GetQueue(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier @namespace, string queueName)
     {
-        var existingQueue = provider.GetSubresourceAs<ServiceBusQueueResource>(queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
+        var existingQueue = provider.GetSubresourceAs<ServiceBusQueueResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
         return existingQueue == null ? (OperationResult.NotFound, null) : (OperationResult.Success, existingQueue);
     }
 }

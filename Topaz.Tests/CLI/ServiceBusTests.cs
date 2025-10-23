@@ -53,7 +53,11 @@ public class ServiceBusTests
             "namespace",
             "delete",
             "--name",
-            NamespaceName
+            NamespaceName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
         await Program.Main([
@@ -63,7 +67,9 @@ public class ServiceBusTests
             "--name",
             NamespaceName,
             "--resource-group",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
         await Program.Main([
@@ -75,14 +81,17 @@ public class ServiceBusTests
             "--namespace-name",
             NamespaceName,
             "--resource-group",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
     }
     
     [Test]
     public void ServiceBusTests_WhenNewNamespacesIsRequested_ItShouldBeCreated()
     {
-        var namespacePath = Path.Combine(".topaz", ".service-bus", NamespaceName, "metadata.json");
+        var namespacePath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".service-bus", NamespaceName, "metadata.json");
 
         Assert.That(File.Exists(namespacePath), Is.True);
     }
@@ -90,14 +99,19 @@ public class ServiceBusTests
     [Test]
     public async Task ServiceBusTests_WhenExistingNamespaceIsDeleted_ItShouldBeDeleted()
     {
-        var namespacePath = Path.Combine(".topaz", ".service-bus", NamespaceName, "metadata.json");
+        var namespacePath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".service-bus", NamespaceName, "metadata.json");
 
         var code = await Program.Main([
             "servicebus",
             "namespace",
             "delete",
             "--name",
-            NamespaceName
+            NamespaceName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
         Assert.Multiple(() =>
@@ -110,7 +124,8 @@ public class ServiceBusTests
     [Test]
     public void ServiceBusTests_WhenNewQueueIsRequested_ItShouldBeCreated()
     {
-        var queuePath = Path.Combine(".topaz", ".service-bus", NamespaceName, "queues", QueueName, "metadata.json");
+        var queuePath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".service-bus", NamespaceName, "queues", QueueName, "metadata.json");
 
         Assert.That(File.Exists(queuePath), Is.True);
     }
@@ -118,7 +133,8 @@ public class ServiceBusTests
     [Test]
     public async Task ServiceBusTests_WhenNewQueueIsDeleted_ItShouldBeDeleted()
     {
-        var queuePath = Path.Combine(".topaz", ".service-bus", NamespaceName, "queues", QueueName, "metadata.json");
+        var queuePath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".service-bus", NamespaceName, "queues", QueueName, "metadata.json");
         
         var code = await Program.Main([
             "servicebus",
@@ -129,7 +145,9 @@ public class ServiceBusTests
             "--namespace-name",
             NamespaceName,
             "--resource-group",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         Assert.Multiple(() =>

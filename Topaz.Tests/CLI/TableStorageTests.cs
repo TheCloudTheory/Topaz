@@ -4,6 +4,12 @@ namespace Topaz.Tests.CLI;
 
 public class TableStorageTests
 {
+    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    
+    private const string SubscriptionName = "sub-test";
+    private const string ResourceGroupName = "test";
+    private const string StorageAccountName = "testsa";
+    
     [SetUp]
     public async Task SetUp()
     {
@@ -12,7 +18,7 @@ public class TableStorageTests
             "subscription",
             "delete",
             "--id",
-            Guid.Empty.ToString()
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main(
@@ -20,16 +26,16 @@ public class TableStorageTests
             "subscription",
             "create",
             "--id",
-            Guid.Empty.ToString(),
+            SubscriptionId.ToString(),
             "--name",
-            "sub-test"
+            SubscriptionName
         ]);
 
         await Program.Main([
             "group",
             "delete",
             "--name",
-            "test"
+            ResourceGroupName
         ]);
 
         await Program.Main([
@@ -40,7 +46,7 @@ public class TableStorageTests
             "--location",
             "westeurope",
             "--subscriptionId",
-            Guid.Empty.ToString()
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
@@ -48,7 +54,11 @@ public class TableStorageTests
             "account",
             "delete",
             "--name",
-            "test"
+            "test",
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
@@ -58,18 +68,19 @@ public class TableStorageTests
             "--name",
             "test",
             "-g",
-            "test",
+            ResourceGroupName,
             "--location",
             "westeurope",
             "--subscriptionId",
-            Guid.Empty.ToString()
+            SubscriptionId.ToString()
         ]);
     }
     
     [Test]
     public async Task TableStorageTests_WhenNewTableIsRequested_ItShouldBeCreated()
     {
-        var tableDirectoryPath = Path.Combine(".topaz", ".azure-storage", "test", ".table", "test", "metadata.json");
+        var tableDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".azure-storage", "test", ".table", "test", "metadata.json");
         
         await Program.Main([
             "storage",
@@ -78,7 +89,11 @@ public class TableStorageTests
             "--name",
             "test",
             "--account-name",
-            "test"
+            "test",
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         Assert.That(File.Exists(tableDirectoryPath), Is.True);
@@ -87,7 +102,8 @@ public class TableStorageTests
     [Test]
     public async Task TableStorageTests_WhenNewTableIsDeleted_ItShouldBeDeleted()
     {
-        var tableDirectoryPath = Path.Combine(".topaz", ".azure-storage", "test", ".table", "test", "metadata.json");
+        var tableDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".azure-storage", "test", ".table", "test", "metadata.json");
         
         await Program.Main([
             "storage",
@@ -96,7 +112,11 @@ public class TableStorageTests
             "--name",
             "test",
             "--account-name",
-            "test"
+            "test",
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
         await Program.Main([
@@ -106,7 +126,11 @@ public class TableStorageTests
             "--name",
             "test",
             "--account-name",
-            "test"
+            "test",
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         Assert.That(File.Exists(tableDirectoryPath), Is.False);

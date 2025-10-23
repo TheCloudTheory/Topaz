@@ -9,7 +9,7 @@ public sealed class ServiceBusService(ITopazLogger logger) : IServiceDefinition
 {
     public string Name => "Azure Service Bus";
     public static bool IsGlobalService => true;
-    public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, "{resourceGroup}", ".service-bus");
+    public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".service-bus");
     public static IReadOnlyCollection<string>? Subresources => [nameof(Subresource.Queues).ToLowerInvariant(), nameof(Subresource.Topics).ToLowerInvariant()];
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>

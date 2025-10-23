@@ -158,7 +158,8 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id);
     }
     
-    public void CreateOrUpdateSubresource<TModel>(string id, string parentId, string subresource, TModel model)
+    public void CreateOrUpdateSubresource<TModel>(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string id, string parentId, string subresource, TModel model)
     {
         if (TService.Subresources == null)
         {
@@ -170,16 +171,17 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             throw new  InvalidOperationException($"You can't create a subresource '{subresource}' for a parent service which doesn't define that subresource.");  
         }
         
-        var metadataFilePath = InitializeSubresourceDirectories(id, parentId, subresource);
+        var metadataFilePath = InitializeSubresourceDirectories(subscriptionIdentifier, resourceGroupIdentifier, id, parentId, subresource);
 
         var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
         File.WriteAllText(metadataFilePath, content);
     }
 
-    private string InitializeSubresourceDirectories(string id, string parentId, string subresource)
+    private string InitializeSubresourceDirectories(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string id, string parentId, string subresource)
     {
         const string metadataFile = "metadata.json";
-        var subresourcePath = GetSubresourcePath(parentId, id, subresource);
+        var subresourcePath = GetSubresourcePath(subscriptionIdentifier, resourceGroupIdentifier, parentId, id, subresource);
         var dataPath = Path.Combine(subresourcePath, "data");
         var metadataFilePath = Path.Combine(subresourcePath, metadataFile);
         
@@ -207,7 +209,8 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return metadataFilePath;
     }
 
-    private string? GetSubresource(string id, string parentId, string subresource)
+    private string? GetSubresource(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string id, string parentId, string subresource)
     {
         if (TService.Subresources == null)
         {
@@ -219,7 +222,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             throw new  InvalidOperationException($"You can't get a subresource '{subresource}' for a parent service which doesn't define that subresource.");  
         }
         
-        var metadataFilePath = InitializeSubresourceDirectories(id, parentId, subresource);
+        var metadataFilePath = InitializeSubresourceDirectories(subscriptionIdentifier, resourceGroupIdentifier, id, parentId, subresource);
 
         if (!File.Exists(metadataFilePath)) return null;
 
@@ -227,23 +230,28 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return string.IsNullOrEmpty(content) ? throw new InvalidOperationException("Metadata file is null or empty.") : content;
     }
     
-    public T? GetSubresourceAs<T>(string id, string parentId, string subresource)
+    public T? GetSubresourceAs<T>(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string id, string parentId, string subresource)
     {
-        var raw = GetSubresource(id, parentId, subresource);
+        var raw = GetSubresource(subscriptionIdentifier, resourceGroupIdentifier, id, parentId, subresource);
         if(string.IsNullOrEmpty(raw)) return default;
         var json = JsonSerializer.Deserialize<T>(raw, GlobalSettings.JsonOptions);
 
         return json;
     }
-    
-    private string GetSubresourcePath(string parentId, string subresourceId, string subresource)
+
+    private string GetSubresourcePath(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string parentId, string subresourceId, string subresource)
     {
-        return Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, parentId, subresource, subresourceId);
+        return Path.Combine(BaseEmulatorPath,
+            GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), parentId,
+            subresource, subresourceId);
     }
 
-    public void DeleteSubresource(string id, string parentId, string subresource)
+    public void DeleteSubresource(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string id, string parentId, string subresource)
     {
-        var subresourcePath = GetSubresourcePath(parentId, id, subresource);
+        var subresourcePath = GetSubresourcePath(subscriptionIdentifier, resourceGroupIdentifier, parentId, id, subresource);
         if(!Directory.Exists(subresourcePath)) 
         {
             _logger.LogDebug($"The subresource '{subresourcePath}' does not exists, no changes applied.");

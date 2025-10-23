@@ -45,7 +45,8 @@ internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITo
     public (OperationResult result, EventHubResource? resource) CreateOrUpdateEventHub(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         EventHubNamespaceIdentifier @namespace, string hubName, CreateOrUpdateEventHubRequest request)
     {
-        var existingHub = provider.GetSubresourceAs<EventHubResource>(hubName, @namespace.Value, nameof(Subresource.Hubs).ToLowerInvariant());
+        var existingHub = provider.GetSubresourceAs<EventHubResource>(subscriptionIdentifier, resourceGroupIdentifier,
+            hubName, @namespace.Value, nameof(Subresource.Hubs).ToLowerInvariant());
         var properties = EventHubResourceProperties.From(request);
         if (existingHub == null)
         {
@@ -53,7 +54,8 @@ internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITo
             properties.UpdatedOn = DateTime.UtcNow;
             
             var resource = new EventHubResource(subscriptionIdentifier, resourceGroupIdentifier, @namespace, hubName, properties);
-            provider.CreateOrUpdateSubresource(hubName, @namespace.Value, nameof(Subresource.Hubs).ToLowerInvariant(), resource);
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, hubName,
+                @namespace.Value, nameof(Subresource.Hubs).ToLowerInvariant(), resource);
             
             return (OperationResult.Created, resource);
         }

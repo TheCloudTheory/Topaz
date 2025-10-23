@@ -35,7 +35,7 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
             var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(path.ExtractValueFromPath(8));
             var queueName = path.ExtractValueFromPath(10);
 
-            if (string.IsNullOrWhiteSpace(queueName) == false)
+            if (!string.IsNullOrWhiteSpace(queueName))
             {
                 switch (method)
                 {
@@ -43,7 +43,7 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
                         HandleCreateOrUpdateQueue(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueName, input);
                         break;
                     case "GET":
-                        HandleGetQueue(response, namespaceIdentifier, queueName);
+                        HandleGetQueue(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueName);
                         break;
                     default:
                         response.StatusCode = HttpStatusCode.NotFound;
@@ -76,9 +76,10 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
         return response;
     }
 
-    private void HandleGetQueue(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string queueName)
+    private void HandleGetQueue(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier, string queueName)
     {
-        var operation = _controlPlane.GetQueue(namespaceIdentifier, queueName);
+        var operation = _controlPlane.GetQueue(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueName);
         if (operation.result == OperationResult.NotFound || operation.resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;

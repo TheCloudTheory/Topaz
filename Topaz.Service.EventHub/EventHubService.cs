@@ -9,7 +9,7 @@ public class EventHubService(ITopazLogger logger) : IServiceDefinition
 {
     public string Name => "Azure Event Hub";
     public static bool IsGlobalService => true;
-    public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, "{resourceGroup}", ".azure-event-hub");
+    public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".azure-event-hub");
     public static IReadOnlyCollection<string>? Subresources => ["hubs"];
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>

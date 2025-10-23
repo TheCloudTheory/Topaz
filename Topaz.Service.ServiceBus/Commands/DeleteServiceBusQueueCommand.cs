@@ -35,7 +35,7 @@ public sealed class DeleteServiceBusQueueCommand(ITopazLogger logger) : Command<
             return 1;
         }
         
-        var result = controlPlane.DeleteQueue(namespaceIdentifier, settings.Name!);
+        var result = controlPlane.DeleteQueue(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, settings.Name!);
         if (result == OperationResult.Failed)
         {
             logger.LogError($"There was a problem deleting queue '{settings.Name!}'.");
