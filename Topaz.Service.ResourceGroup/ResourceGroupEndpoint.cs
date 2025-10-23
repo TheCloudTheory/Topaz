@@ -29,7 +29,7 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
 
         var response = new HttpResponseMessage();
         
-        var subscriptionId = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
+        var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
         var resourceGroupName = path.ExtractValueFromPath(4);
 
         try
@@ -38,18 +38,18 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
             {
                 case "PUT":
                 {
-                    HandleCreateOrUpdateResourceGroup(subscriptionId, ResourceGroupIdentifier.From(resourceGroupName), input, response);
+                    HandleCreateOrUpdateResourceGroup(subscriptionIdentifier, ResourceGroupIdentifier.From(resourceGroupName), input, response);
                     break;
                 }
                 case "GET":
                 {
                     if (string.IsNullOrEmpty(resourceGroupName))
                     {
-                        HandleListResourceGroup(subscriptionId, response);
+                        HandleListResourceGroup(subscriptionIdentifier, response);
                     }
                     else
                     {
-                        HandleGetResourceGroup(ResourceGroupIdentifier.From(resourceGroupName), response);
+                        HandleGetResourceGroup(subscriptionIdentifier, ResourceGroupIdentifier.From(resourceGroupName), response);
                     }
                     
                     break;
@@ -61,7 +61,7 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
                         break;
                     }
                     
-                    HandleDeleteResourceGroup(ResourceGroupIdentifier.From(resourceGroupName), response);
+                    HandleDeleteResourceGroup(subscriptionIdentifier, ResourceGroupIdentifier.From(resourceGroupName), response);
                     break;
             }
         }
@@ -78,16 +78,17 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
         return response;
     }
 
-    private void HandleDeleteResourceGroup(ResourceGroupIdentifier resourceGroup, HttpResponseMessage response)
+    private void HandleDeleteResourceGroup(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        HttpResponseMessage response)
     {
-        var existingResourceGroup = _controlPlane.Get(resourceGroup);
+        var existingResourceGroup = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (existingResourceGroup.result == OperationResult.NotFound)
         {
-            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceGroupNotFoundCode, resourceGroup);
+            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceGroupNotFoundCode, resourceGroupIdentifier);
             return;
         }
 
-        _controlPlane.Delete(resourceGroup);
+        _controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier);
         response.StatusCode = HttpStatusCode.OK;
     }
 
@@ -104,9 +105,10 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
         response.Content = new StringContent(new ListResourceGroupsResponse(operation.resources).ToString());
     }
 
-    private void HandleGetResourceGroup(ResourceGroupIdentifier resourceGroup, HttpResponseMessage response)
+    private void HandleGetResourceGroup(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, HttpResponseMessage response)
     {
-        var operation = _controlPlane.Get(resourceGroup!);
+        var operation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (operation.result == OperationResult.NotFound || operation.resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;
@@ -130,7 +132,7 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
             return;
         }
         
-        var operation = _controlPlane.CreateOrUpdate(resourceGroup, subscriptionId, request);
+        var operation = _controlPlane.CreateOrUpdate(subscriptionId, resourceGroup, request);
         if (operation.result == OperationResult.Failed)
         {
             response.StatusCode = HttpStatusCode.InternalServerError;

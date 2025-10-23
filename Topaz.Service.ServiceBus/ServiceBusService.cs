@@ -7,6 +7,7 @@ namespace Topaz.Service.ServiceBus;
 public sealed class ServiceBusService(ITopazLogger logger) : IServiceDefinition
 {
     public string Name => "Azure Service Bus";
+    public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => ".service-bus";
     public static IReadOnlyCollection<string>? Subresources => [nameof(Subresource.Queues).ToLowerInvariant(), nameof(Subresource.Topics).ToLowerInvariant()];
 

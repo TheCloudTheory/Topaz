@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Security;
@@ -9,32 +10,34 @@ namespace Topaz.Service.Storage.Security;
 internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
 {
     private readonly AzureStorageControlPlane _controlPlane = new(new ResourceProvider(logger), logger);
-    
-    public bool RequestIsAuthorized(string storageAccountName, IHeaderDictionary headers, string absolutePath,
+
+    public bool RequestIsAuthorized(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, IHeaderDictionary headers,
+        string absolutePath,
         QueryString query)
     {
-        if (headers.ContainsKey("Authorization") == false)
+        if (!headers.TryGetValue("Authorization", out var value))
         {
             logger.LogError($"Authentication failure for SharedKeyLite scheme. Authorization header is missing.");
             return false;
         }
-        
-        var authorization = headers["Authorization"];
-        var headerValue = authorization.ToString();
+
+        var headerValue = value.ToString();
         var parts = headerValue.Split(' ');
         var scheme = parts[0];
 
         switch (scheme)
         {
             case "SharedKeyLite":
-                return IsAuthorizedForSharedKeyLiteScheme(storageAccountName, parts[1], headers, absolutePath, query);
+                return IsAuthorizedForSharedKeyLiteScheme(subscriptionIdentifier, resourceGroupIdentifier,
+                    storageAccountName, parts[1], headers, absolutePath, query);
             default:
                 logger.LogError($"Authentication failure for {scheme}. Scheme is not supported.");
                 return false;
         }
     }
 
-    private bool IsAuthorizedForSharedKeyLiteScheme(string storageAccountName, string headerValue,
+    private bool IsAuthorizedForSharedKeyLiteScheme(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string headerValue,
         IHeaderDictionary headers, string absolutePath, QueryString query)
     {
         // SharedKeyLite authorization header value looks like this:
@@ -69,7 +72,7 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
             return false;   
         }
 
-        var storageAccountResource = _controlPlane.Get(storageAccountName);
+        var storageAccountResource = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         if (storageAccountResource.result != OperationResult.Success || storageAccountResource.resource == null)
         {
             throw new InvalidOperationException($"Storage account {storageAccountName} does not exist.");

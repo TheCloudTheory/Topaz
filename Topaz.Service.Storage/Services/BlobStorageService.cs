@@ -7,6 +7,7 @@ namespace Topaz.Service.Storage.Services;
 public class BlobStorageService(ITopazLogger logger) : IServiceDefinition
 {
     public string Name => "Blob Storage";
+    public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => ".blob";
     public static IReadOnlyCollection<string>? Subresources => null;
 

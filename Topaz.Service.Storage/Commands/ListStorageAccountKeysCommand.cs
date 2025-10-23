@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models.Responses;
 using Topaz.Shared;
 
@@ -14,8 +15,10 @@ public sealed class ListStorageAccountKeysCommand(ITopazLogger logger) : Command
     {
         logger.LogInformation("Fetching storage account keys...");
 
+        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
         var controlPlane = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
-        var storageAccount = controlPlane.Get(settings.Name!);
+        var storageAccount = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 
         if (storageAccount.result == OperationResult.Failed || storageAccount.result == OperationResult.Failed ||
             storageAccount.resource == null)
@@ -37,9 +40,19 @@ public sealed class ListStorageAccountKeysCommand(ITopazLogger logger) : Command
             return ValidationResult.Error("Storage account name can't be null.");
         }
 
-        if (string.IsNullOrEmpty(settings.ResourceGroup))
+        if(string.IsNullOrEmpty(settings.ResourceGroup))
         {
-            return ValidationResult.Error("Resource group can't be null.");
+            return ValidationResult.Error("Service Bus namespace resource group can't be null.");
+        }
+        
+        if(string.IsNullOrEmpty(settings.SubscriptionId))
+        {
+            return ValidationResult.Error("Resource group subscription ID can't be null.");
+        }
+
+        if (!Guid.TryParse(settings.SubscriptionId, out _))
+        {
+            return ValidationResult.Error("Resource group subscription ID must be a valid GUID.");
         }
 
         return base.Validate(context, settings);
@@ -51,5 +64,8 @@ public sealed class ListStorageAccountKeysCommand(ITopazLogger logger) : Command
         [CommandOption("-n|--account-name")] public string? Name { get; set; }
 
         [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
+        
+        [CommandOption("-s|--subscription-id")]
+        public string SubscriptionId { get; set; } = null!;
     }
 }

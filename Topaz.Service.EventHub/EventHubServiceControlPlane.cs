@@ -11,10 +11,10 @@ namespace Topaz.Service.EventHub;
 internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITopazLogger logger)
 {
     public (OperationResult result, EventHubNamespaceResource? resource) CreateOrUpdateNamespace(
-        SubscriptionIdentifier subscription, ResourceGroupIdentifier resourceGroup, AzureLocation location,
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location,
         EventHubNamespaceIdentifier @namespace, CreateOrUpdateEventHubNamespaceRequest request)
     {
-        var existingNamespace = provider.GetAs<EventHubNamespaceResource>(@namespace.Value);
+        var existingNamespace = provider.GetAs<EventHubNamespaceResource>(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value);
         var properties = EventHubNamespaceResourceProperties.From(request);
 
         if (existingNamespace == null)
@@ -22,26 +22,27 @@ internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITo
             properties.CreatedOn = DateTime.UtcNow;
             properties.UpdatedOn = DateTime.UtcNow;
 
-            var resource = new EventHubNamespaceResource(subscription, resourceGroup, location, @namespace, properties);
-            provider.CreateOrUpdate(@namespace.Value, resource);
+            var resource = new EventHubNamespaceResource(subscriptionIdentifier, resourceGroupIdentifier, location, @namespace, properties);
+            provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, resource);
 
             return (OperationResult.Created, resource);
         }
 
         properties.UpdatedOn = DateTime.UtcNow;
-        provider.CreateOrUpdate(@namespace.Value, properties);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, properties);
 
         return (OperationResult.Updated, existingNamespace);
     }
 
     public (OperationResult result, EventHubNamespaceResource? resource) GetNamespace(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         EventHubNamespaceIdentifier namespaceIdentifier)
     {
-        var existingNamespace = provider.GetAs<EventHubNamespaceResource>(namespaceIdentifier.Value);
+        var existingNamespace = provider.GetAs<EventHubNamespaceResource>(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier.Value);
         return existingNamespace == null ? (OperationResult.NotFound, null) : (OperationResult.Success, existingNamespace);
     }
 
-    public (OperationResult result, EventHubResource? resource) CreateOrUpdateEventHub(SubscriptionIdentifier subscription, ResourceGroupIdentifier resourceGroup,
+    public (OperationResult result, EventHubResource? resource) CreateOrUpdateEventHub(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         EventHubNamespaceIdentifier @namespace, string hubName, CreateOrUpdateEventHubRequest request)
     {
         var existingHub = provider.GetSubresourceAs<EventHubResource>(hubName, @namespace.Value, nameof(Subresource.Hubs).ToLowerInvariant());
@@ -51,14 +52,14 @@ internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITo
             properties.CreatedOn = DateTime.UtcNow;
             properties.UpdatedOn = DateTime.UtcNow;
             
-            var resource = new EventHubResource(subscription, resourceGroup, @namespace, hubName, properties);
+            var resource = new EventHubResource(subscriptionIdentifier, resourceGroupIdentifier, @namespace, hubName, properties);
             provider.CreateOrUpdateSubresource(hubName, @namespace.Value, nameof(Subresource.Hubs).ToLowerInvariant(), resource);
             
             return (OperationResult.Created, resource);
         }
         
         properties.UpdatedOn = DateTime.UtcNow;
-        provider.CreateOrUpdate(@namespace.Value, properties);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, properties);
         
         return (OperationResult.Updated, existingHub);
     }

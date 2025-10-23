@@ -1,11 +1,12 @@
 using System.Text.Json;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.Shared;
 
 public class ResourceProviderBase<TService> where TService : IServiceDefinition
 {
-    protected const string BaseEmulatorPath = ".topaz";
+    protected const string BaseEmulatorPath = GlobalSettings.MainEmulatorDirectory;
     private readonly ITopazLogger _logger;
 
     protected ResourceProviderBase(ITopazLogger logger)
@@ -13,10 +14,13 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         _logger = logger;
     }
 
-    public virtual void Delete(string id)
+    public void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id)
     {
-        var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
-        if(Directory.Exists(servicePath) == false) 
+        var servicePath = string.IsNullOrWhiteSpace(id) ?
+            Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier)) :
+            Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id);
+            
+        if(!Directory.Exists(servicePath)) 
         {
             _logger.LogDebug($"The resource '{servicePath}' does not exists, no changes applied.");
             return;
@@ -26,31 +30,47 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         Directory.Delete(servicePath, true);
     }
 
-    public string? Get(string id)
+    public string? Get(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id)
     {
         const string fileName = $"metadata.json";
-        var metadataFile = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id, fileName);
+        var metadataFile = string.IsNullOrWhiteSpace(id) ? 
+            Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier)) :
+            Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id, fileName);
 
-        if (File.Exists(metadataFile) == false) return null;
+        if (!File.Exists(metadataFile)) return null;
 
         var content = File.ReadAllText(metadataFile);
-        if(string.IsNullOrEmpty(content)) throw new InvalidOperationException("Metadata file is null or empty.");
-
-        return content;
+        return string.IsNullOrEmpty(content) ? throw new InvalidOperationException("Metadata file is null or empty.") : content;
     }
 
-    public T? GetAs<T>(string id)
+    private static string GetLocalDirectoryPathWithReplacedValues(SubscriptionIdentifier? subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier)
     {
-        var raw = Get(id);
+        if (subscriptionIdentifier == null)
+        {
+            return TService.LocalDirectoryPath;
+        }
+        
+        if (resourceGroupIdentifier == null)
+        {
+            return TService.LocalDirectoryPath.Replace("{subscriptionId}", subscriptionIdentifier.Value.ToString());
+        }
+        
+        return TService.LocalDirectoryPath.Replace("{subscriptionId}", subscriptionIdentifier.Value.ToString())
+            .Replace("{resourceGroup}", resourceGroupIdentifier.Value);
+    }
+
+    public T? GetAs<T>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string? id = null)
+    {
+        var raw = Get(subscriptionIdentifier, resourceGroupIdentifier, id);
         if(string.IsNullOrEmpty(raw)) return default;
         var json = JsonSerializer.Deserialize<T>(raw, GlobalSettings.JsonOptions);
 
         return json;
     }
 
-    public IEnumerable<string> List()
+    public IEnumerable<string> List(SubscriptionIdentifier? subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier)
     {
-        var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath);
+        var servicePath = Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier));
         if (!Directory.Exists(servicePath))
         {
             _logger.LogWarning("Trying to list resources for a non-existing service. If you see this warning, make sure you created a service (e.g subscription) before accessing its data.");
@@ -62,32 +82,35 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return metadataFiles.Select(File.ReadAllText);
     }
 
-    public IEnumerable<T?>? ListAs<T>()
+    public IEnumerable<T?> ListAs<T>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier)
     {
-        var contents = List();
+        var contents = List(subscriptionIdentifier, resourceGroupIdentifier);
         return contents.Select(file => JsonSerializer.Deserialize<T>(file, GlobalSettings.JsonOptions));
     }
 
-    public void Create<TModel>(string id, TModel model)
+    public void Create<TModel>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id, TModel model)
     {
-        var metadataFilePath = InitializeServiceDirectories(id);
+        var metadataFilePath = InitializeServiceDirectories(subscriptionIdentifier, resourceGroupIdentifier, id);
 
         _logger.LogDebug($"Attempting to create {metadataFilePath} file.");
 
-        if(File.Exists(metadataFilePath) == true) throw new InvalidOperationException($"Metadata file for {typeof(TService)} with ID {id} already exists.");
+        if(File.Exists(metadataFilePath)) throw new InvalidOperationException($"Metadata file for {typeof(TService)} with ID {id} already exists.");
 
         var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
         File.WriteAllText(metadataFilePath, content);
 
-        return;
+        if (TService.IsGlobalService)
+        {
+            
+        }
     }
 
-    private string InitializeServiceDirectories(string id)
+    private string InitializeServiceDirectories(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id)
     {
-        var servicePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath);
+        var servicePath = Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier));
         _logger.LogDebug($"Attempting to create {servicePath} directory...");
 
-        if(Directory.Exists(servicePath) == false)
+        if(!Directory.Exists(servicePath))
         {
             Directory.CreateDirectory(servicePath);
             _logger.LogDebug($"Directory {servicePath} created.");
@@ -97,8 +120,10 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             _logger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
         }
         
-        const string fileName = $"metadata.json";
-        var instancePath = Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
+        const string fileName = "metadata.json";
+        var instancePath = string.IsNullOrWhiteSpace(id) ? 
+            Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier)) :
+            Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id);
         var metadataFilePath = Path.Combine(instancePath, fileName);
         var dataPath = Path.Combine(instancePath, "data");
 
@@ -118,17 +143,19 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return metadataFilePath;
     }
 
-    public void CreateOrUpdate<TModel>(string id, TModel model)
+    public void CreateOrUpdate<TModel>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string? id, TModel model)
     {
-        var metadataFilePath = InitializeServiceDirectories(id);
+        var metadataFilePath = InitializeServiceDirectories(subscriptionIdentifier, resourceGroupIdentifier, id);
         var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
 
         File.WriteAllText(metadataFilePath, content);
     }
 
-    public string GetServiceInstancePath(string id)
+    public string GetServiceInstancePath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string? id)
     {
-        return Path.Combine(BaseEmulatorPath, TService.LocalDirectoryPath, id);
+        return string.IsNullOrWhiteSpace(id) ? 
+            Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier)) :
+            Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id);
     }
     
     public void CreateOrUpdateSubresource<TModel>(string id, string parentId, string subresource, TModel model)
@@ -138,7 +165,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             throw new  InvalidOperationException("You can't create a subresource for a parent service which defines not subresources.");    
         }
         
-        if (TService.Subresources.Contains(subresource) == false)
+        if (!TService.Subresources.Contains(subresource))
         {
             throw new  InvalidOperationException($"You can't create a subresource '{subresource}' for a parent service which doesn't define that subresource.");  
         }
@@ -151,13 +178,13 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
     private string InitializeSubresourceDirectories(string id, string parentId, string subresource)
     {
-        var metadataFile = "metadata.json";
+        const string metadataFile = "metadata.json";
         var subresourcePath = GetSubresourcePath(parentId, id, subresource);
         var dataPath = Path.Combine(subresourcePath, "data");
         var metadataFilePath = Path.Combine(subresourcePath, metadataFile);
         
         _logger.LogDebug($"Attempting to create {subresourcePath} directory.");
-        if (Directory.Exists(subresourcePath) == false)
+        if (!Directory.Exists(subresourcePath))
         {
             Directory.CreateDirectory(subresourcePath);
             _logger.LogDebug($"Attempting to create {subresourcePath} directory - created!");
@@ -168,7 +195,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         }
         
         _logger.LogDebug($"Attempting to create {metadataFilePath} file.");
-        if (Directory.Exists(metadataFilePath) == false)
+        if (!Directory.Exists(metadataFilePath))
         {
             Directory.CreateDirectory(dataPath);
         }
@@ -184,22 +211,20 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     {
         if (TService.Subresources == null)
         {
-            throw new  InvalidOperationException("You can't get a subresource for a parent service which defines not subresources.");    
+            throw new InvalidOperationException("You can't get a subresource for a parent service which defines not subresources.");    
         }
         
-        if (TService.Subresources.Contains(subresource) == false)
+        if (!TService.Subresources.Contains(subresource))
         {
             throw new  InvalidOperationException($"You can't get a subresource '{subresource}' for a parent service which doesn't define that subresource.");  
         }
         
         var metadataFilePath = InitializeSubresourceDirectories(id, parentId, subresource);
 
-        if (File.Exists(metadataFilePath) == false) return null;
+        if (!File.Exists(metadataFilePath)) return null;
 
         var content = File.ReadAllText(metadataFilePath);
-        if(string.IsNullOrEmpty(content)) throw new InvalidOperationException("Metadata file is null or empty.");
-
-        return content;
+        return string.IsNullOrEmpty(content) ? throw new InvalidOperationException("Metadata file is null or empty.") : content;
     }
     
     public T? GetSubresourceAs<T>(string id, string parentId, string subresource)
@@ -219,7 +244,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     public void DeleteSubresource(string id, string parentId, string subresource)
     {
         var subresourcePath = GetSubresourcePath(parentId, id, subresource);
-        if(Directory.Exists(subresourcePath) == false) 
+        if(!Directory.Exists(subresourcePath)) 
         {
             _logger.LogDebug($"The subresource '{subresourcePath}' does not exists, no changes applied.");
             return;

@@ -16,10 +16,11 @@ public class CreateServiceBusQueueCommand(ITopazLogger logger) : Command<CreateS
     {
         logger.LogDebug($"Executing {nameof(CreateServiceBusQueueCommand)}.{nameof(Execute)}.");
 
+        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
-        var resourceGroup = resourceGroupControlPlane.Get(resourceGroupIdentifier);
+        var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
         if (resourceGroup.result == OperationResult.NotFound || resourceGroup.resource == null)
         {
             logger.LogError($"Resource group {resourceGroupIdentifier} not found.");
@@ -28,7 +29,7 @@ public class CreateServiceBusQueueCommand(ITopazLogger logger) : Command<CreateS
 
         var controlPlane = new ServiceBusServiceControlPlane(new ResourceProvider(logger), logger);
         var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(settings.NamespaceName!);
-        var @namespace = controlPlane.GetNamespace(namespaceIdentifier);
+        var @namespace = controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
         if (@namespace.result == OperationResult.NotFound || @namespace.resource == null)
         {
             logger.LogError($"Namespace {namespaceIdentifier} not found.");
@@ -63,6 +64,16 @@ public class CreateServiceBusQueueCommand(ITopazLogger logger) : Command<CreateS
         {
             return ValidationResult.Error("Service Bus namespace resource group can't be null.");
         }
+        
+        if(string.IsNullOrEmpty(settings.SubscriptionId))
+        {
+            return ValidationResult.Error("Resource group subscription ID can't be null.");
+        }
+
+        if (!Guid.TryParse(settings.SubscriptionId, out _))
+        {
+            return ValidationResult.Error("Resource group subscription ID must be a valid GUID.");
+        }
 
         return base.Validate(context, settings);
     }
@@ -70,6 +81,9 @@ public class CreateServiceBusQueueCommand(ITopazLogger logger) : Command<CreateS
     [UsedImplicitly]
     public sealed class CreateServiceBusQueueCommandSettings : CommandSettings
     {
+        [CommandOption("-s|--subscription-id")]
+        public string SubscriptionId { get; set; } = null!;
+        
         [CommandOption("-n|--queue-name")]
         public string? Name { get; set; }
         

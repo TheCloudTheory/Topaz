@@ -9,7 +9,7 @@ internal sealed class SubscriptionControlPlane(SubscriptionResourceProvider prov
 {
     public (OperationResult result, Models.Subscription? resource) Get(SubscriptionIdentifier subscriptionIdentifier)
     {
-        var data = provider.Get(subscriptionIdentifier.ToString());
+        var data = provider.Get(subscriptionIdentifier, null, null);
         if (data == null) return (OperationResult.NotFound, null);
         
         var model = JsonSerializer.Deserialize<Models.Subscription>(data, GlobalSettings.JsonOptions);
@@ -19,22 +19,22 @@ internal sealed class SubscriptionControlPlane(SubscriptionResourceProvider prov
 
     public Models.Subscription Create(string? id, string name)
     {
-        var subscriptionId = string.IsNullOrEmpty(id) ? Guid.NewGuid().ToString() : id;
-        var model = new Models.Subscription(subscriptionId, name);
+        var subscriptionIdentifier = string.IsNullOrEmpty(id) ? SubscriptionIdentifier.From(Guid.NewGuid().ToString()) : SubscriptionIdentifier.From(id);
+        var model = new Models.Subscription(subscriptionIdentifier, name);
 
-        provider.Create(subscriptionId, model);
+        provider.Create(subscriptionIdentifier, null, null, model);
 
         return model;
     }
 
-    internal void Delete(string subscriptionId)
+    internal void Delete(SubscriptionIdentifier subscriptionIdentifier)
     {
-        provider.Delete(subscriptionId);
+        provider.Delete(subscriptionIdentifier, null, null);
     }
 
     internal (OperationResult result, Models.Subscription[] resource) List()
     {
-        var rawSubscriptions = provider.List();
+        var rawSubscriptions = provider.List(null, null);
         var subscriptions = rawSubscriptions
             .Select(s => JsonSerializer.Deserialize<Models.Subscription>(s, GlobalSettings.JsonOptions)!).ToArray();
         

@@ -1,35 +1,33 @@
+using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.Subscription.Commands;
 
+[UsedImplicitly]
 public class DeleteSubscriptionCommand(ITopazLogger logger) : Command<DeleteSubscriptionCommand.DeleteSubscriptionCommandSettings>
 {
-    private readonly ITopazLogger _topazLogger = logger;
-
     public override int Execute(CommandContext context, DeleteSubscriptionCommandSettings settings)
     {
-        this._topazLogger.LogInformation("Deleting subscription...");
+        logger.LogInformation("Deleting subscription...");
 
-        var controlPlane = new SubscriptionControlPlane(new SubscriptionResourceProvider(this._topazLogger));
-        controlPlane.Delete(settings.Id!);
+        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
+        var controlPlane = new SubscriptionControlPlane(new SubscriptionResourceProvider(logger));
+        controlPlane.Delete(subscriptionIdentifier);
 
-        this._topazLogger.LogInformation("Subscription deleted.");
+        logger.LogInformation("Subscription deleted.");
 
         return 0;
     }
 
     public override ValidationResult Validate(CommandContext context, DeleteSubscriptionCommandSettings settings)
     {
-        if(string.IsNullOrEmpty(settings.Id))
-        {
-            return ValidationResult.Error("Subscription ID can't be null.");
-        }
-
-        return base.Validate(context, settings);
+        return string.IsNullOrEmpty(settings.Id) ? ValidationResult.Error("Subscription ID can't be null.") : base.Validate(context, settings);
     }
 
+    [UsedImplicitly]
     public sealed class DeleteSubscriptionCommandSettings : CommandSettings
     {
         [CommandOption("-i|--id")]

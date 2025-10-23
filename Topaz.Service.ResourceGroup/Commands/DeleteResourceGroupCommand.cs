@@ -15,16 +15,17 @@ public sealed class DeleteResourceGroupCommand(ITopazLogger logger) : Command<De
         logger.LogDebug($"Executing {nameof(DeleteResourceGroupCommand)}.{nameof(Execute)}.");
         logger.LogInformation("Deleting resource group...");
 
+        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.Name!);
         var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
-        var existingResource = controlPlane.Get(resourceGroupIdentifier);
+        var existingResource = controlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
         if (existingResource.result == OperationResult.NotFound)
         {
             logger.LogError($"Resource group '{settings.Name}' could not be found.");
             return 1;
         }
         
-        _= controlPlane.Delete(resourceGroupIdentifier);
+        _= controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier);
         
         logger.LogInformation("Resource group deleted.");
 
@@ -37,6 +38,16 @@ public sealed class DeleteResourceGroupCommand(ITopazLogger logger) : Command<De
         {
             return ValidationResult.Error("Resource group name can't be null.");
         }
+        
+        if(string.IsNullOrEmpty(settings.SubscriptionId))
+        {
+            return ValidationResult.Error("Resource group subscription ID can't be null.");
+        }
+
+        if (!Guid.TryParse(settings.SubscriptionId, out _))
+        {
+            return ValidationResult.Error("Resource group subscription ID must be a valid GUID.");
+        }
 
         return base.Validate(context, settings);
     }
@@ -44,6 +55,9 @@ public sealed class DeleteResourceGroupCommand(ITopazLogger logger) : Command<De
     [UsedImplicitly]
     public sealed class DeleteResourceGroupCommandSettings : CommandSettings
     {
+        [CommandOption("-s|--subscription-id")]
+        public string SubscriptionId { get; set; } = null!;
+        
         [CommandOption("-n|--name")]
         public string? Name { get; set; }
     }

@@ -6,6 +6,7 @@ namespace Topaz.Service.Storage.Services;
 
 public sealed class TableStorageService(ITopazLogger logger) : IServiceDefinition
 {
+    public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => ".table";
     public static IReadOnlyCollection<string>? Subresources => null;
 

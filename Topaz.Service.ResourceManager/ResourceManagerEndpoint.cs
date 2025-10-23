@@ -89,7 +89,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
             return;
         }
 
-        var resourceGroup = _resourceGroupControlPlane.Get(resourceGroupIdentifier);
+        var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroup.result == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;
@@ -111,7 +111,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
             return;
         }
 
-        var resourceGroup = _resourceGroupControlPlane.Get(resourceGroupIdentifier);
+        var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroup.result == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;
@@ -144,7 +144,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
             return;
         }
 
-        var resourceGroup = _resourceGroupControlPlane.Get(resourceGroupIdentifier);
+        var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroup.result == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;
@@ -173,7 +173,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
             return;
         }
 
-        var resourceGroup = _resourceGroupControlPlane.Get(resourceGroupIdentifier);
+        var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroup.result == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;

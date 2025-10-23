@@ -5,6 +5,7 @@ namespace Topaz.Service.Subscription;
 
 public sealed class SubscriptionService(ITopazLogger logger) : IServiceDefinition
 {
+    public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => ".subscription";
     
     public static IReadOnlyCollection<string>? Subresources => null;

@@ -9,17 +9,17 @@ namespace Topaz.Service.KeyVault;
 
 internal sealed class KeyVaultControlPlane(ResourceProvider provider)
 {
-    public Models.KeyVault Create(string name, ResourceGroupIdentifier resourceGroup, AzureLocation location, SubscriptionIdentifier subscriptionId)
+    public Models.KeyVault Create(string name, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location, SubscriptionIdentifier subscriptionIdentifier)
     {
-        var model = new Models.KeyVault(name, resourceGroup.Value, location, subscriptionId.Value.ToString());
+        var model = new Models.KeyVault(name, resourceGroupIdentifier.Value, location, subscriptionIdentifier.Value.ToString());
 
-        provider.Create(name, model);
+        provider.Create(subscriptionIdentifier, resourceGroupIdentifier, name, model);
 
         return model;
     }
 
-    public (OperationResult result, KeyVaultResource resource) CreateOrUpdate(SubscriptionIdentifier subscriptionId,
-        ResourceGroupIdentifier resourceGroup, string keyVaultName, CreateOrUpdateKeyVaultRequest request)
+    public (OperationResult result, KeyVaultResource resource) CreateOrUpdate(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName, CreateOrUpdateKeyVaultRequest request)
     {
         var properties = new KeyVaultResourceProperties
         {
@@ -31,22 +31,24 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
             TenantId = request.Properties.TenantId
         };
 
-        var resource = new KeyVaultResource(subscriptionId, resourceGroup, keyVaultName, request.Location, properties);
-        provider.CreateOrUpdate(keyVaultName, resource);
+        var resource = new KeyVaultResource(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, request.Location, properties);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource);
 
         // This operation must also support handling operation result when Key Vault was updated
         return (OperationResult.Created, resource);
     }
 
-    public (OperationResult result, KeyVaultResource? resource) Get(string keyVaultName)
+    public (OperationResult result, KeyVaultResource? resource) Get(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName)
     {
-        var resource = provider.GetAs<KeyVaultResource>(keyVaultName);
+        var resource = provider.GetAs<KeyVaultResource>(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
         return resource == null ? (OperationResult.Failed, null) : (OperationResult.Created, resource);
     }
 
-    public (OperationResult result, CheckNameResponse response) CheckName(string keyVaultName, string? resourceType)
+    public (OperationResult result, CheckNameResponse response) CheckName(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName, string? resourceType)
     {
-        var keyVault = provider.GetAs<KeyVaultResource>(keyVaultName);
+        var keyVault = provider.GetAs<KeyVaultResource>(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
         if (keyVault == null)
         {
             return (OperationResult.Success, new CheckNameResponse {  NameAvailable = true });
@@ -62,32 +64,27 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
         return (OperationResult.Success, new CheckNameResponse { NameAvailable = false });
     }
     
-    public (OperationResult result, KeyVaultResource?[]? resource) ListBySubscription(SubscriptionIdentifier subscriptionId)
+    public (OperationResult result, KeyVaultResource?[]? resource) ListBySubscription(SubscriptionIdentifier subscriptionIdentifier)
     {
-        var resources = provider.ListAs<KeyVaultResource>();
-        if (resources == null)
-        {
-            return (OperationResult.Failed,null);
-        }
-        
-        var filteredResources = resources.Where(resource => resource != null && resource.Id.Contains(subscriptionId.Value.ToString()));
+        var resources = provider.ListAs<KeyVaultResource>(subscriptionIdentifier, null);
+
+        var filteredResources = resources.Where(resource => resource != null && resource.Id.Contains(subscriptionIdentifier.Value.ToString()));
         return  (OperationResult.Success, filteredResources.ToArray());
     }
 
-    public OperationResult Delete(SubscriptionIdentifier subscriptionId, string keyVaultName)
+    public void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName)
     {
-        var resource = provider.GetAs<KeyVaultResource>(keyVaultName);
+        var resource = provider.GetAs<KeyVaultResource>(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
         if (resource == null)
         {
-            return OperationResult.NotFound;
+            return;
         }
 
-        if (!resource.Id.Contains(subscriptionId.Value.ToString()))
+        if (!resource.Id.Contains(subscriptionIdentifier.Value.ToString()))
         {
-            return OperationResult.Failed;
+            return;
         }
         
-        provider.Delete(keyVaultName);
-        return OperationResult.Deleted;
+        provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
     }
 }

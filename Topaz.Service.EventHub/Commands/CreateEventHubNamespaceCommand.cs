@@ -19,7 +19,7 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
-        var resourceGroup = resourceGroupControlPlane.Get(resourceGroupIdentifier);
+        var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(Guid.Parse(settings.SubscriptionId)), resourceGroupIdentifier);
         if (resourceGroup.result == OperationResult.NotFound || resourceGroup.resource == null)
         {
             logger.LogError($"ResourceGroup {resourceGroupIdentifier} not found.");
@@ -47,6 +47,16 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
         {
             return ValidationResult.Error("Resource group location can't be null.");
         }
+        
+        if(string.IsNullOrEmpty(settings.SubscriptionId))
+        {
+            return ValidationResult.Error("Resource group subscription ID can't be null.");
+        }
+
+        if (!Guid.TryParse(settings.SubscriptionId, out _))
+        {
+            return ValidationResult.Error("Resource group subscription ID must be a valid GUID.");
+        }
 
         return base.Validate(context, settings);
     }
@@ -62,5 +72,8 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
 
         [CommandOption("-l|--location")]
         public string? Location { get; set; }
+        
+        [CommandOption("-s|--subscription-id")]
+        public string SubscriptionId { get; set; } = null!;
     }
 }

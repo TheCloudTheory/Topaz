@@ -5,8 +5,9 @@ namespace Topaz.Tests.CLI;
 public class ResourceGroupTests
 {
     private static readonly Guid SubscriptionId = Guid.NewGuid();
-    private const string SusbcriptionName = "sub-test";
+    private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
+    private const string ResourceGroupName2 = "test";
 
     [SetUp]
     public async Task SetUp()
@@ -26,14 +27,16 @@ public class ResourceGroupTests
             "--id",
             SubscriptionId.ToString(),
             "--name",
-            SusbcriptionName
+            SubscriptionName
         ]);
 
         await Program.Main([
             "group",
             "delete",
             "--name",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
@@ -65,7 +68,9 @@ public class ResourceGroupTests
             "group",
             "delete",
             "--name",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
         Assert.Multiple(() =>
@@ -82,7 +87,9 @@ public class ResourceGroupTests
             "group",
             "delete",
             "--name",
-            "invalid-resource-group"
+            "invalid-resource-group",
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
         Assert.That(code, Is.EqualTo(1));
@@ -99,5 +106,45 @@ public class ResourceGroupTests
         ]);
         
         Assert.That(code, Is.EqualTo(0));
+    }
+    
+    [Test]
+    public async Task ResourceGroupTests_WhenResourceGroupsIsCreatedWithSpecificLocation_TheLocationShouldBeReturned()
+    {
+        await Program.Main([
+            "group",
+            "delete",
+            "--name",
+            ResourceGroupName2,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+        
+        var code = await Program.Main([
+            "group",
+            "create",
+            "--name",
+            ResourceGroupName2,
+            "--location",
+            "northeurope",
+            "--subscription-id",
+            SubscriptionId.ToString(),
+        ]);
+        
+        Assert.That(code, Is.EqualTo(0));
+        
+        var code2 = await Program.Main([
+            "group",
+            "show",
+            "--name",
+            ResourceGroupName2,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+        
+        Assert.That(code2, Is.EqualTo(0));
+        
+        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".resource-groups", ResourceGroupName2, "metadata.json");
+        var metadata = await File.ReadAllTextAsync(resourceGroupPath);
     }
 }

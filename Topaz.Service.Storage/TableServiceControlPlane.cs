@@ -4,6 +4,7 @@ using System.Xml.Linq;
 using System.Xml.Serialization;
 using Azure.Data.Tables.Models;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Models.Requests;
 using Topaz.Service.Storage.Models.Responses;
@@ -62,13 +63,13 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         return provider.GetTableDataPath(tableName, storageAccountName);
     }
 
-    public TableServiceProperties GetTableProperties(string storageAccountName)
+    public TableServiceProperties GetTableProperties(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
     {
         var storageControlPlane = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
-        var path = storageControlPlane.GetServiceInstancePath(storageAccountName);
+        var path = storageControlPlane.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         var propertiesFilePath = Path.Combine(path, "properties.xml");
 
-        if (File.Exists(propertiesFilePath) == false) throw new InvalidOperationException();
+        if (!File.Exists(propertiesFilePath)) throw new InvalidOperationException();
         
         var document = XDocument.Load(File.OpenRead(propertiesFilePath), LoadOptions.PreserveWhitespace);
         var properties = TableServicePropertiesSerialization.DeserializeTableServiceProperties(document.Root);

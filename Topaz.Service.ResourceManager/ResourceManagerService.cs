@@ -6,6 +6,7 @@ namespace Topaz.Service.ResourceManager;
 public sealed class ResourceManagerService(ITopazLogger logger) : IServiceDefinition
 {
     public string Name => "Resource Manager";
+    public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => ".resource-manager";
     public static IReadOnlyCollection<string>? Subresources => [];
 

@@ -58,7 +58,7 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
                         HandleCreateOrUpdateNamespace(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, input);
                         break;
                     case "GET":
-                        HandleGetNamespace(response, namespaceIdentifier);
+                        HandleGetNamespace(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
                         break;
                     default:
                         response.StatusCode = HttpStatusCode.NotFound;
@@ -118,9 +118,10 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
         response.Content = new StringContent(operation.resource.ToString());
     }
 
-    private void HandleGetNamespace(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier)
+    private void HandleGetNamespace(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier)
     {
-        var operation = _controlPlane.GetNamespace(namespaceIdentifier);
+        var operation = _controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
         if (operation.result == OperationResult.NotFound || operation.resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;

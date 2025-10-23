@@ -13,8 +13,10 @@ public sealed class CreateResourceGroupCommand(ITopazLogger logger) : Command<Cr
     {
         logger.LogDebug("Creating a resource group...");
 
+        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.Name!);
         var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
-        var rg = controlPlane.Create(ResourceGroupIdentifier.From(settings.Name!), SubscriptionIdentifier.From(settings.SubscriptionId!), settings.Location!);
+        var rg = controlPlane.Create(subscriptionIdentifier, resourceGroupIdentifier, settings.Location!);
 
         logger.LogInformation(rg.resource.ToString());
 

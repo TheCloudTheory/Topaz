@@ -14,16 +14,16 @@ internal sealed class TableResourceProvider(ITopazLogger logger) : ResourceProvi
     private void InitializeServiceDirectory(string storageAccountName)
     {
         var servicePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath);
-        this._topazLogger.LogDebug($"Attempting to create {servicePath} directory...");
+        _topazLogger.LogDebug($"Attempting to create {servicePath} directory...");
 
-        if(Directory.Exists(servicePath) == false)
+        if(!Directory.Exists(servicePath))
         {
             Directory.CreateDirectory(servicePath);
-            this._topazLogger.LogDebug($"Directory {servicePath} created.");
+            _topazLogger.LogDebug($"Directory {servicePath} created.");
         }
         else
         {
-            this._topazLogger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
+            _topazLogger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
         }
     }
 
@@ -33,10 +33,6 @@ internal sealed class TableResourceProvider(ITopazLogger logger) : ResourceProvi
 
         var servicePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, id, TableStorageService.LocalDirectoryPath);
         return Directory.EnumerateDirectories(servicePath);
-    }
-
-    public override void Delete(string id)
-    {
     }
 
     public void Delete(string tableName, string storageAccountName)
@@ -59,28 +55,26 @@ internal sealed class TableResourceProvider(ITopazLogger logger) : ResourceProvi
         
         var metadataFilePath = CreateTableDirectories(tableName, storageAccountName);
 
-        this._topazLogger.LogDebug($"Attempting to create {metadataFilePath} file.");
+        _topazLogger.LogDebug($"Attempting to create {metadataFilePath} file.");
 
-        if(File.Exists(metadataFilePath) == true) throw new InvalidOperationException($"Metadata file for {typeof(TableStorageService)} with ID {tableName} already exists.");
+        if(File.Exists(metadataFilePath)) throw new InvalidOperationException($"Metadata file for {typeof(TableStorageService)} with ID {tableName} already exists.");
 
         var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
         File.WriteAllText(metadataFilePath, content);
-
-        return;
     }
 
     private string CreateTableDirectories(string tableName, string storageAccountName)
     {
-        var metadataFile = $"metadata.json";
-        var tablePath = this.GetTablePath(tableName, storageAccountName);
+        const string metadataFile = "metadata.json";
+        var tablePath = GetTablePath(tableName, storageAccountName);
         var dataPath = Path.Combine(tablePath, "data");
         var aclPath = Path.Combine(tablePath, "acl");
         var metadataFilePath = Path.Combine(tablePath, metadataFile);
 
-        this._topazLogger.LogDebug($"Attempting to create {tablePath} directory.");
+        _topazLogger.LogDebug($"Attempting to create {tablePath} directory.");
         if(Directory.Exists(tablePath))
         {
-            this._topazLogger.LogDebug($"Attempting to create {tablePath} directory - skipped.");
+            _topazLogger.LogDebug($"Attempting to create {tablePath} directory - skipped.");
         }
         else
         {
@@ -88,7 +82,7 @@ internal sealed class TableResourceProvider(ITopazLogger logger) : ResourceProvi
             Directory.CreateDirectory(dataPath);
             Directory.CreateDirectory(aclPath);
             
-            this._topazLogger.LogDebug($"Attempting to create {tablePath} directory - created!");
+            _topazLogger.LogDebug($"Attempting to create {tablePath} directory - created!");
         }
 
         return metadataFilePath;
@@ -106,7 +100,7 @@ internal sealed class TableResourceProvider(ITopazLogger logger) : ResourceProvi
 
     public string GetTableAclPath(string tableName, string storageAccountName)
     {
-        return Path.Combine(this.GetTablePath(tableName, storageAccountName), "acl");
+        return Path.Combine(GetTablePath(tableName, storageAccountName), "acl");
     }
 
     public bool CheckIfTableExists(string tableName, string storageAccountName)

@@ -23,7 +23,7 @@ internal sealed class ResourceManagerControlPlane(ResourceManagerResourceProvide
                 TemplateHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(template)))
             });
 
-        provider.CreateOrUpdate(deploymentName, deploymentResource);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, deploymentResource);
         
         return (OperationResult.Success, deploymentResource);
     }
@@ -32,7 +32,7 @@ internal sealed class ResourceManagerControlPlane(ResourceManagerResourceProvide
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string deploymentName)
     {
-        var resource = provider.GetAs<DeploymentResource>(deploymentName);
+        var resource = provider.GetAs<DeploymentResource>(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
         if (resource == null ||
             !resource.IsInSubscription(subscriptionIdentifier) ||
             !resource.IsInResourceGroup(resourceGroupIdentifier))
@@ -47,7 +47,7 @@ internal sealed class ResourceManagerControlPlane(ResourceManagerResourceProvide
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string deploymentName)
     {
-        var resource = provider.GetAs<DeploymentResource>(deploymentName);
+        var resource = provider.GetAs<DeploymentResource>(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
         if (resource == null ||
             !resource.IsInSubscription(subscriptionIdentifier) ||
             !resource.IsInResourceGroup(resourceGroupIdentifier))
@@ -55,17 +55,13 @@ internal sealed class ResourceManagerControlPlane(ResourceManagerResourceProvide
             return OperationResult.NotFound;
         }
 
-        provider.Delete(deploymentName);
+        provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
         return OperationResult.Deleted;
     }
 
     public (OperationResult result, DeploymentResource?[] resource) GetDeployments(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
     {
-        var resources = provider.ListAs<DeploymentResource>();
-        if (resources == null)
-        {
-            return (OperationResult.Success, []);
-        }
+        var resources = provider.ListAs<DeploymentResource>(subscriptionIdentifier, resourceGroupIdentifier);
 
         var filteredBySubscriptionAndResourceGroup = resources.Where(deployment =>
             deployment != null &&

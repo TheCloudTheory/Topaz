@@ -1,4 +1,3 @@
-using System.Net;
 using System.Text.Json;
 using Azure.Core;
 using Topaz.Service.ResourceGroup.Models;
@@ -11,52 +10,60 @@ namespace Topaz.Service.ResourceGroup;
 
 public sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider groupResourceProvider, ITopazLogger logger)
 {
-    public (OperationResult result, ResourceGroupResource? resource) Get(ResourceGroupIdentifier resourceGroup)
+    public (OperationResult result, ResourceGroupResource? resource) Get(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
     {
-        var resource = groupResourceProvider.GetAs<ResourceGroupResource>(resourceGroup.Value);
+        var resource = groupResourceProvider.GetAs<ResourceGroupResource>(subscriptionIdentifier, resourceGroupIdentifier);
+
+        if (resource != null && !resource.IsInSubscription(subscriptionIdentifier))
+        {
+            return (OperationResult.NotFound, null);
+        }
+        
         return resource == null ? 
             (OperationResult.NotFound,  null) : 
             (OperationResult.Success, resource);
     }
 
-    public (OperationResult result, ResourceGroupResource resource) Create(ResourceGroupIdentifier resourceGroup, SubscriptionIdentifier subscriptionId, AzureLocation location)
+    public (OperationResult result, ResourceGroupResource resource) Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location)
     {
-        var model = new ResourceGroupResource(subscriptionId, resourceGroup.Value, location, new ResourceGroupProperties());
+        var model = new ResourceGroupResource(subscriptionIdentifier, resourceGroupIdentifier.Value, location, new ResourceGroupProperties());
 
-        groupResourceProvider.Create(resourceGroup.Value, model);
+        groupResourceProvider.Create(subscriptionIdentifier, resourceGroupIdentifier, null, model);
 
         return (OperationResult.Created, model);
     }
 
-    public (OperationResult result, ResourceGroupResource resource) CreateOrUpdate(ResourceGroupIdentifier resourceGroup, SubscriptionIdentifier subscriptionId, CreateOrUpdateResourceGroupRequest request)
+    public (OperationResult result, ResourceGroupResource resource) CreateOrUpdate(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        CreateOrUpdateResourceGroupRequest request)
     {
-        var resource = groupResourceProvider.GetAs<ResourceGroupResource>(resourceGroup.Value);
+        var resource = groupResourceProvider.GetAs<ResourceGroupResource>(subscriptionIdentifier, resourceGroupIdentifier);
         if (resource != null)
         {
-            logger.LogDebug($"Resource group {resourceGroup} already exists.");
+            logger.LogDebug($"Resource group {resourceGroupIdentifier} already exists.");
             return (OperationResult.Updated, resource);
         }
         
-        logger.LogDebug($"Creating resource group {resourceGroup} because it doesn't exist.");
-        var newResource = new ResourceGroupResource(subscriptionId, resourceGroup.Value, request.Location!, new ResourceGroupProperties());
-        groupResourceProvider.CreateOrUpdate(resourceGroup.Value, newResource);
+        logger.LogDebug($"Creating resource group {resourceGroupIdentifier} because it doesn't exist.");
+        var newResource = new ResourceGroupResource(subscriptionIdentifier, resourceGroupIdentifier.Value, request.Location!, new ResourceGroupProperties());
+        groupResourceProvider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, null, newResource);
             
         return (OperationResult.Created, newResource);
     }
     
-    public (OperationResult result, ResourceGroupResource[] resources) List(SubscriptionIdentifier subscriptionId)
+    public (OperationResult result, ResourceGroupResource[] resources) List(SubscriptionIdentifier subscriptionIdentifier)
     {
-        var resources = groupResourceProvider.List();
+        var resources = groupResourceProvider.List(subscriptionIdentifier, null);
         var groups = resources
             .Select(r => JsonSerializer.Deserialize<ResourceGroupResource>(r, GlobalSettings.JsonOptions)!)
-            .Where(g => g.Id.Contains(subscriptionId.Value.ToString())).ToArray();
+            .Where(g => g.Id.Contains(subscriptionIdentifier.Value.ToString())).ToArray();
         
         return (OperationResult.Success,  groups);
     }
 
-    public OperationResult Delete(ResourceGroupIdentifier resourceGroup)
+    public OperationResult Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
     {
-        groupResourceProvider.Delete(resourceGroup.Value);
+        groupResourceProvider.Delete(subscriptionIdentifier, resourceGroupIdentifier, null);
         return OperationResult.Deleted;
     }
 }

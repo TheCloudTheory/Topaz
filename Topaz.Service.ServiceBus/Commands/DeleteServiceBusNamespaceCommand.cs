@@ -15,8 +15,10 @@ public sealed class DeleteServiceBusNamespaceCommand(ITopazLogger logger) : Comm
     {
         logger.LogDebug($"Executing {nameof(DeleteServiceBusNamespaceCommand)}.{nameof(Execute)}.");
         
+        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = new ServiceBusServiceControlPlane(new ResourceProvider(logger), logger);
-        _ = controlPlane.DeleteNamespace(settings.Name!);
+        _ = controlPlane.DeleteNamespace(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 
         logger.LogInformation("Service Bus namespace deleted.");
 
@@ -29,6 +31,21 @@ public sealed class DeleteServiceBusNamespaceCommand(ITopazLogger logger) : Comm
         {
             return ValidationResult.Error("Service Bus namespace name can't be null.");
         }
+        
+        if(string.IsNullOrEmpty(settings.ResourceGroup))
+        {
+            return ValidationResult.Error("Service Bus namespace resource group can't be null.");
+        }
+        
+        if(string.IsNullOrEmpty(settings.SubscriptionId))
+        {
+            return ValidationResult.Error("Resource group subscription ID can't be null.");
+        }
+
+        if (!Guid.TryParse(settings.SubscriptionId, out _))
+        {
+            return ValidationResult.Error("Resource group subscription ID must be a valid GUID.");
+        }
 
         return base.Validate(context, settings);
     }
@@ -38,5 +55,11 @@ public sealed class DeleteServiceBusNamespaceCommand(ITopazLogger logger) : Comm
     {
         [CommandOption("-n|--name")]
         public string? Name { get; set; }
+        
+        [CommandOption("-g|--resource-group")]
+        public string? ResourceGroup { get; set; }
+        
+        [CommandOption("-s|--subscription-id")]
+        public string SubscriptionId { get; set; } = null!;
     }
 }

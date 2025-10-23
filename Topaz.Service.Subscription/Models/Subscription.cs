@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.Subscription.Models;
@@ -8,12 +9,12 @@ namespace Topaz.Service.Subscription.Models;
 public record Subscription
 {
     public string Id => $"/subscriptions/{SubscriptionId}";
-    public string SubscriptionId { get; set; }
-    public string DisplayName { get; set; }
+    public string SubscriptionId { get; init; }
+    public string DisplayName { get; init; }
 
-    public Subscription(string subscriptionId, string displayName)
+    public Subscription(SubscriptionIdentifier subscriptionIdentifier, string displayName)
     {
-        SubscriptionId = subscriptionId;
+        SubscriptionId = subscriptionIdentifier.ToString();
         DisplayName = displayName;
     }
 

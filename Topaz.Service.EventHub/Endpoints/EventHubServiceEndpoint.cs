@@ -35,7 +35,7 @@ public sealed class EventHubServiceEndpoint(ITopazLogger logger) : IEndpointDefi
             {
                 case "GET":
                 {
-                    HandleGetNamespaceRequest(response, namespaceIdentifier);
+                    HandleGetNamespaceRequest(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
                     break;
                 }
                 case "PUT":
@@ -92,9 +92,10 @@ public sealed class EventHubServiceEndpoint(ITopazLogger logger) : IEndpointDefi
         response.Content = new StringContent(operation.resource.ToString());
     }
 
-    private void HandleGetNamespaceRequest(HttpResponseMessage response, EventHubNamespaceIdentifier namespaceIdentifier)
+    private void HandleGetNamespaceRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, EventHubNamespaceIdentifier namespaceIdentifier)
     {
-        var operation = _controlPlane.GetNamespace(namespaceIdentifier);
+        var operation = _controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
         if (operation.result == OperationResult.NotFound || operation.resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;
