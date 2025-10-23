@@ -8,7 +8,7 @@ public class BlobStorageService(ITopazLogger logger) : IServiceDefinition
 {
     public string Name => "Blob Storage";
     public static bool IsGlobalService => false;
-    public static string LocalDirectoryPath => ".blob";
+    public static string LocalDirectoryPath => Path.Combine(AzureStorageService.LocalDirectoryPath, "{storageAccount}", ".blob");
     public static IReadOnlyCollection<string>? Subresources => null;
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>

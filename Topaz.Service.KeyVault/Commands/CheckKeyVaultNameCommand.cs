@@ -27,7 +27,7 @@ public class CheckKeyVaultNameCommand(ITopazLogger logger) : Command<CheckKeyVau
     {
         if(string.IsNullOrEmpty(settings.ResourceGroup))
         {
-            return ValidationResult.Error("Event Hub namespace resource group can't be null.");
+            return ValidationResult.Error("Key Vault resource group can't be null.");
         }
         
         if(string.IsNullOrEmpty(settings.SubscriptionId))

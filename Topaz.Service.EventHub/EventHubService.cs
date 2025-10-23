@@ -1,4 +1,5 @@
 using Topaz.Service.EventHub.Endpoints;
+using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -8,7 +9,7 @@ public class EventHubService(ITopazLogger logger) : IServiceDefinition
 {
     public string Name => "Azure Event Hub";
     public static bool IsGlobalService => true;
-    public static string LocalDirectoryPath => ".azure-event-hub";
+    public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, "{resourceGroup}", ".azure-event-hub");
     public static IReadOnlyCollection<string>? Subresources => ["hubs"];
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>

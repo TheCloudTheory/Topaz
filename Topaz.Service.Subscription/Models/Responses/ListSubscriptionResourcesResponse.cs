@@ -21,7 +21,7 @@ public record ListSubscriptionResourcesResponse
 
         public static GenericResourceExpanded From<T>(ArmResource<T> resource)
         {
-            return new GenericResourceExpanded()
+            return new GenericResourceExpanded
             {
                 Id = resource.Id,
                 Name = resource.Name,

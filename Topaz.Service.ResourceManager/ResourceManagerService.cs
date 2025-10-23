@@ -1,3 +1,4 @@
+using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -7,7 +8,7 @@ public sealed class ResourceManagerService(ITopazLogger logger) : IServiceDefini
 {
     public string Name => "Resource Manager";
     public static bool IsGlobalService => false;
-    public static string LocalDirectoryPath => ".resource-manager";
+    public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, "{resourceGroup}", ".resource-manager");
     public static IReadOnlyCollection<string>? Subresources => [];
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>

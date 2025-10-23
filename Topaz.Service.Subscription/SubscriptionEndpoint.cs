@@ -5,7 +5,6 @@ using System.Text.Json;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 using Microsoft.AspNetCore.Http;
-using Topaz.Service.KeyVault;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription.Models.Requests;
 using Topaz.Service.Subscription.Models.Responses;
@@ -15,11 +14,9 @@ namespace Topaz.Service.Subscription;
 public sealed class SubscriptionEndpoint(SubscriptionResourceProvider provider, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly SubscriptionControlPlane _controlPlane = new(provider);
-    private readonly KeyVaultControlPlane _keyVaultControlPlane = new(new KeyVault.ResourceProvider(logger));
     
     public string[] Endpoints => [
         "GET /subscriptions/{subscriptionId}",
-        "GET /subscriptions/{subscriptionId}/resources",
         "POST /subscriptions/{subscriptionId}",
         "GET /subscriptions"
     ];
@@ -43,14 +40,7 @@ public sealed class SubscriptionEndpoint(SubscriptionResourceProvider provider, 
                     }
                     else
                     {
-                        if (query.TryGetValueForKey("$filter", out var filter))
-                        {
-                            HandleListSubscriptionResourcesRequest(SubscriptionIdentifier.From(subscriptionId), filter, response);
-                        }
-                        else
-                        {
-                            HandleGetSubscriptionRequest(path, response);
-                        }
+                        HandleGetSubscriptionRequest(path, response);
                     }
                     
                     break;
@@ -73,26 +63,6 @@ public sealed class SubscriptionEndpoint(SubscriptionResourceProvider provider, 
         }
         
         return response;
-    }
-
-    private void HandleListSubscriptionResourcesRequest(SubscriptionIdentifier subscriptionId, string? filter, HttpResponseMessage response)
-    {
-        logger.LogDebug($"Executing {nameof(HandleListSubscriptionResourcesRequest)}: Attempting to list resources for subscription ID `{subscriptionId}` and filter `{filter}`.");
-
-        var keyVaults = _keyVaultControlPlane.ListBySubscription(subscriptionId);
-        if (keyVaults.result != OperationResult.Success || keyVaults.resource == null)
-        {
-            response.StatusCode = HttpStatusCode.InternalServerError;
-            return;
-        }
-
-        var result = new ListSubscriptionResourcesResponse
-        {
-            Value = keyVaults.resource.Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From!).ToArray()
-        };
-        
-        response.Content = new StringContent(result.ToString());
-        response.StatusCode = HttpStatusCode.OK;
     }
 
     private void HandleListSubscriptionsRequest(HttpResponseMessage response)

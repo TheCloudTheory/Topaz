@@ -61,7 +61,9 @@ public class KeyVaultTests
     [Test]
     public void KeyVaultTests_WhenNewKeyVaultIsRequested_ItShouldBeCreated()
     {
-        var keyVaultPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".azure-key-vault", VaultName, "metadata.json");
+        var keyVaultPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".azure-key-vault", VaultName,
+            "metadata.json");
 
         Assert.That(File.Exists(keyVaultPath), Is.True);
     }
@@ -69,13 +71,19 @@ public class KeyVaultTests
     [Test]
     public async Task KeyVaultTests_WhenNewKeyVaultIsDeleted_ItShouldBeDeleted()
     {
-        var keyVaultPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".azure-key-vault", VaultName);
+        var keyVaultPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".azure-key-vault", VaultName,
+            "metadata.json");
 
         var result = await Program.Main([
             "keyvault",
             "delete",
             "--name",
-            VaultName
+            VaultName,
+            "-g",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         Assert.Multiple(() =>
@@ -92,7 +100,11 @@ public class KeyVaultTests
             "keyvault",
             "check-name",
             "--name",
-            VaultName
+            VaultName,
+            "-g",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         Assert.Multiple(() =>
@@ -108,7 +120,11 @@ public class KeyVaultTests
             "keyvault",
             "check-name",
             "--name",
-            "somerandomkv"
+            "somerandomkv",
+            "-g",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         Assert.Multiple(() =>
