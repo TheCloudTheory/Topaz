@@ -59,190 +59,186 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         try
         {
-            if (method == "GET")
+            switch (method)
             {
-                switch (path)
-                {
-                    case "/":
-                        HandleGetTablePropertiesRequest(null, null, storageAccountName.Name, response, query);
-                        break;
-                    case "/Tables":
-                        HandleGetTablesRequest(storageAccountName.Name, response);
-                        break;
-                    default:
-                        if(query.TryGetValueForKey("comp", out var comp) && comp == "acl")
-                        {
-                            HandleGetAclRequest(storageAccountName.Name, path, response);
-                            return response;
-                        }
-                        
-                        var potentialTableName = path.Replace("()", string.Empty).Replace("/", string.Empty);
-                        if(IsPathReferencingTable(potentialTableName, storageAccountName.Name))
-                        {
-                            var entities = _dataPlane.QueryEntities(query, potentialTableName, storageAccountName.Name);
-                            var dataEndpointResponse = new TableDataEndpointResponse(entities);
-
-                            response.Content = JsonContent.Create(dataEndpointResponse);
-                            response.StatusCode = HttpStatusCode.OK;
-
-                            break;
-                        }
-
-                        response.StatusCode = HttpStatusCode.NotFound;
-                        break;
-                }
-
-                return response;
-            }
-
-            if (method == "POST")
-            {
-                switch (path)
-                {
-                    case "/Tables":
-                        try
-                        {
-                            HandleCreateTable(input, headers, storageAccountName.Name, response);
-                        }
-                        catch (EntityAlreadyExistsException)
-                        {
-                            var error = new ErrorResponse("TableAlreadyExists", "Table already exists.");
-
-                            response.StatusCode = HttpStatusCode.Conflict;
-                            response.Headers.Add("x-ms-error-code", "TableAlreadyExists");
-                            response.Content = JsonContent.Create(error);
-                        }
-
-                        break;
-                    default:
-                        if(IsPathReferencingTable(path, storageAccountName.Name))
-                        {
-                            try
-                            {
-                                var tableName = path.Replace("/", string.Empty);
-                                var payload = _dataPlane.InsertEntity(input, tableName, storageAccountName.Name);
-
-                                // Depending on the value of the `Prefer` header, the response 
-                                // given by the emulator should be either 204 or 201
-                                if (headers.TryGetValue("Prefer", out var prefer) == false || prefer != "return-no-content")
-                                {
-                                    // No `Prefer` header or value other than `return-no-content`
-                                    // hence the result will be 201
-                                    response.StatusCode = HttpStatusCode.Created;
-                                    response.Content = JsonContent.Create(payload);
-                                }
-
-                                if (prefer == "return-no-content")
-                                {
-                                    response.StatusCode = HttpStatusCode.NoContent;
-                                }
-
-                                break;
-                            }
-                            catch(EntityAlreadyExistsException)
-                            {
-                                var error = new ErrorResponse("EntityAlreadyExists", "Entity already exists.");
-
-                                response.StatusCode = HttpStatusCode.Conflict;
-                                response.Headers.Add("x-ms-error-code", "EntityAlreadyExists");
-                                response.Content = JsonContent.Create(error);
-
-                                break;
-                            }
-                        }
-
-                        var matches = Regex.Match(path, @"\w+\(PartitionKey='\w+',RowKey='\w+'\)$", RegexOptions.IgnoreCase);
-                        if(matches.Length > 0)
-                        {
-                            logger.LogDebug("Matched the update operation.");
-
-                            var (TableName, PartitionKey, RowKey) = GetOperationDataForUpdateOperation(matches);
-
-                            try
-                            {
-                                _dataPlane.UpdateEntity(input, TableName, storageAccountName.Name, PartitionKey, RowKey, headers);
-
-                                response.StatusCode = HttpStatusCode.NoContent;
-                            }
-                            catch(EntityNotFoundException)
-                            {
-                                var error = new ErrorResponse("EntityNotFound", "Entity not found.");
-
-                                response.StatusCode = HttpStatusCode.NotFound;
-                                response.Headers.Add("x-ms-error-code", "EntityNotFound");
-                                response.Content = JsonContent.Create(error);
-                            }
-                            catch(UpdateConditionNotSatisfiedException)
-                            {
-                                var error = new ErrorResponse("UpdateConditionNotSatisfied", "The update condition specified in the request was not satisfied.");
-
-                                response.StatusCode = HttpStatusCode.PreconditionFailed;
-                                response.Headers.Add("x-ms-error-code", "UpdateConditionNotSatisfied");
-                                response.Content = JsonContent.Create(error);
-                            }
-                            
-                            break;
-                        }
-                        
-                        response.StatusCode = HttpStatusCode.NotFound;
-                        break;
-                }
-
-                return response;
-            }
-
-            if(method == "PUT" || method == "PATCH")
-            {
-                var matches = Regex.Match(path, @"\w+\(PartitionKey='\w+',RowKey='\w+'\)$", RegexOptions.IgnoreCase);
-                if(matches.Length > 0)
-                {
-                    HandleUpdateEntityRequest(input, headers, matches, storageAccountName.Name, response);
-                    return response;
-                }
-                
-                if(query.TryGetValueForKey("comp", out var comp) && comp == "acl")
-                {
-                    var tableName = path.Replace("/", string.Empty);
-                    HandleSetAclRequest(storageAccountName.Name, tableName, input, response);
-                    return response;
-                }
-                
-                response.StatusCode = HttpStatusCode.NotFound;
-                return response;
-            }
-
-            if(method == "DELETE")
-            {
-                try
-                {
-                    var matches = Regex.Match(path, @"^\/Tables\('.*?'\)$", RegexOptions.IgnoreCase);
-                    if(matches.Length == 0)
+                case "GET":
+                    switch (path)
                     {
-                        throw new Exception($"Invalid request path {path} for the delete operation.");
+                        case "/":
+                            HandleGetTablePropertiesRequest(null, null, storageAccountName.Name, response, query);
+                            break;
+                        case "/Tables":
+                            HandleGetTablesRequest(storageAccountName.Name, response);
+                            break;
+                        default:
+                            if(query.TryGetValueForKey("comp", out var comp) && comp == "acl")
+                            {
+                                HandleGetAclRequest(storageAccountName.Name, path, response);
+                                return response;
+                            }
+                        
+                            var potentialTableName = path.Replace("()", string.Empty).Replace("/", string.Empty);
+                            if(IsPathReferencingTable(potentialTableName, storageAccountName.Name))
+                            {
+                                var entities = _dataPlane.QueryEntities(query, potentialTableName, storageAccountName.Name);
+                                var dataEndpointResponse = new TableDataEndpointResponse(entities);
+
+                                response.Content = JsonContent.Create(dataEndpointResponse);
+                                response.StatusCode = HttpStatusCode.OK;
+
+                                break;
+                            }
+
+                            response.StatusCode = HttpStatusCode.NotFound;
+                            break;
                     }
 
-                    var tableName = matches.Value.Trim('/').Replace("Tables('", "").Replace("')", "");
+                    return response;
+                case "POST":
+                    switch (path)
+                    {
+                        case "/Tables":
+                            try
+                            {
+                                HandleCreateTable(input, headers, storageAccountName.Name, response);
+                            }
+                            catch (EntityAlreadyExistsException)
+                            {
+                                var error = new ErrorResponse("TableAlreadyExists", "Table already exists.");
 
-                    logger.LogDebug($"Attempting to delete table: {tableName}.");
-                    _controlPlane.DeleteTable(tableName, storageAccountName.Name);
-                    logger.LogDebug($"Table {tableName} deleted.");
+                                response.StatusCode = HttpStatusCode.Conflict;
+                                response.Headers.Add("x-ms-error-code", "TableAlreadyExists");
+                                response.Content = JsonContent.Create(error);
+                            }
 
-                    response.StatusCode = HttpStatusCode.NoContent;
+                            break;
+                        default:
+                            if(IsPathReferencingTable(path, storageAccountName.Name))
+                            {
+                                try
+                                {
+                                    var tableName = path.Replace("/", string.Empty);
+                                    var payload = _dataPlane.InsertEntity(input, tableName, storageAccountName.Name);
+
+                                    // Depending on the value of the `Prefer` header, the response 
+                                    // given by the emulator should be either 204 or 201
+                                    if (headers.TryGetValue("Prefer", out var prefer) == false || prefer != "return-no-content")
+                                    {
+                                        // No `Prefer` header or value other than `return-no-content`
+                                        // hence the result will be 201
+                                        response.StatusCode = HttpStatusCode.Created;
+                                        response.Content = JsonContent.Create(payload);
+                                    }
+
+                                    if (prefer == "return-no-content")
+                                    {
+                                        response.StatusCode = HttpStatusCode.NoContent;
+                                    }
+
+                                    break;
+                                }
+                                catch(EntityAlreadyExistsException)
+                                {
+                                    var error = new ErrorResponse("EntityAlreadyExists", "Entity already exists.");
+
+                                    response.StatusCode = HttpStatusCode.Conflict;
+                                    response.Headers.Add("x-ms-error-code", "EntityAlreadyExists");
+                                    response.Content = JsonContent.Create(error);
+
+                                    break;
+                                }
+                            }
+
+                            var matches = Regex.Match(path, @"\w+\(PartitionKey='\w+',RowKey='\w+'\)$", RegexOptions.IgnoreCase);
+                            if(matches.Length > 0)
+                            {
+                                logger.LogDebug("Matched the update operation.");
+
+                                var (TableName, PartitionKey, RowKey) = GetOperationDataForUpdateOperation(matches);
+
+                                try
+                                {
+                                    _dataPlane.UpdateEntity(input, TableName, storageAccountName.Name, PartitionKey, RowKey, headers);
+
+                                    response.StatusCode = HttpStatusCode.NoContent;
+                                }
+                                catch(EntityNotFoundException)
+                                {
+                                    var error = new ErrorResponse("EntityNotFound", "Entity not found.");
+
+                                    response.StatusCode = HttpStatusCode.NotFound;
+                                    response.Headers.Add("x-ms-error-code", "EntityNotFound");
+                                    response.Content = JsonContent.Create(error);
+                                }
+                                catch(UpdateConditionNotSatisfiedException)
+                                {
+                                    var error = new ErrorResponse("UpdateConditionNotSatisfied", "The update condition specified in the request was not satisfied.");
+
+                                    response.StatusCode = HttpStatusCode.PreconditionFailed;
+                                    response.Headers.Add("x-ms-error-code", "UpdateConditionNotSatisfied");
+                                    response.Content = JsonContent.Create(error);
+                                }
+                            
+                                break;
+                            }
+                        
+                            response.StatusCode = HttpStatusCode.NotFound;
+                            break;
+                    }
 
                     return response;
-                }
-                catch (EntityNotFoundException)
+                case "PUT":
+                case "PATCH":
                 {
-                    var error = new ErrorResponse("EntityNotFound", "Table not found.");
-
+                    var matches = Regex.Match(path, @"\w+\(PartitionKey='\w+',RowKey='\w+'\)$", RegexOptions.IgnoreCase);
+                    if(matches.Length > 0)
+                    {
+                        HandleUpdateEntityRequest(input, headers, matches, storageAccountName.Name, response);
+                        return response;
+                    }
+                
+                    if(query.TryGetValueForKey("comp", out var comp) && comp == "acl")
+                    {
+                        var tableName = path.Replace("/", string.Empty);
+                        HandleSetAclRequest(storageAccountName.Name, tableName, input, response);
+                        return response;
+                    }
+                
                     response.StatusCode = HttpStatusCode.NotFound;
-                    response.Headers.Add("x-ms-error-code", "EntityNotFound");
-                    response.Content = JsonContent.Create(error);
-
                     return response;
                 }
+                case "DELETE":
+                    try
+                    {
+                        var matches = Regex.Match(path, @"^\/Tables\('.*?'\)$", RegexOptions.IgnoreCase);
+                        if(matches.Length == 0)
+                        {
+                            throw new Exception($"Invalid request path {path} for the delete operation.");
+                        }
+
+                        var tableName = matches.Value.Trim('/').Replace("Tables('", "").Replace("')", "");
+
+                        logger.LogDebug($"Attempting to delete table: {tableName}.");
+                        _controlPlane.DeleteTable(tableName, storageAccountName.Name);
+                        logger.LogDebug($"Table {tableName} deleted.");
+
+                        response.StatusCode = HttpStatusCode.NoContent;
+
+                        return response;
+                    }
+                    catch (EntityNotFoundException)
+                    {
+                        var error = new ErrorResponse("EntityNotFound", "Table not found.");
+
+                        response.StatusCode = HttpStatusCode.NotFound;
+                        response.Headers.Add("x-ms-error-code", "EntityNotFound");
+                        response.Content = JsonContent.Create(error);
+
+                        return response;
+                    }
+
+                    break;
             }
-  
         }
         catch (Exception ex)
         {
