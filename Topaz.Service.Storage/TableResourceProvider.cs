@@ -1,7 +1,6 @@
-using System.Text.Json;
 using Azure.Data.Tables.Models;
 using Topaz.Service.Shared;
-using Topaz.Service.Storage.Exceptions;
+using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Services;
 using Topaz.Shared;
 
@@ -9,103 +8,63 @@ namespace Topaz.Service.Storage;
 
 internal sealed class TableResourceProvider(ITopazLogger logger) : ResourceProviderBase<TableStorageService>(logger)
 {
-    private readonly ITopazLogger _topazLogger = logger;
+    private readonly ITopazLogger _logger = logger;
 
-    private void InitializeServiceDirectory(string storageAccountName)
+    public string GetTableAclPath(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
-        var servicePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath);
-        _topazLogger.LogDebug($"Attempting to create {servicePath} directory...");
-
-        if(!Directory.Exists(servicePath))
-        {
-            Directory.CreateDirectory(servicePath);
-            _topazLogger.LogDebug($"Directory {servicePath} created.");
-        }
-        else
-        {
-            _topazLogger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
-        }
-    }
-
-    public IEnumerable<string> List(string id)
-    {
-        InitializeServiceDirectory(id);
-
-        var servicePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, id, TableStorageService.LocalDirectoryPath);
-        return Directory.EnumerateDirectories(servicePath);
-    }
-
-    public void Delete(string tableName, string storageAccountName)
-    {
-        InitializeServiceDirectory(storageAccountName);
+        var tablePath =
+            GetTablePathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName);
         
-        var tablePath = this.GetTablePath(tableName, storageAccountName);
-
-        if(Directory.Exists(tablePath) == false)
-        {
-            throw new EntityNotFoundException();
-        }
-
-        Directory.Delete(tablePath, true);
+        return Path.Combine(tablePath, "acl");
     }
 
-    public void Create(string tableName, string storageAccountName, TableItem model)
+    public bool CheckIfTableExists(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
-        InitializeServiceDirectory(storageAccountName);
-        
-        var metadataFilePath = CreateTableDirectories(tableName, storageAccountName);
-
-        _topazLogger.LogDebug($"Attempting to create {metadataFilePath} file.");
-
-        if(File.Exists(metadataFilePath)) throw new InvalidOperationException($"Metadata file for {typeof(TableStorageService)} with ID {tableName} already exists.");
-
-        var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
-        File.WriteAllText(metadataFilePath, content);
-    }
-
-    private string CreateTableDirectories(string tableName, string storageAccountName)
-    {
-        const string metadataFile = "metadata.json";
-        var tablePath = GetTablePath(tableName, storageAccountName);
-        var dataPath = Path.Combine(tablePath, "data");
-        var aclPath = Path.Combine(tablePath, "acl");
-        var metadataFilePath = Path.Combine(tablePath, metadataFile);
-
-        _topazLogger.LogDebug($"Attempting to create {tablePath} directory.");
-        if(Directory.Exists(tablePath))
-        {
-            _topazLogger.LogDebug($"Attempting to create {tablePath} directory - skipped.");
-        }
-        else
-        {
-            Directory.CreateDirectory(tablePath);
-            Directory.CreateDirectory(dataPath);
-            Directory.CreateDirectory(aclPath);
-            
-            _topazLogger.LogDebug($"Attempting to create {tablePath} directory - created!");
-        }
-
-        return metadataFilePath;
-    }
-
-    private string GetTablePath(string tableName, string storageAccountName)
-    {
-        return Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath, tableName);
-    }
-
-    public string GetTableDataPath(string tableName, string storageAccountName)
-    {
-        return Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath, tableName, "data");
-    }
-
-    public string GetTableAclPath(string tableName, string storageAccountName)
-    {
-        return Path.Combine(GetTablePath(tableName, storageAccountName), "acl");
-    }
-
-    public bool CheckIfTableExists(string tableName, string storageAccountName)
-    {
-        var tablePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, TableStorageService.LocalDirectoryPath, tableName);
+        var tablePath = GetTablePathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName);
         return Directory.Exists(tablePath);
+    }
+
+    private string GetTablePathWithReplacedValues(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string tableName)
+    {
+        var storageAccountPath =
+            GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+
+        return Path.Combine(storageAccountPath, tableName);
+    }
+
+    public void Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName, TableItem model)
+    {
+        base.Create(subscriptionIdentifier, resourceGroupIdentifier, GetTableId(storageAccountName, tableName), model);
+    }
+
+    private static string GetTableId(string storageAccountName, string tableName)
+    {
+        return Path.Combine(storageAccountName, ".table", tableName);
+    }
+
+    public void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
+    {
+        base.Delete(subscriptionIdentifier, resourceGroupIdentifier, GetTableId(storageAccountName, tableName));
+    }
+
+    public IEnumerable<string> List(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
+    {
+        var servicePath = Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), storageAccountName);
+        if (!Directory.Exists(servicePath))
+        {
+            _logger.LogWarning("Trying to list resources for a non-existing storage account. If you see this warning, make sure you created a storage account before accessing its data.");
+            return [];
+        }
+        
+        var metadataFiles = Directory.EnumerateFiles(servicePath, "metadata.json", SearchOption.AllDirectories);
+        return metadataFiles.Select(File.ReadAllText);
+    }
+
+    public string GetTableDataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
+    {
+        return GetTablePathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName);
     }
 }

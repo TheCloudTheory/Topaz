@@ -7,6 +7,7 @@ namespace Topaz.Service.ServiceBus;
 
 public sealed class ServiceBusService(ITopazLogger logger) : IServiceDefinition
 {
+    public static string UniqueName => "servicebus";
     public string Name => "Azure Service Bus";
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".service-bus");

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Topaz.CloudEnvironment;
+using Topaz.Dns;
 using Topaz.Host.AMQP;
 using Topaz.Service.EventHub;
 using Topaz.Service.KeyVault;

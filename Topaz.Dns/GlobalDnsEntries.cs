@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Topaz.Shared;
 
-namespace Topaz.Host;
+namespace Topaz.Dns;
 
 public record GlobalDnsEntries
 {

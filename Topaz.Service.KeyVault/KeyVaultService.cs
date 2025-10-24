@@ -10,6 +10,7 @@ public sealed class KeyVaultService(ITopazLogger logger) : IServiceDefinition
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".azure-key-vault");
     public static IReadOnlyCollection<string>? Subresources => null;
+    public static string UniqueName => "keyvault";
     public string Name => "Azure Key Vault";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [

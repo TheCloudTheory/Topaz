@@ -6,16 +6,18 @@ using Topaz.Shared;
 using Microsoft.AspNetCore.Http;
 using Azure;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.Storage;
 
-internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlane, ITopazLogger logger)
+internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvider, ITopazLogger logger)
 {
-    internal string InsertEntity(Stream input, string tableName, string storageAccountName)
+    internal string InsertEntity(Stream input, SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
         logger.LogDebug($"Executing {nameof(InsertEntity)}: {tableName} {storageAccountName}");
 
-        var path = controlPlane.GetTableDataPath(tableName, storageAccountName);
+        var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
 
         using var sr = new StreamReader(input);
 
@@ -47,7 +49,8 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
         return rawContent;
     }
 
-    internal object?[] QueryEntities(QueryString query, string tableName, string storageAccountName)
+    internal object?[] QueryEntities(QueryString query, SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
         logger.LogDebug($"Executing {nameof(QueryEntities)}: {query} {tableName} {storageAccountName}");
 
@@ -59,7 +62,7 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
         //     filter = potentialFilter.Replace("$filter=", string.Empty);
         // }
 
-        var path = controlPlane.GetTableDataPath(tableName, storageAccountName);
+        var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
         var files = Directory.EnumerateFiles(path);
         var entities = files.Select(e => {
             var content = File.ReadAllText(e);
@@ -69,14 +72,14 @@ internal sealed class TableServiceDataPlane(TableServiceControlPlane controlPlan
         return entities; 
     }
 
-    internal void UpdateEntity(Stream input, string tableName, string storageAccountName, string partitionKey,
+    internal void UpdateEntity(Stream input, SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName, string partitionKey,
                                string rowKey, IHeaderDictionary headers)
     {
         logger.LogDebug($"Executing {nameof(InsertEntity)}: {tableName} {storageAccountName}");
 
         var etag = headers["If-Match"];
-
-        var path = controlPlane.GetTableDataPath(tableName, storageAccountName);
+        var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
 
         using var sr = new StreamReader(input);
 

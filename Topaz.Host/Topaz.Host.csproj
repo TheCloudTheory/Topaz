@@ -13,6 +13,7 @@
     <ProjectReference Include="../Topaz.Service.Subscription/Topaz.Service.Subscription.csproj" />
     <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
     <ProjectReference Include="..\Topaz.CloudEnvironment\Topaz.CloudEnvironment.csproj" />
+    <ProjectReference Include="..\Topaz.Dns\Topaz.Dns.csproj" />
     <ProjectReference Include="..\Topaz.Service.EventHub\Topaz.Service.EventHub.csproj" />
     <ProjectReference Include="..\Topaz.Service.ResourceManager\Topaz.Service.ResourceManager.csproj" />
     <ProjectReference Include="..\Topaz.Service.ServiceBus\Topaz.Service.ServiceBus.csproj" />

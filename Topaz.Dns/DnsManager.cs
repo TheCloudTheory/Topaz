@@ -1,6 +1,6 @@
-namespace Topaz.Host;
+namespace Topaz.Dns;
 
-internal sealed class DnsManager
+public sealed class DnsManager
 {
     private const string PlaceholderEntry = "# --- Topaz Host - DO NOT MODIFY ---";
     public void ConfigureEntries()

@@ -1,9 +1,7 @@
 using System.Net;
-using System.Text.Json;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using Azure.Data.Tables.Models;
-using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Models.Requests;
@@ -17,9 +15,9 @@ namespace Topaz.Service.Storage;
 
 internal sealed class TableServiceControlPlane(TableResourceProvider provider, ITopazLogger logger)
 {
-    public TableProperties[] GetTables(string storageAccountName)
+    public TableProperties[] GetTables(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
     {
-        var tables = provider.List(storageAccountName);
+        var tables = provider.List(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
         return [.. tables.Select(t => {
             var di = new DirectoryInfo(t);
@@ -27,20 +25,20 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         })];
     }
 
-    public TableItem CreateTable(string storageAccountName, CreateTableRequest request)
+    public TableItem CreateTable(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, CreateTableRequest request)
     {
         var model = new TableItem(request.TableName);;
 
-        provider.Create(request.TableName!, storageAccountName, model);
+        provider.Create(subscriptionIdentifier, resourceGroupIdentifier, request.TableName!, storageAccountName, model);
 
         return model;
     }
 
-    public CreateTableResponse CreateTable(string tableName, string storageAccountName)
+    public CreateTableResponse CreateTable(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
         var model = new TableItem(tableName);;
 
-        provider.Create(tableName, storageAccountName, model);
+        provider.Create(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName, model);
 
         return new CreateTableResponse()
         {
@@ -48,19 +46,14 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         };
     }
 
-    public void DeleteTable(string tableName, string storageAccountName)
+    public void DeleteTable(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
-       provider.Delete(tableName, storageAccountName);
+       provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
     }
 
-    internal bool CheckIfTableExists(string storageAccountName, string tableName)
+    internal bool CheckIfTableExists(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string tableName)
     {
-        return provider.CheckIfTableExists(tableName, storageAccountName);
-    }
-
-    internal string GetTableDataPath(string tableName, string storageAccountName)
-    {
-        return provider.GetTableDataPath(tableName, storageAccountName);
+        return provider.CheckIfTableExists(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
     }
 
     public TableServiceProperties GetTableProperties(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
@@ -77,11 +70,11 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         return properties;
     }
 
-    public HttpStatusCode SetAcl(string storageAccountName, string tableName, Stream input)
+    public HttpStatusCode SetAcl(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string tableName, Stream input)
     {
         using var sr = new StreamReader(input);
         
-        var aclPath = provider.GetTableAclPath(tableName, storageAccountName);
+        var aclPath = provider.GetTableAclPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
         var document = XDocument.Load(input, LoadOptions.PreserveWhitespace);
         
         if (document.Element("SignedIdentifiers") is {} signedIdentifiersElement)
@@ -112,9 +105,9 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         return HttpStatusCode.NoContent;
     }
 
-    public SignedIdentifiers GetAcl(string storageAccountName, string tableName)
+    public SignedIdentifiers GetAcl(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string tableName)
     {
-        var aclPath = provider.GetTableAclPath(tableName, storageAccountName);
+        var aclPath = provider.GetTableAclPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
         var files = Directory.EnumerateFiles(aclPath, "*.xml", SearchOption.TopDirectoryOnly);
 
         using var sw = new EncodingAwareStringWriter();

@@ -6,6 +6,7 @@ namespace Topaz.Service.ResourceManager;
 
 public sealed class ResourceManagerService(ITopazLogger logger) : IServiceDefinition
 {
+    public static string UniqueName => "resourcemanager";
     public string Name => "Resource Manager";
     public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".resource-manager");

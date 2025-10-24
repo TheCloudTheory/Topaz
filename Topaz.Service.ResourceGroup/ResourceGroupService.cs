@@ -9,6 +9,7 @@ public sealed class ResourceGroupService(ITopazLogger logger) : IServiceDefiniti
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(SubscriptionService.LocalDirectoryPath, "{subscriptionId}", ".resource-group", "{resourceGroup}");
     public static IReadOnlyCollection<string>? Subresources => null;
+    public static string UniqueName => "resourcegroup";
 
     public string Name => "Resource Group";
 

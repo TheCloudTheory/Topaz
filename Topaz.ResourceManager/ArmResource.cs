@@ -19,6 +19,11 @@ public abstract class ArmResource<T>
     {
         return SubscriptionIdentifier.From(Guid.Parse(Id.Split("/")[2]));
     }
+    
+    public ResourceGroupIdentifier GetResourceGroup()
+    {
+        return ResourceGroupIdentifier.From(Id.Split("/")[4]);
+    }
 
     public bool IsInSubscription(SubscriptionIdentifier subscriptionIdentifier)
     {

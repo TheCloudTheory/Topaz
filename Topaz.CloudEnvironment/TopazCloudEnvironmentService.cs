@@ -6,6 +6,7 @@ namespace Topaz.CloudEnvironment;
 
 public sealed class TopazCloudEnvironmentService : IServiceDefinition
 {
+    public static string UniqueName => "cloudenvironment";
     public string Name => "CloudEnvironment";
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, "{resourceGroup}", ".cloud");

@@ -21,7 +21,7 @@ namespace Topaz.Service.Storage.Endpoints;
 public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly TableServiceControlPlane _controlPlane = new(new TableResourceProvider(logger), logger);
-    private readonly TableServiceDataPlane _dataPlane = new(new TableServiceControlPlane(new TableResourceProvider(logger), logger), logger);
+    private readonly TableServiceDataPlane _dataPlane = new(new TableResourceProvider(logger), logger);
     private readonly ResourceProvider _resourceProvider = new(logger);
     private readonly TableStorageSecurityProvider _securityProvider = new(logger); 
 
@@ -45,13 +45,16 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         var response = new HttpResponseMessage();
         
-        if(!TryGetStorageAccount(headers, out var storageAccountName))
+        if(!TryGetStorageAccount(headers, out var storageAccount))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return response;
         }
 
-        if (!_securityProvider.RequestIsAuthorized(null, null, storageAccountName.Name, headers, path, query))
+        var subscriptionIdentifier = storageAccount!.GetSubscription();
+        var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+
+        if (!_securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, headers, path, query))
         {
             response.StatusCode = HttpStatusCode.Unauthorized;
             return response;
@@ -65,22 +68,22 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
                     switch (path)
                     {
                         case "/":
-                            HandleGetTablePropertiesRequest(null, null, storageAccountName.Name, response, query);
+                            HandleGetTablePropertiesRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, response, query);
                             break;
                         case "/Tables":
-                            HandleGetTablesRequest(storageAccountName.Name, response);
+                            HandleGetTablesRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, response);
                             break;
                         default:
                             if(query.TryGetValueForKey("comp", out var comp) && comp == "acl")
                             {
-                                HandleGetAclRequest(storageAccountName.Name, path, response);
+                                HandleGetAclRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, path, response);
                                 return response;
                             }
                         
                             var potentialTableName = path.Replace("()", string.Empty).Replace("/", string.Empty);
-                            if(IsPathReferencingTable(potentialTableName, storageAccountName.Name))
+                            if(IsPathReferencingTable(subscriptionIdentifier, resourceGroupIdentifier, potentialTableName, storageAccount.Name))
                             {
-                                var entities = _dataPlane.QueryEntities(query, potentialTableName, storageAccountName.Name);
+                                var entities = _dataPlane.QueryEntities(query, subscriptionIdentifier, resourceGroupIdentifier, potentialTableName, storageAccount.Name);
                                 var dataEndpointResponse = new TableDataEndpointResponse(entities);
 
                                 response.Content = JsonContent.Create(dataEndpointResponse);
@@ -100,7 +103,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
                         case "/Tables":
                             try
                             {
-                                HandleCreateTable(input, headers, storageAccountName.Name, response);
+                                HandleCreateTable(input, headers, subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, response);
                             }
                             catch (EntityAlreadyExistsException)
                             {
@@ -113,16 +116,16 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 
                             break;
                         default:
-                            if(IsPathReferencingTable(path, storageAccountName.Name))
+                            if(IsPathReferencingTable(subscriptionIdentifier, resourceGroupIdentifier, path, storageAccount.Name))
                             {
                                 try
                                 {
                                     var tableName = path.Replace("/", string.Empty);
-                                    var payload = _dataPlane.InsertEntity(input, tableName, storageAccountName.Name);
+                                    var payload = _dataPlane.InsertEntity(input, subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccount.Name);
 
                                     // Depending on the value of the `Prefer` header, the response 
                                     // given by the emulator should be either 204 or 201
-                                    if (headers.TryGetValue("Prefer", out var prefer) == false || prefer != "return-no-content")
+                                    if (!headers.TryGetValue("Prefer", out var prefer) || prefer != "return-no-content")
                                     {
                                         // No `Prefer` header or value other than `return-no-content`
                                         // hence the result will be 201
@@ -154,11 +157,11 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
                             {
                                 logger.LogDebug("Matched the update operation.");
 
-                                var (TableName, PartitionKey, RowKey) = GetOperationDataForUpdateOperation(matches);
+                                var (tableName, partitionKey, rowKey) = GetOperationDataForUpdateOperation(matches);
 
                                 try
                                 {
-                                    _dataPlane.UpdateEntity(input, TableName, storageAccountName.Name, PartitionKey, RowKey, headers);
+                                    _dataPlane.UpdateEntity(input, subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccount.Name, partitionKey, rowKey, headers);
 
                                     response.StatusCode = HttpStatusCode.NoContent;
                                 }
@@ -193,14 +196,14 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
                     var matches = Regex.Match(path, @"\w+\(PartitionKey='\w+',RowKey='\w+'\)$", RegexOptions.IgnoreCase);
                     if(matches.Length > 0)
                     {
-                        HandleUpdateEntityRequest(input, headers, matches, storageAccountName.Name, response);
+                        HandleUpdateEntityRequest(input, headers, matches, subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, response);
                         return response;
                     }
                 
                     if(query.TryGetValueForKey("comp", out var comp) && comp == "acl")
                     {
                         var tableName = path.Replace("/", string.Empty);
-                        HandleSetAclRequest(storageAccountName.Name, tableName, input, response);
+                        HandleSetAclRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, tableName, input, response);
                         return response;
                     }
                 
@@ -219,7 +222,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
                         var tableName = matches.Value.Trim('/').Replace("Tables('", "").Replace("')", "");
 
                         logger.LogDebug($"Attempting to delete table: {tableName}.");
-                        _controlPlane.DeleteTable(tableName, storageAccountName.Name);
+                        _controlPlane.DeleteTable(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccount.Name);
                         logger.LogDebug($"Table {tableName} deleted.");
 
                         response.StatusCode = HttpStatusCode.NoContent;
@@ -253,7 +256,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         throw new NotSupportedException();
     }
 
-    private void HandleCreateTable(Stream input, IHeaderDictionary headers, string storageAccountName,
+    private void HandleCreateTable(Stream input, IHeaderDictionary headers, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName,
         HttpResponseMessage response)
     {
         using var sr = new StreamReader(input);
@@ -267,7 +270,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
             return;
         }
         
-        var tableExists = _controlPlane.CheckIfTableExists(storageAccountName, request.TableName);
+        var tableExists = _controlPlane.CheckIfTableExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, request.TableName);
         if (tableExists)
         {
             var error = new ErrorResponse("TableAlreadyExists", "Table already exists.");
@@ -279,13 +282,13 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
             return;
         }
         
-        var table = _controlPlane.CreateTable(storageAccountName, request);
+        var table = _controlPlane.CreateTable(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, request);
         
         // Depending on the value of the `Prefer` header, the response 
         // given by the emulator should be either 204 or 201. The header
         // is also instructing the server to ignore creating a table if
         // it already exists
-        if (headers.TryGetValue("Prefer", out var prefer) == false || prefer != "return-no-content")
+        if (!headers.TryGetValue("Prefer", out var prefer) || prefer != "return-no-content")
         {
             response.Content = JsonContent.Create(table);
             
@@ -295,37 +298,41 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
             response.Headers.Add("Preference-Applied", "return-content");
         }
 
-        if (prefer == "return-no-content")
-        {
-            response.StatusCode = HttpStatusCode.NoContent;
-            response.Headers.Add("Preference-Applied", "return-no-content");
-        }
+        if (prefer != "return-no-content") return;
+        
+        response.StatusCode = HttpStatusCode.NoContent;
+        response.Headers.Add("Preference-Applied", "return-no-content");
     }
 
-    private void HandleGetAclRequest(string storageAccountName, string path, HttpResponseMessage response)
+    private void HandleGetAclRequest(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string path,
+        HttpResponseMessage response)
     {
         logger.LogDebug($"Executing {nameof(HandleGetAclRequest)}.");
 
         var tableName = path.Replace("/", string.Empty);
-        var acls = _controlPlane.GetAcl(storageAccountName, tableName);
-        
+        var acls = _controlPlane.GetAcl(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName);
+
         using var sw = new EncodingAwareStringWriter();
         var serializer = new XmlSerializer(typeof(SignedIdentifiers));
         serializer.Serialize(sw, acls);
-        
+
         response.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/xml");
         response.StatusCode = HttpStatusCode.OK;
     }
 
-    private void HandleSetAclRequest(string storageAccountName, string tableName, Stream input, HttpResponseMessage response)
+    private void HandleSetAclRequest(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string tableName, Stream input,
+        HttpResponseMessage response)
     {
         logger.LogDebug($"Executing {nameof(HandleSetAclRequest)}.");
-        
-        var code = _controlPlane.SetAcl(storageAccountName, tableName, input);
+
+        var code = _controlPlane.SetAcl(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName,
+            input);
         response.StatusCode = code;
     }
 
-    private void HandleUpdateEntityRequest(Stream input, IHeaderDictionary headers, Match matches,
+    private void HandleUpdateEntityRequest(Stream input, IHeaderDictionary headers, Match matches, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName, HttpResponseMessage response)
     {
         logger.LogDebug("Matched the update operation.");
@@ -334,9 +341,9 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         try
         {
-            this._dataPlane.UpdateEntity(input, tableName, storageAccountName, partitionKey, rowKey, headers);
+            _dataPlane.UpdateEntity(input, subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName, partitionKey, rowKey, headers);
 
-            response.StatusCode = System.Net.HttpStatusCode.NoContent;
+            response.StatusCode = HttpStatusCode.NoContent;
         }
         catch(EntityNotFoundException)
         {
@@ -350,7 +357,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         {
             var error = new ErrorResponse("UpdateConditionNotSatisfied", "The update condition specified in the request was not satisfied.");
 
-            response.StatusCode = System.Net.HttpStatusCode.PreconditionFailed;
+            response.StatusCode = HttpStatusCode.PreconditionFailed;
             response.Headers.Add("x-ms-error-code", "UpdateConditionNotSatisfied");
             response.Content = JsonContent.Create(error);
         }
@@ -387,9 +394,9 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         if(comp != "properties") throw new Exception("Invalid value for 'comp'.");
     }
 
-    private void HandleGetTablesRequest(string storageAccountName, HttpResponseMessage response)
+    private void HandleGetTablesRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, HttpResponseMessage response)
     {
-        var tables = this._controlPlane.GetTables(storageAccountName);
+        var tables = _controlPlane.GetTables(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         var endpointResponse = new TableEndpointResponse(tables);
         response.Content = JsonContent.Create(endpointResponse);
     }
@@ -413,14 +420,14 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         return (TableName: tableName, PartitionKey: partitionKey, RowKey: rowKey);
     }
 
-    private bool IsPathReferencingTable(string tablePath, string storageAccountName)
+    private bool IsPathReferencingTable(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string tablePath, string storageAccountName)
     {
         logger.LogDebug($"Executing {nameof(IsPathReferencingTable)}: {tablePath} {storageAccountName}");
         
         // Path may start with `/` so we need to get rid of it
         var tableName = tablePath.Replace("/", string.Empty);
 
-        return _controlPlane.CheckIfTableExists(storageAccountName, tableName);
+        return _controlPlane.CheckIfTableExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName);
     }
 
     private string ClearOriginalPath(string path)

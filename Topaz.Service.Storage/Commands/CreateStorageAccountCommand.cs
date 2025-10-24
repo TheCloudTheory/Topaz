@@ -14,9 +14,11 @@ public sealed class CreateStorageAccountCommand(ITopazLogger logger) : Command<C
     {
         logger.LogInformation("Creating storage account...");
 
+        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
         var controlPlane = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
-        var sa = controlPlane.Create(settings.Name!, ResourceGroupIdentifier.From(settings.ResourceGroup!),
-            settings.Location!, SubscriptionIdentifier.From(settings.SubscriptionId!));
+        var sa = controlPlane.Create(settings.Name!, resourceGroupIdentifier,
+            settings.Location!, subscriptionIdentifier);
 
         if (sa.result == OperationResult.Failed || sa.resource == null)
         {

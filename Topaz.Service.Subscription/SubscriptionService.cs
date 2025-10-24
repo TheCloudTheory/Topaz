@@ -9,6 +9,7 @@ public sealed class SubscriptionService(ITopazLogger logger) : IServiceDefinitio
     public static string LocalDirectoryPath => ".subscription";
     
     public static IReadOnlyCollection<string>? Subresources => null;
+    public static string UniqueName => "subscription";
 
     public string Name => "Subscription";
 

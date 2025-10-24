@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
+    <ProjectReference Include="..\Topaz.Dns\Topaz.Dns.csproj" />
   </ItemGroup>
 
 </Project>

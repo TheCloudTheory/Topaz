@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Topaz.Dns;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -43,7 +44,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return string.IsNullOrEmpty(content) ? throw new InvalidOperationException("Metadata file is null or empty.") : content;
     }
 
-    private static string GetLocalDirectoryPathWithReplacedValues(SubscriptionIdentifier? subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier)
+    protected static string GetLocalDirectoryPathWithReplacedValues(SubscriptionIdentifier? subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier)
     {
         if (subscriptionIdentifier == null)
         {
@@ -78,7 +79,6 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         }
         
         var metadataFiles = Directory.EnumerateFiles(servicePath, "metadata.json", SearchOption.AllDirectories);
-
         return metadataFiles.Select(File.ReadAllText);
     }
 
@@ -99,10 +99,15 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
         File.WriteAllText(metadataFilePath, content);
 
-        if (TService.IsGlobalService)
-        {
+        if (!TService.IsGlobalService) return;
+        
+        var instanceName = string.IsNullOrWhiteSpace(id)
+            ? resourceGroupIdentifier == null
+                ? subscriptionIdentifier.Value.ToString()
+                : resourceGroupIdentifier.Value
+            : id;
             
-        }
+        GlobalDnsEntries.AddEntry(TService.UniqueName, instanceName);
     }
 
     private string InitializeServiceDirectories(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id)

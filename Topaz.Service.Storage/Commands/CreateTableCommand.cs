@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
@@ -12,8 +13,10 @@ public sealed class CreateTableCommand(ITopazLogger logger) : Command<CreateTabl
     {
         logger.LogInformation("Creating table...");
 
+        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
         var rp = new TableServiceControlPlane(new TableResourceProvider(logger), logger);
-        var sa = rp.CreateTable(settings.Name, settings.AccountName);
+        var sa = rp.CreateTable(subscriptionIdentifier, resourceGroupIdentifier, settings.Name, settings.AccountName);
 
         logger.LogInformation($"Table created: {sa!}");
 
@@ -26,6 +29,16 @@ public sealed class CreateTableCommand(ITopazLogger logger) : Command<CreateTabl
         {
             return ValidationResult.Error("Table name can't be null.");
         }
+        
+        if(string.IsNullOrEmpty(settings.ResourceGroup))
+        {
+            return ValidationResult.Error("Storage account resource group can't be null.");
+        }
+
+        if(string.IsNullOrEmpty(settings.SubscriptionId))
+        {
+            return ValidationResult.Error("Storage account subscription ID can't be null.");
+        }
 
         return string.IsNullOrEmpty(settings.AccountName) ? 
             ValidationResult.Error("Storage account name can't be null.") 
@@ -36,8 +49,12 @@ public sealed class CreateTableCommand(ITopazLogger logger) : Command<CreateTabl
     public sealed class CreateTableCommandSettings : CommandSettings
     {
         [CommandOption("-n|--name")] public string Name { get; set; } = null!;
-
         [CommandOption("--account-name")] public string AccountName { get; set; } = null!;
+        
+        [CommandOption("-g|--resource-group")]
+        public string? ResourceGroup { get; set; }
+        [CommandOption("-s|--subscription-id")]
+        public string? SubscriptionId { get; set; }
 
     }
 }

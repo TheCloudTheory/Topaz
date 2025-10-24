@@ -10,6 +10,7 @@ public sealed class AzureStorageService(ITopazLogger logger) : IServiceDefinitio
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".azure-storage");
     public static IReadOnlyCollection<string>? Subresources => null;
+    public static string UniqueName => "storage";
 
     public string Name => "Azure Storage";
 
