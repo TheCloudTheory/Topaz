@@ -2,32 +2,33 @@ using System.Net;
 using System.Text.Json;
 using Topaz.Service.KeyVault.Models;
 using Topaz.Service.KeyVault.Models.Requests;
-using Topaz.Service.KeyVault.Models.Responses;
-using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault;
 
 internal sealed class KeyVaultDataPlane(ITopazLogger logger, ResourceProvider provider)
 {
-    internal (Secret? data, HttpStatusCode code) SetSecret(Stream input, string vaultName, string secretName)
+    internal (Secret? data, HttpStatusCode code) SetSecret(Stream input, SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
     {
         logger.LogDebug($"Executing {nameof(SetSecret)}: {secretName} {vaultName}");
-        
+
         using var sr = new StreamReader(input);
 
         var rawContent = sr.ReadToEnd();
 
-        if(string.IsNullOrEmpty(rawContent))
+        if (string.IsNullOrEmpty(rawContent))
         {
             return (null, HttpStatusCode.Unauthorized);
         }
 
-        var data = JsonSerializer.Deserialize<SetSecretRequest>(rawContent, GlobalSettings.JsonOptions) ?? throw new Exception();
+        var data = JsonSerializer.Deserialize<SetSecretRequest>(rawContent, GlobalSettings.JsonOptions) ??
+                   throw new Exception();
 
         logger.LogDebug($"Executing {nameof(SetSecret)}: Processing {rawContent}.");
-        
-        var path = provider.GetKeyVaultPath(vaultName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var fileName = $"{secretName}.json";
         var entityPath = Path.Combine(path, fileName);
 
@@ -36,10 +37,10 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, ResourceProvider pr
             // When SetSecret is called for Key Vault, data plane checks if a secret already exists.
             // If it does, it adds a new version instead of throwing an error or replacing it.
             var newVersion = CreateNewSecretVersion(secretName, data.Value, entityPath);
-            
+
             return (newVersion, HttpStatusCode.OK);
         }
-        
+
         // Secret does not exist so we simply create it.
         var secret = new Secret(secretName, data.Value, Guid.NewGuid());
         File.WriteAllText(entityPath, JsonSerializer.Serialize(new[] { secret }, GlobalSettings.JsonOptions));
@@ -62,11 +63,12 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, ResourceProvider pr
         return secret;
     }
 
-    public (Secret? data, HttpStatusCode code) GetSecret(string vaultName, string secretName, string? version)
+    public (Secret? data, HttpStatusCode code) GetSecret(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName, string? version)
     {
         logger.LogDebug($"Executing {nameof(GetSecret)}: {secretName} {vaultName}");
         
-        var path = provider.GetKeyVaultPath(vaultName);
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var fileName = $"{secretName}.json";
         var entityPath = Path.Combine(path, fileName);
         
@@ -92,11 +94,12 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, ResourceProvider pr
         return (secret, secret == null ? HttpStatusCode.NotFound : HttpStatusCode.OK);
     }
 
-    public (Secret[] data, HttpStatusCode code) GetSecrets(string vaultName)
+    public (Secret[] data, HttpStatusCode code) GetSecrets(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName)
     {
         logger.LogDebug($"Executing {nameof(GetSecrets)}: {vaultName}");
         
-        var path = provider.GetKeyVaultPath(vaultName);
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var files = Directory.EnumerateFiles(path, "*.json");
         var secrets = new List<Secret>();
 
@@ -114,15 +117,16 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, ResourceProvider pr
         return (secrets.ToArray(), HttpStatusCode.OK);
     }
 
-    public (Secret? data, HttpStatusCode code) DeleteSecret(string vaultName, string secretName)
+    public (Secret? data, HttpStatusCode code) DeleteSecret(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
     {
         logger.LogDebug($"Executing {nameof(DeleteSecret)}: {secretName} {vaultName}");
         
-        var path = provider.GetKeyVaultPath(vaultName);
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var fileName = $"{secretName}.json";
         var entityPath = Path.Combine(path, fileName);
         
-        if (File.Exists(entityPath) == false)
+        if (!File.Exists(entityPath))
         {
             logger.LogDebug($"Executing {nameof(DeleteSecret)}: Secret {secretName} not found.");
             

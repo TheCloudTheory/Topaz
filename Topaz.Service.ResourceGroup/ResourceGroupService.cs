@@ -6,7 +6,7 @@ namespace Topaz.Service.ResourceGroup;
 
 public sealed class ResourceGroupService(ITopazLogger logger) : IServiceDefinition
 {
-    public static bool IsGlobalService => true;
+    public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => Path.Combine(SubscriptionService.LocalDirectoryPath, ".resource-group", "{resourceGroup}");
     public static IReadOnlyCollection<string>? Subresources => null;
     public static string UniqueName => "resourcegroup";

@@ -1,4 +1,3 @@
-using System.Text;
 using Azure;
 using Azure.Data.Tables;
 using Azure.Data.Tables.Models;
@@ -46,7 +45,9 @@ namespace Topaz.Tests.E2E
                 "group",
                 "delete",
                 "--name",
-                ResourceGroupName
+                ResourceGroupName,
+                "--subscription-id",
+                SubscriptionId.ToString()
             ]);
 
             await Program.Main([
@@ -65,7 +66,11 @@ namespace Topaz.Tests.E2E
                 "account",
                 "delete",
                 "--name",
-                StorageAccountName
+                StorageAccountName,
+                "-g",
+                ResourceGroupName,
+                "--subscription-id",
+                SubscriptionId.ToString()
             ]);
 
             await Program.Main([
@@ -79,7 +84,7 @@ namespace Topaz.Tests.E2E
                 "--location",
                 "westeurope",
                 "--subscription-id",
-                Guid.Empty.ToString()
+                SubscriptionId.ToString()
             ]);
         
             var credential = new AzureLocalCredential();

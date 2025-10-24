@@ -41,7 +41,7 @@ public class SubscriptionTests
         Assert.Multiple(() =>
         {
             Assert.That(subscription.Data.Id.ToString(), Is.EqualTo($"/subscriptions/{Guid.Empty}"));
-            Assert.That(subscription.Data.SubscriptionId.ToString(), Is.EqualTo(Guid.Empty.ToString()));
+            Assert.That(subscription.Data.SubscriptionId, Is.EqualTo(Guid.Empty.ToString()));
             Assert.That(subscription.Data.DisplayName, Is.EqualTo("sub-test"));
         });
     }

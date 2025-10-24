@@ -53,6 +53,18 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
         _logger.LogDebug($"Deleting resource '{servicePath}'.");
         Directory.Delete(servicePath, true);
+        
+        var instanceName = string.IsNullOrWhiteSpace(id)
+            ? resourceGroupIdentifier == null
+                ? subscriptionIdentifier.Value.ToString()
+                : resourceGroupIdentifier.Value
+            : id;
+            
+        var existingInstance = GlobalDnsEntries.GetEntry(TService.UniqueName, instanceName);
+        if (existingInstance != null && TService.IsGlobalService)
+        {
+            GlobalDnsEntries.DeleteEntry(TService.UniqueName, subscriptionIdentifier.Value, resourceGroupIdentifier?.Value, instanceName);
+        }
     }
 
     public string? Get(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id)
@@ -115,6 +127,19 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
     public void Create<TModel>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id, TModel model)
     {
+        var instanceName = string.IsNullOrWhiteSpace(id)
+            ? resourceGroupIdentifier == null
+                ? subscriptionIdentifier.Value.ToString()
+                : resourceGroupIdentifier.Value
+            : id;
+            
+        var existingInstance = GlobalDnsEntries.GetEntry(TService.UniqueName, instanceName);
+        if (existingInstance != null && TService.IsGlobalService)
+        {
+            _logger.LogDebug($"There's an existing instance of {TService.UniqueName} service existing with the name {instanceName}");
+            return;
+        }
+            
         var metadataFilePath = InitializeServiceDirectories(subscriptionIdentifier, resourceGroupIdentifier, id);
 
         _logger.LogDebug($"Attempting to create {metadataFilePath} file.");
@@ -125,14 +150,8 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         File.WriteAllText(metadataFilePath, content);
 
         if (!TService.IsGlobalService) return;
-        
-        var instanceName = string.IsNullOrWhiteSpace(id)
-            ? resourceGroupIdentifier == null
-                ? subscriptionIdentifier.Value.ToString()
-                : resourceGroupIdentifier.Value
-            : id;
-            
-        GlobalDnsEntries.AddEntry(TService.UniqueName, instanceName);
+       
+        GlobalDnsEntries.AddEntry(TService.UniqueName, subscriptionIdentifier.Value, resourceGroupIdentifier?.Value, instanceName);
     }
 
     private string InitializeServiceDirectories(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id)
@@ -175,10 +194,25 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
     public void CreateOrUpdate<TModel>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string? id, TModel model)
     {
+        var instanceName = string.IsNullOrWhiteSpace(id)
+            ? resourceGroupIdentifier.Value
+            : id;
+            
+        var existingInstance = GlobalDnsEntries.GetEntry(TService.UniqueName, instanceName);
+        if (existingInstance != null && TService.IsGlobalService)
+        {
+            _logger.LogDebug($"There's an existing instance of {TService.UniqueName} service existing with the name {instanceName}");
+            return;
+        }
+        
         var metadataFilePath = InitializeServiceDirectories(subscriptionIdentifier, resourceGroupIdentifier, id);
         var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
 
         File.WriteAllText(metadataFilePath, content);
+        
+        if (!TService.IsGlobalService) return;
+       
+        GlobalDnsEntries.AddEntry(TService.UniqueName, subscriptionIdentifier.Value, resourceGroupIdentifier?.Value, instanceName);
     }
 
     public string GetServiceInstancePath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string? id)
@@ -186,6 +220,11 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return string.IsNullOrWhiteSpace(id) ? 
             Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier)) :
             Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id);
+    }
+    
+    public string GetServiceInstanceDataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string id)
+    {
+        return Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id, "data");
     }
     
     public void CreateOrUpdateSubresource<TModel>(SubscriptionIdentifier subscriptionIdentifier,

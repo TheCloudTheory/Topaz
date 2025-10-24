@@ -7,6 +7,7 @@ using System.Web;
 using System.Xml.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using Topaz.Dns;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Exceptions;
@@ -14,6 +15,7 @@ using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Models.Requests;
 using Topaz.Service.Storage.Security;
 using Topaz.Service.Storage.Serialization;
+using Topaz.Service.Storage.Services;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints;
@@ -349,7 +351,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         {
             var error = new ErrorResponse("EntityNotFound", "Entity not found.");
 
-            response.StatusCode = System.Net.HttpStatusCode.NotFound;
+            response.StatusCode = HttpStatusCode.NotFound;
             response.Headers.Add("x-ms-error-code", "EntityNotFound");
             response.Content = JsonContent.Create(error);
         }
@@ -430,17 +432,6 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         return _controlPlane.CheckIfTableExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName);
     }
 
-    private string ClearOriginalPath(string path)
-    {
-        logger.LogDebug($"Executing {nameof(ClearOriginalPath)}: {path}");
-
-        var newPath = path.Split('/')[0];
-
-        logger.LogDebug($"Executing {nameof(ClearOriginalPath)}: New path: {newPath}");
-
-        return newPath;
-    }
-
     private bool TryGetStorageAccount(IHeaderDictionary headers, out StorageAccountResource? storageAccount)
     {
         logger.LogDebug($"Executing {nameof(TryGetStorageAccount)}");
@@ -458,9 +449,12 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         logger.LogDebug($"About to check if storage account '{accountName}' exists.");
 
-        if (_resourceProvider.CheckIfStorageAccountExists(accountName))
+        var identifiers = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, accountName!);
+        if (identifiers != null)
         {
-            storageAccount = _resourceProvider.GetAs<StorageAccountResource>(null, null, accountName);
+            storageAccount = _resourceProvider.GetAs<StorageAccountResource>(
+                SubscriptionIdentifier.From(identifiers.Value.subscription),
+                ResourceGroupIdentifier.From(identifiers.Value.resourceGroup), accountName);
             return true;
         }
 

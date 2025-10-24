@@ -4,8 +4,12 @@ using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Http;
+using Topaz.Dns;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Serialization;
+using Topaz.Service.Storage.Services;
 using Topaz.Service.Storage.Utils;
 using Topaz.Shared;
 
@@ -38,7 +42,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         var response = new HttpResponseMessage();
 
-        if (!TryGetStorageAccountName(headers, out var storageAccountName))
+        if (!TryGetStorageAccount(headers, out var storageAccount))
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return response;
@@ -53,7 +57,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
             switch (method)
             {
                 case "PUT" when query.TryGetValueForKey("restype", out var restype) && restype == "container":
-                    HandleCreateContainerRequest(storageAccountName!, containerName, response);
+                    HandleCreateContainerRequest(storageAccount!.Name, containerName, response);
                     return response;
                 case "PUT":
                 {
@@ -61,11 +65,11 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
                     {
                         if (query.TryGetValueForKey("comp", out var comp) && comp == "metadata")
                         {
-                            HandleSetBlobMetadataRequest(storageAccountName!, path, headers, response);
+                            HandleSetBlobMetadataRequest(storageAccount!.Name, path, headers, response);
                         }
                         else
                         {
-                            HandleUploadBlobRequest(storageAccountName!, path, blobName!, input, response);
+                            HandleUploadBlobRequest(storageAccount!.Name, path, blobName!, input, response);
                         }
                     }
 
@@ -77,11 +81,11 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
                     {
                         if (query.TryGetValueForKey("restype", out var restype) && restype == "container")
                         {
-                            HandleListBlobsRequest(storageAccountName!, containerName, response);
+                            HandleListBlobsRequest(storageAccount!.Name, containerName, response);
                         }
                         else
                         {
-                            HandleGetContainersRequest(storageAccountName!, response);
+                            HandleGetContainersRequest(storageAccount!.Name, response);
                         }
                     }
 
@@ -91,7 +95,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
                 {
                     if (TryGetBlobName(path, out var blobName))
                     {
-                        HandleGetBlobPropertiesRequest(storageAccountName!, path, blobName!, response);
+                        HandleGetBlobPropertiesRequest(storageAccount!.Name, path, blobName!, response);
                     }
 
                     break;
@@ -100,7 +104,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
                 {
                     if (TryGetBlobName(containerName, out var blobName))
                     {
-                        HandleDeleteBlobRequest(storageAccountName!, containerName, blobName!, response);
+                        HandleDeleteBlobRequest(storageAccount!.Name, containerName, blobName!, response);
                     }
 
                     break;
@@ -252,24 +256,33 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         return pathParts[1];
     }
 
-    private bool TryGetStorageAccountName(IHeaderDictionary headers, out string? name)
+    private bool TryGetStorageAccount(IHeaderDictionary headers, out StorageAccountResource? storageAccount)
     {
-        logger.LogDebug($"Executing {nameof(TryGetStorageAccountName)}");
+        logger.LogDebug($"Executing {nameof(TryGetStorageAccount)}");
 
         if (!headers.TryGetValue("Host", out var host))
         {
             logger.LogError("`Host` header not found - it's required for storage account creation.");
             
-            name = null;
+            storageAccount = null;
             return false;
         }
         
         var pathParts = host.ToString().Split('.');
         var accountName = pathParts[0];
-        name = accountName;
 
         logger.LogDebug($"About to check if storage account '{accountName}' exists.");
 
-        return _resourceProvider.CheckIfStorageAccountExists(accountName);
+        var identifiers = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, accountName!);
+        if (identifiers != null)
+        {
+            storageAccount = _resourceProvider.GetAs<StorageAccountResource>(
+                SubscriptionIdentifier.From(identifiers.Value.subscription),
+                ResourceGroupIdentifier.From(identifiers.Value.resourceGroup), accountName);
+            return true;
+        }
+
+        storageAccount = null;
+        return false;
     }
 }
