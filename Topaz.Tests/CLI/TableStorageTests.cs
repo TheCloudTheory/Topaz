@@ -45,7 +45,7 @@ public class TableStorageTests
             "test",
             "--location",
             "westeurope",
-            "--subscriptionId",
+            "--subscription-id",
             SubscriptionId.ToString()
         ]);
 
@@ -71,7 +71,7 @@ public class TableStorageTests
             ResourceGroupName,
             "--location",
             "westeurope",
-            "--subscriptionId",
+            "--subscription-id",
             SubscriptionId.ToString()
         ]);
     }

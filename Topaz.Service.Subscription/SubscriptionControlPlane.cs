@@ -22,7 +22,7 @@ internal sealed class SubscriptionControlPlane(SubscriptionResourceProvider prov
         var subscriptionIdentifier = string.IsNullOrEmpty(id) ? SubscriptionIdentifier.From(Guid.NewGuid().ToString()) : SubscriptionIdentifier.From(id);
         var model = new Models.Subscription(subscriptionIdentifier, name);
 
-        provider.Create(subscriptionIdentifier, null, subscriptionIdentifier.ToString(), model);
+        provider.Create(subscriptionIdentifier, null, null, model);
 
         return model;
     }

@@ -78,8 +78,6 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         {
             Console.WriteLine("Registration of DNS entries is disabled. Make sure you've added those entries manually before running Topaz.");
         }
-
-        CreateEmulatorDirectoryIfNeeded();
         
         var httpEndpoints = new List<IEndpointDefinition>();
         var amqpEndpoints = new List<IEndpointDefinition>();
@@ -101,27 +99,6 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         Console.WriteLine();
         Console.WriteLine("Topaz.Host listening to incoming requests...");
         Console.WriteLine();
-    }
-
-    private void CreateEmulatorDirectoryIfNeeded()
-    {
-        if (Directory.Exists(GlobalSettings.MainEmulatorDirectory))
-        {
-            logger.LogDebug("Emulator directory already exists.");
-            return;
-        }
-        
-        Directory.CreateDirectory(GlobalSettings.MainEmulatorDirectory);
-        logger.LogDebug("Emulator directory created.");
-
-        if (File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))
-        {
-            logger.LogDebug("Global DNS entries file already exists.");
-            return;
-        }
-        
-        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, JsonSerializer.Serialize(new GlobalDnsEntries()));
-        logger.LogDebug("Global DNS entries file created.");
     }
 
     private void CreateAmqpListenersForAmpqEndpoints(IEndpointDefinition[] endpoints)

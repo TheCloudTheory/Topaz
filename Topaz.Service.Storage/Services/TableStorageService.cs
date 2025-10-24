@@ -7,7 +7,7 @@ namespace Topaz.Service.Storage.Services;
 public sealed class TableStorageService(ITopazLogger logger) : IServiceDefinition
 {
     public static bool IsGlobalService => false;
-    public static string LocalDirectoryPath => Path.Combine(AzureStorageService.LocalDirectoryPath, "{storageAccount}", ".table");
+    public static string LocalDirectoryPath => AzureStorageService.LocalDirectoryPath;
     public static IReadOnlyCollection<string>? Subresources => null;
     public static string UniqueName => "tablestorage";
 

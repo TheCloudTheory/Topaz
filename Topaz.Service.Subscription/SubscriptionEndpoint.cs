@@ -40,7 +40,7 @@ public sealed class SubscriptionEndpoint(SubscriptionResourceProvider provider, 
                     }
                     else
                     {
-                        HandleGetSubscriptionRequest(path, response);
+                        HandleGetSubscriptionRequest(subscriptionId, response);
                     }
                     
                     break;
@@ -114,18 +114,16 @@ public sealed class SubscriptionEndpoint(SubscriptionResourceProvider provider, 
         response.StatusCode = HttpStatusCode.Created;
     }
 
-    private void HandleGetSubscriptionRequest(string path, HttpResponseMessage response)
+    private void HandleGetSubscriptionRequest(string subscriptionId, HttpResponseMessage response)
     {
-        var subscriptionId = path.ExtractValueFromPath(2);
-        if (subscriptionId == null)
+        var operation = _controlPlane.Get(SubscriptionIdentifier.From(subscriptionId));
+        if (operation.result == OperationResult.NotFound)
         {
-            response.StatusCode = HttpStatusCode.BadRequest;
+            response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
-        
-        var subscription = _controlPlane.Get(SubscriptionIdentifier.From(subscriptionId));
 
-        response.Content = JsonContent.Create(subscription.resource, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+        response.Content = JsonContent.Create(operation.resource, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
         response.StatusCode = HttpStatusCode.OK;
     }
 }

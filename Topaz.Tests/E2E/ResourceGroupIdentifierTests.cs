@@ -38,11 +38,13 @@ public class ResourceGroupIdentifierTests
         ]);
 
         await Program.Main([
-                "group",
-                "delete",
-                "--name",
-                ResourceGroupName
-            ]);
+            "group",
+            "delete",
+            "--name",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString(),
+        ]);
     }
 
     [Test]

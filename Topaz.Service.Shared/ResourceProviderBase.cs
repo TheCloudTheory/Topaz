@@ -13,8 +13,32 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     protected ResourceProviderBase(ITopazLogger logger)
     {
         _logger = logger;
+        
+        CreateEmulatorDirectoryIfNeeded();
     }
 
+    private void CreateEmulatorDirectoryIfNeeded()
+    {
+        if (Directory.Exists(GlobalSettings.MainEmulatorDirectory))
+        {
+            _logger.LogDebug("Emulator directory already exists.");
+        }
+        else
+        {
+            Directory.CreateDirectory(GlobalSettings.MainEmulatorDirectory);
+            _logger.LogDebug("Emulator directory created.");
+        }
+        
+        if (File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))
+        {
+            _logger.LogDebug("Global DNS entries file already exists.");
+            return;
+        }
+        
+        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, JsonSerializer.Serialize(new GlobalDnsEntries()));
+        _logger.LogDebug("Global DNS entries file created.");
+    }
+    
     public void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id)
     {
         var servicePath = string.IsNullOrWhiteSpace(id) ?
@@ -50,14 +74,15 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         {
             return TService.LocalDirectoryPath;
         }
+
+        if (resourceGroupIdentifier != null)
+            return TService.LocalDirectoryPath.Replace("{subscriptionId}", subscriptionIdentifier.Value.ToString())
+                .Replace("{resourceGroup}", resourceGroupIdentifier.Value);
         
-        if (resourceGroupIdentifier == null)
-        {
-            return TService.LocalDirectoryPath.Replace("{subscriptionId}", subscriptionIdentifier.Value.ToString());
-        }
+        var path = TService.LocalDirectoryPath.Replace("{subscriptionId}", subscriptionIdentifier.Value.ToString());
+        var segments = path.Split("/");
         
-        return TService.LocalDirectoryPath.Replace("{subscriptionId}", subscriptionIdentifier.Value.ToString())
-            .Replace("{resourceGroup}", resourceGroupIdentifier.Value);
+        return segments.Length > 3 ? string.Join("/",  segments.Take(segments.Length - 3)) : path;
     }
 
     public T? GetAs<T>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string? id = null)
