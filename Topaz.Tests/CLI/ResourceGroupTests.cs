@@ -1,10 +1,13 @@
+using System.Text.Json;
 using Topaz.CLI;
+using Topaz.Service.ResourceGroup.Models;
+using Topaz.Shared;
 
 namespace Topaz.Tests.CLI;
 
 public class ResourceGroupTests
 {
-    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    private static readonly Guid SubscriptionId = Guid.Parse("831DA9D1-54A1-45B3-90D7-EE3BD2801362");
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
     private const string ResourceGroupName2 = "test";
@@ -146,7 +149,15 @@ public class ResourceGroupTests
         
         Assert.That(code2, Is.EqualTo(0));
         
-        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".resource-groups", ResourceGroupName2, "metadata.json");
+        var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription", SubscriptionId.ToString(), ".resource-group", ResourceGroupName2, "metadata.json");
         var metadata = await File.ReadAllTextAsync(resourceGroupPath);
+        var rg = JsonSerializer.Deserialize<ResourceGroupResource>(metadata, GlobalSettings.JsonOptions);
+        
+        Assert.That(rg, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(rg.Name, Is.EqualTo(ResourceGroupName));
+            Assert.That(rg.Location, Is.EqualTo("northeurope"));
+        });
     }
 }
