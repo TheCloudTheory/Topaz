@@ -241,8 +241,6 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 
                         return response;
                     }
-
-                    break;
             }
         }
         catch (Exception ex)

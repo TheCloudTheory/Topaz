@@ -1,9 +1,11 @@
 using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 
 namespace Topaz.Service.Storage.Models;
 
-internal class TableProperties(string tableName)
+[UsedImplicitly]
+internal class TableProperties
 {
     [JsonPropertyName("TableName")]
-    public string TableName { get; set; } = tableName;
+    public string? Name { get; init; }
 }

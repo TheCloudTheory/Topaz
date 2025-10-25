@@ -22,6 +22,8 @@ internal sealed class TableResourceProvider(ITopazLogger logger) : ResourceProvi
     public bool CheckIfTableExists(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
+        _logger.LogDebug($"[{nameof(TableResourceProvider)}.{nameof(CheckIfTableExists)}]: Executing for {subscriptionIdentifier}, {resourceGroupIdentifier}, {tableName}, {storageAccountName}");
+        
         var tablePath = GetTablePathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName);
         return Directory.Exists(tablePath);
     }
@@ -32,12 +34,15 @@ internal sealed class TableResourceProvider(ITopazLogger logger) : ResourceProvi
         var storageAccountPath =
             GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
-        return Path.Combine(storageAccountPath, tableName);
+        return Path.Combine(storageAccountPath, ".table", tableName);
     }
 
     public void Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName, TableItem model)
     {
         base.Create(subscriptionIdentifier, resourceGroupIdentifier, GetTableId(storageAccountName, tableName), model);
+
+        var aclPath = Path.Combine(GetTablePathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName), "acl");
+        Directory.CreateDirectory(aclPath);
     }
 
     private static string GetTableId(string storageAccountName, string tableName)
@@ -50,21 +55,8 @@ internal sealed class TableResourceProvider(ITopazLogger logger) : ResourceProvi
         base.Delete(subscriptionIdentifier, resourceGroupIdentifier, GetTableId(storageAccountName, tableName));
     }
 
-    public IEnumerable<string> List(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
-    {
-        var servicePath = Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), storageAccountName);
-        if (!Directory.Exists(servicePath))
-        {
-            _logger.LogWarning("Trying to list resources for a non-existing storage account. If you see this warning, make sure you created a storage account before accessing its data.");
-            return [];
-        }
-        
-        var metadataFiles = Directory.EnumerateFiles(servicePath, "metadata.json", SearchOption.AllDirectories);
-        return metadataFiles.Select(File.ReadAllText);
-    }
-
     public string GetTableDataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
-        return GetTablePathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName);
+        return Path.Combine(GetTablePathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName), "data");
     }
 }

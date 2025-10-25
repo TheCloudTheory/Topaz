@@ -106,25 +106,30 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return json;
     }
 
-    public IEnumerable<string> List(SubscriptionIdentifier? subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier)
+    public IEnumerable<string> List(SubscriptionIdentifier? subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id = null, uint? lookForNoOfSegments = null)
     {
-        var servicePath = Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier));
+        var servicePath = string.IsNullOrWhiteSpace(id) ?
+            Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier))
+            : Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id);
+        
         if (!Directory.Exists(servicePath))
         {
             _logger.LogWarning("Trying to list resources for a non-existing service. If you see this warning, make sure you created a service (e.g subscription) before accessing its data.");
             return [];
         }
         
+        // Add a parameter which will allow to explicitly say how many segments should be looked for.
         var metadataFiles = Directory.EnumerateFiles(servicePath, "metadata.json", SearchOption.AllDirectories);
         var servicePathSegments = TService.LocalDirectoryPath.Split("/");
-        var lookForNoOfSegments = servicePathSegments.Length + 2; // Local path will contain two additional segments: root directory and metadata filename 
+        var defaultLookForNoOfSegments = servicePathSegments.Length + 2; // Local path will contain two additional segments: root directory and metadata filename 
         
-        return metadataFiles.Where(file => file.Split("/").Length == lookForNoOfSegments).Select(File.ReadAllText);
+        return metadataFiles.Where(file => file.Split("/").Length == (lookForNoOfSegments.HasValue ? lookForNoOfSegments.Value : defaultLookForNoOfSegments)).Select(File.ReadAllText);
     }
 
-    public IEnumerable<T?> ListAs<T>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier)
+    public IEnumerable<T?> ListAs<T>(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier? resourceGroupIdentifier, string? id = null, uint? lookForNoOfSegments = null)
     {
-        var contents = List(subscriptionIdentifier, resourceGroupIdentifier);
+        var contents = List(subscriptionIdentifier, resourceGroupIdentifier, id, lookForNoOfSegments);
         return contents.Select(file => JsonSerializer.Deserialize<T>(file, GlobalSettings.JsonOptions));
     }
 

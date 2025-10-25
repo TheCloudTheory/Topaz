@@ -17,12 +17,12 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
 {
     public TableProperties[] GetTables(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
     {
-        var tables = provider.List(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        var tables = provider.ListAs<TableItem>(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, 10);
 
-        return [.. tables.Select(t => {
-            var di = new DirectoryInfo(t);
-            return new TableProperties(di.Name);
-        })];
+        return tables.Where(table => table != null).Select(table => new TableProperties
+        {
+            Name = table!.Name
+        }).ToArray()!;
     }
 
     public TableItem CreateTable(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, CreateTableRequest request)

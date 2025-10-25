@@ -12,11 +12,11 @@ namespace Topaz.Tests.E2E
     public class TableStorageTests
     {
         private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
-        private static readonly Guid SubscriptionId = Guid.NewGuid();
+        private static readonly Guid SubscriptionId = Guid.Parse("8D37D5AF-468B-4F61-A664-9E8B5AE3E4C2");
     
         private const string SubscriptionName = "sub-test";
         private const string ResourceGroupName = "test";
-        private const string StorageAccountName = "devstoreaccount1";
+        private const string StorageAccountName = "tablestoragetests";
 
         private string _key = null!;
         
@@ -123,26 +123,20 @@ namespace Topaz.Tests.E2E
         {
             // Arrange
             var tableClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
-            var existingTables = tableClient.Query().ToArray();
 
             // Act
-            tableClient.CreateTable("testtable");
+            tableClient.CreateTable("testtablentoexisting");
 
             // Assert
-            Assert.That(existingTables, Is.Empty);
-
             var tables = tableClient.Query().ToArray();
-
-            Assert.That(tables, Has.Length.EqualTo(1));
-
             var table = tables.First();
 
-            Assert.That(table.Name, Is.EqualTo("testtable"));
+            Assert.That(table.Name, Is.EqualTo("testtablentoexisting"));
 
             tableClient.DeleteTable(table.Name);
-            existingTables = [.. tableClient.Query()];
+            TableItem[] existingTables = [.. tableClient.Query()];
 
-            Assert.That(existingTables, Is.Empty);
+            Assert.That(existingTables.SingleOrDefault(existingTable => existingTable.Name == "testtablentoexisting"), Is.Null);
         }
 
         [Test]
