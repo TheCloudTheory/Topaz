@@ -10,7 +10,7 @@ namespace Topaz.Tests.E2E;
 public class EventServiceHubTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
-    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    private static readonly Guid SubscriptionId = Guid.Parse("60AD9D95-F7AD-4BD9-AFB7-FA86DFB4B1D9");
     
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
@@ -41,7 +41,9 @@ public class EventServiceHubTests
             "group",
             "delete",
             "--name",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
@@ -60,7 +62,11 @@ public class EventServiceHubTests
             "namespace",
             "delete",
             "--name",
-            EventHubNamespaceName
+            EventHubNamespaceName,
+            "-g",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString(),
         ]);
         
         await Program.Main([
@@ -73,8 +79,8 @@ public class EventServiceHubTests
             ResourceGroupName,
             "--location",
             "westeurope",
-            "--subscriptionId",
-            SubscriptionId.ToString(),
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
     }
     
@@ -83,7 +89,7 @@ public class EventServiceHubTests
     {
         // Arrange
         var credential = new AzureLocalCredential();
-        var armClient = new ArmClient(credential, Guid.Empty.ToString(), ArmClientOptions);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
         var @namespace = resourceGroup.Value.GetEventHubsNamespace(EventHubNamespaceName);

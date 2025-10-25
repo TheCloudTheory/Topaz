@@ -45,17 +45,17 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
 
         if(string.IsNullOrEmpty(settings.Location))
         {
-            return ValidationResult.Error("Resource group location can't be null.");
+            return ValidationResult.Error("Event Hub Namespace location can't be null.");
         }
         
         if(string.IsNullOrEmpty(settings.SubscriptionId))
         {
-            return ValidationResult.Error("Resource group subscription ID can't be null.");
+            return ValidationResult.Error("Event Hub Namespace subscription ID can't be null.");
         }
 
         if (!Guid.TryParse(settings.SubscriptionId, out _))
         {
-            return ValidationResult.Error("Resource group subscription ID must be a valid GUID.");
+            return ValidationResult.Error("Event Hub Namespace subscription ID must be a valid GUID.");
         }
 
         return base.Validate(context, settings);
@@ -64,16 +64,12 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
     [UsedImplicitly]
     public sealed class CreateEventHubCommandSettings : CommandSettings
     {
-        [CommandOption("-n|--name")]
-        public string? Name { get; set; }
+        [CommandOption("-n|--name")] public string? Name { get; set; }
 
-        [CommandOption("-g|--resource-group")]
-        public string? ResourceGroup { get; set; }
+        [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
 
-        [CommandOption("-l|--location")]
-        public string? Location { get; set; }
+        [CommandOption("-l|--location")] public string? Location { get; set; }
         
-        [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        [CommandOption("-s|--subscription-id")] public string SubscriptionId { get; set; } = null!;
     }
 }
