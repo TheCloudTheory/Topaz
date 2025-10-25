@@ -16,22 +16,30 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     {
         logger.LogDebug($"Executing {nameof(ListBlobs)}: {storageAccountName} {containerName}");
         
-        var path = controlPlane.GetContainerDataPath(storageAccountName, containerName);
+        var path = controlPlane.GetContainerDataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
         var files = Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories);
-        var entities = files.Select(file => new Blob { Name = file, Properties = GetDeserializedBlobProperties(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, file)}).ToArray();
+        var entities = files.Select(file => new Blob
+        {
+            Name = file,
+            Properties = GetDeserializedBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
+                storageAccountName, file)
+        }).ToArray();
 
         return new BlobEnumerationResult(storageAccountName, entities); 
     }
 
-    private BlobProperties? GetDeserializedBlobProperties(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string localBlobPath)
+    private BlobProperties? GetDeserializedBlobProperties(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName,
+        string localBlobPath)
     {
         // Note that we will perform a 2-step cleanup for the file path. The reason for that 
         // is that physical file path is a completely different concept than a virtual
         // path used on a service level
-        var prefix = $".topaz/{AzureStorageService.LocalDirectoryPath}/{storageAccountName}/{BlobStorageService.LocalDirectoryPath}";
-        var filePath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, localBlobPath.Replace(prefix, string.Empty).Replace("data/", string.Empty));
+        var servicePath = controlPlane.GetServicePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        var filePath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
+            localBlobPath.Replace(servicePath, string.Empty).Replace("data/", string.Empty));
         var content = File.ReadAllText(filePath);
-        
+
         return JsonSerializer.Deserialize<BlobProperties>(content);
     }
 
@@ -44,7 +52,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         using var sr = new StreamReader(input);
         var rawContent = sr.ReadToEnd();
-        var fullPath = GetBlobPath(storageAccountName, blobPath);
+        var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
         var blobDirectory = Path.GetDirectoryName(fullPath);
 
         if (string.IsNullOrWhiteSpace(blobDirectory))
@@ -53,7 +61,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             return (HttpStatusCode.BadRequest, null);
         }
 
-        if (Directory.Exists(blobDirectory) == false)
+        if (!Directory.Exists(blobDirectory))
         {
             logger.LogDebug($"Creating {blobDirectory} for blob {blobName}...");
             Directory.CreateDirectory(blobDirectory);
@@ -98,10 +106,10 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     /// Returns full physical path for a blob file. 
     /// </summary>
     /// <returns>Physical path for a blob</returns>
-    private string GetBlobPath(string storageAccountName, string blobPath)
+    private string GetBlobPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
     {
         var containerName = GetContainerNameFromBlobPath(blobPath);
-        var path = controlPlane.GetContainerDataPath(storageAccountName, containerName);
+        var path = controlPlane.GetContainerDataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
         
         // We will skip two initial elements being /<container-name> so a blob
         // path doesn't contain a duplicated value
@@ -139,9 +147,9 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     {
         logger.LogDebug($"Executing {nameof(DeleteBlob)}: {storageAccountName} {blobPath} {blobName}");
         
-        var fullPath = GetBlobPath(storageAccountName, blobPath);
+        var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
 
-        if (File.Exists(fullPath) == false)
+        if (!File.Exists(fullPath))
         {
             return HttpStatusCode.NotFound;
         }
@@ -159,9 +167,9 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     {
         logger.LogDebug($"Executing {nameof(SetBlobMetadata)}: {storageAccountName} {blobPath}");
         
-        var fullPath = GetBlobPath(storageAccountName, blobPath);
+        var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
 
-        if (File.Exists(fullPath) == false)
+        if (!File.Exists(fullPath))
         {
             return HttpStatusCode.NotFound;
         }
