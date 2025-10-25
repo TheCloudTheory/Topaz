@@ -24,12 +24,14 @@ internal class Program
         // which are exposed by the emulator. Note you don't need to expose
         // every port available.
         var container = new ContainerBuilder()
-            .WithImage("thecloudtheory/topaz-cli:v1.0.116-alpha")
+            .WithImage("thecloudtheory/topaz-cli:v1.0.229-alpha")
             .WithPortBinding(8890)
             .WithPortBinding(8899)
             .WithPortBinding(8898)
             .WithPortBinding(8897)
             .WithPortBinding(8891)
+            .WithName("topaz.local.dev")
+            .WithCommand("start", "--skip-dns-registration", "--log-level", "Debug")
             .Build();
         
         try
