@@ -4,10 +4,10 @@ namespace Topaz.Tests.CLI;
 
 public class KeyVaultTests
 {
-    private static readonly Guid SubscriptionId = Guid.NewGuid();
-    private static readonly string ResourceGroupName = "test";
-    private static readonly string VaultName = "MyKeyVault";
-    
+    private static readonly Guid SubscriptionId = Guid.Parse("11417FBB-B6ED-4952-9691-29E8D1524852");
+    private const string ResourceGroupName = "test";
+    private const string VaultName = "MyKeyVault";
+
     [SetUp]
     public async Task SetUp()
     {
@@ -41,7 +41,11 @@ public class KeyVaultTests
             "keyvault",
             "delete",
             "--name",
-            VaultName
+            VaultName,
+            "-g",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString(),
         ]);
         
         await Program.Main([
@@ -54,7 +58,7 @@ public class KeyVaultTests
             "--location",
             "westeurope",
             "--subscription-id",
-            SubscriptionId.ToString(),
+            SubscriptionId.ToString()
         ]);
     }
 
