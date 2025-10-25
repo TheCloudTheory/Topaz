@@ -1,4 +1,5 @@
 using Azure.Core;
+using Topaz.Dns;
 using Topaz.Service.KeyVault.Models;
 using Topaz.Service.KeyVault.Models.Requests;
 using Topaz.Service.KeyVault.Models.Responses;
@@ -45,10 +46,15 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
         return resource == null ? (OperationResult.Failed, null) : (OperationResult.Created, resource);
     }
 
-    public (OperationResult result, CheckNameResponse response) CheckName(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName, string? resourceType)
+    public (OperationResult result, CheckNameResponse response) CheckName(SubscriptionIdentifier subscriptionIdentifier, string keyVaultName, string? resourceType)
     {
-        var keyVault = provider.GetAs<KeyVaultResource>(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
+        var dnsEntry = GlobalDnsEntries.GetEntry(KeyVaultService.UniqueName, keyVaultName);
+        if (dnsEntry == null)
+        {
+            return (OperationResult.Success, new CheckNameResponse {  NameAvailable = true });
+        }
+        
+        var keyVault = provider.GetAs<KeyVaultResource>(subscriptionIdentifier, ResourceGroupIdentifier.From(dnsEntry.Value.resourceGroup), keyVaultName);
         if (keyVault == null)
         {
             return (OperationResult.Success, new CheckNameResponse {  NameAvailable = true });
@@ -56,9 +62,9 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
 
         // If resource type is provided (which can be sent as Azure resource type, i.e. "Microsoft.KeyVault/vaults"),
         // we need to check if the existing Key Vault is of the same type
-        if (string.IsNullOrEmpty(resourceType) == false && keyVault.Type != resourceType)
+        if (!string.IsNullOrEmpty(resourceType) && keyVault.Type != resourceType)
         {
-            return (OperationResult.Success, new CheckNameResponse {  NameAvailable = true });
+            return (OperationResult.Success, new CheckNameResponse { NameAvailable = true });
         }
         
         return (OperationResult.Success, new CheckNameResponse { NameAvailable = false });
@@ -66,7 +72,7 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
     
     public (OperationResult result, KeyVaultResource?[]? resource) ListBySubscription(SubscriptionIdentifier subscriptionIdentifier)
     {
-        var resources = provider.ListAs<KeyVaultResource>(subscriptionIdentifier, null);
+        var resources = provider.ListAs<KeyVaultResource>(subscriptionIdentifier, null, null, 8);
 
         var filteredResources = resources.Where(resource => resource != null && resource.Id.Contains(subscriptionIdentifier.Value.ToString()));
         return  (OperationResult.Success, filteredResources.ToArray());

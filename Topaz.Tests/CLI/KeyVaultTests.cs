@@ -5,6 +5,7 @@ namespace Topaz.Tests.CLI;
 public class KeyVaultTests
 {
     private static readonly Guid SubscriptionId = Guid.Parse("11417FBB-B6ED-4952-9691-29E8D1524852");
+    private const string SubscriptionName = "kv-sub";
     private const string ResourceGroupName = "test";
     private const string VaultName = "MyKeyVault";
 
@@ -18,12 +19,24 @@ public class KeyVaultTests
             "--id",
             SubscriptionId.ToString()
         ]);
+        
+        await Program.Main(
+        [
+            "subscription",
+            "create",
+            "--id",
+            SubscriptionId.ToString(),
+            "--name",
+            SubscriptionName
+        ]);
 
         await Program.Main([
             "group",
             "delete",
             "--name",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
@@ -105,8 +118,6 @@ public class KeyVaultTests
             "check-name",
             "--name",
             VaultName,
-            "-g",
-            ResourceGroupName,
             "--subscription-id",
             SubscriptionId.ToString()
         ]);
@@ -125,8 +136,6 @@ public class KeyVaultTests
             "check-name",
             "--name",
             "somerandomkv",
-            "-g",
-            ResourceGroupName,
             "--subscription-id",
             SubscriptionId.ToString()
         ]);

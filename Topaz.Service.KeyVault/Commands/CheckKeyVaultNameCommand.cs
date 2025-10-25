@@ -14,9 +14,8 @@ public class CheckKeyVaultNameCommand(ITopazLogger logger) : Command<CheckKeyVau
         logger.LogInformation($"Executing {nameof(CheckKeyVaultNameCommand)}.{nameof(Execute)}.");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
         var controlPlane = new KeyVaultControlPlane(new ResourceProvider(logger));
-        var kv = controlPlane.CheckName(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!, settings.ResourceType);
+        var kv = controlPlane.CheckName(subscriptionIdentifier, settings.Name!, settings.ResourceType);
 
         logger.LogInformation(kv.response.ToString());
 
@@ -25,11 +24,6 @@ public class CheckKeyVaultNameCommand(ITopazLogger logger) : Command<CheckKeyVau
 
     public override ValidationResult Validate(CommandContext context, CheckKeyVaultNameCommandSettings settings)
     {
-        if(string.IsNullOrEmpty(settings.ResourceGroup))
-        {
-            return ValidationResult.Error("Key Vault resource group can't be null.");
-        }
-        
         if(string.IsNullOrEmpty(settings.SubscriptionId))
         {
             return ValidationResult.Error("Resource group subscription ID can't be null.");
@@ -46,16 +40,9 @@ public class CheckKeyVaultNameCommand(ITopazLogger logger) : Command<CheckKeyVau
     [UsedImplicitly]
     public sealed class CheckKeyVaultNameCommandSettings : CommandSettings
     {
-        [CommandOption("-n|--name")]
-        public string? Name { get; set; }
-
-        [CommandOption("--resource-type")]
-        public string? ResourceType { get; set; }
+        [CommandOption("-n|--name")] public string? Name { get; set; }
+        [CommandOption("--resource-type")] public string? ResourceType { get; set; }
         
-        [CommandOption("-g|--resource-group")]
-        public string? ResourceGroup { get; set; }
-        
-        [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        [CommandOption("-s|--subscription-id")] public string SubscriptionId { get; set; } = null!;
     }
 }

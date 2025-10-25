@@ -30,7 +30,7 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
         try
         {
             var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
-            var resourceGroupIdentifier = ResourceGroupIdentifier.From(path.ExtractValueFromPath(4));
+            var resourceGroupSegment = path.ExtractValueFromPath(4);
             var keyVaultName = path.ExtractValueFromPath(8);
             
             switch (method)
@@ -43,28 +43,29 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
                         break;
                     }
                     
-                    HandleCreateUpdateKeyVaultRequest(response, subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, input);
+                    HandleCreateUpdateKeyVaultRequest(response, subscriptionIdentifier, ResourceGroupIdentifier.From(resourceGroupSegment), keyVaultName, input);
                     break;
                 case "GET":
-                    if (string.IsNullOrWhiteSpace(keyVaultName))
-                    {
-                        logger.LogDebug($"Executing {nameof(GetResponse)}: Can't process request if Key Vault name is empty.");
-                        response.StatusCode = HttpStatusCode.BadRequest;
-                        break;
-                    }
-                    
+                   
                     if (query.TryGetValueForKey("$filter", out var filter))
                     {
                         HandleListSubscriptionResourcesRequest(subscriptionIdentifier, filter, response);
                     }
                     else
                     {
-                        HandleGetKeyVaultRequest(response, subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
+                        if (string.IsNullOrWhiteSpace(keyVaultName))
+                        {
+                            logger.LogDebug($"Executing {nameof(GetResponse)}: Can't process request if Key Vault name is empty.");
+                            response.StatusCode = HttpStatusCode.BadRequest;
+                            break;
+                        }
+                        
+                        HandleGetKeyVaultRequest(response, subscriptionIdentifier, ResourceGroupIdentifier.From(resourceGroupSegment), keyVaultName);
                     }
                     
                     break;
                 case "POST":
-                    HandleCheckNameRequest(response, subscriptionIdentifier, resourceGroupIdentifier, input);
+                    HandleCheckNameRequest(response, subscriptionIdentifier, input);
                     break;
                 case "DELETE":
                     if (string.IsNullOrWhiteSpace(keyVaultName))
@@ -74,7 +75,7 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
                         break;
                     }
                     
-                    HandleDeleteKeyVaultRequest(response, subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
+                    HandleDeleteKeyVaultRequest(response, subscriptionIdentifier, ResourceGroupIdentifier.From(resourceGroupSegment), keyVaultName);
                     break;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
@@ -110,7 +111,7 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
     }
 
-    private void HandleCheckNameRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, Stream input)
+    private void HandleCheckNameRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, Stream input)
     {
         using var reader = new StreamReader(input);
 
@@ -123,7 +124,7 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
             return;
         }
 
-        var result = _controlPlane.CheckName(subscriptionIdentifier, resourceGroupIdentifier, request.Name, request.Type);
+        var result = _controlPlane.CheckName(subscriptionIdentifier, request.Name, request.Type);
         
         response.StatusCode = HttpStatusCode.OK;
         response.Content = new StringContent(JsonSerializer.Serialize(result.response, GlobalSettings.JsonOptions));

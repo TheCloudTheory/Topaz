@@ -80,7 +80,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return string.IsNullOrEmpty(content) ? throw new InvalidOperationException("Metadata file is null or empty.") : content;
     }
 
-    protected static string GetLocalDirectoryPathWithReplacedValues(SubscriptionIdentifier? subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier)
+    private static string GetLocalDirectoryPathWithReplacedValues(SubscriptionIdentifier? subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier)
     {
         if (subscriptionIdentifier == null)
         {
@@ -122,6 +122,8 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var metadataFiles = Directory.EnumerateFiles(servicePath, "metadata.json", SearchOption.AllDirectories);
         var servicePathSegments = TService.LocalDirectoryPath.Split("/");
         var defaultLookForNoOfSegments = servicePathSegments.Length + 2; // Local path will contain two additional segments: root directory and metadata filename 
+        
+        _logger.LogDebug($"[{nameof(ResourceProviderBase<TService>)}:{nameof(List)}]: If lookForNoOfSegments parameter wasn't provided (was {lookForNoOfSegments}) will default to {defaultLookForNoOfSegments} segments lookup.");
         
         return metadataFiles.Where(file => file.Split("/").Length == (lookForNoOfSegments.HasValue ? lookForNoOfSegments.Value : defaultLookForNoOfSegments)).Select(File.ReadAllText);
     }
