@@ -15,7 +15,8 @@ public class E2EFixture
             "start",
             "--log-level=Debug",
             "--skip-dns-registration",
-            "--enable-logging-to-file"
+            "--enable-logging-to-file",
+            "--refresh-log"
         ]);
 
         await Task.Run(() => _topaz, CancellationTokenSource.Token);

@@ -12,10 +12,11 @@ namespace Topaz.Tests.E2E;
 public class AzureStorageServiceTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
-    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    private static readonly Guid SubscriptionId = Guid.Parse("09265DD3-8B4C-4709-AFC3-90F24878B2DA");
     
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
+    private const string StorageAccountName = "azurestoragetests";
     
     [SetUp]
     public async Task SetUp()
@@ -63,7 +64,6 @@ public class AzureStorageServiceTests
     public void AzureStorageServiceTests_WhenStorageIsCreated_ItShouldBeAvailableAndThenDeleted()
     {
         // Arrange
-        const string storageAccountName = "test";
         var credential = new AzureLocalCredential();
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
@@ -74,14 +74,14 @@ public class AzureStorageServiceTests
         
         // Act
         _ = resourceGroup.Value.GetStorageAccounts()
-            .CreateOrUpdate(WaitUntil.Completed, storageAccountName, operation);
-        var storageAccount = resourceGroup.Value.GetStorageAccount(storageAccountName);
+            .CreateOrUpdate(WaitUntil.Completed, StorageAccountName, operation);
+        var storageAccount = resourceGroup.Value.GetStorageAccount(StorageAccountName);
         
         // Assert
         Assert.That(storageAccount, Is.Not.Null);
         Assert.Multiple(() =>
         {
-            Assert.That(storageAccount.Value.Data.Name, Is.EqualTo(storageAccountName));
+            Assert.That(storageAccount.Value.Data.Name, Is.EqualTo(StorageAccountName));
             Assert.That(storageAccount.Value.Data.Kind, Is.EqualTo(StorageKind.StorageV2));
             Assert.That(storageAccount.Value.Data.Sku.Name, Is.EqualTo(StorageSkuName.StandardLrs));
         });
@@ -90,7 +90,7 @@ public class AzureStorageServiceTests
         storageAccount.Value.Delete(WaitUntil.Completed);
         
         // Assert 2
-        Assert.Throws<RequestFailedException>(() => resourceGroup.Value.GetStorageAccount(storageAccountName),
+        Assert.Throws<RequestFailedException>(() => resourceGroup.Value.GetStorageAccount(StorageAccountName),
             "The Resource 'Microsoft.Storage/storageAccounts/test' under resource group 'test' was not found");
     }
 
@@ -98,7 +98,6 @@ public class AzureStorageServiceTests
     public void AzureStorageServiceTests_WhenStorageAccountIsCreated_ItShouldHaveTwoAccesKeysAvailable()
     {
         // Arrange
-        const string storageAccountName = "test";
         var credential = new AzureLocalCredential();
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
@@ -109,8 +108,8 @@ public class AzureStorageServiceTests
         
         // Act
         _ = resourceGroup.Value.GetStorageAccounts()
-            .CreateOrUpdate(WaitUntil.Completed, storageAccountName, operation);
-        var storageAccount = resourceGroup.Value.GetStorageAccount(storageAccountName);
+            .CreateOrUpdate(WaitUntil.Completed, StorageAccountName, operation);
+        var storageAccount = resourceGroup.Value.GetStorageAccount(StorageAccountName);
         var keys = storageAccount.Value.GetKeys().ToArray();
         
         // Assert

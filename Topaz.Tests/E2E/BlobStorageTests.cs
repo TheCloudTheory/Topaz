@@ -10,11 +10,11 @@ namespace Topaz.Tests.E2E;
 public class BlobStorageTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
-    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    private static readonly Guid SubscriptionId = Guid.Parse("075A1FEB-A765-4170-899F-B9370412CC9D");
     
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
-    private const string StorageAccountName = "devstoreaccount1";
+    private const string StorageAccountName = "blobstoragetests";
 
     private string _key = null!;
     
@@ -43,7 +43,9 @@ public class BlobStorageTests
             "group",
             "delete",
             "--name",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
@@ -62,7 +64,11 @@ public class BlobStorageTests
             "account",
             "delete",
             "--name",
-            StorageAccountName
+            StorageAccountName,
+            "-g",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
@@ -76,7 +82,7 @@ public class BlobStorageTests
             "--location",
             "westeurope",
             "--subscription-id",
-            Guid.Empty.ToString()
+            SubscriptionId.ToString()
         ]);
         
         var credential = new AzureLocalCredential();

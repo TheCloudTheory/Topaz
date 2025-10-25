@@ -50,11 +50,8 @@ public sealed class CreateTableCommand(ITopazLogger logger) : Command<CreateTabl
     {
         [CommandOption("-n|--name")] public string Name { get; set; } = null!;
         [CommandOption("--account-name")] public string AccountName { get; set; } = null!;
-        
-        [CommandOption("-g|--resource-group")]
-        public string? ResourceGroup { get; set; }
-        [CommandOption("-s|--subscription-id")]
-        public string? SubscriptionId { get; set; }
+        [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
+        [CommandOption("-s|--subscription-id")] public string? SubscriptionId { get; set; }
 
     }
 }

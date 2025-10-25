@@ -5,14 +5,14 @@ namespace Topaz.Dns;
 
 public record GlobalDnsEntries
 {
-    public IDictionary<string, IDictionary<string, List<string>>> Entries { get; set; } = new Dictionary<string, IDictionary<string, List<string>>>();
+    public IDictionary<string, IDictionary<string, List<string>>> Services { get; init; } = new Dictionary<string, IDictionary<string, List<string>>>();
 
     public static void AddEntry(string serviceName, Guid subscriptionIdentifier, string? resourceGroupIdentifier, string instanceName)
     {
         var entries = GetDnsEntriesFromFile();
 
         if (entries == null) throw new InvalidOperationException();
-        if (entries.Entries.TryGetValue(serviceName, out var value))
+        if (entries.Services.TryGetValue(serviceName, out var value))
         {
             if (value.TryGetValue(GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier),
                     out var instances))
@@ -26,7 +26,7 @@ public record GlobalDnsEntries
         }
         else
         {
-            entries.Entries[serviceName] = new  Dictionary<string, List<string>>
+            entries.Services[serviceName] = new  Dictionary<string, List<string>>
             {
                 {GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier), [instanceName]}
             };
@@ -54,7 +54,7 @@ public record GlobalDnsEntries
         var entries = GetDnsEntriesFromFile();
 
         if (entries == null) throw new InvalidOperationException();
-        if (!entries.Entries.TryGetValue(serviceName, out var globalServiceEntries)) return null;
+        if (!entries.Services.TryGetValue(serviceName, out var globalServiceEntries)) return null;
         
         var existingEntry = globalServiceEntries.SingleOrDefault(entry => entry.Value.Contains(instanceName)).Key;
         if (string.IsNullOrWhiteSpace(existingEntry))
@@ -67,15 +67,42 @@ public record GlobalDnsEntries
     }
 
     public static void DeleteEntry(string serviceName, Guid subscriptionIdentifier, string? resourceGroupIdentifier,
-        string instanceName)
+        string? instanceName)
     {
         var entries = GetDnsEntriesFromFile();
         if (entries == null) throw new InvalidOperationException();
-        if (!entries.Entries.TryGetValue(serviceName, out var globalServiceEntries)) return;
-        
+        if (!entries.Services.TryGetValue(serviceName, out var globalServiceEntries)) return;
+
         globalServiceEntries.Remove(GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier));
+        
+        if (string.IsNullOrWhiteSpace(instanceName) && string.IsNullOrWhiteSpace(resourceGroupIdentifier))
+        {
+            // If both the name of an instance and a resource group are null,
+            // it means a subscription was removed. Cascade delete all the resources
+            // which may have entries related to the subscription
+            foreach (var service in entries.Services)
+            {
+                if (service.Key.Contains(subscriptionIdentifier.ToString()))
+                {
+                    entries.Services.Remove(service.Key);
+                }
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(instanceName) && !string.IsNullOrWhiteSpace(resourceGroupIdentifier))
+        {
+            // If only instance name is null then we need to remove global entries
+            // for resources inside that resource group only
+            foreach (var service in entries.Services)
+            {
+                if (service.Key == GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier))
+                {
+                    entries.Services.Remove(service.Key);
+                }
+            }
+        }
             
-        var newEntries = JsonSerializer.Serialize(entries);
+        var newEntries = JsonSerializer.Serialize(entries, GlobalSettings.JsonOptionsCli);
         File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, newEntries);
     }
 }

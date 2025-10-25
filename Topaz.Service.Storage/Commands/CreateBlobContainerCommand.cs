@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
@@ -12,8 +13,10 @@ public sealed class CreateBlobContainerCommand(ITopazLogger logger) : Command<Cr
     {
         logger.LogInformation("Creating blob container...");
 
+        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
         var rp = new BlobServiceControlPlane(new BlobResourceProvider(logger));
-        _ = rp.CreateContainer(settings.Name, settings.AccountName);
+        _ = rp.CreateContainer(subscriptionIdentifier, resourceGroupIdentifier, settings.Name, settings.AccountName);
 
         logger.LogInformation("Container created.");
 
@@ -26,6 +29,16 @@ public sealed class CreateBlobContainerCommand(ITopazLogger logger) : Command<Cr
         {
             return ValidationResult.Error("Container name can't be null.");
         }
+        
+        if(string.IsNullOrEmpty(settings.ResourceGroup))
+        {
+            return ValidationResult.Error("Storage account resource group can't be null.");
+        }
+
+        if(string.IsNullOrEmpty(settings.SubscriptionId))
+        {
+            return ValidationResult.Error("Storage account subscription ID can't be null.");
+        }
 
         return string.IsNullOrEmpty(settings.AccountName) ? 
             ValidationResult.Error("Storage account name can't be null.") 
@@ -36,7 +49,8 @@ public sealed class CreateBlobContainerCommand(ITopazLogger logger) : Command<Cr
     public sealed class CreateBlobContainerCommandSettings : CommandSettings
     {
         [CommandOption("-n|--name")] public string Name { get; set; } = null!;
-
         [CommandOption("--account-name")] public string AccountName { get; set; } = null!;
+        [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
+        [CommandOption("-s|--subscription-id")] public string? SubscriptionId { get; set; }
     }
 }

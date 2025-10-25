@@ -13,7 +13,7 @@ namespace Topaz.Tests.E2E;
 public class KeyVaultFullTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
-    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    private static readonly Guid SubscriptionId = Guid.Parse("1898F130-313E-4D49-85AB-5F501F311159");
     
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
@@ -44,7 +44,9 @@ public class KeyVaultFullTests
             "group",
             "delete",
             "--name",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
@@ -65,8 +67,12 @@ public class KeyVaultFullTests
         await Program.Main([
             "keyvault",
             "delete",
+            "--resource-group",
+            ResourceGroupName,
             "--name",
-            TestKeyVaultName
+            TestKeyVaultName,
+            "--subscription-id",
+            SubscriptionId.ToString(),
         ]);
     }
 
@@ -75,7 +81,7 @@ public class KeyVaultFullTests
     {
         // Arrange
         var credential = new AzureLocalCredential();
-        var armClient = new ArmClient(credential, Guid.Empty.ToString(), ArmClientOptions);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup("test");
         var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,

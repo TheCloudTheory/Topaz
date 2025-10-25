@@ -50,7 +50,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             _logger.LogDebug($"The resource '{servicePath}' does not exists, no changes applied.");
             return;
         }
-
+        
         _logger.LogDebug($"Deleting resource '{servicePath}'.");
         Directory.Delete(servicePath, true);
         
@@ -63,7 +63,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var existingInstance = GlobalDnsEntries.GetEntry(TService.UniqueName, instanceName);
         if (existingInstance != null && TService.IsGlobalService)
         {
-            GlobalDnsEntries.DeleteEntry(TService.UniqueName, subscriptionIdentifier.Value, resourceGroupIdentifier?.Value, instanceName);
+            GlobalDnsEntries.DeleteEntry(TService.UniqueName, subscriptionIdentifier.Value, resourceGroupIdentifier?.Value, id);
         }
     }
 
@@ -116,7 +116,10 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         }
         
         var metadataFiles = Directory.EnumerateFiles(servicePath, "metadata.json", SearchOption.AllDirectories);
-        return metadataFiles.Select(File.ReadAllText);
+        var servicePathSegments = TService.LocalDirectoryPath.Split("/");
+        var lookForNoOfSegments = servicePathSegments.Length + 2; // Local path will contain two additional segments: root directory and metadata filename 
+        
+        return metadataFiles.Where(file => file.Split("/").Length == lookForNoOfSegments).Select(File.ReadAllText);
     }
 
     public IEnumerable<T?> ListAs<T>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier)

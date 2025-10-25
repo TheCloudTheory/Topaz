@@ -33,7 +33,7 @@ public class DeleteStorageAccountCommand(ITopazLogger logger) : Command<DeleteSt
         
         if(string.IsNullOrEmpty(settings.ResourceGroup))
         {
-            return ValidationResult.Error("Service Bus namespace resource group can't be null.");
+            return ValidationResult.Error("Storage account resource group can't be null.");
         }
         
         if(string.IsNullOrEmpty(settings.SubscriptionId))

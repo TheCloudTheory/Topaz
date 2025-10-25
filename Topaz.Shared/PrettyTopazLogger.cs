@@ -38,9 +38,19 @@ public sealed class PrettyTopazLogger : ITopazLogger
         LogLevel = logLevel;
     }
 
-    public void EnableLoggingToFile()
+    public void EnableLoggingToFile(bool refreshLog)
     {
         IsLoggingToFileEnabled = true;
+
+        if (refreshLog)
+        {
+            RefreshLogFile();
+        }
+    }
+
+    private static void RefreshLogFile()
+    {
+        File.WriteAllText(LogFilePath, string.Empty);
     }
 
     private void Log(string message, LogLevel logLevel, Exception? exception = null)

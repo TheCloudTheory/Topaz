@@ -23,7 +23,7 @@ internal sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.S
 
         if (settings.EnableLoggingToFile)
         {
-            logger.EnableLoggingToFile();
+            logger.EnableLoggingToFile(settings.RefreshLog);
             logger.LogInformation("Enabled logging to file.");
         }
 
@@ -50,5 +50,6 @@ internal sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.S
         [CommandOption("--certificate-key")] public string? CertificateKey { get; set; }
         [CommandOption("--skip-dns-registration")] public bool SkipRegistrationOfDnsEntries { get; set; }
         [CommandOption("--enable-logging-to-file")] public bool EnableLoggingToFile { get; set; }
+        [CommandOption("--refresh-log")] public bool RefreshLog { get; set; } = true;
     }
 }

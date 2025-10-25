@@ -48,6 +48,9 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
             return response;
         }
 
+        var subscriptionIdentifier = storageAccount!.GetSubscription();
+        var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+
         try
         {
             var containerName = GetContainerName(path);
@@ -57,7 +60,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
             switch (method)
             {
                 case "PUT" when query.TryGetValueForKey("restype", out var restype) && restype == "container":
-                    HandleCreateContainerRequest(storageAccount!.Name, containerName, response);
+                    HandleCreateContainerRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, containerName, response);
                     return response;
                 case "PUT":
                 {
@@ -65,11 +68,11 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
                     {
                         if (query.TryGetValueForKey("comp", out var comp) && comp == "metadata")
                         {
-                            HandleSetBlobMetadataRequest(storageAccount!.Name, path, headers, response);
+                            HandleSetBlobMetadataRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, path, headers, response);
                         }
                         else
                         {
-                            HandleUploadBlobRequest(storageAccount!.Name, path, blobName!, input, response);
+                            HandleUploadBlobRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, path, blobName!, input, response);
                         }
                     }
 
@@ -81,11 +84,11 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
                     {
                         if (query.TryGetValueForKey("restype", out var restype) && restype == "container")
                         {
-                            HandleListBlobsRequest(storageAccount!.Name, containerName, response);
+                            HandleListBlobsRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, containerName, response);
                         }
                         else
                         {
-                            HandleGetContainersRequest(storageAccount!.Name, response);
+                            HandleGetContainersRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, response);
                         }
                     }
 
@@ -95,7 +98,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
                 {
                     if (TryGetBlobName(path, out var blobName))
                     {
-                        HandleGetBlobPropertiesRequest(storageAccount!.Name, path, blobName!, response);
+                        HandleGetBlobPropertiesRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, path, blobName!, response);
                     }
 
                     break;
@@ -104,7 +107,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
                 {
                     if (TryGetBlobName(containerName, out var blobName))
                     {
-                        HandleDeleteBlobRequest(storageAccount!.Name, containerName, blobName!, response);
+                        HandleDeleteBlobRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, containerName, blobName!, response);
                     }
 
                     break;
@@ -122,10 +125,10 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         return response;
     }
 
-    private void HandleSetBlobMetadataRequest(string storageAccountName, string containerName,
+    private void HandleSetBlobMetadataRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName,
         IHeaderDictionary headers, HttpResponseMessage response)
     {
-        var result = _dataPlane.SetBlobMetadata(storageAccountName, containerName, headers);
+        var result = _dataPlane.SetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName, headers);
 
         if (result == HttpStatusCode.NotFound)
         {
@@ -137,10 +140,10 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
     }
 
-    private void HandleDeleteBlobRequest(string storageAccountName, string containerName, string blobName,
+    private void HandleDeleteBlobRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName, string blobName,
         HttpResponseMessage response)
     {
-        var result = _dataPlane.DeleteBlob(storageAccountName, containerName, blobName);
+        var result = _dataPlane.DeleteBlob(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName, blobName);
 
         if (result == HttpStatusCode.NotFound)
         {
@@ -152,10 +155,10 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
     }
 
-    private void HandleGetBlobPropertiesRequest(string storageAccountName, string blobPath, string blobName,
+    private void HandleGetBlobPropertiesRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName,
         HttpResponseMessage response)
     {
-        var properties = _dataPlane.GetBlobProperties(storageAccountName, blobPath, blobName);
+        var properties = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath, blobName);
 
         if (properties.code == HttpStatusCode.NotFound)
         {
@@ -172,10 +175,11 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
     }
 
-    private void HandleUploadBlobRequest(string storageAccountName, string blobPath, string blobName, Stream input,
+    private void HandleUploadBlobRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName, Stream input,
         HttpResponseMessage response)
     {
-        var result = _dataPlane.PutBlob(storageAccountName, blobPath, blobName, input);
+        var result = _dataPlane.PutBlob(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, blobPath, blobName, input);
 
         // TODO: The response must include the response headers from https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob?tabs=microsoft-entra-id#response
         response.StatusCode = result.code;
@@ -209,13 +213,13 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         return false;
     }
 
-    private void HandleListBlobsRequest(string storageAccountName, string containerName, HttpResponseMessage response)
+    private void HandleListBlobsRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName, HttpResponseMessage response)
     {
         // TODO: The request may come with additional keys in the query string, e.g.:
         // ?restype=container&comp=list&prefix=localhost/eh-test/$default/ownership/&include=Metadata  
         // We need to handle them as well
 
-        var blobs = _dataPlane.ListBlobs(storageAccountName, containerName);
+        var blobs = _dataPlane.ListBlobs(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
 
         using var sw = new EncodingAwareStringWriter();
         var serializer = new XmlSerializer(typeof(BlobEnumerationResult));
@@ -225,9 +229,9 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         response.StatusCode = HttpStatusCode.OK;
     }
 
-    private void HandleGetContainersRequest(string storageAccountName, HttpResponseMessage response)
+    private void HandleGetContainersRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, HttpResponseMessage response)
     {
-        var containers = this._controlPlane.ListContainers(storageAccountName);
+        var containers = _controlPlane.ListContainers(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
         using var sw = new EncodingAwareStringWriter();
         var serializer = new XmlSerializer(typeof(ContainerEnumerationResult));
@@ -237,10 +241,10 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         response.StatusCode = HttpStatusCode.OK;
     }
 
-    private void HandleCreateContainerRequest(string storageAccountName, string containerName,
+    private void HandleCreateContainerRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName,
         HttpResponseMessage response)
     {
-        var code = _controlPlane.CreateContainer(containerName, storageAccountName);
+        var code = _controlPlane.CreateContainer(subscriptionIdentifier, resourceGroupIdentifier, containerName, storageAccountName);
 
         response.StatusCode = code;
     }

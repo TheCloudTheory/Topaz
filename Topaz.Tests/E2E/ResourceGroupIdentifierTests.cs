@@ -11,7 +11,7 @@ namespace Topaz.Tests.E2E;
 public class ResourceGroupIdentifierTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
-    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    private static readonly Guid SubscriptionId = Guid.Parse("E2E32128-3C4A-427A-A457-B50FAB108FB9");
     
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";

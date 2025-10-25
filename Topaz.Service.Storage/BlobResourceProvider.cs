@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Services;
 using Topaz.Shared;
 
@@ -7,51 +9,47 @@ namespace Topaz.Service.Storage;
 
 internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProviderBase<BlobStorageService>(logger)
 {
-    private readonly ITopazLogger _topazLogger = logger;
+    private readonly ITopazLogger _logger = logger;
     
     private void InitializeServiceDirectory(string storageAccountName)
     {
         var servicePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, BlobStorageService.LocalDirectoryPath);
-        _topazLogger.LogDebug($"Attempting to create {servicePath} directory...");
+        _logger.LogDebug($"Attempting to create {servicePath} directory...");
 
         if(!Directory.Exists(servicePath))
         {
             Directory.CreateDirectory(servicePath);
-            _topazLogger.LogDebug($"Directory {servicePath} created.");
+            _logger.LogDebug($"Directory {servicePath} created.");
         }
         else
         {
-            _topazLogger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
+            _logger.LogDebug($"Attempting to create {servicePath} directory - skipped.");
         }
     }
     
-    public void Create(string storageAccountName, string containerName)
+    public void Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName, Container container)
     {
-        InitializeServiceDirectory(storageAccountName);
-        
-        var metadataFilePath = CreateBlobDirectories(storageAccountName, containerName);
-
-        _topazLogger.LogDebug($"Attempting to create {metadataFilePath} file.");
-
-        if(File.Exists(metadataFilePath)) throw new InvalidOperationException($"Metadata file for {typeof(BlobStorageService)} with ID {containerName} already exists.");
-
-        var content = JsonSerializer.Serialize(new Models.Container() { Name = containerName }, GlobalSettings.JsonOptions);
-        File.WriteAllText(metadataFilePath, content);
+        base.Create(subscriptionIdentifier, resourceGroupIdentifier, GetContainerId(storageAccountName, containerName), container);
+    }
+    
+    private static string GetContainerId(string storageAccountName, string containerName)
+    {
+        return Path.Combine(storageAccountName, ".blob", containerName);
     }
 
-    private string CreateBlobDirectories(string storageAccountName, string containerName)
+    private string CreateBlobDirectories(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
     {
         const string metadataFile = "metadata.json";
         
         var containerPath = GetContainerPath(storageAccountName, containerName);
         var dataPath = Path.Combine(containerPath, "data");
         var metadataFilePath = Path.Combine(containerPath, metadataFile);
-        var blobMetadataDirectoryPath = GetContainerMetadataPath(storageAccountName, containerName);
+        var blobMetadataDirectoryPath = GetContainerMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
 
-        _topazLogger.LogDebug($"Attempting to create {containerPath} directory.");
+        _logger.LogDebug($"Attempting to create {containerPath} directory.");
         if(Directory.Exists(containerPath))
         {
-            _topazLogger.LogDebug($"Attempting to create {containerPath} directory - skipped.");
+            _logger.LogDebug($"Attempting to create {containerPath} directory - skipped.");
         }
         else
         {
@@ -59,18 +57,23 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
             Directory.CreateDirectory(dataPath);
             Directory.CreateDirectory(blobMetadataDirectoryPath);
             
-            _topazLogger.LogDebug($"Attempting to create {containerPath} directory - created!");
+            _logger.LogDebug($"Attempting to create {containerPath} directory - created!");
         }
 
         return metadataFilePath;
     }
     
-    public IEnumerable<string> List(string id)
+    public IEnumerable<string> List(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
     {
-        InitializeServiceDirectory(id);
-
-        var servicePath = Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, id, BlobStorageService.LocalDirectoryPath);
-        return Directory.EnumerateDirectories(servicePath);
+        var servicePath = Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), storageAccountName);
+        if (!Directory.Exists(servicePath))
+        {
+            _logger.LogWarning("Trying to list resources for a non-existing storage account. If you see this warning, make sure you created a storage account before accessing its data.");
+            return [];
+        }
+        
+        var metadataFiles = Directory.EnumerateFiles(servicePath, "metadata.json", SearchOption.AllDirectories);
+        return metadataFiles.Select(File.ReadAllText);
     }
     
     private string GetContainerPath(string storageAccountName, string containerName)
@@ -83,8 +86,20 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
         return Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, BlobStorageService.LocalDirectoryPath, containerName, "data");
     }
     
-    public string GetContainerMetadataPath(string storageAccountName, string containerName)
+    public string GetContainerMetadataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
     {
-        return Path.Combine(BaseEmulatorPath, AzureStorageService.LocalDirectoryPath, storageAccountName, BlobStorageService.LocalDirectoryPath, containerName, ".metadata");
+        var tablePath =
+            GetContainerPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
+        
+        return Path.Combine(tablePath, ".metadata");
+    }
+    
+    private string GetContainerPathWithReplacedValues(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
+    {
+        var storageAccountPath =
+            GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+
+        return Path.Combine(storageAccountPath, containerName);
     }
 }

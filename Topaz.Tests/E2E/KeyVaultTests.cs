@@ -8,6 +8,11 @@ namespace Topaz.Tests.E2E;
 
 public class KeyVaultTests
 {
+    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    
+    private const string SubscriptionName = "sub-test";
+    private const string ResourceGroupName = "test";
+    
     [SetUp]
     public async Task SetUp()
     {
@@ -16,7 +21,7 @@ public class KeyVaultTests
             "subscription",
             "delete",
             "--id",
-            Guid.Empty.ToString()
+            SubscriptionId.ToString()
         ]);
         
         await Program.Main(
@@ -24,34 +29,40 @@ public class KeyVaultTests
             "subscription",
             "create",
             "--id",
-            Guid.Empty.ToString(),
+            SubscriptionId.ToString(),
             "--name",
-            "sub-test"
+            SubscriptionName
         ]);
 
         await Program.Main([
             "group",
             "delete",
             "--name",
-            "test"
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
             "group",
             "create",
             "--name",
-            "test",
+            ResourceGroupName,
             "--location",
             "westeurope",
             "--subscription-id",
-            Guid.Empty.ToString()
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
             "keyvault",
             "delete",
             "--name",
-            "test"
+            "test",
+            "-g",
+            "rg-test",
+            "--subscription-id",
+            SubscriptionId.ToString(),
         ]);
         
         await Program.Main([
@@ -64,7 +75,7 @@ public class KeyVaultTests
             "--location",
             "westeurope",
             "--subscription-id",
-            Guid.Empty.ToString(),
+            SubscriptionId.ToString()
         ]);
     }
 

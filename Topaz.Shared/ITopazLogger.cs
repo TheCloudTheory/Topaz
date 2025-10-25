@@ -10,5 +10,5 @@ public interface ITopazLogger
     void LogError(string message);
     void LogWarning(string message);
     void SetLoggingLevel(LogLevel level);
-    void EnableLoggingToFile();
+    void EnableLoggingToFile(bool refreshLog);
 }
