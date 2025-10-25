@@ -11,7 +11,7 @@ namespace Topaz.Tests.E2E;
 public class ServiceBusServiceTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
-    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    private static readonly Guid SubscriptionId = Guid.Parse("AD67D396-BEF3-40AB-8B50-68FC37B0D72D");
     
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
@@ -43,7 +43,9 @@ public class ServiceBusServiceTests
             "group",
             "delete",
             "--name",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
@@ -62,7 +64,11 @@ public class ServiceBusServiceTests
             "namespace",
             "delete",
             "--name",
-            NamespaceName
+            NamespaceName,
+            "--resource-group",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
     }
 
@@ -71,7 +77,7 @@ public class ServiceBusServiceTests
     {
         // Arrange
         var credential = new AzureLocalCredential();
-        var armClient = new ArmClient(credential, Guid.Empty.ToString(), ArmClientOptions);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
         var data = new ServiceBusNamespaceData(AzureLocation.WestEurope);
@@ -92,7 +98,7 @@ public class ServiceBusServiceTests
     {
         // Arrange
         var credential = new AzureLocalCredential();
-        var armClient = new ArmClient(credential, Guid.Empty.ToString(), ArmClientOptions);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
         var data = new ServiceBusNamespaceData(AzureLocation.WestEurope);
