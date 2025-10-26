@@ -2,10 +2,12 @@ using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console.Cli;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Command;
 
 namespace Topaz.CLI.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("start", "Starts the emulator.")]
 internal sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.StartCommandSettings>
 {
     public override int Execute(CommandContext context, StartCommandSettings settings)
@@ -44,12 +46,25 @@ internal sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.S
     [UsedImplicitly]
     public sealed class StartCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("Sets the log level. Available values are: Debug, Information, Warning, Error")]
         [CommandOption("-l|--log-level")] public LogLevel? LogLevel { get; set; }
+        
+        [CommandOptionDefinition("Configures the tenant ID used when providing metadata endpoints")]
         [CommandOption("--tenant-id")] public Guid? TenantId { get; set; }
+        
+        [CommandOptionDefinition("Allows you to bring your own certificate (BYOC). Must be an RFC 7468 PEM-encoded certificate.")]
         [CommandOption("--certificate-file")] public string? CertificateFile { get; set; }
+        
+        [CommandOptionDefinition("Allows you to bring your own certificate (BYOC).")]
         [CommandOption("--certificate-key")] public string? CertificateKey { get; set; }
+        
+        [CommandOptionDefinition("Allows you to skip DNS entries registration in the `hosts` file so you can run Topaz without elevated permissions.")]
         [CommandOption("--skip-dns-registration")] public bool SkipRegistrationOfDnsEntries { get; set; }
+        
+        [CommandOptionDefinition("Tells the emulator to save logs to a file.")]
         [CommandOption("--enable-logging-to-file")] public bool EnableLoggingToFile { get; set; }
+        
+        [CommandOptionDefinition("Clears the logs file upon starting the emulator.")]
         [CommandOption("--refresh-log")] public bool RefreshLog { get; set; } = true;
     }
 }

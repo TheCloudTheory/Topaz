@@ -1,12 +1,13 @@
-﻿using JetBrains.Annotations;
+﻿using System.Reflection;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
-using Topaz.CLI.Commands;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
 using Topaz.Service.ResourceGroup.Commands;
 using Topaz.Service.ResourceManager.Commands;
 using Topaz.Service.ServiceBus.Commands;
+using Topaz.Service.Shared.Command;
 using Topaz.Service.Storage.Commands;
 using Topaz.Service.Subscription.Commands;
 using Topaz.Shared;
@@ -48,95 +49,42 @@ internal class Program
 
         var app = new CommandApp(registrar);
         
-        app.Configure(config =>
-        {
-            config.AddCommand<StartCommand>("start");
-
-            config.AddBranch("storage", branch =>
-            {
-                branch.AddBranch("account", account =>
-                {
-                    account.AddCommand<CreateStorageAccountCommand>("create");
-                    account.AddCommand<DeleteStorageAccountCommand>("delete");
-                    account.AddCommand<ShowStorageAccountConnectionStringCommand>("show-connection-string");
-                    
-                    account.AddBranch("keys", keys =>
-                    {
-                        keys.AddCommand<ListStorageAccountKeysCommand>("list");
-                    });
-                });
-
-                branch.AddBranch("table", account =>
-                {
-                    account.AddCommand<CreateTableCommand>("create");
-                    account.AddCommand<DeleteTableCommand>("delete");
-                });
-                
-                branch.AddBranch("container", account =>
-                {
-                    account.AddCommand<CreateBlobContainerCommand>("create");
-                });
-            });    
-
-            config.AddBranch("group", group => {
-                group.AddCommand<CreateResourceGroupCommand>("create");
-                group.AddCommand<DeleteResourceGroupCommand>("delete");
-                group.AddCommand<ListResourceGroupCommand>("list");
-                group.AddCommand<ShowResourceGroupCommand>("show");
-            });
-
-            config.AddBranch("keyvault", keyVault => {
-                keyVault.AddCommand<CreateKeyVaultCommand>("create");
-                keyVault.AddCommand<DeleteKeyVaultCommand>("delete");
-                keyVault.AddCommand<CheckKeyVaultNameCommand>("check-name");
-            });
-
-            config.AddBranch("subscription", subscription => {
-                subscription.AddCommand<CreateSubscriptionCommand>("create");
-                subscription.AddCommand<DeleteSubscriptionCommand>("delete");
-                subscription.AddCommand<ListSubscriptionsCommand>("list");
-            });
-            
-            config.AddBranch("eventhubs", branch =>
-            {
-                branch.AddBranch("namespace", @namespace =>
-                {
-                    @namespace.AddCommand<CreateEventHubNamespaceCommand>("create");
-                    @namespace.AddCommand<DeleteEventHubNamespaceCommand>("delete");
-                });
-                
-                branch.AddBranch("eventhub", eventHub =>
-                {
-                    eventHub.AddCommand<CreateEventHubCommand>("create");
-                    eventHub.AddCommand<DeleteEventHubCommand>("delete");
-                });
-            });
-            
-            config.AddBranch("servicebus", branch =>
-            {
-                branch.AddBranch("namespace", @namespace =>
-                {
-                    @namespace.AddCommand<CreateServiceBusNamespaceCommand>("create");
-                    @namespace.AddCommand<DeleteServiceBusNamespaceCommand>("delete");
-                });
-                
-                branch.AddBranch("queue", queue =>
-                {
-                    queue.AddCommand<CreateServiceBusQueueCommand>("create");
-                    queue.AddCommand<DeleteServiceBusQueueCommand>("delete");
-                });
-            });
-            
-            config.AddBranch("deployment", branch =>
-            {
-                branch.AddBranch("group", groupDeployment =>
-                {
-                    groupDeployment.AddCommand<CreateGroupDeploymentCommand>("create");
-                });
-            });
-        });
+        app.Configure(FindAndRegisterCommands);
 
         return app.RunAsync(args);
+    }
+
+    private static void FindAndRegisterCommands(IConfigurator config)
+    {
+        Console.WriteLine("Searching and configuring commands...");
+
+        // Even though the types will be loaded via reflection, they must be explicitly 
+        // used so they can be loaded. The issue here is related to GetReferencedAssemblies(),
+        // which gets the assemblies referenced in the assembly, not in the project
+        // (those are completely different references conceptually).
+        // See e.g. https://github.com/dotnet/runtime/issues/57714 for a reference.
+        _ = new[]
+        {
+            typeof(GenericResourceGroupCommand),
+            typeof(GenericEventHubCommand),
+            typeof(GenericKeyVaultCommand),
+            typeof(GenericResourceManagerCommand),
+            typeof(GenericServiceBusCommand),
+            typeof(GenericStorageCommand),
+            typeof(GenericSubscriptionCommand),
+        };
+        
+        var commands = Assembly.GetExecutingAssembly()
+            .GetReferencedAssemblies()
+            .Select(Assembly.Load)
+            .SelectMany(assembly => assembly.GetExportedTypes()).Where(type => typeof(IEmulatorCommand).IsAssignableFrom(type) && !type.IsAbstract)
+            .Select(type => Activator.CreateInstance(type) as IEmulatorCommand)
+            .Where(command => command != null);
+
+        foreach (var command in commands)
+        {
+            command!.Configure(config);
+        }
     }
 
     private static void CreateLocalDirectoryForEmulator()
