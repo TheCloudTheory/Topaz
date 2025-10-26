@@ -11,10 +11,6 @@ using Topaz.Service.ServiceBus.Commands;
 using Topaz.Service.Storage.Commands;
 using Topaz.Service.Subscription.Commands;
 
-// Absolute path where the generated markdown files are supposed
-// to be stored
-const string destinationLocation = "website/docs/cli-reference";
-
 Console.WriteLine($"Topaz.Documentation.Generator {ThisAssembly.AssemblyInformationalVersion}");
 
 _ = new[]
