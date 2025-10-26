@@ -1,4 +1,4 @@
-namespace Topaz.Service.Shared.Command;
+namespace Topaz.Documentation.Command;
 
 [AttributeUsage(AttributeTargets.Class)]
 public sealed class CommandDefinitionAttribute(string commandName, string description) : Attribute

@@ -1,13 +1,16 @@
 using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared;
-using Topaz.Service.Shared.Command;
 
 namespace Topaz.CLI.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("start", "Starts the emulator.")]
+[CommandExample("Start the emulator with default settings", "topaz start")]
+[CommandExample("Start the emulator maximum verbosity", "topaz start --log-level Debug")]
+[CommandExample("Start the emulator with your own certificates", "topaz start --certificate-file \"topaz.crt\" --certificate-key \"topaz.key\"")]
 internal sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.StartCommandSettings>
 {
     public override int Execute(CommandContext context, StartCommandSettings settings)

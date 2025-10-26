@@ -49,6 +49,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ResourceManag
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Dns", "Topaz.Dns\Topaz.Dns.csproj", "{182652C5-956C-4AA2-984E-0F84E81ADF74}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{783C9587-263C-46CF-8701-7272EFD9CD9E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Documentation", "Documentation\Topaz.Documentation\Topaz.Documentation.csproj", "{D3EA0A7B-3231-4421-9D63-7749F6DBB3AC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -143,6 +147,10 @@ Global
 		{182652C5-956C-4AA2-984E-0F84E81ADF74}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{182652C5-956C-4AA2-984E-0F84E81ADF74}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{182652C5-956C-4AA2-984E-0F84E81ADF74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3EA0A7B-3231-4421-9D63-7749F6DBB3AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3EA0A7B-3231-4421-9D63-7749F6DBB3AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3EA0A7B-3231-4421-9D63-7749F6DBB3AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3EA0A7B-3231-4421-9D63-7749F6DBB3AC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -154,5 +162,6 @@ Global
 		{1DA9278A-2B35-46E1-8688-8CC4EE7612FF} = {421A7F1B-9656-4A7E-B209-B1E8811D3E28}
 		{1C9E5C5B-3259-4A6A-B63E-54AAA0322A57} = {421A7F1B-9656-4A7E-B209-B1E8811D3E28}
 		{B5721FE5-FD9B-411E-9A2A-8BEEB842F37B} = {421A7F1B-9656-4A7E-B209-B1E8811D3E28}
+		{D3EA0A7B-3231-4421-9D63-7749F6DBB3AC} = {783C9587-263C-46CF-8701-7272EFD9CD9E}
 	EndGlobalSection
 EndGlobal

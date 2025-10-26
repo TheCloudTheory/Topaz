@@ -1,5 +1,5 @@
 using Spectre.Console.Cli;
-using Topaz.Service.Shared.Command;
+using Topaz.Documentation.Command;
 
 namespace Topaz.Service.ResourceManager.Commands;
 

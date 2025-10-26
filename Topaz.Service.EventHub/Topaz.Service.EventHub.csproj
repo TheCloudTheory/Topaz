@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Documentation\Topaz.Documentation\Topaz.Documentation.csproj" />
       <ProjectReference Include="..\Topaz.Service.ResourceGroup\Topaz.Service.ResourceGroup.csproj" />
       <ProjectReference Include="..\Topaz.Service.Shared\Topaz.Service.Shared.csproj" />
       <ProjectReference Include="..\Topaz.Shared\Topaz.Shared.csproj" />

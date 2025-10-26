@@ -1,6 +1,6 @@
 using Spectre.Console.Cli;
 
-namespace Topaz.Service.Shared.Command;
+namespace Topaz.Documentation.Command;
 
 public interface IEmulatorCommand
 {
