@@ -2,6 +2,7 @@
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
+using Topaz.CLI.Commands;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
 using Topaz.Service.ResourceGroup.Commands;
@@ -79,7 +80,10 @@ internal class Program
             .Select(Assembly.Load)
             .SelectMany(assembly => assembly.GetExportedTypes()).Where(type => typeof(IEmulatorCommand).IsAssignableFrom(type) && !type.IsAbstract)
             .Select(type => Activator.CreateInstance(type) as IEmulatorCommand)
-            .Where(command => command != null);
+            .Where(command => command != null)
+            .ToList();
+
+        commands.Add(new GenericStartCommand());
 
         foreach (var command in commands)
         {
