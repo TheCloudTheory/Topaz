@@ -170,9 +170,12 @@ foreach (var group in groups)
             Directory.CreateDirectory(directoryTemplate);
         }
 
-        var fileTemplate = Path.Combine(directoryTemplate, definition.CommandName + ".md");
+        var commandNameAsFilename = string.Join("-", definition.CommandName.Split(" "));
+        var fileTemplate = Path.Combine(directoryTemplate, commandNameAsFilename + ".md");
         File.WriteAllText(fileTemplate, doc);
 
         index++;
     }
+    
+    Console.WriteLine("Documentation generated.");
 }

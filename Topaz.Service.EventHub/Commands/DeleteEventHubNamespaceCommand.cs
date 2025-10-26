@@ -1,12 +1,15 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("eventhubs namespace delete",  "event-hub", "Deletes an Event Hub.")]
+[CommandExample("Deletes Event Hub", "topaz eventhubs namespace delete \\\n    --name \"sb-namespace\" \\\n    --resource-group \"rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
 public class DeleteEventHubNamespaceCommand(ITopazLogger logger) : Command<DeleteEventHubNamespaceCommand.DeleteEventHubNamespaceCommandSettings>
 {
     public override int Execute(CommandContext context, DeleteEventHubNamespaceCommandSettings settings)
@@ -48,12 +51,15 @@ public class DeleteEventHubNamespaceCommand(ITopazLogger logger) : Command<Delet
     [UsedImplicitly]
     public sealed class DeleteEventHubNamespaceCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Event Hub namespace name.")]
         [CommandOption("-n|--name")]
         public string? Name { get; set; }
         
+        [CommandOptionDefinition("(Required) Event Hub namespace resource group name.")]
         [CommandOption("-g|--resource-group")]
         public string? ResourceGroup { get; set; }
         
+        [CommandOptionDefinition("(Required) Event Hub namespace subscription ID.")]
         [CommandOption("-s|--subscription-id")]
         public string SubscriptionId { get; set; } = null!;
     }

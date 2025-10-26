@@ -1,11 +1,14 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("eventhubs eventhub delete",  "event-hub", "Deletes an Event Hub.")]
+[CommandExample("Deletes Event Hub", "topaz eventhubs eventhub delete \\\n    --namespace-name \"sb-namespace\" \\\n    --name \"ehtest\"")]
 public class DeleteEventHubCommand(ITopazLogger logger) : Command<DeleteEventHubCommand.DeleteEventHubCommandSettings>
 {
     public override int Execute(CommandContext context, DeleteEventHubCommandSettings settings)
@@ -35,9 +38,11 @@ public class DeleteEventHubCommand(ITopazLogger logger) : Command<DeleteEventHub
     [UsedImplicitly]
     public sealed class DeleteEventHubCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Event Hub name.")]
         [CommandOption("-n|--name")]
         public string? Name { get; set; }
         
+        [CommandOptionDefinition("(Required) Event Hub namespace name.")]
         [CommandOption("--namespace-name")]
         public string? NamespaceName { get; set; }
     }

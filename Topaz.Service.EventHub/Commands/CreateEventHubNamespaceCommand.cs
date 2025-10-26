@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.EventHub.Models.Requests;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
@@ -10,6 +11,8 @@ using Topaz.Shared;
 namespace Topaz.Service.EventHub.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("eventhubs namespace create",  "event-hub", "Creates new Event Hub namespace.")]
+[CommandExample("Creates Event Hub namespace", "topaz eventhubs namespace create \\\n    --resource-group rg-test \\\n    --location \"westeurope\" \\\n    --name \"eh-namespace\" \\\n    --subscription-id \"07CB2605-9C16-46E9-A2BD-0A8D39E049E8\"")]
 public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Command<CreateEventHubNamespaceCommand.CreateEventHubCommandSettings>
 {
     public override int Execute(CommandContext context, CreateEventHubCommandSettings settings)
@@ -64,12 +67,16 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
     [UsedImplicitly]
     public sealed class CreateEventHubCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) hub name.")]
         [CommandOption("-n|--name")] public string? Name { get; set; }
 
+        [CommandOptionDefinition("(Required) resource group name.")]
         [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
 
+        [CommandOptionDefinition("(Required) Event Hub namespace location.")]
         [CommandOption("-l|--location")] public string? Location { get; set; }
         
+        [CommandOptionDefinition("(Required) subscription ID.")]
         [CommandOption("-s|--subscription-id")] public string SubscriptionId { get; set; } = null!;
     }
 }
