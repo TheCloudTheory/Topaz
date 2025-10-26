@@ -3,15 +3,16 @@ sidebar_position: 1
 ---
 
 # start
-
 Starts the emulator.
 
 ## Options
-* `-l|--log-level` - Sets the log level. Available values are: Debug, Information, Warning, Error
+* `-l, --log-level` - Sets the log level. Available values are: Debug, Information, Warning, Error
 * `--tenant-id` - Configures the tenant ID used when providing metadata endpoints
 * `--certificate-file` - Allows you to bring your own certificate (BYOC). Must be an RFC 7468 PEM-encoded certificate.
-* `--certificate-key` - Allows you to bring your own certificate (BYOC)
-* `--skip-dns-registration` - Allows you to skip DNS entries registration in the `hosts` file so you can run Topaz without elevated permissions
+* `--certificate-key` - Allows you to bring your own certificate (BYOC).
+* `--skip-dns-registration` - Allows you to skip DNS entries registration in the `hosts` file so you can run Topaz without elevated permissions.
+* `--enable-logging-to-file` - Tells the emulator to save logs to a file.
+* `--refresh-log` - Clears the logs file upon starting the emulator.
 
 ## Examples
 
