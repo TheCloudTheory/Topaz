@@ -22,14 +22,14 @@ public sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.Sta
 
         if (settings.TenantId == null)
         {
-            logger.LogWarning(
-                "No tenant specified. Using --tenant-id options required if you want to use Topaz with Azure CLI.");
+            Console.WriteLine(
+                "No tenant specified. Using --tenant-id options is required if you want to use Topaz with Azure CLI.");
         }
 
         if (settings.EnableLoggingToFile)
         {
             logger.EnableLoggingToFile(settings.RefreshLog);
-            logger.LogInformation("Enabled logging to file.");
+            Console.WriteLine("Enabled logging to file.");
         }
 
         var host = new Topaz.Host.Host(new GlobalOptions

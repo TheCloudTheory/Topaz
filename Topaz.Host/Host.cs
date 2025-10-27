@@ -45,9 +45,14 @@ public class Host(GlobalOptions options, ITopazLogger logger)
 
     public void Start()
     {
+        Console.Title = "--- Topaz.Host ---";
+        
+        Console.WriteLine("");
+        Console.WriteLine("==============================");
         Console.WriteLine("Topaz.Host - Welcome!");
         Console.WriteLine($"Version: {ThisAssembly.AssemblyInformationalVersion}");
         Console.WriteLine("==============================");
+        Console.WriteLine("");
         
         var services = new IServiceDefinition[] {
             new AzureStorageService(logger),
@@ -81,6 +86,14 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             Console.WriteLine("Registration of DNS entries is disabled. Make sure you've added those entries manually before running Topaz.");
         }
         
+        Console.WriteLine();
+        Console.WriteLine("Enabled services:");
+        
+        foreach (var service in services)
+        {
+            Console.WriteLine($"- {service.Name}: {string.Join(", ", service.Endpoints.Select(e => $"{e.PortAndProtocol.Protocol} -> {e.PortAndProtocol.Port}"))}");
+        }
+        
         var httpEndpoints = new List<IEndpointDefinition>();
         var amqpEndpoints = new List<IEndpointDefinition>();
 
@@ -89,14 +102,6 @@ public class Host(GlobalOptions options, ITopazLogger logger)
 
         CreateWebserverForHttpEndpoints([.. httpEndpoints]);
         CreateAmqpListenersForAmpqEndpoints([.. amqpEndpoints]);
-
-        Console.WriteLine();
-        Console.WriteLine("Enabled services:");
-        
-        foreach (var service in services)
-        {
-            Console.WriteLine($"- {service.Name}: {string.Join(", ", service.Endpoints.Select(e => $"{e.PortAndProtocol.Protocol} -> {e.PortAndProtocol.Port}"))}");
-        }
         
         Console.WriteLine();
         Console.WriteLine("Topaz.Host listening to incoming requests...");
