@@ -63,8 +63,10 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         };
 
         // Topaz requires elevated permissions to run as there may be operations (like modifying entries
-        // in the hosts file), which will require them to function properly.
-        if (!Environment.IsPrivilegedProcess && !options.SkipRegistrationOfDnsEntries)
+        // in the hosts file), which will require them to function properly. Note that this is relevant
+        // only if Topaz runs directly inside a host - for containerized environment, making changes to the
+        // hosts file makes no sense as requests are coming from the outside of the container.
+        if (NeedsToRunAsPrivilegedProcess())
         {
             Console.Error.WriteLine("Topaz.Host - Not Privileged! You must run Topaz with elevated permissions in order for it to work properly. If you want to run Topaz without elevated permissions, use `--skip-dns-registration` option and set it to `true`.");
             return;
@@ -99,6 +101,11 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         Console.WriteLine();
         Console.WriteLine("Topaz.Host listening to incoming requests...");
         Console.WriteLine();
+    }
+
+    private bool NeedsToRunAsPrivilegedProcess()
+    {
+        return !Environment.IsPrivilegedProcess && !options.SkipRegistrationOfDnsEntries && !IsRunningInsideContainer();
     }
 
     private void CreateAmqpListenersForAmpqEndpoints(IEndpointDefinition[] endpoints)
