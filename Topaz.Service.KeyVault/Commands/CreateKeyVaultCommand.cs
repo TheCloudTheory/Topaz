@@ -2,19 +2,32 @@ using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.KeyVault.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("keyvault create",  "key-vault", "Creates a new Azure Key Vault.")]
+[CommandExample("Creates a new Key Vault", "topaz keyvault create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"kvlocal\" \\\n    --location \"westeurope\" \\\n    --resource-group \"rg-local\"")]
 public class CreateKeyVaultCommand(ITopazLogger logger) : Command<CreateKeyVaultCommand.CreateKeyVaultCommandSettings>
 {
     public override int Execute(CommandContext context, CreateKeyVaultCommandSettings settings)
     {
         logger.LogInformation($"Executing {nameof(CreateKeyVaultCommand)}.{nameof(Execute)}.");
 
+        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = new KeyVaultControlPlane(new ResourceProvider(logger));
-        var kv = controlPlane.Create(settings.Name!, ResourceGroupIdentifier.From(settings.ResourceGroup!), settings.Location!, SubscriptionIdentifier.From(settings.SubscriptionId!));
+        var existingKeyVault = controlPlane.CheckName(subscriptionIdentifier, settings.Name!, null);
+
+        if (!existingKeyVault.response.NameAvailable)
+        {
+            logger.LogError($"The specified vault: {settings.Name} already exists.");
+            return 1;
+        }
+        
+        var kv = controlPlane.Create(subscriptionIdentifier, resourceGroupIdentifier, settings.Location!, settings.Name!);
 
         logger.LogInformation(kv.ToString());
 
@@ -44,15 +57,19 @@ public class CreateKeyVaultCommand(ITopazLogger logger) : Command<CreateKeyVault
     [UsedImplicitly]
     public sealed class CreateKeyVaultCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) vault name")]
         [CommandOption("-n|--name")]
         public string? Name { get; set; }
 
+        [CommandOptionDefinition("(Required) resource group name")]
         [CommandOption("-g|--resource-group")]
         public string? ResourceGroup { get; set; }
 
+        [CommandOptionDefinition("(Required) Key Vault location")]
         [CommandOption("-l|--location")]
         public string? Location { get; set; }
 
+        [CommandOptionDefinition("(Required) subscription ID")]
         [CommandOption("-s|--subscription-id")]
         public string? SubscriptionId { get; set; }
     }

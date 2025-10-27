@@ -32,13 +32,13 @@ public record GlobalDnsEntries
             };
         }
         
-        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, JsonSerializer.Serialize(entries));
+        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, JsonSerializer.Serialize(entries, GlobalSettings.JsonOptionsCli));
     }
 
     private static GlobalDnsEntries? GetDnsEntriesFromFile()
     {
         var file = File.ReadAllText(GlobalSettings.GlobalDnsEntriesFilePath);
-        var entries = JsonSerializer.Deserialize<GlobalDnsEntries>(file);
+        var entries = JsonSerializer.Deserialize<GlobalDnsEntries>(file, GlobalSettings.JsonOptions);
         return entries;
     }
 
@@ -82,9 +82,12 @@ public record GlobalDnsEntries
             // which may have entries related to the subscription
             foreach (var service in entries.Services)
             {
-                if (service.Key.Contains(subscriptionIdentifier.ToString()))
+                foreach (var instance in service.Value)
                 {
-                    entries.Services.Remove(service.Key);
+                    if (instance.Key.Contains(subscriptionIdentifier.ToString()))
+                    {
+                        entries.Services.Remove(service.Key);
+                    }
                 }
             }
         }

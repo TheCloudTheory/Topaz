@@ -145,4 +145,24 @@ public class KeyVaultTests
             Assert.That(result, Is.EqualTo(0));
         });
     }
+
+
+    [Test]
+    public async Task KeyVaultTests_WhenDuplicatedKeyVaultIsAttemptedToBeCreated_ItShouldFailGracefullyWithMeaningfulError()
+    {
+        var result = await Program.Main([
+            "keyvault",
+            "create",
+            "--name",
+            VaultName,
+            "-g",
+            ResourceGroupName,
+            "--location",
+            "westeurope",
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+        
+        Assert.That(result, Is.EqualTo(1));
+    }
 }

@@ -10,7 +10,7 @@ namespace Topaz.Service.KeyVault;
 
 internal sealed class KeyVaultControlPlane(ResourceProvider provider)
 {
-    public Models.KeyVault Create(string name, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location, SubscriptionIdentifier subscriptionIdentifier)
+    public Models.KeyVault Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location, string name)
     {
         var model = new Models.KeyVault(name, resourceGroupIdentifier.Value, location, subscriptionIdentifier.Value.ToString());
 
