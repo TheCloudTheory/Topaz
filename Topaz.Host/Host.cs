@@ -72,7 +72,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             return;
         }
 
-        if (!options.SkipRegistrationOfDnsEntries)
+        if (!options.SkipRegistrationOfDnsEntries && !IsRunningInsideContainer())
         {
             _dnsManager.ConfigureEntries();
         }
