@@ -60,9 +60,11 @@ public sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.Sta
         
         [CommandOptionDefinition("Allows you to bring your own certificate (BYOC).")]
         [CommandOption("--certificate-key")] public string? CertificateKey { get; set; }
-        
-        [CommandOptionDefinition("Allows you to skip DNS entries registration in the `hosts` file so you can run Topaz without elevated permissions.")]
-        [CommandOption("--skip-dns-registration")] public bool SkipRegistrationOfDnsEntries { get; set; }
+
+        [CommandOptionDefinition(
+            "Allows you to skip DNS entries registration in the `hosts` file so you can run Topaz without elevated permissions.")]
+        [CommandOption("--skip-dns-registration")]
+        public bool SkipRegistrationOfDnsEntries { get; set; } = true;
         
         [CommandOptionDefinition("Tells the emulator to save logs to a file.")]
         [CommandOption("--enable-logging-to-file")] public bool EnableLoggingToFile { get; set; }
