@@ -10,18 +10,34 @@ namespace Topaz.Service.KeyVault;
 
 internal sealed class KeyVaultControlPlane(ResourceProvider provider)
 {
-    public Models.KeyVault Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location, string name)
+    public ControlPlaneOperationResult<KeyVaultResource> Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location, string keyVaultName)
     {
-        var model = new Models.KeyVault(name, resourceGroupIdentifier.Value, location, subscriptionIdentifier.Value.ToString());
+        var isNameValid = CheckIfKeyVaultNameIsValid(keyVaultName);
+        if (!isNameValid)
+        {
+            return new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Failed, null,
+                $"The vault name '{keyVaultName}' is invalid. A vault's name must be between 3-24 alphanumeric characters. The name must begin with a letter, end with a letter or digit, and not contain consecutive hyphens.",
+                "VaultNameNotValid");
+        }
+        
+        var resource = new KeyVaultResource(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, location, KeyVaultResourceProperties.Default);
 
-        provider.Create(subscriptionIdentifier, resourceGroupIdentifier, name, model);
+        provider.Create(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource);
 
-        return model;
+        return new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Created, resource, null, null);
     }
 
-    public (OperationResult result, KeyVaultResource resource) CreateOrUpdate(SubscriptionIdentifier subscriptionIdentifier,
+    public ControlPlaneOperationResult<KeyVaultResource> CreateOrUpdate(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName, CreateOrUpdateKeyVaultRequest request)
     {
+        var isNameValid = CheckIfKeyVaultNameIsValid(keyVaultName);
+        if (!isNameValid)
+        {
+            return new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Failed, null,
+                $"The vault name '{keyVaultName}' is invalid. A vault's name must be between 3-24 alphanumeric characters. The name must begin with a letter, end with a letter or digit, and not contain consecutive hyphens.",
+                "VaultNameNotValid");
+        }
+        
         var properties = new KeyVaultResourceProperties
         {
             Sku = new KeyVaultResourceProperties.KeyVaultSku()
@@ -36,7 +52,22 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource);
 
         // This operation must also support handling operation result when Key Vault was updated
-        return (OperationResult.Created, resource);
+        return new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Created, resource, null, null);
+    }
+
+    private bool CheckIfKeyVaultNameIsValid(string keyVaultName)
+    {
+        const int minLength = 3;
+        const int maxLength = 24;
+        
+        if (keyVaultName.Length is < minLength or > maxLength) return false;
+        if(!char.IsLetter(keyVaultName[0])) return false;
+        if(!char.IsLetter(keyVaultName[^1]) && !char.IsDigit(keyVaultName[^1])) return false;
+
+        var characters = keyVaultName.Select(c => c).ToArray();
+        if(characters.Any(c => !char.IsDigit(c) && !char.IsLetter(c) && c != '-')) return false;
+
+        return !characters.Where((t, index) => index != 0 && (t == '-' && characters[index - 1] == '-')).Any();
     }
 
     public (OperationResult result, KeyVaultResource? resource) Get(SubscriptionIdentifier subscriptionIdentifier,

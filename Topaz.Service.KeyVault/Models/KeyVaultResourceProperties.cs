@@ -13,4 +13,14 @@ internal sealed class KeyVaultResourceProperties
         public string? Family { get; set; }
         public string? Name { get; set; }
     }
+
+    public static KeyVaultResourceProperties Default => new()
+    {
+        TenantId = Guid.Empty,
+        Sku = new KeyVaultSku
+        {
+            Family = "A",
+            Name = "Standard"
+        }
+    };
 }

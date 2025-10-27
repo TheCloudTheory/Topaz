@@ -25,35 +25,29 @@ public static class HttpResponseMessageExtensions
             case ResourceNotFoundCode:
                 message = string.Format(ResourceNotFoundMessage, args);
                 error = new GenericErrorResponse(ResourceNotFoundCode, message);
-                
                 response.StatusCode = HttpStatusCode.NotFound;
-                response.Content = JsonContent.Create(error);
                 break;
             case EndpointNotFoundCode:
                 message = string.Format(EndpointNotFoundMessage, args);
                 error = new GenericErrorResponse(EndpointNotFoundCode, message);
-                
                 response.StatusCode = HttpStatusCode.NotFound;
-                response.Content = JsonContent.Create(error);
                 break;
             case ResourceGroupNotFoundCode:
                 message = string.Format(ResourceGroupNotFoundMessage, args);
                 error = new GenericErrorResponse(ResourceGroupNotFoundCode, message);
-                
                 response.StatusCode = HttpStatusCode.NotFound;
-                response.Content = JsonContent.Create(error);
                 break;
             case InternalErrorCode:
                 message = string.Format(InternalErrorMessage, args);
                 error = new GenericErrorResponse(InternalErrorCode, message);
-                
                 response.StatusCode = HttpStatusCode.InternalServerError;
-                response.Content = JsonContent.Create(error);
                 break;
             default:
+                error = new GenericErrorResponse(code, string.Format("{0}", args));
                 response.StatusCode = HttpStatusCode.InternalServerError;
-                response.Content = new StringContent("Unknown error");
                 break;
         }
+
+        response.Content = JsonContent.Create(error);
     }
 }

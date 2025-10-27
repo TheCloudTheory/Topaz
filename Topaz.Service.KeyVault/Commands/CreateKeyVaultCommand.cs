@@ -3,6 +3,7 @@ using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.KeyVault.Commands;
@@ -27,9 +28,14 @@ public class CreateKeyVaultCommand(ITopazLogger logger) : Command<CreateKeyVault
             return 1;
         }
         
-        var kv = controlPlane.Create(subscriptionIdentifier, resourceGroupIdentifier, settings.Location!, settings.Name!);
+        var operation = controlPlane.Create(subscriptionIdentifier, resourceGroupIdentifier, settings.Location!, settings.Name!);
+        if (operation.Result != OperationResult.Created)
+        {
+            logger.LogError($"({operation.Code}) {operation.Reason}");
+            return 1;
+        }
 
-        logger.LogInformation(kv.ToString());
+        logger.LogInformation(operation.Resource!.ToString());
 
         return 0;
     }

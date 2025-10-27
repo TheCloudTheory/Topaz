@@ -165,4 +165,29 @@ public class KeyVaultTests
         
         Assert.That(result, Is.EqualTo(1));
     }
+    
+    [Test]
+    [TestCase("kv-topaz-asdgdahsdhjajhsdjhagsdhgajgsd")]
+    [TestCase("kv")]
+    [TestCase("00kvtest")]
+    [TestCase("kvtest-")]
+    [TestCase("kv_test")]
+    [TestCase("kv--test")]
+    public async Task KeyVaultTests_WhenInvalidKeyVaultNameIsProvided_ItShouldFailGracefullyWithMeaningfulError(string invalidName)
+    {
+        var result = await Program.Main([
+            "keyvault",
+            "create",
+            "--name",
+            invalidName,
+            "-g",
+            ResourceGroupName,
+            "--location",
+            "westeurope",
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+        
+        Assert.That(result, Is.EqualTo(1));
+    }
 }

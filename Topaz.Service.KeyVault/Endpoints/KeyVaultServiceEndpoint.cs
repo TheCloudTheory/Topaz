@@ -159,9 +159,14 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
 
         var result = _controlPlane.CreateOrUpdate(subscriptionId, resourceGroup, keyVaultName, request);
-
-        response.StatusCode = result.result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
-        response.Content = new StringContent(result.resource.ToString());
+        if (result.Result != OperationResult.Created || result.Resource == null)
+        {
+            response.CreateErrorResponse(result.Code!, result.Reason!);
+            return;
+        }
+        
+        response.StatusCode = result.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
+        response.Content = new StringContent(result.Resource.ToString());
     }
     
     private void HandleListSubscriptionResourcesRequest(SubscriptionIdentifier subscriptionId, string? filter, HttpResponseMessage response)
