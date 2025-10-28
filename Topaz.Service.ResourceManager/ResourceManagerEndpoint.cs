@@ -90,7 +90,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
         }
 
         var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
-        if (resourceGroup.result == OperationResult.NotFound)
+        if (resourceGroup.Result == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
@@ -112,7 +112,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
         }
 
         var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
-        if (resourceGroup.result == OperationResult.NotFound)
+        if (resourceGroup.Result == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
@@ -145,7 +145,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
         }
 
         var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
-        if (resourceGroup.result == OperationResult.NotFound)
+        if (resourceGroup.Result == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
@@ -174,7 +174,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
         }
 
         var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
-        if (resourceGroup.result == OperationResult.NotFound)
+        if (resourceGroup.Result == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
@@ -191,7 +191,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
         }
 
         var result = _controlPlane.CreateOrUpdateDeployment(subscriptionIdentifier, resourceGroupIdentifier,
-            deploymentName, JsonSerializer.Serialize(request.Properties.Template), resourceGroup.resource!.Location,
+            deploymentName, JsonSerializer.Serialize(request.Properties.Template), resourceGroup.Resource!.Location,
             request.Properties.Mode);
         
         response.StatusCode = HttpStatusCode.OK;

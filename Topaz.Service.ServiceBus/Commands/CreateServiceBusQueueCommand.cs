@@ -21,7 +21,7 @@ public class CreateServiceBusQueueCommand(ITopazLogger logger) : Command<CreateS
         var resourceGroupControlPlane =
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
         var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
-        if (resourceGroup.result == OperationResult.NotFound || resourceGroup.resource == null)
+        if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {
             logger.LogError($"Resource group {resourceGroupIdentifier} not found.");
             return 1;
@@ -36,7 +36,7 @@ public class CreateServiceBusQueueCommand(ITopazLogger logger) : Command<CreateS
             return 1;
         }
         
-        var queue = controlPlane.CreateOrUpdateQueue(resourceGroup.resource.GetSubscription(), resourceGroupIdentifier, namespaceIdentifier, settings.Name!, new CreateOrUpdateServiceBusQueueRequest());
+        var queue = controlPlane.CreateOrUpdateQueue(resourceGroup.Resource.GetSubscription(), resourceGroupIdentifier, namespaceIdentifier, settings.Name!, new CreateOrUpdateServiceBusQueueRequest());
         if (queue.result == OperationResult.Failed || queue.resource == null)
         {
             logger.LogError($"There was a problem creating queue '{settings.Name!}'.");

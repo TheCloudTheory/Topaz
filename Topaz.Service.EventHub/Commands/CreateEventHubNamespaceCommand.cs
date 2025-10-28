@@ -23,7 +23,7 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
         var resourceGroupControlPlane =
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
         var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(Guid.Parse(settings.SubscriptionId)), resourceGroupIdentifier);
-        if (resourceGroup.result == OperationResult.NotFound || resourceGroup.resource == null)
+        if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {
             logger.LogError($"ResourceGroup {resourceGroupIdentifier} not found.");
             return 1;
@@ -31,7 +31,7 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
 
         var controlPlane = new EventHubServiceControlPlane(new ResourceProvider(logger), logger);
         var request = new CreateOrUpdateEventHubNamespaceRequest();
-        var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.resource.GetSubscription(), resourceGroupIdentifier,
+        var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.Resource.GetSubscription(), resourceGroupIdentifier,
             settings.Location!, EventHubNamespaceIdentifier.From(settings.Name!), request);
 
         logger.LogInformation(ns.ToString());

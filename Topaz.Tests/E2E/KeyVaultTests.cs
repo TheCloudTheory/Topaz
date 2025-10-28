@@ -60,7 +60,7 @@ public class KeyVaultTests
             "--name",
             "test",
             "-g",
-            "rg-test",
+            ResourceGroupName,
             "--subscription-id",
             SubscriptionId.ToString(),
         ]);
@@ -71,7 +71,7 @@ public class KeyVaultTests
             "--name",
             "test",
             "-g",
-            "rg-test",
+            ResourceGroupName,
             "--location",
             "westeurope",
             "--subscription-id",

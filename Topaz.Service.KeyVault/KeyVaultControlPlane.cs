@@ -3,21 +3,34 @@ using Topaz.Dns;
 using Topaz.Service.KeyVault.Models;
 using Topaz.Service.KeyVault.Models.Requests;
 using Topaz.Service.KeyVault.Models.Responses;
+using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.KeyVault;
 
-internal sealed class KeyVaultControlPlane(ResourceProvider provider)
+internal sealed class KeyVaultControlPlane(
+    KeyVaultResourceProvider provider,
+    ResourceGroupControlPlane resourceGroupControlPlane)
 {
+    private const string InvalidVaultNameMessageTemplate = "The vault name '{0}' is invalid. A vault's name must be between 3-24 alphanumeric characters. The name must begin with a letter, end with a letter or digit, and not contain consecutive hyphens.";
+
     public ControlPlaneOperationResult<KeyVaultResource> Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location, string keyVaultName)
     {
         var isNameValid = CheckIfKeyVaultNameIsValid(keyVaultName);
         if (!isNameValid)
         {
             return new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Failed, null,
-                $"The vault name '{keyVaultName}' is invalid. A vault's name must be between 3-24 alphanumeric characters. The name must begin with a letter, end with a letter or digit, and not contain consecutive hyphens.",
+                string.Format(InvalidVaultNameMessageTemplate, keyVaultName),
                 "VaultNameNotValid");
+        }
+
+        var resourceGroupOperation = resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Failed, null,
+                resourceGroupOperation.Reason,
+                resourceGroupOperation.Code);
         }
         
         var resource = new KeyVaultResource(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, location, KeyVaultResourceProperties.Default);
@@ -34,8 +47,16 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
         if (!isNameValid)
         {
             return new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Failed, null,
-                $"The vault name '{keyVaultName}' is invalid. A vault's name must be between 3-24 alphanumeric characters. The name must begin with a letter, end with a letter or digit, and not contain consecutive hyphens.",
+                string.Format(InvalidVaultNameMessageTemplate, keyVaultName),
                 "VaultNameNotValid");
+        }
+        
+        var resourceGroupOperation = resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Failed, null,
+                resourceGroupOperation.Reason,
+                resourceGroupOperation.Code);
         }
         
         var properties = new KeyVaultResourceProperties
@@ -79,6 +100,17 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
 
     public (OperationResult result, CheckNameResponse response) CheckName(SubscriptionIdentifier subscriptionIdentifier, string keyVaultName, string? resourceType)
     {
+        var isNameValid = CheckIfKeyVaultNameIsValid(keyVaultName);
+        if (!isNameValid)
+        {
+            return (OperationResult.Success,
+                new CheckNameResponse
+                {
+                    NameAvailable = false, Reason = CheckNameResponse.NoAvailabilityReason.AccountNameInvalid,
+                    Message = string.Format(InvalidVaultNameMessageTemplate, keyVaultName)
+                });
+        }
+        
         var dnsEntry = GlobalDnsEntries.GetEntry(KeyVaultService.UniqueName, keyVaultName);
         if (dnsEntry == null)
         {
@@ -97,8 +129,13 @@ internal sealed class KeyVaultControlPlane(ResourceProvider provider)
         {
             return (OperationResult.Success, new CheckNameResponse { NameAvailable = true });
         }
-        
-        return (OperationResult.Success, new CheckNameResponse { NameAvailable = false });
+
+        return (OperationResult.Success,
+            new CheckNameResponse
+            {
+                NameAvailable = false, Reason = CheckNameResponse.NoAvailabilityReason.AlreadyExists,
+                Message = $"The name '{keyVaultName}' is already in use."
+            });
     }
     
     public (OperationResult result, KeyVaultResource?[]? resource) ListBySubscription(SubscriptionIdentifier subscriptionIdentifier)

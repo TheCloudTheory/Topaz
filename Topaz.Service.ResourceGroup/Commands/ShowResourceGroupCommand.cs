@@ -17,7 +17,7 @@ public sealed class ShowResourceGroupCommand(ITopazLogger logger) : Command<Show
         var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
         var operation = controlPlane.Get(new SubscriptionIdentifier(Guid.Parse(settings.SubscriptionId)), new ResourceGroupIdentifier(settings.Name!));
 
-        logger.LogInformation(JsonSerializer.Serialize(operation.resource, GlobalSettings.JsonOptionsCli));
+        logger.LogInformation(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
 
         return 0;
     }

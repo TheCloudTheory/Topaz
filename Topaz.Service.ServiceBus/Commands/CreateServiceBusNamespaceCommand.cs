@@ -20,7 +20,7 @@ public sealed class CreateServiceBusNamespaceCommand(ITopazLogger logger) : Comm
         var resourceGroupControlPlane =
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
         var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
-        if (resourceGroup.result == OperationResult.NotFound || resourceGroup.resource == null)
+        if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {
             logger.LogError($"ResourceGroup {resourceGroupIdentifier} not found.");
             return 1;
@@ -29,7 +29,7 @@ public sealed class CreateServiceBusNamespaceCommand(ITopazLogger logger) : Comm
         var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(settings.Name!);
         var controlPlane = new ServiceBusServiceControlPlane(new ResourceProvider(logger), logger);
         var request = new CreateOrUpdateServiceBusNamespaceRequest();
-        var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.resource.GetSubscription(), resourceGroupIdentifier, resourceGroup.resource.Location, namespaceIdentifier, request);
+        var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.Resource.GetSubscription(), resourceGroupIdentifier, resourceGroup.Resource.Location, namespaceIdentifier, request);
 
         if (ns.result == OperationResult.Failed || ns.resource == null)
         {

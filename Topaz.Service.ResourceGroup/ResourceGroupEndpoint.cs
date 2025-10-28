@@ -81,8 +81,8 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
     private void HandleDeleteResourceGroup(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         HttpResponseMessage response)
     {
-        var existingResourceGroup = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
-        if (existingResourceGroup.result == OperationResult.NotFound)
+        var resourceGroupOperation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
         {
             response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceGroupNotFoundCode, resourceGroupIdentifier);
             return;
@@ -109,14 +109,14 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
         ResourceGroupIdentifier resourceGroupIdentifier, HttpResponseMessage response)
     {
         var operation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
-        if (operation.result == OperationResult.NotFound || operation.resource == null)
+        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
 
         response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(operation.resource.ToString());
+        response.Content = new StringContent(operation.Resource.ToString());
     }
 
     private void HandleCreateOrUpdateResourceGroup(SubscriptionIdentifier subscriptionId, ResourceGroupIdentifier resourceGroup, Stream input, HttpResponseMessage response)

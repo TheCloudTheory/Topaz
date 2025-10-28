@@ -10,18 +10,28 @@ namespace Topaz.Service.ResourceGroup;
 
 public sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider groupResourceProvider, ITopazLogger logger)
 {
-    public (OperationResult result, ResourceGroupResource? resource) Get(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
+    private const string ResourceGroupNotFoundMessageTemplate =
+        "Resource group '{0}' could not be found";
+
+    private const string ResourceGroupNotFoundMessageCode = "ResourceGroupNotFound";
+    
+    public ControlPlaneOperationResult<ResourceGroupResource> Get(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
     {
         var resource = groupResourceProvider.GetAs<ResourceGroupResource>(subscriptionIdentifier, resourceGroupIdentifier);
-
         if (resource != null && !resource.IsInSubscription(subscriptionIdentifier))
         {
-            return (OperationResult.NotFound, null);
+            return new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.NotFound, null,
+                string.Format(ResourceGroupNotFoundMessageTemplate, resourceGroupIdentifier.Value),
+                ResourceGroupNotFoundMessageCode);
         }
         
         return resource == null ? 
-            (OperationResult.NotFound,  null) : 
-            (OperationResult.Success, resource);
+            new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.NotFound, null,
+                string.Format(ResourceGroupNotFoundMessageTemplate, resourceGroupIdentifier.Value),
+                ResourceGroupNotFoundMessageCode) : 
+            new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.Success, resource,
+                null,
+                null);
     }
 
     public (OperationResult result, ResourceGroupResource resource) Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location)

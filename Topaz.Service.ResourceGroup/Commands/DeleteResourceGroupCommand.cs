@@ -19,7 +19,7 @@ public sealed class DeleteResourceGroupCommand(ITopazLogger logger) : Command<De
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.Name!);
         var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
         var existingResource = controlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
-        if (existingResource.result == OperationResult.NotFound)
+        if (existingResource.Result == OperationResult.NotFound)
         {
             logger.LogError($"Resource group '{settings.Name}' could not be found.");
             return 1;

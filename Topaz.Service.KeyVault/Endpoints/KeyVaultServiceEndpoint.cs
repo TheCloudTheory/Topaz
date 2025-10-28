@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.KeyVault.Models.Requests;
+using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription.Models.Responses;
@@ -11,7 +12,7 @@ namespace Topaz.Service.KeyVault.Endpoints;
 
 public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly KeyVaultControlPlane _controlPlane = new(new ResourceProvider(logger));
+    private readonly KeyVaultControlPlane _controlPlane = new(new KeyVaultResourceProvider(logger), new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger));
     public string[] Endpoints => [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",

@@ -99,7 +99,7 @@ public class TopazFixture
         await _network!.DisposeAsync();
     }
 
-    protected async Task RunAzureCliCommand(string command, Action<JsonNode>? assertion = null)
+    protected async Task RunAzureCliCommand(string command, Action<JsonNode>? assertion = null, int exitCode = 0)
     {
         var result = await _containerAzureCli!.ExecAsync(new List<string>()
         {
@@ -108,7 +108,7 @@ public class TopazFixture
             command
         });
         
-        Assert.That(result.ExitCode, Is.EqualTo(0), 
+        Assert.That(result.ExitCode, Is.EqualTo(exitCode), 
             $"`{command}` command failed. STDOUT: {result.Stdout}, STDERR: {result.Stderr}");
         
         Console.WriteLine(result.Stdout);

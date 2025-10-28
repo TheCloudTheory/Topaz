@@ -7,7 +7,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault;
 
-internal sealed class KeyVaultDataPlane(ITopazLogger logger, ResourceProvider provider)
+internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourceProvider provider)
 {
     internal (Secret? data, HttpStatusCode code) SetSecret(Stream input, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)

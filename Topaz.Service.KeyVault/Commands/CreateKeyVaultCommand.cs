@@ -3,6 +3,7 @@ using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 
@@ -19,7 +20,7 @@ public class CreateKeyVaultCommand(ITopazLogger logger) : Command<CreateKeyVault
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = new KeyVaultControlPlane(new ResourceProvider(logger));
+        var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger), new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger));
         var existingKeyVault = controlPlane.CheckName(subscriptionIdentifier, settings.Name!, null);
 
         if (!existingKeyVault.response.NameAvailable)

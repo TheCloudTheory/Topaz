@@ -24,7 +24,7 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
         var resourceGroupControlPlane =
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
         var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
-        if (resourceGroup.result == OperationResult.NotFound || resourceGroup.resource == null)
+        if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {
             logger.LogError($"ResourceGroup {resourceGroupIdentifier} not found.");
             return 1;
@@ -34,9 +34,9 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
         var fakeRequest = GetEmptyTemplate();
 
         var deploymentName = string.IsNullOrWhiteSpace(settings.Name) ? "empty-template" : settings.Name;
-        var deployment = controlPlane.CreateOrUpdateDeployment(resourceGroup.resource.GetSubscription(),
+        var deployment = controlPlane.CreateOrUpdateDeployment(resourceGroup.Resource.GetSubscription(),
             resourceGroupIdentifier, deploymentName, fakeRequest,
-            resourceGroup.resource.Location, settings.Mode.ToString());
+            resourceGroup.Resource.Location, settings.Mode.ToString());
 
         logger.LogInformation(deployment.resource.ToString());
 

@@ -22,7 +22,7 @@ public sealed class CreateEventHubCommand(ITopazLogger logger) : Command<CreateE
         var resourceGroupControlPlane =
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
         var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
-        if (resourceGroup.result == OperationResult.NotFound || resourceGroup.resource == null)
+        if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {
             logger.LogError($"Resource group {resourceGroupIdentifier} not found.");
             return 1;
@@ -37,7 +37,7 @@ public sealed class CreateEventHubCommand(ITopazLogger logger) : Command<CreateE
             return 1;
         }
 
-        var queue = controlPlane.CreateOrUpdateEventHub(resourceGroup.resource.GetSubscription(),
+        var queue = controlPlane.CreateOrUpdateEventHub(resourceGroup.Resource.GetSubscription(),
             resourceGroupIdentifier, namespaceIdentifier, settings.Name!, new CreateOrUpdateEventHubRequest());
         if (queue.result == OperationResult.Failed || queue.resource == null)
         {

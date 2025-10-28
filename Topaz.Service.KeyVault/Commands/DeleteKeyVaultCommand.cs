@@ -15,7 +15,7 @@ public sealed class DeleteKeyVaultCommand(ITopazLogger logger) : Command<DeleteK
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var rp = new ResourceProvider(logger);
+        var rp = new KeyVaultResourceProvider(logger);
         
         rp.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 
