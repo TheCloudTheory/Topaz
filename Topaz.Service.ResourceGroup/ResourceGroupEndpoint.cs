@@ -134,13 +134,27 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
         }
         
         var operation = _controlPlane.CreateOrUpdate(subscriptionId, resourceGroup, request);
-        if (operation.result == OperationResult.Failed)
-        {
-            response.StatusCode = HttpStatusCode.InternalServerError;
-            return;
-        }
         
-        response.StatusCode = operation.result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
-        response.Content = new StringContent(operation.resource.ToString());
+        switch (operation.Result)
+        {
+            case OperationResult.Failed:
+                response.StatusCode = HttpStatusCode.InternalServerError;
+                response.Content = new StringContent(operation.ToString());
+            
+                return;
+            case OperationResult.NotFound:
+                response.StatusCode = HttpStatusCode.NotFound;
+                response.Content = new StringContent(operation.ToString());
+            
+                return;
+            case OperationResult.Created:
+            case OperationResult.Updated:
+            case OperationResult.Success:
+            case OperationResult.Deleted:
+            default:
+                response.StatusCode = operation.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
+                response.Content = new StringContent(operation.Resource!.ToString()!);
+                break;
+        }
     }
 }

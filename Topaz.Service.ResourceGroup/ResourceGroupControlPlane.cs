@@ -51,22 +51,29 @@ internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider gr
         return new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.Created, model, null, null);
     }
 
-    public (OperationResult result, ResourceGroupResource resource) CreateOrUpdate(
+    public ControlPlaneOperationResult<ResourceGroupResource> CreateOrUpdate(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         CreateOrUpdateResourceGroupRequest request)
     {
+        var subscriptionOperation = subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscriptionOperation.Result == OperationResult.NotFound || subscriptionOperation.Resource == null)
+        {
+            return new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.Failed, null,
+                subscriptionOperation.Reason, subscriptionOperation.Code);
+        }
+        
         var resource = groupResourceProvider.GetAs<ResourceGroupResource>(subscriptionIdentifier, resourceGroupIdentifier);
         if (resource != null)
         {
             logger.LogDebug($"Resource group {resourceGroupIdentifier} already exists.");
-            return (OperationResult.Updated, resource);
+            return new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.Updated, resource, null, null);
         }
         
         logger.LogDebug($"Creating resource group {resourceGroupIdentifier} because it doesn't exist.");
         var newResource = new ResourceGroupResource(subscriptionIdentifier, resourceGroupIdentifier.Value, request.Location!, new ResourceGroupProperties());
         groupResourceProvider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, null, newResource);
             
-        return (OperationResult.Created, newResource);
+        return new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.Created, newResource, null, null);
     }
     
     public (OperationResult result, ResourceGroupResource[] resources) List(SubscriptionIdentifier subscriptionIdentifier)
