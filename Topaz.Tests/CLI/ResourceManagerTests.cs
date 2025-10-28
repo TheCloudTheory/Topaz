@@ -5,6 +5,8 @@ namespace Topaz.Tests.CLI;
 public class ResourceManagerTests
 {
     private static readonly Guid SubscriptionId = Guid.Parse("DD4517F3-2D72-4EF6-A85A-1910C24F4566");
+
+    private const string SubscriptionName = "resource-manager-sub";
     private const string ResourceGroupName = "test";
     private const string MultipleDeploymentsResourceGroupName = "rg-test-multiple";
     private const string DeploymentName = "TestDeployment";
@@ -18,6 +20,16 @@ public class ResourceManagerTests
             "delete",
             "--id",
             SubscriptionId.ToString()
+        ]);
+        
+        await Program.Main(
+        [
+            "subscription",
+            "create",
+            "--id",
+            SubscriptionId.ToString(),
+            "--name",
+            SubscriptionName
         ]);
 
         await Program.Main([
