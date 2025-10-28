@@ -114,4 +114,20 @@ public class ResourceManagerTests
             Assert.That(File.Exists(deploymentPath), Is.True);
         });
     }
+
+    [Test]
+    public async Task ResourceManagerTests_WhenDeploymentIsRequestedForNotExistingResourceGroup_ItMustFail()
+    {
+        var result = await Program.Main([
+            "deployment",
+            "group",
+            "create",
+            "--resource-group",
+            "some-random-rg",
+            "--subscription-id",
+            SubscriptionId.ToString(),
+        ]);
+        
+        Assert.That(result, Is.EqualTo(1));
+    }
 }

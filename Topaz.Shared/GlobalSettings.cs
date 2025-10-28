@@ -10,7 +10,7 @@ public static class GlobalSettings
     {
          PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
          PropertyNameCaseInsensitive = true,
-         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
     
     public static readonly JsonSerializerOptions JsonOptionsCli = new()
@@ -18,7 +18,8 @@ public static class GlobalSettings
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true,
         WriteIndented = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
     public const ushort DefaultEventHubAmqpPort = 8888;
@@ -30,5 +31,5 @@ public static class GlobalSettings
     public const ushort DefaultResourceManagerPort = 8899;
     public const string MainEmulatorDirectory = ".topaz";
 
-    public static string GlobalDnsEntriesFilePath = Path.Combine(MainEmulatorDirectory, "global-dns.json");
+    public static readonly string GlobalDnsEntriesFilePath = Path.Combine(MainEmulatorDirectory, "global-dns.json");
 }
