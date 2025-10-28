@@ -5,6 +5,7 @@ using Topaz.Service.ResourceGroup;
 using Topaz.Service.ServiceBus.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Service.ServiceBus.Commands;
@@ -18,7 +19,7 @@ public sealed class CreateServiceBusNamespaceCommand(ITopazLogger logger) : Comm
 
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
         var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
         if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {

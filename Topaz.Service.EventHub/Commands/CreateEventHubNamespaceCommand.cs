@@ -6,6 +6,7 @@ using Topaz.Service.EventHub.Models.Requests;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
@@ -21,7 +22,7 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
         
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
         var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(Guid.Parse(settings.SubscriptionId)), resourceGroupIdentifier);
         if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {

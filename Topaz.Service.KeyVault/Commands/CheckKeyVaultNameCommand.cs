@@ -4,6 +4,7 @@ using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands;
@@ -18,7 +19,9 @@ public class CheckKeyVaultNameCommand(ITopazLogger logger) : Command<CheckKeyVau
         logger.LogInformation($"Executing {nameof(CheckKeyVaultNameCommand)}.{nameof(Execute)}.");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger), new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger));
+        var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
+                new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger));
         var kv = controlPlane.CheckName(subscriptionIdentifier, settings.Name!, settings.ResourceType);
 
         logger.LogInformation(kv.response.ToString());

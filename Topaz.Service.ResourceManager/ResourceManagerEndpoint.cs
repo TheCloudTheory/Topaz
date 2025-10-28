@@ -16,7 +16,7 @@ namespace Topaz.Service.ResourceManager;
 public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly SubscriptionControlPlane _subscriptionControlPlane = new(new SubscriptionResourceProvider(logger));
-    private readonly ResourceGroupControlPlane _resourceGroupControlPlane = new(new ResourceGroupResourceProvider(logger), logger);
+    private readonly ResourceGroupControlPlane _resourceGroupControlPlane = new(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
     private readonly ResourceManagerControlPlane _controlPlane = new(new ResourceManagerResourceProvider(logger));
     
     public string[] Endpoints =>

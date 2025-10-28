@@ -4,11 +4,12 @@ using Topaz.Service.ResourceGroup.Models;
 using Topaz.Service.ResourceGroup.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Service.ResourceGroup;
 
-public sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider groupResourceProvider, ITopazLogger logger)
+internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider groupResourceProvider, SubscriptionControlPlane subscriptionControlPlane, ITopazLogger logger)
 {
     private const string ResourceGroupNotFoundMessageTemplate =
         "Resource group '{0}' could not be found";
@@ -34,13 +35,20 @@ public sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider grou
                 null);
     }
 
-    public (OperationResult result, ResourceGroupResource resource) Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location)
+    public ControlPlaneOperationResult<ResourceGroupResource> Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location)
     {
+        var subscriptionOperation = subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscriptionOperation.Result == OperationResult.NotFound || subscriptionOperation.Resource == null)
+        {
+            return new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.Failed, null,
+                subscriptionOperation.Reason, subscriptionOperation.Code);
+        }
+        
         var model = new ResourceGroupResource(subscriptionIdentifier, resourceGroupIdentifier.Value, location, new ResourceGroupProperties());
 
         groupResourceProvider.Create(subscriptionIdentifier, resourceGroupIdentifier, null, model);
 
-        return (OperationResult.Created, model);
+        return new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.Created, model, null, null);
     }
 
     public (OperationResult result, ResourceGroupResource resource) CreateOrUpdate(

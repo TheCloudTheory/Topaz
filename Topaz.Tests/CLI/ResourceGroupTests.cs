@@ -160,4 +160,21 @@ public class ResourceGroupTests
             Assert.That(rg.Location, Is.EqualTo("northeurope"));
         });
     }
+    
+    [Test]
+    public async Task ResourceGroupTests_WhenResourceGroupIsGoingToBeCreatedInNonExistentSubscription_TheCommandMustFail()
+    {
+        var result = await Program.Main([
+            "group",
+            "create",
+            "--name",
+            ResourceGroupName,
+            "--location",
+            "westeurope",
+            "--subscription-id",
+            Guid.NewGuid().ToString(),
+        ]);
+
+        Assert.That(result, Is.EqualTo(1));
+    }
 }

@@ -2,7 +2,9 @@ using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
 
 namespace Topaz.Service.ResourceGroup.Commands;
 
@@ -15,10 +17,16 @@ public sealed class CreateResourceGroupCommand(ITopazLogger logger) : Command<Cr
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.Name!);
-        var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger);
-        var rg = controlPlane.Create(subscriptionIdentifier, resourceGroupIdentifier, settings.Location!);
+        var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+        var operation = controlPlane.Create(subscriptionIdentifier, resourceGroupIdentifier, settings.Location!);
 
-        logger.LogInformation(rg.resource.ToString());
+        if (operation.Result != OperationResult.Created)
+        {
+            logger.LogError(operation.ToString());
+            return 1;
+        }
+        
+        logger.LogInformation(operation.Resource!.ToString());
 
         return 0;
     }

@@ -7,13 +7,14 @@ using Topaz.Service.ResourceGroup.Models.Requests;
 using Topaz.Service.ResourceGroup.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Service.ResourceGroup;
 
 public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourceProvider, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly ResourceGroupControlPlane _controlPlane = new(groupResourceProvider, logger);
+    private readonly ResourceGroupControlPlane _controlPlane = new(groupResourceProvider, new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
 
     public string[] Endpoints => [

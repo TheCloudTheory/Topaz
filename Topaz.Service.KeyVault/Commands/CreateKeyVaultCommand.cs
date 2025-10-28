@@ -6,6 +6,7 @@ using Topaz.Documentation.Command;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
 
 namespace Topaz.Service.KeyVault.Commands;
 
@@ -20,7 +21,9 @@ public class CreateKeyVaultCommand(ITopazLogger logger) : Command<CreateKeyVault
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger), new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), logger));
+        var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
+                new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger));
         var existingKeyVault = controlPlane.CheckName(subscriptionIdentifier, settings.Name!, null);
 
         if (!existingKeyVault.response.NameAvailable)
