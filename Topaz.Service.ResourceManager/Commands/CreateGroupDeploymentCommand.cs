@@ -31,7 +31,7 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
         var controlPlane = new ResourceManagerControlPlane(new ResourceManagerResourceProvider(logger));
         var fakeRequest = GetTemplate(settings.TemplateFile);
 
-        var deploymentName = string.IsNullOrWhiteSpace(settings.Name) ? "empty-template" : settings.Name;
+        var deploymentName = DetermineDeploymentName(settings);
         var deployment = controlPlane.CreateOrUpdateDeployment(resourceGroup.Resource.GetSubscription(),
             resourceGroupIdentifier, deploymentName, fakeRequest,
             resourceGroup.Resource.Location, settings.Mode.ToString());
@@ -39,6 +39,20 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
         logger.LogInformation(deployment.resource.ToString());
 
         return 0;
+    }
+
+    private static string DetermineDeploymentName(CreateGroupDeploymentCommandSettings settings)
+    {
+        return string.IsNullOrWhiteSpace(settings.Name) ? string.IsNullOrWhiteSpace(settings.TemplateFile) ? 
+            "empty-template"
+            : GenerateDeploymentNameFromFilename(settings.TemplateFile) 
+                : settings.Name;
+    }
+
+    private static string GenerateDeploymentNameFromFilename(string templateFile)
+    {
+        var fi = new FileInfo(templateFile);
+        return fi.Name.Replace(fi.Extension, string.Empty);
     }
 
     private static string GetTemplate(string? templateFile)
