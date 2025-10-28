@@ -1,12 +1,9 @@
 using System.Reflection;
-using System.Text.Json;
-using Azure.Deployments.Core.Definitions.Schema;
-using Azure.Deployments.Core.Entities;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.ResourceGroup;
-using Topaz.Service.ResourceManager.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -14,6 +11,7 @@ using Topaz.Shared;
 namespace Topaz.Service.ResourceManager.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("deployment group create", "deployment", "Creates a new  deployment on a resource group level")]
 public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateGroupDeploymentCommand.CreateGroupDeploymentCommandSettings>
 {
     public override int Execute(CommandContext context, CreateGroupDeploymentCommandSettings settings)
@@ -31,7 +29,7 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
         }
         
         var controlPlane = new ResourceManagerControlPlane(new ResourceManagerResourceProvider(logger));
-        var fakeRequest = GetEmptyTemplate();
+        var fakeRequest = GetTemplate(settings.TemplateFile);
 
         var deploymentName = string.IsNullOrWhiteSpace(settings.Name) ? "empty-template" : settings.Name;
         var deployment = controlPlane.CreateOrUpdateDeployment(resourceGroup.Resource.GetSubscription(),
@@ -43,13 +41,21 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
         return 0;
     }
 
-    private static string GetEmptyTemplate()
+    private static string GetTemplate(string? templateFile)
     {
-        var emptyTemplate = Assembly.GetExecutingAssembly()
-            ?.GetManifestResourceStream("Topaz.Service.ResourceManager.empty-template.json");
-        if (emptyTemplate is null) throw new InvalidOperationException();
+        Stream template;
+        if (string.IsNullOrWhiteSpace(templateFile))
+        {
+            var resource = Assembly.GetExecutingAssembly()
+                .GetManifestResourceStream("Topaz.Service.ResourceManager.empty-template.json");
+            template = resource ?? throw new InvalidOperationException();
+        }
+        else
+        {
+            template = File.OpenRead(templateFile);
+        }
 
-        using var reader = new StreamReader(emptyTemplate);
+        using var reader = new StreamReader(template);
         return reader.ReadToEnd();
     }
 
@@ -64,23 +70,42 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
         {
             return ValidationResult.Error("Resource group subscription ID must be a valid GUID.");
         }
+
+        if (string.IsNullOrWhiteSpace(settings.TemplateFile))
+            return string.IsNullOrEmpty(settings.ResourceGroup)
+                ? ValidationResult.Error("Resource group name is required when creating a group deployment.")
+                : base.Validate(context, settings);
         
+        if (!File.Exists(settings.TemplateFile))
+        {
+            return ValidationResult.Error("Deployment template file does not exist.");
+        }
+
         return string.IsNullOrEmpty(settings.ResourceGroup) ? ValidationResult.Error("Resource group name is required when creating a group deployment.") : base.Validate(context, settings);
     }
     
     [UsedImplicitly]
     public sealed class CreateGroupDeploymentCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("Subscription ID for the deployment", true)]
         [CommandOption("-s|--subscription-id")]
         public string SubscriptionId { get; set; } = null!;
         
+        [CommandOptionDefinition("Name of the deployment")]
         [CommandOption("-n|--name")]
         public string? Name { get; set; }
 
+        [CommandOptionDefinition("Resource group for the deployment", true)]
         [CommandOption("-g|--resource-group")]
         public string? ResourceGroup { get; set; }
-
+        
+        [CommandOptionDefinition("Deployment mode. Available options are: Incremental, Complete")]
+        [CommandOption("--mode")]
         public DeploymentMode Mode { get; set; } = DeploymentMode.Incremental;
+        
+        [CommandOptionDefinition("The path to the template file or Bicep file.")]
+        [CommandOption("-f|--template-file")]
+        public string? TemplateFile { get; set; }
     }
 
     public enum DeploymentMode
