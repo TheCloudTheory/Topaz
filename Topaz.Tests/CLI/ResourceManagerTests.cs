@@ -6,6 +6,7 @@ public class ResourceManagerTests
 {
     private static readonly Guid SubscriptionId = Guid.Parse("DD4517F3-2D72-4EF6-A85A-1910C24F4566");
     private const string ResourceGroupName = "test";
+    private const string MultipleDeploymentsResourceGroupName = "rg-test-multiple";
     private const string DeploymentName = "TestDeployment";
 
     [SetUp]
@@ -129,5 +130,97 @@ public class ResourceManagerTests
         ]);
         
         Assert.That(result, Is.EqualTo(1));
+    }
+
+    [Test] public async Task ResourceManagerTests_WhenThereAreMultipleDeploymentsAvailable_TheyShouldBeReturned()
+    {
+        await Program.Main([
+            "group",
+            "delete",
+            "--name",
+            MultipleDeploymentsResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+        
+        await Program.Main([
+            "group",
+            "create",
+            "--name",
+            MultipleDeploymentsResourceGroupName,
+            "--location",
+            "westeurope",
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+        
+        await Program.Main([
+            "deployment",
+            "group",
+            "create",
+            "--resource-group",
+            MultipleDeploymentsResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString(),
+            "--template-file",
+            "templates/deployment1.json",
+            "--name",
+            "deployment1"
+        ]);
+        
+        await Program.Main([
+            "deployment",
+            "group",
+            "create",
+            "--resource-group",
+            MultipleDeploymentsResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString(),
+            "--template-file",
+            "templates/deployment1.json",
+            "--name",
+            "deployment2"
+        ]);
+        
+        await Program.Main([
+            "deployment",
+            "group",
+            "create",
+            "--resource-group",
+            MultipleDeploymentsResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString(),
+            "--template-file",
+            "templates/deployment1.json",
+            "--name",
+            "deployment3"
+        ]);
+
+        var deploymentPaths = new[]
+        {
+            Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+                SubscriptionId.ToString(), ".resource-group", MultipleDeploymentsResourceGroupName, ".resource-manager", "deployment1",
+                "metadata.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+                SubscriptionId.ToString(), ".resource-group", MultipleDeploymentsResourceGroupName, ".resource-manager", "deployment2",
+                "metadata.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+                SubscriptionId.ToString(), ".resource-group", MultipleDeploymentsResourceGroupName, ".resource-manager", "deployment3",
+                "metadata.json")
+        };
+        
+        Assert.That(deploymentPaths.Select(File.Exists).All(p => p), Is.True);
+        
+        var result = await Program.Main([
+            "deployment",
+            "group",
+            "list",
+            "--resource-group",
+            MultipleDeploymentsResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
+        ]);
+        
+        Assert.That(result, Is.EqualTo(0));
     }
 }

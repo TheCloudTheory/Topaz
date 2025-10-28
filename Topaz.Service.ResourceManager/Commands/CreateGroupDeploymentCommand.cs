@@ -77,12 +77,12 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
     {
         if(string.IsNullOrEmpty(settings.SubscriptionId))
         {
-            return ValidationResult.Error("Resource group subscription ID can't be null.");
+            return ValidationResult.Error("Group deployment subscription ID can't be null.");
         }
 
         if (!Guid.TryParse(settings.SubscriptionId, out _))
         {
-            return ValidationResult.Error("Resource group subscription ID must be a valid GUID.");
+            return ValidationResult.Error("Group deployment subscription ID must be a valid GUID.");
         }
 
         if (string.IsNullOrWhiteSpace(settings.TemplateFile))

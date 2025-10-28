@@ -12,6 +12,7 @@ public sealed class GenericResourceManagerCommand : IEmulatorCommand
             branch.AddBranch("group", groupDeployment =>
             {
                 groupDeployment.AddCommand<CreateGroupDeploymentCommand>("create");
+                groupDeployment.AddCommand<ListGroupDeploymentCommand>("list");
             });
         });
     }

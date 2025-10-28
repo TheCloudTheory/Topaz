@@ -59,15 +59,15 @@ internal sealed class ResourceManagerControlPlane(ResourceManagerResourceProvide
         return OperationResult.Deleted;
     }
 
-    public (OperationResult result, DeploymentResource?[] resource) GetDeployments(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
+    public (OperationResult result, DeploymentResource[] resource) GetDeployments(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
     {
-        var resources = provider.ListAs<DeploymentResource>(subscriptionIdentifier, resourceGroupIdentifier);
+        var resources = provider.ListAs<DeploymentResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8);
 
         var filteredBySubscriptionAndResourceGroup = resources.Where(deployment =>
-            deployment != null &&
             deployment.IsInSubscription(subscriptionIdentifier) &&
-            deployment.IsInResourceGroup(resourceGroupIdentifier));
+            deployment.IsInResourceGroup(resourceGroupIdentifier))
+            .ToArray();
         
-        return (OperationResult.Success,  filteredBySubscriptionAndResourceGroup.ToArray());
+        return (OperationResult.Success,  filteredBySubscriptionAndResourceGroup);
     }
 }

@@ -128,11 +128,11 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return metadataFiles.Where(file => file.Split("/").Length == (lookForNoOfSegments.HasValue ? lookForNoOfSegments.Value : defaultLookForNoOfSegments)).Select(File.ReadAllText);
     }
 
-    public IEnumerable<T?> ListAs<T>(SubscriptionIdentifier subscriptionIdentifier,
+    public IEnumerable<T> ListAs<T>(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier? resourceGroupIdentifier, string? id = null, uint? lookForNoOfSegments = null)
     {
         var contents = List(subscriptionIdentifier, resourceGroupIdentifier, id, lookForNoOfSegments);
-        return contents.Select(file => JsonSerializer.Deserialize<T>(file, GlobalSettings.JsonOptions));
+        return contents.Select(file => JsonSerializer.Deserialize<T>(file, GlobalSettings.JsonOptions)!);
     }
 
     public void Create<TModel>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id, TModel model)
