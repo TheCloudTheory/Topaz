@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Topaz.Service.ResourceManager.Models;
+using Topaz.Service.ResourceManager.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 
@@ -8,6 +9,9 @@ namespace Topaz.Service.ResourceManager;
 
 internal sealed class ResourceManagerControlPlane(ResourceManagerResourceProvider provider)
 {
+    private const string DeploymentNotFoundMessageTemplate = "Deployment {0} not found";
+    private const string DeploymentNotFoundCode = "DeploymentNotFound";
+    
     private readonly ArmTemplateParser _templateParser = new();
 
     public (OperationResult result, DeploymentResource resource) CreateOrUpdateDeployment(
@@ -28,7 +32,7 @@ internal sealed class ResourceManagerControlPlane(ResourceManagerResourceProvide
         return (OperationResult.Success, deploymentResource);
     }
 
-    public (OperationResult result, DeploymentResource? resource) GetDeployment(
+    public ControlPlaneOperationResult<DeploymentResource> GetDeployment(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string deploymentName)
     {
@@ -37,10 +41,11 @@ internal sealed class ResourceManagerControlPlane(ResourceManagerResourceProvide
             !resource.IsInSubscription(subscriptionIdentifier) ||
             !resource.IsInResourceGroup(resourceGroupIdentifier))
         {
-            return (OperationResult.NotFound, null);
+            return new ControlPlaneOperationResult<DeploymentResource>(OperationResult.NotFound, null,
+                string.Format(DeploymentNotFoundMessageTemplate, deploymentName), DeploymentNotFoundCode);
         }
 
-        return (OperationResult.Success, resource);
+        return new ControlPlaneOperationResult<DeploymentResource>(OperationResult.Success, resource, null, null);
     }
     
     public OperationResult DeleteDeployment(
@@ -69,5 +74,24 @@ internal sealed class ResourceManagerControlPlane(ResourceManagerResourceProvide
             .ToArray();
         
         return (OperationResult.Success,  filteredBySubscriptionAndResourceGroup);
+    }
+
+    public ControlPlaneOperationResult<DeploymentValidateResult> ValidateDeployment(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string deploymentName, string input)
+    {
+        var deploymentOperation = GetDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
+        if (deploymentOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<DeploymentValidateResult>(OperationResult.Failed,
+                new DeploymentValidateResult
+                {
+                    Error = new GenericErrorResponse(deploymentOperation.Code!, deploymentOperation.Reason!)
+                }, deploymentOperation.Reason, deploymentOperation.Code);
+        }
+        
+        return new ControlPlaneOperationResult<DeploymentValidateResult>(OperationResult.Success, new DeploymentValidateResult
+        {
+            Name = deploymentName,
+            Properties = deploymentOperation.Resource!.Properties
+        }, null, null);
     }
 }

@@ -91,7 +91,7 @@ public sealed class SubscriptionEndpoint(SubscriptionResourceProvider provider, 
         }
         
         var subscription = _controlPlane.Get(SubscriptionIdentifier.From(subscriptionId));
-        if (subscription.result is not OperationResult.NotFound)
+        if (subscription.Result is not OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.BadRequest;
             response.Content = new StringContent($"Subscription with ID {subscriptionId} already exists.");
@@ -117,13 +117,13 @@ public sealed class SubscriptionEndpoint(SubscriptionResourceProvider provider, 
     private void HandleGetSubscriptionRequest(string subscriptionId, HttpResponseMessage response)
     {
         var operation = _controlPlane.Get(SubscriptionIdentifier.From(subscriptionId));
-        if (operation.result == OperationResult.NotFound)
+        if (operation.Result == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
 
-        response.Content = JsonContent.Create(operation.resource, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+        response.Content = JsonContent.Create(operation.Resource, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
         response.StatusCode = HttpStatusCode.OK;
     }
 }

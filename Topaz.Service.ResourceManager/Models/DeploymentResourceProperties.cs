@@ -4,7 +4,7 @@ using Azure.ResourceManager.Resources.Models;
 
 namespace Topaz.Service.ResourceManager.Models;
 
-internal sealed class DeploymentResourceProperties
+public sealed class DeploymentResourceProperties
 {
     public string DebugSettingDetailLevel => "none";
     public IReadOnlyList<SubResource>? OutputResources { get; set; }

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.ResourceGroup;
+using Topaz.Service.ResourceGroup.Models;
 using Topaz.Service.ResourceManager.Models.Requests;
 using Topaz.Service.ResourceManager.Models.Responses;
 using Topaz.Service.Shared;
@@ -24,6 +25,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}",
         "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}",
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments",
+        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}/validate"
     ];
 
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
@@ -40,13 +42,31 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
             var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
             var resourceGroupIdentifier = ResourceGroupIdentifier.From(path.ExtractValueFromPath(4));
             var deploymentName = path.ExtractValueFromPath(8);
+            
+            var subscriptionOperation = _subscriptionControlPlane.Get(subscriptionIdentifier);
+            if (subscriptionOperation.Result == OperationResult.NotFound)
+            {
+                response.StatusCode =  HttpStatusCode.NotFound;
+                response.Content = new StringContent(subscriptionOperation.ToString());
+                
+                return response;
+            }
+
+            var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+            if (resourceGroupOperation.Result == OperationResult.NotFound || resourceGroupOperation.Resource == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                response.Content = new StringContent(subscriptionOperation.ToString());
+                
+                return response;
+            }
 
             switch (method)
             {
                 case "PUT":
                     if (!string.IsNullOrWhiteSpace(deploymentName))
                     {
-                        HandleCreateOrUpdateDeployment(response, subscriptionIdentifier, resourceGroupIdentifier, deploymentName, input);
+                        HandleCreateOrUpdateDeployment(response, subscriptionIdentifier, resourceGroupOperation.Resource, deploymentName, input);
                     }
                     break;
                 case "GET":
@@ -65,6 +85,13 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
                         HandleDeleteDeployment(response, subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
                     }
                     break;
+                case "POST":
+                    if (!string.IsNullOrWhiteSpace(deploymentName))
+                    {
+                        HandleValidateDeployment(response, subscriptionIdentifier, resourceGroupIdentifier,
+                            deploymentName, input);
+                    }
+                    break;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
                     break;
@@ -80,22 +107,18 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
         return response;
     }
 
+    private void HandleValidateDeployment(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string deploymentName, Stream input)
+    {
+        logger.LogDebug(nameof(ResourceManagerEndpoint), nameof(HandleValidateDeployment), subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
+        
+        using var reader = new StreamReader(input);
+        
+        var content = reader.ReadToEnd();
+        var result = _controlPlane.ValidateDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, content);
+    }
+
     private void HandleGetDeployments(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
     {
-        var subscription = _subscriptionControlPlane.Get(subscriptionIdentifier);
-        if (subscription.result == OperationResult.NotFound)
-        {
-            response.StatusCode =  HttpStatusCode.NotFound;
-            return;
-        }
-
-        var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
-        if (resourceGroup.Result == OperationResult.NotFound)
-        {
-            response.StatusCode = HttpStatusCode.NotFound;
-            return;
-        }
-
         var result = _controlPlane.GetDeployments(subscriptionIdentifier, resourceGroupIdentifier);
         
         response.StatusCode = HttpStatusCode.OK;
@@ -104,22 +127,8 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
 
     private void HandleDeleteDeployment(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string deploymentName)
     {
-        var subscription = _subscriptionControlPlane.Get(subscriptionIdentifier);
-        if (subscription.result == OperationResult.NotFound)
-        {
-            response.StatusCode =  HttpStatusCode.NotFound;
-            return;
-        }
-
-        var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
-        if (resourceGroup.Result == OperationResult.NotFound)
-        {
-            response.StatusCode = HttpStatusCode.NotFound;
-            return;
-        }
-        
-        var deployment = _controlPlane.GetDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
-        if (deployment.result == OperationResult.NotFound || deployment.resource == null)
+        var deploymentOperation = _controlPlane.GetDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
+        if (deploymentOperation.Result == OperationResult.NotFound || deploymentOperation.Resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
@@ -137,49 +146,21 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
 
     private void HandleGetDeployment(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string deploymentName)
     {
-        var subscription = _subscriptionControlPlane.Get(subscriptionIdentifier);
-        if (subscription.result == OperationResult.NotFound)
-        {
-            response.StatusCode =  HttpStatusCode.NotFound;
-            return;
-        }
-
-        var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
-        if (resourceGroup.Result == OperationResult.NotFound)
-        {
-            response.StatusCode = HttpStatusCode.NotFound;
-            return;
-        }
-        
-        var deployment = _controlPlane.GetDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
-        if (deployment.result == OperationResult.NotFound || deployment.resource == null)
+        var deploymentOperation = _controlPlane.GetDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
+        if (deploymentOperation.Result == OperationResult.NotFound || deploymentOperation.Resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
         
         response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(deployment.resource.ToString());
+        response.Content = new StringContent(deploymentOperation.Resource.ToString());
     }
 
     private void HandleCreateOrUpdateDeployment(HttpResponseMessage response,
-        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupResource resourceGroup,
         string deploymentName, Stream input)
     {
-        var subscription = _subscriptionControlPlane.Get(subscriptionIdentifier);
-        if (subscription.result == OperationResult.NotFound)
-        {
-            response.StatusCode =  HttpStatusCode.NotFound;
-            return;
-        }
-
-        var resourceGroup = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
-        if (resourceGroup.Result == OperationResult.NotFound)
-        {
-            response.StatusCode = HttpStatusCode.NotFound;
-            return;
-        }
-        
         using var reader = new StreamReader(input);
         
         var content = reader.ReadToEnd();
@@ -190,8 +171,8 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
             return;
         }
 
-        var result = _controlPlane.CreateOrUpdateDeployment(subscriptionIdentifier, resourceGroupIdentifier,
-            deploymentName, JsonSerializer.Serialize(request.Properties.Template), resourceGroup.Resource!.Location,
+        var result = _controlPlane.CreateOrUpdateDeployment(subscriptionIdentifier, resourceGroup.GetResourceGroup(),
+            deploymentName, JsonSerializer.Serialize(request.Properties.Template), resourceGroup.Location,
             request.Properties.Mode);
         
         response.StatusCode = HttpStatusCode.OK;

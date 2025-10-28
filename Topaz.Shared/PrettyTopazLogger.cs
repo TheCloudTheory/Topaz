@@ -18,6 +18,12 @@ public sealed class PrettyTopazLogger : ITopazLogger
         Log(message, LogLevel.Debug);
     }
 
+    public void LogDebug(string className, string methodName, params object[] parameters)
+    {
+        var message = $"[{className}.{methodName}]: {string.Join(", ", parameters)}";
+        LogDebug(message);
+    }
+
     public void LogError(Exception ex)
     {
         Log(string.Empty, LogLevel.Error, ex);

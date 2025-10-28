@@ -7,14 +7,20 @@ namespace Topaz.Service.Subscription;
 
 internal sealed class SubscriptionControlPlane(SubscriptionResourceProvider provider)
 {
-    public (OperationResult result, Models.Subscription? resource) Get(SubscriptionIdentifier subscriptionIdentifier)
+    private const string SubscriptionNotFoundMessageTemplate = "Subscription {0} not found";
+    private const string SubscriptionNotFoundCode = "SubscriptionNotFound";
+    
+    public ControlPlaneOperationResult<Models.Subscription> Get(SubscriptionIdentifier subscriptionIdentifier)
     {
         var data = provider.Get(subscriptionIdentifier, null, null);
-        if (data == null) return (OperationResult.NotFound, null);
+        if (data == null)
+            return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.NotFound, null,
+                string.Format(SubscriptionNotFoundMessageTemplate, subscriptionIdentifier.Value),
+                SubscriptionNotFoundCode);
         
         var model = JsonSerializer.Deserialize<Models.Subscription>(data, GlobalSettings.JsonOptions);
 
-        return (OperationResult.Success, model);
+        return new(OperationResult.Success, model, null, null);
     }
 
     public Models.Subscription Create(string? id, string name)

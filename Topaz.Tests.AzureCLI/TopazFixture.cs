@@ -70,6 +70,7 @@ public class TopazFixture
             .WithCommand("-c", "tail -f /dev/null")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CloudEnvironmentConfiguration), "cloud.json")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
+            .WithBindMount(Path.GetFullPath("./templates"), "/templates")
             .WithEnvironment("REQUESTS_CA_BUNDLE", "/usr/lib64/az/lib/python3.9/site-packages/certifi/cacert.pem")
             .Build();
         
