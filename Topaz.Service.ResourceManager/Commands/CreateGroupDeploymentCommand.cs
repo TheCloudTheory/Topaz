@@ -11,7 +11,7 @@ using Topaz.Shared;
 namespace Topaz.Service.ResourceManager.Commands;
 
 [UsedImplicitly]
-[CommandDefinition("deployment group create", "deployment", "Creates a new  deployment on a resource group level")]
+[CommandDefinition("deployment group create", "deployment", "Creates a new deployment on a resource group level")]
 public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateGroupDeploymentCommand.CreateGroupDeploymentCommandSettings>
 {
     public override int Execute(CommandContext context, CreateGroupDeploymentCommandSettings settings)

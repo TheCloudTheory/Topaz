@@ -130,7 +130,9 @@ foreach (var group in groups)
                 var optionNames = string.Join(", ",
                     new[] { shortNames, longNames }.Where(s => !string.IsNullOrEmpty(s)));
 
-                sb.AppendLine($"* `{optionNames}` - {optionDefinition.Description}");
+                var required = optionDefinition.Required ? "(Required) " : string.Empty;
+                
+                sb.AppendLine($"* `{optionNames}` - {required}{optionDefinition.Description}");
             }
         }
 
