@@ -84,7 +84,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     {
         if (subscriptionIdentifier == null)
         {
-            return TService.LocalDirectoryPath;
+            return TService.LocalDirectoryPath.Replace("/{subscriptionId}", string.Empty);
         }
 
         if (resourceGroupIdentifier != null)
@@ -114,7 +114,9 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         
         if (!Directory.Exists(servicePath))
         {
+            _logger.LogDebug($"Used `{servicePath}` to check if a service exists.");
             _logger.LogWarning("Trying to list resources for a non-existing service. If you see this warning, make sure you created a service (e.g subscription) before accessing its data.");
+            
             return [];
         }
         

@@ -38,7 +38,8 @@ public sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.Sta
             CertificateFile = settings.CertificateFile,
             CertificateKey = settings.CertificateKey,
             SkipRegistrationOfDnsEntries = settings.SkipRegistrationOfDnsEntries,
-            EnableLoggingToFile = settings.EnableLoggingToFile
+            EnableLoggingToFile = settings.EnableLoggingToFile,
+            DefaultSubscription = settings.DefaultSubscription
         }, logger);
 
         host.Start();
@@ -71,5 +72,8 @@ public sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.Sta
         
         [CommandOptionDefinition("Clears the logs file upon starting the emulator.")]
         [CommandOption("--refresh-log")] public bool RefreshLog { get; set; } = true;
+        
+        [CommandOptionDefinition("Creates a default subscription with the provided subscription ID")]
+        [CommandOption("--default-subscription")] public Guid? DefaultSubscription { get; set; }
     }
 }

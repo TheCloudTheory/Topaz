@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
@@ -43,7 +42,7 @@ public class TopazFixture
         _network = new NetworkBuilder()
             .WithName(Guid.NewGuid().ToString("D"))
             .Build();
-        
+
         _containerTopaz = new ContainerBuilder()
             .WithImage(TopazContainerImage)
             .WithPortBinding(8890)
@@ -55,7 +54,9 @@ public class TopazFixture
             .WithName("topaz.local.dev")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateKey), "/app/topaz.key")
-            .WithCommand("start", "--tenant-id", TenantId, "--certificate-file", "topaz.crt", "--certificate-key", "topaz.key", "--skip-dns-registration", "--log-level", "Debug")
+            .WithCommand("start", "--tenant-id", TenantId, "--certificate-file", "topaz.crt", "--certificate-key",
+                "topaz.key", "--skip-dns-registration", "--log-level", "Debug", "--default-subscription",
+                Guid.NewGuid().ToString())
             .Build();
 
         await _containerTopaz.StartAsync()
@@ -89,7 +90,7 @@ public class TopazFixture
 
         await RunAzureCliCommand("az cloud register -n Topaz --cloud-config @\"cloud.json\"");
         await RunAzureCliCommand("az cloud set -n Topaz");
-        await RunAzureCliCommand($"az login --service-principal --username {ClientId} --password {ClientSecret} --tenant {TenantId} --allow-no-subscriptions");
+        await RunAzureCliCommand($"az login --service-principal --username {ClientId} --password {ClientSecret} --tenant {TenantId}");
     }
 
     [OneTimeTearDown]

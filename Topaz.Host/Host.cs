@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
-using System.Text.Json;
 using Amqp;
 using Amqp.Listener;
 using Amqp.Types;
@@ -18,6 +17,7 @@ using Topaz.Service.ResourceGroup;
 using Topaz.Service.ResourceManager;
 using Topaz.Service.ServiceBus;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Services;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
@@ -92,6 +92,20 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         foreach (var service in services)
         {
             Console.WriteLine($"- {service.Name}: {string.Join(", ", service.Endpoints.Select(e => $"{e.PortAndProtocol.Protocol} -> {e.PortAndProtocol.Port}"))}");
+        }
+
+        if (options.DefaultSubscription.HasValue)
+        {
+            Console.WriteLine();
+            Console.WriteLine("Creating a default subscription...");
+
+            var subscriptionControlPlane = new SubscriptionControlPlane(new SubscriptionResourceProvider(logger));
+            var existingSubscriptionOperation = subscriptionControlPlane.Get(SubscriptionIdentifier.From(options.DefaultSubscription.Value));
+            if (existingSubscriptionOperation.Result == OperationResult.NotFound)
+            {
+                subscriptionControlPlane.Create(SubscriptionIdentifier.From(options.DefaultSubscription.Value), "Topaz - Default");
+                Console.WriteLine("Default subscription created.");
+            }
         }
         
         var httpEndpoints = new List<IEndpointDefinition>();

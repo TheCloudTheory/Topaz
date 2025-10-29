@@ -13,6 +13,7 @@ Starts the emulator.
 * `--skip-dns-registration` - Allows you to skip DNS entries registration in the `hosts` file so you can run Topaz without elevated permissions.
 * `--enable-logging-to-file` - Tells the emulator to save logs to a file.
 * `--refresh-log` - Clears the logs file upon starting the emulator.
+* `--default-subscription` - Creates a default subscription with the provided subscription ID
 
 ## Examples
 

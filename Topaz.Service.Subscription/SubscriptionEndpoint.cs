@@ -89,8 +89,9 @@ public sealed class SubscriptionEndpoint(SubscriptionResourceProvider provider, 
             response.Content = new StringContent($"Subscription ID can't be null.");
             return;
         }
-        
-        var subscription = _controlPlane.Get(SubscriptionIdentifier.From(subscriptionId));
+
+        var subscriptionIdentifier = SubscriptionIdentifier.From(subscriptionId);
+        var subscription = _controlPlane.Get(subscriptionIdentifier);
         if (subscription.Result is not OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.BadRequest;
@@ -110,7 +111,7 @@ public sealed class SubscriptionEndpoint(SubscriptionResourceProvider provider, 
             return;
         }
 
-        _controlPlane.Create(subscriptionId, request.SubscriptionName);
+        _controlPlane.Create(subscriptionIdentifier, request.SubscriptionName);
         response.StatusCode = HttpStatusCode.Created;
     }
 

@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.Subscription.Commands;
 
@@ -12,8 +13,9 @@ public sealed class CreateSubscriptionCommand(ITopazLogger logger) : Command<Cre
     {
         logger.LogInformation("Creating subscription...");
 
+        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
         var controlPlane = new SubscriptionControlPlane(new SubscriptionResourceProvider(logger));
-        var sa = controlPlane.Create(settings.Id, settings.Name!);
+        var sa = controlPlane.Create(subscriptionIdentifier, settings.Name!);
 
         logger.LogInformation(sa.ToString());
 

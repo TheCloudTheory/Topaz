@@ -20,17 +20,16 @@ internal sealed class SubscriptionControlPlane(SubscriptionResourceProvider prov
         
         var model = JsonSerializer.Deserialize<Models.Subscription>(data, GlobalSettings.JsonOptions);
 
-        return new(OperationResult.Success, model, null, null);
+        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Success, model, null, null);
     }
 
-    public Models.Subscription Create(string? id, string name)
+    public ControlPlaneOperationResult<Models.Subscription> Create(SubscriptionIdentifier subscriptionIdentifier, string name)
     {
-        var subscriptionIdentifier = string.IsNullOrEmpty(id) ? SubscriptionIdentifier.From(Guid.NewGuid().ToString()) : SubscriptionIdentifier.From(id);
         var model = new Models.Subscription(subscriptionIdentifier, name);
 
         provider.Create(subscriptionIdentifier, null, null, model);
 
-        return model;
+        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Created, model, null, null);
     }
 
     internal void Delete(SubscriptionIdentifier subscriptionIdentifier)
