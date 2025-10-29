@@ -164,6 +164,9 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
         using var reader = new StreamReader(input);
         
         var content = reader.ReadToEnd();
+        
+        logger.LogDebug($"Attempting to deserialize into {nameof(CreateDeploymentRequest)}: {content}");
+        
         var request = JsonSerializer.Deserialize<CreateDeploymentRequest>(content, GlobalSettings.JsonOptions);
         if (request?.Properties == null || string.IsNullOrWhiteSpace(request.Properties.Mode))
         {

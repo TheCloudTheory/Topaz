@@ -8,7 +8,7 @@ namespace Topaz.Tests.AzureCLI;
 
 public class TopazFixture
 {
-    private const string AzureCliContainerImage = "mcr.microsoft.com/azure-cli:2.62.0-cbl-mariner2.0";
+    private const string AzureCliContainerImage = "mcr.microsoft.com/azure-cli:2.78.0";
     private const string CloudEnvironmentConfiguration = """
                                                          {
                                                            "endpoints":{
@@ -72,7 +72,7 @@ public class TopazFixture
             .WithResourceMapping(Encoding.UTF8.GetBytes(CloudEnvironmentConfiguration), "cloud.json")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
             .WithBindMount(Path.GetFullPath("./templates"), "/templates")
-            .WithEnvironment("REQUESTS_CA_BUNDLE", "/usr/lib64/az/lib/python3.9/site-packages/certifi/cacert.pem")
+            .WithEnvironment("REQUESTS_CA_BUNDLE", "/usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem")
             .Build();
         
         // Act
@@ -82,7 +82,7 @@ public class TopazFixture
         {
             "/bin/sh",
             "-c",
-            "cat /tmp/topaz.crt >> /usr/lib64/az/lib/python3.9/site-packages/certifi/cacert.pem"
+            "cat /tmp/topaz.crt >> /usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem"
         });
         
         Assert.That(appendCertResult.ExitCode, Is.EqualTo(0), 
