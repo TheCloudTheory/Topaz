@@ -26,12 +26,6 @@ namespace Topaz.Host;
 
 public class Host(GlobalOptions options, ITopazLogger logger)
 {
-    /// <summary>
-    /// IP address used by Topaz to listen to incoming requests. Note that address is controlled by the
-    /// host itself while ports and protocols are the responsibility of appropriate services.
-    /// </summary>
-    private static readonly string TopazIpAddress = IsRunningInsideContainer() ? "0.0.0.0" : "127.0.2.1";
-
     private static bool IsRunningInsideContainer()
     {
         var env = Environment.GetEnvironmentVariable("TOPAZ_CONTAINERIZED");
@@ -42,6 +36,13 @@ public class Host(GlobalOptions options, ITopazLogger logger)
 
     private readonly Router _router = new(options, logger);
     private readonly DnsManager _dnsManager = new();
+
+    /// <summary>
+    /// IP address used by Topaz to listen to incoming requests. Note that address is controlled by the
+    /// host itself while ports and protocols are the responsibility of appropriate services.
+    /// </summary>
+    private readonly string _topazIpAddress = IsRunningInsideContainer() ? "0.0.0.0" :
+        string.IsNullOrWhiteSpace(options.EmulatorIpAddress) ? "127.0.0.1" : options.EmulatorIpAddress;
 
     public void Start()
     {
@@ -131,7 +132,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
     {
         foreach (var endpoint in endpoints)
         {
-            var address = new Address($"amqp://{TopazIpAddress}:{endpoint.PortAndProtocol.Port}");
+            var address = new Address($"amqp://{_topazIpAddress}:{endpoint.PortAndProtocol.Port}");
             var listener = new ContainerHost(address);
             
             // TODO: Support other authentication mechanism besides CBS
@@ -148,8 +149,19 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                 Trace.TraceLevel = TraceLevel.Frame;
                 Trace.TraceListener = (l, f, a) => logger.LogDebug(string.Format(f, a));
             }
-            
-            Threads.Add(new Thread(() => listener.Open()));
+
+            Threads.Add(new Thread(() =>
+            {
+                try
+                {
+                    listener.Open();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"Failed to open Topaz host listener for AMQP ({address}). Error: {ex.Message}.");
+                }
+            }));
+       
             Threads.Last().Start();
         }
     }
@@ -189,12 +201,12 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                     switch (httpEndpoint.PortAndProtocol.Protocol)
                     {
                         case Protocol.Http:
-                            logger.LogInformation($"Starting HTTP endpoint: {TopazIpAddress}:{httpEndpoint.PortAndProtocol.Port}");
-                            hostOptions.Listen(IPAddress.Parse(TopazIpAddress), httpEndpoint.PortAndProtocol.Port);
+                            logger.LogInformation($"Starting HTTP endpoint: {_topazIpAddress}:{httpEndpoint.PortAndProtocol.Port}");
+                            hostOptions.Listen(IPAddress.Parse(_topazIpAddress), httpEndpoint.PortAndProtocol.Port);
                             break;
                         case Protocol.Https:
-                            logger.LogInformation($"Starting HTTPS endpoint: {TopazIpAddress}:{httpEndpoint.PortAndProtocol.Port}");
-                            hostOptions.Listen(IPAddress.Parse(TopazIpAddress), httpEndpoint.PortAndProtocol.Port, listenOptions =>
+                            logger.LogInformation($"Starting HTTPS endpoint: {_topazIpAddress}:{httpEndpoint.PortAndProtocol.Port}");
+                            hostOptions.Listen(IPAddress.Parse(_topazIpAddress), httpEndpoint.PortAndProtocol.Port, listenOptions =>
                             {
                                 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                                 {
