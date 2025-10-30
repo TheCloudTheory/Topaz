@@ -3,15 +3,26 @@
 # This script modifies `/etc/hosts` to add DNS entries for local development.
 # It requires sudo privileges to run.
 
+if [ "$#" -gt 1 ]; then
+    echo "Usage: $0 [ip-address]"
+    echo "If no IP address is provided, 127.0.2.1 will be used as default."
+    exit 1
+fi
+
+# Use provided IP address or default to 127.0.2.1
+IP_ADDRESS="${1:-127.0.2.1}"
+
+echo "Using IP address: $IP_ADDRESS"
+
 # Define the DNS entries to be added
 DNS_ENTRIES=(
-    "127.0.2.1   topaz.local.dev"
-    "127.0.2.1   topaz.storage.table.local.dev"
-    "127.0.2.1   topaz.storage.blob.local.dev"
-    "127.0.2.1   topaz.storage.queue.local.dev"
-    "127.0.2.1   topaz.servicebus.local.dev"
-    "127.0.2.1   topaz.eventhub.local.dev"
-    "127.0.2.1   topaz.keyvault.local.dev"
+    "$IP_ADDRESS   topaz.local.dev"
+    "$IP_ADDRESS   topaz.storage.table.local.dev"
+    "$IP_ADDRESS   topaz.storage.blob.local.dev"
+    "$IP_ADDRESS   topaz.storage.queue.local.dev"
+    "$IP_ADDRESS   topaz.servicebus.local.dev"
+    "$IP_ADDRESS   topaz.eventhub.local.dev"
+    "$IP_ADDRESS   topaz.keyvault.local.dev"
 )
 
 # Backup the current /etc/hosts file

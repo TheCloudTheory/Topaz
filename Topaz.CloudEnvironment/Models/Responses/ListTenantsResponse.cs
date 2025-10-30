@@ -40,7 +40,7 @@ internal sealed class ListTenantsResponse
         public Guid TenantId { get; init; }
         public string DisplayName { get; init; }
         public string TenantType => "AAD";
-        public string DefaultDomain => "localhost";
+        public string DefaultDomain => "topaz.local.dev";
     }
     
     public override string ToString() => JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
