@@ -30,7 +30,7 @@ public class ListGroupDeploymentCommand(ITopazLogger logger) : Command<ListGroup
             return 1;
         }
         
-        var controlPlane = new ResourceManagerControlPlane(new ResourceManagerResourceProvider(logger));
+        var controlPlane = new ResourceManagerControlPlane(new ResourceManagerResourceProvider(logger), new TemplateDeploymentOrchestrator(logger));
         var deployments = controlPlane.GetDeployments(subscriptionIdentifier, resourceGroupIdentifier);
         
         logger.LogInformation(JsonSerializer.Serialize(deployments.resource));

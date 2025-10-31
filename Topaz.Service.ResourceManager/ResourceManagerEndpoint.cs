@@ -13,11 +13,11 @@ using Topaz.Shared;
 
 namespace Topaz.Service.ResourceManager;
 
-public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefinition
+public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploymentOrchestrator deploymentOrchestrator) : IEndpointDefinition
 {
     private readonly SubscriptionControlPlane _subscriptionControlPlane = new(new SubscriptionResourceProvider(logger));
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane = new(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
-    private readonly ResourceManagerControlPlane _controlPlane = new(new ResourceManagerResourceProvider(logger));
+    private readonly ResourceManagerControlPlane _controlPlane = new(new ResourceManagerResourceProvider(logger), deploymentOrchestrator);
     
     public string[] Endpoints =>
     [
@@ -178,7 +178,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger) : IEndpointDefi
             deploymentName, JsonSerializer.Serialize(request.Properties.Template), resourceGroup.Location,
             request.Properties.Mode);
         
-        response.StatusCode = HttpStatusCode.OK;
+        response.StatusCode = HttpStatusCode.Created;
         response.Content = new StringContent(JsonSerializer.Serialize(result.resource, GlobalSettings.JsonOptions), Encoding.UTF8, "application/json");
     }
 }

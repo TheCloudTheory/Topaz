@@ -7,7 +7,9 @@ using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ResourceManager;
 
-internal sealed class ResourceManagerControlPlane(ResourceManagerResourceProvider provider)
+internal sealed class ResourceManagerControlPlane(
+    ResourceManagerResourceProvider provider,
+    TemplateDeploymentOrchestrator templateDeploymentOrchestrator)
 {
     private const string DeploymentNotFoundMessageTemplate = "Deployment {0} not found";
     private const string DeploymentNotFoundCode = "DeploymentNotFound";
@@ -28,6 +30,8 @@ internal sealed class ResourceManagerControlPlane(ResourceManagerResourceProvide
             });
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, deploymentResource);
+
+        templateDeploymentOrchestrator.EnqueueTemplateDeployment(template);
         
         return (OperationResult.Success, deploymentResource);
     }

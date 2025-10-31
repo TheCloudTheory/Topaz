@@ -206,10 +206,12 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                             break;
                         case Protocol.Https:
                             logger.LogInformation($"Starting HTTPS endpoint: {_topazIpAddress}:{httpEndpoint.PortAndProtocol.Port}");
+                            
                             hostOptions.Listen(IPAddress.Parse(_topazIpAddress), httpEndpoint.PortAndProtocol.Port, listenOptions =>
                             {
                                 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                                 {
+                                    logger.LogInformation("Using the provided PFX certificate.");
                                     listenOptions.UseHttps("topaz.pfx", "qwerty");
                                 }
                                 else

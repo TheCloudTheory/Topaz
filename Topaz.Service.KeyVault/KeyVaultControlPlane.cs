@@ -13,6 +13,9 @@ internal sealed class KeyVaultControlPlane(
     KeyVaultResourceProvider provider,
     ResourceGroupControlPlane resourceGroupControlPlane)
 {
+    private const string KeyVaultNotFoundCode = "KeyVaultNotFound";
+    private const string KeyVaultNotFoundMessageTemplate =
+        "Key Vault '{0}' could not be found";
     private const string InvalidVaultNameMessageTemplate = "The vault name '{0}' is invalid. A vault's name must be between 3-24 alphanumeric characters. The name must begin with a letter, end with a letter or digit, and not contain consecutive hyphens.";
 
     public ControlPlaneOperationResult<KeyVaultResource> Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location, string keyVaultName)
@@ -91,11 +94,13 @@ internal sealed class KeyVaultControlPlane(
         return !characters.Where((t, index) => index != 0 && (t == '-' && characters[index - 1] == '-')).Any();
     }
 
-    public (OperationResult result, KeyVaultResource? resource) Get(SubscriptionIdentifier subscriptionIdentifier,
+    public ControlPlaneOperationResult<KeyVaultResource> Get(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName)
     {
         var resource = provider.GetAs<KeyVaultResource>(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
-        return resource == null ? (OperationResult.Failed, null) : (OperationResult.Created, resource);
+        return resource == null ? 
+            new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.NotFound, null, string.Format(KeyVaultNotFoundMessageTemplate, keyVaultName), KeyVaultNotFoundCode) 
+            : new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Created, resource, null, null);
     }
 
     public (OperationResult result, CheckNameResponse response) CheckName(SubscriptionIdentifier subscriptionIdentifier, string keyVaultName, string? resourceType)

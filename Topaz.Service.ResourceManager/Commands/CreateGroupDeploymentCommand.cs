@@ -29,7 +29,7 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
             return 1;
         }
         
-        var controlPlane = new ResourceManagerControlPlane(new ResourceManagerResourceProvider(logger));
+        var controlPlane = new ResourceManagerControlPlane(new ResourceManagerResourceProvider(logger), new TemplateDeploymentOrchestrator(logger));
         var fakeRequest = GetTemplate(settings.TemplateFile);
 
         var deploymentName = DetermineDeploymentName(settings);

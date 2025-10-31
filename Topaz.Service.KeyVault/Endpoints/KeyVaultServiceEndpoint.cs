@@ -101,7 +101,7 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
     private void HandleDeleteKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,  string keyVaultName)
     {
         var existingKeyVault = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
-        switch (existingKeyVault.result)
+        switch (existingKeyVault.Result)
         {
             case OperationResult.NotFound:
                 response.StatusCode = HttpStatusCode.NotFound;
@@ -138,15 +138,14 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
     private void HandleGetKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName)
     {
         var vault = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
-        if (vault.result == OperationResult.Failed || vault.resource == null)
+        if (vault.Result == OperationResult.NotFound || vault.Resource == null)
         {
-            logger.LogError("There was an error getting the Key Vault.");
-            response.StatusCode = HttpStatusCode.InternalServerError;
+            response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
         
         response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(vault.resource.ToString());
+        response.Content = new StringContent(vault.Resource.ToString());
     }
 
     private void HandleCreateUpdateKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionId,

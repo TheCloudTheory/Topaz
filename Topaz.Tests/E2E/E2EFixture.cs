@@ -6,7 +6,7 @@ namespace Topaz.Tests.E2E;
 public class E2EFixture
 {
     private static Task? _topaz;
-    private static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+    private static readonly CancellationTokenSource CancellationTokenSource = new();
     
     [OneTimeSetUp]
     public async Task SetUp()
