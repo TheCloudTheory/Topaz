@@ -92,3 +92,27 @@ jobs:
       uses: alstr/todo-to-issue-action@v5.1.12
       with:
         LANGUAGES: "${{ github.workspace }}/todo.json"
+    - name: Update Topaz documentation
+      if: github.ref == 'refs/heads/main'
+      run: |
+        # Run the documentation generator
+        dotnet run --project ./Documentation/Topaz.Documentation.Generator/Topaz.Documentation.Generator.csproj
+        
+        # Configure git for the action
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Add changed files from website directory
+        git add ./website/
+        
+        # Check if there are any changes to commit
+        if git diff --staged --quiet; then
+          echo "No documentation changes to commit"
+        else
+          # Commit the changes
+          git commit -m "docs: update documentation"
+          
+          # Push the changes back to the repository
+          git push
+        fi
+
