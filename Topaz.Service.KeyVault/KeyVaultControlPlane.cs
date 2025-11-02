@@ -64,7 +64,7 @@ internal sealed class KeyVaultControlPlane(
         
         var properties = new KeyVaultResourceProperties
         {
-            Sku = new KeyVaultResourceProperties.KeyVaultSku()
+            Sku = new KeyVaultResourceProperties.KeyVaultSku
             {
                 Family = request.Properties.Sku.Family,
                 Name = request.Properties.Sku.Name
@@ -147,7 +147,7 @@ internal sealed class KeyVaultControlPlane(
     {
         var resources = provider.ListAs<KeyVaultResource>(subscriptionIdentifier, null, null, 8);
 
-        var filteredResources = resources.Where(resource => resource != null && resource.Id.Contains(subscriptionIdentifier.Value.ToString()));
+        var filteredResources = resources.Where(resource => resource.Id.Contains(subscriptionIdentifier.Value.ToString()));
         return  (OperationResult.Success, filteredResources.ToArray());
     }
 

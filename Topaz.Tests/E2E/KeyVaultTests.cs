@@ -113,7 +113,7 @@ public class KeyVaultTests
         });
         
         // Assert
-        Assert.Throws<RequestFailedException>(() => client.GetSecret("secret-name"));
+        Assert.Throws<RequestFailedException>(() => client.GetSecret("secret-name-not-existing"));
     }
     
     [Test]

@@ -1,4 +1,7 @@
+using System.Text;
+using System.Text.Json;
 using Azure;
+using Azure.Deployments.Core.Definitions.Schema;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 
@@ -9,7 +12,7 @@ public sealed class DeploymentResourceProperties
     public string DebugSettingDetailLevel => "none";
     public IReadOnlyList<SubResource>? OutputResources { get; set; }
     public IReadOnlyList<SubResource>? ValidatedResources { get; set; }
-    public string ProvisioningState => ResourcesProvisioningState.Succeeded.ToString();
+    public string? ProvisioningState { get; set; }
     public string? CorrelationId { get; set; }
     public DateTimeOffset? Timestamp { get; set; }
     public TimeSpan? Duration { get; set; }
@@ -28,4 +31,15 @@ public sealed class DeploymentResourceProperties
     public ResponseError? Error { get; set; }
     public IReadOnlyList<DeploymentDiagnosticsDefinition>? Diagnostics { get; set; }
     public ValidationLevel? ValidationLevel { get; set; }
+
+    public static DeploymentResourceProperties New(string deploymentMode, Template template)
+    {
+        return new DeploymentResourceProperties
+        {
+            CorrelationId = Guid.NewGuid().ToString(),
+            Mode = deploymentMode,
+            TemplateHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(template))),
+            ProvisioningState = ResourcesProvisioningState.Created.ToString()
+        };
+    }
 }

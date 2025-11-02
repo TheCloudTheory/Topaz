@@ -1,5 +1,4 @@
-using System.Text;
-using System.Text.Json;
+using Topaz.Service.ResourceManager.Deployment;
 using Topaz.Service.ResourceManager.Models;
 using Topaz.Service.ResourceManager.Models.Responses;
 using Topaz.Service.Shared;
@@ -14,24 +13,19 @@ internal sealed class ResourceManagerControlPlane(
     private const string DeploymentNotFoundMessageTemplate = "Deployment {0} not found";
     private const string DeploymentNotFoundCode = "DeploymentNotFound";
     
-    private readonly ArmTemplateParser _templateParser = new();
+    private readonly ArmTemplateEngineFacade _templateEngineFacade = new();
 
     public (OperationResult result, DeploymentResource resource) CreateOrUpdateDeployment(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string deploymentName, string content, string location, string deploymentMode)
     {
-        var template = _templateParser.Parse(content);
+        var template = _templateEngineFacade.Parse(content);
         var deploymentResource = new DeploymentResource(subscriptionIdentifier, resourceGroupIdentifier, deploymentName,
-            location, new DeploymentResourceProperties
-            {
-                CorrelationId = Guid.NewGuid().ToString(),
-                Mode = deploymentMode,
-                TemplateHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(template)))
-            });
+            location, DeploymentResourceProperties.New(deploymentMode, template));
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, deploymentResource);
 
-        templateDeploymentOrchestrator.EnqueueTemplateDeployment(template);
+        templateDeploymentOrchestrator.EnqueueTemplateDeployment(subscriptionIdentifier, resourceGroupIdentifier, template, deploymentResource);
         
         return (OperationResult.Success, deploymentResource);
     }
@@ -91,6 +85,8 @@ internal sealed class ResourceManagerControlPlane(
                     Error = new GenericErrorResponse(deploymentOperation.Code!, deploymentOperation.Reason!)
                 }, deploymentOperation.Reason, deploymentOperation.Code);
         }
+
+        _templateEngineFacade.Validate(deploymentOperation.Resource!.AsTemplate());
         
         return new ControlPlaneOperationResult<DeploymentValidateResult>(OperationResult.Success, new DeploymentValidateResult
         {

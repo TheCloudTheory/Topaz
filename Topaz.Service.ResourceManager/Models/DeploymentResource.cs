@@ -1,11 +1,16 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Core;
+using Azure.Deployments.Core.Definitions.Schema;
+using Azure.ResourceManager.Resources.Models;
 using Topaz.ResourceManager;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
 
 namespace Topaz.Service.ResourceManager.Models;
 
-internal sealed class DeploymentResource
+public sealed class DeploymentResource
     : ArmResource<DeploymentResourceProperties>
 {
     [JsonConstructor]
@@ -35,4 +40,14 @@ internal sealed class DeploymentResource
     public override ResourceSku? Sku { get; init; }
     public override string? Kind { get; init; }
     public override DeploymentResourceProperties Properties { get; init; }
+
+    public Template AsTemplate()
+    {
+        return JsonSerializer.Deserialize<Template>(JsonSerializer.Serialize(this, GlobalSettings.JsonOptions))!;
+    }
+
+    public void CompleteDeployment()
+    {
+        Properties.ProvisioningState = ResourcesProvisioningState.Succeeded.ToString();
+    }
 }

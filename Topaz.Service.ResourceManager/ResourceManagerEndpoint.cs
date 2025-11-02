@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ResourceGroup.Models;
+using Topaz.Service.ResourceManager.Deployment;
 using Topaz.Service.ResourceManager.Models.Requests;
 using Topaz.Service.ResourceManager.Models.Responses;
 using Topaz.Service.Shared;

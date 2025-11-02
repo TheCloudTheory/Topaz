@@ -1,4 +1,5 @@
 using Topaz.Service.ResourceGroup;
+using Topaz.Service.ResourceManager.Deployment;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -10,21 +11,22 @@ public sealed class ResourceManagerService : IServiceDefinition
     public string Name => "Resource Manager";
     public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".resource-manager");
-    public static IReadOnlyCollection<string>? Subresources => [];
+    public static IReadOnlyCollection<string> Subresources => [];
     
-    private static TemplateDeploymentOrchestrator? DeploymentOrchestrator;
+    private static TemplateDeploymentOrchestrator? _deploymentOrchestrator;
+    
     private readonly ITopazLogger _logger;
 
     public ResourceManagerService(ITopazLogger logger)
     {
         _logger = logger;
         
-        DeploymentOrchestrator = new TemplateDeploymentOrchestrator(logger);
-        DeploymentOrchestrator.Start();
+        _deploymentOrchestrator = new TemplateDeploymentOrchestrator(new ResourceManagerResourceProvider(logger), logger);
+        _deploymentOrchestrator.Start();
     }
     
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new ResourceManagerEndpoint(_logger, DeploymentOrchestrator),
+        new ResourceManagerEndpoint(_logger, _deploymentOrchestrator!),
     ];
 }
