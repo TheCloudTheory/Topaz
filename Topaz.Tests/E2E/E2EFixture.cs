@@ -16,7 +16,9 @@ public class E2EFixture
             "--log-level=Debug",
             "--skip-dns-registration",
             "--enable-logging-to-file",
-            "--refresh-log"
+            "--refresh-log",
+            "--emulator-ip-address",
+            "127.0.2.1"
         ]);
 
         await Task.Run(() => _topaz, CancellationTokenSource.Token);

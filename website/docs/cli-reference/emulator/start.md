@@ -14,6 +14,7 @@ Starts the emulator.
 * `--enable-logging-to-file` - Tells the emulator to save logs to a file.
 * `--refresh-log` - Clears the logs file upon starting the emulator.
 * `--default-subscription` - Creates a default subscription with the provided subscription ID
+* `--emulator-ip-address` - Defines the IP address used by the emulator to listen to incoming requests. Not that this address is only relevant if running the emulator directly on a host machine.
 
 ## Examples
 
