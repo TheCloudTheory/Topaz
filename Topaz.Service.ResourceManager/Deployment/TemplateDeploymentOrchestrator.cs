@@ -1,8 +1,13 @@
 using System.Text.Json;
 using Azure.Deployments.Core.Definitions.Schema;
+using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
+using Newtonsoft.Json.Linq;
 using Topaz.ResourceManager;
+using Topaz.Service.KeyVault;
+using Topaz.Service.ResourceGroup;
 using Topaz.Service.ResourceManager.Models;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Service.ResourceManager.Deployment;
@@ -15,9 +20,10 @@ public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvid
     private readonly ArmTemplateEngineFacade _armTemplateEngineFacade = new();
         
     public void EnqueueTemplateDeployment(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, Template template, DeploymentResource deploymentResource)
+        ResourceGroupIdentifier resourceGroupIdentifier, Template template, DeploymentResource deploymentResource,
+        InsensitiveDictionary<JToken> metadataInsensitive)
     {
-        _armTemplateEngineFacade.ProcessTemplate(subscriptionIdentifier, resourceGroupIdentifier, template);
+        _armTemplateEngineFacade.ProcessTemplate(subscriptionIdentifier, resourceGroupIdentifier, template, metadataInsensitive);
         
         DeploymentQueue.Enqueue(new TemplateDeployment(template, deploymentResource));
     }
@@ -54,20 +60,26 @@ public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvid
 
     private void RouteDeployment(TemplateDeployment templateDeployment)
     {
-        logger.LogDebug($"Routing deployment resources of {templateDeployment.Deployment.Id} deployment to appriopriate control planes.");
+        logger.LogDebug($"Routing deployment resources of {templateDeployment.Deployment.Id} deployment to appropriate control planes.");
         
         foreach (var resource in templateDeployment.Template.Resources)
         {
-            var genericResource = JsonSerializer.Deserialize<GenericResource>(resource.ToJson(), GlobalSettings.JsonOptions);
+            IControlPlane? controlPlane = null;
+            var genericResource = JsonSerializer.Deserialize<GenericResource>(resource.ToJson(), GlobalSettings.JsonOptions)!;
             
             switch (resource.Type.Value)
             {
                 case "Microsoft.KeyVault/vaults":
+                    controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
+                        new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
+                            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger));
                     break;
                 default:
                     logger.LogWarning($"Deployment of {templateDeployment.Deployment.Type} is not yet supported.");
                     break;
             }
+
+            controlPlane?.Deploy(genericResource);
         }
 
         templateDeployment.Deployment.CompleteDeployment();

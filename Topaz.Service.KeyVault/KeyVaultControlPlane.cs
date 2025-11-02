@@ -1,5 +1,6 @@
 using Azure.Core;
 using Topaz.Dns;
+using Topaz.ResourceManager;
 using Topaz.Service.KeyVault.Models;
 using Topaz.Service.KeyVault.Models.Requests;
 using Topaz.Service.KeyVault.Models.Responses;
@@ -11,7 +12,7 @@ namespace Topaz.Service.KeyVault;
 
 internal sealed class KeyVaultControlPlane(
     KeyVaultResourceProvider provider,
-    ResourceGroupControlPlane resourceGroupControlPlane)
+    ResourceGroupControlPlane resourceGroupControlPlane) : IControlPlane
 {
     private const string KeyVaultNotFoundCode = "KeyVaultNotFound";
     private const string KeyVaultNotFoundMessageTemplate =
@@ -165,5 +166,29 @@ internal sealed class KeyVaultControlPlane(
         }
         
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
+    }
+
+    public void Deploy(GenericResource resource)
+    {
+        var keyVault = resource.As<KeyVaultResource, KeyVaultResourceProperties>();
+        if (keyVault == null)
+        {
+            return;
+        }
+
+        CreateOrUpdate(keyVault.GetSubscription(), keyVault.GetResourceGroup(), keyVault.Name,
+            new CreateOrUpdateKeyVaultRequest()
+            {
+                Location = keyVault.Location,
+                Properties = new CreateOrUpdateKeyVaultRequest.KeyVaultProperties
+                {
+                    Sku = new CreateOrUpdateKeyVaultRequest.KeyVaultProperties.KeyVaultSku
+                    {
+                        Name = keyVault.Sku.Name,
+                        Family = keyVault.Sku.Family
+                    },
+                    TenantId = keyVault.Properties.TenantId
+                }
+            });
     }
 }

@@ -18,11 +18,13 @@ internal sealed class ArmTemplateEngineFacade
         return template;
     }
 
-    public void ProcessTemplate(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, Template template)
+    public void ProcessTemplate(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, Template template,
+        InsensitiveDictionary<JToken> metadataInsensitive)
     {
         TemplateEngine.ProcessTemplateLanguageExpressions("topaz", subscriptionIdentifier.Value.ToString(),
             resourceGroupIdentifier.Value, template, "", InsensitiveDictionary<JToken>.Empty,
-            InsensitiveDictionary<JToken>.Empty,
+            metadataInsensitive,
             new ReadOnlyDictionary<string, IReadOnlyDictionary<string, DeploymentExtensionConfigItem>>(
                 new Dictionary<string, IReadOnlyDictionary<string, DeploymentExtensionConfigItem>>()),
             new TemplateMetricsRecorder(), InsensitiveDictionary<JToken>.Empty);
