@@ -94,6 +94,8 @@ jobs:
         LANGUAGES: "${{ github.workspace }}/todo.json"
     - name: Update Topaz documentation
       if: github.ref == 'refs/heads/main'
+      env:
+        TOPAZ_BASE_DOCS_PATH: ${{ github.workspace }}
       run: |
         # Run the documentation generator
         dotnet run --project ./Documentation/Topaz.Documentation.Generator/Topaz.Documentation.Generator.csproj

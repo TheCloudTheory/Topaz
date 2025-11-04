@@ -165,7 +165,10 @@ foreach (var group in groups)
         Console.WriteLine();
         Console.WriteLine("Saving documentation of the command...");
 
-        var directoryTemplate = Path.Combine("..", "..", "..", "..", "..", "..", "website", "docs", "cli-reference",
+        var basePath = string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("TOPAZ_BASE_DOCS_PATH"))
+            ? Path.Combine("..", "..", "..", "..", "..", "..")
+            : Environment.GetEnvironmentVariable("TOPAZ_BASE_DOCS_PATH")!;
+        var directoryTemplate = Path.Combine(basePath, "website", "docs", "cli-reference",
             definition.CommandGroup);
         if (!Directory.Exists(directoryTemplate))
         {
