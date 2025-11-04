@@ -8,11 +8,11 @@
       "apiVersion": "2024-11-01",
       "name": "topaz-keyvault",
       "location": "[resourceGroup().location]",
+      "sku": {
+        "family": "A",
+        "name": "standard"
+      },
       "properties": {
-        "sku": {
-          "family": "A",
-          "name": "standard"
-        },
         "tenantId": "[tenant().tenantId]",
         "accessPolicies": [],
         "enabledForDeployment": false,

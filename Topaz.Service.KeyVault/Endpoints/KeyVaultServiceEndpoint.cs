@@ -15,7 +15,7 @@ public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly KeyVaultControlPlane _controlPlane = new(new KeyVaultResourceProvider(logger),
         new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger));
+            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger), logger);
     
     public string[] Endpoints => [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",

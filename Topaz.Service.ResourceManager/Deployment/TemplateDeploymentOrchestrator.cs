@@ -72,17 +72,18 @@ public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvid
                 case "Microsoft.KeyVault/vaults":
                     controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
                         new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger));
+                            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger), logger);
                     break;
                 default:
                     logger.LogWarning($"Deployment of {templateDeployment.Deployment.Type} is not yet supported.");
                     break;
             }
 
+            templateDeployment.Start();
             controlPlane?.Deploy(genericResource);
         }
 
-        templateDeployment.Deployment.CompleteDeployment();
+        templateDeployment.Complete();
         provider.CreateOrUpdate(templateDeployment.Deployment.GetSubscription(), templateDeployment.Deployment.GetResourceGroup(), templateDeployment.Deployment.Name, templateDeployment.Deployment);
         logger.LogInformation($"Deployment {templateDeployment.Deployment.Id} completed.");
     }

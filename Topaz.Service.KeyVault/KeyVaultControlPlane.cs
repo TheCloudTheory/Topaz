@@ -7,12 +7,14 @@ using Topaz.Service.KeyVault.Models.Responses;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault;
 
 internal sealed class KeyVaultControlPlane(
     KeyVaultResourceProvider provider,
-    ResourceGroupControlPlane resourceGroupControlPlane) : IControlPlane
+    ResourceGroupControlPlane resourceGroupControlPlane,
+    ITopazLogger logger) : IControlPlane
 {
     private const string KeyVaultNotFoundCode = "KeyVaultNotFound";
     private const string KeyVaultNotFoundMessageTemplate =
@@ -173,6 +175,7 @@ internal sealed class KeyVaultControlPlane(
         var keyVault = resource.As<KeyVaultResource, KeyVaultResourceProperties>();
         if (keyVault == null)
         {
+            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Key Vault instance.");
             return;
         }
 
