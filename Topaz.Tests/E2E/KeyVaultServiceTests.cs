@@ -15,7 +15,7 @@ public class KeyVaultServiceTests
     private static readonly Guid SubscriptionId = Guid.Parse("727D20F8-F051-41D0-8D00-E93D31E998E8");
     
     private const string SubscriptionName = "sub-test";
-    private const string ResourceGroupName = "test";
+    private const string ResourceGroupName = "rg-test-keyvault";
     
     [SetUp]
     public async Task SetUp()

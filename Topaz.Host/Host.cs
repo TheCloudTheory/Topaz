@@ -20,6 +20,7 @@ using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Services;
 using Topaz.Service.Subscription;
+using Topaz.Service.VirtualNetwork;
 using Topaz.Shared;
 
 namespace Topaz.Host;
@@ -65,7 +66,8 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             new BlobStorageService(logger),
             new TopazCloudEnvironmentService(),
             new ServiceBusService(logger),
-            new ResourceManagerService(logger)
+            new ResourceManagerService(logger),
+            new VirtualNetworkService(logger)
         };
 
         // Topaz requires elevated permissions to run as there may be operations (like modifying entries

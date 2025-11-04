@@ -11,7 +11,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Endpoints;
 
-public class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
+internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly KeyVaultControlPlane _controlPlane = new(new KeyVaultResourceProvider(logger),
         new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
