@@ -4,7 +4,6 @@ using Azure.Core;
 using Azure.Deployments.Core.Definitions.Schema;
 using Azure.ResourceManager.Resources.Models;
 using Topaz.ResourceManager;
-using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -49,5 +48,10 @@ public sealed class DeploymentResource
     public void CompleteDeployment()
     {
         Properties.ProvisioningState = ResourcesProvisioningState.Succeeded.ToString();
+    }
+
+    public void FailDeployment()
+    {
+        Properties.ProvisioningState = ResourcesProvisioningState.Failed.ToString();
     }
 }

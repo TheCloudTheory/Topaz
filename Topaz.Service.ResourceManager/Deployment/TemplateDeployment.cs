@@ -32,12 +32,12 @@ internal sealed class TemplateDeployment
 
     public void Start()
     {
-        Status =  DeploymentStatus.Running;
+        Status = DeploymentStatus.Running;
     }
     
     public void Complete()
     {
-        Status =  DeploymentStatus.Completed;
+        Status = DeploymentStatus.Completed;
         
         Deployment.CompleteDeployment();
     }
@@ -49,5 +49,12 @@ internal sealed class TemplateDeployment
         Completed,
         Cancelled,
         Failed,
+    }
+
+    public void Fail()
+    {
+        Status = DeploymentStatus.Failed;
+        
+        Deployment.FailDeployment();
     }
 }

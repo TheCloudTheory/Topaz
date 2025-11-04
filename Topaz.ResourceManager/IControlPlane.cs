@@ -1,6 +1,8 @@
+using Topaz.Service.Shared;
+
 namespace Topaz.ResourceManager;
 
 public interface IControlPlane
 {
-    void Deploy(GenericResource resource);
+    OperationResult Deploy(GenericResource resource);
 }

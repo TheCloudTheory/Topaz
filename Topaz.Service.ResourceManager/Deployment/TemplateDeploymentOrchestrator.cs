@@ -6,6 +6,7 @@ using Topaz.ResourceManager;
 using Topaz.Service.KeyVault;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ResourceManager.Models;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
@@ -61,7 +62,8 @@ public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvid
     private void RouteDeployment(TemplateDeployment templateDeployment)
     {
         logger.LogDebug($"Routing deployment resources of {templateDeployment.Deployment.Id} deployment to appropriate control planes.");
-        
+
+        var hasProvisioningFailed = false;
         foreach (var resource in templateDeployment.Template.Resources)
         {
             IControlPlane? controlPlane = null;
@@ -80,10 +82,23 @@ public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvid
             }
 
             templateDeployment.Start();
-            controlPlane?.Deploy(genericResource);
+            var result = controlPlane?.Deploy(genericResource);
+
+            if (result == OperationResult.Failed)
+            {
+                hasProvisioningFailed = true;
+            }
         }
 
-        templateDeployment.Complete();
+        if (!hasProvisioningFailed)
+        {
+            templateDeployment.Complete();
+        }
+        else
+        {
+            templateDeployment.Fail();
+        }
+        
         provider.CreateOrUpdate(templateDeployment.Deployment.GetSubscription(), templateDeployment.Deployment.GetResourceGroup(), templateDeployment.Deployment.Name, templateDeployment.Deployment);
         logger.LogInformation($"Deployment {templateDeployment.Deployment.Id} completed.");
     }

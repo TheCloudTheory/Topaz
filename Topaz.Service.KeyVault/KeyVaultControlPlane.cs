@@ -69,13 +69,13 @@ internal sealed class KeyVaultControlPlane(
         {
             Sku = new KeyVaultResourceProperties.KeyVaultSku
             {
-                Family = request.Properties.Sku.Family,
+                Family = request.Properties!.Sku!.Family,
                 Name = request.Properties.Sku.Name
             },
             TenantId = request.Properties.TenantId
         };
 
-        var resource = new KeyVaultResource(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, request.Location, properties);
+        var resource = new KeyVaultResource(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, request.Location!, properties);
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource);
 
         // This operation must also support handling operation result when Key Vault was updated
@@ -170,16 +170,16 @@ internal sealed class KeyVaultControlPlane(
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
     }
 
-    public void Deploy(GenericResource resource)
+    public OperationResult Deploy(GenericResource resource)
     {
         var keyVault = resource.As<KeyVaultResource, KeyVaultResourceProperties>();
         if (keyVault == null)
         {
             logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Key Vault instance.");
-            return;
+            return OperationResult.Failed;
         }
 
-        CreateOrUpdate(keyVault.GetSubscription(), keyVault.GetResourceGroup(), keyVault.Name,
+        var result = CreateOrUpdate(keyVault.GetSubscription(), keyVault.GetResourceGroup(), keyVault.Name,
             new CreateOrUpdateKeyVaultRequest()
             {
                 Location = keyVault.Location,
@@ -187,11 +187,13 @@ internal sealed class KeyVaultControlPlane(
                 {
                     Sku = new CreateOrUpdateKeyVaultRequest.KeyVaultProperties.KeyVaultSku
                     {
-                        Name = keyVault.Sku.Name,
+                        Name = keyVault.Sku!.Name,
                         Family = keyVault.Sku.Family
                     },
                     TenantId = keyVault.Properties.TenantId
                 }
             });
+
+        return result.Result;
     }
 }
