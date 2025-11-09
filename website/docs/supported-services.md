@@ -22,6 +22,10 @@ Queue Storage|:x:|:x:
 Key Vault|⚠️|⚠️
 Event Hub|⚠️|⚠️
 Service Bus|⚠️|⚠️
+Virtual Network|⚠️|N/A
+Azure Resource Manager|⚠️|N/A
+Container Registry|:x:|:x:
+Azure SQL|:x:|:x:
 
 ✅ - fully supported (stable)
 
