@@ -11,4 +11,8 @@
       <ProjectReference Include="..\Topaz.Service.Shared\Topaz.Service.Shared.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Azure.ResourceManager.Network" Version="1.13.0" />
+    </ItemGroup>
+
 </Project>

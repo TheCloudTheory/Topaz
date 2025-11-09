@@ -68,7 +68,18 @@ public class VirtualNetworkTests
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
         var data = new VirtualNetworkData
         {
-            AddressPrefixes = { "10.0.0.0/22" }
+            AddressPrefixes = { "10.0.0.0/22" },
+            Subnets =
+            {
+                new SubnetData
+                {
+                    AddressPrefixes =
+                    {
+                        "10.0.0.0/26"
+                    },
+                    Name = "test-subnet"
+                }
+            }
         };
         const string virtualNetworkName = "virtual-network";
         
@@ -83,6 +94,9 @@ public class VirtualNetworkTests
             Assert.That(virtualNetwork.Value.Data.Name, Is.EqualTo(virtualNetworkName));
             Assert.That(virtualNetwork.Value.Data.ResourceType, Is.EqualTo(new ResourceType("Microsoft.Network/virtualNetworks")));
             Assert.That(virtualNetwork.Value.Data.AddressPrefixes, Contains.Item("10.0.0.0/22"));
+            Assert.That(virtualNetwork.Value.Data.Subnets, Has.Count.EqualTo(1));
+            Assert.That(virtualNetwork.Value.Data.Subnets.First().Name, Is.EqualTo("test-subnet"));
+            Assert.That(virtualNetwork.Value.Data.Subnets.First().AddressPrefixes, Contains.Item("10.0.0.0/26"));
         });
     }
 }
