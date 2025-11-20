@@ -46,7 +46,7 @@ internal sealed class VirtualNetworkControlPlane(VirtualNetworkResourceProvider 
         var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound)
         {
-            return new ControlPlaneOperationResult<VirtualNetworkResource>(OperationResult.Failed, null,
+            return new ControlPlaneOperationResult<VirtualNetworkResource>(OperationResult.NotFound, null,
                 resourceGroupOperation.Reason,
                 resourceGroupOperation.Code);
         }
