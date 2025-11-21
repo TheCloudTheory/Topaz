@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "TopazMCP": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "Topaz.MCP/Topaz.MCP.csproj"
+      ]
+    }
+  }
+}

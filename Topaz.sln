@@ -61,6 +61,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{5DCFF73A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.VirtualNetwork", "Topaz.Service.VirtualNetwork\Topaz.Service.VirtualNetwork.csproj", "{32CF6C52-068C-4A56-938E-A34749F915C7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.MCP", "Topaz.MCP\Topaz.MCP.csproj", "{78C01901-6F3B-4320-8479-8B090BBE1798}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -167,6 +169,10 @@ Global
 		{32CF6C52-068C-4A56-938E-A34749F915C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{32CF6C52-068C-4A56-938E-A34749F915C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{32CF6C52-068C-4A56-938E-A34749F915C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78C01901-6F3B-4320-8479-8B090BBE1798}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78C01901-6F3B-4320-8479-8B090BBE1798}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78C01901-6F3B-4320-8479-8B090BBE1798}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78C01901-6F3B-4320-8479-8B090BBE1798}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
