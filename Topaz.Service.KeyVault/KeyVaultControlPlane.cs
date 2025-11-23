@@ -39,7 +39,7 @@ internal sealed class KeyVaultControlPlane(
                 resourceGroupOperation.Code);
         }
         
-        var resource = new KeyVaultResource(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, location, KeyVaultResourceProperties.Default);
+        var resource = new KeyVaultResource(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, location, null, KeyVaultResourceProperties.Default(keyVaultName));
 
         provider.Create(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource);
 
@@ -65,17 +65,9 @@ internal sealed class KeyVaultControlPlane(
                 resourceGroupOperation.Code);
         }
         
-        var properties = new KeyVaultResourceProperties
-        {
-            Sku = new KeyVaultResourceProperties.KeyVaultSku
-            {
-                Family = request.Properties!.Sku!.Family,
-                Name = request.Properties.Sku.Name
-            },
-            TenantId = request.Properties.TenantId
-        };
-
-        var resource = new KeyVaultResource(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, request.Location!, properties);
+        var properties = KeyVaultResourceProperties.FromRequest(keyVaultName, request);
+        var resource = new KeyVaultResource(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, request.Location!, request.Tags, properties);
+        
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource);
 
         // This operation must also support handling operation result when Key Vault was updated
@@ -180,7 +172,7 @@ internal sealed class KeyVaultControlPlane(
         }
 
         var result = CreateOrUpdate(keyVault.GetSubscription(), keyVault.GetResourceGroup(), keyVault.Name,
-            new CreateOrUpdateKeyVaultRequest()
+            new CreateOrUpdateKeyVaultRequest
             {
                 Location = keyVault.Location,
                 Properties = new CreateOrUpdateKeyVaultRequest.KeyVaultProperties

@@ -30,7 +30,7 @@ internal sealed class ServiceBusNamespaceResource
     public override string Name { get; init; }
     public override string Type => "Microsoft.ServiceBus/namespaces";
     public override string Location { get; init; }
-    public override IDictionary<string, string> Tags { get; } = new Dictionary<string, string>();
+    public override IDictionary<string, string> Tags { get; init; } = new Dictionary<string, string>();
     public override ResourceSku? Sku { get; init; }
     public override string? Kind { get; init; }
     public override ServiceBusNamespaceResourceProperties Properties { get; init; }
