@@ -23,7 +23,8 @@ public class CreateKeyVaultCommand(ITopazLogger logger) : Command<CreateKeyVault
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger), logger);
+                new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger),
+            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
         var existingKeyVault = controlPlane.CheckName(subscriptionIdentifier, settings.Name!, null);
 
         if (!existingKeyVault.response.NameAvailable)

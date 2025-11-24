@@ -7,6 +7,7 @@ using Topaz.Service.KeyVault.Models.Responses;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault;
@@ -14,6 +15,7 @@ namespace Topaz.Service.KeyVault;
 internal sealed class KeyVaultControlPlane(
     KeyVaultResourceProvider provider,
     ResourceGroupControlPlane resourceGroupControlPlane,
+    SubscriptionControlPlane subscriptionControlPlane,
     ITopazLogger logger) : IControlPlane
 {
     private const string KeyVaultNotFoundCode = "KeyVaultNotFound";
@@ -142,7 +144,7 @@ internal sealed class KeyVaultControlPlane(
     {
         var resources = provider.ListAs<KeyVaultResource>(subscriptionIdentifier, null, null, 8);
 
-        var filteredResources = resources.Where(resource => resource.Id.Contains(subscriptionIdentifier.Value.ToString()));
+        var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier));
         return  (OperationResult.Success, filteredResources.ToArray());
     }
 
@@ -187,5 +189,27 @@ internal sealed class KeyVaultControlPlane(
             });
 
         return result.Result;
+    }
+
+    public (OperationResult result, KeyVaultResource?[]? resource) ListByResourceGroup(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
+    {
+        var subscription = subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscription.Resource == null || subscription.Result == OperationResult.NotFound)
+        {
+            return (OperationResult.NotFound, null);
+        }
+
+        var resourceGroup = resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroup.Resource == null || resourceGroup.Result == OperationResult.NotFound)
+        {
+            return (OperationResult.NotFound, null);
+        }
+
+        var resources = provider.ListAs<KeyVaultResource>(subscriptionIdentifier, null, null, 8);
+        var filteredResources = resources.Where(resource =>
+            resource.IsInSubscription(subscriptionIdentifier) && resource.IsInResourceGroup(resourceGroupIdentifier));
+        
+        return  (OperationResult.Success, filteredResources.ToArray());
     }
 }

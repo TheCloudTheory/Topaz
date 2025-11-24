@@ -13,14 +13,17 @@ namespace Topaz.Service.KeyVault.Endpoints;
 
 internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly KeyVaultControlPlane _controlPlane = new(new KeyVaultResourceProvider(logger),
+    private readonly KeyVaultControlPlane _controlPlane = new(
+        new KeyVaultResourceProvider(logger),
         new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger), logger);
+            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger),
+        new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
     
     public string[] Endpoints => [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
         "GET /subscriptions/{subscriptionId}/resources",
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults",
         "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkNameAvailability",
         "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkMhsmNameAvailability",
         "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}"
@@ -60,8 +63,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
                     {
                         if (string.IsNullOrWhiteSpace(keyVaultName))
                         {
-                            logger.LogDebug($"Executing {nameof(GetResponse)}: Can't process request if Key Vault name is empty.");
-                            response.StatusCode = HttpStatusCode.BadRequest;
+                            HandleListKeyVaultsByResourceGroupRequest(response, subscriptionIdentifier, ResourceGroupIdentifier.From(resourceGroupSegment));
                             break;
                         }
                         
@@ -96,6 +98,24 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
         }
         
         return response;
+    }
+
+    private void HandleListKeyVaultsByResourceGroupRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
+    {
+        var keyVaults = _controlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier);
+        if (keyVaults.result != OperationResult.Success || keyVaults.resource == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        var result = new ListSubscriptionResourcesResponse
+        {
+            Value = keyVaults.resource.Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From!).ToArray()
+        };
+        
+        response.Content = new StringContent(result.ToString());
+        response.StatusCode = HttpStatusCode.OK;
     }
 
     private void HandleDeleteKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,  string keyVaultName)

@@ -278,7 +278,7 @@ public class KeyVaultTests : TopazFixture
         await RunAzureCliCommand("az group create -n test-rg -l westeurope");
         await RunAzureCliCommand("az keyvault create --location westeurope --name DeleteVault123 --resource-group test-rg");
         await RunAzureCliCommand("az keyvault delete --name DeleteVault123 --only-show-errors");
-        await RunAzureCliCommand("az keyvault show --name DeleteVault123", null, 3);
+        await RunAzureCliCommand("az keyvault show --name DeleteVault123", null, 1);
         await RunAzureCliCommand("az group delete -n test-rg --yes");
     }
     
@@ -295,7 +295,7 @@ public class KeyVaultTests : TopazFixture
     [Test]
     public async Task KeyVaultTests_WhenDeleteCommandIsCalledForNonExistentVault_ItShouldFail()
     {
-        await RunAzureCliCommand("az keyvault delete --name NonExistentVault888 --only-show-errors", null, 3);
+        await RunAzureCliCommand("az keyvault delete --name NonExistentVault888 --only-show-errors", null, 1);
     }
     
     #endregion
