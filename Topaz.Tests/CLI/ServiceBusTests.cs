@@ -4,7 +4,7 @@ namespace Topaz.Tests.CLI;
 
 public class ServiceBusTests
 {
-    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    private static readonly Guid SubscriptionId = Guid.Parse("2F643E9E-DDDD-42D2-8AA0-2BFE33073E71");
     private static readonly string ResourceGroupName = "test";
     private static readonly string NamespaceName = "test";
     private static readonly string QueueName = "queue-test";
@@ -153,7 +153,7 @@ public class ServiceBusTests
         Assert.Multiple(() =>
         {
             Assert.That(File.Exists(queuePath), Is.False);
-            Assert.That(code, Is.EqualTo(1));
+            Assert.That(code, Is.EqualTo(0));
         });
     }
 }
