@@ -87,4 +87,26 @@ public class KeyVaultServiceTests
             Assert.That(kv.Value.Data.Properties.Sku.Name, Is.EqualTo(operation.Properties.Sku.Name));
         });
     }
+
+    [Test]
+    public void KeyVaultTests_WhenKeyVaultIsDeletedUsingSDK_ItShouldNotBeAvailable()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+        const string testKeyVaultName = "testkvdeleted";
+        
+        // Act
+        resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, testKeyVaultName, operation, CancellationToken.None);
+        var kv = resourceGroup.Value.GetKeyVault(testKeyVaultName);
+        kv.Value.Delete(WaitUntil.Completed);
+        
+        // Assert
+        Assert.Throws<RequestFailedException>(() => resourceGroup.Value.GetKeyVault(testKeyVaultName));
+    }
 }
