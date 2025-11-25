@@ -5,7 +5,7 @@ public class KeyVaultTests : TopazFixture
     #region Check Name Tests
     
     [Test]
-    public async Task KeyVaultTests_WhenCheckNameCommandIsCalledAndKeyVaultExists_ItShouldReturnTrue()
+    public async Task KeyVaultTests_WhenCheckNameCommandIsCalledAndKeyVaultExists_ItShouldReturnFalse()
     {
         await RunAzureCliCommand("az group create -n test-rg -l westeurope");
         await RunAzureCliCommand("az keyvault create --location westeurope --name MyKeyVault --resource-group test-rg");
@@ -45,6 +45,22 @@ public class KeyVaultTests : TopazFixture
             {
                 Assert.That(response["nameAvailable"]!.GetValue<bool>(), Is.EqualTo(true));
                 Assert.That(response["reason"], Is.Null);
+            });
+        });
+    }
+    
+    [Test]
+    public async Task KeyVaultTests_WhenCheckNameCommandIsCalledAndNameIsNotAvailableBecauseItWasSoftDeleted_ItShouldReturnFalse()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name MyKeyVault098 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault delete --name MyKeyVault098 --only-show-errors");
+        await RunAzureCliCommand("az keyvault check-name --name MyKeyVault098", (response) =>
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(response["nameAvailable"]!.GetValue<bool>(), Is.EqualTo(false));
+                Assert.That(response["reason"]!.GetValue<string>(), Is.EqualTo("AlreadyExists"));
             });
         });
     }
@@ -278,7 +294,7 @@ public class KeyVaultTests : TopazFixture
         await RunAzureCliCommand("az group create -n test-rg -l westeurope");
         await RunAzureCliCommand("az keyvault create --location westeurope --name DeleteVault123 --resource-group test-rg");
         await RunAzureCliCommand("az keyvault delete --name DeleteVault123 --only-show-errors");
-        await RunAzureCliCommand("az keyvault show --name DeleteVault123", null, 1);
+        await RunAzureCliCommand("az keyvault show --name DeleteVault123", null, 3);
         await RunAzureCliCommand("az group delete -n test-rg --yes");
     }
     
@@ -399,7 +415,6 @@ public class KeyVaultTests : TopazFixture
             var deletedVaults = response.AsArray();
             Assert.That(deletedVaults.Any(v => v!["name"]!.GetValue<string>() == "DeletedVault123"), Is.True);
         });
-        await RunAzureCliCommand("az keyvault purge --name DeletedVault123 --only-show-errors");
         await RunAzureCliCommand("az group delete -n test-rg --yes");
     }
     

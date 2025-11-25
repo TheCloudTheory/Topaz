@@ -145,7 +145,16 @@ internal sealed class KeyVaultControlPlane(
         var resources = provider.ListAs<KeyVaultResource>(subscriptionIdentifier, null, null, 8);
 
         var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier));
-        return  (OperationResult.Success, filteredResources.ToArray());
+        return (OperationResult.Success, filteredResources.ToArray());
+    }
+    
+    public (OperationResult result, KeyVaultResource?[]? resource) ListDeletedBySubscription(SubscriptionIdentifier subscriptionIdentifier)
+    {
+        var keyVaults = ListBySubscription(subscriptionIdentifier);
+        var filteredResources = keyVaults.resource!.Where(keyVault =>
+            GlobalDnsEntries.IsSoftDeleted(KeyVaultService.UniqueName, keyVault!.Name));
+        
+        return (OperationResult.Success, filteredResources.ToArray());
     }
 
     public void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName)

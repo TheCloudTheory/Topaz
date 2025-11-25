@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.KeyVault.Models.Requests;
+using Topaz.Service.KeyVault.Models.Responses;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -25,6 +26,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
         "GET /subscriptions/{subscriptionId}/resources",
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults",
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/deletedVaults",
+        "GET /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/deletedManagedHSMs",
         "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkNameAvailability",
         "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkMhsmNameAvailability",
         "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}"
@@ -62,7 +64,8 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
                     }
                     else
                     {
-                        if (string.IsNullOrWhiteSpace(resourceGroupSegment))
+                        // TODO: Separate logic for returning different kinds of deleted Key Vaults
+                        if (path.EndsWith("deletedVaults", StringComparison.OrdinalIgnoreCase) || path.EndsWith("deletedManagedHSMs", StringComparison.OrdinalIgnoreCase))
                         {
                             HandleListDeletedVaultsRequest(response, subscriptionIdentifier);
                             break;
@@ -109,11 +112,38 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
 
     private void HandleListDeletedVaultsRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier)
     {
+        logger.LogDebug($"Executing {nameof(HandleListDeletedVaultsRequest)}.");
         
+        var keyVaults = _controlPlane.ListDeletedBySubscription(subscriptionIdentifier);
+        if (keyVaults.result != OperationResult.Success || keyVaults.resource == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        var result = new ListDeletedResponse
+        {
+            Value = keyVaults.resource.Select(keyVault => new ListDeletedResponse.DeletedKeyVaultResponse
+            {
+                Id =
+                    $"/subscriptions/{keyVault!.GetSubscription().Value}/providers/Microsoft.KeyVault/locations/{keyVault.Location}/deletedVaults/{keyVault.Name}",
+                Name = keyVault.Name,
+                Properties = new ListDeletedResponse.DeletedKeyVaultResponse.DeletedKeyVaultProperties
+                {
+                    VaultId = keyVault.Id,
+                    Location = keyVault.Location,
+                }
+            }).ToArray()
+        };
+        
+        response.Content = new StringContent(result.ToString());
+        response.StatusCode = HttpStatusCode.OK;
     }
 
     private void HandleListKeyVaultsByResourceGroupRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
     {
+        logger.LogDebug($"Executing {nameof(HandleListKeyVaultsByResourceGroupRequest)}.");
+        
         var keyVaults = _controlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier);
         if (keyVaults.result != OperationResult.Success || keyVaults.resource == null)
         {
@@ -134,6 +164,8 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string keyVaultName)
     {
+        logger.LogDebug($"Executing {nameof(HandleDeleteKeyVaultRequest)}.");
+        
         var existingKeyVault = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
         switch (existingKeyVault.Result)
         {
@@ -152,6 +184,8 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
 
     private void HandleCheckNameRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, Stream input)
     {
+        logger.LogDebug($"Executing {nameof(HandleCheckNameRequest)}.");
+        
         using var reader = new StreamReader(input);
 
         var content = reader.ReadToEnd();
@@ -171,6 +205,8 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
 
     private void HandleGetKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName)
     {
+        logger.LogDebug($"Executing {nameof(HandleGetKeyVaultRequest)}.");
+        
         var vault = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
         if (vault.Result == OperationResult.NotFound || vault.Resource == null)
         {
@@ -185,6 +221,8 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
     private void HandleCreateUpdateKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionId,
         ResourceGroupIdentifier resourceGroup, string keyVaultName, Stream input)
     {
+        logger.LogDebug($"Executing {nameof(HandleCreateUpdateKeyVaultRequest)}.");
+        
         using var reader = new StreamReader(input);
 
         var content = reader.ReadToEnd();
