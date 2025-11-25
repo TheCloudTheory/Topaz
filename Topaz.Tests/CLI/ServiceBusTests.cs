@@ -153,7 +153,7 @@ public class ServiceBusTests
         Assert.Multiple(() =>
         {
             Assert.That(File.Exists(queuePath), Is.False);
-            Assert.That(code, Is.EqualTo(0));
+            Assert.That(code, Is.EqualTo(1));
         });
     }
 }

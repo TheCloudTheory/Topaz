@@ -2,7 +2,9 @@ using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
 
 namespace Topaz.Service.KeyVault.Commands;
 
@@ -15,9 +17,12 @@ public sealed class DeleteKeyVaultCommand(ITopazLogger logger) : Command<DeleteK
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var rp = new KeyVaultResourceProvider(logger);
+        var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
+                new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger),
+            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
         
-        rp.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
+        controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 
         logger.LogInformation("Azure Key Vault deleted.");
 

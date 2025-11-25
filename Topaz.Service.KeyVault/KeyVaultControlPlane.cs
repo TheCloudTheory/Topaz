@@ -95,7 +95,7 @@ internal sealed class KeyVaultControlPlane(
         ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName)
     {
         var resource = provider.GetAs<KeyVaultResource>(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
-        return resource == null ? 
+        return resource == null && GlobalDnsEntries.IsSoftDeleted(KeyVaultService.UniqueName, keyVaultName) ? 
             new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.NotFound, null, string.Format(KeyVaultNotFoundMessageTemplate, keyVaultName), KeyVaultNotFoundCode) 
             : new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Created, resource, null, null);
     }
@@ -156,12 +156,13 @@ internal sealed class KeyVaultControlPlane(
             return;
         }
 
-        if (!resource.Id.Contains(subscriptionIdentifier.Value.ToString()))
+        if (!resource.IsInSubscription(subscriptionIdentifier))
         {
             return;
         }
         
-        provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
+        // Note that Azure Key Vault is soft deleted
+        provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, true);
     }
 
     public OperationResult Deploy(GenericResource resource)

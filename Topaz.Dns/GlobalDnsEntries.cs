@@ -5,7 +5,7 @@ namespace Topaz.Dns;
 
 public record GlobalDnsEntries
 {
-    public IDictionary<string, IDictionary<string, List<string>>> Services { get; init; } = new Dictionary<string, IDictionary<string, List<string>>>();
+    public IDictionary<string, IDictionary<string, List<DnsEntry>>> Services { get; init; } = new Dictionary<string, IDictionary<string, List<DnsEntry>>>();
 
     public static void AddEntry(string serviceName, Guid subscriptionIdentifier, string? resourceGroupIdentifier, string instanceName)
     {
@@ -17,18 +17,27 @@ public record GlobalDnsEntries
             if (value.TryGetValue(GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier),
                     out var instances))
             {
-                instances.Add(instanceName);
+                instances.Add(new DnsEntry
+                {
+                    Name = instanceName
+                });
             }
             else
             {
-                value[GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier)] = [instanceName];
+                value[GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier)] = [new DnsEntry
+                {
+                    Name = instanceName
+                }];
             }
         }
         else
         {
-            entries.Services[serviceName] = new  Dictionary<string, List<string>>
+            entries.Services[serviceName] = new  Dictionary<string, List<DnsEntry>>
             {
-                {GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier), [instanceName]}
+                {GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier), [new DnsEntry
+                {
+                    Name = instanceName
+                }]}
             };
         }
         
@@ -55,8 +64,9 @@ public record GlobalDnsEntries
 
         if (entries == null) throw new InvalidOperationException();
         if (!entries.Services.TryGetValue(serviceName, out var globalServiceEntries)) return null;
-        
-        var existingEntry = globalServiceEntries.SingleOrDefault(entry => entry.Value.Contains(instanceName)).Key;
+
+        var existingEntry = globalServiceEntries
+            .SingleOrDefault(serviceEntries => serviceEntries.Value.SingleOrDefault(entry => entry.Name == instanceName) != null).Key;
         if (string.IsNullOrWhiteSpace(existingEntry))
         {
             return null;
@@ -67,13 +77,29 @@ public record GlobalDnsEntries
     }
 
     public static void DeleteEntry(string serviceName, Guid subscriptionIdentifier, string? resourceGroupIdentifier,
-        string? instanceName)
+        string? instanceName, bool softDelete = false)
     {
         var entries = GetDnsEntriesFromFile();
         if (entries == null) throw new InvalidOperationException();
         if (!entries.Services.TryGetValue(serviceName, out var globalServiceEntries)) return;
 
-        globalServiceEntries.Remove(GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier));
+        var entryKey = GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier);
+        if (!softDelete)
+        {
+            globalServiceEntries.Remove(entryKey);
+        }
+        else
+        {
+            var serviceEntries = globalServiceEntries.Single(entry => entry.Key == entryKey);
+            var entry = serviceEntries.Value.SingleOrDefault(entry => entry.Name == instanceName);
+
+            if (entry == null)
+            {
+                throw new InvalidOperationException($"Service entry with key {entryKey} does not exist");
+            }
+
+            entry.SoftDeleted = true;
+        }
         
         if (string.IsNullOrWhiteSpace(instanceName) && string.IsNullOrWhiteSpace(resourceGroupIdentifier))
         {
@@ -108,4 +134,25 @@ public record GlobalDnsEntries
         var newEntries = JsonSerializer.Serialize(entries, GlobalSettings.JsonOptionsCli);
         File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, newEntries);
     }
+
+    public static bool IsSoftDeleted(string serviceName, string instanceName)
+    {
+        var entries = GetDnsEntriesFromFile();
+
+        if (entries == null) throw new InvalidOperationException();
+        if (!entries.Services.TryGetValue(serviceName, out var globalServiceEntries)) return false;
+
+        var existingEntry = globalServiceEntries
+            .SingleOrDefault(serviceEntries =>
+                serviceEntries.Value.SingleOrDefault(entry => entry.Name == instanceName) != null).Value
+            .SingleOrDefault(entry => entry.Name == instanceName);
+        
+        return existingEntry is { SoftDeleted: true };
+    }
+}
+
+public class DnsEntry
+{
+    public required string Name { get; init; }
+    public bool SoftDeleted { get; set; }
 }

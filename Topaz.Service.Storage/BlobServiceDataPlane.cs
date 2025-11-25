@@ -68,12 +68,10 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             logger.LogDebug($"Blob directory {blobDirectory} created.");
         }
 
-        var metadata = new BlobProperties
+        var metadata = new BlobProperties(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
         {
             Name = blobName,
-            DateUploaded = DateTimeOffset.UtcNow,
             ETag = new ETag(DateTimeOffset.Now.Ticks.ToString()),
-            LastModified = DateTimeOffset.UtcNow
         };
 
         File.WriteAllText(GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath), JsonSerializer.Serialize(metadata));

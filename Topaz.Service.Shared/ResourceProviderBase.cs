@@ -38,8 +38,9 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, JsonSerializer.Serialize(new GlobalDnsEntries()));
         _logger.LogDebug("Global DNS entries file created.");
     }
-    
-    public void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id)
+
+    public void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier,
+        string? id, bool softDelete = false)
     {
         var servicePath = string.IsNullOrWhiteSpace(id) ?
             Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier)) :
@@ -50,9 +51,13 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             _logger.LogDebug($"The resource '{servicePath}' does not exists, no changes applied.");
             return;
         }
-        
-        _logger.LogDebug($"Deleting resource '{servicePath}'.");
-        Directory.Delete(servicePath, true);
+
+        // A resource wil be physically deleted only if it's not soft deleted
+        if (!softDelete)
+        {
+            _logger.LogDebug($"Deleting resource '{servicePath}'.");
+            Directory.Delete(servicePath, true);
+        }
         
         var instanceName = string.IsNullOrWhiteSpace(id)
             ? resourceGroupIdentifier == null
@@ -63,7 +68,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var existingInstance = GlobalDnsEntries.GetEntry(TService.UniqueName, instanceName);
         if (existingInstance != null && TService.IsGlobalService)
         {
-            GlobalDnsEntries.DeleteEntry(TService.UniqueName, subscriptionIdentifier.Value, resourceGroupIdentifier?.Value, id);
+            GlobalDnsEntries.DeleteEntry(TService.UniqueName, subscriptionIdentifier.Value, resourceGroupIdentifier?.Value, id, softDelete);
         }
     }
 

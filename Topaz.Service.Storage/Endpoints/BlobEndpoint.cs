@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -193,10 +194,10 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         // Adding `Last-Modified` directly as response header fail with an error stating
         // we're misusing that header. However, based on the behavior of Blob Storage SDK 
         // it looks like it expects that header to be part of the response headers, not response
-        // content. For now we can leave it as it is (as SDK fallbacks to ETag anyway),
+        // content. For now, we can leave it as it is (as SDK fallbacks to ETag anyway),
         // but it may be worth considering adding that header without validation if possible.
         var emptyContent = new StringContent(string.Empty);
-        emptyContent.Headers.LastModified = result.properties.LastModified;
+        emptyContent.Headers.LastModified = DateTimeOffset.Parse(result.properties.LastModified!, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
         response.Content = emptyContent;
     }
 
