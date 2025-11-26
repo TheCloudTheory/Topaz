@@ -209,27 +209,30 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return metadataFilePath;
     }
 
-    public void CreateOrUpdate<TModel>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string? id, TModel model)
+    public void CreateOrUpdate<TModel>(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string? id, TModel model, bool createOperation = false)
     {
         var instanceName = string.IsNullOrWhiteSpace(id)
             ? resourceGroupIdentifier.Value
             : id;
-            
+
         var existingInstance = GlobalDnsEntries.GetEntry(TService.UniqueName, instanceName);
-        if (existingInstance != null && TService.IsGlobalService)
+        if (existingInstance != null && TService.IsGlobalService && createOperation)
         {
-            _logger.LogDebug($"There's an existing instance of {TService.UniqueName} service existing with the name {instanceName}");
+            _logger.LogDebug(
+                $"There's an existing instance of {TService.UniqueName} service existing with the name {instanceName}");
             return;
         }
-        
+
         var metadataFilePath = InitializeServiceDirectories(subscriptionIdentifier, resourceGroupIdentifier, id);
         var content = JsonSerializer.Serialize(model, GlobalSettings.JsonOptions);
 
         File.WriteAllText(metadataFilePath, content);
-        
-        if (!TService.IsGlobalService) return;
-       
-        GlobalDnsEntries.AddEntry(TService.UniqueName, subscriptionIdentifier.Value, resourceGroupIdentifier?.Value, instanceName);
+
+        if (!TService.IsGlobalService || !createOperation) return;
+
+        GlobalDnsEntries.AddEntry(TService.UniqueName, subscriptionIdentifier.Value, resourceGroupIdentifier?.Value,
+            instanceName);
     }
 
     public string GetServiceInstancePath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string? id)

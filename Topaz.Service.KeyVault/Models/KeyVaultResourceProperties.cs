@@ -51,19 +51,34 @@ internal sealed class KeyVaultResourceProperties
         
         return new KeyVaultResourceProperties(keyVaultName)
         {
-            EnabledForDeployment = request.Properties.EnabledForDeployment,
-            EnabledForDiskEncryption = request.Properties.EnabledForDiskEncryption,
-            EnabledForTemplateDeployment = request.Properties.EnabledForTemplateDeployment,
-            EnableSoftDelete = request.Properties.EnableSoftDelete,
-            EnablePurgeProtection = request.Properties.EnablePurgeProtection,
-            EnableRbacAuthorization = request.Properties.EnableRbacAuthorization,
-            SoftDeleteRetentionInDays = request.Properties.SoftDeleteRetentionInDays,
-            TenantId = request.Properties.TenantId,
+            EnabledForDeployment = request.Properties.EnabledForDeployment.GetValueOrDefault(false),
+            EnabledForDiskEncryption = request.Properties.EnabledForDiskEncryption.GetValueOrDefault(false),
+            EnabledForTemplateDeployment = request.Properties.EnabledForTemplateDeployment.GetValueOrDefault(false),
+            EnableSoftDelete = request.Properties.EnableSoftDelete.GetValueOrDefault(true),
+            EnablePurgeProtection = request.Properties.EnablePurgeProtection.GetValueOrDefault(false),
+            EnableRbacAuthorization = request.Properties.EnableRbacAuthorization.GetValueOrDefault(false),
+            SoftDeleteRetentionInDays = request.Properties.SoftDeleteRetentionInDays.GetValueOrDefault(90),
             Sku = new KeyVaultSku
             {
                 Family = request.Properties.Sku?.Family,
                 Name = request.Properties.Sku?.Name
             }
         };
+    }
+
+    public static void UpdateFromRequest(KeyVaultResource resource, CreateOrUpdateKeyVaultRequest request)
+    {
+        if (request.Properties == null)
+        {
+            throw new ArgumentNullException(nameof(request.Properties));
+        }
+
+        resource.Properties.EnabledForDeployment = request.Properties.EnabledForDeployment.GetValueOrDefault(false);
+        resource.Properties.EnabledForDiskEncryption = request.Properties.EnabledForDiskEncryption.GetValueOrDefault(false);
+        resource.Properties.EnabledForTemplateDeployment = request.Properties.EnabledForTemplateDeployment.GetValueOrDefault(false);
+        resource.Properties.EnableSoftDelete = request.Properties.EnableSoftDelete.GetValueOrDefault(true);
+        resource.Properties.EnablePurgeProtection = request.Properties.EnablePurgeProtection.GetValueOrDefault(false);
+        resource.Properties.EnableRbacAuthorization = request.Properties.EnableRbacAuthorization.GetValueOrDefault(false);
+        resource.Properties.SoftDeleteRetentionInDays = request.Properties.SoftDeleteRetentionInDays.GetValueOrDefault(90);
     }
 }

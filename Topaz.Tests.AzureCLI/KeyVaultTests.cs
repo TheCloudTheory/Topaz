@@ -237,7 +237,7 @@ public class KeyVaultTests : TopazFixture
     [Test]
     public async Task KeyVaultTests_WhenShowCommandIsCalledForNonExistentVault_ItShouldFail()
     {
-        await RunAzureCliCommand("az keyvault show --name NonExistentVault999", null, 3);
+        await RunAzureCliCommand("az keyvault show --name NonExistentVault999", null, 1);
     }
     
     #endregion

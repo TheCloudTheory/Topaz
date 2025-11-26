@@ -66,14 +66,26 @@ internal sealed class KeyVaultControlPlane(
                 resourceGroupOperation.Reason,
                 resourceGroupOperation.Code);
         }
-        
-        var properties = KeyVaultResourceProperties.FromRequest(keyVaultName, request);
-        var resource = new KeyVaultResource(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, request.Location!, request.Tags, properties);
-        
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource);
 
-        // This operation must also support handling operation result when Key Vault was updated
-        return new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Created, resource, null, null);
+        KeyVaultResource resource;
+        var keyVaultOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
+        var createOperation = keyVaultOperation.Result == OperationResult.NotFound;
+        if (createOperation)
+        {
+            var properties = KeyVaultResourceProperties.FromRequest(keyVaultName, request);
+            resource = new KeyVaultResource(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, request.Location!, request.Tags, properties);
+        }
+        else
+        {
+            KeyVaultResourceProperties.UpdateFromRequest(keyVaultOperation.Resource!, request);
+            resource = keyVaultOperation.Resource!;
+        }
+        
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource, createOperation);
+        
+        return new ControlPlaneOperationResult<KeyVaultResource>(
+            createOperation ? OperationResult.Created : OperationResult.Updated,
+            resource, null, null);
     }
 
     private bool CheckIfKeyVaultNameIsValid(string keyVaultName)

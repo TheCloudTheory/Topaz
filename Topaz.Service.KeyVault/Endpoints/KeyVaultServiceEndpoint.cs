@@ -235,7 +235,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
         }
 
         var result = _controlPlane.CreateOrUpdate(subscriptionId, resourceGroup, keyVaultName, request);
-        if (result.Result != OperationResult.Created || result.Resource == null)
+        if ((result.Result != OperationResult.Created && result.Result != OperationResult.Updated) || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);
             return;
