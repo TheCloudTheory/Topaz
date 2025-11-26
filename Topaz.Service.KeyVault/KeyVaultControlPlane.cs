@@ -67,13 +67,13 @@ internal sealed class KeyVaultControlPlane(
                 resourceGroupOperation.Code);
         }
 
-        KeyVaultResource resource;
+        KeyVaultFullResource resource;
         var keyVaultOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
         var createOperation = keyVaultOperation.Result == OperationResult.NotFound;
         if (createOperation)
         {
             var properties = KeyVaultResourceProperties.FromRequest(keyVaultName, request);
-            resource = new KeyVaultResource(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, request.Location!, request.Tags, properties);
+            resource = new KeyVaultFullResource(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, request.Location!, request.Tags, properties);
         }
         else
         {
@@ -103,13 +103,13 @@ internal sealed class KeyVaultControlPlane(
         return !characters.Where((t, index) => index != 0 && (t == '-' && characters[index - 1] == '-')).Any();
     }
 
-    public ControlPlaneOperationResult<KeyVaultResource> Get(SubscriptionIdentifier subscriptionIdentifier,
+    public ControlPlaneOperationResult<KeyVaultFullResource> Get(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName)
     {
-        var resource = provider.GetAs<KeyVaultResource>(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
+        var resource = provider.GetAs<KeyVaultFullResource>(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
         return resource == null || GlobalDnsEntries.IsSoftDeleted(KeyVaultService.UniqueName, keyVaultName) ? 
-            new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.NotFound, null, string.Format(KeyVaultNotFoundMessageTemplate, keyVaultName), KeyVaultNotFoundCode) 
-            : new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Created, resource, null, null);
+            new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.NotFound, null, string.Format(KeyVaultNotFoundMessageTemplate, keyVaultName), KeyVaultNotFoundCode) 
+            : new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.Created, resource, null, null);
     }
 
     public (OperationResult result, CheckNameResponse response) CheckName(SubscriptionIdentifier subscriptionIdentifier, string keyVaultName, string? resourceType)
@@ -152,15 +152,15 @@ internal sealed class KeyVaultControlPlane(
             });
     }
     
-    public (OperationResult result, KeyVaultResource?[]? resource) ListBySubscription(SubscriptionIdentifier subscriptionIdentifier)
+    public (OperationResult result, KeyVaultFullResource?[]? resource) ListBySubscription(SubscriptionIdentifier subscriptionIdentifier)
     {
-        var resources = provider.ListAs<KeyVaultResource>(subscriptionIdentifier, null, null, 8);
+        var resources = provider.ListAs<KeyVaultFullResource>(subscriptionIdentifier, null, null, 8);
 
         var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier));
         return (OperationResult.Success, filteredResources.ToArray());
     }
     
-    public (OperationResult result, KeyVaultResource?[]? resource) ListDeletedBySubscription(SubscriptionIdentifier subscriptionIdentifier)
+    public (OperationResult result, KeyVaultFullResource?[]? resource) ListDeletedBySubscription(SubscriptionIdentifier subscriptionIdentifier)
     {
         var keyVaults = ListBySubscription(subscriptionIdentifier);
         var filteredResources = keyVaults.resource!.Where(keyVault =>
@@ -171,7 +171,7 @@ internal sealed class KeyVaultControlPlane(
 
     public void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName)
     {
-        var resource = provider.GetAs<KeyVaultResource>(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
+        var resource = provider.GetAs<KeyVaultFullResource>(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
         if (resource == null)
         {
             return;
@@ -181,6 +181,12 @@ internal sealed class KeyVaultControlPlane(
         {
             return;
         }
+        
+        resource.DeletionDate = DateTimeOffset.Now;
+        resource.ScheduledPurgeDate = DateTimeOffset.Now.AddDays(resource.Properties.SoftDeleteRetentionInDays);
+        
+        // First Key Vault needs to be updated with the additional properties we added
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource);
         
         // Note that Azure Key Vault is soft deleted
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, true);
@@ -233,5 +239,20 @@ internal sealed class KeyVaultControlPlane(
             resource.IsInSubscription(subscriptionIdentifier) && resource.IsInResourceGroup(resourceGroupIdentifier));
         
         return  (OperationResult.Success, filteredResources.ToArray());
+    }
+
+    public (OperationResult result, KeyVaultFullResource? resource) ShowDeleted(SubscriptionIdentifier subscriptionIdentifier, string keyVaultName)
+    {
+        var subscription = subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscription.Resource == null || subscription.Result == OperationResult.NotFound)
+        {
+            return (OperationResult.NotFound, null);
+        }
+        
+        var keyVaults = ListBySubscription(subscriptionIdentifier);
+        var keyVault = keyVaults.resource!.SingleOrDefault(keyVault => keyVault!.Name == keyVaultName);
+            GlobalDnsEntries.IsSoftDeleted(KeyVaultService.UniqueName, keyVaultName);
+
+        return keyVault == null ? (OperationResult.NotFound, null) : (OperationResult.Success, keyVault);
     }
 }

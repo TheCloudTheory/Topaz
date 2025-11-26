@@ -5,7 +5,7 @@ using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.KeyVault.Models;
 
-internal sealed class KeyVaultResource
+internal class KeyVaultResource
     : ArmResource<KeyVaultResourceProperties>
 {
     [JsonConstructor]
@@ -29,12 +29,12 @@ internal sealed class KeyVaultResource
         Properties = properties;
     }
     
-    public override string Id { get; init; }
-    public override string Name { get; init; }
+    public sealed override string Id { get; init; }
+    public sealed override string Name { get; init; }
     public override string Type => "Microsoft.KeyVault/vaults";
-    public override string Location { get; init; }
-    public override IDictionary<string, string> Tags { get; init; }
+    public sealed override string Location { get; init; }
+    public sealed override IDictionary<string, string> Tags { get; init; }
     public override ResourceSku? Sku { get; init; }
     public override string? Kind { get; init; }
-    public override KeyVaultResourceProperties Properties { get; init; }
+    public sealed override KeyVaultResourceProperties Properties { get; init; }
 }

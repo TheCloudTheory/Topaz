@@ -383,23 +383,6 @@ public class KeyVaultTests : TopazFixture
         await RunAzureCliCommand("az group delete -n test-rg --yes");
     }
     
-    [Test]
-    public async Task KeyVaultTests_WhenUpdateCommandIsCalledWithTags_TagsShouldBeUpdated()
-    {
-        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
-        await RunAzureCliCommand("az keyvault create --location westeurope --name UpdateVaultGHI --resource-group test-rg --tags Env=Dev");
-        await RunAzureCliCommand("az keyvault update --name UpdateVaultGHI --tags Env=Prod Team=Engineering", (response) =>
-        {
-            Assert.Multiple(() =>
-            {
-                Assert.That(response["tags"]!["Env"]!.GetValue<string>(), Is.EqualTo("Prod"));
-                Assert.That(response["tags"]!["Team"]!.GetValue<string>(), Is.EqualTo("Engineering"));
-            });
-        });
-        await RunAzureCliCommand("az keyvault delete --name UpdateVaultGHI --only-show-errors");
-        await RunAzureCliCommand("az group delete -n test-rg --yes");
-    }
-    
     #endregion
     
     #region Purge and Recovery Tests

@@ -23,6 +23,11 @@ public sealed class ListDeletedResponse
             public DateTimeOffset? ScheduledPurgeDate { get; set; }
             public bool PurgeProtectionEnabled { get; set; }
         }
+
+        public override string ToString()
+        {
+            return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
+        }
     }
 
     public string? NextLink { get; set; }
