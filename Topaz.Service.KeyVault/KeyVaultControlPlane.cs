@@ -255,4 +255,22 @@ internal sealed class KeyVaultControlPlane(
 
         return keyVault == null ? (OperationResult.NotFound, null) : (OperationResult.Success, keyVault);
     }
+
+    public (OperationResult operationResult, string? vaultUri) Purge(SubscriptionIdentifier subscriptionIdentifier, string location, string keyVaultName)
+    {
+        var subscription = subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscription.Resource == null || subscription.Result == OperationResult.NotFound)
+        {
+            return (OperationResult.NotFound, null);
+        }
+
+        var keyVault = ShowDeleted(subscriptionIdentifier, keyVaultName);
+        if (keyVault.resource == null || keyVault.result == OperationResult.NotFound)
+        {
+            return (OperationResult.NotFound, null);
+        }
+        
+        provider.Delete(subscriptionIdentifier, keyVault.resource.GetResourceGroup(), keyVaultName);
+        return (OperationResult.Success, keyVault.resource.Properties.VaultUri);
+    }
 }

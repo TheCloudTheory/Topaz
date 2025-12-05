@@ -179,7 +179,8 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
     /// </summary>
     private static void EnforceAuthenticationChallenge(HttpResponseMessage response, HttpStatusCode code)
     {
-        response.Headers.Add("WWW-Authenticate", $"Bearer authorization=\"http://topaz.local.dev:8898/{Guid.Empty}\", resource=\"https://topaz.local.dev:8898\"");
+        response.Headers.Add("WWW-Authenticate",
+            $"Bearer authorization=\"http://topaz.local.dev:8898/{Guid.Empty}\", resource=\"https://topaz.local.dev:8898\"");
         response.StatusCode = code;
     }
 }

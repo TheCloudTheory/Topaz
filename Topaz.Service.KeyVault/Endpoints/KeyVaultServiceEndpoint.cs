@@ -30,6 +30,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/locations/{location}/deletedVaults/{keyVaultName}",
         "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkNameAvailability",
         "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkMhsmNameAvailability",
+        "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/locations/{location}/deletedVaults/{keyVaultName}/purge",
         "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}"
     ];
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
@@ -75,7 +76,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
                         var isShowDeletedRequest = path.ExtractValueFromPath(7) == "deletedVaults";
                         if (isShowDeletedRequest)
                         {
-                            HandleShowDeletedVaultRequest(response, subscriptionIdentifier, keyVaultName);
+                            HandleShowDeletedVaultRequest(response, subscriptionIdentifier, keyVaultName!);
                             break;
                         }
                         
@@ -90,7 +91,14 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
                     
                     break;
                 case "POST":
-                    HandleCheckNameRequest(response, subscriptionIdentifier, input);
+                    if (string.IsNullOrWhiteSpace(keyVaultName))
+                    {
+                        HandleCheckNameRequest(response, subscriptionIdentifier, input);
+                        break;
+                    }
+                    
+                    var location = path.ExtractValueFromPath(6);
+                    HandlePurgeKeyVaultRequest(response, subscriptionIdentifier, location!, keyVaultName);
                     break;
                 case "DELETE":
                     if (string.IsNullOrWhiteSpace(keyVaultName))
@@ -116,6 +124,21 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
         }
         
         return response;
+    }
+
+    private void HandlePurgeKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, string location, string keyVaultName)
+    {
+        logger.LogDebug($"Executing {nameof(HandlePurgeKeyVaultRequest)} for `{subscriptionIdentifier}` and `{keyVaultName}` and `{location}`.");
+        
+        var (operationResult, vaultUri) = _controlPlane.Purge(subscriptionIdentifier, location, keyVaultName);
+        if (operationResult == OperationResult.NotFound || vaultUri == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        response.Headers.Location = new Uri(vaultUri);
+        response.StatusCode = HttpStatusCode.OK;
     }
 
     private void HandleShowDeletedVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, string keyVaultName)
