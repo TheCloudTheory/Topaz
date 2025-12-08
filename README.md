@@ -36,31 +36,3 @@ If you want to work with emulators for Azure services, you have a couple of opti
 * Azurite - https://github.com/Azure/Azurite
 * Azure Cosmos DB Emulator - https://github.com/Azure/azure-cosmos-db-emulator-docker
 * Azure Service Bus Emulator - https://github.com/Azure/azure-service-bus-emulator-installer
-
-## How to install Topaz?
-Topaz doesn't require installation and can be run as either a single executable or a Docker container. If you want to run it as a standalone application, make sure you've installed and trusted certificates (unless you don't need to use HTTPS endpoints). The certificates are attached to each release package. We strongly recommend running Topaz as a Docker container though as it saves you from complexity of local installation:
-```
-docker run --rm thecloudtheory/topaz-cli:<tag>
-```
-Image tags are always aligned with the Git tag linked to a specific release.
-
-One of the best options to run Topaz is to leverage [Testcontainers](https://testcontainers.com/). Check the `Examples` directory in this repository for detailed code snippets.
-
-## NuGet packages
-Topaz provides a set of NuGet packages, which can be used to simplify configuration, authenticate to your local environment and integrate with certain types of applications (e.g. ASP.NET Core):
-* [TheCloudTheory.Topaz.Identity](https://www.nuget.org/packages/TheCloudTheory.Topaz.Identity/)
-* [TheCloudTheory.Topaz.ResourceManager](https://www.nuget.org/packages/TheCloudTheory.Topaz.ResourceManager/)
-* [TheCloudTheory.Topaz.AspNetCore.Extensions](https://www.nuget.org/packages/TheCloudTheory.Topaz.AspNetCore.Extensions/)
-
-Once installed, they enable to you get started with the emulator without much of a hassle:
-```
-var credentials = new AzureLocalCredential();
-var client = new SecretClient(
-  vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(keyVaultName),
-  credential: credentials,
-  new SecretClientOptions
-  {
-    DisableChallengeResourceVerification = true
-});
-```
-Check the `Examples` directory in the repository for other use cases and scenarios.
