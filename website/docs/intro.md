@@ -33,24 +33,17 @@ Image tags are always aligned with the Git tag linked to a specific release.
 One of the best options to run Topaz is to leverage [Testcontainers](https://testcontainers.com/). Check the rest of the documentation for the detailed instructions.
 
 ## DNS resolution for Topaz
-Topaz requires you to register required DNS entries in your `hosts` file, so all the requests used by your application or scripts are correctly routed to the emulator. By default, Topaz listens on `127.0.2.1` IP address on various ports - you need to point all the Azure-related hosts to that address unless you run the emulator as an administrator. In that case, Topaz can manage the entries in the `hosts` file on its own.
+In order to fully support emulation of Azure services, Topaz requires doing a one-time configuration of local DNS resolution. It can be done using a dedicated script available in the repository:
+* [macOS](https://github.com/TheCloudTheory/Topaz/blob/main/install/install-macos.sh)
+* [Linux](https://github.com/TheCloudTheory/Topaz/blob/main/install/install-linux.sh)
 
-:::warning
+:::tip
 
-Topaz-managed DNS configuration is not fully tested yet. Additionally, if you run Topaz as container, it won't be able to manage DNS entries on the host machine.
+For now the recommended way of running Topaz on Windows machines is using WSL.
 
 :::
 
-To simplify management of DNS entries, we strongly encourage you to use the [scripts](https://github.com/TheCloudTheory/Topaz/tree/main/scripts) available in the project repository:
-
-```bash
-sudo ./register-dns-entries.sh
-
-# You will need to run the below command each time you created a new storage account
-sudo ./register-dns-storage-entry.sh <storage-account-name>
-```
-
-The general "best practice" is to use the same name for services as often as possible (what will be the case in many popular scenarios). If you feel the currently available way of managing DNS is cumbersome, we'll be more than happy for all the suggestions how we could improve this functionality for you.
+The installation scripts require admin privileges to make necessary changes, but after initial setup Topaz require no elevated permissions.
 
 ## Start the emulator
 
