@@ -37,7 +37,7 @@ jobs:
         ./ubuntu-install.sh
     - name: Configure DNS resolution
       run: |
-        ./install/install-linux.sh
+        sudo ./install/install-linux.sh
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
