@@ -35,12 +35,9 @@ jobs:
       run: |
         cd certificate
         ./ubuntu-install.sh
-    - name: Register DNS entries
+    - name: Configure DNS resolution
       run: |
-        ./scripts/register-dns-entries.sh
-    - name: Register DNS entries for tests
-      run: |
-        ./scripts/register-dns-entries-for-tests.sh
+        ./install/install-linux.sh
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
