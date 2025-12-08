@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e  # Exit on any error
+
 echo "--------------------------------------------"
 echo "Starting installation of dnsmasq for .topaz.local.dev domains..."
 echo "(Note that sudo privileges will be required for some steps)"
@@ -9,6 +11,35 @@ echo "--------------------------------------------"
 if [ "$EUID" -ne 0 ]; then 
     echo "Please run as root or with sudo"
     exit 1
+fi
+
+# Check if port 53 is already in use
+echo "--------------------------------------------"
+echo "Checking for port 53 conflicts..."
+echo "--------------------------------------------"
+
+if lsof -Pi :53 -sTCP:LISTEN -t >/dev/null 2>&1 || ss -tulpn | grep -q ':53 ' 2>/dev/null; then
+    echo "Port 53 is already in use. Checking for systemd-resolved..."
+    
+    if systemctl is-active --quiet systemd-resolved; then
+        echo "systemd-resolved is running on port 53. Stopping and disabling it..."
+        systemctl stop systemd-resolved
+        systemctl disable systemd-resolved
+        
+        # Backup and update resolv.conf
+        if [ -L /etc/resolv.conf ]; then
+            rm /etc/resolv.conf
+        fi
+        echo "nameserver 8.8.8.8" > /etc/resolv.conf
+        echo "nameserver 8.8.4.4" >> /etc/resolv.conf
+        
+        echo "systemd-resolved stopped and disabled."
+    else
+        echo "ERROR: Port 53 is in use by another service."
+        echo "Please identify and stop the service using port 53:"
+        lsof -i :53 2>/dev/null || ss -tulpn | grep ':53 '
+        exit 1
+    fi
 fi
 
 # Detect package manager
@@ -52,7 +83,14 @@ echo "--------------------------------------------"
 echo "Step 3 - Verifying dnsmasq service status..."
 echo "--------------------------------------------"
 
-systemctl status dnsmasq --no-pager
+if systemctl is-active --quiet dnsmasq; then
+    echo "dnsmasq is running successfully"
+    systemctl status dnsmasq --no-pager
+else
+    echo "ERROR: dnsmasq failed to start"
+    systemctl status dnsmasq --no-pager
+    exit 1
+fi
 
 echo "--------------------------------------------"
 echo "Step 4 - Configuring local DNS resolution..."
