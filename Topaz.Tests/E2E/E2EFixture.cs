@@ -18,16 +18,11 @@ public class E2EFixture
             "--enable-logging-to-file",
             "--refresh-log",
             "--emulator-ip-address",
-            IsRunningOnMacOS() ? "127.0.0.1" : "127.0.2.1"
+            "127.0.0.1"
         ]);
 
         await Task.Run(() => _topaz, CancellationTokenSource.Token);
         await Task.Delay(1000);
-    }
-
-    private bool IsRunningOnMacOS()
-    {
-        return OperatingSystem.IsMacOS();
     }
 
     [OneTimeTearDown]
