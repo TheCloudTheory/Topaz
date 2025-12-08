@@ -110,8 +110,22 @@ if systemctl is-active --quiet NetworkManager; then
     
     echo "NetworkManager configured to use dnsmasq"
 else
-    echo "NetworkManager not detected. You may need to configure /etc/resolv.conf manually."
-    echo "Add 'nameserver 127.0.0.1' as the first nameserver in /etc/resolv.conf"
+    echo "NetworkManager not detected. Configuring /etc/resolv.conf..."
+    
+    # Backup existing resolv.conf if it's not a symlink we already removed
+    if [ -f /etc/resolv.conf ] && [ ! -L /etc/resolv.conf ]; then
+        cp /etc/resolv.conf /etc/resolv.conf.backup
+        echo "Backup created at /etc/resolv.conf.backup"
+    fi
+    
+    # Add 127.0.0.1 as the first nameserver
+    {
+        echo "nameserver 127.0.0.1"
+        echo "nameserver 8.8.8.8"
+        echo "nameserver 8.8.4.4"
+    } > /etc/resolv.conf
+    
+    echo "/etc/resolv.conf configured to use dnsmasq at 127.0.0.1"
 fi
 
 echo "--------------------------------------------"
@@ -123,5 +137,5 @@ dig test.topaz.local.dev @127.0.0.1
 
 echo "--------------------------------------------"
 echo "Installation complete!"
-echo "Test with: ping xxx.storage.topaz.local.dev"
+echo "Test with: ping xxx.topaz.local.dev"
 echo "--------------------------------------------"
