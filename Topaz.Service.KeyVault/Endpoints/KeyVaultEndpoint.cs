@@ -16,12 +16,12 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultKeyVaultPort, Protocol.Https);
 
     public string[] Endpoints => [
-        "PUT /{vaultName}/secrets/{secretName}",
-        "GET /{vaultName}/secrets/{secretName}",
-        "GET /{vaultName}/secrets/{secretName}/",
-        "GET /{vaultName}/secrets/{secretName}/{secretVersion}",
-        "DELETE /{vaultName}/secrets/{secretName}",
-        "GET /{vaultName}/secrets/",
+        "PUT /secrets/{secretName}",
+        "GET /secrets/{secretName}",
+        "GET /secrets/{secretName}/",
+        "GET /secrets/{secretName}/{secretVersion}",
+        "DELETE /secrets/{secretName}",
+        "GET /secrets/",
     ];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query, GlobalOptions options)
@@ -32,8 +32,8 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         try
         {
-            var vaultName = path.ExtractValueFromPath(1);
-            var secretName = path.ExtractValueFromPath(3);
+            var vaultName = headers["Host"].ToString().Split(".")[0];
+            var secretName = path.ExtractValueFromPath(2);
             var identifiers = GlobalDnsEntries.GetEntry(KeyVaultService.UniqueName, vaultName!);
 
             if (identifiers == null)
@@ -148,7 +148,7 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
     private void HandleGetSecretRequest(string path, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string? secretName, HttpResponseMessage response)
     {
-        var version = path.ExtractValueFromPath(4);
+        var version = path.ExtractValueFromPath(3);
         var (data, code) = _dataPlane.GetSecret(subscriptionIdentifier, resourceGroupIdentifier, vaultName, secretName!, version);
 
         if (code == HttpStatusCode.NotFound)
@@ -180,7 +180,7 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
     private static void EnforceAuthenticationChallenge(HttpResponseMessage response, HttpStatusCode code)
     {
         response.Headers.Add("WWW-Authenticate",
-            $"Bearer authorization=\"http://topaz.local.dev:8898/{Guid.Empty}\", resource=\"https://topaz.local.dev:8898\"");
+            $"Bearer authorization=\"https://keyvault.topaz.local.dev:{GlobalSettings.DefaultKeyVaultPort}/{Guid.Empty}\", resource=\"https://keyvault.topaz.local.dev:{GlobalSettings.DefaultKeyVaultPort}\"");
         response.StatusCode = code;
     }
 }

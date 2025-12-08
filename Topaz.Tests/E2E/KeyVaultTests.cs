@@ -152,6 +152,11 @@ public class KeyVaultTests
         {
             DisableChallengeResourceVerification = true
         });
+        var existingSecrets = client.GetPropertiesOfSecrets().ToArray();
+        foreach (var secret in existingSecrets)
+        {
+            client.StartDeleteSecret(secret.Name);
+        }
 
         // Act
         var secret1 = client.SetSecret("secret-one", "test");

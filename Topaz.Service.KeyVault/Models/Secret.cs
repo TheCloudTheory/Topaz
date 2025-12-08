@@ -20,7 +20,7 @@ public record class Secret
     public SecretAttributes Attributes { get; set; }
 }
 
-public record class SecretAttributes(bool Enabled, long Created, long Updated)
+public record SecretAttributes(bool Enabled, long Created, long Updated)
 {
     public string RecoveryLevel => "Recoverable+Purgeable";
 }

@@ -12,7 +12,7 @@ public static class TopazResourceHelpers
     /// <remarks>
     /// The endpoint uses the localhost address with the default Key Vault port defined in GlobalSettings.
     /// </remarks>
-    public static Uri GetKeyVaultEndpoint(string vaultName) => new($"https://topaz.local.dev:{GlobalSettings.DefaultKeyVaultPort}/{vaultName}");
+    public static Uri GetKeyVaultEndpoint(string vaultName) => new($"https://{vaultName}.keyvault.topaz.local.dev:{GlobalSettings.DefaultKeyVaultPort}");
 
      /// <summary>
     /// Generates an Azure Storage connection string for local development/testing.

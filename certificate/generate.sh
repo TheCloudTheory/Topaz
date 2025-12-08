@@ -26,12 +26,13 @@ openssl req \
   echo '[ alt_names ]'; \
   echo "DNS.1 = www.${PARENT}${SUFFIX}"; \
   echo "DNS.2 = ${PARENT}${SUFFIX}"; \
-  echo "DNS.3 = ${PARENT}.storage.table${SUFFIX}"; \
-  echo "DNS.4 = ${PARENT}.storage.blob${SUFFIX}"; \
-  echo "DNS.5 = ${PARENT}.storage.queue${SUFFIX}"; \
-  echo "DNS.6 = ${PARENT}.servicebus${SUFFIX}"; \
-  echo "DNS.7 = ${PARENT}.eventhub${SUFFIX}"; \
-  echo "DNS.8 = ${PARENT}.keyvault${SUFFIX}"; \
+  echo "DNS.3 = *.${PARENT}${SUFFIX}"; \
+  echo "DNS.4 = *.table.storage.${PARENT}${SUFFIX}"; \
+  echo "DNS.5 = *.blob.storage.${PARENT}${SUFFIX}"; \
+  echo "DNS.6 = *.queue.storage.${PARENT}${SUFFIX}"; \
+  echo "DNS.7 = *.servicebus.${PARENT}${SUFFIX}"; \
+  echo "DNS.8 = *.eventhub.${PARENT}${SUFFIX}"; \
+  echo "DNS.9 = *.keyvault.${PARENT}${SUFFIX}"; \
   echo '[ v3_ca ]'; \
   echo 'subjectKeyIdentifier=hash'; \
   echo 'authorityKeyIdentifier=keyid:always,issuer'; \

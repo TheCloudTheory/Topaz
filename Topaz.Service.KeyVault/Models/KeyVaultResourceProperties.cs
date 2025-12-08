@@ -11,7 +11,7 @@ internal sealed class KeyVaultResourceProperties
 
     private KeyVaultResourceProperties(string keyVaultName)
     {
-        VaultUri = $"https://{keyVaultName}.topaz.keyvault.local.dev";
+        VaultUri = $"https://{keyVaultName}.keyvault.topaz.local.dev";
     }
     
     public Guid TenantId { get; init; }
