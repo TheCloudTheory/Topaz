@@ -39,7 +39,9 @@ public class ServiceBusTests
             "group",
             "delete",
             "--name",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
@@ -58,7 +60,9 @@ public class ServiceBusTests
             "namespace",
             "delete",
             "--name",
-            NamespaceName
+            NamespaceName,
+            "--resource-group",
+            ResourceGroupName
         ]);
         
         await Program.Main([
