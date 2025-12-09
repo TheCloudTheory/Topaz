@@ -72,8 +72,12 @@ echo "--------------------------------------------"
 # Create dnsmasq configuration directory if it doesn't exist
 mkdir -p $DNSMASQ_CONF_DIR
 
-# Configure dnsmasq to resolve .topaz.local.dev domains
+# Configure dnsmasq to resolve .topaz.local.dev domains and subdomains
 echo "address=/.topaz.local.dev/127.0.0.1" > $DNSMASQ_CONF_DIR/topaz.local.dev.conf
+echo "address=/.keyvault.topaz.local.dev/127.0.0.1" >> $DNSMASQ_CONF_DIR/topaz.local.dev.conf
+echo "address=/.storage.topaz.local.dev/127.0.0.1" >> $DNSMASQ_CONF_DIR/topaz.local.dev.conf
+echo "address=/.servicebus.topaz.local.dev/127.0.0.1" >> $DNSMASQ_CONF_DIR/topaz.local.dev.conf
+echo "address=/.eventhub.topaz.local.dev/127.0.0.1" >> $DNSMASQ_CONF_DIR/topaz.local.dev.conf
 
 # Enable and start dnsmasq service
 systemctl enable dnsmasq

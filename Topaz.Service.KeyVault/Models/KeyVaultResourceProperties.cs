@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Topaz.Service.KeyVault.Models.Requests;
+using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Models;
 
@@ -11,7 +12,7 @@ internal sealed class KeyVaultResourceProperties
 
     private KeyVaultResourceProperties(string keyVaultName)
     {
-        VaultUri = $"https://{keyVaultName}.keyvault.topaz.local.dev";
+        VaultUri = $"https://{keyVaultName}.keyvault.topaz.local.dev:{GlobalSettings.DefaultKeyVaultPort}";
     }
     
     public Guid TenantId { get; init; }

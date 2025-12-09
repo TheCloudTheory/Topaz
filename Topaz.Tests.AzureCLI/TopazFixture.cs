@@ -17,7 +17,7 @@ public class TopazFixture
                                                              "microsoft_graph_resource_id": "https://topaz.local.dev:8899/"
                                                            },
                                                            "suffixes": {
-                                                             "keyvault_dns": "https://topaz.local.dev:8899/"
+                                                             "keyvault_dns": "https://topaz.local.dev:8898/"
                                                            }
                                                          }
                                                          """;
@@ -73,6 +73,10 @@ public class TopazFixture
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
             .WithBindMount(Path.GetFullPath("./templates"), "/templates")
             .WithEnvironment("REQUESTS_CA_BUNDLE", "/usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem")
+            .WithExtraHost("purgevault123.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("deletedvault123.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("deletedvault456.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("recovervault123.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
             .Build();
         
         // Act
