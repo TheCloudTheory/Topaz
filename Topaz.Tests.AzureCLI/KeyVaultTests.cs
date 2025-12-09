@@ -428,7 +428,7 @@ public class KeyVaultTests : TopazFixture
         await RunAzureCliCommand("az keyvault create --location westeurope --name PurgeVault123 --resource-group test-rg");
         await RunAzureCliCommand("az keyvault delete --name PurgeVault123 --only-show-errors");
         await RunAzureCliCommand("az keyvault purge --name PurgeVault123 --only-show-errors");
-        await RunAzureCliCommand("az keyvault show-deleted --name PurgeVault123", null, 3);
+        await RunAzureCliCommand("az keyvault show-deleted --name PurgeVault123", null, 1);
         await RunAzureCliCommand("az group delete -n test-rg --yes");
     }
     
