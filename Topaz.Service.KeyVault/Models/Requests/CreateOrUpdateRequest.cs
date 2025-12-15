@@ -20,6 +20,7 @@ internal record CreateOrUpdateKeyVaultRequest
         public bool? EnablePurgeProtection { get; set; }
         public bool? EnableRbacAuthorization { get; set; }
         public uint? SoftDeleteRetentionInDays  { get; set; }
+        public string? CreateMode { get; set; }
 
         [UsedImplicitly]
         internal class KeyVaultSku

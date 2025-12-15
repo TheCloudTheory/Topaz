@@ -438,7 +438,7 @@ public class KeyVaultTests : TopazFixture
         await RunAzureCliCommand("az group create -n test-rg -l westeurope");
         await RunAzureCliCommand("az keyvault create --location westeurope --name RecoverVault123 --resource-group test-rg");
         await RunAzureCliCommand("az keyvault delete --name RecoverVault123 --only-show-errors");
-        await RunAzureCliCommand("az keyvault recover --name RecoverVault123", (response) =>
+        await RunAzureCliCommand("az keyvault recover --name RecoverVault123 --debug", (response) =>
         {
             Assert.Multiple(() =>
             {

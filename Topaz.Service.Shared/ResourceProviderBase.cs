@@ -8,35 +8,12 @@ namespace Topaz.Service.Shared;
 public class ResourceProviderBase<TService> where TService : IServiceDefinition
 {
     protected const string BaseEmulatorPath = GlobalSettings.MainEmulatorDirectory;
+    
     private readonly ITopazLogger _logger;
 
     protected ResourceProviderBase(ITopazLogger logger)
     {
         _logger = logger;
-        
-        CreateEmulatorDirectoryIfNeeded();
-    }
-
-    private void CreateEmulatorDirectoryIfNeeded()
-    {
-        if (Directory.Exists(GlobalSettings.MainEmulatorDirectory))
-        {
-            _logger.LogDebug("Emulator directory already exists.");
-        }
-        else
-        {
-            Directory.CreateDirectory(GlobalSettings.MainEmulatorDirectory);
-            _logger.LogDebug("Emulator directory created.");
-        }
-        
-        if (File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))
-        {
-            _logger.LogDebug("Global DNS entries file already exists.");
-            return;
-        }
-        
-        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, JsonSerializer.Serialize(new GlobalDnsEntries()));
-        _logger.LogDebug("Global DNS entries file created.");
     }
 
     public void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier,

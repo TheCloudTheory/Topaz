@@ -31,7 +31,8 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
         "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkNameAvailability",
         "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkMhsmNameAvailability",
         "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/locations/{location}/deletedVaults/{keyVaultName}/purge",
-        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}"
+        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
+        "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}"
     ];
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query, GlobalOptions options)
@@ -110,6 +111,9 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
                     
                     HandleDeleteKeyVaultRequest(response, subscriptionIdentifier, ResourceGroupIdentifier.From(resourceGroupSegment), keyVaultName);
                     break;
+                case "PATCH":
+                    HandleUpdateKeyVaultRequest(response, subscriptionIdentifier, ResourceGroupIdentifier.From(resourceGroupSegment), keyVaultName!, input);
+                    break;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
                     break;
@@ -124,6 +128,34 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
         }
         
         return response;
+    }
+
+    private void HandleUpdateKeyVaultRequest(HttpResponseMessage response,
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string keyVaultName, Stream input)
+    {
+        logger.LogDebug($"Executing {nameof(HandleCreateUpdateKeyVaultRequest)}.");
+        
+        using var reader = new StreamReader(input);
+
+        var content = reader.ReadToEnd();
+        var request = JsonSerializer.Deserialize<UpdateKeyVaultRequest>(content, GlobalSettings.JsonOptions);
+
+        if (request == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+        
+        var result = _controlPlane.Update(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, request);
+        if (result.Result != OperationResult.Updated || result.Resource == null)
+        {
+            response.CreateErrorResponse(result.Code!, result.Reason!);
+            return;
+        }
+        
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(result.Resource.ToString());
     }
 
     private void HandlePurgeKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, string location, string keyVaultName)

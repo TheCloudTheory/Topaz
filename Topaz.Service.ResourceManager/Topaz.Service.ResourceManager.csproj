@@ -15,7 +15,7 @@
 
     <ItemGroup>
       <PackageReference Include="Azure.Deployments.Templates" Version="1.473.0" />
-      <PackageReference Include="Azure.ResourceManager.Resources" Version="1.11.1" />
+      <PackageReference Include="Azure.ResourceManager.Resources" Version="1.11.2" />
     </ItemGroup>
 
     <ItemGroup>

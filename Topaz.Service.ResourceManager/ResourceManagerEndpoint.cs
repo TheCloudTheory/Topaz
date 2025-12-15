@@ -26,6 +26,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploym
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}",
         "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}",
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments",
+        "GET /subscriptions/{subscriptionId}/providers/{providerName}",
         "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}/validate"
     ];
 
@@ -43,6 +44,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploym
             var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
             var resourceGroupIdentifier = ResourceGroupIdentifier.From(path.ExtractValueFromPath(4));
             var deploymentName = path.ExtractValueFromPath(8);
+            var segments = path.Split('/');
             
             var subscriptionOperation = _subscriptionControlPlane.Get(subscriptionIdentifier);
             if (subscriptionOperation.Result == OperationResult.NotFound)
@@ -54,7 +56,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploym
             }
 
             var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
-            if (resourceGroupOperation.Result == OperationResult.NotFound || resourceGroupOperation.Resource == null)
+            if (CanHandleRequestBasedOnAvailableData(segments, resourceGroupOperation))
             {
                 response.StatusCode = HttpStatusCode.NotFound;
                 response.Content = new StringContent(subscriptionOperation.ToString());
@@ -67,10 +69,17 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploym
                 case "PUT":
                     if (!string.IsNullOrWhiteSpace(deploymentName))
                     {
-                        HandleCreateOrUpdateDeployment(response, subscriptionIdentifier, resourceGroupOperation.Resource, deploymentName, input);
+                        HandleCreateOrUpdateDeployment(response, subscriptionIdentifier, resourceGroupOperation.Resource!, deploymentName, input);
                     }
                     break;
                 case "GET":
+                    if (segments.Length == 5)
+                    {
+                        var providerName = path.ExtractValueFromPath(4);
+                        HandleGetResourceProviderData(response, subscriptionIdentifier, providerName!);
+                        break;
+                    }
+                    
                     if (!string.IsNullOrWhiteSpace(deploymentName))
                     {
                         HandleGetDeployment(response, subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
@@ -108,6 +117,22 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploym
         return response;
     }
 
+    private static bool CanHandleRequestBasedOnAvailableData(string[] segments, ControlPlaneOperationResult<ResourceGroupResource> resourceGroupOperation)
+    {
+        return segments.Length != 5 && (resourceGroupOperation.Result == OperationResult.NotFound || resourceGroupOperation.Resource == null);
+    }
+
+    private void HandleGetResourceProviderData(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, string providerName)
+    {
+        var data = new ResourceProviderDataResponse(providerName)
+        {
+            Id = $"/subscriptions/{subscriptionIdentifier}/providers/{providerName}",
+        };
+        
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(data.ToString());
+    }
+
     private void HandleValidateDeployment(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string deploymentName, Stream input)
     {
         logger.LogDebug(nameof(ResourceManagerEndpoint), nameof(HandleValidateDeployment), subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
@@ -116,6 +141,8 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploym
         
         var content = reader.ReadToEnd();
         var result = _controlPlane.ValidateDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, content);
+        
+        // TODO: Finish validating a deployment
     }
 
     private void HandleGetDeployments(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)

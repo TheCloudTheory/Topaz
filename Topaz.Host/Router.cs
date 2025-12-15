@@ -79,6 +79,8 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
             await CreateNotFoundResponse(context, method, path);
             return;
         }
+        
+        logger.LogDebug($"The selected handler for an endpoint will be {endpoint.GetType().Name}");
 
         var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query, options);
         var textResponse = await response.Content.ReadAsStringAsync();

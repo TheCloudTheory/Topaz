@@ -3,6 +3,7 @@ using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
+using Azure.ResourceManager.Resources;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
@@ -150,6 +151,51 @@ public class KeyVaultServiceTests
             Assert.That(kv.Value.Data.Properties.EnabledForDiskEncryption, Is.EqualTo(updateOperation.Properties.EnabledForDiskEncryption));
             Assert.That(kv.Value.Data.Properties.EnabledForTemplateDeployment, Is.EqualTo(updateOperation.Properties.EnabledForTemplateDeployment));
             Assert.That(kv.Value.Data.Properties.EnableRbacAuthorization, Is.EqualTo(updateOperation.Properties.EnableRbacAuthorization));
+        });
+    }
+
+    [Test]
+    public void KeyVaultTests_WhenKeyVaultIsDeletedAndThenRecovered_ItShouldBeAvailable()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+        const string testKeyVaultName = "testkvrecovered";
+        resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, testKeyVaultName, operation, CancellationToken.None);
+        var originalVault = resourceGroup.Value.GetKeyVault(testKeyVaultName);
+        _ = originalVault.Value.Delete(WaitUntil.Completed);
+        var updateOperation = new
+        {
+            location = AzureLocation.WestEurope.ToString(),
+            properties = new
+            {
+                tenantId = operation.Properties.TenantId,
+                sku = operation.Properties.Sku.Family,
+                createMode = "recover"
+            }
+        };
+        
+        // Act
+        armClient.GetGenericResource(originalVault.Value.Id).Update(WaitUntil.Completed, new GenericResourceData(AzureLocation.WestEurope)
+        {
+            Properties = BinaryData.FromObjectAsJson(updateOperation.properties)
+        });
+        var kv = resourceGroup.Value.GetKeyVault(testKeyVaultName);
+        
+        // Assert
+        Assert.That(kv, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(kv.Value.Data.Name, Is.EqualTo(testKeyVaultName));
+            Assert.That(kv.Value.Data.ResourceType, Is.EqualTo(new ResourceType("Microsoft.KeyVault/vaults")));
+            Assert.That(kv.Value.Data.Properties.TenantId, Is.EqualTo(operation.Properties.TenantId));
+            Assert.That(kv.Value.Data.Properties.Sku.Family, Is.EqualTo(operation.Properties.Sku.Family));
+            Assert.That(kv.Value.Data.Properties.Sku.Name, Is.EqualTo(operation.Properties.Sku.Name));
         });
     }
 }

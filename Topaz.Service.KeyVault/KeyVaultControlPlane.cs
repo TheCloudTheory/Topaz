@@ -273,4 +273,39 @@ internal sealed class KeyVaultControlPlane(
         provider.Delete(subscriptionIdentifier, keyVault.resource.GetResourceGroup(), keyVaultName);
         return (OperationResult.Success, keyVault.resource.Properties.VaultUri);
     }
+
+    public ControlPlaneOperationResult<KeyVaultFullResource> Update(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName, UpdateKeyVaultRequest request)
+    {
+        var resourceGroupOperation = resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.Failed, null,
+                resourceGroupOperation.Reason,
+                resourceGroupOperation.Code);
+        }
+
+        var keyVaultOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
+        if (keyVaultOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.NotFound, null,
+                string.Format(KeyVaultNotFoundMessageTemplate, keyVaultName), KeyVaultNotFoundCode);
+        }
+        
+        var resource = keyVaultOperation.Resource!;
+
+        // If the provided PATCH request is referring to a recover operation, we need to get
+        // rid of the properties indicating, that it was removed
+        if (request.Properties?.CreateMode == "recover")
+        {
+            resource.DeletionDate = null;
+            resource.ScheduledPurgeDate = null;
+        }
+
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource);
+        
+        return new ControlPlaneOperationResult<KeyVaultFullResource>(
+            OperationResult.Updated,
+            resource, null, null);
+    }
 }
