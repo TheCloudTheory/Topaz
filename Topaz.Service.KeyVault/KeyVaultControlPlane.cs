@@ -104,10 +104,10 @@ internal sealed class KeyVaultControlPlane(
     }
 
     public ControlPlaneOperationResult<KeyVaultFullResource> Get(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName)
+        ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName, bool ignoreSoftDeleted = false)
     {
         var resource = provider.GetAs<KeyVaultFullResource>(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
-        return resource == null || GlobalDnsEntries.IsSoftDeleted(KeyVaultService.UniqueName, keyVaultName) ? 
+        return resource == null || (GlobalDnsEntries.IsSoftDeleted(KeyVaultService.UniqueName, keyVaultName) && !ignoreSoftDeleted) ? 
             new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.NotFound, null, string.Format(KeyVaultNotFoundMessageTemplate, keyVaultName), KeyVaultNotFoundCode) 
             : new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.Created, resource, null, null);
     }
@@ -285,7 +285,8 @@ internal sealed class KeyVaultControlPlane(
                 resourceGroupOperation.Code);
         }
 
-        var keyVaultOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
+        var isRecoverMode = request.Properties?.CreateMode == "recover";
+        var keyVaultOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, isRecoverMode);
         if (keyVaultOperation.Result == OperationResult.NotFound)
         {
             return new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.NotFound, null,
@@ -296,13 +297,13 @@ internal sealed class KeyVaultControlPlane(
 
         // If the provided PATCH request is referring to a recover operation, we need to get
         // rid of the properties indicating, that it was removed
-        if (request.Properties?.CreateMode == "recover")
+        if (isRecoverMode)
         {
             resource.DeletionDate = null;
             resource.ScheduledPurgeDate = null;
         }
 
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource, false, isRecoverMode);
         
         return new ControlPlaneOperationResult<KeyVaultFullResource>(
             OperationResult.Updated,

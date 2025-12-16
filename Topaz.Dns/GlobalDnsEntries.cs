@@ -149,6 +149,25 @@ public record GlobalDnsEntries
         
         return existingEntry is { SoftDeleted: true };
     }
+
+    public static void RecoverEntry(string serviceName, string instanceName)
+    {
+        var entries = GetDnsEntriesFromFile();
+
+        if (entries == null) throw new InvalidOperationException();
+        if (!entries.Services.TryGetValue(serviceName, out var globalServiceEntries)) return;
+
+        var existingEntry = globalServiceEntries
+            .SingleOrDefault(serviceEntries =>
+                serviceEntries.Value.SingleOrDefault(entry => entry.Name == instanceName) != null).Value
+            .SingleOrDefault(entry => entry.Name == instanceName);
+
+        if (existingEntry == null) return;
+        
+        existingEntry.SoftDeleted = false;
+        
+        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, JsonSerializer.Serialize(entries, GlobalSettings.JsonOptionsCli));
+    }
 }
 
 public class DnsEntry

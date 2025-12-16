@@ -187,14 +187,14 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     }
 
     public void CreateOrUpdate<TModel>(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string? id, TModel model, bool createOperation = false)
+        ResourceGroupIdentifier resourceGroupIdentifier, string? id, TModel model, bool createOperation = false, bool recoverInstance = false)
     {
         var instanceName = string.IsNullOrWhiteSpace(id)
             ? resourceGroupIdentifier.Value
             : id;
 
         var existingInstance = GlobalDnsEntries.GetEntry(TService.UniqueName, instanceName);
-        if (existingInstance != null && TService.IsGlobalService && createOperation)
+        if (existingInstance != null && TService.IsGlobalService && createOperation && !recoverInstance)
         {
             _logger.LogDebug(
                 $"There's an existing instance of {TService.UniqueName} service existing with the name {instanceName}");
@@ -206,7 +206,15 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
         File.WriteAllText(metadataFilePath, content);
 
-        if (!TService.IsGlobalService || !createOperation) return;
+        if (!TService.IsGlobalService || !createOperation)
+        {
+            if (recoverInstance)
+            {
+                GlobalDnsEntries.RecoverEntry(TService.UniqueName, instanceName);
+            }
+
+            return;
+        }
 
         GlobalDnsEntries.AddEntry(TService.UniqueName, subscriptionIdentifier.Value, resourceGroupIdentifier?.Value,
             instanceName);
