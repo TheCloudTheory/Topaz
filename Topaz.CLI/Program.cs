@@ -1,8 +1,10 @@
 ﻿using System.Reflection;
+using System.Text.Json;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
 using Topaz.CLI.Commands;
+using Topaz.Dns;
 using Topaz.Documentation.Command;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
@@ -46,7 +48,7 @@ internal class Program
 
     private static Task<int> BootstrapCli(string[] args, TypeRegistrar registrar)
     {
-        CreateLocalDirectoryForEmulator();
+        CreateEmulatorDirectoryIfNeeded();
 
         var app = new CommandApp(registrar);
         
@@ -91,13 +93,25 @@ internal class Program
         }
     }
 
-    private static void CreateLocalDirectoryForEmulator()
+    private static void CreateEmulatorDirectoryIfNeeded()
     {
-        const string emulatorPath = ".topaz";
-        if(Directory.Exists(emulatorPath)) return;
+        if (Directory.Exists(GlobalSettings.MainEmulatorDirectory))
+        {
+            Console.WriteLine("Emulator directory already exists.");
+        }
+        else
+        {
+            Directory.CreateDirectory(GlobalSettings.MainEmulatorDirectory);
+            Console.WriteLine("Emulator directory created.");
+        }
         
-        Console.WriteLine("Creating local directory for emulator...");
-
-        Directory.CreateDirectory(".topaz");
+        if (File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))
+        {
+            Console.WriteLine("Global DNS entries file already exists.");
+            return;
+        }
+        
+        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, JsonSerializer.Serialize(new GlobalDnsEntries()));
+        Console.WriteLine("Global DNS entries file created.");
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
-using System.Text.Json;
 using Amqp;
 using Amqp.Listener;
 using Amqp.Types;
@@ -56,10 +55,6 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         Console.WriteLine($"Version: {ThisAssembly.AssemblyInformationalVersion}");
         Console.WriteLine("==============================");
         Console.WriteLine("");
-        
-        // Before services are initialized, we need to bootstrap emulator's local directory
-        // and the rest of required middlewares.
-        CreateEmulatorDirectoryIfNeeded();
         
         var services = new IServiceDefinition[] {
             new AzureStorageService(logger),
@@ -128,28 +123,6 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         Console.WriteLine();
         Console.WriteLine("Topaz.Host listening to incoming requests...");
         Console.WriteLine();
-    }
-    
-    private void CreateEmulatorDirectoryIfNeeded()
-    {
-        if (Directory.Exists(GlobalSettings.MainEmulatorDirectory))
-        {
-            logger.LogDebug("Emulator directory already exists.");
-        }
-        else
-        {
-            Directory.CreateDirectory(GlobalSettings.MainEmulatorDirectory);
-            logger.LogDebug("Emulator directory created.");
-        }
-        
-        if (File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))
-        {
-            logger.LogDebug("Global DNS entries file already exists.");
-            return;
-        }
-        
-        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, JsonSerializer.Serialize(new GlobalDnsEntries()));
-        logger.LogDebug("Global DNS entries file created.");
     }
 
     private bool NeedsToRunAsPrivilegedProcess()
