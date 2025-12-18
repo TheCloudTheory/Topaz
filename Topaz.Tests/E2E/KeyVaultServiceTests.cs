@@ -70,7 +70,7 @@ public class KeyVaultServiceTests
         var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
         var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
             new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
-        const string testKeyVaultName = "testkv";
+        const string testKeyVaultName = "testkvusingsdk";
         
         // Act
         resourceGroup.Value.GetKeyVaults()
