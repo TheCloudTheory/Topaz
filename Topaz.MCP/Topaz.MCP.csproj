@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
       <PackageReference Include="ModelContextProtocol" Version="0.4.0-preview.3" />
       <PackageReference Include="Testcontainers" Version="4.8.1" />
