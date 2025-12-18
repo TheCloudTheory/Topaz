@@ -7,8 +7,18 @@ public record GlobalDnsEntries
 {
     public IDictionary<string, IDictionary<string, List<DnsEntry>>> Services { get; init; } = new Dictionary<string, IDictionary<string, List<DnsEntry>>>();
 
+    private static ITopazLogger? _logger;
+    
+    public static ITopazLogger ConfigureLogger(ITopazLogger logger) => _logger = logger; 
+
     public static void AddEntry(string serviceName, Guid subscriptionIdentifier, string? resourceGroupIdentifier, string instanceName)
     {
+        var existingEntry = GetEntry(serviceName, instanceName);
+        if (existingEntry != null)
+        {
+            throw  new InvalidOperationException($"Service {serviceName} entry with key {instanceName} already exists ({existingEntry.Value.subscription}:{existingEntry.Value.resourceGroup})");
+        }
+        
         var entries = GetDnsEntriesFromFile();
 
         if (entries == null) throw new InvalidOperationException();
@@ -137,11 +147,15 @@ public record GlobalDnsEntries
 
     public static bool IsSoftDeleted(string serviceName, string instanceName)
     {
+        _logger?.LogDebug(nameof(IsSoftDeleted), $"Checking if {instanceName} is soft deleted...");
+        
         var entries = GetDnsEntriesFromFile();
 
         if (entries == null) throw new InvalidOperationException();
         if (!entries.Services.TryGetValue(serviceName, out var globalServiceEntries)) return false;
 
+        _logger?.LogDebug(nameof(IsSoftDeleted), $"Loading entries: {JsonSerializer.Serialize(globalServiceEntries, GlobalSettings.JsonOptionsCli)}");
+        
         var existingEntry = globalServiceEntries
             .SingleOrDefault(serviceEntries =>
                 serviceEntries.Value.SingleOrDefault(entry => entry.Name == instanceName) != null).Value

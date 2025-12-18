@@ -32,7 +32,7 @@ public sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.Sta
             logger.EnableLoggingToFile(settings.RefreshLog);
             Console.WriteLine("Enabled logging to file.");
         }
-
+        
         var host = new Topaz.Host.Host(new GlobalOptions
         {
             TenantId = settings.TenantId,

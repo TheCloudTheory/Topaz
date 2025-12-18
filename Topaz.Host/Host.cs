@@ -56,6 +56,8 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         Console.WriteLine("==============================");
         Console.WriteLine("");
         
+        GlobalDnsEntries.ConfigureLogger(logger);
+        
         var services = new IServiceDefinition[] {
             new AzureStorageService(logger),
             new TableStorageService(logger),

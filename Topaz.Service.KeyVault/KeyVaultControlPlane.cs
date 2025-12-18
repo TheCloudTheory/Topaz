@@ -68,7 +68,8 @@ internal sealed class KeyVaultControlPlane(
         }
 
         KeyVaultFullResource resource;
-        var keyVaultOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
+        var isRecoverMode = request.Properties?.CreateMode == "recover";
+        var keyVaultOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, isRecoverMode);
         var createOperation = keyVaultOperation.Result == OperationResult.NotFound;
         if (createOperation)
         {
@@ -79,9 +80,10 @@ internal sealed class KeyVaultControlPlane(
         {
             KeyVaultResourceProperties.UpdateFromRequest(keyVaultOperation.Resource!, request);
             resource = keyVaultOperation.Resource!;
+            SetRecoverPropertiesForKeyVault(isRecoverMode, resource);
         }
         
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource, createOperation);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource, createOperation, isRecoverMode);
         
         return new ControlPlaneOperationResult<KeyVaultResource>(
             createOperation ? OperationResult.Created : OperationResult.Updated,
@@ -295,18 +297,24 @@ internal sealed class KeyVaultControlPlane(
         
         var resource = keyVaultOperation.Resource!;
 
-        // If the provided PATCH request is referring to a recover operation, we need to get
-        // rid of the properties indicating, that it was removed
-        if (isRecoverMode)
-        {
-            resource.DeletionDate = null;
-            resource.ScheduledPurgeDate = null;
-        }
+        SetRecoverPropertiesForKeyVault(isRecoverMode, resource);
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource, false, isRecoverMode);
         
         return new ControlPlaneOperationResult<KeyVaultFullResource>(
             OperationResult.Updated,
             resource, null, null);
+    }
+
+    /// <summary>
+    /// If the provided PATCH request is referring to a recover operation, we need to get
+    /// rid of the properties indicating, that it was removed
+    /// </summary>
+    private static void SetRecoverPropertiesForKeyVault(bool isRecoverMode, KeyVaultFullResource resource)
+    {
+        if (!isRecoverMode) return;
+        
+        resource.DeletionDate = null;
+        resource.ScheduledPurgeDate = null;
     }
 }

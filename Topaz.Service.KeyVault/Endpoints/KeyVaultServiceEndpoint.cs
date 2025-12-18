@@ -320,6 +320,8 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
         using var reader = new StreamReader(input);
 
         var content = reader.ReadToEnd();
+        logger.LogDebug(nameof(HandleCreateUpdateKeyVaultRequest), $"Processing payload: {content}");
+        
         var request = JsonSerializer.Deserialize<CreateOrUpdateKeyVaultRequest>(content, GlobalSettings.JsonOptions);
 
         if (request == null)
