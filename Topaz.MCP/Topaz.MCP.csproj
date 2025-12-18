@@ -15,6 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Topaz.AspNetCore.Extensions\Topaz.AspNetCore.Extensions.csproj" />
       <ProjectReference Include="..\Topaz.Shared\Topaz.Shared.csproj" />
     </ItemGroup>
 
