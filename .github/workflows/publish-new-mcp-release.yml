@@ -1,4 +1,4 @@
-name: Publish new release
+name: Publish new MCP release
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ on:
         required: true
         type: string
   workflow_run:
-    workflows: [Build_Test_And_Publish]
+    workflows: [Build_and_publish_Topaz_MCP]
     types: [completed]
 
 permissions:
@@ -55,8 +55,6 @@ jobs:
           **/linux-x64/topaz-linux-x64
           **/win-x64/topaz-win-x64.exe
           **/linux-arm64/topaz-linux-arm64
-          **/win-x64/topaz.crt
-          **/win-x64/topaz.pfx
     - name: Copy artifact for Docker
       run: |
         mkdir publish
@@ -85,7 +83,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5.7.0
       with:
-        images: thecloudtheory/topaz-cli
+        images: thecloudtheory/topaz-mcp
         tags: |
           type=raw,value=${{ steps.read-tag.outputs.tag }}
     - name: Build and push Docker image
@@ -93,7 +91,7 @@ jobs:
       uses: docker/build-push-action@v6.18.0
       with:
         context: .
-        file: ./Topaz.CLI/Dockerfile
+        file: ./Topaz.MCP/Dockerfile
         push: true
         platforms: linux/amd64,linux/arm64
         tags: ${{ steps.meta.outputs.tags }}
@@ -101,6 +99,6 @@ jobs:
     - name: Generate artifact attestation
       uses: actions/attest-build-provenance@v2
       with:
-        subject-name: index.docker.io/thecloudtheory/topaz-cli
+        subject-name: index.docker.io/thecloudtheory/topaz-mcp
         subject-digest: ${{ steps.push.outputs.digest }}
         push-to-registry: true

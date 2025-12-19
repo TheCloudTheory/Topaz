@@ -1,0 +1,82 @@
+name: Build_and_publish_Topaz_MCP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: write
+      checks: write
+      pull-requests: write
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Install nbgv
+      run: dotnet tool install -g nbgv
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Publish Linux (interim)
+      run: dotnet publish ${{ github.workspace }}/Topaz.MCP/Topaz.MCP.csproj -c Release -r linux-x64 -o ./publish
+    - name: Build interim Docker image
+      id: push
+      uses: docker/build-push-action@v6.18.0
+      with:
+        context: .
+        file: ./Topaz.MCP/Dockerfile
+        push: false
+        tags: topaz/mcp
+        platforms: linux/amd64
+    - name: Publish Windows
+      run: dotnet publish ${{ github.workspace }}/Topaz.MCP/Topaz.MCP.csproj -c Release -r win-x64 -o ./publish/win-x64
+    - name: Publish Linux
+      run: dotnet publish ${{ github.workspace }}/Topaz.MCP/Topaz.MCP.csproj -c Release -r linux-x64 -o ./publish/linux-x64
+    - name: Publish macOS
+      run: dotnet publish ${{ github.workspace }}/Topaz.MCP/Topaz.MCP.csproj -c Release -r osx-x64 -o ./publish/osx-x64
+    - name: Publish Arm64
+      run: dotnet publish ${{ github.workspace }}/Topaz.MCP/Topaz.MCP.csproj -c Release -r linux-arm64 -o ./publish/linux-arm64
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: win-x64
+        path: ./publish/win-x64
+    - name: Upload Linux artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-x64
+        path: ./publish/linux-x64
+    - name: Upload MacOS artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: osx-x64
+        path: ./publish/osx-x64
+    - name: Upload Arm64 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-arm64
+        path: ./publish/linux-arm64
+    - name: Stamp pipeline run with a tag
+      run: nbgv tag
+    - name: Push a tag
+      run: git push origin --tags
+    - name: Get the generated tag
+      id: get-tag
+      run: |
+        TAG=$(git describe --tags --abbrev=0)
+        echo "Generated tag: $TAG"
+        echo $TAG > tag-info.txt
+    - name: Upload tag info artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: tag-info
+        path: tag-info.txt
+        retention-days: 1

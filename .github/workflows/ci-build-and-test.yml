@@ -12,6 +12,7 @@ on:
       - 'Examples/**'
       - 'website/**'
       - 'static/**'
+      - 'Topaz.MCP/**'
 
 jobs:
   build:
