@@ -8,6 +8,15 @@
         "--project",
         "Topaz.MCP/Topaz.MCP.csproj"
       ]
+    },
+    "TopazMCPDocker": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "topaz/mcp"
+      ]
     }
   }
 }

@@ -9,3 +9,4 @@ static
 LICENSE
 README.md
 todo.js
+**/node_modules/**
