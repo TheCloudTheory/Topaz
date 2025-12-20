@@ -64,4 +64,44 @@ internal sealed class ManagedIdentityControlPlane(
 
         return result.Result;
     }
+
+    public ControlPlaneOperationResult<ManagedIdentityResource[]> ListBySubscription(SubscriptionIdentifier subscriptionIdentifier)
+    {
+        var subscription = subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscription.Resource == null || subscription.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ManagedIdentityResource[]>(OperationResult.NotFound, null, subscription.Reason, subscription.Code);
+        }
+        
+        var resources = provider.ListAs<ManagedIdentityResource>(subscriptionIdentifier, null, null, 8);
+        var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier));
+        
+        return new ControlPlaneOperationResult<ManagedIdentityResource[]>(OperationResult.Success, filteredResources.ToArray(), null, null);
+    }
+
+    public ControlPlaneOperationResult<ManagedIdentityResource[]> ListByResourceGroup(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
+    {
+        var subscription = subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscription.Resource == null || subscription.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ManagedIdentityResource[]>(OperationResult.NotFound, null, subscription.Reason, subscription.Code);
+        }
+
+        var resourceGroup = resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroup.Resource == null || resourceGroup.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ManagedIdentityResource[]>(OperationResult.NotFound, null, resourceGroup.Reason, resourceGroup.Code);
+        }
+        
+        var resources = provider.ListAs<ManagedIdentityResource>(subscriptionIdentifier, resourceGroupIdentifier);
+        var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier) && resource.IsInResourceGroup(resourceGroupIdentifier));
+        
+        return new ControlPlaneOperationResult<ManagedIdentityResource[]>(OperationResult.Success, filteredResources.ToArray(), null, null);
+    }
+
+    public ControlPlaneOperationResult<ManagedIdentityResource> Get(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string managedIdentityName)
+    {
+        var resource = provider.GetAs<ManagedIdentityResource>(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityName);
+        return new ControlPlaneOperationResult<ManagedIdentityResource>(OperationResult.Success, resource, null, null);
+    }
 }

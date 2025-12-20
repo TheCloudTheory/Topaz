@@ -2,10 +2,12 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.ManagedIdentity.Models.Requests;
+using Topaz.Service.ManagedIdentity.Models.Responses;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
+using Topaz.Service.Subscription.Models.Responses;
 using Topaz.Shared;
 
 namespace Topaz.Service.ManagedIdentity;
@@ -57,6 +59,22 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
                     HandleCreateUpdateManagedIdentityRequest(response, subscriptionIdentifier, resourceGroupIdentifier!,
                         managedIdentityName!, input);
                     break;
+                case "GET":
+                    if (resourceGroupIdentifier == null && string.IsNullOrEmpty(managedIdentityName))
+                    {
+                        HandleListBySubscriptionRequest(response, subscriptionIdentifier);
+                        break;
+                    }
+
+                    if (string.IsNullOrEmpty(managedIdentityName))
+                    {
+                        HandleListByResourceGroupRequest(response, subscriptionIdentifier, resourceGroupIdentifier!);
+                        break;
+                    }
+
+                    HandleGetManagedIdentityRequest(response, subscriptionIdentifier, resourceGroupIdentifier,
+                        managedIdentityName);
+                    break;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
                     break;
@@ -73,6 +91,61 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
         }
 
         return response;
+    }
+
+    private void HandleGetManagedIdentityRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string managedIdentityName)
+    {
+        logger.LogDebug($"Executing {nameof(HandleGetManagedIdentityRequest)}.");
+        
+        var operation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityName);
+        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(operation.Resource.ToString());
+    }
+
+    private void HandleListByResourceGroupRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
+    {
+        logger.LogDebug($"Executing {nameof(HandleListByResourceGroupRequest)}.");
+        
+        var identities = _controlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier);
+        if (identities.Result != OperationResult.Success || identities.Resource == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        var result = new UserAssignedIdentitiesListResponse
+        {
+            Value = identities.Resource.ToArray()
+        };
+        
+        response.Content = new StringContent(result.ToString());
+        response.StatusCode = HttpStatusCode.OK;
+    }
+
+    private void HandleListBySubscriptionRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier)
+    {
+        logger.LogDebug($"Executing {nameof(HandleListBySubscriptionRequest)}.");
+        
+        var identities = _controlPlane.ListBySubscription(subscriptionIdentifier);
+        if (identities.Result != OperationResult.Success || identities.Resource == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        var result = new UserAssignedIdentitiesListResponse
+        {
+            Value = identities.Resource.ToArray()
+        };
+        
+        response.Content = new StringContent(result.ToString());
+        response.StatusCode = HttpStatusCode.OK;
     }
 
     private void HandleCreateUpdateManagedIdentityRequest(HttpResponseMessage response,

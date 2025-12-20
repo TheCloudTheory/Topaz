@@ -341,11 +341,11 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
         response.Content = new StringContent(result.Resource.ToString());
     }
     
-    private void HandleListSubscriptionResourcesRequest(SubscriptionIdentifier subscriptionId, string? filter, HttpResponseMessage response)
+    private void HandleListSubscriptionResourcesRequest(SubscriptionIdentifier subscriptionIdentifier, string? filter, HttpResponseMessage response)
     {
-        logger.LogDebug($"Executing {nameof(HandleListSubscriptionResourcesRequest)}: Attempting to list resources for subscription ID `{subscriptionId}` and filter `{filter}`.");
+        logger.LogDebug($"Executing {nameof(HandleListSubscriptionResourcesRequest)}: Attempting to list resources for subscription ID `{subscriptionIdentifier}` and filter `{filter}`.");
 
-        var keyVaults = _controlPlane.ListBySubscription(subscriptionId);
+        var keyVaults = _controlPlane.ListBySubscription(subscriptionIdentifier);
         if (keyVaults.result != OperationResult.Success || keyVaults.resource == null)
         {
             response.StatusCode = HttpStatusCode.InternalServerError;

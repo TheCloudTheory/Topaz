@@ -110,7 +110,7 @@ internal sealed class KeyVaultControlPlane(
         var characters = keyVaultName.Select(c => c).ToArray();
         if(characters.Any(c => !char.IsDigit(c) && !char.IsLetter(c) && c != '-')) return false;
 
-        return !characters.Where((t, index) => index != 0 && (t == '-' && characters[index - 1] == '-')).Any();
+        return !characters.Where((t, index) => index != 0 && t == '-' && characters[index - 1] == '-').Any();
     }
 
     public ControlPlaneOperationResult<KeyVaultFullResource> Get(SubscriptionIdentifier subscriptionIdentifier,
@@ -119,7 +119,7 @@ internal sealed class KeyVaultControlPlane(
         var resource = provider.GetAs<KeyVaultFullResource>(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
         return resource == null || (GlobalDnsEntries.IsSoftDeleted(KeyVaultService.UniqueName, keyVaultName) && !ignoreSoftDeleted) ? 
             new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.NotFound, null, string.Format(KeyVaultNotFoundMessageTemplate, keyVaultName), KeyVaultNotFoundCode) 
-            : new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.Created, resource, null, null);
+            : new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.Success, resource, null, null);
     }
 
     public (OperationResult result, CheckNameResponse response) CheckName(SubscriptionIdentifier subscriptionIdentifier, string keyVaultName, string? resourceType)
