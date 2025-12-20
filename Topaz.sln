@@ -63,6 +63,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.VirtualNetwor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.MCP", "Topaz.MCP\Topaz.MCP.csproj", "{78C01901-6F3B-4320-8479-8B090BBE1798}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ManagedIdentity", "Topaz.Service.ManagedIdentity\Topaz.Service.ManagedIdentity.csproj", "{C7123F8D-86CD-458A-BFC1-F4B5423BDF2E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -173,6 +175,10 @@ Global
 		{78C01901-6F3B-4320-8479-8B090BBE1798}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{78C01901-6F3B-4320-8479-8B090BBE1798}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{78C01901-6F3B-4320-8479-8B090BBE1798}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7123F8D-86CD-458A-BFC1-F4B5423BDF2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7123F8D-86CD-458A-BFC1-F4B5423BDF2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7123F8D-86CD-458A-BFC1-F4B5423BDF2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7123F8D-86CD-458A-BFC1-F4B5423BDF2E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -198,5 +204,6 @@ Global
 		{8F85AFEB-935A-4AED-AE10-EC4907D94941} = {5DCFF73A-7D3A-4162-8264-447FA524DBA0}
 		{973A0FFE-48A8-4374-940A-95F1B2C8E87A} = {5DCFF73A-7D3A-4162-8264-447FA524DBA0}
 		{32CF6C52-068C-4A56-938E-A34749F915C7} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
+		{C7123F8D-86CD-458A-BFC1-F4B5423BDF2E} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
 	EndGlobalSection
 EndGlobal

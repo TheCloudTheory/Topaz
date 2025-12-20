@@ -12,7 +12,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.ResourceGroup;
 
-public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourceProvider, ITopazLogger logger) : IEndpointDefinition
+public sealed class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourceProvider, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly ResourceGroupControlPlane _controlPlane = new(groupResourceProvider, new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
@@ -63,6 +63,9 @@ public class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourcePr
                     }
                     
                     HandleDeleteResourceGroup(subscriptionIdentifier, ResourceGroupIdentifier.From(resourceGroupName), response);
+                    break;
+                default:
+                    response.StatusCode = HttpStatusCode.NotFound;
                     break;
             }
         }

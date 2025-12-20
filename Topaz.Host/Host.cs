@@ -13,6 +13,7 @@ using Topaz.Dns;
 using Topaz.Host.AMQP;
 using Topaz.Service.EventHub;
 using Topaz.Service.KeyVault;
+using Topaz.Service.ManagedIdentity;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ResourceManager;
 using Topaz.Service.ServiceBus;
@@ -36,7 +37,6 @@ public class Host(GlobalOptions options, ITopazLogger logger)
     private static readonly List<Thread> Threads = [];
 
     private readonly Router _router = new(options, logger);
-    private readonly DnsManager _dnsManager = new();
 
     /// <summary>
     /// IP address used by Topaz to listen to incoming requests. Note that address is controlled by the
@@ -69,27 +69,9 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             new TopazCloudEnvironmentService(),
             new ServiceBusService(logger),
             new ResourceManagerService(logger),
-            new VirtualNetworkService(logger)
+            new VirtualNetworkService(logger),
+            new ManagedIdentityService(logger)
         };
-
-        // Topaz requires elevated permissions to run as there may be operations (like modifying entries
-        // in the hosts file), which will require them to function properly. Note that this is relevant
-        // only if Topaz runs directly inside a host - for containerized environment, making changes to the
-        // hosts file makes no sense as requests are coming from the outside of the container.
-        if (NeedsToRunAsPrivilegedProcess())
-        {
-            Console.Error.WriteLine("Topaz.Host - Not Privileged! You must run Topaz with elevated permissions in order for it to work properly. If you want to run Topaz without elevated permissions, use `--skip-dns-registration` option and set it to `true`.");
-            return;
-        }
-
-        if (!options.SkipRegistrationOfDnsEntries && !IsRunningInsideContainer())
-        {
-            _dnsManager.ConfigureEntries();
-        }
-        else
-        {
-            Console.WriteLine("Registration of DNS entries is disabled. Make sure you've added those entries manually before running Topaz.");
-        }
         
         Console.WriteLine();
         Console.WriteLine("Enabled services:");
@@ -125,11 +107,6 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         Console.WriteLine();
         Console.WriteLine("Topaz.Host listening to incoming requests...");
         Console.WriteLine();
-    }
-
-    private bool NeedsToRunAsPrivilegedProcess()
-    {
-        return !Environment.IsPrivilegedProcess && !options.SkipRegistrationOfDnsEntries && !IsRunningInsideContainer();
     }
 
     private void CreateAmqpListenersForAmpqEndpoints(IEndpointDefinition[] endpoints)

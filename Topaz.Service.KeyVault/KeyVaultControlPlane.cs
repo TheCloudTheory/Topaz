@@ -32,6 +32,14 @@ internal sealed class KeyVaultControlPlane(
                 string.Format(InvalidVaultNameMessageTemplate, keyVaultName),
                 "VaultNameNotValid");
         }
+        
+        var subscriptionOperation = subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscriptionOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<KeyVaultResource>(OperationResult.Failed, null,
+                subscriptionOperation.Reason,
+                subscriptionOperation.Code);
+        }
 
         var resourceGroupOperation = resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound)

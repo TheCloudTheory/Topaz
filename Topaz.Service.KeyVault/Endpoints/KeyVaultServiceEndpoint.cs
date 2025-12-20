@@ -312,8 +312,8 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
         response.Content = new StringContent(operation.Resource.ToString());
     }
 
-    private void HandleCreateUpdateKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionId,
-        ResourceGroupIdentifier resourceGroup, string keyVaultName, Stream input)
+    private void HandleCreateUpdateKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName, Stream input)
     {
         logger.LogDebug($"Executing {nameof(HandleCreateUpdateKeyVaultRequest)}.");
         
@@ -330,7 +330,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
             return;
         }
 
-        var result = _controlPlane.CreateOrUpdate(subscriptionId, resourceGroup, keyVaultName, request);
+        var result = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, request);
         if ((result.Result != OperationResult.Created && result.Result != OperationResult.Updated) || result.Resource == null)
         {
             response.CreateErrorResponse(result.Code!, result.Reason!);

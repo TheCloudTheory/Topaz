@@ -10,6 +10,8 @@ internal sealed class SubscriptionControlPlane(SubscriptionResourceProvider prov
     private const string SubscriptionNotFoundMessageTemplate = "Subscription {0} not found";
     private const string SubscriptionNotFoundCode = "SubscriptionNotFound";
     
+    public static SubscriptionControlPlane New(ITopazLogger logger) => new(new SubscriptionResourceProvider(logger));
+    
     public ControlPlaneOperationResult<Models.Subscription> Get(SubscriptionIdentifier subscriptionIdentifier)
     {
         var data = provider.Get(subscriptionIdentifier, null, null);

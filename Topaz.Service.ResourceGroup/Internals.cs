@@ -6,3 +6,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Topaz.Service.KeyVault")]
 [assembly: InternalsVisibleTo("Topaz.Service.ServiceBus")]
 [assembly: InternalsVisibleTo("Topaz.Service.VirtualNetwork")]
+[assembly: InternalsVisibleTo("Topaz.Service.ManagedIdentity")]
