@@ -19,11 +19,12 @@ Azure Storage|⚠️|⚠️
 Table Storage|⚠️|✅
 Blob Storage|⚠️|⚠️
 Queue Storage|:x:|:x:
-Key Vault|⚠️|⚠️
+Key Vault|✅|⚠️
 Event Hub|⚠️|⚠️
 Service Bus|⚠️|⚠️
 Virtual Network|⚠️|N/A
 Azure Resource Manager|⚠️|N/A
+Managed Identity|✅|N/A
 Container Registry|:x:|:x:
 Azure SQL|:x:|:x:
 
