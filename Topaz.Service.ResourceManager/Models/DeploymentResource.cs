@@ -34,8 +34,8 @@ public sealed class DeploymentResource
     public override string Id { get; init; }
     public override string Name { get; init; }
     public override string Type => "Microsoft.Resources/deployments";
-    public override string Location { get; init; }
-    public override IDictionary<string, string> Tags { get; init; } = new Dictionary<string, string>();
+    public override string Location { get; set; }
+    public override IDictionary<string, string> Tags { get; set; } = new Dictionary<string, string>();
     public override ResourceSku? Sku { get; init; }
     public override string? Kind { get; init; }
     public override DeploymentResourceProperties Properties { get; init; }

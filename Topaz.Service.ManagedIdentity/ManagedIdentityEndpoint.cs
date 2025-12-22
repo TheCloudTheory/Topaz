@@ -77,6 +77,9 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
                 case "DELETE":
                     HandleDeleteManagedIdentityRequest(response, subscriptionIdentifier, resourceGroupIdentifier!, ManagedIdentityIdentifier.From(managedIdentityName));
                     break;
+                case "PATCH":
+                    HandleUpdateManagedIdentityRequest(response, subscriptionIdentifier, resourceGroupIdentifier!, ManagedIdentityIdentifier.From(managedIdentityName), input);
+                    break;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
                     break;
@@ -93,6 +96,35 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
         }
 
         return response;
+    }
+
+    private void HandleUpdateManagedIdentityRequest(HttpResponseMessage response,
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        ManagedIdentityIdentifier managedIdentityIdentifier, Stream input)
+    {
+        logger.LogDebug($"Executing {nameof(HandleUpdateManagedIdentityRequest)}.");
+
+        using var reader = new StreamReader(input);
+
+        var content = reader.ReadToEnd();
+        var request =
+            JsonSerializer.Deserialize<CreateUpdateManagedIdentityRequest>(content, GlobalSettings.JsonOptions);
+
+        if (request == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+        
+        var result = _controlPlane.Update(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier, request);
+        if (result.Result != OperationResult.Updated || result.Resource == null)
+        {
+            response.CreateErrorResponse(result.Code!, result.Reason!);
+            return;
+        }
+
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(result.Resource.ToString());
     }
 
     private void HandleDeleteManagedIdentityRequest(HttpResponseMessage response,

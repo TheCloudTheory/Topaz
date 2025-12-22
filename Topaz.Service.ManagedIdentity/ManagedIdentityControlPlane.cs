@@ -140,4 +140,38 @@ internal sealed class ManagedIdentityControlPlane(
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier.Value);
         return new ControlPlaneOperationResult(OperationResult.Deleted, null, null);
     }
+
+    public ControlPlaneOperationResult<ManagedIdentityResource> Update(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, ManagedIdentityIdentifier managedIdentityIdentifier,
+        CreateUpdateManagedIdentityRequest request)
+    {
+        var subscription = subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscription.Resource == null || subscription.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ManagedIdentityResource>(OperationResult.NotFound, null, subscription.Reason, subscription.Code);
+        }
+
+        var resourceGroup = resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroup.Resource == null || resourceGroup.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ManagedIdentityResource>(OperationResult.NotFound, null, resourceGroup.Reason, resourceGroup.Code);
+        }
+        
+        var resource =
+            provider.GetAs<ManagedIdentityResource>(subscriptionIdentifier, resourceGroupIdentifier,
+                managedIdentityIdentifier.Value);
+
+        if (resource == null)
+        {
+            return new ControlPlaneOperationResult<ManagedIdentityResource>(OperationResult.NotFound, null,
+                string.Format(ManagedIdentityNotFoundMessageTemplate, managedIdentityIdentifier),
+                ManagedIdentityNotFoundCode);
+        }
+
+        resource.UpdateFrom(request);
+        
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier.Value, resource);
+        return new ControlPlaneOperationResult<ManagedIdentityResource>(OperationResult.Updated,
+            resource, null, null);
+    }
 }

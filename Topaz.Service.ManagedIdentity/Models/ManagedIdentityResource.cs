@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Azure.Core;
 using Topaz.ResourceManager;
+using Topaz.Service.ManagedIdentity.Models.Requests;
 using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ManagedIdentity.Models;
@@ -32,9 +33,16 @@ public class ManagedIdentityResource
     public sealed override string Id { get; init; }
     public sealed override string Name { get; init; }
     public override string Type => "Microsoft.ManagedIdentity/userAssignedIdentities";
-    public sealed override string Location { get; init; }
-    public sealed override IDictionary<string, string> Tags { get; init; }
+    public sealed override string Location { get; set; }
+    public sealed override IDictionary<string, string> Tags { get; set; }
     public override ResourceSku? Sku { get; init; }
     public override string? Kind { get; init; }
     public sealed override ManagedIdentityResourceProperties Properties { get; init; }
+
+    public void UpdateFrom(CreateUpdateManagedIdentityRequest request)
+    {
+        Location =  request.Location;
+        Tags = request.Tags ?? new Dictionary<string, string>();
+        Properties.IsolationScope = request.Properties?.IsolationScope;
+    }
 }
