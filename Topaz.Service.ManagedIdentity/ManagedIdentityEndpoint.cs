@@ -7,7 +7,6 @@ using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
-using Topaz.Service.Subscription.Models.Responses;
 using Topaz.Shared;
 
 namespace Topaz.Service.ManagedIdentity;
@@ -57,7 +56,7 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
             {
                 case "PUT":
                     HandleCreateUpdateManagedIdentityRequest(response, subscriptionIdentifier, resourceGroupIdentifier!,
-                        managedIdentityName!, input);
+                        ManagedIdentityIdentifier.From(managedIdentityName), input);
                     break;
                 case "GET":
                     if (resourceGroupIdentifier == null && string.IsNullOrEmpty(managedIdentityName))
@@ -72,8 +71,11 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
                         break;
                     }
 
-                    HandleGetManagedIdentityRequest(response, subscriptionIdentifier, resourceGroupIdentifier,
-                        managedIdentityName);
+                    HandleGetManagedIdentityRequest(response, subscriptionIdentifier, resourceGroupIdentifier!,
+                        ManagedIdentityIdentifier.From(managedIdentityName));
+                    break;
+                case "DELETE":
+                    HandleDeleteManagedIdentityRequest(response, subscriptionIdentifier, resourceGroupIdentifier!, ManagedIdentityIdentifier.From(managedIdentityName));
                     break;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
@@ -93,17 +95,47 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
         return response;
     }
 
-    private void HandleGetManagedIdentityRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string managedIdentityName)
+    private void HandleDeleteManagedIdentityRequest(HttpResponseMessage response,
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        ManagedIdentityIdentifier managedIdentityIdentifier)
+    {
+        logger.LogDebug($"Executing {nameof(HandleDeleteManagedIdentityRequest)}.");
+        
+        var managedIdentity = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
+        switch (managedIdentity.Result)
+        {
+            case OperationResult.NotFound:
+                response.StatusCode = HttpStatusCode.NotFound;
+                return;
+            case OperationResult.Failed:
+                response.StatusCode = HttpStatusCode.InternalServerError;
+                return;
+            default:
+                var result = _controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
+                response.StatusCode = result.Result switch
+                {
+                    OperationResult.Deleted => HttpStatusCode.OK,
+                    OperationResult.NotFound => HttpStatusCode.NotFound,
+                    _ => HttpStatusCode.InternalServerError
+                };
+
+                break;
+        }
+    }
+
+    private void HandleGetManagedIdentityRequest(HttpResponseMessage response,
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        ManagedIdentityIdentifier managedIdentityIdentifier)
     {
         logger.LogDebug($"Executing {nameof(HandleGetManagedIdentityRequest)}.");
-        
-        var operation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityName);
+
+        var operation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
         if (operation.Result == OperationResult.NotFound || operation.Resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
-        
+
         response.StatusCode = HttpStatusCode.OK;
         response.Content = new StringContent(operation.Resource.ToString());
     }
@@ -150,7 +182,7 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
 
     private void HandleCreateUpdateManagedIdentityRequest(HttpResponseMessage response,
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
-        string managedIdentityName, Stream input)
+        ManagedIdentityIdentifier managedIdentityIdentifier, Stream input)
     {
         logger.LogDebug($"Executing {nameof(HandleCreateUpdateManagedIdentityRequest)}.");
 
@@ -166,8 +198,7 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
             return;
         }
 
-        var result = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityName,
-            request);
+        var result = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier, request);
         if ((result.Result != OperationResult.Created && result.Result != OperationResult.Updated) ||
             result.Resource == null)
         {

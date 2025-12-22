@@ -192,6 +192,11 @@ internal sealed class KeyVaultControlPlane(
             return;
         }
         
+        if (!resource.IsInResourceGroup(resourceGroupIdentifier))
+        {
+            return;
+        }
+        
         resource.DeletionDate = DateTimeOffset.Now;
         resource.ScheduledPurgeDate = DateTimeOffset.Now.AddDays(resource.Properties.SoftDeleteRetentionInDays);
         

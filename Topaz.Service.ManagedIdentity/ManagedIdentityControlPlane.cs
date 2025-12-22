@@ -16,9 +16,13 @@ internal sealed class ManagedIdentityControlPlane(
     ITopazLogger logger
 ) : IControlPlane
 {
+    private const string ManagedIdentityNotFoundCode = "ManagedIdentityNotFound";
+    private const string ManagedIdentityNotFoundMessageTemplate =
+        "Managed Identity '{0}' could not be found";
+    
     public ControlPlaneOperationResult<ManagedIdentityResource> CreateOrUpdate(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
-        string managedIdentityName, CreateUpdateManagedIdentityRequest request)
+        ManagedIdentityIdentifier managedIdentityIdentifier, CreateUpdateManagedIdentityRequest request)
     {
         var subscriptionOperation = subscriptionControlPlane.Get(subscriptionIdentifier);
         if (subscriptionOperation.Result == OperationResult.NotFound)
@@ -36,9 +40,9 @@ internal sealed class ManagedIdentityControlPlane(
                 resourceGroupOperation.Code);
         }
         
-        var resource = new ManagedIdentityResource(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityName, request.Location, request.Tags, ManagedIdentityResourceProperties.From(request.Properties!));
+        var resource = new ManagedIdentityResource(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier.Value, request.Location, request.Tags, ManagedIdentityResourceProperties.From(request.Properties!));
 
-        provider.Create(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityName, resource);
+        provider.Create(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier.Value, resource);
 
         return new ControlPlaneOperationResult<ManagedIdentityResource>(OperationResult.Created, resource, null, null);
     }
@@ -52,7 +56,7 @@ internal sealed class ManagedIdentityControlPlane(
             return OperationResult.Failed;
         }
 
-        var result = CreateOrUpdate(identity.GetSubscription(), identity.GetResourceGroup(), identity.Name,
+        var result = CreateOrUpdate(identity.GetSubscription(), identity.GetResourceGroup(), ManagedIdentityIdentifier.From(identity.Name),
             new CreateUpdateManagedIdentityRequest
             {
                 Location = identity.Location,
@@ -99,9 +103,41 @@ internal sealed class ManagedIdentityControlPlane(
         return new ControlPlaneOperationResult<ManagedIdentityResource[]>(OperationResult.Success, filteredResources.ToArray(), null, null);
     }
 
-    public ControlPlaneOperationResult<ManagedIdentityResource> Get(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string managedIdentityName)
+    public ControlPlaneOperationResult<ManagedIdentityResource> Get(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, ManagedIdentityIdentifier managedIdentityIdentifier)
     {
-        var resource = provider.GetAs<ManagedIdentityResource>(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityName);
+        var resource =
+            provider.GetAs<ManagedIdentityResource>(subscriptionIdentifier, resourceGroupIdentifier,
+                managedIdentityIdentifier.Value);
         return new ControlPlaneOperationResult<ManagedIdentityResource>(OperationResult.Success, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, ManagedIdentityIdentifier managedIdentityIdentifier)
+    {
+        var subscription = subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscription.Resource == null || subscription.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound, subscription.Reason, subscription.Code);
+        }
+
+        var resourceGroup = resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroup.Resource == null || resourceGroup.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound, resourceGroup.Reason, resourceGroup.Code);
+        }
+        
+        var resource =
+            provider.GetAs<ManagedIdentityResource>(subscriptionIdentifier, resourceGroupIdentifier,
+                managedIdentityIdentifier.Value);
+
+        if (resource == null)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound,
+                string.Format(ManagedIdentityNotFoundMessageTemplate, managedIdentityIdentifier),
+                ManagedIdentityNotFoundCode);
+        }
+        
+        provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier.Value);
+        return new ControlPlaneOperationResult(OperationResult.Deleted, null, null);
     }
 }

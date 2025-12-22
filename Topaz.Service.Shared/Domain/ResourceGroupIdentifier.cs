@@ -4,12 +4,7 @@ public record ResourceGroupIdentifier(string Value)
 {
     public static ResourceGroupIdentifier From(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            throw new ArgumentException("Value cannot be null or whitespace.", nameof(value));    
-        }
-        
-        return new ResourceGroupIdentifier(value);
+        return string.IsNullOrWhiteSpace(value) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(value)) : new ResourceGroupIdentifier(value);
     }
 
     public override string ToString()
