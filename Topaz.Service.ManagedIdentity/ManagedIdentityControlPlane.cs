@@ -45,7 +45,7 @@ internal sealed class ManagedIdentityControlPlane(
         var resource = isCreateOperation
             ? new ManagedIdentityResource(subscriptionIdentifier, resourceGroupIdentifier,
                 managedIdentityIdentifier.Value, request.Location, request.Tags,
-                ManagedIdentityResourceProperties.From(request.Properties!))
+                ManagedIdentityResourceProperties.From(request.Properties))
             : managedIdentityOperation.Resource!;
 
         if (!isCreateOperation)

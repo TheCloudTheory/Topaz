@@ -13,14 +13,14 @@ public sealed class ManagedIdentityResourceProperties
 
     public string? IsolationScope { get; set; }
 
-    public static ManagedIdentityResourceProperties From(CreateUpdateManagedIdentityRequest.ManagedIdentityProperties properties)
+    public static ManagedIdentityResourceProperties From(CreateUpdateManagedIdentityRequest.ManagedIdentityProperties? properties)
     {
         return new ManagedIdentityResourceProperties
         {
             ClientId = Guid.NewGuid().ToString(),
             PrincipalId = Guid.NewGuid().ToString(),
             TenantId = Guid.NewGuid().ToString(),
-            IsolationScope = properties.IsolationScope
+            IsolationScope = properties?.IsolationScope
         };
     }
 }
