@@ -39,12 +39,23 @@ internal sealed class ManagedIdentityControlPlane(
                 resourceGroupOperation.Reason,
                 resourceGroupOperation.Code);
         }
-        
-        var resource = new ManagedIdentityResource(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier.Value, request.Location, request.Tags, ManagedIdentityResourceProperties.From(request.Properties!));
 
-        provider.Create(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier.Value, resource);
+        var managedIdentityOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
+        var isCreateOperation = managedIdentityOperation.Result == OperationResult.NotFound;
+        var resource = isCreateOperation
+            ? new ManagedIdentityResource(subscriptionIdentifier, resourceGroupIdentifier,
+                managedIdentityIdentifier.Value, request.Location, request.Tags,
+                ManagedIdentityResourceProperties.From(request.Properties!))
+            : managedIdentityOperation.Resource!;
 
-        return new ControlPlaneOperationResult<ManagedIdentityResource>(OperationResult.Created, resource, null, null);
+        if (!isCreateOperation)
+        {
+            resource.UpdateFrom(request);
+        }
+
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier.Value, resource);
+
+        return new ControlPlaneOperationResult<ManagedIdentityResource>(isCreateOperation ? OperationResult.Created : OperationResult.Updated, resource, null, null);
     }
 
     public OperationResult Deploy(GenericResource resource)
@@ -97,7 +108,7 @@ internal sealed class ManagedIdentityControlPlane(
             return new ControlPlaneOperationResult<ManagedIdentityResource[]>(OperationResult.NotFound, null, resourceGroup.Reason, resourceGroup.Code);
         }
         
-        var resources = provider.ListAs<ManagedIdentityResource>(subscriptionIdentifier, resourceGroupIdentifier);
+        var resources = provider.ListAs<ManagedIdentityResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8);
         var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier) && resource.IsInResourceGroup(resourceGroupIdentifier));
         
         return new ControlPlaneOperationResult<ManagedIdentityResource[]>(OperationResult.Success, filteredResources.ToArray(), null, null);
@@ -106,10 +117,10 @@ internal sealed class ManagedIdentityControlPlane(
     public ControlPlaneOperationResult<ManagedIdentityResource> Get(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, ManagedIdentityIdentifier managedIdentityIdentifier)
     {
-        var resource =
-            provider.GetAs<ManagedIdentityResource>(subscriptionIdentifier, resourceGroupIdentifier,
-                managedIdentityIdentifier.Value);
-        return new ControlPlaneOperationResult<ManagedIdentityResource>(OperationResult.Success, resource, null, null);
+        var resource = provider.GetAs<ManagedIdentityResource>(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier.Value);
+        return resource == null ? 
+            new ControlPlaneOperationResult<ManagedIdentityResource>(OperationResult.NotFound, null, string.Format(ManagedIdentityNotFoundMessageTemplate, managedIdentityIdentifier), ManagedIdentityNotFoundCode) 
+            : new ControlPlaneOperationResult<ManagedIdentityResource>(OperationResult.Success, resource, null, null);
     }
 
     public ControlPlaneOperationResult Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, ManagedIdentityIdentifier managedIdentityIdentifier)

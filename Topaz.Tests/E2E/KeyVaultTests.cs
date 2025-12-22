@@ -8,7 +8,7 @@ namespace Topaz.Tests.E2E;
 
 public class KeyVaultTests
 {
-    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    private static readonly Guid SubscriptionId = Guid.Parse("0B3C7E76-4569-442A-A858-D2BA2FE522BB");
     
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";

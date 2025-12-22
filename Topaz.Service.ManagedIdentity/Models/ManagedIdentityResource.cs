@@ -23,7 +23,7 @@ public class ManagedIdentityResource
         IDictionary<string, string>? tags,
         ManagedIdentityResourceProperties properties)
     {
-        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/Microsoft.ManagedIdentity/userAssignedIdentities/{name}";
+        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{name}";
         Name = name;
         Location = location;
         Tags = tags ?? new Dictionary<string, string>();

@@ -43,10 +43,12 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
         try
         {
             ResourceGroupIdentifier? resourceGroupIdentifier = null;
+            var segmentsCount = path.Split(['/'], StringSplitOptions.RemoveEmptyEntries).Length;
             var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
-            var resourceGroupName = path.ExtractValueFromPath(4);
-            if (!string.IsNullOrEmpty(resourceGroupName))
+            
+            if (segmentsCount > 6)
             {
+                var resourceGroupName = path.ExtractValueFromPath(4);
                 resourceGroupIdentifier = ResourceGroupIdentifier.From(resourceGroupName);
             }
 

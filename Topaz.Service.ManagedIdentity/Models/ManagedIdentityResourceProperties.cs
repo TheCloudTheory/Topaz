@@ -17,6 +17,9 @@ public sealed class ManagedIdentityResourceProperties
     {
         return new ManagedIdentityResourceProperties
         {
+            ClientId = Guid.NewGuid().ToString(),
+            PrincipalId = Guid.NewGuid().ToString(),
+            TenantId = Guid.NewGuid().ToString(),
             IsolationScope = properties.IsolationScope
         };
     }
