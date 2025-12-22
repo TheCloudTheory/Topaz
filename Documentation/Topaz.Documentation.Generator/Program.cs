@@ -5,6 +5,7 @@ using Topaz.CLI.Commands;
 using Topaz.Documentation.Command;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
+using Topaz.Service.ManagedIdentity.Commands;
 using Topaz.Service.ResourceGroup.Commands;
 using Topaz.Service.ResourceManager.Commands;
 using Topaz.Service.ServiceBus.Commands;
@@ -23,6 +24,7 @@ _ = new[]
     typeof(GenericServiceBusCommand),
     typeof(GenericStorageCommand),
     typeof(GenericSubscriptionCommand),
+    typeof(GenericManagedIdentityCommand)
 };
 
 Console.WriteLine("Looking for commands...");
