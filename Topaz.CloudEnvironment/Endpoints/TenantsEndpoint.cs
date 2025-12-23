@@ -13,7 +13,8 @@ internal sealed class TenantsEndpoint : IEndpointDefinition
     ];
     
     public (int Port, Protocol Protocol) PortAndProtocol => (8899, Protocol.Https);
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query, GlobalOptions options)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
+        QueryString query, GlobalOptions options, Guid correlationId)
     {
         var response = new HttpResponseMessage();
 

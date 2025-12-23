@@ -82,7 +82,7 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
         
         logger.LogDebug($"The selected handler for an endpoint will be {endpoint.GetType().Name}");
 
-        var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query, options);
+        var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query, options, Guid.NewGuid());
         var textResponse = await response.Content.ReadAsStringAsync();
 
         logger.LogInformation($"Response: [{endpoint.GetType()}][{response.StatusCode}] [{path}] {textResponse}");

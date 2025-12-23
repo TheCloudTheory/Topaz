@@ -12,7 +12,8 @@ public sealed class MetadataEndpoint : IEndpointDefinition
     ];
     public (int Port, Protocol Protocol) PortAndProtocol => (8899, Protocol.Https);
     
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query, GlobalOptions options)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
+        QueryString query, GlobalOptions options, Guid correlationId)
     {
         var response = new HttpResponseMessage();
         var metadata = new GetMetadataEndpointResponse();

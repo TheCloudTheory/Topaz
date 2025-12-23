@@ -24,7 +24,8 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
         "GET /secrets/",
     ];
 
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query, GlobalOptions options)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
+        QueryString query, GlobalOptions options, Guid correlationId)
     {
         logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
 

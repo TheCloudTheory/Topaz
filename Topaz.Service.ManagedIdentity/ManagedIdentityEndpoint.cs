@@ -34,7 +34,7 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
         QueryString query,
-        GlobalOptions options)
+        GlobalOptions options, Guid correlationId)
     {
         logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
 

@@ -21,8 +21,9 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
     ];
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
 
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query,
-        GlobalOptions options)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
+        QueryString query,
+        GlobalOptions options, Guid correlationId)
     {
         logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
         

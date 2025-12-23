@@ -6,7 +6,7 @@ public interface ITopazLogger
     
     void LogInformation(string message);
     void LogDebug(string message);
-    void LogDebug(string methodName, string message);
+    void LogDebug(string methodName, string message, Guid? correlationId);
     void LogDebug(string className, string methodName, params object[] parameters);
     void LogError(Exception ex);
     void LogError(string message);

@@ -18,9 +18,9 @@ public sealed class PrettyTopazLogger : ITopazLogger
         Log(message, LogLevel.Debug);
     }
 
-    public void LogDebug(string methodName, string message)
+    public void LogDebug(string methodName, string message, Guid? correlationId)
     {
-        Log($"[{methodName}]: {message}", LogLevel.Debug);
+        Log($"[{correlationId}][{methodName}]: {message}", LogLevel.Debug);
     }
 
     public void LogDebug(string className, string methodName, params object[] parameters)

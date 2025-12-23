@@ -19,8 +19,9 @@ internal sealed class VirtualNetworkServiceEndpoint(ITopazLogger logger) : IEndp
 
     private readonly VirtualNetworkControlPlane _controlPlane = new(new VirtualNetworkResourceProvider(logger), logger);
 
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query,
-        GlobalOptions options)
+    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
+        QueryString query,
+        GlobalOptions options, Guid correlationId)
     {
         logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
         
