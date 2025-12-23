@@ -203,7 +203,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploym
         }
 
         var result = _controlPlane.CreateOrUpdateDeployment(subscriptionIdentifier, resourceGroup.GetResourceGroup(),
-            deploymentName, JsonSerializer.Serialize(request.Properties.Template), resourceGroup.Location,
+            deploymentName, JsonSerializer.Serialize(request.Properties.Template), request.Properties.Parameters?.Parameters, resourceGroup.Location,
             request.Properties.Mode);
         
         response.StatusCode = HttpStatusCode.Created;

@@ -21,8 +21,15 @@ internal sealed class KeyVaultControlPlane(
     private const string KeyVaultNotFoundCode = "KeyVaultNotFound";
     private const string KeyVaultNotFoundMessageTemplate =
         "Key Vault '{0}' could not be found";
-    private const string InvalidVaultNameMessageTemplate = "The vault name '{0}' is invalid. A vault's name must be between 3-24 alphanumeric characters. The name must begin with a letter, end with a letter or digit, and not contain consecutive hyphens.";
 
+    private const string InvalidVaultNameMessageTemplate =
+        "The vault name '{0}' is invalid. A vault's name must be between 3-24 alphanumeric characters. The name must begin with a letter, end with a letter or digit, and not contain consecutive hyphens.";
+
+    public static KeyVaultControlPlane New(ITopazLogger logger) => new(new KeyVaultResourceProvider(logger),
+        new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
+            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger),
+        new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+    
     public ControlPlaneOperationResult<KeyVaultResource> Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location, string keyVaultName)
     {
         var isNameValid = CheckIfKeyVaultNameIsValid(keyVaultName);

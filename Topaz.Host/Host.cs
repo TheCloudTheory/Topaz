@@ -45,7 +45,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
     private readonly string _topazIpAddress = IsRunningInsideContainer() ? "0.0.0.0" :
         string.IsNullOrWhiteSpace(options.EmulatorIpAddress) ? "127.0.0.1" : options.EmulatorIpAddress;
 
-    public void Start()
+    public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         Console.Title = "--- Topaz.Host ---";
         
@@ -101,12 +101,15 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         ExtractEndpointsForProtocols(services, httpEndpoints, [Protocol.Http, Protocol.Https]);
         ExtractEndpointsForProtocols(services, amqpEndpoints, [Protocol.Amqp]);
 
-        CreateWebserverForHttpEndpoints([.. httpEndpoints]);
+        await CreateWebserverForHttpEndpointsAsync([.. httpEndpoints], cancellationToken);
         CreateAmqpListenersForAmpqEndpoints([.. amqpEndpoints]);
         
         Console.WriteLine();
         Console.WriteLine("Topaz.Host listening to incoming requests...");
         Console.WriteLine();
+        
+        // Wait for cancellation
+        await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
     }
 
     private void CreateAmqpListenersForAmpqEndpoints(IEndpointDefinition[] endpoints)
@@ -165,7 +168,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         }
     }
 
-    private void CreateWebserverForHttpEndpoints(IEndpointDefinition[] httpEndpoints)
+    private async Task CreateWebserverForHttpEndpointsAsync(IEndpointDefinition[] httpEndpoints, CancellationToken cancellationToken)
     {
         var host = new WebHostBuilder()
             .UseKestrel((_, hostOptions) =>
@@ -225,14 +228,13 @@ public class Host(GlobalOptions options, ITopazLogger logger)
 
                         logger.LogError(ex);
 
-                        await context.Response.WriteAsync(ex.Message);
+                        await context.Response.WriteAsync(ex.Message, cancellationToken: cancellationToken);
                     }
                 });
             })
             .Build();
 
-        Threads.Add(new Thread(() => host.Run()));
-        Threads.Last().Start();
+        await host.StartAsync(cancellationToken);
     }
 
     private void ConfigurePemCertificate(ListenOptions listenOptions)

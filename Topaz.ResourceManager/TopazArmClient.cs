@@ -39,6 +39,14 @@ public sealed class TopazArmClient : IDisposable
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task PurgeKeyVault(Guid subscriptionId, string keyVaultName, string location)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, $"subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/locations/{location}/deletedVaults/{keyVaultName}/purge");
+        var response = await _httpClient.SendAsync(request);
+        
+        response.EnsureSuccessStatusCode();
+    }
+
     public void Dispose()
     {
         _httpClient.Dispose();

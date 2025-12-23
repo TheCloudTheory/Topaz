@@ -4,6 +4,8 @@ using Azure;
 using Azure.Deployments.Core.Definitions.Schema;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
+using Topaz.Service.ResourceManager.Models.Requests;
+using Topaz.Shared;
 
 namespace Topaz.Service.ResourceManager.Models;
 
@@ -32,14 +34,16 @@ public sealed class DeploymentResourceProperties
     public IReadOnlyList<DeploymentDiagnosticsDefinition>? Diagnostics { get; set; }
     public ValidationLevel? ValidationLevel { get; set; }
 
-    public static DeploymentResourceProperties New(string deploymentMode, Template template)
+    internal static DeploymentResourceProperties New(string deploymentMode, Template template,
+        Dictionary<string, CreateDeploymentRequest.ParameterValue>? parameters)
     {
         return new DeploymentResourceProperties
         {
             CorrelationId = Guid.NewGuid().ToString(),
             Mode = deploymentMode,
             TemplateHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(template))),
-            ProvisioningState = ResourcesProvisioningState.Created.ToString()
+            ProvisioningState = ResourcesProvisioningState.Created.ToString(),
+            Parameters = parameters == null ? BinaryData.Empty : BinaryData.FromObjectAsJson(parameters, GlobalSettings.JsonOptions)
         };
     }
 }

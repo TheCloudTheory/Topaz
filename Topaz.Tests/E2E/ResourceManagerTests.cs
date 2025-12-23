@@ -2,6 +2,7 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault;
+using Azure.ResourceManager.ManagedServiceIdentities;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Topaz.Identity;
@@ -127,11 +128,64 @@ public class ResourceManagerTests
         
         // Assert
         var kv = await rg.Value.GetKeyVaultAsync("topaz-keyvault");
-        
+
         Assert.Multiple(() =>
         {
             Assert.That(kv, Is.Not.Null);
             Assert.That(kv.Value.Data.Name, Is.EqualTo("topaz-keyvault"));
         });
+        
+        // Cleanup
+        await kv.Value.DeleteAsync(WaitUntil.Completed);
+        await topaz.PurgeKeyVault(subscriptionId, kv.Value.Data.Name, kv.Value.Data.Location);
+    }
+    
+    [Test]
+    public async Task ResourceManagerTest_WhenTemplateContainsParameters_TheyShouldBeSupported()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub";
+        const string resourceGroupName = "rg-deployment";
+        const string deploymentName = "deployment-parameters";
+            
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential();
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient();
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        // Act
+        await rg.Value.GetArmDeployments().CreateOrUpdateAsync(WaitUntil.Completed, deploymentName,
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment-identity.json")),
+                Parameters = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment-identity.parameters.json"))
+            }));
+        
+        // Assert
+        var kv = await rg.Value.GetKeyVaultAsync("deploykeyvault01");
+        var mi = await rg.Value.GetUserAssignedIdentityAsync("deployidentity01");
+
+        try
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(kv, Is.Not.Null);
+                Assert.That(kv.Value.Data.Name, Is.EqualTo("deploykeyvault01"));
+                Assert.That(mi, Is.Not.Null);
+                Assert.That(mi.Value.Data.Name, Is.EqualTo("deployidentity01"));
+                Assert.That(mi.Value.Data.Tags, Contains.Key("cost-center"));
+                Assert.That(mi.Value.Data.Tags["cost-center"], Is.EqualTo("10008923"));
+            });
+        }
+        finally
+        {
+            // Cleanup
+            await kv.Value.DeleteAsync(WaitUntil.Completed);
+            await topaz.PurgeKeyVault(subscriptionId, kv.Value.Data.Name, kv.Value.Data.Location);
+        }
     }
 }

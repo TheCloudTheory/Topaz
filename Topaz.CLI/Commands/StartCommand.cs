@@ -12,9 +12,9 @@ namespace Topaz.CLI.Commands;
 [CommandExample("Start the emulator maximum verbosity", "topaz start --log-level Debug")]
 [CommandExample("Start the emulator with your own certificates",
     "topaz start --certificate-file \"topaz.crt\" --certificate-key \"topaz.key\"")]
-public sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.StartCommandSettings>
+public sealed class StartCommand(ITopazLogger logger) : AsyncCommand<StartCommand.StartCommandSettings>
 {
-    public override int Execute(CommandContext context, StartCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, StartCommandSettings settings)
     {
         if (settings.LogLevel != null)
         {
@@ -44,7 +44,7 @@ public sealed class StartCommand(ITopazLogger logger) : Command<StartCommand.Sta
             EmulatorIpAddress = settings.EmulatorIpAddress
         }, logger);
 
-        host.Start();
+        await host.StartAsync(Program.CancellationToken);
 
         return 0;
     }

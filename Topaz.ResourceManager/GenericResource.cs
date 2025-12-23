@@ -24,6 +24,7 @@ public sealed class GenericResource : ArmResource<object>
             Location = Location,
             Sku = Sku,
             Kind = Kind,
+            Tags = Tags,
             Properties = ConvertProperties<TProps>(Properties)
         };
         

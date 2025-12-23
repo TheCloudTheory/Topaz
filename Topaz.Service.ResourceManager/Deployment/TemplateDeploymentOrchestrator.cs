@@ -4,11 +4,10 @@ using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
 using Newtonsoft.Json.Linq;
 using Topaz.ResourceManager;
 using Topaz.Service.KeyVault;
-using Topaz.Service.ResourceGroup;
+using Topaz.Service.ManagedIdentity;
 using Topaz.Service.ResourceManager.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Service.ResourceManager.Deployment;
@@ -24,12 +23,12 @@ public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvid
         ResourceGroupIdentifier resourceGroupIdentifier, Template template, DeploymentResource deploymentResource,
         InsensitiveDictionary<JToken> metadataInsensitive)
     {
-        _armTemplateEngineFacade.ProcessTemplate(subscriptionIdentifier, resourceGroupIdentifier, template, metadataInsensitive);
+        _armTemplateEngineFacade.ProcessTemplate(subscriptionIdentifier, resourceGroupIdentifier, template, metadataInsensitive, deploymentResource.Properties.Parameters);
         
         DeploymentQueue.Enqueue(new TemplateDeployment(template, deploymentResource));
     }
 
-    public void Start()
+    public void Start(CancellationToken stoppingToken = default)
     {
         if (OrchestratorThread != null)
         {
@@ -38,7 +37,7 @@ public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvid
         
         OrchestratorThread = new Thread(() =>
         {
-            while (true)
+            while (!stoppingToken.IsCancellationRequested)
             {
                 if (DeploymentQueue.Count == 0)
                 {
@@ -63,6 +62,9 @@ public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvid
     {
         logger.LogDebug($"Routing deployment resources of {templateDeployment.Deployment.Id} deployment to appropriate control planes.");
 
+        templateDeployment.Start();
+        logger.LogInformation($"Deployment of {templateDeployment.Deployment.Id} started.");
+        
         var hasProvisioningFailed = false;
         foreach (var resource in templateDeployment.Template.Resources)
         {
@@ -72,18 +74,18 @@ public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvid
             switch (resource.Type.Value)
             {
                 case "Microsoft.KeyVault/vaults":
-                    controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
-                        new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger),
-                        new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+                    controlPlane = KeyVaultControlPlane.New(logger);
+                    break;
+                case "Microsoft.ManagedIdentity/userAssignedIdentities":
+                    controlPlane = ManagedIdentityControlPlane.New(logger);
                     break;
                 default:
                     logger.LogWarning($"Deployment of {templateDeployment.Deployment.Type} is not yet supported.");
                     break;
             }
-
-            templateDeployment.Start();
+            
             var result = controlPlane?.Deploy(genericResource);
+            logger.LogInformation($"Deployment of {genericResource.Id} completed with status {result}.");
 
             if (result == OperationResult.Failed)
             {

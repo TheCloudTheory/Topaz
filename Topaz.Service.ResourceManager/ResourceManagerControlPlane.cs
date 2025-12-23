@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using Topaz.Service.ResourceGroup.Models;
 using Topaz.Service.ResourceManager.Deployment;
 using Topaz.Service.ResourceManager.Models;
+using Topaz.Service.ResourceManager.Models.Requests;
 using Topaz.Service.ResourceManager.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -25,11 +26,13 @@ internal sealed class ResourceManagerControlPlane(
 
     public (OperationResult result, DeploymentResource resource) CreateOrUpdateDeployment(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
-        string deploymentName, string content, string location, string deploymentMode)
+        string deploymentName, string content,
+        Dictionary<string, CreateDeploymentRequest.ParameterValue>? parameters, string location,
+        string deploymentMode)
     {
         var template = _templateEngineFacade.Parse(content);
         var deploymentResource = new DeploymentResource(subscriptionIdentifier, resourceGroupIdentifier, deploymentName,
-            location, DeploymentResourceProperties.New(deploymentMode, template));
+            location, DeploymentResourceProperties.New(deploymentMode, template, parameters));
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, deploymentResource);
 

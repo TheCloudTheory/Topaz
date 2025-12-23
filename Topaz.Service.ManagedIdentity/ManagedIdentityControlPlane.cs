@@ -20,6 +20,12 @@ internal sealed class ManagedIdentityControlPlane(
     private const string ManagedIdentityNotFoundMessageTemplate =
         "Managed Identity '{0}' could not be found";
     
+    public static ManagedIdentityControlPlane New(ITopazLogger logger) => new(
+        new ManagedIdentityResourceProvider(logger),
+        ResourceGroupControlPlane.New(logger),
+        SubscriptionControlPlane.New(logger),
+        logger);
+    
     public ControlPlaneOperationResult<ManagedIdentityResource> CreateOrUpdate(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         ManagedIdentityIdentifier managedIdentityIdentifier, CreateUpdateManagedIdentityRequest request)
@@ -71,9 +77,10 @@ internal sealed class ManagedIdentityControlPlane(
             new CreateUpdateManagedIdentityRequest
             {
                 Location = identity.Location,
+                Tags = identity.Tags,
                 Properties = new CreateUpdateManagedIdentityRequest.ManagedIdentityProperties
                 {
-                    IsolationScope = identity.Properties.IsolationScope
+                    IsolationScope = identity.Properties?.IsolationScope
                 }
             });
 

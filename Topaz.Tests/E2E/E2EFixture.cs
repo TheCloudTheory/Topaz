@@ -11,6 +11,8 @@ public class E2EFixture
     [OneTimeSetUp]
     public async Task SetUp()
     {
+        Program.CancellationToken = CancellationTokenSource.Token;
+        
         _topaz = Program.Main([
             "start",
             "--log-level=Debug",
@@ -21,7 +23,6 @@ public class E2EFixture
             "127.0.0.1"
         ]);
 
-        await Task.Run(() => _topaz, CancellationTokenSource.Token);
         await Task.Delay(1000);
     }
 
@@ -29,5 +30,23 @@ public class E2EFixture
     public async Task TearDown()
     {
         await CancellationTokenSource.CancelAsync();
+        
+        if (_topaz != null)
+        {
+            try
+            {
+                await _topaz.WaitAsync(TimeSpan.FromSeconds(2));
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when cancellation is triggered
+            }
+            catch (TimeoutException)
+            {
+                // Task didn't complete in time
+            }
+        }
+        
+        CancellationTokenSource.Dispose();
     }
 }

@@ -21,6 +21,8 @@ namespace Topaz.CLI;
 [UsedImplicitly]
 internal class Program
 {
+    internal static CancellationToken CancellationToken { get; set; } = CancellationToken.None;
+    
     internal static async Task<int> Main(string[] args)
     {
         try
