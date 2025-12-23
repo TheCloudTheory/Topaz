@@ -40,6 +40,6 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
         var storageAccountPath =
             GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
-        return Path.Combine(storageAccountPath, containerName);
+        return Path.Combine(storageAccountPath, ".blob", containerName);
     }
 }

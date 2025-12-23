@@ -36,7 +36,7 @@ public static class TopazResourceHelpers
     /// - Development emulator flag set to true
     /// - Default localhost endpoint on port 8889
     /// </remarks>
-    public static string GetServiceBusConnectionString() => "Endpoint=sb://servicebus.topaz.local.dev:8889;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
+    public static string GetServiceBusConnectionString(string serviceBusNamespaceName) => $"Endpoint=sb://{serviceBusNamespaceName}.servicebus.topaz.local.dev:8889;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
 
     /// <summary>
     /// Gets the Event Hub connection string for the local development emulator.
@@ -48,5 +48,5 @@ public static class TopazResourceHelpers
     /// - Development emulator flag set to true
     /// - Default localhost endpoint on port 8888
     /// </remarks>
-    public static string GetEventHubConnectionString() => "Endpoint=sb://eventhub.topaz.local.dev:8888;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
+    public static string GetEventHubConnectionString(string eventHubNamespaceName) => $"Endpoint=sb://{eventHubNamespaceName}.eventhub.topaz.local.dev:8888;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
 }

@@ -1,7 +1,10 @@
+using System.Text.Json.Serialization;
+
 namespace Topaz.Service.Storage;
 
-internal class ErrorResponse(string code, string message)
+internal class TableErrorResponse(string code, string message)
 {
+    [JsonPropertyName("odata.error")]
     public ErrorDetail Error { get; init; } = new(code, message);
 
     public class ErrorDetail(string code, string message)

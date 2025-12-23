@@ -126,14 +126,14 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             return blobPath;
         }
         
-        var containerName = segments[1];
+        var containerName = segments[1] == ".blob" ?  segments[2] : segments[1];
         return containerName;
     }
 
     private string GetBlobPropertiesPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
     {
         var containerName = GetContainerNameFromBlobPath(blobPath);
-        var metadataFileName = blobPath.Replace("/", "_");
+        var metadataFileName = blobPath.Replace("/.blob", string.Empty).Replace("/", "_");
         var path = Path.Combine(controlPlane.GetContainerBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
             $"{metadataFileName}.properties.json");
 

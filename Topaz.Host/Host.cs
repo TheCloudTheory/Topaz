@@ -68,7 +68,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             new BlobStorageService(logger),
             new TopazCloudEnvironmentService(),
             new ServiceBusService(logger),
-            new ResourceManagerService(logger),
+            new ResourceManagerService(logger, cancellationToken),
             new VirtualNetworkService(logger),
             new ManagedIdentityService(logger)
         };

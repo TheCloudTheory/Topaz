@@ -1,3 +1,4 @@
+using Azure;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Storage.Blobs;
@@ -158,6 +159,30 @@ public class BlobStorageTests
 
         // Assert
         Assert.That(properties, Is.Not.Null);
+    }
+    
+    [Test]
+    public void BlobStorageTests_WhenBlobPropertiesAreRequestedForNotExistentBlob_ProperErrorShouldBeThrownAndHandled()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("test");
+        var containerClient = serviceClient.GetBlobContainerClient("test");
+        var blobClient = containerClient.GetBlobClient("notexisting.txt");
+
+        // Assert
+        try
+        {
+            _ = blobClient.GetProperties();
+        }
+        catch (RequestFailedException ex) when (ex.ErrorCode == "BlobNotFound")
+        {
+            Assert.Pass();
+        }
+        catch
+        {
+            Assert.Fail("Request failed with invalid error code.");
+        }
     }
 
     [Test]

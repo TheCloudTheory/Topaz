@@ -109,7 +109,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
                             }
                             catch (EntityAlreadyExistsException)
                             {
-                                var error = new ErrorResponse("TableAlreadyExists", "Table already exists.");
+                                var error = new TableErrorResponse("TableAlreadyExists", "Table already exists.");
 
                                 response.StatusCode = HttpStatusCode.Conflict;
                                 response.Headers.Add("x-ms-error-code", "TableAlreadyExists");
@@ -144,7 +144,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
                                 }
                                 catch(EntityAlreadyExistsException)
                                 {
-                                    var error = new ErrorResponse("EntityAlreadyExists", "Entity already exists.");
+                                    var error = new TableErrorResponse("EntityAlreadyExists", "Entity already exists.");
 
                                     response.StatusCode = HttpStatusCode.Conflict;
                                     response.Headers.Add("x-ms-error-code", "EntityAlreadyExists");
@@ -169,7 +169,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
                                 }
                                 catch(EntityNotFoundException)
                                 {
-                                    var error = new ErrorResponse("EntityNotFound", "Entity not found.");
+                                    var error = new TableErrorResponse("EntityNotFound", "Entity not found.");
 
                                     response.StatusCode = HttpStatusCode.NotFound;
                                     response.Headers.Add("x-ms-error-code", "EntityNotFound");
@@ -177,7 +177,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
                                 }
                                 catch(UpdateConditionNotSatisfiedException)
                                 {
-                                    var error = new ErrorResponse("UpdateConditionNotSatisfied", "The update condition specified in the request was not satisfied.");
+                                    var error = new TableErrorResponse("UpdateConditionNotSatisfied", "The update condition specified in the request was not satisfied.");
 
                                     response.StatusCode = HttpStatusCode.PreconditionFailed;
                                     response.Headers.Add("x-ms-error-code", "UpdateConditionNotSatisfied");
@@ -233,7 +233,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
                     }
                     catch (EntityNotFoundException)
                     {
-                        var error = new ErrorResponse("EntityNotFound", "Table not found.");
+                        var error = new TableErrorResponse("EntityNotFound", "Table not found.");
 
                         response.StatusCode = HttpStatusCode.NotFound;
                         response.Headers.Add("x-ms-error-code", "EntityNotFound");
@@ -273,7 +273,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         var tableExists = _controlPlane.CheckIfTableExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, request.TableName);
         if (tableExists)
         {
-            var error = new ErrorResponse("TableAlreadyExists", "Table already exists.");
+            var error = new TableErrorResponse("TableAlreadyExists", "Table already exists.");
 
             response.StatusCode = HttpStatusCode.Conflict;
             response.Headers.Add("x-ms-error-code", "TableAlreadyExists");
@@ -347,7 +347,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
         catch(EntityNotFoundException)
         {
-            var error = new ErrorResponse("EntityNotFound", "Entity not found.");
+            var error = new TableErrorResponse("EntityNotFound", "Entity not found.");
 
             response.StatusCode = HttpStatusCode.NotFound;
             response.Headers.Add("x-ms-error-code", "EntityNotFound");
@@ -355,7 +355,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
         catch(UpdateConditionNotSatisfiedException)
         {
-            var error = new ErrorResponse("UpdateConditionNotSatisfied", "The update condition specified in the request was not satisfied.");
+            var error = new TableErrorResponse("UpdateConditionNotSatisfied", "The update condition specified in the request was not satisfied.");
 
             response.StatusCode = HttpStatusCode.PreconditionFailed;
             response.Headers.Add("x-ms-error-code", "UpdateConditionNotSatisfied");

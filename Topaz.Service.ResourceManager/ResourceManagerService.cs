@@ -17,12 +17,12 @@ public sealed class ResourceManagerService : IServiceDefinition
     
     private readonly ITopazLogger _logger;
 
-    public ResourceManagerService(ITopazLogger logger)
+    public ResourceManagerService(ITopazLogger logger, CancellationToken cancellationToken)
     {
         _logger = logger;
         
         _deploymentOrchestrator = new TemplateDeploymentOrchestrator(new ResourceManagerResourceProvider(logger), logger);
-        _deploymentOrchestrator.Start();
+        _deploymentOrchestrator.Start(cancellationToken);
     }
     
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>

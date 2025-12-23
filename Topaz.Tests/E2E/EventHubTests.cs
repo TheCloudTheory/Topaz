@@ -13,7 +13,7 @@ namespace Topaz.Tests.E2E;
 public class EventHubTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
-    private static readonly Guid SubscriptionId = Guid.NewGuid();
+    private static readonly Guid SubscriptionId = Guid.Parse("100E4CCB-7630-44A4-85D9-3ED9F8492DAC");
     
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test";
@@ -21,7 +21,7 @@ public class EventHubTests
     private const string EventHubName = "test";
     private const string StorageAccountName = "devstoreaccount1";
     private const string ContainerName = "test";
-    private static readonly string ConnectionString = TopazResourceHelpers.GetEventHubConnectionString();
+    private static readonly string ConnectionString = TopazResourceHelpers.GetEventHubConnectionString(EventHubNamespaceName);
     
     private string _key = null!;
     
@@ -50,7 +50,9 @@ public class EventHubTests
             "group",
             "delete",
             "--name",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
@@ -69,7 +71,11 @@ public class EventHubTests
             "namespace",
             "delete",
             "--name",
-            EventHubNamespaceName
+            EventHubNamespaceName,
+            "-g",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
         await Program.Main([
@@ -82,7 +88,7 @@ public class EventHubTests
             ResourceGroupName,
             "--location",
             "westeurope",
-            "--subscriptionId",
+            "--subscription-id",
             SubscriptionId.ToString()
         ]);
         
@@ -95,7 +101,9 @@ public class EventHubTests
             "-g",
             ResourceGroupName,
             "--namespace-name",
-            EventHubNamespaceName
+            EventHubNamespaceName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
         await Program.Main([
@@ -107,7 +115,9 @@ public class EventHubTests
             "-g",
             ResourceGroupName,
             "--namespace-name",
-            EventHubNamespaceName
+            EventHubNamespaceName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
         await Program.Main([
@@ -115,7 +125,11 @@ public class EventHubTests
             "account",
             "delete",
             "--name",
-            StorageAccountName
+            StorageAccountName,
+            "-g",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
 
         await Program.Main([
@@ -139,7 +153,11 @@ public class EventHubTests
             "--name",
             ContainerName,
             "--account-name",
-            StorageAccountName
+            StorageAccountName,
+            "-g",
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
         var credential = new AzureLocalCredential();
@@ -153,8 +171,7 @@ public class EventHubTests
     }
     
     [Test]
-    [Ignore("Ignored until fixed")]
-    public async Task EventHubTests_WhenMessageIsSent_ItShouldBeAvailableInEventHub()
+    public async Task EventHubTests_WhenMessageIsSent_ItShouldBeAvailableInEventHub1()
     {
         // Arrange
         var producer = new EventHubProducerClient(

@@ -11,8 +11,8 @@ public class ServiceBusTests
     private const string NamespaceName = "sb-test";
     private const string QueueName = "queue-test";
     
-    private static readonly Guid SubscriptionId = Guid.NewGuid();
-    private static readonly string ConnectionString = TopazResourceHelpers.GetServiceBusConnectionString();
+    private static readonly Guid SubscriptionId = Guid.Parse("922E7F4C-A0BB-4D49-84B8-2530EA3033D2");
+    private static readonly string ConnectionString = TopazResourceHelpers.GetServiceBusConnectionString(NamespaceName);
     
     [SetUp]
     public async Task SetUp()
