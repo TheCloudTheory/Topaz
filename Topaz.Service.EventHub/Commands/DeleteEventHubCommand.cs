@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
@@ -17,7 +18,7 @@ public class DeleteEventHubCommand(ITopazLogger logger) : Command<DeleteEventHub
         logger.LogInformation($"Deleting {settings.Name} event hub...");
 
         var controlPlane = new EventHubServiceControlPlane(new ResourceProvider(logger), logger);
-        controlPlane.Delete(settings.Name!, settings.NamespaceName!);
+        controlPlane.Delete(settings.Name!, EventHubNamespaceIdentifier.From(settings.NamespaceName!));
 
         logger.LogInformation($"Event hub {settings.Name} deleted.");
 

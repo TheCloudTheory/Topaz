@@ -32,7 +32,7 @@ public sealed class CreateEventHubCommand(ITopazLogger logger) : Command<CreateE
         var controlPlane = new EventHubServiceControlPlane(new ResourceProvider(logger), logger);
         var namespaceIdentifier = EventHubNamespaceIdentifier.From(settings.NamespaceName!);
         var @namespace = controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
-        if (@namespace.result == OperationResult.NotFound || @namespace.resource == null)
+        if (@namespace.Result == OperationResult.NotFound || @namespace.Resource == null)
         {
             logger.LogError($"Namespace {namespaceIdentifier} not found.");
             return 1;
@@ -40,13 +40,13 @@ public sealed class CreateEventHubCommand(ITopazLogger logger) : Command<CreateE
 
         var queue = controlPlane.CreateOrUpdateEventHub(resourceGroup.Resource.GetSubscription(),
             resourceGroupIdentifier, namespaceIdentifier, settings.Name!, new CreateOrUpdateEventHubRequest());
-        if (queue.result == OperationResult.Failed || queue.resource == null)
+        if (queue.Result == OperationResult.Failed || queue.Resource == null)
         {
             logger.LogError($"There was a problem creating queue '{settings.Name!}'.");
             return 1;
         }
         
-        logger.LogInformation(queue.resource.ToString());
+        logger.LogInformation(queue.Resource.ToString());
 
         return 0;
     }

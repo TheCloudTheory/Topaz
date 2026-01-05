@@ -11,7 +11,13 @@ namespace Topaz.Service.EventHub;
 
 internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITopazLogger logger) : IControlPlane
 {
-    public (OperationResult result, EventHubNamespaceResource? resource) CreateOrUpdateNamespace(
+    private const string EventHubNamespaceNotFoundCode = "EventHubNamespaceNotFound";
+    private const string EventHubNotFoundCode = "EventHubNotFound";
+    private const string EventHubNamespaceNotFoundMessageTemplate = "Event hub namespace '{0}' could not be found";
+    private const string EventHubNotFoundMessageTemplate =
+        "Event hub '{0}' could not be found";
+    
+    public ControlPlaneOperationResult<EventHubNamespaceResource> CreateOrUpdateNamespace(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location,
         EventHubNamespaceIdentifier @namespace, CreateOrUpdateEventHubNamespaceRequest request)
     {
@@ -26,24 +32,29 @@ internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITo
             var resource = new EventHubNamespaceResource(subscriptionIdentifier, resourceGroupIdentifier, location, @namespace, properties);
             provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, resource);
 
-            return (OperationResult.Created, resource);
+            return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Created, resource, null, null);
         }
 
         properties.UpdatedOn = DateTime.UtcNow;
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, properties);
 
-        return (OperationResult.Updated, existingNamespace);
+        return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Updated, existingNamespace, null, null);
     }
 
-    public (OperationResult result, EventHubNamespaceResource? resource) GetNamespace(
+    public ControlPlaneOperationResult<EventHubNamespaceResource> GetNamespace(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         EventHubNamespaceIdentifier namespaceIdentifier)
     {
         var existingNamespace = provider.GetAs<EventHubNamespaceResource>(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier.Value);
-        return existingNamespace == null ? (OperationResult.NotFound, null) : (OperationResult.Success, existingNamespace);
+        return existingNamespace == null
+            ? new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.NotFound, null,
+                string.Format(EventHubNamespaceNotFoundMessageTemplate, namespaceIdentifier),
+                EventHubNamespaceNotFoundCode)
+            : new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Success, existingNamespace,
+                null, null);
     }
 
-    public (OperationResult result, EventHubResource? resource) CreateOrUpdateEventHub(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+    public ControlPlaneOperationResult<EventHubResource> CreateOrUpdateEventHub(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         EventHubNamespaceIdentifier @namespace, string hubName, CreateOrUpdateEventHubRequest request)
     {
         var existingHub = provider.GetSubresourceAs<EventHubResource>(subscriptionIdentifier, resourceGroupIdentifier,
@@ -58,26 +69,27 @@ internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITo
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, hubName,
                 @namespace.Value, nameof(Subresource.Hubs).ToLowerInvariant(), resource);
             
-            return (OperationResult.Created, resource);
+            return new ControlPlaneOperationResult<EventHubResource>(OperationResult.Created, resource, null, null);
         }
         
         properties.UpdatedOn = DateTime.UtcNow;
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, properties);
         
-        return (OperationResult.Updated, existingHub);
+        return new ControlPlaneOperationResult<EventHubResource>(OperationResult.Updated, existingHub, null, null);
     }
 
-    public void Delete(string name, string namespaceName)
+    public ControlPlaneOperationResult<EventHubNamespaceResource> Delete(string name, EventHubNamespaceIdentifier namespaceName)
     {
         logger.LogDebug($"Executing {nameof(Delete)}: {name} {namespaceName}");
 
-        if (!provider.EventHubExists(namespaceName, name))
+        if (!provider.EventHubExists(namespaceName.Value, name))
         {
-            // TODO: Return proper error
-            return;
+            return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.NotFound, null, string.Format(EventHubNotFoundMessageTemplate, name),
+                EventHubNotFoundMessageTemplate);
         }
 
-        provider.DeleteEventHub(name, namespaceName);
+        provider.DeleteEventHub(name, namespaceName.Value);
+        return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Deleted, null, null, null);
     }
 
     public OperationResult Deploy(GenericResource resource)
@@ -99,7 +111,7 @@ internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITo
             hub.Name,
             new CreateOrUpdateEventHubRequest());
 
-        return result.result;
+        return result.Result;
     }
 
     private OperationResult DeployEventHubNamespace(GenericResource resource)
@@ -115,6 +127,6 @@ internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITo
             EventHubNamespaceIdentifier.From(@namespace.Name),
             new CreateOrUpdateEventHubNamespaceRequest());
 
-        return result.result;
+        return result.Result;
     }
 }

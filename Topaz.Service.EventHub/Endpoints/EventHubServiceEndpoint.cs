@@ -81,8 +81,8 @@ public sealed class EventHubServiceEndpoint(ITopazLogger logger) : IEndpointDefi
         }
 
         var operation = _controlPlane.CreateOrUpdateEventHub(subscriptionIdentifier, resourceGroupIdentifier, @namespaceIdentifier, queueName, request);
-        if (operation.result != OperationResult.Created && operation.result != OperationResult.Updated ||
-            operation.resource == null)
+        if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated ||
+            operation.Resource == null)
         {
             response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode,
                 $"Unknown error when performing CreateOrUpdate operation.");
@@ -90,20 +90,20 @@ public sealed class EventHubServiceEndpoint(ITopazLogger logger) : IEndpointDefi
         }
 
         response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(operation.resource.ToString());
+        response.Content = new StringContent(operation.Resource.ToString());
     }
 
     private void HandleGetNamespaceRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, EventHubNamespaceIdentifier namespaceIdentifier)
     {
         var operation = _controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
-        if (operation.result == OperationResult.NotFound || operation.resource == null)
+        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
         
-        response.Content = new StringContent(operation.resource.ToString());
+        response.Content = new StringContent(operation.Resource.ToString());
         response.StatusCode = HttpStatusCode.OK;
     }
 }
