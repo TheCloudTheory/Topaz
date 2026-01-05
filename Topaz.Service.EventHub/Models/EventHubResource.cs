@@ -29,4 +29,9 @@ internal sealed class EventHubResource
     public override string Name { get; init; }
     public override string Type => "Microsoft.EventHub/namespaces/hubs";
     public override EventHubResourceProperties Properties { get; init; }
+    
+    public EventHubNamespaceIdentifier GetNamespace()
+    {
+        return EventHubNamespaceIdentifier.From(Id.Split("/")[8]);
+    }
 }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Azure.Core;
+using Topaz.ResourceManager;
 using Topaz.Service.EventHub.Models;
 using Topaz.Service.EventHub.Models.Requests;
 using Topaz.Service.Shared;
@@ -8,7 +9,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.EventHub;
 
-internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITopazLogger logger)
+internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITopazLogger logger) : IControlPlane
 {
     public (OperationResult result, EventHubNamespaceResource? resource) CreateOrUpdateNamespace(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location,
@@ -70,12 +71,50 @@ internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITo
     {
         logger.LogDebug($"Executing {nameof(Delete)}: {name} {namespaceName}");
 
-        if (provider.EventHubExists(namespaceName, name) == false)
+        if (!provider.EventHubExists(namespaceName, name))
         {
             // TODO: Return proper error
             return;
         }
 
         provider.DeleteEventHub(name, namespaceName);
+    }
+
+    public OperationResult Deploy(GenericResource resource)
+    {
+        return resource.Type == "Microsoft.EventHub/namespaces" ? DeployEventHubNamespace(resource) : DeployEventHub(resource);
+    }
+
+    private OperationResult DeployEventHub(GenericResource resource)
+    {
+        var hub = resource.AsSubresource<EventHubResource, EventHubResourceProperties>();
+        if (hub == null)
+        {
+            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Event Hub instance.");
+            return OperationResult.Failed;
+        }
+
+        var result = CreateOrUpdateEventHub(hub.GetSubscription(), hub.GetResourceGroup(),
+            hub.GetNamespace(),
+            hub.Name,
+            new CreateOrUpdateEventHubRequest());
+
+        return result.result;
+    }
+
+    private OperationResult DeployEventHubNamespace(GenericResource resource)
+    {
+        var @namespace = resource.As<EventHubNamespaceResource, EventHubNamespaceResourceProperties>();
+        if (@namespace == null)
+        {
+            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Event Hub namespace instance.");
+            return OperationResult.Failed;
+        }
+
+        var result = CreateOrUpdateNamespace(@namespace.GetSubscription(), @namespace.GetResourceGroup(), @namespace.Location,
+            EventHubNamespaceIdentifier.From(@namespace.Name),
+            new CreateOrUpdateEventHubNamespaceRequest());
+
+        return result.result;
     }
 }

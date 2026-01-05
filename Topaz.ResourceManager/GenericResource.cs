@@ -30,6 +30,20 @@ public sealed class GenericResource : ArmResource<object>
         
         return result;
     }
+    
+    public T? AsSubresource<T, TProps>() 
+        where T : ArmSubresource<TProps>, new()
+        where TProps : new()
+    {
+        var result = new T
+        {
+            Id = Id,
+            Name = Name,
+            Properties = ConvertProperties<TProps>(Properties)
+        };
+        
+        return result;
+    }
 
     private static TProps ConvertProperties<TProps>(object source) where TProps : new()
     {

@@ -1,4 +1,5 @@
 using Azure;
+using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.EventHubs;
 using Topaz.CLI;
@@ -84,6 +85,29 @@ public class EventServiceHubTests
         ]);
     }
     
+    [Test]
+    public void EventHubTests_WhenNewNamespaceIsRequested_ItShouldBeCreated()
+    {
+        // Arrange
+        const string namespaceName = "eh-ns-test";
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var @namespace = resourceGroup.Value.GetEventHubsNamespace(namespaceName);
+
+        // Act
+        var result = @namespace.Value.Update(new EventHubsNamespaceData(AzureLocation.WestEurope));
+        var response = resourceGroup.Value.GetEventHubsNamespace(namespaceName);
+        
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value.Data.Name, Is.EqualTo(namespaceName));
+            Assert.That(response.Value.Data.Name, Is.EqualTo(namespaceName));
+        });
+    }
+
     [Test]
     public void EventHubTests_WhenNewHubIsRequested_ItShouldBeCreated()
     {
