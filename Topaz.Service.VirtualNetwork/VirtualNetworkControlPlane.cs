@@ -18,10 +18,37 @@ internal sealed class VirtualNetworkControlPlane(VirtualNetworkResourceProvider 
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger),
             new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+
+    public static VirtualNetworkControlPlane New(ITopazLogger logger) =>
+        new(new VirtualNetworkResourceProvider(logger), logger);
     
     public OperationResult Deploy(GenericResource resource)
     {
-        return OperationResult.Success;
+        var vnet = resource.As<VirtualNetworkResource, VirtualNetworkResourceProperties>();
+        if (vnet == null)
+        {
+            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Virtual Network instance.");
+            return OperationResult.Failed;
+        }
+
+        var result = CreateOrUpdate(vnet.GetSubscription(), vnet.GetResourceGroup(), vnet.Name,
+            new CreateOrUpdateVirtualNetworkRequest
+            {
+                Properties = new CreateOrUpdateVirtualNetworkRequest.CreateOrUpdateVirtualNetworkRequestProperties
+                {
+                     AddressSpace = vnet.Properties.AddressSpace,
+                     Subnets =  vnet.Properties.Subnets,
+                     EnableDdosProtection =  vnet.Properties.EnableDdosProtection,
+                     Encryption =  vnet.Properties.Encryption,
+                     BgpCommunities = vnet.Properties.BgpCommunities,
+                     FlowLogs = vnet.Properties.FlowLogs,
+                     FlowTimeoutInMinutes = vnet.Properties.FlowTimeoutInMinutes,
+                     EnableVmProtection = vnet.Properties.EnableVmProtection,
+                     PrivateEndpointVnetPolicy = vnet.Properties.PrivateEndpointVnetPolicy
+                }
+            });
+
+        return result.Result;
     }
 
     public ControlPlaneOperationResult<VirtualNetworkResource> Get(SubscriptionIdentifier subscriptionIdentifier,

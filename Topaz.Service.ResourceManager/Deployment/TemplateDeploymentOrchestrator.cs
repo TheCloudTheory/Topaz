@@ -8,6 +8,7 @@ using Topaz.Service.ManagedIdentity;
 using Topaz.Service.ResourceManager.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.VirtualNetwork;
 using Topaz.Shared;
 
 namespace Topaz.Service.ResourceManager.Deployment;
@@ -76,11 +77,14 @@ public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvid
                 case "Microsoft.KeyVault/vaults":
                     controlPlane = KeyVaultControlPlane.New(logger);
                     break;
+                case "Microsoft.Network/virtualNetworks":
+                    controlPlane = VirtualNetworkControlPlane.New(logger);
+                    break;
                 case "Microsoft.ManagedIdentity/userAssignedIdentities":
                     controlPlane = ManagedIdentityControlPlane.New(logger);
                     break;
                 default:
-                    logger.LogWarning($"Deployment of {templateDeployment.Deployment.Type} is not yet supported.");
+                    logger.LogWarning($"Deployment of {resource.Type} is not yet supported.");
                     break;
             }
             

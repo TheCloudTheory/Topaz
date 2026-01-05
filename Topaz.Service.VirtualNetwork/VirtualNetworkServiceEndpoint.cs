@@ -104,6 +104,6 @@ internal sealed class VirtualNetworkServiceEndpoint(ITopazLogger logger) : IEndp
         }
 
         response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(operation.Result.ToString());
+        response.Content = new StringContent(operation.Resource?.ToString()!);
     }
 }

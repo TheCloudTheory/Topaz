@@ -2,6 +2,8 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Network;
+using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Resources.Models;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
@@ -97,6 +99,40 @@ public class VirtualNetworkTests
             Assert.That(virtualNetwork.Value.Data.Subnets, Has.Count.EqualTo(1));
             Assert.That(virtualNetwork.Value.Data.Subnets.First().Name, Is.EqualTo("test-subnet"));
             Assert.That(virtualNetwork.Value.Data.Subnets.First().AddressPrefixes, Contains.Item("10.0.0.0/26"));
+        });
+    }
+
+    [Test]
+    public async Task VirtualNetworkTests_WhenVirtualNetworkIsCreatedUsingTemplate_ItShouldBeAvailable()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub-vnet-deployment";
+        const string resourceGroupName = "rg-deployment";
+        const string deploymentName = "deployment-vnet";
+            
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential();
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient();
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        // Act
+        await rg.Value.GetArmDeployments().CreateOrUpdateAsync(WaitUntil.Completed, deploymentName,
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment-vnet.json"))
+            }));
+        
+        // Assert
+        var vnet = await rg.Value.GetVirtualNetworkAsync("topaz-vnet");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(vnet, Is.Not.Null);
+            Assert.That(vnet.Value.Data.Name, Is.EqualTo("topaz-vnet"));
         });
     }
 }

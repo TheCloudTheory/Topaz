@@ -12,6 +12,7 @@
       <ProjectReference Include="..\Topaz.Service.ResourceGroup\Topaz.Service.ResourceGroup.csproj" />
       <ProjectReference Include="..\Topaz.Service.Shared\Topaz.Service.Shared.csproj" />
       <ProjectReference Include="..\Topaz.Service.Subscription\Topaz.Service.Subscription.csproj" />
+      <ProjectReference Include="..\Topaz.Service.VirtualNetwork\Topaz.Service.VirtualNetwork.csproj" />
     </ItemGroup>
 
     <ItemGroup>
