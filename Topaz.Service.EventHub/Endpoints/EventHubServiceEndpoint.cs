@@ -15,13 +15,14 @@ public sealed class EventHubServiceEndpoint(ITopazLogger logger) : IEndpointDefi
     private readonly EventHubServiceControlPlane _controlPlane = new(new ResourceProvider(logger), logger);
     public string[] Endpoints => [
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
+        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}"
     ];
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
         QueryString query, GlobalOptions options, Guid correlationId)
     {
-        logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
+        logger.LogDebug(nameof(EventHubServiceEndpoint), nameof(GetResponse), "Handling `[{0}]{1}`", correlationId, method, path);
 
         var response = new HttpResponseMessage();
 
@@ -41,11 +42,13 @@ public sealed class EventHubServiceEndpoint(ITopazLogger logger) : IEndpointDefi
                 }
                 case "PUT":
                 {
-                    if (string.IsNullOrWhiteSpace(hubName) == false)
+                    if (!string.IsNullOrWhiteSpace(hubName))
                     {
                         HandleCreateOrUpdateEventHubRequest(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, hubName, input);
+                        break;
                     }
                     
+                    HandleCreateOrUpdateEventHubNamespaceRequest(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, input);
                     break;
                 }
                 default:
@@ -62,6 +65,35 @@ public sealed class EventHubServiceEndpoint(ITopazLogger logger) : IEndpointDefi
         }
 
         return response;
+    }
+
+    private void HandleCreateOrUpdateEventHubNamespaceRequest(HttpResponseMessage response,
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        EventHubNamespaceIdentifier namespaceIdentifier, Stream input)
+    {
+        using var reader = new StreamReader(input);
+
+        var content = reader.ReadToEnd();
+        var request =
+            JsonSerializer.Deserialize<CreateOrUpdateEventHubNamespaceRequest>(content, GlobalSettings.JsonOptions);
+
+        if (request == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+        
+        var operation = _controlPlane.CreateOrUpdateNamespace(subscriptionIdentifier, resourceGroupIdentifier, request.Location!, namespaceIdentifier, request);
+        if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated ||
+            operation.Resource == null)
+        {
+            response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode,
+                $"Unknown error when performing CreateOrUpdate operation.");
+            return;
+        }
+
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(operation.Resource.ToString());
     }
 
     private void HandleCreateOrUpdateEventHubRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,

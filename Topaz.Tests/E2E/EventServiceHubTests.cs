@@ -86,19 +86,19 @@ public class EventServiceHubTests
     }
     
     [Test]
-    public void EventHubTests_WhenNewNamespaceIsRequested_ItShouldBeCreated()
+    public async Task EventHubTests_WhenNewNamespaceIsRequested_ItShouldBeCreated()
     {
         // Arrange
         const string namespaceName = "eh-ns-test";
         var credential = new AzureLocalCredential();
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
-        var subscription = armClient.GetDefaultSubscription();
-        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
-        var @namespace = resourceGroup.Value.GetEventHubsNamespace(namespaceName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
 
         // Act
-        var result = @namespace.Value.Update(new EventHubsNamespaceData(AzureLocation.WestEurope));
-        var response = resourceGroup.Value.GetEventHubsNamespace(namespaceName);
+        var result = await resourceGroup.Value.GetEventHubsNamespaces().CreateOrUpdateAsync(WaitUntil.Completed,
+            namespaceName, new EventHubsNamespaceData(AzureLocation.WestEurope));
+        var response = await resourceGroup.Value.GetEventHubsNamespaceAsync(namespaceName);
         
         // Assert
         Assert.Multiple(() =>
