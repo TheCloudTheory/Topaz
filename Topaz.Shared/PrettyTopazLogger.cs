@@ -8,40 +8,47 @@ public sealed class PrettyTopazLogger : ITopazLogger
     private bool IsLoggingToFileEnabled { get; set; }
     public LogLevel LogLevel { get; private set; } = LogLevel.Information;
 
-    public void LogInformation(string message)
+    public void LogInformation(string message, Guid correlationId = default)
     {
-        Log(message, LogLevel.Information);
+        Log(message, LogLevel.Information, correlationId);
     }
 
-    public void LogDebug(string message)
+    public void LogDebug(string message, Guid correlationId = default)
     {
-        Log(message, LogLevel.Debug);
+        Log(message, LogLevel.Debug, correlationId);
     }
 
-    public void LogDebug(string methodName, string message, Guid? correlationId)
+    public void LogDebug(string methodName, string message, Guid correlationId = default)
     {
-        Log($"[{correlationId}][{methodName}]: {message}", LogLevel.Debug);
+        Log($"[{methodName}]: {message}", LogLevel.Debug, correlationId);
     }
 
-    public void LogDebug(string className, string methodName, params object[] parameters)
+    public void LogDebug(string className, string methodName, Guid correlationId = default, params object[] parameters)
     {
         var message = $"[{className}.{methodName}]: {string.Join(", ", parameters)}";
-        LogDebug(message);
+        LogDebug(message, correlationId);
     }
 
-    public void LogError(Exception ex)
+    public void LogDebug(string className, string methodName, string template, Guid correlationId = default,
+        params object[] parameters)
     {
-        Log(string.Empty, LogLevel.Error, ex);
+        var message = string.Format(template, parameters);
+        LogDebug(message, correlationId);
     }
 
-    public void LogError(string message)
+    public void LogError(Exception ex, Guid correlationId = default)
     {
-        Log(message, LogLevel.Error);
+        Log(string.Empty, LogLevel.Error, correlationId, ex);
     }
 
-    public void LogWarning(string message)
+    public void LogError(string message, Guid correlationId = default)
     {
-        Log(message, LogLevel.Warning);
+        Log(message, LogLevel.Error, correlationId);
+    }
+
+    public void LogWarning(string message, Guid correlationId = default)
+    {
+        Log(message, LogLevel.Warning, correlationId);
     }
 
     public void SetLoggingLevel(LogLevel logLevel)
@@ -64,7 +71,7 @@ public sealed class PrettyTopazLogger : ITopazLogger
         File.WriteAllText(LogFilePath, string.Empty);
     }
 
-    private void Log(string message, LogLevel logLevel, Exception? exception = null)
+    private void Log(string message, LogLevel logLevel, Guid correlationId, Exception? exception = null)
     {
         if (LogLevel > logLevel) return;
         
@@ -77,7 +84,7 @@ public sealed class PrettyTopazLogger : ITopazLogger
         }
         else
         {
-            var log = $"[{logLevel}][{timestamp}]: {message}";
+            var log = $"[{logLevel}][{correlationId}][{timestamp}]: {message}";
             
             AnsiConsole.WriteLine(log);
             TryWriteToFile(log);

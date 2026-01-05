@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Serialization;
-using Topaz.Service.Storage.Services;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage;
@@ -161,9 +160,9 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     }
 
     // TODO: Setting metadata should update / append values instead of replacing them
-    public HttpStatusCode SetBlobMetadata(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, IHeaderDictionary headers)
+    public HttpStatusCode SetBlobMetadata(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, IHeaderDictionary headers, Guid correlationId)
     {
-        logger.LogDebug($"Executing {nameof(SetBlobMetadata)}: {storageAccountName} {blobPath}");
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(SetBlobMetadata),"Account: `{0}`, Path: {1}, Headers: {2}", correlationId, storageAccountName, blobPath, headers);
         
         var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
 

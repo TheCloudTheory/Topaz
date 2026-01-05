@@ -25,7 +25,7 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
             return;
         }
 
-        logger.LogInformation($"Received request: {method} {context.Request.Host}{path}{query}");
+        logger.LogInformation($"Request: [{method}][{context.Request.Host}{path}{query}]");
 
         IEndpointDefinition? endpoint = null;
         var pathParts = path.Split('/');
@@ -85,7 +85,7 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
         var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query, options, Guid.NewGuid());
         var textResponse = await response.Content.ReadAsStringAsync();
 
-        logger.LogInformation($"Response: [{endpoint.GetType()}][{response.StatusCode}] [{path}] {textResponse}");
+        logger.LogInformation($"Response: [{method}][{context.Request.Host}{path}{query}][{response.StatusCode}] {textResponse}");
         
         context.Response.StatusCode = (int)response.StatusCode;
         

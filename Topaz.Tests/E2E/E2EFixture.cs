@@ -15,7 +15,7 @@ public class E2EFixture
         
         _topaz = Program.Main([
             "start",
-            "--log-level=Debug",
+            "--log-level=Information",
             "--enable-logging-to-file",
             "--refresh-log",
             "--emulator-ip-address",

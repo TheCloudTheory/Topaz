@@ -1,4 +1,5 @@
 using Amqp.Listener;
+using Amqp.Types;
 using Topaz.Shared;
 
 namespace Topaz.Host.AMQP;
@@ -13,6 +14,8 @@ public class OutgoingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
         var messagesToSend = IncomingLinkEndpoint.Messages.Take(flowContext.Messages);
         foreach (var message in messagesToSend)
         {
+            message.MessageAnnotations[new Symbol("x-opt-offset")] = IncomingLinkEndpoint.Messages.IndexOf(message).ToString();
+            
             flowContext.Link.SendMessage(message);
             IncomingLinkEndpoint.Messages.Remove(message);
         }

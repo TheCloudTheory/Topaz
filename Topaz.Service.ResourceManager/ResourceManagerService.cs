@@ -27,6 +27,6 @@ public sealed class ResourceManagerService : IServiceDefinition
     
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new ResourceManagerEndpoint(_logger, _deploymentOrchestrator!),
+        new ResourceManagerEndpoint(_logger, _deploymentOrchestrator!, new CorrelationIdFactory()),
     ];
 }

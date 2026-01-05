@@ -36,7 +36,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         "DELETE /{containerName}/...",
     ];
     
-    private Guid? _correlationId;
+    private Guid _correlationId;
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
         QueryString query, GlobalOptions options, Guid correlationId)
@@ -72,7 +72,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
                     {
                         if (query.TryGetValueForKey("comp", out var comp) && comp == "metadata")
                         {
-                            HandleSetBlobMetadataRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, path, headers, response);
+                            HandleSetBlobMetadataRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, path, blobName!, headers, response);
                         }
                         else
                         {
@@ -109,9 +109,9 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
                 }
                 case "DELETE":
                 {
-                    if (TryGetBlobName(containerName, out var blobName))
+                    if (TryGetBlobName(path, out var blobName))
                     {
-                        HandleDeleteBlobRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, containerName, blobName!, response);
+                        HandleDeleteBlobRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, path, blobName!, response);
                     }
 
                     break;
@@ -129,12 +129,12 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         return response;
     }
 
-    private void HandleSetBlobMetadataRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath,
+    private void HandleSetBlobMetadataRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName,
         IHeaderDictionary headers, HttpResponseMessage response)
     {
         logger.LogDebug(nameof(HandleSetBlobMetadataRequest), $"Handling setting blob metadata for {blobPath}.", _correlationId);
         
-        var result = _dataPlane.SetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath, headers);
+        var result = _dataPlane.SetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath, headers, _correlationId);
 
         if (result == HttpStatusCode.NotFound)
         {
@@ -143,16 +143,20 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
         else
         {
+            var properties = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath, blobName);
+            
             response.StatusCode = result;
+            response.Headers.Add("ETag", properties.properties?.ETag.ToString());
+            response.Headers.Add("Last-Modified", properties.properties?.LastModified);
         }
     }
 
-    private void HandleDeleteBlobRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName, string blobName,
+    private void HandleDeleteBlobRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName,
         HttpResponseMessage response)
     {
         logger.LogDebug(nameof(HandleDeleteBlobRequest), $"Handling deleting blob {blobName}.", _correlationId);
         
-        var result = _dataPlane.DeleteBlob(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName, blobName);
+        var result = _dataPlane.DeleteBlob(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath, blobName);
 
         if (result == HttpStatusCode.NotFound)
         {

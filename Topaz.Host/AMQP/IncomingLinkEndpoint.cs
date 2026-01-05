@@ -27,6 +27,9 @@ public class IncomingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
         if (messageContext.Message.Format == BatchFormat)
         {
         }
+
+        // Add message annotations which are used by Event Hub SDK for some of the internal operations
+        messageContext.Message.MessageAnnotations = new MessageAnnotations();
         
         Messages.Add(messageContext.Message);
         messageContext.Complete();

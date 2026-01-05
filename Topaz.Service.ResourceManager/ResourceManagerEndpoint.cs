@@ -14,7 +14,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.ResourceManager;
 
-public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploymentOrchestrator deploymentOrchestrator) : IEndpointDefinition
+public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploymentOrchestrator deploymentOrchestrator, CorrelationIdFactory idFactory) : IEndpointDefinition
 {
     private readonly SubscriptionControlPlane _subscriptionControlPlane = new(new SubscriptionResourceProvider(logger));
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane = new(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
@@ -136,7 +136,9 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploym
 
     private void HandleValidateDeployment(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string deploymentName, Stream input)
     {
-        logger.LogDebug(nameof(ResourceManagerEndpoint), nameof(HandleValidateDeployment), subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
+        logger.LogDebug(nameof(ResourceManagerEndpoint), nameof(HandleValidateDeployment),
+            "Subscription `{0}`, resource group `{1}`, deployment name: `{2}`", idFactory.Get(), subscriptionIdentifier,
+            resourceGroupIdentifier, deploymentName);
         
         using var reader = new StreamReader(input);
         

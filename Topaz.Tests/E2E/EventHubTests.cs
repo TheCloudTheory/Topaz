@@ -235,7 +235,7 @@ public class EventHubTests
         }
         
         await processor.StartProcessingAsync();
-        await Task.Delay(TimeSpan.FromSeconds(30));
+        await Task.Delay(TimeSpan.FromSeconds(10));
         await processor.StopProcessingAsync();
         
         // Assert

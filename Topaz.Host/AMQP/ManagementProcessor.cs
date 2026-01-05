@@ -27,7 +27,7 @@ internal sealed class ManagementProcessor : IRequestProcessor
             [ResponseMap.GeoReplicationFactor] = 1,
             [ResponseMap.Name] = "topaz_host",
             [ResponseMap.CreatedAt] = DateTime.UtcNow,
-            [ResponseMap.PartitionIdentifiers] = new[] { Guid.NewGuid().ToString() }
+            [ResponseMap.PartitionIdentifiers] = new[] { Guid.Empty.ToString() }
         };
 
         var reply = new Message(body) { ApplicationProperties = p, };
