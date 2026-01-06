@@ -16,6 +16,7 @@ public sealed class EventHubServiceEndpoint(ITopazLogger logger) : IEndpointDefi
     public string[] Endpoints => [
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
+        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}"
     ];
     public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
@@ -51,6 +52,9 @@ public sealed class EventHubServiceEndpoint(ITopazLogger logger) : IEndpointDefi
                     HandleCreateOrUpdateEventHubNamespaceRequest(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, input);
                     break;
                 }
+                case "DELETE":
+                    HandleDeleteEventHubNamespaceRequest(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
+                    break;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
                     break;
@@ -65,6 +69,26 @@ public sealed class EventHubServiceEndpoint(ITopazLogger logger) : IEndpointDefi
         }
 
         return response;
+    }
+
+    private void HandleDeleteEventHubNamespaceRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, EventHubNamespaceIdentifier namespaceIdentifier)
+    {
+        logger.LogDebug($"Executing {nameof(HandleDeleteEventHubNamespaceRequest)}.");
+        
+        var existingNamespace = _controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
+        switch (existingNamespace.Result)
+        {
+            case OperationResult.NotFound:
+                response.StatusCode = HttpStatusCode.NotFound;
+                return;
+            case OperationResult.Failed:
+                response.StatusCode = HttpStatusCode.InternalServerError;
+                return;
+            default:
+                _controlPlane.DeleteNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
+                response.StatusCode = HttpStatusCode.OK;
+                break;
+        }
     }
 
     private void HandleCreateOrUpdateEventHubNamespaceRequest(HttpResponseMessage response,

@@ -26,17 +26,19 @@ internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITo
 
         if (existingNamespace == null)
         {
-            properties.CreatedOn = DateTime.UtcNow;
-            properties.UpdatedOn = DateTime.UtcNow;
+            properties.CreatedAt = DateTime.UtcNow;
+            properties.UpdatedAt = DateTime.UtcNow;
+            properties.ProvisioningState = "Succeeded";
 
             var resource = new EventHubNamespaceResource(subscriptionIdentifier, resourceGroupIdentifier, location, @namespace, properties);
-            provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, resource);
+            provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, resource, true);
 
             return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Created, resource, null, null);
         }
 
-        properties.UpdatedOn = DateTime.UtcNow;
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, properties);
+        properties.UpdatedAt = DateTime.UtcNow;
+        existingNamespace.UpdateProperties(properties);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, existingNamespace);
 
         return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Updated, existingNamespace, null, null);
     }
@@ -89,6 +91,23 @@ internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITo
         }
 
         provider.DeleteEventHub(name, namespaceName.Value);
+        return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Deleted, null, null, null);
+    }
+    
+    public ControlPlaneOperationResult<EventHubNamespaceResource> DeleteNamespace(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        EventHubNamespaceIdentifier namespaceName)
+    {
+        logger.LogDebug($"Executing {nameof(DeleteNamespace)}: {namespaceName}");
+        
+        var existingNamespace = GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
+        if (existingNamespace.Resource == null || existingNamespace.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.NotFound, null, string.Format(EventHubNamespaceNotFoundMessageTemplate, namespaceName),
+                EventHubNamespaceNotFoundCode);
+        }
+
+        provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, namespaceName.Value);
         return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Deleted, null, null, null);
     }
 

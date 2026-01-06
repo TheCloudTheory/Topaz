@@ -106,22 +106,62 @@ public class EventServiceHubTests
             Assert.That(result.Value.Data.Name, Is.EqualTo(namespaceName));
             Assert.That(response.Value.Data.Name, Is.EqualTo(namespaceName));
         });
+        
+        // Cleanup
+        await response.Value.DeleteAsync(WaitUntil.Completed);
+    }
+    
+    [Test]
+    public async Task EventHubTests_WhenNamespaceExistsAndIsCreatedOrUpdated_ItShouldBeUpdated()
+    {
+        // Arrange
+        const string namespaceName = "eh-ns-update-test";
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        _ = await resourceGroup.Value.GetEventHubsNamespaces().CreateOrUpdateAsync(WaitUntil.Completed,
+            namespaceName, new EventHubsNamespaceData(AzureLocation.WestEurope));
+
+        // Act
+        var result = await resourceGroup.Value.GetEventHubsNamespaces().CreateOrUpdateAsync(WaitUntil.Completed,
+            namespaceName, new EventHubsNamespaceData(AzureLocation.WestEurope)
+            {
+                IsAutoInflateEnabled =  true,
+                DisableLocalAuth = true
+            });
+        var response = await resourceGroup.Value.GetEventHubsNamespaceAsync(namespaceName);
+        
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value.Data.Name, Is.EqualTo(namespaceName));
+            Assert.That(response.Value.Data.Name, Is.EqualTo(namespaceName));
+            Assert.That(response.Value.Data.IsAutoInflateEnabled, Is.True);
+            Assert.That(response.Value.Data.DisableLocalAuth, Is.True);
+        });
+        
+        // Cleanup
+        await response.Value.DeleteAsync(WaitUntil.Completed);
     }
 
     [Test]
-    public void EventHubTests_WhenNewHubIsRequested_ItShouldBeCreated()
+    public async Task EventHubTests_WhenNewHubIsRequested_ItShouldBeCreated()
     {
         // Arrange
         var credential = new AzureLocalCredential();
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
-        var subscription = armClient.GetDefaultSubscription();
-        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
-        var @namespace = resourceGroup.Value.GetEventHubsNamespace(EventHubNamespaceName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var @namespace = await resourceGroup.Value.GetEventHubsNamespaceAsync(EventHubNamespaceName);
 
         // Act
-        var hub = @namespace.Value.GetEventHubs().CreateOrUpdate(WaitUntil.Completed, "test-eh", new EventHubData());
+        var hub = await @namespace.Value.GetEventHubs().CreateOrUpdateAsync(WaitUntil.Completed, "test-eh", new EventHubData());
 
         // Assert
         Assert.That(hub.Value.Data.Name, Is.EqualTo("test-eh"));
+        
+        // Cleanup
+        await hub.Value.DeleteAsync(WaitUntil.Completed);
     }
 }

@@ -35,4 +35,21 @@ internal sealed class EventHubNamespaceResource
     public override ResourceSku? Sku { get; init; }
     public override string? Kind { get; init; }
     public override EventHubNamespaceResourceProperties Properties { get; init; }
+
+    public void UpdateProperties(EventHubNamespaceResourceProperties properties)
+    {
+        Properties.AlternateName = properties.AlternateName;
+        Properties.ClusterArmId = properties.ClusterArmId;
+        Properties.DisableLocalAuth = properties.DisableLocalAuth;
+        Properties.Encryption = properties.Encryption;
+        Properties.IsAutoInflateEnabled = properties.IsAutoInflateEnabled;
+        Properties.KafkaEnabled = properties.KafkaEnabled;
+        Properties.MaximumThroughputUnits = properties.MaximumThroughputUnits;
+        Properties.MetricId = properties.MetricId;
+        Properties.MinimumTlsVersion = properties.MinimumTlsVersion;
+        Properties.PrivateEndpointConnections = properties.PrivateEndpointConnections;
+        Properties.PublicNetworkAccess = properties.PublicNetworkAccess;
+        Properties.ServiceBusEndpoint = properties.ServiceBusEndpoint;
+        Properties.ZoneRedundant = properties.ZoneRedundant;
+    }
 }
