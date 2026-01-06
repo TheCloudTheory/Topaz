@@ -13,6 +13,7 @@ using Topaz.Service.Storage.Serialization;
 using Topaz.Service.Storage.Services;
 using Topaz.Service.Storage.Utils;
 using Topaz.Shared;
+using BlobProperties = Topaz.Service.Storage.Models.BlobProperties;
 
 namespace Topaz.Service.Storage.Endpoints;
 
@@ -146,8 +147,10 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
             var properties = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath, blobName);
             
             response.StatusCode = result;
-            response.Headers.Add("ETag", properties.properties?.ETag.ToString());
-            response.Headers.Add("Last-Modified", properties.properties?.LastModified);
+            
+            if (properties.properties == null) return;
+            
+            SetResponseHeaders(response, properties.properties);
         }
     }
 
@@ -203,17 +206,27 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         if (result.properties == null) return;
 
-        // Note we're enclosing ETag header explicitly with double quotes to align it 
-        // with RFC description stating this tag is "nn entity tag consists of an opaque quoted string, possibly prefixed by a weakness indicator"
-        response.Headers.Add("ETag", $"\"{result.properties.ETag.ToString()}\"");
+        SetResponseHeaders(response, result.properties);
+    }
 
+    private static void SetResponseHeaders(HttpResponseMessage response,
+        BlobProperties properties)
+    {
+        var etag = properties.ETag.ToString();
+        if (!etag.StartsWith('"') && !etag.EndsWith('"'))
+        {
+            // Note we're enclosing ETag header explicitly with double quotes to align it 
+            // with RFC description stating this tag is "nn entity tag consists of an opaque quoted string, possibly prefixed by a weakness indicator"
+            response.Headers.Add("ETag", $"\"{etag}\"");
+        }
+        
         // Adding `Last-Modified` directly as response header fail with an error stating
         // we're misusing that header. However, based on the behavior of Blob Storage SDK 
         // it looks like it expects that header to be part of the response headers, not response
         // content. For now, we can leave it as it is (as SDK fallbacks to ETag anyway),
         // but it may be worth considering adding that header without validation if possible.
         var emptyContent = new StringContent(string.Empty);
-        emptyContent.Headers.LastModified = DateTimeOffset.Parse(result.properties.LastModified!, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
+        emptyContent.Headers.LastModified = DateTimeOffset.Parse(properties.LastModified!, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
         response.Content = emptyContent;
     }
 
