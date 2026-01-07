@@ -30,7 +30,7 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
             return 1;
         }
 
-        var controlPlane = new EventHubServiceControlPlane(new ResourceProvider(logger), logger);
+        var controlPlane = new EventHubServiceControlPlane(new EventHubResourceProvider(logger), logger);
         var request = new CreateOrUpdateEventHubNamespaceRequest();
         var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.Resource.GetSubscription(), resourceGroupIdentifier,
             settings.Location!, EventHubNamespaceIdentifier.From(settings.Name!), request);

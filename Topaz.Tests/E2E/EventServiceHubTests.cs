@@ -2,6 +2,9 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.EventHubs;
+using Azure.ResourceManager.Network;
+using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Resources.Models;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
@@ -163,5 +166,42 @@ public class EventServiceHubTests
         
         // Cleanup
         await hub.Value.DeleteAsync(WaitUntil.Completed);
+    }
+
+    [Test]
+    public async Task EventHubTests_WhenNewHubIsRequestedViaTemplate_ItShouldBeCreated()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub-eventhub-deployment";
+        const string resourceGroupName = "rg-deployment";
+        const string deploymentName = "deployment-vnet";
+            
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential();
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient();
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        // Act
+        await rg.Value.GetArmDeployments().CreateOrUpdateAsync(WaitUntil.Completed, deploymentName,
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment-eventhub.json"))
+            }));
+        
+        // Assert
+        var @namespace = await rg.Value.GetEventHubsNamespaceAsync("topaz-eh");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(@namespace, Is.Not.Null);
+            Assert.That(@namespace.Value.Data.Name, Is.EqualTo("topaz-eh"));
+        });
+        
+        // Cleanup
+        await @namespace.Value.DeleteAsync(WaitUntil.Completed);
     }
 }

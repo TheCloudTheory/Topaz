@@ -29,4 +29,9 @@ internal sealed class ServiceBusQueueResource
     public override string Name { get; init; }
     public override string Type => "Microsoft.ServiceBus/namespaces/queues";
     public override ServiceBusQueueResourceProperties Properties { get; init; }
+
+    public ServiceBusNamespaceIdentifier GetNamespace()
+    {
+        return ServiceBusNamespaceIdentifier.From(Id.Split("/")[8]);
+    }
 }

@@ -27,7 +27,7 @@ public sealed class DeleteServiceBusQueueCommand(ITopazLogger logger) : Command<
             return 1;
         }
 
-        var controlPlane = new ServiceBusServiceControlPlane(new ResourceProvider(logger), logger);
+        var controlPlane = new ServiceBusServiceControlPlane(new ServiceBusResourceProvider(logger), logger);
         var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(settings.NamespaceName!);
         var @namespace = controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
         if (@namespace.result == OperationResult.NotFound || @namespace.resource == null)

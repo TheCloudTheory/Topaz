@@ -9,13 +9,15 @@ using Topaz.Shared;
 
 namespace Topaz.Service.EventHub;
 
-internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITopazLogger logger) : IControlPlane
+internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provider, ITopazLogger logger) : IControlPlane
 {
     private const string EventHubNamespaceNotFoundCode = "EventHubNamespaceNotFound";
     private const string EventHubNotFoundCode = "EventHubNotFound";
     private const string EventHubNamespaceNotFoundMessageTemplate = "Event hub namespace '{0}' could not be found";
     private const string EventHubNotFoundMessageTemplate =
         "Event hub '{0}' could not be found";
+    
+    public static EventHubServiceControlPlane New(ITopazLogger logger) => new(new EventHubResourceProvider(logger), logger);
     
     public ControlPlaneOperationResult<EventHubNamespaceResource> CreateOrUpdateNamespace(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location,
@@ -87,7 +89,7 @@ internal sealed class EventHubServiceControlPlane(ResourceProvider provider, ITo
         if (!provider.EventHubExists(namespaceName.Value, name))
         {
             return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.NotFound, null, string.Format(EventHubNotFoundMessageTemplate, name),
-                EventHubNotFoundMessageTemplate);
+                EventHubNotFoundCode);
         }
 
         provider.DeleteEventHub(name, namespaceName.Value);

@@ -3,9 +3,11 @@ using Azure.Deployments.Core.Definitions.Schema;
 using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
 using Newtonsoft.Json.Linq;
 using Topaz.ResourceManager;
+using Topaz.Service.EventHub;
 using Topaz.Service.KeyVault;
 using Topaz.Service.ManagedIdentity;
 using Topaz.Service.ResourceManager.Models;
+using Topaz.Service.ServiceBus;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.VirtualNetwork;
@@ -82,6 +84,12 @@ public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvid
                     break;
                 case "Microsoft.ManagedIdentity/userAssignedIdentities":
                     controlPlane = ManagedIdentityControlPlane.New(logger);
+                    break;
+                case "Microsoft.EventHub/namespaces":
+                    controlPlane = EventHubServiceControlPlane.New(logger);
+                    break;
+                case "Microsoft.ServiceBus/namespaces":
+                    controlPlane = ServiceBusServiceControlPlane.New(logger);
                     break;
                 default:
                     logger.LogWarning($"Deployment of {resource.Type} is not yet supported.");

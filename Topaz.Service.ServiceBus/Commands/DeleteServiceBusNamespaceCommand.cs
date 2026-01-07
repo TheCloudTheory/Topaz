@@ -17,7 +17,7 @@ public sealed class DeleteServiceBusNamespaceCommand(ITopazLogger logger) : Comm
         
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = new ServiceBusServiceControlPlane(new ResourceProvider(logger), logger);
+        var controlPlane = new ServiceBusServiceControlPlane(new ServiceBusResourceProvider(logger), logger);
         _ = controlPlane.DeleteNamespace(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 
         logger.LogInformation("Service Bus namespace deleted.");

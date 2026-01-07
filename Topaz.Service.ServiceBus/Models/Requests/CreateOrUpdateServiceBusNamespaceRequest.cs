@@ -24,4 +24,14 @@ internal sealed class CreateOrUpdateServiceBusNamespaceRequest
         public object? PublicNetworkAccess { get; init; }
         public int? PremiumMessagingPartitions { get; init; }
     }
+
+    public static CreateOrUpdateServiceBusNamespaceRequest From(GenericResource resource)
+    {
+        return new CreateOrUpdateServiceBusNamespaceRequest
+        {
+            Sku = resource.Sku,
+            Location = resource.Location,
+            Properties = resource.Properties as CreateOrUpdateServiceBusNamespaceRequestProperties
+        };
+    }
 }

@@ -12,7 +12,7 @@ namespace Topaz.Service.EventHub.Endpoints;
 
 public sealed class EventHubServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly EventHubServiceControlPlane _controlPlane = new(new ResourceProvider(logger), logger);
+    private readonly EventHubServiceControlPlane _controlPlane = new(new EventHubResourceProvider(logger), logger);
     public string[] Endpoints => [
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",

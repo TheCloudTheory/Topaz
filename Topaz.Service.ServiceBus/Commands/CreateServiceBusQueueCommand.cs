@@ -28,7 +28,7 @@ public class CreateServiceBusQueueCommand(ITopazLogger logger) : Command<CreateS
             return 1;
         }
 
-        var controlPlane = new ServiceBusServiceControlPlane(new ResourceProvider(logger), logger);
+        var controlPlane = new ServiceBusServiceControlPlane(new ServiceBusResourceProvider(logger), logger);
         var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(settings.NamespaceName!);
         var @namespace = controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
         if (@namespace.result == OperationResult.NotFound || @namespace.resource == null)
@@ -38,13 +38,13 @@ public class CreateServiceBusQueueCommand(ITopazLogger logger) : Command<CreateS
         }
         
         var queue = controlPlane.CreateOrUpdateQueue(resourceGroup.Resource.GetSubscription(), resourceGroupIdentifier, namespaceIdentifier, settings.Name!, new CreateOrUpdateServiceBusQueueRequest());
-        if (queue.result == OperationResult.Failed || queue.resource == null)
+        if (queue.Result == OperationResult.Failed || queue.Resource == null)
         {
             logger.LogError($"There was a problem creating queue '{settings.Name!}'.");
             return 1;
         }
         
-        logger.LogInformation(queue.resource.ToString());
+        logger.LogInformation(queue.Resource.ToString());
 
         return 0;
     }

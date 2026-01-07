@@ -29,7 +29,7 @@ public sealed class CreateEventHubCommand(ITopazLogger logger) : Command<CreateE
             return 1;
         }
         
-        var controlPlane = new EventHubServiceControlPlane(new ResourceProvider(logger), logger);
+        var controlPlane = new EventHubServiceControlPlane(new EventHubResourceProvider(logger), logger);
         var namespaceIdentifier = EventHubNamespaceIdentifier.From(settings.NamespaceName!);
         var @namespace = controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
         if (@namespace.Result == OperationResult.NotFound || @namespace.Resource == null)

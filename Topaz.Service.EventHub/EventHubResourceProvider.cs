@@ -4,7 +4,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.EventHub;
 
-internal sealed class ResourceProvider(ITopazLogger logger) : ResourceProviderBase<EventHubService>(logger) 
+internal sealed class EventHubResourceProvider(ITopazLogger logger) : ResourceProviderBase<EventHubService>(logger) 
 {
     private readonly ITopazLogger _topazLogger = logger;
     

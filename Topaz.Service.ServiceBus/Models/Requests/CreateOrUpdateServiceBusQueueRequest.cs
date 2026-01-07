@@ -1,10 +1,11 @@
 using JetBrains.Annotations;
+using Topaz.ResourceManager;
 
 namespace Topaz.Service.ServiceBus.Models.Requests;
 
 internal sealed class CreateOrUpdateServiceBusQueueRequest
 {
-    public CreateOrUpdateServiceBusQueueRequestProperties Properties { get; init; } = new();
+    public CreateOrUpdateServiceBusQueueRequestProperties? Properties { get; private init; } = new();
     
     [UsedImplicitly]
     public class CreateOrUpdateServiceBusQueueRequestProperties
@@ -27,5 +28,13 @@ internal sealed class CreateOrUpdateServiceBusQueueRequest
         public bool? EnableExpress { get; init; }
         public string? ForwardTo { get; init; }
         public string? ForwardDeadLetteredMessagesTo { get; init; }
+    }
+
+    public static CreateOrUpdateServiceBusQueueRequest From(GenericResource resource)
+    {
+        return new CreateOrUpdateServiceBusQueueRequest
+        {
+            Properties = resource.Properties as CreateOrUpdateServiceBusQueueRequestProperties
+        };
     }
 }

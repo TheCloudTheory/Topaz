@@ -18,7 +18,7 @@ public class DeleteEventHubNamespaceCommand(ITopazLogger logger) : Command<Delet
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var rp = new ResourceProvider(logger);
+        var rp = new EventHubResourceProvider(logger);
         
         rp.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 

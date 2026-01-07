@@ -10,7 +10,7 @@ namespace Topaz.Service.ServiceBus.Endpoints;
 
 public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointDefinition
 {
-    private readonly ServiceBusServiceControlPlane _controlPlane = new(new ResourceProvider(logger), logger);
+    private readonly ServiceBusServiceControlPlane _controlPlane = new(new ServiceBusResourceProvider(logger), logger);
     
     public string[] Endpoints =>
     [
@@ -108,8 +108,8 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
         }
 
         var operation = _controlPlane.CreateOrUpdateQueue(subscriptionIdentifier, resourceGroupIdentifier, @namespaceIdentifier, queueName, request);
-        if (operation.result != OperationResult.Created && operation.result != OperationResult.Updated ||
-            operation.resource == null)
+        if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated ||
+            operation.Resource == null)
         {
             response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode,
                 $"Unknown error when performing CreateOrUpdate operation.");
@@ -117,7 +117,7 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
         }
 
         response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(operation.resource.ToString());
+        response.Content = new StringContent(operation.Resource.ToString());
     }
 
     private void HandleGetNamespace(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
@@ -150,13 +150,13 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
         }
         
         var operation = _controlPlane.CreateOrUpdateNamespace(subscriptionIdentifier, resourceGroupIdentifier, request.Location!, @namespaceIdentifier, request);
-        if (operation.result != OperationResult.Created && operation.result != OperationResult.Updated || operation.resource == null)
+        if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated || operation.Resource == null)
         {
             response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode, $"Unknown error when performing CreateOrUpdate operation.");
             return;
         }
         
-        response.StatusCode = operation.result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
-        response.Content = new StringContent(operation.resource.ToString());
+        response.StatusCode = operation.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
+        response.Content = new StringContent(operation.Resource.ToString());
     }
 }

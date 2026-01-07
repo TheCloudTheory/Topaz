@@ -28,17 +28,17 @@ public sealed class CreateServiceBusNamespaceCommand(ITopazLogger logger) : Comm
         }
 
         var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(settings.Name!);
-        var controlPlane = new ServiceBusServiceControlPlane(new ResourceProvider(logger), logger);
+        var controlPlane = new ServiceBusServiceControlPlane(new ServiceBusResourceProvider(logger), logger);
         var request = new CreateOrUpdateServiceBusNamespaceRequest();
         var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.Resource.GetSubscription(), resourceGroupIdentifier, resourceGroup.Resource.Location, namespaceIdentifier, request);
 
-        if (ns.result == OperationResult.Failed || ns.resource == null)
+        if (ns.Result == OperationResult.Failed || ns.Resource == null)
         {
             logger.LogError($"There was a problem creating namespace '{namespaceIdentifier}'.");
             return 1;
         }
         
-        logger.LogInformation(ns.resource.ToString());
+        logger.LogInformation(ns.Resource.ToString());
 
         return 0;
     }
