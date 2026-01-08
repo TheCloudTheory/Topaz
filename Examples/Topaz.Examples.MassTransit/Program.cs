@@ -1,3 +1,4 @@
+using System.Text;
 using Azure.Core;
 using Azure.ResourceManager.ServiceBus;
 using DotNet.Testcontainers.Builders;
@@ -11,37 +12,23 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddMassTransit(x =>
+
+if (builder.Environment.IsDevelopment())
 {
-    x.UsingAzureServiceBus((context,cfg) =>
-    {
-        cfg.Host(TopazResourceHelpers.GetServiceBusConnectionString());
-        cfg.ConfigureEndpoints(context);
-    });
-    
-    x.AddHostedService<Worker>();
-    x.AddConsumer<MessageConsumer>();
-});
+    var certificateFile = File.ReadAllText("topaz.crt");
+    var certificateKey = File.ReadAllText("topaz.key");
 
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    
     var container = new ContainerBuilder()
-        .WithImage("thecloudtheory/topaz-cli:v1.0.229-alpha")
+        .WithImage("thecloudtheory/topaz-cli:v1.0.270-alpha")
         .WithPortBinding(8890)
         .WithPortBinding(8899)
         .WithPortBinding(8898)
         .WithPortBinding(8897)
         .WithPortBinding(8891)
-        .WithPortBinding(8889)
-        .WithName("topaz.local.dev")
-        .WithCommand("start", "--skip-dns-registration", "--log-level", "Debug")
+        .WithHostname("topaz.local.dev")
+        .WithResourceMapping(Encoding.UTF8.GetBytes(certificateFile), "/app/topaz.crt")
+        .WithResourceMapping(Encoding.UTF8.GetBytes(certificateKey), "/app/topaz.key")
+        .WithCommand("start", "--certificate-file", "topaz.crt", "--certificate-key", "topaz.key")
         .Build();
 
     await container.StartAsync()
@@ -60,8 +47,27 @@ if (app.Environment.IsDevelopment())
         .AddServiceBusQueue(ResourceGroupIdentifier.From(resourceGroupName), ServiceBusNamespaceIdentifier.From("sbnamespace"), "sbqueue", new ServiceBusQueueData());
 }
 
-app.UseHttpsRedirection();
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingAzureServiceBus((context,cfg) =>
+    {
+        cfg.Host(TopazResourceHelpers.GetServiceBusConnectionString("sbnamespace"));
+        cfg.ConfigureEndpoints(context);
+    });
+    
+    x.AddHostedService<Worker>();
+    x.AddConsumer<MessageConsumer>();
+});
 
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"

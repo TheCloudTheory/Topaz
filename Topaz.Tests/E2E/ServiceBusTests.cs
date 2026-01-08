@@ -62,7 +62,9 @@ public class ServiceBusTests
             "--name",
             NamespaceName,
             "--resource-group",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
         await Program.Main([
@@ -72,7 +74,9 @@ public class ServiceBusTests
             "--name",
             NamespaceName,
             "--resource-group",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
         await Program.Main([
@@ -84,7 +88,9 @@ public class ServiceBusTests
             "--namespace-name",
             NamespaceName,
             "--resource-group",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
         
         await Program.Main([
@@ -96,7 +102,9 @@ public class ServiceBusTests
             "--namespace-name",
             NamespaceName,
             "--resource-group",
-            ResourceGroupName
+            ResourceGroupName,
+            "--subscription-id",
+            SubscriptionId.ToString()
         ]);
     }
 

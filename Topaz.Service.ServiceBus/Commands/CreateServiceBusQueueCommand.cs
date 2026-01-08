@@ -68,12 +68,12 @@ public class CreateServiceBusQueueCommand(ITopazLogger logger) : Command<CreateS
         
         if(string.IsNullOrEmpty(settings.SubscriptionId))
         {
-            return ValidationResult.Error("Resource group subscription ID can't be null.");
+            return ValidationResult.Error("Service Bus subscription ID can't be null.");
         }
 
         if (!Guid.TryParse(settings.SubscriptionId, out _))
         {
-            return ValidationResult.Error("Resource group subscription ID must be a valid GUID.");
+            return ValidationResult.Error("Service Bus subscription ID must be a valid GUID.");
         }
 
         return base.Validate(context, settings);

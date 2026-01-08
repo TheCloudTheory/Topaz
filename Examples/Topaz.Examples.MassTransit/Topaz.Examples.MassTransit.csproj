@@ -12,7 +12,16 @@
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.17"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
         <PackageReference Include="Testcontainers" Version="4.7.0" />
-        <PackageReference Include="TheCloudTheory.Topaz.AspNetCore.Extensions" Version="1.0.194-alpha" />
+        <PackageReference Include="TheCloudTheory.Topaz.AspNetCore.Extensions" Version="1.0.331-alpha" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="topaz.crt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="topaz.key">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>
