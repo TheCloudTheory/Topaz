@@ -39,6 +39,18 @@ public static class TopazResourceHelpers
     public static string GetServiceBusConnectionString(string serviceBusNamespaceName) => $"Endpoint=sb://{serviceBusNamespaceName}.servicebus.topaz.local.dev:8889;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
 
     /// <summary>
+    /// Gets the Service Bus connection string for MassTransit or other clients requiring TLS.
+    /// </summary>
+    /// <returns>A connection string configured to connect to Topaz on port 5671 with TLS.</returns>
+    /// <remarks>
+    /// The connection string uses:
+    /// - Port 5671 (standard AMQPS port with TLS)
+    /// - Root management shared access key for authentication
+    /// - No UseDevelopmentEmulator flag (forces TLS usage)
+    /// </remarks>
+    public static string GetServiceBusConnectionStringWithTls(string serviceBusNamespaceName) => $"Endpoint=sb://{serviceBusNamespaceName}.servicebus.topaz.local.dev:5671;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;";
+
+    /// <summary>
     /// Gets the Event Hub connection string for the local development emulator.
     /// </summary>
     /// <returns>A connection string configured to connect to Topaz on port 8889.</returns>
