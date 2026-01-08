@@ -165,7 +165,7 @@ public class EventServiceHubTests
         Assert.That(hub.Value.Data.Name, Is.EqualTo("test-eh"));
         
         // Cleanup
-        await hub.Value.DeleteAsync(WaitUntil.Completed);
+        await @namespace.Value.DeleteAsync(WaitUntil.Completed);
     }
 
     [Test]
