@@ -29,6 +29,7 @@ public static class GlobalSettings
     public const ushort DefaultEventHubPort = 8897;
     public const ushort DefaultKeyVaultPort = 8898;
     public const ushort DefaultResourceManagerPort = 8899;
+    public const ushort AdditionalResourceManagerPort = 443;
     public const string MainEmulatorDirectory = ".topaz";
 
     public static readonly string GlobalDnsEntriesFilePath = Path.Combine(MainEmulatorDirectory, "global-dns.json");

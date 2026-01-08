@@ -15,7 +15,7 @@ internal sealed class VirtualNetworkServiceEndpoint(ITopazLogger logger) : IEndp
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}",
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}"
     ];
-    public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     private readonly VirtualNetworkControlPlane _controlPlane = new(new VirtualNetworkResourceProvider(logger), logger);
 

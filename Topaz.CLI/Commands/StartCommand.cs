@@ -30,7 +30,7 @@ public sealed class StartCommand(ITopazLogger logger) : AsyncCommand<StartComman
         if (settings.EnableLoggingToFile)
         {
             logger.EnableLoggingToFile(settings.RefreshLog);
-            Console.WriteLine("Enabled logging to file.");
+            logger.LogInformation("Enabled logging to file.");
         }
         
         var host = new Topaz.Host.Host(new GlobalOptions
@@ -43,9 +43,16 @@ public sealed class StartCommand(ITopazLogger logger) : AsyncCommand<StartComman
             EmulatorIpAddress = settings.EmulatorIpAddress
         }, logger);
 
-        await host.StartAsync(Program.CancellationToken);
-
-        return 0;
+        try
+        {
+            await host.StartAsync(Program.CancellationToken);
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex);
+            return 1;
+        }
     }
 
     [UsedImplicitly]

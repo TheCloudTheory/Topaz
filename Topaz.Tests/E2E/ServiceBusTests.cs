@@ -13,6 +13,7 @@ public class ServiceBusTests
     
     private static readonly Guid SubscriptionId = Guid.Parse("922E7F4C-A0BB-4D49-84B8-2530EA3033D2");
     private static readonly string ConnectionString = TopazResourceHelpers.GetServiceBusConnectionString(NamespaceName);
+    private static readonly string ConnectionStringTls = TopazResourceHelpers.GetServiceBusConnectionStringWithTls(NamespaceName);
     
     [SetUp]
     public async Task SetUp()
@@ -111,8 +112,19 @@ public class ServiceBusTests
     [Test]
     public async Task ServiceBusTests_WhenMessageIsSentOntoQueue_ItShouldBeReceived()
     {
+        await RunTest(ConnectionString);
+    }
+    
+    [Test]
+    public async Task ServiceBusTests_WhenMessageIsSentOntoQueueUsingTls_ItShouldBeReceived()
+    {
+        await RunTest(ConnectionStringTls);
+    }
+
+    private static async Task RunTest(string connectionString)
+    {
         // Arrange
-        var client = new ServiceBusClient(ConnectionString);
+        var client = new ServiceBusClient(connectionString);
         var sender = client.CreateSender(QueueName);
         var message = new ServiceBusMessage("test message");
         var processorOptions = new ServiceBusProcessorOptions()

@@ -15,7 +15,7 @@ namespace Topaz.Service.ResourceGroup;
 public sealed class ResourceGroupEndpoint(ResourceGroupResourceProvider groupResourceProvider, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly ResourceGroupControlPlane _controlPlane = new(groupResourceProvider, new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
-    public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultResourceManagerPort, Protocol.Https);
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public string[] Endpoints => [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}",

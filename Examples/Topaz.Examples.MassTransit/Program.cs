@@ -8,6 +8,10 @@ using Topaz.Examples.MassTransit;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
 
+var topazContainerImage = Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE") == null ? 
+    "topaz/cli"
+    : Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE")!;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
@@ -18,9 +22,9 @@ if (builder.Environment.IsDevelopment())
     var certificateFile = File.ReadAllText("topaz.crt");
     var certificateKey = File.ReadAllText("topaz.key");
 
-    var container = new ContainerBuilder()
-        .WithImage("thecloudtheory/topaz-cli:v1.0.270-alpha")
-        .WithPortBinding(8889)
+    var container = new ContainerBuilder(topazContainerImage)
+        .WithPortBinding(5671)  // AMQPS (AMQP with TLS) - for MassTransit
+        .WithPortBinding(8889)  // Plain AMQP - for Azure SDK with UseDevelopmentEmulator=true
         .WithPortBinding(8890)
         .WithPortBinding(8899)
         .WithPortBinding(8898)
@@ -49,6 +53,11 @@ if (builder.Environment.IsDevelopment())
     
     // Give additional time for the queue to be fully registered with AMQP broker
     await Task.Delay(2000);
+    
+    // Test direct connection first
+    Console.WriteLine("=== Testing direct Azure Service Bus SDK connection ===");
+    await DirectTest.TestDirectConnection();
+    Console.WriteLine("=== Direct test completed ===\n");
 }
 
 builder.Services.AddMassTransit(x =>
@@ -57,12 +66,12 @@ builder.Services.AddMassTransit(x =>
     
     x.UsingAzureServiceBus((context, cfg) =>
     {
-        var connectionString = TopazResourceHelpers.GetServiceBusConnectionString("sbnamespace");
+        // Use TLS connection string for MassTransit (port 5671 with TLS)
+        var connectionString = TopazResourceHelpers.GetServiceBusConnectionStringWithTls("sbnamespace");
         
-        // Configure transport settings for Topaz
+        // Configure with explicit transport type
         cfg.Host(connectionString, h =>
         {
-            // Force AMQP transport (not AMQP over WebSocket)
             h.TransportType = Azure.Messaging.ServiceBus.ServiceBusTransportType.AmqpTcp;
         });
         
@@ -79,16 +88,18 @@ builder.Services.AddMassTransit(x =>
             e.PrefetchCount = 1;
         });
     });
-    
-    x.AddHostedService<Worker>();
 });
 
-// Ensure MassTransit doesn't start bus connections until everything is ready  
+// Add worker as regular hosted service (not via MassTransit)
+builder.Services.AddHostedService<Worker>();
+
+// Configure MassTransit to not wait for bus start - avoids validation errors
 builder.Services.AddOptions<MassTransitHostOptions>()
     .Configure(options =>
     {
-        options.WaitUntilStarted = true;
-        options.StartTimeout = TimeSpan.FromSeconds(30);
+        options.WaitUntilStarted = false;  // Don't block on startup validation
+        options.StartTimeout = TimeSpan.FromSeconds(10);
+        options.StopTimeout = TimeSpan.FromSeconds(10);
     });
 
 var app = builder.Build();

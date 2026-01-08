@@ -25,7 +25,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
     private readonly BlobServiceDataPlane _dataPlane =
         new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
-    public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultBlobStoragePort, Protocol.Http);
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultBlobStoragePort], Protocol.Http);
 
     public string[] Endpoints =>
     [

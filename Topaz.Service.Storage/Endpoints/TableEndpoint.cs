@@ -27,7 +27,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
     private readonly ResourceProvider _resourceProvider = new(logger);
     private readonly TableStorageSecurityProvider _securityProvider = new(logger); 
 
-    public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultTableStoragePort, Protocol.Http);
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);
 
     public string[] Endpoints => [
         "GET /Tables",

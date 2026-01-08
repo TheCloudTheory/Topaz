@@ -29,7 +29,7 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
 
         IEndpointDefinition? endpoint = null;
         var pathParts = path.Split('/');
-        foreach (var httpEndpoint in httpEndpoints.Where(e => e.PortAndProtocol.Port == port))
+        foreach (var httpEndpoint in httpEndpoints.Where(e => e.PortsAndProtocol.Ports.Any(p => p == port)))
         {
             foreach (var endpointUrl in httpEndpoint.Endpoints)
             {

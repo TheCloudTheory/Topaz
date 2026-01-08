@@ -7,7 +7,7 @@ namespace Topaz.Service.ServiceBus.Endpoints;
 public sealed class ServiceBusEndpoint : IEndpointDefinition
 {
     public string[] Endpoints => [];
-    public (int Port, Protocol Protocol) PortAndProtocol => (GlobalSettings.DefaultServiceBusAmqpPort, Protocol.Amqp);
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultServiceBusAmqpPort], Protocol.Amqp);
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
         QueryString query,

@@ -12,7 +12,7 @@ internal sealed class TenantsEndpoint : IEndpointDefinition
         "GET /tenants"
     ];
     
-    public (int Port, Protocol Protocol) PortAndProtocol => (8899, Protocol.Https);
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([8899], Protocol.Https);
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
         QueryString query, GlobalOptions options, Guid correlationId)
     {
