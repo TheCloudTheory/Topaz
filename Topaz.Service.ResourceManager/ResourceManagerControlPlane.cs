@@ -36,11 +36,12 @@ internal sealed class ResourceManagerControlPlane(
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, deploymentResource);
 
+        var subscriptionMetadata = new SubscriptionMetadata(subscriptionIdentifier);
         var resourceGroupMetadata =
             new ResourceGroupMetadata(subscriptionIdentifier, resourceGroupIdentifier, location);
         var metadata = new DeploymentMetadata
         {
-            { DeploymentMetadata.SubscriptionKey, subscriptionIdentifier.Value },
+            { DeploymentMetadata.SubscriptionKey, JToken.Parse(subscriptionMetadata.ToString()) },
             { DeploymentMetadata.ResourceGroupKey,  JToken.Parse(resourceGroupMetadata.ToString())}
         };
 

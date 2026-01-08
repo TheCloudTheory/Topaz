@@ -29,7 +29,7 @@ internal sealed class EventHubNamespaceResource
     
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.EventHub/namespaces";
+    public override string Type { get; init; } = "Microsoft.EventHub/namespaces";
     public override string Location { get; set; }
     public override IDictionary<string, string> Tags { get; set; } = new Dictionary<string, string>();
     public override ResourceSku? Sku { get; init; }

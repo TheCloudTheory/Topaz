@@ -6,7 +6,7 @@ public sealed class GenericResource : ArmResource<object>
 {
     public override string Id { get; init; } = null!;
     public override string Name { get; init; } = null!;
-    public override string Type => null!;
+    public override string Type { get; init; } = null!;
     public override string Location { get; set; } = null!;
     public override IDictionary<string, string> Tags { get; set; } = null!;
     public override ResourceSku? Sku { get; init; }

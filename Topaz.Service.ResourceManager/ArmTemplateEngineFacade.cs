@@ -32,8 +32,7 @@ internal sealed class ArmTemplateEngineFacade
         TemplateEngine.ProcessTemplateLanguageExpressions("topaz", subscriptionIdentifier.Value.ToString(),
             resourceGroupIdentifier.Value, template, "", inputParameters!,
             metadataInsensitive,
-            new ReadOnlyDictionary<string, IReadOnlyDictionary<string, DeploymentExtensionConfigItem>>(
-                new Dictionary<string, IReadOnlyDictionary<string, DeploymentExtensionConfigItem>>()),
+            TemplateFunctionProviders.GetProviders(),
             new TemplateMetricsRecorder(), InsensitiveDictionary<JToken>.Empty);
     }
 
