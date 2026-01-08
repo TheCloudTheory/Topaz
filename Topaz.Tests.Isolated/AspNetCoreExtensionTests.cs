@@ -18,6 +18,10 @@ namespace Topaz.Tests.Isolated;
 
 public class AspNetCoreExtensionTests
 {
+    private static readonly string TopazContainerImage = Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE") == null ? 
+        "topaz/cli"
+        : Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE")!;
+    
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
     private static readonly string CertificateFile = File.ReadAllText("topaz.crt");
     private static readonly string CertificateKey = File.ReadAllText("topaz.key");
@@ -35,7 +39,7 @@ public class AspNetCoreExtensionTests
     public async Task OneTimeSetUp()
     {
         _container = new ContainerBuilder()
-            .WithImage("thecloudtheory/topaz-cli:v1.0.270-alpha")
+            .WithImage(TopazContainerImage)
             .WithPortBinding(8890)
             .WithPortBinding(8899)
             .WithPortBinding(8898)
