@@ -121,6 +121,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             
             // TODO: Support other authentication mechanism besides CBS
             listener.Listeners[0].SASL.EnableMechanism(new Symbol("MSSBCBS"), new TopazSaslProfile(new Symbol("MSSBCBS")));
+            listener.Listeners[0].SASL.EnableAnonymousMechanism = true;
             listener.Listeners[0].AMQP.MaxFrameSize = 262144;
             
             listener.RegisterRequestProcessor("$cbs", new CbsProcessor());

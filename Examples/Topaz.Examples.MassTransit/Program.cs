@@ -20,6 +20,7 @@ if (builder.Environment.IsDevelopment())
 
     var container = new ContainerBuilder()
         .WithImage("thecloudtheory/topaz-cli:v1.0.270-alpha")
+        .WithPortBinding(8889)
         .WithPortBinding(8890)
         .WithPortBinding(8899)
         .WithPortBinding(8898)
@@ -28,7 +29,7 @@ if (builder.Environment.IsDevelopment())
         .WithHostname("topaz.local.dev")
         .WithResourceMapping(Encoding.UTF8.GetBytes(certificateFile), "/app/topaz.crt")
         .WithResourceMapping(Encoding.UTF8.GetBytes(certificateKey), "/app/topaz.key")
-        .WithCommand("start", "--certificate-file", "topaz.crt", "--certificate-key", "topaz.key")
+        .WithCommand("start", "--certificate-file", "topaz.crt", "--certificate-key", "topaz.key", "--log-level", "Debug")
         .Build();
 
     await container.StartAsync()
@@ -45,19 +46,50 @@ if (builder.Environment.IsDevelopment())
         .AddServiceBusNamespace(ResourceGroupIdentifier.From(resourceGroupName), ServiceBusNamespaceIdentifier.From("sbnamespace"),
             new ServiceBusNamespaceData(AzureLocation.WestEurope))
         .AddServiceBusQueue(ResourceGroupIdentifier.From(resourceGroupName), ServiceBusNamespaceIdentifier.From("sbnamespace"), "sbqueue", new ServiceBusQueueData());
+    
+    // Give additional time for the queue to be fully registered with AMQP broker
+    await Task.Delay(2000);
 }
 
 builder.Services.AddMassTransit(x =>
 {
-    x.UsingAzureServiceBus((context,cfg) =>
+    x.AddConsumer<MessageConsumer>();
+    
+    x.UsingAzureServiceBus((context, cfg) =>
     {
-        cfg.Host(TopazResourceHelpers.GetServiceBusConnectionString("sbnamespace"));
-        cfg.ConfigureEndpoints(context);
+        var connectionString = TopazResourceHelpers.GetServiceBusConnectionString("sbnamespace");
+        
+        // Configure transport settings for Topaz
+        cfg.Host(connectionString, h =>
+        {
+            // Force AMQP transport (not AMQP over WebSocket)
+            h.TransportType = Azure.Messaging.ServiceBus.ServiceBusTransportType.AmqpTcp;
+        });
+        
+        // Add retry configuration for connection issues
+        cfg.UseMessageRetry(r => r.Immediate(5));
+        
+        // Manually configure the receive endpoint to use the pre-created queue
+        cfg.ReceiveEndpoint("sbqueue", e =>
+        {
+            // Configure consumer
+            e.ConfigureConsumer<MessageConsumer>(context);
+            
+            // Add some buffer for connection establishment  
+            e.PrefetchCount = 1;
+        });
     });
     
     x.AddHostedService<Worker>();
-    x.AddConsumer<MessageConsumer>();
 });
+
+// Ensure MassTransit doesn't start bus connections until everything is ready  
+builder.Services.AddOptions<MassTransitHostOptions>()
+    .Configure(options =>
+    {
+        options.WaitUntilStarted = true;
+        options.StartTimeout = TimeSpan.FromSeconds(30);
+    });
 
 var app = builder.Build();
 
