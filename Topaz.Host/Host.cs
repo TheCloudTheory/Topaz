@@ -134,7 +134,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
     {
         var scheme = useTls ? "amqps" : "amqp";
         // Use port+1 for TLS (e.g., 8889 for plain, 5671 for TLS)
-        var port = useTls ? 5671 : endpoint.PortsAndProtocol.Ports[0];
+        var port = useTls ? GlobalSettings.AmqpTlsConnectionPort : endpoint.PortsAndProtocol.Ports[0];
         var address = new Address($"{scheme}://{_topazIpAddress}:{port}");
         var listener = new ContainerHost(address);
         
@@ -231,6 +231,12 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                                 if (usedPorts.Contains(port))
                                 {
                                     logger.LogDebug($"Using port {port} will be skipped as it's already registered.");
+                                    continue;
+                                }
+
+                                if (!IsRunningInsideContainer() && port == GlobalSettings.AdditionalResourceManagerPort)
+                                {
+                                    logger.LogWarning("Port 443 used by HTTPS endpoint will be skipped as Topaz isn't running inside a container.");
                                     continue;
                                 }
                             

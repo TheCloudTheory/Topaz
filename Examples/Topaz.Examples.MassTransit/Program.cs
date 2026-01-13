@@ -23,6 +23,7 @@ if (builder.Environment.IsDevelopment())
     var certificateKey = File.ReadAllText("topaz.key");
 
     var container = new ContainerBuilder(topazContainerImage)
+        .WithPortBinding(443)
         .WithPortBinding(5671)  // AMQPS (AMQP with TLS) - for MassTransit
         .WithPortBinding(8889)  // Plain AMQP - for Azure SDK with UseDevelopmentEmulator=true
         .WithPortBinding(8890)
