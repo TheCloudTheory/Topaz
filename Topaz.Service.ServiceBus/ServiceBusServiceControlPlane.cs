@@ -10,6 +10,13 @@ namespace Topaz.Service.ServiceBus;
 
 internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider provider, ITopazLogger logger) : IControlPlane
 {
+    private const string ServiceBusQueueNotFoundCode = "ServiceBusQueueNotFound";
+    private const string ServiceBusQueueNotFoundMessageTemplate =
+        "Service Bus queue '{0}' could not be found";
+    private const string ServiceBusTopicNotFoundCode = "ServiceBusTopicNotFound";
+    private const string ServiceBusTopicNotFoundMessageTemplate =
+        "Service Bus topic '{0}' could not be found";
+    
     public static ServiceBusServiceControlPlane New(ITopazLogger logger) => new(new ServiceBusResourceProvider(logger), logger);
     
     public ControlPlaneOperationResult<ServiceBusNamespaceResource> CreateOrUpdateNamespace(
@@ -98,12 +105,14 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
         return OperationResult.Deleted;
     }
 
-    public (OperationResult result, ServiceBusQueueResource? resource) GetQueue(SubscriptionIdentifier subscriptionIdentifier,
+    public ControlPlaneOperationResult<ServiceBusQueueResource> GetQueue(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier @namespace, string queueName)
     {
         var existingQueue = provider.GetSubresourceAs<ServiceBusQueueResource>(subscriptionIdentifier,
             resourceGroupIdentifier, queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
-        return existingQueue == null ? (OperationResult.NotFound, null) : (OperationResult.Success, existingQueue);
+        return existingQueue == null
+            ? new ControlPlaneOperationResult<ServiceBusQueueResource>(OperationResult.NotFound, null, ServiceBusQueueNotFoundMessageTemplate, ServiceBusQueueNotFoundCode)
+            : new ControlPlaneOperationResult<ServiceBusQueueResource>(OperationResult.Success, existingQueue, null, null);
     }
 
     public OperationResult Deploy(GenericResource resource)
@@ -143,5 +152,35 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
             CreateOrUpdateServiceBusNamespaceRequest.From(resource));
 
         return result.Result;
+    }
+
+    public ControlPlaneOperationResult<ServiceBusTopicResource> GetTopic(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName)
+    {
+        var existingQueue = provider.GetSubresourceAs<ServiceBusTopicResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, topicName, namespaceIdentifier.Value, nameof(Subresource.Queues).ToLowerInvariant());
+        return existingQueue == null
+            ? new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.NotFound, null, ServiceBusTopicNotFoundMessageTemplate, ServiceBusTopicNotFoundCode)
+            : new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Success, existingQueue, null, null);
+    }
+
+    public ControlPlaneOperationResult<ServiceBusTopicResource> CreateOrUpdateTopic(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier,
+        string topicName, CreateOrUpdateServiceBusTopicRequest request)
+    {
+        var existingTopic = provider.GetSubresourceAs<ServiceBusTopicResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, topicName, namespaceIdentifier.Value, nameof(Subresource.Queues).ToLowerInvariant());
+        var properties = ServiceBusTopicResourceProperties.From(request);
+        if (existingTopic == null)
+        {
+            var resource = new ServiceBusTopicResource(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, topicName, properties);
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, topicName,
+                namespaceIdentifier.Value, nameof(Subresource.Queues).ToLowerInvariant(), resource);
+            
+            return new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Created, resource, null, null);
+        }
+        
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier.Value, properties);
+        
+        return new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Updated, existingTopic, null, null);
     }
 }

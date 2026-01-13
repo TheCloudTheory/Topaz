@@ -17,7 +17,9 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}",
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}",
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/queues/{queueName}",
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/queues/{queueName}"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/queues/{queueName}",
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/topics/{topicName}",
+        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/topics/{topicName}"
     ];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => (
@@ -39,21 +41,40 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
             var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
             var resourceGroupIdentifier = ResourceGroupIdentifier.From(path.ExtractValueFromPath(4));
             var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(path.ExtractValueFromPath(8));
-            var queueName = path.ExtractValueFromPath(10);
+            var queueOrTopicName = path.ExtractValueFromPath(10);
+            var isQueueRequest = path.Contains("/queues");
 
-            if (!string.IsNullOrWhiteSpace(queueName))
+            if (!string.IsNullOrWhiteSpace(queueOrTopicName))
             {
-                switch (method)
+                if (isQueueRequest)
                 {
-                    case "PUT":
-                        HandleCreateOrUpdateQueue(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueName, input);
-                        break;
-                    case "GET":
-                        HandleGetQueue(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueName);
-                        break;
-                    default:
-                        response.StatusCode = HttpStatusCode.NotFound;
-                        break;
+                    switch (method)
+                    {
+                        case "PUT":
+                            HandleCreateOrUpdateQueueRequest(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueOrTopicName, input);
+                            break;
+                        case "GET":
+                            HandleGetQueueRequest(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueOrTopicName);
+                            break;
+                        default:
+                            response.StatusCode = HttpStatusCode.NotFound;
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (method)
+                    {
+                        case "PUT":
+                            HandleCreateOrUpdateTopicRequest(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueOrTopicName, input);
+                            break;
+                        case "GET":
+                            HandleGetTopicRequest(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueOrTopicName);
+                            break;
+                        default:
+                            response.StatusCode = HttpStatusCode.NotFound;
+                            break;
+                    }
                 }
             }
             else
@@ -82,21 +103,65 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
         return response;
     }
 
-    private void HandleGetQueue(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier, string queueName)
+    private void HandleCreateOrUpdateTopicRequest(HttpResponseMessage response,
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, Stream input)
     {
-        var operation = _controlPlane.GetQueue(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueName);
-        if (operation.result == OperationResult.NotFound || operation.resource == null)
+        using var reader = new StreamReader(input);
+
+        var content = reader.ReadToEnd();
+        var request =
+            JsonSerializer.Deserialize<CreateOrUpdateServiceBusTopicRequest>(content, GlobalSettings.JsonOptions);
+
+        if (request == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        var operation = _controlPlane.CreateOrUpdateTopic(subscriptionIdentifier, resourceGroupIdentifier, @namespaceIdentifier, topicName, request);
+        if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated ||
+            operation.Resource == null)
+        {
+            response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode,
+                $"Unknown error when performing CreateOrUpdate operation.");
+            return;
+        }
+
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(operation.Resource.ToString());
+    }
+
+    private void HandleGetTopicRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier,
+        string topicName)
+    {
+        var operation = _controlPlane.GetTopic(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, topicName);
+        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
         
-        response.Content = new StringContent(operation.resource.ToString());
+        response.Content = new StringContent(operation.Resource.ToString());
         response.StatusCode = HttpStatusCode.OK;
     }
 
-    private void HandleCreateOrUpdateQueue(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
+    private void HandleGetQueueRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier, string queueName)
+    {
+        var operation = _controlPlane.GetQueue(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueName);
+        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        response.Content = new StringContent(operation.Resource.ToString());
+        response.StatusCode = HttpStatusCode.OK;
+    }
+
+    private void HandleCreateOrUpdateQueueRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier,
         string queueName, Stream input)
     {

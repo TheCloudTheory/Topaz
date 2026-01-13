@@ -239,6 +239,12 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                                     logger.LogWarning("Port 443 used by HTTPS endpoint will be skipped as Topaz isn't running inside a container.");
                                     continue;
                                 }
+                                
+                                if (!IsRunningInsideContainer() && port == GlobalSettings.AmqpTlsConnectionPort)
+                                {
+                                    logger.LogWarning($"Port {GlobalSettings.AmqpTlsConnectionPort} used by HTTPS endpoint will be skipped as Topaz isn't running inside a container.");
+                                    continue;
+                                }
                             
                                 hostOptions.Listen(IPAddress.Parse(_topazIpAddress), port, listenOptions =>
                                 {

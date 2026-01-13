@@ -21,7 +21,6 @@ internal sealed class KeyVaultControlPlane(
     private const string KeyVaultNotFoundCode = "KeyVaultNotFound";
     private const string KeyVaultNotFoundMessageTemplate =
         "Key Vault '{0}' could not be found";
-
     private const string InvalidVaultNameMessageTemplate =
         "The vault name '{0}' is invalid. A vault's name must be between 3-24 alphanumeric characters. The name must begin with a letter, end with a letter or digit, and not contain consecutive hyphens.";
 
