@@ -218,4 +218,26 @@ public static class TopazConfigurationExtensions
         
         return concrete;
     }
+    
+    /// <summary>
+    /// Creates or updates an Azure Service Bus topic within the specified Service Bus namespace.
+    /// </summary>
+    /// <param name="builder">The task containing the TopazEnvironmentBuilder instance.</param>
+    /// <param name="resourceGroupIdentifier">The resource group containing the Service Bus namespace.</param>
+    /// <param name="namespaceIdentifier">The Service Bus namespace where the topic will be created.</param>
+    /// <param name="topicName">The name of the Service Bus topic to create or update.</param>
+    /// <param name="data">The Service Bus topic configuration data.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the updated TopazEnvironmentBuilder.</returns>
+    public static async Task<TopazEnvironmentBuilder> AddServiceBusTopic(this Task<TopazEnvironmentBuilder> builder,
+        ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, ServiceBusTopicData data)
+    {
+        var concrete = await builder;
+        var subscription = await concrete.ArmClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupIdentifier.Value);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaceAsync(namespaceIdentifier.Value);
+
+        _ = await @namespace.Value.GetServiceBusTopics().CreateOrUpdateAsync(WaitUntil.Completed, topicName, data);
+        
+        return concrete;
+    }
 }

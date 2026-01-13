@@ -32,6 +32,7 @@ public class AspNetCoreExtensionTests
     private const string KeyVaultName = "kvtesttopaz";
     private const string ServiceBusNamespaceName = "sb-test";
     private const string ServiceBusQueueName = "sb-queue-test";
+    private const string ServiceBusTopicName = "sb-topic-test";
 
     private IContainer? _container;
 
@@ -156,5 +157,34 @@ public class AspNetCoreExtensionTests
         Assert.That(queue, Is.Not.Null);
         Assert.That(queue.Value, Is.Not.Null);
         Assert.That(queue.Value.Data.Name, Is.EqualTo(ServiceBusQueueName));
+    }
+    
+    [Test]
+    public async Task WhenServiceBusTopicIsCreated_ItMustBeAvailable()
+    {
+        // Arrange
+        var builder = new ConfigurationBuilder();
+        var credentials = new AzureLocalCredential();
+        var subscriptionId = Guid.NewGuid();
+        const string namespaceName = "sb-test3";
+        
+        // Act
+        await builder.AddTopaz(subscriptionId)
+            .AddSubscription(subscriptionId, SubscriptionName)
+            .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope)
+            .AddServiceBusNamespace(ResourceGroupIdentifier.From(ResourceGroupName), ServiceBusNamespaceIdentifier.From(namespaceName),
+                new ServiceBusNamespaceData(AzureLocation.WestEurope))
+            .AddServiceBusTopic(ResourceGroupIdentifier.From(ResourceGroupName), ServiceBusNamespaceIdentifier.From(namespaceName), ServiceBusTopicName, new ServiceBusTopicData());
+        
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaceAsync(namespaceName);
+        var topic = await @namespace.Value.GetServiceBusTopicAsync(ServiceBusTopicName);
+
+        // Assert
+        Assert.That(topic, Is.Not.Null);
+        Assert.That(topic.Value, Is.Not.Null);
+        Assert.That(topic.Value.Data.Name, Is.EqualTo(ServiceBusTopicName));
     }
 }
