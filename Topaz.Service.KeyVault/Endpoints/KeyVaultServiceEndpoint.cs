@@ -9,6 +9,7 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
 using Topaz.Service.Subscription.Models.Responses;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.KeyVault.Endpoints;
 

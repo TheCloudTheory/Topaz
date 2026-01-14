@@ -1,4 +1,5 @@
 using Azure.Core;
+using Topaz.Dns;
 using Topaz.ResourceManager;
 using Topaz.Service.ServiceBus.Models;
 using Topaz.Service.ServiceBus.Models.Requests;
@@ -182,5 +183,15 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier.Value, properties);
         
         return new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Updated, existingTopic, null, null);
+    }
+
+    public static (OperationResult result, SubscriptionIdentifier? subscriptionIdentifier, ResourceGroupIdentifier?
+        resourceGroupIdentifier) GetIdentifiersForParentResource(ServiceBusNamespaceIdentifier namespaceIdentifier)
+    {
+        var dnsEntry = GlobalDnsEntries.GetEntry(ServiceBusService.UniqueName, namespaceIdentifier.Value);
+        return dnsEntry == null
+            ? (OperationResult.NotFound, null, null)
+            : (OperationResult.Success, SubscriptionIdentifier.From(dnsEntry.Value.subscription),
+                ResourceGroupIdentifier.From(dnsEntry.Value.resourceGroup));
     }
 }

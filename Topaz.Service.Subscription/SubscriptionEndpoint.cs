@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription.Models.Requests;
 using Topaz.Service.Subscription.Models.Responses;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Subscription;
 

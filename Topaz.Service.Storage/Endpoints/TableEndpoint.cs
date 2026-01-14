@@ -17,6 +17,7 @@ using Topaz.Service.Storage.Security;
 using Topaz.Service.Storage.Serialization;
 using Topaz.Service.Storage.Services;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Storage.Endpoints;
 

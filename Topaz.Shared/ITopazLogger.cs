@@ -5,6 +5,8 @@ public interface ITopazLogger
     LogLevel LogLevel { get; }
     
     void LogInformation(string message, Guid correlationId = default);
+    
+    [Obsolete("Use LogDebug(string className, string methodName, string template, Guid correlationId = default, params object[] parameters) instead.")]
     void LogDebug(string message, Guid correlationId = default);
     void LogDebug(string methodName, string message, Guid correlationId);
     void LogDebug(string className, string methodName, Guid correlationId = default, params object[] parameters);

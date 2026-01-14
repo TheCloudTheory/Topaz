@@ -7,6 +7,7 @@ using Topaz.Service.KeyVault.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.KeyVault.Endpoints;
 

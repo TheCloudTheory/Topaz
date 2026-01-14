@@ -1,7 +1,7 @@
 using System.Web;
 using Microsoft.AspNetCore.Http;
 
-namespace Topaz.Shared;
+namespace Topaz.Shared.Extensions;
 
 public static class QueryStringExtensions
 {

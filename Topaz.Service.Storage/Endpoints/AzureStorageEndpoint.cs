@@ -6,6 +6,7 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models.Requests;
 using Topaz.Service.Storage.Models.Responses;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Storage.Endpoints;
 

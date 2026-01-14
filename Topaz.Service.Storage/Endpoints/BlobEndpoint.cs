@@ -13,6 +13,7 @@ using Topaz.Service.Storage.Serialization;
 using Topaz.Service.Storage.Services;
 using Topaz.Service.Storage.Utils;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 using BlobProperties = Topaz.Service.Storage.Models.BlobProperties;
 
 namespace Topaz.Service.Storage.Endpoints;

@@ -5,10 +5,11 @@ using Topaz.Service.ServiceBus.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ServiceBus.Endpoints;
 
-public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointDefinition
+public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly ServiceBusServiceControlPlane _controlPlane = new(new ServiceBusResourceProvider(logger), logger);
     
@@ -19,7 +20,11 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/queues/{queueName}",
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/queues/{queueName}",
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/topics/{topicName}",
-        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/topics/{topicName}"
+        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/topics/{topicName}",
+        
+        // When using MassTransit, the actual endpoint used comes from the actual FQDN of the namespaces,
+        // ergo it's not leveraging the standard Azure Resource Manager endpoints to manage entities.
+        "GET /{entity}/{messageType}"
     ];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => (
@@ -32,12 +37,36 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
         QueryString query,
         GlobalOptions options, Guid correlationId)
     {
-        logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Executing {0}{1} with headers {2}.", correlationId, path, query, headers.ParseHeadersForLogs());
         
         var response = new HttpResponseMessage();
 
         try
         {
+            var isAdditionalResourceEndpoint = path.Split("/").Length == 3;
+            if (isAdditionalResourceEndpoint)
+            {
+                switch (method)
+                {
+                    case "GET":
+                        // SDK of any kind is expected to send a Host header with the following structure:
+                        // [namespace].servicebus.topaz.local.dev:[port]
+                        // so we just fetch the name of the namespace from it.
+                        var namespaceIdentifierFromHeader = headers["Host"].ToString().Split(".")[0];
+                        
+                        // Topic name comes in a form of {entity}/{messageType} when MassTransit creates the topology.
+                        var topicName = $"{path.ExtractValueFromPath(1)}/{path.ExtractValueFromPath(2)}";
+                        
+                        HandleGetTopicRequest(response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader), topicName);
+                        break;
+                    default:
+                        response.StatusCode = HttpStatusCode.NotFound;
+                        break;
+                }
+                
+                return response;
+            }
+            
             var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
             var resourceGroupIdentifier = ResourceGroupIdentifier.From(path.ExtractValueFromPath(4));
             var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(path.ExtractValueFromPath(8));
@@ -101,6 +130,18 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger)  : IEndpointD
         }
 
         return response;
+    }
+
+    private void HandleGetTopicRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName)
+    {
+        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
+        if (identifiersOperation.result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        HandleGetTopicRequest(response, identifiersOperation.subscriptionIdentifier!, identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, topicName);
     }
 
     private void HandleCreateOrUpdateTopicRequest(HttpResponseMessage response,

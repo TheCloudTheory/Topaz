@@ -1,4 +1,4 @@
-namespace Topaz.Shared;
+namespace Topaz.Shared.Extensions;
 
 public static class StringExtensions
 {
