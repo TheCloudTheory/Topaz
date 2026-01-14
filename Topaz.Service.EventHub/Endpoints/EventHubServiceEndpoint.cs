@@ -23,10 +23,8 @@ public sealed class EventHubServiceEndpoint(ITopazLogger logger) : IEndpointDefi
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
     
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
-        QueryString query, GlobalOptions options, Guid correlationId)
+        QueryString query, GlobalOptions options)
     {
-        logger.LogDebug(nameof(EventHubServiceEndpoint), nameof(GetResponse), "Handling `[{0}]{1}`", correlationId, method, path);
-
         var response = new HttpResponseMessage();
 
         try

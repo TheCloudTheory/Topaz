@@ -24,10 +24,8 @@ public sealed class SubscriptionEndpoint(SubscriptionResourceProvider provider, 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
-        QueryString query, GlobalOptions options, Guid correlationId)
+        QueryString query, GlobalOptions options)
     {
-        logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
-
         var response = new HttpResponseMessage();
 
         try

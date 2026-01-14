@@ -1,4 +1,4 @@
-namespace Topaz.Service.Shared;
+namespace Topaz.Shared;
 
 public sealed class CorrelationIdFactory
 {
@@ -9,5 +9,10 @@ public sealed class CorrelationIdFactory
         _correlationId ??= Guid.NewGuid();
 
         return _correlationId.Value;
+    }
+
+    public void GenerateNew()
+    {
+        _correlationId = Guid.NewGuid();
     }
 }

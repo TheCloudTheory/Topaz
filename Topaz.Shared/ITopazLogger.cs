@@ -4,16 +4,17 @@ public interface ITopazLogger
 {
     LogLevel LogLevel { get; }
     
-    void LogInformation(string message, Guid correlationId = default);
+    void LogInformation(string message);
     
-    [Obsolete("Use LogDebug(string className, string methodName, string template, Guid correlationId = default, params object[] parameters) instead.")]
-    void LogDebug(string message, Guid correlationId = default);
-    void LogDebug(string methodName, string message, Guid correlationId);
-    void LogDebug(string className, string methodName, Guid correlationId = default, params object[] parameters);
-    void LogDebug(string className, string methodName, string template, Guid correlationId = default, params object[] parameters);
-    void LogError(Exception ex, Guid correlationId = default);
-    void LogError(string message, Guid correlationId = default);
-    void LogWarning(string message, Guid correlationId = default);
+    [Obsolete("Use LogDebug(string className, string methodName, string template, params object[] parameters) instead.")]
+    void LogDebug(string message);
+    void LogDebug(string methodName, string message);
+    void LogDebug(string className, string methodName, params object[] parameters);
+    void LogDebug(string className, string methodName, string template, params object[] parameters);
+    void LogError(Exception ex);
+    void LogError(string message);
+    void LogWarning(string message);
     void SetLoggingLevel(LogLevel level);
     void EnableLoggingToFile(bool refreshLog);
+    void ConfigureIdFactory(CorrelationIdFactory idFactory); 
 }

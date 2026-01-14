@@ -14,11 +14,11 @@ internal sealed class TenantsEndpoint : IEndpointDefinition
     
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([8899], Protocol.Https);
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
-        QueryString query, GlobalOptions options, Guid correlationId)
+        QueryString query, GlobalOptions options)
     {
         var response = new HttpResponseMessage();
 
-        if (options.TenantId.HasValue == false)
+        if (!options.TenantId.HasValue)
         {
             response.StatusCode = HttpStatusCode.BadRequest;
             return response;

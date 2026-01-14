@@ -26,10 +26,8 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
     ];
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
-        QueryString query, GlobalOptions options, Guid correlationId)
+        QueryString query, GlobalOptions options)
     {
-        logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
-
         var response = new HttpResponseMessage();
 
         try

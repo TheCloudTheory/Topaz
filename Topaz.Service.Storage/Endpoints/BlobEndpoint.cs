@@ -37,15 +37,10 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         "HEAD /{containerName}/...",
         "DELETE /{containerName}/...",
     ];
-    
-    private Guid _correlationId;
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
-        QueryString query, GlobalOptions options, Guid correlationId)
+        QueryString query, GlobalOptions options)
     {
-        _correlationId = correlationId;
-        logger.LogDebug(nameof(GetResponse), $"{path}{query}", correlationId);
-
         var response = new HttpResponseMessage();
 
         if (!TryGetStorageAccount(headers, out var storageAccount))
@@ -61,7 +56,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         {
             var containerName = GetContainerName(path);
 
-            logger.LogDebug(nameof(GetResponse), $"Found container: {containerName}", correlationId);
+            logger.LogDebug(nameof(GetResponse), $"Found container: {containerName}");
 
             switch (method)
             {
@@ -134,14 +129,14 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
     private void HandleSetBlobMetadataRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName,
         IHeaderDictionary headers, HttpResponseMessage response)
     {
-        logger.LogDebug(nameof(HandleSetBlobMetadataRequest), $"Handling setting blob metadata for {blobPath}.", _correlationId);
+        logger.LogDebug(nameof(HandleSetBlobMetadataRequest), $"Handling setting blob metadata for {blobPath}.");
         
-        var result = _dataPlane.SetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath, headers, _correlationId);
+        var result = _dataPlane.SetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath, headers);
 
         if (result == HttpStatusCode.NotFound)
         {
             response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Blob not found", HttpStatusCode.NotFound);
-            logger.LogDebug(nameof(HandleSetBlobMetadataRequest), $"Blob {blobPath} was not found.", _correlationId);
+            logger.LogDebug(nameof(HandleSetBlobMetadataRequest), $"Blob {blobPath} was not found.");
         }
         else
         {
@@ -158,7 +153,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
     private void HandleDeleteBlobRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName,
         HttpResponseMessage response)
     {
-        logger.LogDebug(nameof(HandleDeleteBlobRequest), $"Handling deleting blob {blobName}.", _correlationId);
+        logger.LogDebug(nameof(HandleDeleteBlobRequest), $"Handling deleting blob {blobName}.");
         
         var result = _dataPlane.DeleteBlob(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath, blobName);
 
@@ -175,7 +170,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
     private void HandleGetBlobPropertiesRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName,
         HttpResponseMessage response)
     {
-        logger.LogDebug(nameof(HandleGetBlobPropertiesRequest), $"Handling blob properties for {blobPath}.", _correlationId);
+        logger.LogDebug(nameof(HandleGetBlobPropertiesRequest), $"Handling blob properties for {blobPath}.");
         
         var properties = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath, blobName);
 
@@ -197,7 +192,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
     private void HandleUploadBlobRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName, Stream input,
         HttpResponseMessage response)
     {
-        logger.LogDebug(nameof(HandleUploadBlobRequest), $"Handling blob upload for {blobPath}.", _correlationId);
+        logger.LogDebug(nameof(HandleUploadBlobRequest), $"Handling blob upload for {blobPath}.");
         
         var result = _dataPlane.PutBlob(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccountName, blobPath, blobName, input);
@@ -246,7 +241,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 
     private void HandleListBlobsRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName, HttpResponseMessage response)
     {
-        logger.LogDebug(nameof(HandleListBlobsRequest), $"Handling listing blobs for {storageAccountName}/{containerName}.", _correlationId);
+        logger.LogDebug(nameof(HandleListBlobsRequest), $"Handling listing blobs for {storageAccountName}/{containerName}.");
         
         // TODO: The request may come with additional keys in the query string, e.g.:
         // ?restype=container&comp=list&prefix=localhost/eh-test/$default/ownership/&include=Metadata  
@@ -264,7 +259,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 
     private void HandleGetContainersRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, HttpResponseMessage response)
     {
-        logger.LogDebug(nameof(HandleGetContainersRequest), $"Handling listing containers for {storageAccountName}.", _correlationId);
+        logger.LogDebug(nameof(HandleGetContainersRequest), $"Handling listing containers for {storageAccountName}.");
         
         var containers = _controlPlane.ListContainers(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
@@ -279,7 +274,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
     private void HandleCreateContainerRequest(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName,
         HttpResponseMessage response)
     {
-        logger.LogDebug(nameof(HandleCreateContainerRequest), $"Creating container: {containerName}", _correlationId);
+        logger.LogDebug(nameof(HandleCreateContainerRequest), $"Creating container: {containerName}");
         
         var code = _controlPlane.CreateContainer(subscriptionIdentifier, resourceGroupIdentifier, containerName, storageAccountName);
 
@@ -288,18 +283,18 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
 
     private string GetContainerName(string path)
     {
-        logger.LogDebug(nameof(GetContainerName), $"Looking for container name in {path}", _correlationId);
+        logger.LogDebug(nameof(GetContainerName), $"Looking for container name in {path}");
 
         var pathParts = path.Split('/');
 
-        logger.LogDebug(nameof(GetContainerName), $"Returning: {pathParts[1]}", _correlationId);
+        logger.LogDebug(nameof(GetContainerName), $"Returning: {pathParts[1]}");
 
         return pathParts[1];
     }
 
     private bool TryGetStorageAccount(IHeaderDictionary headers, out StorageAccountResource? storageAccount)
     {
-        logger.LogDebug(nameof(TryGetStorageAccount), $"Trying to get storage account.", _correlationId);
+        logger.LogDebug(nameof(TryGetStorageAccount), $"Trying to get storage account.");
 
         if (!headers.TryGetValue("Host", out var host))
         {
@@ -312,7 +307,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         var pathParts = host.ToString().Split('.');
         var accountName = pathParts[0];
         
-        logger.LogDebug(nameof(TryGetStorageAccount), $"About to check if storage account '{accountName}' exists.", _correlationId);
+        logger.LogDebug(nameof(TryGetStorageAccount), $"About to check if storage account '{accountName}' exists.");
 
         var identifiers = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, accountName!);
         if (identifiers != null)
@@ -324,7 +319,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
 
         storageAccount = null;
-        logger.LogDebug(nameof(TryGetStorageAccount), $"Storage account '{accountName}' doesn't exists.", _correlationId);
+        logger.LogDebug(nameof(TryGetStorageAccount), $"Storage account '{accountName}' doesn't exists.");
         
         return false;
     }

@@ -10,7 +10,7 @@ public sealed class EventHubEndpoint(ITopazLogger logger) : IEndpointDefinition
     public string[] Endpoints => ["/{eventHubPath}/messages"];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultEventHubPort], Protocol.Http);
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
-        QueryString query, GlobalOptions options, Guid correlationId)
+        QueryString query, GlobalOptions options)
     {
         throw new NotImplementedException();
     }

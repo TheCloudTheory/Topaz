@@ -160,25 +160,30 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     }
 
     // TODO: Setting metadata should update / append values instead of replacing them
-    public HttpStatusCode SetBlobMetadata(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, IHeaderDictionary headers, Guid correlationId)
+    public HttpStatusCode SetBlobMetadata(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath,
+        IHeaderDictionary headers)
     {
-        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(SetBlobMetadata),"Account: `{0}`, Path: {1}, Headers: {2}", correlationId, storageAccountName, blobPath, headers);
-        
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(SetBlobMetadata),
+            "Account: `{0}`, Path: {1}, Headers: {2}", storageAccountName, blobPath, headers);
+
         var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
 
         if (!File.Exists(fullPath))
         {
             return HttpStatusCode.NotFound;
         }
-        
+
         var metadataHeaders = headers.Where(h => h.Key.StartsWith("x-ms-meta")).ToDictionary(h => h.Key, h => h.Value);
         var metadata = metadataHeaders.Select(h => $"{h.Key}={h.Value}").ToArray();
-        
-        File.WriteAllLines(GetBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath), metadata);
-        
+
+        File.WriteAllLines(
+            GetBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath),
+            metadata);
+
         return HttpStatusCode.OK;
     }
-    
+
     private string GetBlobMetadataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
     {
         var containerName = GetContainerNameFromBlobPath(blobPath);

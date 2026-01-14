@@ -36,10 +36,8 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
         QueryString query,
-        GlobalOptions options, Guid correlationId)
+        GlobalOptions options)
     {
-        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "[{3}]{0}{1} with headers {2}.", correlationId, path, query, headers.ParseHeadersForLogs(), method);
-        
         var response = new HttpResponseMessage();
 
         try
@@ -47,7 +45,7 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
             var isAdditionalResourceEndpoint = path.Split("/").Length == 3;
             if (isAdditionalResourceEndpoint)
             {
-                logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Handling request via an additional resource endpoint.", correlationId);
+                logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Handling request via an additional resource endpoint.");
                 
                 // SDK of any kind is expected to send a Host header with the following structure:
                 // [namespace].servicebus.topaz.local.dev:[port]
@@ -56,15 +54,15 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
                         
                 // Topic name comes in a form of {entity}/{messageType} when MassTransit creates the topology.
                 var topicName = $"{path.ExtractValueFromPath(1)}/{path.ExtractValueFromPath(2)}";
-                logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Extracted topic name equal to `{0}`", correlationId, topicName);
+                logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Extracted topic name equal to `{0}`", topicName);
                 
                 switch (method)
                 {
                     case "GET":
-                        HandleGetTopicRequest(response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader), topicName, correlationId);
+                        HandleGetTopicRequest(response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader), topicName);
                         break;
                     case "PUT":
-                        HandleCreateOrUpdateTopicRequest(response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader), topicName, input, correlationId);
+                        HandleCreateOrUpdateTopicRequest(response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader), topicName, input);
                         break;
                     default:
                         response.StatusCode = HttpStatusCode.NotFound;
@@ -74,7 +72,7 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
                 return response;
             }
             
-            logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Handling request via an standard resource endpoint.", correlationId);
+            logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Handling request via an standard resource endpoint.");
             
             var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
             var resourceGroupIdentifier = ResourceGroupIdentifier.From(path.ExtractValueFromPath(4));
@@ -86,7 +84,7 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
             {
                 if (isQueueRequest)
                 {
-                    logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Request considered to be a queue request.", correlationId);
+                    logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Request considered to be a queue request.");
                     
                     switch (method)
                     {
@@ -103,7 +101,7 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
                 }
                 else
                 {
-                    logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Request considered to be a topic request.", correlationId);
+                    logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Request considered to be a topic request.");
                     
                     switch (method)
                     {
@@ -121,7 +119,7 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
             }
             else
             {
-                logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Request considered to be a namespace request.", correlationId);
+                logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Request considered to be a namespace request.");
                 
                 switch (method)
                 {
@@ -147,9 +145,9 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
         return response;
     }
 
-    private void HandleCreateOrUpdateTopicRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, Stream input, Guid correlationId)
+    private void HandleCreateOrUpdateTopicRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, Stream input)
     {
-        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleCreateOrUpdateTopicRequest), "Executing for {0}/{1}.", correlationId, namespaceIdentifier, topicName);
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleCreateOrUpdateTopicRequest), "Executing for {0}/{1}.", namespaceIdentifier, topicName);
         
         var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
         if (identifiersOperation.result == OperationResult.NotFound)
@@ -161,9 +159,9 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
         HandleCreateOrUpdateTopicRequest(response, identifiersOperation.subscriptionIdentifier!, identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, topicName, input);
     }
 
-    private void HandleGetTopicRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, Guid correlationId)
+    private void HandleGetTopicRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName)
     {
-        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleGetTopicRequest), "Executing for {0}/{1}.", correlationId, namespaceIdentifier, topicName);
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleGetTopicRequest), "Executing for {0}/{1}.", namespaceIdentifier, topicName);
         
         var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
         if (identifiersOperation.result == OperationResult.NotFound)

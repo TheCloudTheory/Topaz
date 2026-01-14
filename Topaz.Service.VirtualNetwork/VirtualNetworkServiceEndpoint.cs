@@ -22,10 +22,8 @@ internal sealed class VirtualNetworkServiceEndpoint(ITopazLogger logger) : IEndp
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
         QueryString query,
-        GlobalOptions options, Guid correlationId)
+        GlobalOptions options)
     {
-        logger.LogDebug($"Executing {nameof(GetResponse)}: [{method}] {path}{query}");
-        
         var response = new HttpResponseMessage();
         
         try

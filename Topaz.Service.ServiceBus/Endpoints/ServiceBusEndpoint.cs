@@ -11,7 +11,7 @@ public sealed class ServiceBusEndpoint : IEndpointDefinition
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
         QueryString query,
-        GlobalOptions options, Guid correlationId)
+        GlobalOptions options)
     {
         throw new NotImplementedException();
     }

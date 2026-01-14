@@ -15,17 +15,16 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
         var method = context.Request.Method;
         var query = context.Request.QueryString;
         var port = context.Request.Host.Port;
-        var correlationId = Guid.NewGuid();
 
         if (method == null)
         {
-            logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "Received request with no method.", correlationId);
+            logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "Received request with no method.");
 
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             return;
         }
 
-        logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}]", correlationId);
+        logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}]");
 
         IEndpointDefinition? endpoint = null;
         var pathParts = path.Split('/');
@@ -80,12 +79,13 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
             return;
         }
         
-        logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "The selected handler for an endpoint will be {0}", correlationId, endpoint.GetType().Name);
+        logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "The selected handler for an endpoint will be {0}", endpoint.GetType().Name);
+        logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "[{0}] {1}{2}", method, path, query);
 
-        var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query, options, correlationId);
+        var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query, options);
         var textResponse = await response.Content.ReadAsStringAsync();
 
-        logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}][{response.StatusCode}] {textResponse}", correlationId);
+        logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}][{response.StatusCode}] {textResponse}");
         
         context.Response.StatusCode = (int)response.StatusCode;
         

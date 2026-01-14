@@ -57,7 +57,8 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         Console.WriteLine("");
         
         GlobalDnsEntries.ConfigureLogger(logger);
-        
+
+        var idFactory = new CorrelationIdFactory();
         var services = new IServiceDefinition[] {
             new AzureStorageService(logger),
             new TableStorageService(logger),
@@ -102,7 +103,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         ExtractEndpointsForProtocols(services, httpEndpoints, [Protocol.Http, Protocol.Https]);
         ExtractEndpointsForProtocols(services, amqpEndpoints, [Protocol.Amqp]);
 
-        await CreateWebserverForHttpEndpointsAsync([.. httpEndpoints], cancellationToken);
+        await CreateWebserverForHttpEndpointsAsync([.. httpEndpoints], idFactory, cancellationToken);
         CreateAmqpListenersForAmpqEndpoints([.. amqpEndpoints]);
         
         Console.WriteLine();
@@ -197,7 +198,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         }
     }
 
-    private async Task CreateWebserverForHttpEndpointsAsync(IEndpointDefinition[] httpEndpoints, CancellationToken cancellationToken)
+    private async Task CreateWebserverForHttpEndpointsAsync(IEndpointDefinition[] httpEndpoints, CorrelationIdFactory idFactory, CancellationToken cancellationToken)
     {
         var host = new WebHostBuilder()
             .UseKestrel((_, hostOptions) =>
@@ -212,7 +213,8 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                             {
                                 if (usedPorts.Contains(port))
                                 {
-                                    logger.LogDebug($"Using port {port} will be skipped as it's already registered.");
+                                    logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),
+                                        "Using port {0} will be skipped as it's already registered.", Guid.Empty, port);
                                     continue;
                                 }
                                 
@@ -278,6 +280,9 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                 {
                     try
                     {
+                        // Generate new correlation ID, which can be fetched by any class via DI
+                        idFactory.GenerateNew();
+                        
                         await _router.MatchAndExecuteEndpoint(httpEndpoints, context).ConfigureAwait(false);
                     }
                     catch (Exception ex)

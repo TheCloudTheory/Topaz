@@ -5,50 +5,51 @@ namespace Topaz.Shared;
 public sealed class PrettyTopazLogger : ITopazLogger
 {
     private const string LogFilePath = "topaz.log";
+    private CorrelationIdFactory? _idFactory;
     private bool IsLoggingToFileEnabled { get; set; }
     public LogLevel LogLevel { get; private set; } = LogLevel.Information;
 
-    public void LogInformation(string message, Guid correlationId = default)
+    public void LogInformation(string message)
     {
-        Log(message, LogLevel.Information, correlationId);
+        Log(message, LogLevel.Information, GetCorrelationId());
     }
 
-    public void LogDebug(string message, Guid correlationId = default)
+    public void LogDebug(string message)
     {
-        Log(message, LogLevel.Debug, correlationId);
+        Log(message, LogLevel.Debug, GetCorrelationId());
     }
 
-    public void LogDebug(string methodName, string message, Guid correlationId = default)
+    public void LogDebug(string methodName, string message)
     {
-        Log($"[{methodName}]: {message}", LogLevel.Debug, correlationId);
+        Log($"[{methodName}]: {message}", LogLevel.Debug, GetCorrelationId());
     }
 
-    public void LogDebug(string className, string methodName, Guid correlationId = default, params object[] parameters)
+    public void LogDebug(string className, string methodName, params object[] parameters)
     {
         var message = $"[{className}.{methodName}]: {string.Join(", ", parameters)}";
-        LogDebug(message, correlationId);
+        LogDebug(message);
     }
 
-    public void LogDebug(string className, string methodName, string template, Guid correlationId = default,
+    public void LogDebug(string className, string methodName, string template,
         params object[] parameters)
     {
         var message = $"[{className}.{methodName}]: {string.Format(template, parameters)}";
-        LogDebug(message, correlationId);
+        LogDebug(message);
     }
 
-    public void LogError(Exception ex, Guid correlationId = default)
+    public void LogError(Exception ex)
     {
-        Log(string.Empty, LogLevel.Error, correlationId, ex);
+        Log(string.Empty, LogLevel.Error, GetCorrelationId(), ex);
     }
 
-    public void LogError(string message, Guid correlationId = default)
+    public void LogError(string message)
     {
-        Log(message, LogLevel.Error, correlationId);
+        Log(message, LogLevel.Error, GetCorrelationId());
     }
 
-    public void LogWarning(string message, Guid correlationId = default)
+    public void LogWarning(string message)
     {
-        Log(message, LogLevel.Warning, correlationId);
+        Log(message, LogLevel.Warning, GetCorrelationId());
     }
 
     public void SetLoggingLevel(LogLevel logLevel)
@@ -64,6 +65,11 @@ public sealed class PrettyTopazLogger : ITopazLogger
         {
             RefreshLogFile();
         }
+    }
+
+    public void ConfigureIdFactory(CorrelationIdFactory idFactory)
+    {
+        _idFactory = idFactory;
     }
 
     private static void RefreshLogFile()
@@ -102,5 +108,10 @@ public sealed class PrettyTopazLogger : ITopazLogger
     {
         var log = $"[{logLevel}][{timestamp}]: {exception.Message}: {exception.StackTrace}{Environment.NewLine}";
         TryWriteToFile(log);
+    }
+    
+    private Guid GetCorrelationId()
+    {
+        return _idFactory?.Get() ?? Guid.Empty;
     }
 }
