@@ -1,5 +1,4 @@
 using System.Net;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
@@ -16,16 +15,17 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
         var method = context.Request.Method;
         var query = context.Request.QueryString;
         var port = context.Request.Host.Port;
+        var correlationId = Guid.NewGuid();
 
         if (method == null)
         {
-            logger.LogDebug($"Received request with no method.");
+            logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "Received request with no method.", correlationId);
 
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             return;
         }
 
-        logger.LogInformation($"Request: [{method}][{context.Request.Host}{path}{query}]");
+        logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}]", correlationId);
 
         IEndpointDefinition? endpoint = null;
         var pathParts = path.Split('/');
@@ -80,12 +80,12 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
             return;
         }
         
-        logger.LogDebug($"The selected handler for an endpoint will be {endpoint.GetType().Name}");
+        logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "The selected handler for an endpoint will be {0}", correlationId, endpoint.GetType().Name);
 
-        var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query, options, Guid.NewGuid());
+        var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query, options, correlationId);
         var textResponse = await response.Content.ReadAsStringAsync();
 
-        logger.LogInformation($"Response: [{method}][{context.Request.Host}{path}{query}][{response.StatusCode}] {textResponse}");
+        logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}][{response.StatusCode}] {textResponse}", correlationId);
         
         context.Response.StatusCode = (int)response.StatusCode;
         
@@ -149,7 +149,7 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
     private bool MatchesRegexExpressionForEndpoint(string endpointSegment, string pathSegment)
     {
         if(string.IsNullOrEmpty(endpointSegment) || string.IsNullOrEmpty(pathSegment)) return false;
-        if(endpointSegment.StartsWith('^') == false) return false;
+        if(!endpointSegment.StartsWith('^')) return false;
 
         var matches = Regex.Match(pathSegment, endpointSegment, RegexOptions.IgnoreCase);
         return matches.Success;

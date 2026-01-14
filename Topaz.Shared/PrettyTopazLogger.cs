@@ -32,7 +32,7 @@ public sealed class PrettyTopazLogger : ITopazLogger
     public void LogDebug(string className, string methodName, string template, Guid correlationId = default,
         params object[] parameters)
     {
-        var message = string.Format(template, parameters);
+        var message = $"[{className}.{methodName}]: {string.Format(template, parameters)}";
         LogDebug(message, correlationId);
     }
 
@@ -84,9 +84,9 @@ public sealed class PrettyTopazLogger : ITopazLogger
         }
         else
         {
-            var log = $"[{logLevel}][{correlationId}][{timestamp}]: {message}";
+            var log = $"[{logLevel}][{correlationId}][{timestamp}]{message}";
             
-            AnsiConsole.WriteLine(log);
+            Console.WriteLine(log);
             TryWriteToFile(log);
         }     
     }

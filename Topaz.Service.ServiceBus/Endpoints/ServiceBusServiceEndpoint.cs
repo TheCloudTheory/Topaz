@@ -24,7 +24,8 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
         
         // When using MassTransit, the actual endpoint used comes from the actual FQDN of the namespaces,
         // ergo it's not leveraging the standard Azure Resource Manager endpoints to manage entities.
-        "GET /{entity}/{messageType}"
+        "GET /{entity}/{messageType}",
+        "PUT /{entity}/{messageType}"
     ];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => (
@@ -37,7 +38,7 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
         QueryString query,
         GlobalOptions options, Guid correlationId)
     {
-        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Executing {0}{1} with headers {2}.", correlationId, path, query, headers.ParseHeadersForLogs());
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "[{3}]{0}{1} with headers {2}.", correlationId, path, query, headers.ParseHeadersForLogs(), method);
         
         var response = new HttpResponseMessage();
 
@@ -46,18 +47,24 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
             var isAdditionalResourceEndpoint = path.Split("/").Length == 3;
             if (isAdditionalResourceEndpoint)
             {
+                logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Handling request via an additional resource endpoint.", correlationId);
+                
+                // SDK of any kind is expected to send a Host header with the following structure:
+                // [namespace].servicebus.topaz.local.dev:[port]
+                // so we just fetch the name of the namespace from it.
+                var namespaceIdentifierFromHeader = headers["Host"].ToString().Split(".")[0];
+                        
+                // Topic name comes in a form of {entity}/{messageType} when MassTransit creates the topology.
+                var topicName = $"{path.ExtractValueFromPath(1)}/{path.ExtractValueFromPath(2)}";
+                logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Extracted topic name equal to `{0}`", correlationId, topicName);
+                
                 switch (method)
                 {
                     case "GET":
-                        // SDK of any kind is expected to send a Host header with the following structure:
-                        // [namespace].servicebus.topaz.local.dev:[port]
-                        // so we just fetch the name of the namespace from it.
-                        var namespaceIdentifierFromHeader = headers["Host"].ToString().Split(".")[0];
-                        
-                        // Topic name comes in a form of {entity}/{messageType} when MassTransit creates the topology.
-                        var topicName = $"{path.ExtractValueFromPath(1)}/{path.ExtractValueFromPath(2)}";
-                        
-                        HandleGetTopicRequest(response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader), topicName);
+                        HandleGetTopicRequest(response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader), topicName, correlationId);
+                        break;
+                    case "PUT":
+                        HandleCreateOrUpdateTopicRequest(response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader), topicName, input, correlationId);
                         break;
                     default:
                         response.StatusCode = HttpStatusCode.NotFound;
@@ -66,6 +73,8 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
                 
                 return response;
             }
+            
+            logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Handling request via an standard resource endpoint.", correlationId);
             
             var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
             var resourceGroupIdentifier = ResourceGroupIdentifier.From(path.ExtractValueFromPath(4));
@@ -77,6 +86,8 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
             {
                 if (isQueueRequest)
                 {
+                    logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Request considered to be a queue request.", correlationId);
+                    
                     switch (method)
                     {
                         case "PUT":
@@ -92,6 +103,8 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
                 }
                 else
                 {
+                    logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Request considered to be a topic request.", correlationId);
+                    
                     switch (method)
                     {
                         case "PUT":
@@ -108,6 +121,8 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
             }
             else
             {
+                logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Request considered to be a namespace request.", correlationId);
+                
                 switch (method)
                 {
                     case "PUT":
@@ -132,8 +147,24 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
         return response;
     }
 
-    private void HandleGetTopicRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName)
+    private void HandleCreateOrUpdateTopicRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, Stream input, Guid correlationId)
     {
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleCreateOrUpdateTopicRequest), "Executing for {0}/{1}.", correlationId, namespaceIdentifier, topicName);
+        
+        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
+        if (identifiersOperation.result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        HandleCreateOrUpdateTopicRequest(response, identifiersOperation.subscriptionIdentifier!, identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, topicName, input);
+    }
+
+    private void HandleGetTopicRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, Guid correlationId)
+    {
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleGetTopicRequest), "Executing for {0}/{1}.", correlationId, namespaceIdentifier, topicName);
+        
         var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
         if (identifiersOperation.result == OperationResult.NotFound)
         {
