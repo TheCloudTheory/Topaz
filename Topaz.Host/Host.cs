@@ -57,7 +57,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         Console.WriteLine("");
         
         GlobalDnsEntries.ConfigureLogger(logger);
-
+        
         var idFactory = new CorrelationIdFactory();
         var services = new IServiceDefinition[] {
             new AzureStorageService(logger),
@@ -73,6 +73,8 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             new VirtualNetworkService(logger),
             new ManagedIdentityService(logger)
         };
+        
+        logger.ConfigureIdFactory(idFactory);
         
         Console.WriteLine();
         Console.WriteLine("Enabled services:");
@@ -148,7 +150,6 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             listener.Listeners[0].SSL.CheckCertificateRevocation = false;
         }
         
-        // TODO: Support other authentication mechanism besides CBS
         listener.Listeners[0].SASL.EnableMechanism(new Symbol("MSSBCBS"), new TopazSaslProfile(new Symbol("MSSBCBS")));
         listener.Listeners[0].SASL.EnableAnonymousMechanism = true;
         listener.Listeners[0].AMQP.MaxFrameSize = 262144;
@@ -161,7 +162,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         if (logger.LogLevel == LogLevel.Debug)
         {
             Trace.TraceLevel = TraceLevel.Frame;
-            Trace.TraceListener = (l, f, a) => logger.LogDebug($"[{address.Scheme}://{address.Host}:{address.Port}]: {string.Format(f, a)}");
+            Trace.TraceListener = (l, f, a) => logger.LogDebug(nameof(Host), nameof(CreateAmqpListener), $"[{address.Scheme}://{address.Host}:{address.Port}]: {string.Format(f, a)}");
         }
 
         Threads.Add(new Thread(() =>
@@ -184,15 +185,15 @@ public class Host(GlobalOptions options, ITopazLogger logger)
     {
         foreach (var service in services)
         {
-            logger.LogDebug($"Processing {service.Name} service...");
+            logger.LogDebug(nameof(Host), nameof(ExtractEndpointsForProtocols), $"Processing {service.Name} service...");
 
             foreach (var endpoint in service.Endpoints)
             {
-                logger.LogDebug($"Processing {service.Name} endpoints...");
+                logger.LogDebug(nameof(Host), nameof(ExtractEndpointsForProtocols),$"Processing {service.Name} endpoints...");
 
                 if (!protocols.Contains(endpoint.PortsAndProtocol.Protocol)) continue;
                 
-                logger.LogDebug($"Processing endpoint of {service.Name} service.");
+                logger.LogDebug(nameof(Host), nameof(ExtractEndpointsForProtocols),$"Processing endpoint of {service.Name} service.");
                 httpEndpoints.Add(endpoint);
             }
         }
@@ -232,7 +233,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                                 
                                 if (usedPorts.Contains(port))
                                 {
-                                    logger.LogDebug($"Using port {port} will be skipped as it's already registered.");
+                                    logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),$"Using port {port} will be skipped as it's already registered.");
                                     continue;
                                 }
 
