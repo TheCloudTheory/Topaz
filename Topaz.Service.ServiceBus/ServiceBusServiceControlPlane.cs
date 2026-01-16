@@ -37,7 +37,7 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
 
             var resource = new ServiceBusNamespaceResource(subscriptionIdentifier, resourceGroupIdentifier, location,
                 @namespace, properties);
-            provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, resource);
+            provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, resource, true);
 
             return new ControlPlaneOperationResult<ServiceBusNamespaceResource>(OperationResult.Created, resource, null, null);
         }
@@ -170,17 +170,28 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
     {
         var existingTopic = provider.GetSubresourceAs<ServiceBusTopicResource>(subscriptionIdentifier,
             resourceGroupIdentifier, topicName, namespaceIdentifier.Value, nameof(Subresource.Queues).ToLowerInvariant());
-        var properties = ServiceBusTopicResourceProperties.From(request);
+        
         if (existingTopic == null)
         {
-            var resource = new ServiceBusTopicResource(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, topicName, properties);
+            var properties = ServiceBusTopicResourceProperties.From(request);
+            var resource = new ServiceBusTopicResource(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, topicName, properties)
+                {
+                    Properties =
+                    {
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    }
+                };
+
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, topicName,
                 namespaceIdentifier.Value, nameof(Subresource.Queues).ToLowerInvariant(), resource);
             
             return new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Created, resource, null, null);
         }
+
+        ServiceBusTopicResourceProperties.UpdateFromRequest(existingTopic, request);
         
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier.Value, properties);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier.Value, existingTopic);
         
         return new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Updated, existingTopic, null, null);
     }

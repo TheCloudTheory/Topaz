@@ -16,6 +16,7 @@ public sealed class ServiceBusService(ITopazLogger logger) : IServiceDefinition
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         new ServiceBusEndpoint(),
-        new ServiceBusServiceEndpoint(logger)
+        new ServiceBusServiceEndpoint(logger),
+        new ServiceBusServiceLegacyEndpoint(logger)
     ];
 }

@@ -13,10 +13,12 @@ public record GlobalDnsEntries
 
     public static void AddEntry(string serviceName, Guid subscriptionIdentifier, string? resourceGroupIdentifier, string instanceName)
     {
+        _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(AddEntry), "Adding entry for `{0}`, `{1}`, `{2}`...", serviceName, resourceGroupIdentifier!, instanceName);
+        
         var existingEntry = GetEntry(serviceName, instanceName);
         if (existingEntry != null)
         {
-            throw  new InvalidOperationException($"Service {serviceName} entry with key {instanceName} already exists ({existingEntry.Value.subscription}:{existingEntry.Value.resourceGroup})");
+            throw new InvalidOperationException($"Service {serviceName} entry with key {instanceName} already exists ({existingEntry.Value.subscription}:{existingEntry.Value.resourceGroup})");
         }
         
         var entries = GetDnsEntriesFromFile();
@@ -70,15 +72,21 @@ public record GlobalDnsEntries
 
     public static (Guid subscription, string resourceGroup)? GetEntry(string serviceName, string instanceName)
     {
+        _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(GetEntry), "Loading service `{0}` with key `{1}`...", serviceName, instanceName);
         var entries = GetDnsEntriesFromFile();
 
         if (entries == null) throw new InvalidOperationException();
-        if (!entries.Services.TryGetValue(serviceName, out var globalServiceEntries)) return null;
+        if (!entries.Services.TryGetValue(serviceName, out var globalServiceEntries))
+        {
+            _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(GetEntry), $"Service `{serviceName}` does not exist.");
+            return null;
+        }
 
         var existingEntry = globalServiceEntries
             .SingleOrDefault(serviceEntries => serviceEntries.Value.SingleOrDefault(entry => entry.Name == instanceName) != null).Key;
         if (string.IsNullOrWhiteSpace(existingEntry))
         {
+            _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(GetEntry), $"Service `{serviceName}` entry with key {instanceName} not found.");
             return null;
         }
 

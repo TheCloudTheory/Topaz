@@ -31,7 +31,7 @@ public sealed class PrettyTopazLogger : ITopazLogger
     }
 
     public void LogDebug(string className, string methodName, string template,
-        params object[] parameters)
+        params object?[] parameters)
     {
         var message = $"[{className}.{methodName}]: {string.Format(template, parameters)}";
         LogDebug(message);

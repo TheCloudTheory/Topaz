@@ -10,7 +10,7 @@ public interface ITopazLogger
     void LogDebug(string message);
     void LogDebug(string methodName, string message);
     void LogDebug(string className, string methodName, params object[] parameters);
-    void LogDebug(string className, string methodName, string template, params object[] parameters);
+    void LogDebug(string className, string methodName, string template, params object?[] parameters);
     void LogError(Exception ex);
     void LogError(string message);
     void LogWarning(string message);

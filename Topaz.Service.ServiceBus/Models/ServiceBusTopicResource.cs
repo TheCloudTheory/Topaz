@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
+using System.Xml.Serialization;
 using Topaz.ResourceManager;
+using Topaz.Service.ServiceBus.Models.Responses;
 using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ServiceBus.Models;
@@ -29,4 +31,17 @@ internal sealed class ServiceBusTopicResource
     public override string Name { get; init; }
     public override string Type => "Microsoft.ServiceBus/namespaces/topics";
     public override ServiceBusTopicResourceProperties Properties { get; init; }
+
+    /// <summary>
+    /// Returns an XML string representing properties of Service Bus topic.
+    /// Used 
+    /// </summary>
+    public string ToXmlString()
+    {
+        var serializer = new XmlSerializer(typeof(CreateOrUpdateServiceBusTopicAtomResponse));
+        using var stringWriter = new StringWriter();
+        serializer.Serialize(stringWriter, CreateOrUpdateServiceBusTopicAtomResponse.From(Name, Properties));
+        
+        return stringWriter.ToString();
+    }
 }

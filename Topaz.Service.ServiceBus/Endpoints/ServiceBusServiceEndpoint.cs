@@ -21,17 +21,11 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/queues/{queueName}",
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/topics/{topicName}",
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/topics/{topicName}",
-        
-        // When using MassTransit, the actual endpoint used comes from the actual FQDN of the namespaces,
-        // ergo it's not leveraging the standard Azure Resource Manager endpoints to manage entities.
-        "GET /{entity}/{messageType}",
-        "PUT /{entity}/{messageType}"
     ];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => (
     [
-        GlobalSettings.DefaultResourceManagerPort, GlobalSettings.AdditionalResourceManagerPort,
-        GlobalSettings.AmqpTlsConnectionPort
+        GlobalSettings.DefaultResourceManagerPort, GlobalSettings.AdditionalResourceManagerPort
     ], Protocol.Https);
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
@@ -42,36 +36,6 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
 
         try
         {
-            var isAdditionalResourceEndpoint = path.Split("/").Length == 3;
-            if (isAdditionalResourceEndpoint)
-            {
-                logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Handling request via an additional resource endpoint.");
-                
-                // SDK of any kind is expected to send a Host header with the following structure:
-                // [namespace].servicebus.topaz.local.dev:[port]
-                // so we just fetch the name of the namespace from it.
-                var namespaceIdentifierFromHeader = headers["Host"].ToString().Split(".")[0];
-                        
-                // Topic name comes in a form of {entity}/{messageType} when MassTransit creates the topology.
-                var topicName = $"{path.ExtractValueFromPath(1)}/{path.ExtractValueFromPath(2)}";
-                logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Extracted topic name equal to `{0}`", topicName);
-                
-                switch (method)
-                {
-                    case "GET":
-                        HandleGetTopicRequest(response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader), topicName);
-                        break;
-                    case "PUT":
-                        HandleCreateOrUpdateTopicRequest(response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader), topicName, input);
-                        break;
-                    default:
-                        response.StatusCode = HttpStatusCode.NotFound;
-                        break;
-                }
-                
-                return response;
-            }
-            
             logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Handling request via an standard resource endpoint.");
             
             var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
@@ -138,39 +102,10 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
         catch (Exception ex)
         {
             logger.LogError(ex);
-            
             response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode, ex.Message);
         }
 
         return response;
-    }
-
-    private void HandleCreateOrUpdateTopicRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, Stream input)
-    {
-        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleCreateOrUpdateTopicRequest), "Executing for {0}/{1}.", namespaceIdentifier, topicName);
-        
-        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
-        if (identifiersOperation.result == OperationResult.NotFound)
-        {
-            response.StatusCode = HttpStatusCode.NotFound;
-            return;
-        }
-        
-        HandleCreateOrUpdateTopicRequest(response, identifiersOperation.subscriptionIdentifier!, identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, topicName, input);
-    }
-
-    private void HandleGetTopicRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName)
-    {
-        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleGetTopicRequest), "Executing for {0}/{1}.", namespaceIdentifier, topicName);
-        
-        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
-        if (identifiersOperation.result == OperationResult.NotFound)
-        {
-            response.StatusCode = HttpStatusCode.NotFound;
-            return;
-        }
-        
-        HandleGetTopicRequest(response, identifiersOperation.subscriptionIdentifier!, identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, topicName);
     }
 
     private void HandleCreateOrUpdateTopicRequest(HttpResponseMessage response,
@@ -178,11 +113,11 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
         ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, Stream input)
     {
         using var reader = new StreamReader(input);
-
         var content = reader.ReadToEnd();
-        var request =
-            JsonSerializer.Deserialize<CreateOrUpdateServiceBusTopicRequest>(content, GlobalSettings.JsonOptions);
 
+        var request =
+                JsonSerializer.Deserialize<CreateOrUpdateServiceBusTopicRequest>(content, GlobalSettings.JsonOptions);
+        
         if (request == null)
         {
             response.StatusCode = HttpStatusCode.InternalServerError;
@@ -199,7 +134,8 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
         }
 
         response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(operation.Resource.ToString());
+        response.Content =
+            new StringContent(operation.Resource.ToString());
     }
 
     private void HandleGetTopicRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
