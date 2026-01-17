@@ -34,7 +34,7 @@ internal sealed class ServiceBusTopicResource
 
     /// <summary>
     /// Returns an XML string representing properties of Service Bus topic.
-    /// Used 
+    /// Used in legacy endpoints based on Atom.
     /// </summary>
     public string ToXmlString()
     {

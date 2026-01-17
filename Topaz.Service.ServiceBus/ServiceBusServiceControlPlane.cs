@@ -74,21 +74,28 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
     {
         var existingQueue = provider.GetSubresourceAs<ServiceBusQueueResource>(subscriptionIdentifier,
             resourceGroupIdentifier, queueName, @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant());
-        var properties = ServiceBusQueueResourceProperties.From(request);
+        
         if (existingQueue == null)
         {
-            properties.CreatedOn = DateTime.UtcNow;
-            properties.UpdatedOn = DateTime.UtcNow;
+            var properties = ServiceBusQueueResourceProperties.From(request);
+            var resource = new ServiceBusQueueResource(subscriptionIdentifier, resourceGroupIdentifier, @namespace, queueName, properties)
+            {
+                Properties =
+                {
+                    CreatedOn = DateTime.UtcNow,
+                    UpdatedOn = DateTime.UtcNow
+                }
+            };
             
-            var resource = new ServiceBusQueueResource(subscriptionIdentifier, resourceGroupIdentifier, @namespace, queueName, properties);
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, queueName,
                 @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant(), resource);
             
             return new ControlPlaneOperationResult<ServiceBusQueueResource>(OperationResult.Created, resource, null, null);
         }
         
-        properties.UpdatedOn = DateTime.UtcNow;
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, properties);
+        ServiceBusQueueResourceProperties.UpdateFromRequest(existingQueue, request);
+        
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, existingQueue);
         
         return new ControlPlaneOperationResult<ServiceBusQueueResource>(OperationResult.Updated, existingQueue, null, null);
     }

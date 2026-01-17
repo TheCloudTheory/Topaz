@@ -17,6 +17,7 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
     [
         // When using MassTransit, the actual endpoint used comes from the actual FQDN of the namespaces,
         // ergo it's not leveraging the standard Azure Resource Manager endpoints to manage entities.
+        "PUT /{entity}",
         "GET /{entity}/{messageType}",
         "PUT /{entity}/{messageType}"
     ];
@@ -37,23 +38,19 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
             // [namespace].servicebus.topaz.local.dev:[port]
             // so we just fetch the name of the namespace from it.
             var namespaceIdentifierFromHeader = headers["Host"].ToString().Split(".")[0];
-                        
-            // Topic name comes in a form of {entity}/{messageType} when MassTransit creates the topology.
-            var topicName = $"{path.ExtractValueFromPath(1)}/{path.ExtractValueFromPath(2)}";
-            logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Extracted topic name equal to `{0}`", topicName);
-                
-            switch (method)
+
+            // The incoming requests may use either /{entity} or /{entity}/{messageType} endpoints.
+            // If it's the latter then we assume it's a topic-related request
+            var isTopicRequest = path.Split("/").Length > 2;
+
+            if (isTopicRequest)
             {
-                case "GET":
-                    HandleGetTopicRequest(response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader), topicName);
-                    break;
-                case "PUT":
-                    HandleCreateOrUpdateTopicRequest(response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader), topicName, input);
-                    break;
-                default:
-                    response.StatusCode = HttpStatusCode.NotFound;
-                    break;
+                HandleTopicRequests(path, method, input, response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader));
+                return response;
             }
+            
+            HandleQueueRequests(path, method, input, response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader));
+            
         }
         catch (Exception ex)
         {
@@ -63,7 +60,116 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
         
         return response;
     }
-    
+
+    private void HandleQueueRequests(string path, string method, Stream input, HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier)
+    {
+        var queueName = path.ExtractValueFromPath(1);
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleQueueRequests), "Extracted queue name equal to `{0}`", queueName);
+                
+        switch (method)
+        {
+            case "GET":
+                HandleGetQueueRequest(response, namespaceIdentifier, queueName!);
+                break;
+            case "PUT":
+                HandleCreateOrUpdateQueueRequest(response, namespaceIdentifier, queueName!, input);
+                break;
+            default:
+                response.StatusCode = HttpStatusCode.NotFound;
+                break;
+        }
+    }
+
+    private void HandleGetQueueRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string queueName)
+    {
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleGetQueueRequest), "Executing for {0}/{1}.", namespaceIdentifier, queueName);
+        
+        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
+        if (identifiersOperation.result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        var operation = _controlPlane.GetQueue(identifiersOperation.subscriptionIdentifier!, identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, queueName);
+        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        response.Content = new StringContent(operation.Resource.ToXmlString());
+        response.StatusCode = HttpStatusCode.OK;
+    }
+
+    private void HandleCreateOrUpdateQueueRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string queueName, Stream input)
+    {
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleCreateOrUpdateQueueRequest), "Executing for {0}/{1}.", namespaceIdentifier, queueName);
+        
+        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
+        if (identifiersOperation.result == OperationResult.NotFound)
+        {
+            logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleCreateOrUpdateQueueRequest), "No identifier found for {0}/{1}.", namespaceIdentifier, queueName);
+            
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        using var reader = new StreamReader(input);
+        var content = reader.ReadToEnd();
+        
+        logger.LogDebug(nameof(ServiceBusServiceLegacyEndpoint), nameof(HandleCreateOrUpdateQueueRequest), "Received payload: {0}", content);
+        
+        var serializer = new XmlSerializer(typeof(CreateOrUpdateServiceBusQueueAtomRequest));
+        using var stringReader = new StringReader(content);
+
+        if (serializer.Deserialize(stringReader) is not CreateOrUpdateServiceBusQueueAtomRequest request)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        logger.LogDebug(nameof(ServiceBusServiceLegacyEndpoint), nameof(HandleCreateOrUpdateQueueRequest),
+            "Request properties: EnableExpress={0}, EnablePartitioning={1}, MaxSizeInMegabytes={2}",
+            request.Content?.Properties?.EnableExpress, request.Content?.Properties?.EnablePartitioning,
+            request.Content?.Properties?.MaxSizeInMegabytes);
+        
+        var operation = _controlPlane.CreateOrUpdateQueue(identifiersOperation.subscriptionIdentifier!,
+            identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, queueName, CreateOrUpdateServiceBusQueueRequest.From(request));
+        if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated ||
+            operation.Resource == null)
+        {
+            response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode,
+                $"Unknown error when performing CreateOrUpdate operation.");
+            return;
+        }
+
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content =
+            new StringContent(operation.Resource.ToXmlString());
+    }
+
+    private void HandleTopicRequests(string path, string method, Stream input, HttpResponseMessage response,
+        ServiceBusNamespaceIdentifier namespaceIdentifier)
+    {
+        // Topic name comes in a form of {entity}/{messageType} when MassTransit creates the topology.
+        var topicName = $"{path.ExtractValueFromPath(1)}/{path.ExtractValueFromPath(2)}";
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleTopicRequests), "Extracted topic name equal to `{0}`", topicName);
+                
+        switch (method)
+        {
+            case "GET":
+                HandleGetTopicRequest(response, namespaceIdentifier, topicName);
+                break;
+            case "PUT":
+                HandleCreateOrUpdateTopicRequest(response, namespaceIdentifier, topicName, input);
+                break;
+            default:
+                response.StatusCode = HttpStatusCode.NotFound;
+                break;
+        }
+    }
+
     private void HandleCreateOrUpdateTopicRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, Stream input)
     {
         logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleCreateOrUpdateTopicRequest), "Executing for {0}/{1}.", namespaceIdentifier, topicName);

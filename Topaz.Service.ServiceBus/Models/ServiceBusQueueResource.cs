@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
+using System.Xml.Serialization;
 using Topaz.ResourceManager;
+using Topaz.Service.ServiceBus.Models.Responses;
 using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ServiceBus.Models;
@@ -33,5 +35,18 @@ internal sealed class ServiceBusQueueResource
     public ServiceBusNamespaceIdentifier GetNamespace()
     {
         return ServiceBusNamespaceIdentifier.From(Id.Split("/")[8]);
+    }
+    
+    /// <summary>
+    /// Returns an XML string representing properties of Service Bus topic.
+    /// Used in legacy endpoints based on Atom.
+    /// </summary>
+    public string ToXmlString()
+    {
+        var serializer = new XmlSerializer(typeof(CreateOrUpdateServiceBusQueueAtomResponse));
+        using var stringWriter = new StringWriter();
+        serializer.Serialize(stringWriter, CreateOrUpdateServiceBusQueueAtomResponse.From(Name, Properties));
+        
+        return stringWriter.ToString();
     }
 }
