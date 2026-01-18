@@ -25,7 +25,7 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
     ];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.AmqpTlsConnectionPort], Protocol.Https);
+        ([GlobalSettings.AmqpTlsConnectionPort, GlobalSettings.AdditionalServiceBusPort], Protocol.Https);
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query,
         GlobalOptions options)

@@ -36,7 +36,7 @@ public static class TopazResourceHelpers
     /// - Development emulator flag set to true
     /// - Default localhost endpoint on port 8889
     /// </remarks>
-    public static string GetServiceBusConnectionString(string serviceBusNamespaceName) => $"Endpoint=sb://{serviceBusNamespaceName}.servicebus.topaz.local.dev:8889;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
+    public static string GetServiceBusConnectionString(string serviceBusNamespaceName) => $"Endpoint=sb://{serviceBusNamespaceName}.servicebus.topaz.local.dev:{GlobalSettings.DefaultServiceBusAmqpPort};SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
 
     /// <summary>
     /// Gets the Service Bus connection string for MassTransit or other clients requiring TLS.
@@ -48,8 +48,11 @@ public static class TopazResourceHelpers
     /// - Root management shared access key for authentication
     /// - No UseDevelopmentEmulator flag (forces TLS usage)
     /// </remarks>
-    public static string GetServiceBusConnectionStringWithTls(string serviceBusNamespaceName) => $"Endpoint=sb://{serviceBusNamespaceName}.servicebus.topaz.local.dev:5671;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;";
+    public static string GetServiceBusConnectionStringWithTls(string serviceBusNamespaceName) => $"Endpoint=sb://{serviceBusNamespaceName}.servicebus.topaz.local.dev:{GlobalSettings.AmqpTlsConnectionPort};SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;";
 
+    
+    public static string GetServiceBusConnectionStringForManagement(string serviceBusNamespaceName) => $"Endpoint=sb://{serviceBusNamespaceName}.servicebus.topaz.local.dev:{GlobalSettings.AdditionalServiceBusPort};SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;";
+    
     /// <summary>
     /// Gets the Event Hub connection string for the local development emulator.
     /// </summary>

@@ -24,6 +24,7 @@ public static class GlobalSettings
 
     public const ushort DefaultEventHubAmqpPort = 8888;
     public const ushort DefaultServiceBusAmqpPort = 8889;
+    public const ushort AdditionalServiceBusPort = 8887;
     public const ushort DefaultTableStoragePort = 8890;
     public const ushort DefaultBlobStoragePort = 8891;
     public const ushort DefaultEventHubPort = 8897;

@@ -17,7 +17,7 @@ public sealed class ServiceBusQueueResourceProperties
     public long? MaxMessageSizeInKilobytes { get; set; } = 0;
     public bool? RequiresDuplicateDetection { get; set; }
     public bool? RequiresSession { get; set; }
-    public TimeSpan? DefaultMessageTimeToLive { get; set; }
+    public TimeSpan? DefaultMessageTimeToLive { get; set; } = TimeSpan.MaxValue;
     public bool? DeadLetteringOnMessageExpiration { get; set; }
 
     /// <summary>
@@ -35,7 +35,7 @@ public sealed class ServiceBusQueueResourceProperties
     public int? MaxDeliveryCount { get; set; }
     public string? Status { get; set; }
     public bool? EnableBatchedOperations { get; set; }
-    public TimeSpan? AutoDeleteOnIdle { get; set; }
+    public TimeSpan? AutoDeleteOnIdle { get; set; } = TimeSpan.MaxValue;
     public bool? EnablePartitioning { get; set; }
     public bool? EnableExpress { get; set; }
     public string? ForwardTo { get; set; }
@@ -55,10 +55,10 @@ public sealed class ServiceBusQueueResourceProperties
             DuplicateDetectionHistoryTimeWindow = properties?.DuplicateDetectionHistoryTimeWindow.ToString() ?? XmlConvert.ToString(TimeSpan.FromMinutes(10)),
             ForwardTo = properties?.ForwardTo,
             ForwardDeadLetteredMessagesTo = properties?.ForwardDeadLetteredMessagesTo,
-            DefaultMessageTimeToLive = properties?.DefaultMessageTimeToLive,
+            DefaultMessageTimeToLive = properties?.DefaultMessageTimeToLive ?? TimeSpan.MaxValue,
             MaxDeliveryCount = properties?.MaxDeliveryCount,
             EnableBatchedOperations = properties?.EnableBatchedOperations,
-            AutoDeleteOnIdle = properties?.AutoDeleteOnIdle,
+            AutoDeleteOnIdle = properties?.AutoDeleteOnIdle ?? TimeSpan.MaxValue,
             EnablePartitioning = properties?.EnablePartitioning,
             EnableExpress = properties?.EnableExpress,
             Status = properties?.Status,
