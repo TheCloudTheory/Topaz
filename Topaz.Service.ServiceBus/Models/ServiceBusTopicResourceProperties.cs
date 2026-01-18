@@ -1,3 +1,5 @@
+using System.Xml;
+using JetBrains.Annotations;
 using Topaz.Service.ServiceBus.Models.Requests;
 
 namespace Topaz.Service.ServiceBus.Models;
@@ -11,7 +13,18 @@ public sealed class ServiceBusTopicResourceProperties
     public long? SizeInBytes { get; set; } = 0;
     public TimeSpan? AutoDeleteOnIdle { get; set; }
     public TimeSpan? DefaultMessageTimeToLive { get; set; } = TimeSpan.FromDays(14);
-    public TimeSpan? DuplicateDetectionHistoryTimeWindow { get; set; } = TimeSpan.FromMinutes(10);
+    
+    /// <summary>
+    /// Implicitly this field is considered to be a TimeSpan, but the expected representation
+    /// needs to be a duration object.
+    /// </summary>
+    public string? DuplicateDetectionHistoryTimeWindow
+    {
+        [UsedImplicitly] get => _duplicateDetectionHistoryTimeWindow.HasValue ? XmlConvert.ToString(_duplicateDetectionHistoryTimeWindow.Value) : null;
+        set => _duplicateDetectionHistoryTimeWindow = string.IsNullOrWhiteSpace(value) ? null : XmlConvert.ToTimeSpan(value);
+    }
+    
+    private TimeSpan? _duplicateDetectionHistoryTimeWindow;
     public bool? EnableBatchedOperations { get; set; } = false;
     public bool? EnableExpress { get; set; } = false;
     public bool? EnablePartitioning { get; set; } = false;
@@ -30,7 +43,7 @@ public sealed class ServiceBusTopicResourceProperties
             CountDetails = properties?.CountDetails,
             AutoDeleteOnIdle = properties?.AutoDeleteOnIdle,
             DefaultMessageTimeToLive = properties?.DefaultMessageTimeToLive,
-            DuplicateDetectionHistoryTimeWindow = properties?.DuplicateDetectionHistoryTimeWindow ?? TimeSpan.FromMinutes(10),
+            DuplicateDetectionHistoryTimeWindow = properties?.DuplicateDetectionHistoryTimeWindow.ToString() ?? XmlConvert.ToString(TimeSpan.FromMinutes(10)),
             EnableBatchedOperations = properties?.EnableBatchedOperations,
             EnableExpress = properties?.EnableExpress,
             EnablePartitioning = properties?.EnablePartitioning,
@@ -59,7 +72,7 @@ public sealed class ServiceBusTopicResourceProperties
             properties.DefaultMessageTimeToLive = requestProps.DefaultMessageTimeToLive;
         
         if (requestProps.DuplicateDetectionHistoryTimeWindow.HasValue)
-            properties.DuplicateDetectionHistoryTimeWindow = requestProps.DuplicateDetectionHistoryTimeWindow;
+            properties.DuplicateDetectionHistoryTimeWindow = requestProps.DuplicateDetectionHistoryTimeWindow.ToString();
         
         if (requestProps.EnableBatchedOperations.HasValue)
             properties.EnableBatchedOperations = requestProps.EnableBatchedOperations;

@@ -18,8 +18,10 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
         // When using MassTransit, the actual endpoint used comes from the actual FQDN of the namespaces,
         // ergo it's not leveraging the standard Azure Resource Manager endpoints to manage entities.
         "PUT /{entity}",
+        "GET /{entity}",
         "GET /{entity}/{messageType}",
-        "PUT /{entity}/{messageType}"
+        "PUT /{entity}/{messageType}",
+        "PUT /{entity}/{messageType}/Subscriptions/{subscription}"
     ];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
@@ -41,11 +43,21 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
 
             // The incoming requests may use either /{entity} or /{entity}/{messageType} endpoints.
             // If it's the latter then we assume it's a topic-related request
-            var isTopicRequest = path.Split("/").Length > 2;
+            var isTopicRequest = path.Split("/").Length == 3;
 
             if (isTopicRequest)
             {
                 HandleTopicRequests(path, method, input, response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader));
+                return response;
+            }
+            
+            // If the requested endpoints contains additional segments,
+            // it will be considered to be a subscription request.
+            var isSubscriptionRequest = path.Split("/").Length > 3;
+
+            if (isSubscriptionRequest)
+            {
+                HandleSubscriptionRequest(path, method, input, response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader));
                 return response;
             }
             
@@ -59,6 +71,86 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
         }
         
         return response;
+    }
+
+    private void HandleSubscriptionRequest(string path, string method, Stream input, HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier)
+    {
+        var subscriptionName = path.ExtractValueFromPath(4);
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleSubscriptionRequest), "Extracted subscription name equal to `{0}`", subscriptionName);
+        
+        switch (method)
+        {
+            case "GET":
+                HandleGetSubscriptionRequest(response, namespaceIdentifier, subscriptionName!);
+                break;
+            case "PUT":
+                HandleCreateOrUpdateSubscriptionRequest(response, namespaceIdentifier, subscriptionName!, input);
+                break;
+            default:
+                response.StatusCode = HttpStatusCode.NotFound;
+                break;
+        }
+    }
+
+    private void HandleCreateOrUpdateSubscriptionRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string subscriptionName, Stream input)
+    {
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleCreateOrUpdateSubscriptionRequest), "Executing for {0}/{1}.", namespaceIdentifier, subscriptionName);
+        
+        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
+        if (identifiersOperation.result == OperationResult.NotFound)
+        {
+            logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleCreateOrUpdateSubscriptionRequest), "No identifier found for {0}/{1}.", namespaceIdentifier, subscriptionName);
+            
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        using var reader = new StreamReader(input);
+        var content = reader.ReadToEnd();
+        
+        logger.LogDebug(nameof(ServiceBusServiceLegacyEndpoint), nameof(HandleCreateOrUpdateSubscriptionRequest), "Received payload: {0}", content);
+        
+        var serializer = new XmlSerializer(typeof(CreateOrUpdateServiceBusQueueAtomRequest));
+        using var stringReader = new StringReader(content);
+
+        if (serializer.Deserialize(stringReader) is not CreateOrUpdateServiceBusQueueAtomRequest request)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        logger.LogDebug(nameof(ServiceBusServiceLegacyEndpoint), nameof(HandleCreateOrUpdateSubscriptionRequest),
+            "Request properties: EnableExpress={0}, EnablePartitioning={1}, MaxSizeInMegabytes={2}",
+            request.Content?.Properties?.EnableExpress, request.Content?.Properties?.EnablePartitioning,
+            request.Content?.Properties?.MaxSizeInMegabytes);
+        
+        var operation = _controlPlane.CreateOrUpdateSubscription(identifiersOperation.subscriptionIdentifier!,
+            identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, subscriptionName, CreateOrUpdateServiceBusQueueRequest.From(request));
+        if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated ||
+            operation.Resource == null)
+        {
+            response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode,
+                $"Unknown error when performing CreateOrUpdate operation.");
+            return;
+        }
+
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content =
+            new StringContent(operation.Resource.ToXmlString());
+    }
+
+    private void HandleGetSubscriptionRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string subscriptionName)
+    {
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleGetSubscriptionRequest), "Executing for {0}/{1}.", namespaceIdentifier, subscriptionName);
+        
+        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
+        if (identifiersOperation.result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        response.StatusCode = HttpStatusCode.OK;
     }
 
     private void HandleQueueRequests(string path, string method, Stream input, HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier)

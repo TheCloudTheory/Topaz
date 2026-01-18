@@ -212,4 +212,12 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
             : (OperationResult.Success, SubscriptionIdentifier.From(dnsEntry.Value.subscription),
                 ResourceGroupIdentifier.From(dnsEntry.Value.resourceGroup));
     }
+
+    public ControlPlaneOperationResult<ServiceBusTopicResource> CreateOrUpdateSubscription(SubscriptionIdentifier identifiersOperationSubscriptionIdentifier,
+        ResourceGroupIdentifier identifiersOperationResourceGroupIdentifier,
+        ServiceBusNamespaceIdentifier namespaceIdentifier, string subscriptionName,
+        CreateOrUpdateServiceBusQueueRequest from)
+    {
+        throw new NotImplementedException();
+    }
 }
