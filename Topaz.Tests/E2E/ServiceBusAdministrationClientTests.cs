@@ -96,5 +96,26 @@ public class ServiceBusAdministrationClientTests
         
         // Assert
         Assert.That(queue.Value.Name, Is.EqualTo(QueueName));
+        
+        // Cleanup
+        await client.DeleteQueueAsync(QueueName);
+    }
+    
+    [Test]
+    public async Task ServiceBusAdministrationClientTests_WhenTopicIsCreatedUsingAdministrationClient_ItShouldBeAvailable()
+    {
+        // Arrange
+        var client =
+            new ServiceBusAdministrationClient(TopazResourceHelpers.GetServiceBusConnectionStringForManagement(NamespaceName));
+        
+        // Act
+        _ = await client.CreateTopicAsync(TopicName);
+        var queue = await client.GetTopicAsync(TopicName);
+        
+        // Assert
+        Assert.That(queue.Value.Name, Is.EqualTo(TopicName));
+        
+        // Cleanup
+        await client.DeleteTopicAsync(TopicName);
     }
 }

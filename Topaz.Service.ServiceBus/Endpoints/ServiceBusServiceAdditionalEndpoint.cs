@@ -9,7 +9,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ServiceBus.Endpoints;
 
-public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndpointDefinition
+public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly ServiceBusServiceControlPlane _controlPlane = new(new ServiceBusResourceProvider(logger), logger);
     
@@ -19,6 +19,7 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
         // ergo it's not leveraging the standard Azure Resource Manager endpoints to manage entities.
         "PUT /{entity}",
         "GET /{entity}",
+        "DELETE /{entity}",
         "GET /{entity}/{messageType}",
         "PUT /{entity}/{messageType}",
         "PUT /{entity}/{messageType}/Subscriptions/{subscription}"
@@ -34,35 +35,54 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
 
         try
         {
-            logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Handling request via an additional resource endpoint.");
-                
+            logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Handling a request via an additional resource endpoint.");
+            
             // SDK of any kind is expected to send a Host header with the following structure:
             // [namespace].servicebus.topaz.local.dev:[port]
             // so we just fetch the name of the namespace from it.
             var namespaceIdentifierFromHeader = headers["Host"].ToString().Split(".")[0];
-
-            // The incoming requests may use either /{entity} or /{entity}/{messageType} endpoints.
-            // If it's the latter then we assume it's a topic-related request
-            var isTopicRequest = path.Split("/").Length == 3;
-
-            if (isTopicRequest)
+            var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader);
+            
+            logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Handling a request for `{0}` namespace.", namespaceIdentifier);
+            
+            // Requests coming in for the additional endpoint doesn't have a clear indicator of for 
+            // what kind of entity they are sent for. As the SDK sends a request for an entity,
+            // we will make the assumption that if an entity exists, such a type of the entity
+            // should be handled.
+            var entityName = path.ExtractValueFromPath(1);
+            var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
+            if (identifiersOperation.result == OperationResult.NotFound)
             {
-                HandleTopicRequests(path, method, input, response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader));
+                logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleCreateOrUpdateSubscriptionRequest), "No identifier found for {0}/{1}.", namespaceIdentifier, entityName);
+            
+                response.StatusCode = HttpStatusCode.NotFound;
                 return response;
             }
             
-            // If the requested endpoints contains additional segments,
-            // it will be considered to be a subscription request.
-            var isSubscriptionRequest = path.Split("/").Length > 3;
-
-            if (isSubscriptionRequest)
+            // We will read the content early from the request as the payload will help us
+            // understand what kind of entity is going to be handled.
+            using var reader = new StreamReader(input);
+            var content = reader.ReadToEnd();
+        
+            logger.LogDebug(nameof(ServiceBusServiceAdditionalEndpoint), nameof(GetResponse), "Received payload: {0}", content);
+            
+            var entityType = _controlPlane.GetEntityType(identifiersOperation.subscriptionIdentifier!, identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, entityName!, content);
+            logger.LogDebug(nameof(ServiceBusServiceAdditionalEndpoint), nameof(GetResponse), "Detected entity type: `{0}`", entityType);
+            switch (entityType)
             {
-                HandleSubscriptionRequest(path, method, input, response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader));
-                return response;
+                case ServiceBusEntityType.Topic:
+                    HandleTopicRequests(path, method, content, response, namespaceIdentifier);
+                    return response;
+                case ServiceBusEntityType.Subscription:
+                    HandleSubscriptionRequest(path, method, content, response, namespaceIdentifier);
+                    return response;
+                case ServiceBusEntityType.Queue:
+                    HandleQueueRequests(path, method, content, response, namespaceIdentifier);
+                    return response;
+                default:
+                    response.StatusCode = HttpStatusCode.NotFound;
+                    break;
             }
-            
-            HandleQueueRequests(path, method, input, response, ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader));
-            
         }
         catch (Exception ex)
         {
@@ -73,7 +93,7 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
         return response;
     }
 
-    private void HandleSubscriptionRequest(string path, string method, Stream input, HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier)
+    private void HandleSubscriptionRequest(string path, string method, string input, HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier)
     {
         var subscriptionName = path.ExtractValueFromPath(4);
         logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleSubscriptionRequest), "Extracted subscription name equal to `{0}`", subscriptionName);
@@ -92,7 +112,7 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
         }
     }
 
-    private void HandleCreateOrUpdateSubscriptionRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string subscriptionName, Stream input)
+    private void HandleCreateOrUpdateSubscriptionRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string subscriptionName, string input)
     {
         logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleCreateOrUpdateSubscriptionRequest), "Executing for {0}/{1}.", namespaceIdentifier, subscriptionName);
         
@@ -105,13 +125,8 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
             return;
         }
         
-        using var reader = new StreamReader(input);
-        var content = reader.ReadToEnd();
-        
-        logger.LogDebug(nameof(ServiceBusServiceLegacyEndpoint), nameof(HandleCreateOrUpdateSubscriptionRequest), "Received payload: {0}", content);
-        
         var serializer = new XmlSerializer(typeof(CreateOrUpdateServiceBusQueueAtomRequest));
-        using var stringReader = new StringReader(content);
+        using var stringReader = new StringReader(input);
 
         if (serializer.Deserialize(stringReader) is not CreateOrUpdateServiceBusQueueAtomRequest request)
         {
@@ -119,7 +134,7 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
             return;
         }
 
-        logger.LogDebug(nameof(ServiceBusServiceLegacyEndpoint), nameof(HandleCreateOrUpdateSubscriptionRequest),
+        logger.LogDebug(nameof(ServiceBusServiceAdditionalEndpoint), nameof(HandleCreateOrUpdateSubscriptionRequest),
             "Request properties: EnableExpress={0}, EnablePartitioning={1}, MaxSizeInMegabytes={2}",
             request.Content?.Properties?.EnableExpress, request.Content?.Properties?.EnablePartitioning,
             request.Content?.Properties?.MaxSizeInMegabytes);
@@ -153,7 +168,7 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
         response.StatusCode = HttpStatusCode.OK;
     }
 
-    private void HandleQueueRequests(string path, string method, Stream input, HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier)
+    private void HandleQueueRequests(string path, string method, string input, HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier)
     {
         var queueName = path.ExtractValueFromPath(1);
         logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleQueueRequests), "Extracted queue name equal to `{0}`", queueName);
@@ -166,10 +181,34 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
             case "PUT":
                 HandleCreateOrUpdateQueueRequest(response, namespaceIdentifier, queueName!, input);
                 break;
+            case "DELETE":
+                HandleDeleteQueueRequest(response, namespaceIdentifier, queueName!);
+                break;
             default:
                 response.StatusCode = HttpStatusCode.NotFound;
                 break;
         }
+    }
+
+    private void HandleDeleteQueueRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string queueName)
+    {
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleDeleteQueueRequest), "Executing for {0}/{1}.", namespaceIdentifier, queueName);
+        
+        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
+        if (identifiersOperation.result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        var operation = _controlPlane.DeleteQueue(identifiersOperation.subscriptionIdentifier!, identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, queueName);
+        if (operation == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        response.StatusCode = HttpStatusCode.OK;
     }
 
     private void HandleGetQueueRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string queueName)
@@ -194,7 +233,7 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
         response.StatusCode = HttpStatusCode.OK;
     }
 
-    private void HandleCreateOrUpdateQueueRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string queueName, Stream input)
+    private void HandleCreateOrUpdateQueueRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string queueName, string input)
     {
         logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleCreateOrUpdateQueueRequest), "Executing for {0}/{1}.", namespaceIdentifier, queueName);
         
@@ -207,13 +246,8 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
             return;
         }
         
-        using var reader = new StreamReader(input);
-        var content = reader.ReadToEnd();
-        
-        logger.LogDebug(nameof(ServiceBusServiceLegacyEndpoint), nameof(HandleCreateOrUpdateQueueRequest), "Received payload: {0}", content);
-        
         var serializer = new XmlSerializer(typeof(CreateOrUpdateServiceBusQueueAtomRequest));
-        using var stringReader = new StringReader(content);
+        using var stringReader = new StringReader(input);
 
         if (serializer.Deserialize(stringReader) is not CreateOrUpdateServiceBusQueueAtomRequest request)
         {
@@ -221,7 +255,7 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
             return;
         }
 
-        logger.LogDebug(nameof(ServiceBusServiceLegacyEndpoint), nameof(HandleCreateOrUpdateQueueRequest),
+        logger.LogDebug(nameof(ServiceBusServiceAdditionalEndpoint), nameof(HandleCreateOrUpdateQueueRequest),
             "Request properties: EnableExpress={0}, EnablePartitioning={1}, MaxSizeInMegabytes={2}",
             request.Content?.Properties?.EnableExpress, request.Content?.Properties?.EnablePartitioning,
             request.Content?.Properties?.MaxSizeInMegabytes);
@@ -241,11 +275,10 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
             new StringContent(operation.Resource.ToXmlString());
     }
 
-    private void HandleTopicRequests(string path, string method, Stream input, HttpResponseMessage response,
+    private void HandleTopicRequests(string path, string method, string input, HttpResponseMessage response,
         ServiceBusNamespaceIdentifier namespaceIdentifier)
     {
-        // Topic name comes in a form of {entity}/{messageType} when MassTransit creates the topology.
-        var topicName = $"{path.ExtractValueFromPath(1)}/{path.ExtractValueFromPath(2)}";
+        var topicName = path.TrimStart('/');
         logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleTopicRequests), "Extracted topic name equal to `{0}`", topicName);
                 
         switch (method)
@@ -256,13 +289,37 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
             case "PUT":
                 HandleCreateOrUpdateTopicRequest(response, namespaceIdentifier, topicName, input);
                 break;
+            case "DELETE":
+                HandleDeleteTopicRequest(response, namespaceIdentifier, topicName!);
+                break;
             default:
                 response.StatusCode = HttpStatusCode.NotFound;
                 break;
         }
     }
 
-    private void HandleCreateOrUpdateTopicRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, Stream input)
+    private void HandleDeleteTopicRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName)
+    {
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleDeleteQueueRequest), "Executing for {0}/{1}.", namespaceIdentifier, topicName);
+        
+        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
+        if (identifiersOperation.result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        var operation = _controlPlane.DeleteTopic(identifiersOperation.subscriptionIdentifier!, identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, topicName);
+        if (operation == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        response.StatusCode = HttpStatusCode.OK;
+    }
+
+    private void HandleCreateOrUpdateTopicRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, string input)
     {
         logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleCreateOrUpdateTopicRequest), "Executing for {0}/{1}.", namespaceIdentifier, topicName);
         
@@ -275,13 +332,8 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
             return;
         }
         
-        using var reader = new StreamReader(input);
-        var content = reader.ReadToEnd();
-        
-        logger.LogDebug(nameof(ServiceBusServiceLegacyEndpoint), nameof(HandleCreateOrUpdateTopicRequest), "Received payload: {0}", content);
-        
         var serializer = new XmlSerializer(typeof(CreateOrUpdateServiceBusTopicAtomRequest));
-        using var stringReader = new StringReader(content);
+        using var stringReader = new StringReader(input);
 
         if (serializer.Deserialize(stringReader) is not CreateOrUpdateServiceBusTopicAtomRequest request)
         {
@@ -289,7 +341,7 @@ public sealed class ServiceBusServiceLegacyEndpoint(ITopazLogger logger) : IEndp
             return;
         }
 
-        logger.LogDebug(nameof(ServiceBusServiceLegacyEndpoint), nameof(HandleCreateOrUpdateTopicRequest),
+        logger.LogDebug(nameof(ServiceBusServiceAdditionalEndpoint), nameof(HandleCreateOrUpdateTopicRequest),
             "Request properties: EnableExpress={0}, EnablePartitioning={1}, MaxSizeInMegabytes={2}",
             request.Content?.Properties?.EnableExpress, request.Content?.Properties?.EnablePartitioning,
             request.Content?.Properties?.MaxSizeInMegabytes);

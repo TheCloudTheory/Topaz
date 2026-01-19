@@ -1,3 +1,4 @@
+using System.Xml.Linq;
 using Azure.Core;
 using Topaz.Dns;
 using Topaz.ResourceManager;
@@ -165,7 +166,7 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
     public ControlPlaneOperationResult<ServiceBusTopicResource> GetTopic(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName)
     {
         var existingQueue = provider.GetSubresourceAs<ServiceBusTopicResource>(subscriptionIdentifier,
-            resourceGroupIdentifier, topicName, namespaceIdentifier.Value, nameof(Subresource.Queues).ToLowerInvariant());
+            resourceGroupIdentifier, topicName, namespaceIdentifier.Value, nameof(Subresource.Topics).ToLowerInvariant());
         return existingQueue == null
             ? new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.NotFound, null, ServiceBusTopicNotFoundMessageTemplate, ServiceBusTopicNotFoundCode)
             : new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Success, existingQueue, null, null);
@@ -191,7 +192,7 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
                 };
 
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, topicName,
-                namespaceIdentifier.Value, nameof(Subresource.Queues).ToLowerInvariant(), resource);
+                namespaceIdentifier.Value, nameof(Subresource.Topics).ToLowerInvariant(), resource);
             
             return new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Created, resource, null, null);
         }
@@ -219,5 +220,56 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
         CreateOrUpdateServiceBusQueueRequest from)
     {
         throw new NotImplementedException();
+    }
+
+    public ServiceBusEntityType GetEntityType(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier,
+        string entityName, string content)
+    {
+        if (string.IsNullOrEmpty(content))
+        {
+            var queueOperation = GetQueue(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, entityName);
+            if (queueOperation.Result == OperationResult.Success)
+            {
+                return ServiceBusEntityType.Queue;
+            }
+
+            var topicOperation = GetTopic(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, entityName);
+            if (topicOperation.Result == OperationResult.Success)
+            {
+                return ServiceBusEntityType.Topic;
+            }
+
+            return ServiceBusEntityType.Unknown;
+        }
+        
+        var xml = XDocument.Parse(content);
+        if (xml.Descendants().Any(e => e.Name.LocalName == "QueueDescription"))
+        {
+            return ServiceBusEntityType.Queue;
+        }
+        
+        if (xml.Descendants().Any(e => e.Name.LocalName == "TopicDescription"))
+        {
+            return ServiceBusEntityType.Topic;
+        }
+        
+        return xml.Descendants().Any(e => e.Name.LocalName == "SubscriptionDescription") ? ServiceBusEntityType.Subscription : ServiceBusEntityType.Unknown;
+    }
+
+    public OperationResult DeleteTopic(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName)
+    {
+        var existingQueue = provider.GetSubresourceAs<ServiceBusQueueResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, topicName, namespaceIdentifier.Value,
+            nameof(Subresource.Topics).ToLowerInvariant());
+        if (existingQueue == null)
+        {
+            return OperationResult.NotFound;
+        }
+        
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, topicName, namespaceIdentifier.Value, nameof(Subresource.Topics).ToLowerInvariant());
+        return OperationResult.Deleted;
     }
 }

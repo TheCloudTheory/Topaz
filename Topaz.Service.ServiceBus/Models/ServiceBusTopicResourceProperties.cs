@@ -11,7 +11,7 @@ public sealed class ServiceBusTopicResourceProperties
     public DateTimeOffset? UpdatedAt { get; set; }
     public DateTimeOffset? AccessedAt { get; set; } = DateTimeOffset.UtcNow;
     public long? SizeInBytes { get; set; } = 0;
-    public TimeSpan? AutoDeleteOnIdle { get; set; }
+    public TimeSpan? AutoDeleteOnIdle { get; set; } = TimeSpan.MaxValue;
     public TimeSpan? DefaultMessageTimeToLive { get; set; } = TimeSpan.FromDays(14);
     
     /// <summary>
@@ -41,8 +41,8 @@ public sealed class ServiceBusTopicResourceProperties
         return new ServiceBusTopicResourceProperties
         {
             CountDetails = properties?.CountDetails,
-            AutoDeleteOnIdle = properties?.AutoDeleteOnIdle,
-            DefaultMessageTimeToLive = properties?.DefaultMessageTimeToLive,
+            AutoDeleteOnIdle = properties?.AutoDeleteOnIdle ?? TimeSpan.MaxValue,
+            DefaultMessageTimeToLive = properties?.DefaultMessageTimeToLive ?? TimeSpan.FromDays(14),
             DuplicateDetectionHistoryTimeWindow = properties?.DuplicateDetectionHistoryTimeWindow.ToString() ?? XmlConvert.ToString(TimeSpan.FromMinutes(10)),
             EnableBatchedOperations = properties?.EnableBatchedOperations,
             EnableExpress = properties?.EnableExpress,

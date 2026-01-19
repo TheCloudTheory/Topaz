@@ -17,6 +17,6 @@ public sealed class ServiceBusService(ITopazLogger logger) : IServiceDefinition
     [
         new ServiceBusEndpoint(),
         new ServiceBusServiceEndpoint(logger),
-        new ServiceBusServiceLegacyEndpoint(logger)
+        new ServiceBusServiceAdditionalEndpoint(logger)
     ];
 }
