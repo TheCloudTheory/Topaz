@@ -22,6 +22,9 @@ public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : I
         "DELETE /{entity}",
         "GET /{entity}/{messageType}",
         "PUT /{entity}/{messageType}",
+        "GET /{entity}/Subscriptions/{subscription}",
+        "PUT /{entity}/Subscriptions/{subscription}",
+        "DELETE /{entity}/Subscriptions/{subscription}",
         "PUT /{entity}/{messageType}/Subscriptions/{subscription}"
     ];
 
@@ -49,7 +52,7 @@ public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : I
             // what kind of entity they are sent for. As the SDK sends a request for an entity,
             // we will make the assumption that if an entity exists, such a type of the entity
             // should be handled.
-            var entityName = path.ExtractValueFromPath(1);
+            var entityName = path.Contains("/Subscriptions") ? GetSubscriptionNameFromPath(path) : path.ExtractValueFromPath(1);
             var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
             if (identifiersOperation.result == OperationResult.NotFound)
             {
@@ -93,9 +96,14 @@ public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : I
         return response;
     }
 
+    private static string? GetSubscriptionNameFromPath(string path)
+    {
+        return string.IsNullOrWhiteSpace(path.ExtractValueFromPath(4)) ? path.ExtractValueFromPath(3) : path.ExtractValueFromPath(4);
+    }
+
     private void HandleSubscriptionRequest(string path, string method, string input, HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier)
     {
-        var subscriptionName = path.ExtractValueFromPath(4);
+        var subscriptionName = GetSubscriptionNameFromPath(path);
         logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleSubscriptionRequest), "Extracted subscription name equal to `{0}`", subscriptionName);
         
         switch (method)
@@ -106,10 +114,34 @@ public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : I
             case "PUT":
                 HandleCreateOrUpdateSubscriptionRequest(response, namespaceIdentifier, subscriptionName!, input);
                 break;
+            case "DELETE":
+                HandleDeleteSubscriptionRequest(response, namespaceIdentifier, subscriptionName!);
+                break;
             default:
                 response.StatusCode = HttpStatusCode.NotFound;
                 break;
         }
+    }
+
+    private void HandleDeleteSubscriptionRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string subscriptionName)
+    {
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleDeleteSubscriptionRequest), "Executing for {0}/{1}.", namespaceIdentifier, subscriptionName);
+        
+        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
+        if (identifiersOperation.result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        var operation = _controlPlane.DeleteSubscription(identifiersOperation.subscriptionIdentifier!, identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, subscriptionName);
+        if (operation == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        response.StatusCode = HttpStatusCode.OK;
     }
 
     private void HandleCreateOrUpdateSubscriptionRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string subscriptionName, string input)
@@ -125,22 +157,22 @@ public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : I
             return;
         }
         
-        var serializer = new XmlSerializer(typeof(CreateOrUpdateServiceBusQueueAtomRequest));
+        var serializer = new XmlSerializer(typeof(CreateOrUpdateServiceBusSubscriptionAtomRequest));
         using var stringReader = new StringReader(input);
 
-        if (serializer.Deserialize(stringReader) is not CreateOrUpdateServiceBusQueueAtomRequest request)
+        if (serializer.Deserialize(stringReader) is not CreateOrUpdateServiceBusSubscriptionAtomRequest request)
         {
             response.StatusCode = HttpStatusCode.InternalServerError;
             return;
         }
 
         logger.LogDebug(nameof(ServiceBusServiceAdditionalEndpoint), nameof(HandleCreateOrUpdateSubscriptionRequest),
-            "Request properties: EnableExpress={0}, EnablePartitioning={1}, MaxSizeInMegabytes={2}",
-            request.Content?.Properties?.EnableExpress, request.Content?.Properties?.EnablePartitioning,
-            request.Content?.Properties?.MaxSizeInMegabytes);
+            "Request properties: Status={0}, MaxDeliveryCount={1}, LockDuration={2}",
+            request.Content?.Properties?.Status, request.Content?.Properties?.MaxDeliveryCount,
+            request.Content?.Properties?.LockDuration);
         
         var operation = _controlPlane.CreateOrUpdateSubscription(identifiersOperation.subscriptionIdentifier!,
-            identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, subscriptionName, CreateOrUpdateServiceBusQueueRequest.From(request));
+            identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, subscriptionName, CreateOrUpdateServiceBusSubscriptionRequest.From(request));
         if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated ||
             operation.Resource == null)
         {
@@ -165,6 +197,14 @@ public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : I
             return;
         }
         
+        var operation = _controlPlane.GetSubscription(identifiersOperation.subscriptionIdentifier!, identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, subscriptionName);
+        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        response.Content = new StringContent(operation.Resource.ToXmlString());
         response.StatusCode = HttpStatusCode.OK;
     }
 
@@ -290,7 +330,7 @@ public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : I
                 HandleCreateOrUpdateTopicRequest(response, namespaceIdentifier, topicName, input);
                 break;
             case "DELETE":
-                HandleDeleteTopicRequest(response, namespaceIdentifier, topicName!);
+                HandleDeleteTopicRequest(response, namespaceIdentifier, topicName);
                 break;
             default:
                 response.StatusCode = HttpStatusCode.NotFound;

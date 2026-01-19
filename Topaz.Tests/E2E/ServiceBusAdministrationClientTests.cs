@@ -1,8 +1,5 @@
-using Azure;
-using Azure.Core.Pipeline;
 using Azure.Messaging.ServiceBus.Administration;
 using Topaz.CLI;
-using Topaz.Identity;
 using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E;
@@ -16,6 +13,8 @@ public class ServiceBusAdministrationClientTests
     private const string NamespaceName = "sb-test";
     private const string QueueName = "sb-test-queue";
     private const string TopicName = "sb-test-topic";
+    private const string TopicWithSubscriptionName = "sb-test-topic2";
+    private const string TopicSubscriptionName = "subscription1";
     
     [SetUp]
     public async Task SetUp()
@@ -117,5 +116,25 @@ public class ServiceBusAdministrationClientTests
         
         // Cleanup
         await client.DeleteTopicAsync(TopicName);
+    }
+    
+    [Test]
+    public async Task ServiceBusAdministrationClientTests_WhenSubscriptionIsCreatedUsingAdministrationClient_ItShouldBeAvailable()
+    {
+        // Arrange
+        var client =
+            new ServiceBusAdministrationClient(TopazResourceHelpers.GetServiceBusConnectionStringForManagement(NamespaceName));
+        
+        // Act
+        _ = await client.CreateTopicAsync(TopicWithSubscriptionName);
+        _ = await client.CreateSubscriptionAsync(new CreateSubscriptionOptions(TopicWithSubscriptionName, TopicSubscriptionName));
+        var subscription = await client.GetSubscriptionAsync(TopicWithSubscriptionName, TopicSubscriptionName);
+        
+        // Assert
+        Assert.That(subscription.Value.TopicName, Is.EqualTo(TopicWithSubscriptionName));
+        
+        // Cleanup
+        await client.DeleteSubscriptionAsync(TopicWithSubscriptionName, TopicSubscriptionName);
+        await client.DeleteTopicAsync(TopicWithSubscriptionName);
     }
 }

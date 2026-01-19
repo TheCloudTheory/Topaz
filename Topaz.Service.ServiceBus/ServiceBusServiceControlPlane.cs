@@ -18,6 +18,9 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
     private const string ServiceBusTopicNotFoundCode = "ServiceBusTopicNotFound";
     private const string ServiceBusTopicNotFoundMessageTemplate =
         "Service Bus topic '{0}' could not be found";
+    private const string ServiceBusSubscriptionNotFoundCode = "ServiceBusSubscriptionNotFound";
+    private const string ServiceBusSubscriptionNotFoundMessageTemplate =
+        "Service Bus subscription '{0}' could not be found";
     
     public static ServiceBusServiceControlPlane New(ITopazLogger logger) => new(new ServiceBusResourceProvider(logger), logger);
     
@@ -163,13 +166,19 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
         return result.Result;
     }
 
-    public ControlPlaneOperationResult<ServiceBusTopicResource> GetTopic(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName)
+    public ControlPlaneOperationResult<ServiceBusTopicResource> GetTopic(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier,
+        string topicName)
     {
-        var existingQueue = provider.GetSubresourceAs<ServiceBusTopicResource>(subscriptionIdentifier,
-            resourceGroupIdentifier, topicName, namespaceIdentifier.Value, nameof(Subresource.Topics).ToLowerInvariant());
-        return existingQueue == null
-            ? new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.NotFound, null, ServiceBusTopicNotFoundMessageTemplate, ServiceBusTopicNotFoundCode)
-            : new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Success, existingQueue, null, null);
+        var existingTopic = provider.GetSubresourceAs<ServiceBusTopicResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, topicName, namespaceIdentifier.Value,
+            nameof(Subresource.Topics).ToLowerInvariant());
+        
+        return existingTopic == null
+            ? new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.NotFound, null,
+                ServiceBusTopicNotFoundMessageTemplate, ServiceBusTopicNotFoundCode)
+            : new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Success, existingTopic, null,
+                null);
     }
 
     public ControlPlaneOperationResult<ServiceBusTopicResource> CreateOrUpdateTopic(SubscriptionIdentifier subscriptionIdentifier,
@@ -214,12 +223,37 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
                 ResourceGroupIdentifier.From(dnsEntry.Value.resourceGroup));
     }
 
-    public ControlPlaneOperationResult<ServiceBusTopicResource> CreateOrUpdateSubscription(SubscriptionIdentifier identifiersOperationSubscriptionIdentifier,
-        ResourceGroupIdentifier identifiersOperationResourceGroupIdentifier,
+    public ControlPlaneOperationResult<ServiceBusSubscriptionResource> CreateOrUpdateSubscription(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
         ServiceBusNamespaceIdentifier namespaceIdentifier, string subscriptionName,
-        CreateOrUpdateServiceBusQueueRequest from)
+        CreateOrUpdateServiceBusSubscriptionRequest request)
     {
-        throw new NotImplementedException();
+        var existingSubscription = provider.GetSubresourceAs<ServiceBusSubscriptionResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, subscriptionName, namespaceIdentifier.Value, nameof(Subresource.Subscriptions).ToLowerInvariant());
+        
+        if (existingSubscription == null)
+        {
+            var properties = ServiceBusSubscriptionResourceProperties.From(request);
+            var resource = new ServiceBusSubscriptionResource(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, subscriptionName, properties)
+            {
+                Properties =
+                {
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                }
+            };
+
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, subscriptionName,
+                namespaceIdentifier.Value, nameof(Subresource.Subscriptions).ToLowerInvariant(), resource);
+            
+            return new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.Created, resource, null, null);
+        }
+
+        ServiceBusSubscriptionResourceProperties.UpdateFromRequest(existingSubscription, request);
+        
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier.Value, existingSubscription);
+        
+        return new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.Updated, existingSubscription, null, null);
     }
 
     public ServiceBusEntityType GetEntityType(SubscriptionIdentifier subscriptionIdentifier,
@@ -239,8 +273,9 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
             {
                 return ServiceBusEntityType.Topic;
             }
-
-            return ServiceBusEntityType.Unknown;
+            
+            var subscriptionOperation = GetSubscription(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, entityName);
+            return subscriptionOperation.Result == OperationResult.Success ? ServiceBusEntityType.Subscription : ServiceBusEntityType.Unknown;
         }
         
         var xml = XDocument.Parse(content);
@@ -257,6 +292,21 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
         return xml.Descendants().Any(e => e.Name.LocalName == "SubscriptionDescription") ? ServiceBusEntityType.Subscription : ServiceBusEntityType.Unknown;
     }
 
+    internal ControlPlaneOperationResult<ServiceBusSubscriptionResource> GetSubscription(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        ServiceBusNamespaceIdentifier namespaceIdentifier, string subscriptionName)
+    {
+        var existingSubscription = provider.GetSubresourceAs<ServiceBusSubscriptionResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, subscriptionName, namespaceIdentifier.Value,
+            nameof(Subresource.Subscriptions).ToLowerInvariant());
+        
+        return existingSubscription == null
+            ? new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.NotFound, null,
+                ServiceBusSubscriptionNotFoundMessageTemplate, ServiceBusSubscriptionNotFoundCode)
+            : new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.Success, existingSubscription, null,
+                null);
+    }
+
     public OperationResult DeleteTopic(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName)
@@ -270,6 +320,22 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
         }
         
         provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, topicName, namespaceIdentifier.Value, nameof(Subresource.Topics).ToLowerInvariant());
+        return OperationResult.Deleted;
+    }
+
+    public OperationResult DeleteSubscription(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        ServiceBusNamespaceIdentifier namespaceIdentifier, string subscriptionName)
+    {
+        var existingSubscription = provider.GetSubresourceAs<ServiceBusSubscriptionResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, subscriptionName, namespaceIdentifier.Value,
+            nameof(Subresource.Subscriptions).ToLowerInvariant());
+        if (existingSubscription == null)
+        {
+            return OperationResult.NotFound;
+        }
+        
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, subscriptionName, namespaceIdentifier.Value, nameof(Subresource.Subscriptions).ToLowerInvariant());
         return OperationResult.Deleted;
     }
 }
