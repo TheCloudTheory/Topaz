@@ -195,8 +195,8 @@ internal sealed class ServiceBusServiceControlPlane(ServiceBusResourceProvider p
                 {
                     Properties =
                     {
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
+                        CreatedOn = DateTime.UtcNow,
+                        UpdatedOn = DateTime.UtcNow
                     }
                 };
 

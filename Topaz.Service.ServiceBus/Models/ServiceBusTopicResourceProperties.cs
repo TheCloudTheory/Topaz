@@ -1,37 +1,10 @@
 using System.Xml;
-using JetBrains.Annotations;
 using Topaz.Service.ServiceBus.Models.Requests;
 
 namespace Topaz.Service.ServiceBus.Models;
 
-public sealed class ServiceBusTopicResourceProperties
+public sealed class ServiceBusTopicResourceProperties : ServiceBusEntityResourceProperties
 {
-    public object? CountDetails { get; set; }
-    public DateTimeOffset? CreatedAt { get; set; }
-    public DateTimeOffset? UpdatedAt { get; set; }
-    public DateTimeOffset? AccessedAt { get; set; } = DateTimeOffset.UtcNow;
-    public long? SizeInBytes { get; set; } = 0;
-    public TimeSpan? AutoDeleteOnIdle { get; set; } = TimeSpan.MaxValue;
-    public TimeSpan? DefaultMessageTimeToLive { get; set; } = TimeSpan.FromDays(14);
-    
-    /// <summary>
-    /// Implicitly this field is considered to be a TimeSpan, but the expected representation
-    /// needs to be a duration object.
-    /// </summary>
-    public string? DuplicateDetectionHistoryTimeWindow
-    {
-        [UsedImplicitly] get => _duplicateDetectionHistoryTimeWindow.HasValue ? XmlConvert.ToString(_duplicateDetectionHistoryTimeWindow.Value) : null;
-        set => _duplicateDetectionHistoryTimeWindow = string.IsNullOrWhiteSpace(value) ? null : XmlConvert.ToTimeSpan(value);
-    }
-    
-    private TimeSpan? _duplicateDetectionHistoryTimeWindow;
-    public bool? EnableBatchedOperations { get; set; } = false;
-    public bool? EnableExpress { get; set; } = false;
-    public bool? EnablePartitioning { get; set; } = false;
-    public long? MaxMessageSizeInKilobytes { get; set; } = 0;
-    public int? MaxSizeInMegabytes { get; set; } = 0;
-    public bool? RequiresDuplicateDetection { get; set; } = false;
-    public string? Status { get; set; }
     public int? SubscriptionCount { get; set; } = 0;
     public bool? SupportOrdering { get; set; }
 
@@ -41,9 +14,9 @@ public sealed class ServiceBusTopicResourceProperties
         return new ServiceBusTopicResourceProperties
         {
             CountDetails = properties?.CountDetails,
-            AutoDeleteOnIdle = properties?.AutoDeleteOnIdle ?? TimeSpan.MaxValue,
-            DefaultMessageTimeToLive = properties?.DefaultMessageTimeToLive ?? TimeSpan.FromDays(14),
-            DuplicateDetectionHistoryTimeWindow = properties?.DuplicateDetectionHistoryTimeWindow.ToString() ?? XmlConvert.ToString(TimeSpan.FromMinutes(10)),
+            AutoDeleteOnIdle = properties?.AutoDeleteOnIdle?.ToString() ?? XmlConvert.ToString(TimeSpan.MaxValue),
+            DefaultMessageTimeToLive = properties?.DefaultMessageTimeToLive?.ToString() ?? XmlConvert.ToString(TimeSpan.MaxValue),
+            DuplicateDetectionHistoryTimeWindow = properties?.DuplicateDetectionHistoryTimeWindow?.ToString() ?? XmlConvert.ToString(TimeSpan.FromMinutes(10)),
             EnableBatchedOperations = properties?.EnableBatchedOperations,
             EnableExpress = properties?.EnableExpress,
             EnablePartitioning = properties?.EnablePartitioning,
@@ -66,10 +39,10 @@ public sealed class ServiceBusTopicResourceProperties
         var requestProps = request.Properties;
 
         if (requestProps.AutoDeleteOnIdle.HasValue)
-            properties.AutoDeleteOnIdle = requestProps.AutoDeleteOnIdle;
+            properties.AutoDeleteOnIdle = requestProps.AutoDeleteOnIdle.ToString();
         
         if (requestProps.DefaultMessageTimeToLive.HasValue)
-            properties.DefaultMessageTimeToLive = requestProps.DefaultMessageTimeToLive;
+            properties.DefaultMessageTimeToLive = requestProps.DefaultMessageTimeToLive.ToString();
         
         if (requestProps.DuplicateDetectionHistoryTimeWindow.HasValue)
             properties.DuplicateDetectionHistoryTimeWindow = requestProps.DuplicateDetectionHistoryTimeWindow.ToString();
@@ -101,6 +74,6 @@ public sealed class ServiceBusTopicResourceProperties
         if (requestProps.CountDetails != null)
             properties.CountDetails = requestProps.CountDetails;
         
-        properties.UpdatedAt = DateTimeOffset.UtcNow;
+        properties.UpdatedOn = DateTimeOffset.UtcNow;
     }
 }

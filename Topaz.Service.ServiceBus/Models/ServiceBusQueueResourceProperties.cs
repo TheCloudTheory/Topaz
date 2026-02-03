@@ -1,45 +1,10 @@
 using System.Xml;
-using JetBrains.Annotations;
 using Topaz.Service.ServiceBus.Models.Requests;
 
 namespace Topaz.Service.ServiceBus.Models;
 
-public sealed class ServiceBusQueueResourceProperties
+public sealed class ServiceBusQueueResourceProperties : ServiceBusEntityResourceProperties
 {
-    public object? CountDetails { get; set; }
-    public DateTimeOffset? CreatedOn { get; set; }
-    public DateTimeOffset? UpdatedOn { get; set; }
-    public DateTimeOffset? AccessedOn { get; set; } = DateTimeOffset.UtcNow;
-    public long? SizeInBytes { get; set; } = 0;
-    public long? MessageCount { get; set; } = 0;
-    public TimeSpan? LockDuration { get; set; }
-    public int? MaxSizeInMegabytes { get; set; }
-    public long? MaxMessageSizeInKilobytes { get; set; } = 0;
-    public bool? RequiresDuplicateDetection { get; set; }
-    public bool? RequiresSession { get; set; }
-    public TimeSpan? DefaultMessageTimeToLive { get; set; } = TimeSpan.MaxValue;
-    public bool? DeadLetteringOnMessageExpiration { get; set; }
-
-    /// <summary>
-    /// Implicitly this field is considered to be a TimeSpan, but the expected representation
-    /// needs to be a duration object.
-    /// </summary>
-    public string? DuplicateDetectionHistoryTimeWindow
-    {
-        [UsedImplicitly] get => _duplicateDetectionHistoryTimeWindow.HasValue ? XmlConvert.ToString(_duplicateDetectionHistoryTimeWindow.Value) : null;
-        set => _duplicateDetectionHistoryTimeWindow = string.IsNullOrWhiteSpace(value) ? null : XmlConvert.ToTimeSpan(value);
-    }
-    
-    private TimeSpan? _duplicateDetectionHistoryTimeWindow;
-    
-    public int? MaxDeliveryCount { get; set; }
-    public string? Status { get; set; }
-    public bool? EnableBatchedOperations { get; set; }
-    public TimeSpan? AutoDeleteOnIdle { get; set; } = TimeSpan.MaxValue;
-    public bool? EnablePartitioning { get; set; }
-    public bool? EnableExpress { get; set; }
-    public string? ForwardTo { get; set; }
-    public string? ForwardDeadLetteredMessagesTo { get; set; }
     public static ServiceBusQueueResourceProperties From(CreateOrUpdateServiceBusQueueRequest request)
     {
         var properties = request.Properties;
@@ -52,13 +17,13 @@ public sealed class ServiceBusQueueResourceProperties
             RequiresDuplicateDetection = properties?.RequiresDuplicateDetection,
             RequiresSession = properties?.RequiresSession,
             DeadLetteringOnMessageExpiration = properties?.DeadLetteringOnMessageExpiration,
-            DuplicateDetectionHistoryTimeWindow = properties?.DuplicateDetectionHistoryTimeWindow.ToString() ?? XmlConvert.ToString(TimeSpan.FromMinutes(10)),
+            DuplicateDetectionHistoryTimeWindow = properties?.DuplicateDetectionHistoryTimeWindow?.ToString() ?? XmlConvert.ToString(TimeSpan.FromMinutes(10)),
             ForwardTo = properties?.ForwardTo,
             ForwardDeadLetteredMessagesTo = properties?.ForwardDeadLetteredMessagesTo,
-            DefaultMessageTimeToLive = properties?.DefaultMessageTimeToLive ?? TimeSpan.MaxValue,
+            DefaultMessageTimeToLive = properties?.DefaultMessageTimeToLive?.ToString() ?? XmlConvert.ToString(TimeSpan.MaxValue),
             MaxDeliveryCount = properties?.MaxDeliveryCount,
             EnableBatchedOperations = properties?.EnableBatchedOperations,
-            AutoDeleteOnIdle = properties?.AutoDeleteOnIdle ?? TimeSpan.MaxValue,
+            AutoDeleteOnIdle = properties?.AutoDeleteOnIdle?.ToString() ?? XmlConvert.ToString(TimeSpan.MaxValue),
             EnablePartitioning = properties?.EnablePartitioning,
             EnableExpress = properties?.EnableExpress,
             Status = properties?.Status,
@@ -91,7 +56,7 @@ public sealed class ServiceBusQueueResourceProperties
             properties.RequiresSession = requestProps.RequiresSession;
         
         if (requestProps.DefaultMessageTimeToLive.HasValue)
-            properties.DefaultMessageTimeToLive = requestProps.DefaultMessageTimeToLive;
+            properties.DefaultMessageTimeToLive = requestProps.DefaultMessageTimeToLive.ToString();
         
         if (requestProps.DeadLetteringOnMessageExpiration.HasValue)
             properties.DeadLetteringOnMessageExpiration = requestProps.DeadLetteringOnMessageExpiration;
@@ -106,7 +71,7 @@ public sealed class ServiceBusQueueResourceProperties
             properties.EnableBatchedOperations = requestProps.EnableBatchedOperations;
         
         if (requestProps.AutoDeleteOnIdle.HasValue)
-            properties.AutoDeleteOnIdle = requestProps.AutoDeleteOnIdle;
+            properties.AutoDeleteOnIdle = requestProps.AutoDeleteOnIdle.ToString();
         
         if (requestProps.EnablePartitioning.HasValue)
             properties.EnablePartitioning = requestProps.EnablePartitioning;
