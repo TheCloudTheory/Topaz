@@ -22,10 +22,10 @@ internal sealed class EventHubResourceProvider(ITopazLogger logger) : ResourcePr
     {
         var hubPath = GetEventHubPath(namespaceName, name);
         
-        _topazLogger.LogDebug($"Attempting to delete {hubPath} directory.");
+        _topazLogger.LogDebug(nameof(EventHubResourceProvider), nameof(DeleteEventHub), "Attempting to delete {0} directory.", hubPath);
         
         Directory.Delete(hubPath);
         
-        _topazLogger.LogDebug($"Attempting to delete {hubPath} directory - deleted!");
+        _topazLogger.LogDebug(nameof(EventHubResourceProvider), nameof(DeleteEventHub), "Attempting to delete {0} directory - deleted!", hubPath);
     }
 }

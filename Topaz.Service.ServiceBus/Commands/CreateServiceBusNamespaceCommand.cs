@@ -15,7 +15,7 @@ public sealed class CreateServiceBusNamespaceCommand(ITopazLogger logger) : Comm
 {
     public override int Execute(CommandContext context, CreateServiceBusNamespaceCommandSettings settings)
     {
-        logger.LogDebug($"Executing {nameof(CreateServiceBusNamespaceCommand)}.{nameof(Execute)}.");
+        logger.LogDebug(nameof(CreateServiceBusNamespaceCommand), nameof(Execute), "Executing {0}.{1}.", nameof(CreateServiceBusNamespaceCommand), nameof(Execute));
 
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =

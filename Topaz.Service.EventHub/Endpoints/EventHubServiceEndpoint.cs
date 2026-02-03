@@ -73,7 +73,7 @@ public sealed class EventHubServiceEndpoint(ITopazLogger logger) : IEndpointDefi
 
     private void HandleDeleteEventHubNamespaceRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, EventHubNamespaceIdentifier namespaceIdentifier)
     {
-        logger.LogDebug($"Executing {nameof(HandleDeleteEventHubNamespaceRequest)}.");
+        logger.LogDebug(nameof(EventHubServiceEndpoint), nameof(HandleDeleteEventHubNamespaceRequest), "Executing {0}.", nameof(HandleDeleteEventHubNamespaceRequest));
         
         var existingNamespace = _controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
         switch (existingNamespace.Result)

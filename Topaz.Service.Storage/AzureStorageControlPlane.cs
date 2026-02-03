@@ -62,7 +62,7 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         const string propertiesFile = $"properties.xml";
         var propertiesFilePath = Path.Combine(provider.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName), propertiesFile);
 
-        logger.LogDebug($"Attempting to create {propertiesFilePath} file.");
+        logger.LogDebug(nameof(AzureStorageControlPlane), nameof(InitializeServicePropertiesFiles), "Attempting to create {0} file.", propertiesFilePath);
         
         if (!File.Exists(propertiesFilePath))
         {
@@ -82,7 +82,7 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         }
         else
         {
-            logger.LogDebug($"Attempting to create {propertiesFilePath} file - skipped.");
+            logger.LogDebug(nameof(AzureStorageControlPlane), nameof(InitializeServicePropertiesFiles), "Attempting to create {0} file - skipped.", propertiesFilePath);
         }
     }
 

@@ -22,7 +22,7 @@ internal sealed class TableResourceProvider(ITopazLogger logger) : ResourceProvi
     public bool CheckIfTableExists(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
-        _logger.LogDebug($"[{nameof(TableResourceProvider)}.{nameof(CheckIfTableExists)}]: Executing for {subscriptionIdentifier}, {resourceGroupIdentifier}, {tableName}, {storageAccountName}");
+        _logger.LogDebug(nameof(TableResourceProvider), nameof(CheckIfTableExists), "Executing for {0}, {1}, {2}, {3}", subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
         
         var tablePath = GetTablePathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName);
         return Directory.Exists(tablePath);

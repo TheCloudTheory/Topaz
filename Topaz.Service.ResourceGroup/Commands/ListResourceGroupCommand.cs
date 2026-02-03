@@ -13,7 +13,7 @@ public sealed class ListResourceGroupCommand(ITopazLogger logger) : Command<List
 {
     public override int Execute(CommandContext context, ListResourceGroupCommandSettings settings)
     {
-        logger.LogDebug($"Executing {nameof(ListResourceGroupCommand)}.{nameof(Execute)}.");
+        logger.LogDebug(nameof(ListResourceGroupCommand), nameof(Execute), "Executing {0}.{1}.", nameof(ListResourceGroupCommand), nameof(Execute));
 
         var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
         var operation = controlPlane.List(SubscriptionIdentifier.From(settings.SubscriptionId));

@@ -36,7 +36,7 @@ public class AzureStorageEndpoint(ITopazLogger logger) : IEndpointDefinition
             
             if (string.IsNullOrWhiteSpace(storageAccountName))
             {
-                logger.LogDebug($"Executing {nameof(GetResponse)}: No account name provided.");
+                logger.LogDebug(nameof(AzureStorageEndpoint), nameof(GetResponse), "Executing {0}: No account name provided.", nameof(GetResponse));
                 
                 response.StatusCode = HttpStatusCode.BadRequest;
                 return response;

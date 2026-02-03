@@ -84,7 +84,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
 
     public ControlPlaneOperationResult<EventHubNamespaceResource> Delete(string name, EventHubNamespaceIdentifier namespaceName)
     {
-        logger.LogDebug($"Executing {nameof(Delete)}: {name} {namespaceName}");
+        logger.LogDebug(nameof(EventHubServiceControlPlane), nameof(Delete), "Executing {0}: {1} {2}", nameof(Delete), name, namespaceName);
 
         if (!provider.EventHubExists(namespaceName.Value, name))
         {
@@ -100,7 +100,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         EventHubNamespaceIdentifier namespaceName)
     {
-        logger.LogDebug($"Executing {nameof(DeleteNamespace)}: {namespaceName}");
+        logger.LogDebug(nameof(EventHubServiceControlPlane), nameof(DeleteNamespace), "Executing {0}: {1}", nameof(DeleteNamespace), namespaceName);
         
         var existingNamespace = GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceName);
         if (existingNamespace.Resource == null || existingNamespace.Result == OperationResult.NotFound)

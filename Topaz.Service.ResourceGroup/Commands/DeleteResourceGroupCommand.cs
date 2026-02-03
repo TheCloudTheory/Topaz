@@ -13,7 +13,7 @@ public sealed class DeleteResourceGroupCommand(ITopazLogger logger) : Command<De
 {
     public override int Execute(CommandContext context, DeleteResourceGroupCommandSettings settings)
     {
-        logger.LogDebug($"Executing {nameof(DeleteResourceGroupCommand)}.{nameof(Execute)}.");
+        logger.LogDebug(nameof(DeleteResourceGroupCommand), nameof(Execute), "Executing {0}.{1}.", nameof(DeleteResourceGroupCommand), nameof(Execute));
         logger.LogInformation("Deleting resource group...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);

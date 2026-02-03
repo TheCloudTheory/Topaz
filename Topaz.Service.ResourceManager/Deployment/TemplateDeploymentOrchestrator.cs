@@ -50,9 +50,9 @@ public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvid
                     continue;
                 }
             
-                logger.LogDebug("Attempting to dequeue a deployment from the queue...");
+                logger.LogDebug(nameof(TemplateDeploymentOrchestrator), nameof(Start), "Attempting to dequeue a deployment from the queue...");
                 var deployment = DeploymentQueue.Dequeue();
-                logger.LogDebug($"Fetched deployment for resource ID: {deployment.Deployment.Id}");
+                logger.LogDebug(nameof(TemplateDeploymentOrchestrator), nameof(Start), "Fetched deployment for resource ID: {0}", deployment.Deployment.Id);
 
                 RouteDeployment(deployment);
             }
@@ -63,7 +63,7 @@ public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvid
 
     private void RouteDeployment(TemplateDeployment templateDeployment)
     {
-        logger.LogDebug($"Routing deployment resources of {templateDeployment.Deployment.Id} deployment to appropriate control planes.");
+        logger.LogDebug(nameof(TemplateDeploymentOrchestrator), nameof(RouteDeployment), "Routing deployment resources of {0} deployment to appropriate control planes.", templateDeployment.Deployment.Id);
 
         templateDeployment.Start();
         logger.LogInformation($"Deployment of {templateDeployment.Deployment.Id} started.");

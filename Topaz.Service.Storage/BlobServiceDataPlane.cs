@@ -13,7 +13,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 {
     public BlobEnumerationResult ListBlobs(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
     {
-        logger.LogDebug($"Executing {nameof(ListBlobs)}: {storageAccountName} {containerName}");
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(ListBlobs), "Executing {0}: {1} {2}", nameof(ListBlobs), storageAccountName, containerName);
         
         var path = controlPlane.GetContainerDataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
         var files = Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories);
@@ -47,7 +47,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName,
         Stream input)
     {
-        logger.LogDebug($"Executing {nameof(PutBlob)}: {storageAccountName} {blobPath} {blobName}");
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(PutBlob), "Executing {0}: {1} {2} {3}", nameof(PutBlob), storageAccountName, blobPath, blobName);
 
         using var sr = new StreamReader(input);
         var rawContent = sr.ReadToEnd();
@@ -62,9 +62,9 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         if (!Directory.Exists(blobDirectory))
         {
-            logger.LogDebug($"Creating {blobDirectory} for blob {blobName}...");
+            logger.LogDebug(nameof(BlobServiceDataPlane), nameof(PutBlob), "Creating {0} for blob {1}...", blobDirectory, blobName);
             Directory.CreateDirectory(blobDirectory);
-            logger.LogDebug($"Blob directory {blobDirectory} created.");
+            logger.LogDebug(nameof(BlobServiceDataPlane), nameof(PutBlob), "Blob directory {0} created.", blobDirectory);
         }
 
         var metadata = new BlobProperties(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
@@ -83,7 +83,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName, string blobPath, string blobName)
     {
-        logger.LogDebug($"Executing {nameof(GetBlobProperties)}: {storageAccountName} {blobPath} {blobName}");
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetBlobProperties), "Executing {0}: {1} {2} {3}", nameof(GetBlobProperties), storageAccountName, blobPath, blobName);
 
         var fullPath =
             GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
@@ -142,7 +142,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     // TODO: Add support for `snapshot` and `versionid` query params
     public HttpStatusCode DeleteBlob(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName)
     {
-        logger.LogDebug($"Executing {nameof(DeleteBlob)}: {storageAccountName} {blobPath} {blobName}");
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(DeleteBlob), "Executing {0}: {1} {2} {3}", nameof(DeleteBlob), storageAccountName, blobPath, blobName);
         
         var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
 

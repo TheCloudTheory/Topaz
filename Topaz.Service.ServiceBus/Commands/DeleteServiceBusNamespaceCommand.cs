@@ -13,7 +13,7 @@ public sealed class DeleteServiceBusNamespaceCommand(ITopazLogger logger) : Comm
 {
     public override int Execute(CommandContext context, DeleteServiceBusNamespaceCommandSettings settings)
     {
-        logger.LogDebug($"Executing {nameof(DeleteServiceBusNamespaceCommand)}.{nameof(Execute)}.");
+        logger.LogDebug(nameof(DeleteServiceBusNamespaceCommand), nameof(Execute), "Executing {0}.{1}.", nameof(DeleteServiceBusNamespaceCommand), nameof(Execute));
         
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);

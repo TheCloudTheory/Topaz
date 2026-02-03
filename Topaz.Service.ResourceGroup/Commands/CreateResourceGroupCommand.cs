@@ -13,7 +13,7 @@ public sealed class CreateResourceGroupCommand(ITopazLogger logger) : Command<Cr
 {
     public override int Execute(CommandContext context, CreateResourceGroupCommandSettings settings)
     {
-        logger.LogDebug("Creating a resource group...");
+        logger.LogDebug(nameof(CreateResourceGroupCommand), nameof(Execute), "Creating a resource group...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.Name!);
