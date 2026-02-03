@@ -176,7 +176,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
 
     private void HandleShowDeletedVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, string keyVaultName)
     {
-        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(HandleShowDeletedVaultRequest), "Executing {0} for `{1}` and `{2}`.", nameof(HandleListDeletedVaultsRequest), subscriptionIdentifier, keyVaultName);
+        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(HandleShowDeletedVaultRequest), "Executing {0} for `{1}` and `{2}`.", nameof(HandleShowDeletedVaultRequest), subscriptionIdentifier, keyVaultName);
         
         var (operationResult, keyVault) = _controlPlane.ShowDeleted(subscriptionIdentifier, keyVaultName);
         if (operationResult == OperationResult.NotFound || keyVault == null)

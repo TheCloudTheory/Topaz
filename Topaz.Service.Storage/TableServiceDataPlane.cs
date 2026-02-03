@@ -76,7 +76,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName, string partitionKey,
                                string rowKey, IHeaderDictionary headers)
     {
-        logger.LogDebug(nameof(TableServiceDataPlane), nameof(UpdateEntity), "Executing {0}: {1} {2}", nameof(InsertEntity), tableName, storageAccountName);
+        logger.LogDebug(nameof(TableServiceDataPlane), nameof(UpdateEntity), "Executing {0}: {1} {2}", nameof(UpdateEntity), tableName, storageAccountName);
 
         var etag = headers["If-Match"];
         var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
@@ -91,7 +91,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
         if(File.Exists(entityPath) == false)
         {
             // Not existing  entry
-            logger.LogDebug(nameof(TableServiceDataPlane), nameof(UpdateEntity), "Executing {0}: Not existing entry.", nameof(InsertEntity));
+            logger.LogDebug(nameof(TableServiceDataPlane), nameof(UpdateEntity), "Executing {0}: Not existing entry.", nameof(UpdateEntity));
             throw new EntityNotFoundException();
         }
 
