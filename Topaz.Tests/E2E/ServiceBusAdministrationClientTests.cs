@@ -109,15 +109,42 @@ public class ServiceBusAdministrationClientTests
         
         // Act
         _ = await client.CreateTopicAsync(TopicName);
-        var queue = await client.GetTopicAsync(TopicName);
+        var topic = await client.GetTopicAsync(TopicName);
         
         // Assert
-        Assert.That(queue.Value.Name, Is.EqualTo(TopicName));
+        Assert.That(topic.Value.Name, Is.EqualTo(TopicName));
         
         // Cleanup
         await client.DeleteTopicAsync(TopicName);
     }
     
+    [Test]
+    public async Task ServiceBusAdministrationClientTests_WhenTopicIsCreatedUsingAdministrationClientAndProvidedProperties_ItShouldBeAvailable()
+    {
+        // Arrange
+        var client =
+            new ServiceBusAdministrationClient(TopazResourceHelpers.GetServiceBusConnectionStringForManagement(NamespaceName));
+        
+        // Act
+        _ = await client.CreateTopicAsync(new CreateTopicOptions(TopicName)
+        {
+            DefaultMessageTimeToLive = TimeSpan.FromDays(365),
+            AutoDeleteOnIdle = TimeSpan.FromDays(14),
+        });
+        var topic = await client.GetTopicAsync(TopicName);
+        
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(topic.Value.Name, Is.EqualTo(TopicName));
+            Assert.That(topic.Value.DefaultMessageTimeToLive, Is.EqualTo(TimeSpan.FromDays(365)));
+            Assert.That(topic.Value.AutoDeleteOnIdle, Is.EqualTo(TimeSpan.FromDays(14)));
+        });
+
+        // Cleanup
+        await client.DeleteTopicAsync(TopicName);
+    }
+
     [Test]
     public async Task ServiceBusAdministrationClientTests_WhenSubscriptionIsCreatedUsingAdministrationClient_ItShouldBeAvailable()
     {

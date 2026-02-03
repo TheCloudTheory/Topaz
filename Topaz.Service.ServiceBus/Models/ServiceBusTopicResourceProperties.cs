@@ -14,9 +14,14 @@ public sealed class ServiceBusTopicResourceProperties : ServiceBusEntityResource
         return new ServiceBusTopicResourceProperties
         {
             CountDetails = properties?.CountDetails,
-            AutoDeleteOnIdle = properties?.AutoDeleteOnIdle?.ToString() ?? XmlConvert.ToString(TimeSpan.MaxValue),
-            DefaultMessageTimeToLive = properties?.DefaultMessageTimeToLive?.ToString() ?? XmlConvert.ToString(TimeSpan.MaxValue),
-            DuplicateDetectionHistoryTimeWindow = properties?.DuplicateDetectionHistoryTimeWindow?.ToString() ?? XmlConvert.ToString(TimeSpan.FromMinutes(10)),
+            AutoDeleteOnIdle = properties is { AutoDeleteOnIdle: not null }
+                ? XmlConvert.ToString(TimeSpan.Parse(properties.AutoDeleteOnIdle.ToString()!))
+                : XmlConvert.ToString(TimeSpan.MaxValue),
+            DefaultMessageTimeToLive = properties is { DefaultMessageTimeToLive: not null }
+                ? XmlConvert.ToString(TimeSpan.Parse(properties.DefaultMessageTimeToLive.ToString()!))
+                : XmlConvert.ToString(TimeSpan.MaxValue),
+            DuplicateDetectionHistoryTimeWindow = properties?.DuplicateDetectionHistoryTimeWindow?.ToString() ??
+                                                  XmlConvert.ToString(TimeSpan.FromMinutes(10)),
             EnableBatchedOperations = properties?.EnableBatchedOperations,
             EnableExpress = properties?.EnableExpress,
             EnablePartitioning = properties?.EnablePartitioning,

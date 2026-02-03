@@ -11,21 +11,21 @@ public sealed class ServiceBusQueueResourceProperties : ServiceBusEntityResource
         return new ServiceBusQueueResourceProperties
         {
             CountDetails = properties?.CountDetails,
-            LockDuration = properties?.LockDuration,
-            MaxSizeInMegabytes = properties?.MaxSizeInMegabytes,
+            LockDuration = properties?.LockDuration?.ToString() ?? XmlConvert.ToString(TimeSpan.FromSeconds(60)),
+            MaxSizeInMegabytes = properties?.MaxSizeInMegabytes ?? 1024,
             MaxMessageSizeInKilobytes = properties?.MaxMessageSizeInKilobytes ?? 0,
-            RequiresDuplicateDetection = properties?.RequiresDuplicateDetection,
-            RequiresSession = properties?.RequiresSession,
-            DeadLetteringOnMessageExpiration = properties?.DeadLetteringOnMessageExpiration,
+            RequiresDuplicateDetection = properties?.RequiresDuplicateDetection ?? false,
+            RequiresSession = properties?.RequiresSession ?? false,
+            DeadLetteringOnMessageExpiration = properties?.DeadLetteringOnMessageExpiration ?? false,
             DuplicateDetectionHistoryTimeWindow = properties?.DuplicateDetectionHistoryTimeWindow?.ToString() ?? XmlConvert.ToString(TimeSpan.FromMinutes(10)),
             ForwardTo = properties?.ForwardTo,
             ForwardDeadLetteredMessagesTo = properties?.ForwardDeadLetteredMessagesTo,
             DefaultMessageTimeToLive = properties?.DefaultMessageTimeToLive?.ToString() ?? XmlConvert.ToString(TimeSpan.MaxValue),
-            MaxDeliveryCount = properties?.MaxDeliveryCount,
-            EnableBatchedOperations = properties?.EnableBatchedOperations,
+            MaxDeliveryCount = properties?.MaxDeliveryCount ?? 10,
+            EnableBatchedOperations = properties?.EnableBatchedOperations ?? false,
             AutoDeleteOnIdle = properties?.AutoDeleteOnIdle?.ToString() ?? XmlConvert.ToString(TimeSpan.MaxValue),
-            EnablePartitioning = properties?.EnablePartitioning,
-            EnableExpress = properties?.EnableExpress,
+            EnablePartitioning = properties?.EnablePartitioning ?? false,
+            EnableExpress = properties?.EnableExpress ?? false,
             Status = properties?.Status,
         };
     }
@@ -41,7 +41,7 @@ public sealed class ServiceBusQueueResourceProperties : ServiceBusEntityResource
         var requestProps = request.Properties;
 
         if (requestProps.LockDuration.HasValue)
-            properties.LockDuration = requestProps.LockDuration;
+            properties.LockDuration = requestProps.LockDuration.ToString();
         
         if (requestProps.MaxSizeInMegabytes.HasValue)
             properties.MaxSizeInMegabytes = requestProps.MaxSizeInMegabytes;

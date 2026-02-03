@@ -11,8 +11,8 @@ public abstract class ServiceBusEntityResourceProperties
     public DateTimeOffset? AccessedOn { get; set; } = DateTimeOffset.UtcNow;
     public long? SizeInBytes { [UsedImplicitly] get; set; } = 0;
     public long? MessageCount { [UsedImplicitly] get; set; } = 0;
-    public TimeSpan? LockDuration { [UsedImplicitly] get; set; }
-    public int? MaxSizeInMegabytes { [UsedImplicitly] get; set; }
+    public string? LockDuration { [UsedImplicitly] get; set; } = XmlConvert.ToString(TimeSpan.FromSeconds(60));
+    public int? MaxSizeInMegabytes { [UsedImplicitly] get; set; } = 1024;
     public long? MaxMessageSizeInKilobytes { [UsedImplicitly] get; set; } = 0;
     public bool? RequiresDuplicateDetection { [UsedImplicitly] get; set; }
     public bool? RequiresSession { [UsedImplicitly] get; set; } = false;
@@ -20,7 +20,7 @@ public abstract class ServiceBusEntityResourceProperties
     public bool? DeadLetteringOnMessageExpiration { [UsedImplicitly] get; set; } = false;
     public string? DuplicateDetectionHistoryTimeWindow { [UsedImplicitly] get; set; } =
         XmlConvert.ToString(TimeSpan.FromMinutes(10));
-    public int? MaxDeliveryCount { [UsedImplicitly] get; set; }
+    public int? MaxDeliveryCount { [UsedImplicitly] get; set; } = 10;
     public string? Status { [UsedImplicitly] get; set; }
     public bool? EnableBatchedOperations { [UsedImplicitly] get; set; } = false;
     public string? AutoDeleteOnIdle { [UsedImplicitly] get; set; } = XmlConvert.ToString(TimeSpan.MaxValue);
