@@ -14,7 +14,7 @@ public sealed class DeleteServiceBusQueueCommand(ITopazLogger logger) : Command<
 {
     public override int Execute(CommandContext context, DeleteServiceBusQueueCommandSettings settings)
     {
-        logger.LogDebug($"Executing {nameof(DeleteServiceBusQueueCommand)}.{nameof(Execute)}.");
+        logger.LogDebug(nameof(DeleteServiceBusQueueCommand), nameof(Execute), "Executing {0}.{1}.", nameof(DeleteServiceBusQueueCommand), nameof(Execute));
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);

@@ -15,7 +15,7 @@ public class CreateServiceBusQueueCommand(ITopazLogger logger) : Command<CreateS
 {
     public override int Execute(CommandContext context, CreateServiceBusQueueCommandSettings settings)
     {
-        logger.LogDebug($"Executing {nameof(CreateServiceBusQueueCommand)}.{nameof(Execute)}.");
+        logger.LogDebug(nameof(CreateServiceBusQueueCommand), nameof(Execute), "Executing {0}.{1}.", nameof(CreateServiceBusQueueCommand), nameof(Execute));
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);

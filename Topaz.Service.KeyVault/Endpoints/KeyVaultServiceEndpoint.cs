@@ -53,7 +53,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
                 case "PUT":
                     if (string.IsNullOrWhiteSpace(keyVaultName))
                     {
-                        logger.LogDebug($"Executing {nameof(GetResponse)}: Can't process request if Key Vault name is empty.");
+                        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(GetResponse), "Executing {0}: Can't process request if Key Vault name is empty.", nameof(GetResponse));
                         response.StatusCode = HttpStatusCode.BadRequest;
                         break;
                     }
@@ -105,7 +105,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
                 case "DELETE":
                     if (string.IsNullOrWhiteSpace(keyVaultName))
                     {
-                        logger.LogDebug($"Executing {nameof(GetResponse)}: Can't process request if Key Vault name is empty.");
+                        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(GetResponse), "Executing {0}: Can't process request if Key Vault name is empty.", nameof(GetResponse));
                         response.StatusCode = HttpStatusCode.BadRequest;
                         break;
                     }
@@ -135,7 +135,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string keyVaultName, Stream input)
     {
-        logger.LogDebug($"Executing {nameof(HandleCreateUpdateKeyVaultRequest)}.");
+        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(HandleUpdateKeyVaultRequest), "Executing {0}.", nameof(HandleCreateUpdateKeyVaultRequest));
         
         using var reader = new StreamReader(input);
 
@@ -161,7 +161,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
 
     private void HandlePurgeKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, string location, string keyVaultName)
     {
-        logger.LogDebug($"Executing {nameof(HandlePurgeKeyVaultRequest)} for `{subscriptionIdentifier}` and `{keyVaultName}` and `{location}`.");
+        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(HandlePurgeKeyVaultRequest), "Executing {0} for `{1}` and `{2}` and `{3}`.", nameof(HandlePurgeKeyVaultRequest), subscriptionIdentifier, keyVaultName, location);
         
         var (operationResult, vaultUri) = _controlPlane.Purge(subscriptionIdentifier, location, keyVaultName);
         if (operationResult == OperationResult.NotFound || vaultUri == null)
@@ -176,7 +176,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
 
     private void HandleShowDeletedVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, string keyVaultName)
     {
-        logger.LogDebug($"Executing {nameof(HandleListDeletedVaultsRequest)} for `{subscriptionIdentifier}` and `{keyVaultName}`.");
+        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(HandleShowDeletedVaultRequest), "Executing {0} for `{1}` and `{2}`.", nameof(HandleListDeletedVaultsRequest), subscriptionIdentifier, keyVaultName);
         
         var (operationResult, keyVault) = _controlPlane.ShowDeleted(subscriptionIdentifier, keyVaultName);
         if (operationResult == OperationResult.NotFound || keyVault == null)
@@ -205,7 +205,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
 
     private void HandleListDeletedVaultsRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier)
     {
-        logger.LogDebug($"Executing {nameof(HandleListDeletedVaultsRequest)}.");
+        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(HandleListDeletedVaultsRequest), "Executing {0}.", nameof(HandleListDeletedVaultsRequest));
         
         var keyVaults = _controlPlane.ListDeletedBySubscription(subscriptionIdentifier);
         if (keyVaults.result != OperationResult.Success || keyVaults.resource == null)
@@ -237,7 +237,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
 
     private void HandleListKeyVaultsByResourceGroupRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
     {
-        logger.LogDebug($"Executing {nameof(HandleListKeyVaultsByResourceGroupRequest)}.");
+        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(HandleListKeyVaultsByResourceGroupRequest), "Executing {0}.", nameof(HandleListKeyVaultsByResourceGroupRequest));
         
         var keyVaults = _controlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier);
         if (keyVaults.result != OperationResult.Success || keyVaults.resource == null)
@@ -259,7 +259,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string keyVaultName)
     {
-        logger.LogDebug($"Executing {nameof(HandleDeleteKeyVaultRequest)}.");
+        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(HandleDeleteKeyVaultRequest), "Executing {0}.", nameof(HandleDeleteKeyVaultRequest));
         
         var existingKeyVault = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
         switch (existingKeyVault.Result)
@@ -279,7 +279,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
 
     private void HandleCheckNameRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, Stream input)
     {
-        logger.LogDebug($"Executing {nameof(HandleCheckNameRequest)}.");
+        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(HandleCheckNameRequest), "Executing {0}.", nameof(HandleCheckNameRequest));
         
         using var reader = new StreamReader(input);
 
@@ -300,7 +300,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
 
     private void HandleGetKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName)
     {
-        logger.LogDebug($"Executing {nameof(HandleGetKeyVaultRequest)}.");
+        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(HandleGetKeyVaultRequest), "Executing {0}.", nameof(HandleGetKeyVaultRequest));
         
         var operation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
         if (operation.Result == OperationResult.NotFound || operation.Resource == null)
@@ -316,12 +316,12 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
     private void HandleCreateUpdateKeyVaultRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName, Stream input)
     {
-        logger.LogDebug($"Executing {nameof(HandleCreateUpdateKeyVaultRequest)}.");
+        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(HandleCreateUpdateKeyVaultRequest), "Executing {0}.", nameof(HandleCreateUpdateKeyVaultRequest));
         
         using var reader = new StreamReader(input);
 
         var content = reader.ReadToEnd();
-        logger.LogDebug(nameof(HandleCreateUpdateKeyVaultRequest), $"Processing payload: {content}");
+        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(HandleCreateUpdateKeyVaultRequest), "Processing payload: {0}", content);
         
         var request = JsonSerializer.Deserialize<CreateOrUpdateKeyVaultRequest>(content, GlobalSettings.JsonOptions);
 
@@ -344,7 +344,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
     
     private void HandleListSubscriptionResourcesRequest(SubscriptionIdentifier subscriptionIdentifier, string? filter, HttpResponseMessage response)
     {
-        logger.LogDebug($"Executing {nameof(HandleListSubscriptionResourcesRequest)}: Attempting to list resources for subscription ID `{subscriptionIdentifier}` and filter `{filter}`.");
+        logger.LogDebug(nameof(KeyVaultServiceEndpoint), nameof(HandleListSubscriptionResourcesRequest), "Executing {0}: Attempting to list resources for subscription ID `{1}` and filter `{2}`.", nameof(HandleListSubscriptionResourcesRequest), subscriptionIdentifier, filter);
 
         var keyVaults = _controlPlane.ListBySubscription(subscriptionIdentifier);
         if (keyVaults.result != OperationResult.Success || keyVaults.resource == null)

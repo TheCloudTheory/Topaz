@@ -103,7 +103,7 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         ManagedIdentityIdentifier managedIdentityIdentifier, Stream input)
     {
-        logger.LogDebug($"Executing {nameof(HandleUpdateManagedIdentityRequest)}.");
+        logger.LogDebug(nameof(ManagedIdentityEndpoint), nameof(HandleUpdateManagedIdentityRequest), "Executing {0}.", nameof(HandleUpdateManagedIdentityRequest));
 
         using var reader = new StreamReader(input);
 
@@ -132,7 +132,7 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         ManagedIdentityIdentifier managedIdentityIdentifier)
     {
-        logger.LogDebug($"Executing {nameof(HandleDeleteManagedIdentityRequest)}.");
+        logger.LogDebug(nameof(ManagedIdentityEndpoint), nameof(HandleDeleteManagedIdentityRequest), "Executing {0}.", nameof(HandleDeleteManagedIdentityRequest));
         
         var managedIdentity = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
         switch (managedIdentity.Result)
@@ -160,7 +160,7 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         ManagedIdentityIdentifier managedIdentityIdentifier)
     {
-        logger.LogDebug($"Executing {nameof(HandleGetManagedIdentityRequest)}.");
+        logger.LogDebug(nameof(ManagedIdentityEndpoint), nameof(HandleGetManagedIdentityRequest), "Executing {0}.", nameof(HandleGetManagedIdentityRequest));
 
         var operation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
         if (operation.Result == OperationResult.NotFound || operation.Resource == null)
@@ -175,7 +175,7 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
 
     private void HandleListByResourceGroupRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
     {
-        logger.LogDebug($"Executing {nameof(HandleListByResourceGroupRequest)}.");
+        logger.LogDebug(nameof(ManagedIdentityEndpoint), nameof(HandleListByResourceGroupRequest), "Executing {0}.", nameof(HandleListByResourceGroupRequest));
         
         var identities = _controlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier);
         if (identities.Result != OperationResult.Success || identities.Resource == null)
@@ -195,7 +195,7 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
 
     private void HandleListBySubscriptionRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier)
     {
-        logger.LogDebug($"Executing {nameof(HandleListBySubscriptionRequest)}.");
+        logger.LogDebug(nameof(ManagedIdentityEndpoint), nameof(HandleListBySubscriptionRequest), "Executing {0}.", nameof(HandleListBySubscriptionRequest));
         
         var identities = _controlPlane.ListBySubscription(subscriptionIdentifier);
         if (identities.Result != OperationResult.Success || identities.Resource == null)
@@ -217,7 +217,7 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         ManagedIdentityIdentifier managedIdentityIdentifier, Stream input)
     {
-        logger.LogDebug($"Executing {nameof(HandleCreateUpdateManagedIdentityRequest)}.");
+        logger.LogDebug(nameof(ManagedIdentityEndpoint), nameof(HandleCreateUpdateManagedIdentityRequest), "Executing {0}.", nameof(HandleCreateUpdateManagedIdentityRequest));
 
         using var reader = new StreamReader(input);
 
