@@ -14,14 +14,9 @@ public sealed class ServiceBusTopicResourceProperties : ServiceBusEntityResource
         return new ServiceBusTopicResourceProperties
         {
             CountDetails = properties?.CountDetails,
-            AutoDeleteOnIdle = properties is { AutoDeleteOnIdle: not null }
-                ? XmlConvert.ToString(TimeSpan.Parse(properties.AutoDeleteOnIdle.ToString()!))
-                : XmlConvert.ToString(TimeSpan.MaxValue),
-            DefaultMessageTimeToLive = properties is { DefaultMessageTimeToLive: not null }
-                ? XmlConvert.ToString(TimeSpan.Parse(properties.DefaultMessageTimeToLive.ToString()!))
-                : XmlConvert.ToString(TimeSpan.MaxValue),
-            DuplicateDetectionHistoryTimeWindow = properties?.DuplicateDetectionHistoryTimeWindow?.ToString() ??
-                                                  XmlConvert.ToString(TimeSpan.FromMinutes(10)),
+            AutoDeleteOnIdle = DeterminePropertyValue(properties?.AutoDeleteOnIdle, TimeSpan.MaxValue),
+            DefaultMessageTimeToLive = DeterminePropertyValue(properties?.DefaultMessageTimeToLive, TimeSpan.MaxValue),
+            DuplicateDetectionHistoryTimeWindow = DeterminePropertyValue(properties?.DuplicateDetectionHistoryTimeWindow, TimeSpan.FromMinutes(10)),
             EnableBatchedOperations = properties?.EnableBatchedOperations,
             EnableExpress = properties?.EnableExpress,
             EnablePartitioning = properties?.EnablePartitioning,
@@ -32,7 +27,7 @@ public sealed class ServiceBusTopicResourceProperties : ServiceBusEntityResource
             Status = properties?.Status
         };
     }
-    
+
     internal static void UpdateFromRequest(ServiceBusTopicResource resource, CreateOrUpdateServiceBusTopicRequest request)
     {
         if (request.Properties == null)

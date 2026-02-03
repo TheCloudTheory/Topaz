@@ -28,4 +28,11 @@ public abstract class ServiceBusEntityResourceProperties
     public bool? EnableExpress { [UsedImplicitly] get; set; } = false;
     public string? ForwardTo { [UsedImplicitly] get; set; }
     public string? ForwardDeadLetteredMessagesTo { [UsedImplicitly] get; set; }
+    
+    protected static string DeterminePropertyValue(TimeSpan? property, TimeSpan defaultValue)
+    {
+        return property.HasValue
+            ? XmlConvert.ToString(TimeSpan.Parse(property.ToString()!))
+            : XmlConvert.ToString(defaultValue);
+    }
 }
