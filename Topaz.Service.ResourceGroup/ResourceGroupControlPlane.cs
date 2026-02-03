@@ -69,11 +69,11 @@ internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider gr
         var resource = groupResourceProvider.GetAs<ResourceGroupResource>(subscriptionIdentifier, resourceGroupIdentifier);
         if (resource != null)
         {
-            logger.LogDebug($"Resource group {resourceGroupIdentifier} already exists.");
+            logger.LogDebug(nameof(ResourceGroupControlPlane), nameof(CreateOrUpdate), "Resource group {0} already exists.", resourceGroupIdentifier);
             return new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.Updated, resource, null, null);
         }
         
-        logger.LogDebug($"Creating resource group {resourceGroupIdentifier} because it doesn't exist.");
+        logger.LogDebug(nameof(ResourceGroupControlPlane), nameof(CreateOrUpdate), "Creating resource group {0} because it doesn't exist.", resourceGroupIdentifier);
         var newResource = new ResourceGroupResource(subscriptionIdentifier, resourceGroupIdentifier.Value, request.Location!, new ResourceGroupProperties());
         groupResourceProvider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, null, newResource);
             

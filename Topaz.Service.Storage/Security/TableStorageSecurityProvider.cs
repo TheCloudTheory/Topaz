@@ -55,7 +55,7 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
         if (valueParts.Length != 2)
         {
             logger.LogError($"Authentication failure for SharedKeyLite scheme. Header value isn't correct.");
-            logger.LogDebug($"[{nameof(IsAuthorizedForSharedKeyLiteScheme)}]: Header value: {headerValue}");
+            logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLiteScheme), "Header value: {0}", headerValue);
             
             return false;    
         }
@@ -68,7 +68,7 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
         if (accountName != storageAccountName)
         {
             logger.LogError($"Authentication failure for SharedKeyLite scheme. Storage account name isn't correct.");
-            logger.LogDebug($"[{nameof(IsAuthorizedForSharedKeyLiteScheme)}]: Storage account name: {storageAccountName} but the value sent with the Authorization header is {accountName}.");
+            logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLiteScheme), "Storage account name: {0} but the value sent with the Authorization header is {1}.", storageAccountName, accountName);
             
             return false;   
         }

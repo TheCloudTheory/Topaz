@@ -195,7 +195,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploym
         
         var content = reader.ReadToEnd();
         
-        logger.LogDebug($"Attempting to deserialize into {nameof(CreateDeploymentRequest)}: {content}");
+        logger.LogDebug(nameof(ResourceManagerEndpoint), nameof(HandleCreateDeploymentRequest), "Attempting to deserialize into {0}: {1}", nameof(CreateDeploymentRequest), content);
         
         var request = JsonSerializer.Deserialize<CreateDeploymentRequest>(content, GlobalSettings.JsonOptions);
         if (request?.Properties == null || string.IsNullOrWhiteSpace(request.Properties.Mode))

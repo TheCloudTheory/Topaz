@@ -15,7 +15,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
     internal string InsertEntity(Stream input, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
-        logger.LogDebug($"Executing {nameof(InsertEntity)}: {tableName} {storageAccountName}");
+        logger.LogDebug(nameof(TableServiceDataPlane), nameof(InsertEntity), "Executing {0}: {1} {2}", nameof(InsertEntity), tableName, storageAccountName);
 
         var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
 
@@ -24,7 +24,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
         var rawContent = sr.ReadToEnd();
         var metadata = JsonSerializer.Deserialize<GenericTableEntity>(rawContent, GlobalSettings.JsonOptions) ?? throw new Exception();
 
-        logger.LogDebug($"Executing {nameof(InsertEntity)}: Inserting {rawContent}.");
+        logger.LogDebug(nameof(TableServiceDataPlane), nameof(InsertEntity), "Executing {0}: Inserting {1}.", nameof(InsertEntity), rawContent);
 
         var etag = new ETag(DateTimeOffset.Now.Ticks.ToString());
         var timestamp = DateTimeOffset.Now.ToUniversalTime();
@@ -34,7 +34,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
         if(File.Exists(entityPath))
         {
             // Duplicated entry
-            logger.LogDebug($"Executing {nameof(InsertEntity)}: Duplicated entry.");
+            logger.LogDebug(nameof(TableServiceDataPlane), nameof(InsertEntity), "Executing {0}: Duplicated entry.", nameof(InsertEntity));
             throw new EntityAlreadyExistsException();
         } 
 
@@ -52,7 +52,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
     internal object?[] QueryEntities(QueryString query, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
-        logger.LogDebug($"Executing {nameof(QueryEntities)}: {query} {tableName} {storageAccountName}");
+        logger.LogDebug(nameof(TableServiceDataPlane), nameof(QueryEntities), "Executing {0}: {1} {2} {3}", nameof(QueryEntities), query, tableName, storageAccountName);
 
         // TODO: Add OData parser
         // string? filter = null;
@@ -76,7 +76,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName, string partitionKey,
                                string rowKey, IHeaderDictionary headers)
     {
-        logger.LogDebug($"Executing {nameof(InsertEntity)}: {tableName} {storageAccountName}");
+        logger.LogDebug(nameof(TableServiceDataPlane), nameof(UpdateEntity), "Executing {0}: {1} {2}", nameof(InsertEntity), tableName, storageAccountName);
 
         var etag = headers["If-Match"];
         var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
@@ -91,7 +91,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
         if(File.Exists(entityPath) == false)
         {
             // Not existing  entry
-            logger.LogDebug($"Executing {nameof(InsertEntity)}: Not existing entry.");
+            logger.LogDebug(nameof(TableServiceDataPlane), nameof(UpdateEntity), "Executing {0}: Not existing entry.", nameof(InsertEntity));
             throw new EntityNotFoundException();
         }
 

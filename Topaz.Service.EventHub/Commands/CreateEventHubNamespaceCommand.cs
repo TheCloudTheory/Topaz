@@ -18,7 +18,7 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
 {
     public override int Execute(CommandContext context, CreateEventHubCommandSettings settings)
     {
-        logger.LogDebug($"Executing {nameof(CreateEventHubNamespaceCommand)}.{nameof(Execute)}.");
+        logger.LogDebug(nameof(CreateEventHubNamespaceCommand), nameof(Execute), "Executing {0}.{1}.", nameof(CreateEventHubNamespaceCommand), nameof(Execute));
         
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =

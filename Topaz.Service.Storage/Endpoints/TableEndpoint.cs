@@ -158,7 +158,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
                             var matches = Regex.Match(path, @"\w+\(PartitionKey='\w+',RowKey='\w+'\)$", RegexOptions.IgnoreCase);
                             if(matches.Length > 0)
                             {
-                                logger.LogDebug("Matched the update operation.");
+                                logger.LogDebug(nameof(TableEndpoint), nameof(GetResponse), "Matched the update operation.");
 
                                 var (tableName, partitionKey, rowKey) = GetOperationDataForUpdateOperation(matches);
 
@@ -224,9 +224,9 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 
                         var tableName = matches.Value.Trim('/').Replace("Tables('", "").Replace("')", "");
 
-                        logger.LogDebug($"Attempting to delete table: {tableName}.");
+                        logger.LogDebug(nameof(TableEndpoint), nameof(GetResponse), "Attempting to delete table: {0}.", tableName);
                         _controlPlane.DeleteTable(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccount.Name);
-                        logger.LogDebug($"Table {tableName} deleted.");
+                        logger.LogDebug(nameof(TableEndpoint), nameof(GetResponse), "Table {0} deleted.", tableName);
 
                         response.StatusCode = HttpStatusCode.NoContent;
 
@@ -309,7 +309,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string path,
         HttpResponseMessage response)
     {
-        logger.LogDebug($"Executing {nameof(HandleGetAclRequest)}.");
+        logger.LogDebug(nameof(TableEndpoint), nameof(HandleGetAclRequest), "Executing {0}.", nameof(HandleGetAclRequest));
 
         var tableName = path.Replace("/", string.Empty);
         var acls = _controlPlane.GetAcl(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName);
@@ -326,7 +326,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string tableName, Stream input,
         HttpResponseMessage response)
     {
-        logger.LogDebug($"Executing {nameof(HandleSetAclRequest)}.");
+        logger.LogDebug(nameof(TableEndpoint), nameof(HandleSetAclRequest), "Executing {0}.", nameof(HandleSetAclRequest));
 
         var code = _controlPlane.SetAcl(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName,
             input);
@@ -336,7 +336,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
     private void HandleUpdateEntityRequest(Stream input, IHeaderDictionary headers, Match matches, SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName, HttpResponseMessage response)
     {
-        logger.LogDebug("Matched the update operation.");
+        logger.LogDebug(nameof(TableEndpoint), nameof(HandleUpdateEntityRequest), "Matched the update operation.");
 
         var (tableName, partitionKey, rowKey) = GetOperationDataForUpdateOperation(matches);
 
@@ -404,7 +404,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 
     private (string TableName, string PartitionKey, string RowKey) GetOperationDataForUpdateOperation(Match matches)
     {
-        logger.LogDebug($"Executing {nameof(GetOperationDataForUpdateOperation)}: {matches}");
+        logger.LogDebug(nameof(TableEndpoint), nameof(GetOperationDataForUpdateOperation), "Executing {0}: {1}", nameof(GetOperationDataForUpdateOperation), matches);
 
         var match = matches.Value;
         var dataMatches = Regex.Match(match, @"^(?<tableName>\w+)\(PartitionKey='(?<partitionKey>\w+)',RowKey='(?<rowKey>\w+)'\)$");
@@ -423,7 +423,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 
     private bool IsPathReferencingTable(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string tablePath, string storageAccountName)
     {
-        logger.LogDebug($"Executing {nameof(IsPathReferencingTable)}: {tablePath} {storageAccountName}");
+        logger.LogDebug(nameof(TableEndpoint), nameof(IsPathReferencingTable), "Executing {0}: {1} {2}", nameof(IsPathReferencingTable), tablePath, storageAccountName);
         
         // Path may start with `/` so we need to get rid of it
         var tableName = tablePath.Replace("/", string.Empty);
@@ -433,7 +433,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 
     private bool TryGetStorageAccount(IHeaderDictionary headers, out StorageAccountResource? storageAccount)
     {
-        logger.LogDebug($"Executing {nameof(TryGetStorageAccount)}");
+        logger.LogDebug(nameof(TableEndpoint), nameof(TryGetStorageAccount), "Executing {0}", nameof(TryGetStorageAccount));
 
         if (!headers.TryGetValue("Host", out var host))
         {
@@ -446,7 +446,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         var pathParts = host.ToString().Split('.');
         var accountName = pathParts[0];
 
-        logger.LogDebug($"About to check if storage account '{accountName}' exists.");
+        logger.LogDebug(nameof(TableEndpoint), nameof(TryGetStorageAccount), "About to check if storage account '{0}' exists.", accountName);
 
         var identifiers = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, accountName!);
         if (identifiers != null)
