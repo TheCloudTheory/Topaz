@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Topaz.CloudEnvironment;
 using Topaz.Dns;
 using Topaz.Host.AMQP;
+using Topaz.Service.Authorization;
 using Topaz.Service.EventHub;
 using Topaz.Service.KeyVault;
 using Topaz.Service.ManagedIdentity;
@@ -71,7 +72,10 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             new ServiceBusService(logger),
             new ResourceManagerService(logger, cancellationToken),
             new VirtualNetworkService(logger),
-            new ManagedIdentityService(logger)
+            new ManagedIdentityService(logger),
+            new ResourceAuthorizationService(logger),
+            new ResourceGroupAuthorizationService(logger),
+            new SubscriptionAuthorizationService(logger)
         };
         
         logger.ConfigureIdFactory(idFactory);
