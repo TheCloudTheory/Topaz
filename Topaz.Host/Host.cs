@@ -167,14 +167,16 @@ public class Host(GlobalOptions options, ITopazLogger logger)
 
         Threads.Add(new Thread(() =>
         {
+            var listenerAddress = $"{address.Scheme}://{address.Host}:{address.Port}";
+            
             try
             {
                 listener.Open();
-                logger.LogInformation($"AMQP listener started: {address.Scheme}://{address.Host}:{address.Port}");
+                logger.LogInformation($"AMQP listener started: {listenerAddress}");
             }
             catch (Exception ex)
             {
-                logger.LogError($"Failed to open Topaz host listener for AMQP ({address}). Error: {ex.Message}.");
+                logger.LogError($"Failed to open Topaz host listener for AMQP ({listenerAddress}). Error: {ex.Message}.");
             }
         }));
    

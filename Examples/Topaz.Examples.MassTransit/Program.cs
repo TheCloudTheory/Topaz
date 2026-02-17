@@ -53,9 +53,6 @@ if (builder.Environment.IsDevelopment())
             new ServiceBusNamespaceData(AzureLocation.WestEurope))
         .AddServiceBusQueue(ResourceGroupIdentifier.From(resourceGroupName), ServiceBusNamespaceIdentifier.From("sbnamespace"), "sbqueue", new ServiceBusQueueData());
     
-    // Give additional time for the queue to be fully registered with AMQP broker
-    await Task.Delay(2000);
-    
     // Test direct connection first
     Console.WriteLine("=== Testing direct Azure Service Bus SDK connection ===");
     await DirectTest.TestDirectConnection();
@@ -72,10 +69,7 @@ builder.Services.AddMassTransit(x =>
         var connectionString = TopazResourceHelpers.GetServiceBusConnectionStringWithTls("sbnamespace");
         
         // Configure with explicit transport type
-        cfg.Host(connectionString, h =>
-        {
-            h.TransportType = Azure.Messaging.ServiceBus.ServiceBusTransportType.AmqpTcp;
-        });
+        cfg.Host(connectionString);
         
         // Add retry configuration for connection issues
         cfg.UseMessageRetry(r => r.Immediate(5));
@@ -94,15 +88,6 @@ builder.Services.AddMassTransit(x =>
 
 // Add worker as regular hosted service (not via MassTransit)
 builder.Services.AddHostedService<Worker>();
-
-// Configure MassTransit to not wait for bus start - avoids validation errors
-builder.Services.AddOptions<MassTransitHostOptions>()
-    .Configure(options =>
-    {
-        options.WaitUntilStarted = false;  // Don't block on startup validation
-        options.StartTimeout = TimeSpan.FromSeconds(10);
-        options.StopTimeout = TimeSpan.FromSeconds(10);
-    });
 
 var app = builder.Build();
 
