@@ -1,4 +1,5 @@
-﻿using Topaz.Service.ResourceGroup;
+﻿using Topaz.Service.Authorization.Endpoints;
+using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -12,5 +13,7 @@ public sealed class ResourceGroupAuthorizationService(ITopazLogger logger) : ISe
     public static string UniqueName => "resource-group-authorization";
     public string Name => "Resource Group Authorization";
 
-    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [];
+    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
+        new ResourceGroupAuthorizationEndpoint(logger)
+    ];
 }

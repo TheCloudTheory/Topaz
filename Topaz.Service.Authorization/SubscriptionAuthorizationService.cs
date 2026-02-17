@@ -1,4 +1,5 @@
-﻿using Topaz.Service.Shared;
+﻿using Topaz.Service.Authorization.Endpoints;
+using Topaz.Service.Shared;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
 
@@ -12,5 +13,7 @@ public sealed class SubscriptionAuthorizationService(ITopazLogger logger) : ISer
     public static string UniqueName => "subscription-authorization";
     public string Name => "Subscription Authorization";
 
-    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [];
+    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
+        new SubscriptionAuthorizationEndpoint(logger)
+    ];
 }
