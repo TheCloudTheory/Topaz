@@ -7,7 +7,7 @@ namespace Topaz.Service.Authorization.Endpoints;
 
 public sealed class ResourceAuthorizationEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
-    public string[] Endpoints { get; }
+    public string[] Endpoints => [];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query,

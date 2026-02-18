@@ -13,7 +13,6 @@ internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider gr
 {
     private const string ResourceGroupNotFoundMessageTemplate =
         "Resource group '{0}' could not be found";
-
     private const string ResourceGroupNotFoundMessageCode = "ResourceGroupNotFound";
 
     public static ResourceGroupControlPlane New(ITopazLogger logger) => new(

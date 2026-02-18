@@ -1,13 +1,24 @@
 using System.Net;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Topaz.Service.Authorization.Domain;
+using Topaz.Service.Authorization.Models.Requests;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Authorization.Endpoints;
 
 public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
-    public string[] Endpoints { get; }
+    private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(logger);
+    
+    public string[] Endpoints => [
+        "PUT /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}",
+        "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}",
+        "DELETE /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}"
+    ];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query,
@@ -17,6 +28,30 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
         
         try
         {
+            var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
+            var roleDefinitionId = RoleDefinitionIdentifier.From(path.ExtractValueFromPath(6));
+            
+            switch (method)
+            {
+                case "PUT":
+                {
+                    HandleCreateUpdateRoleDefinition(response, subscriptionIdentifier, roleDefinitionId, input);
+                    break;
+                }
+                case "GET":
+                {
+                    HandleGetRoleDefinition(response, subscriptionIdentifier, roleDefinitionId);
+                    break;
+                }
+                case "DELETE":
+                {
+                    HandleDeleteRoleDefinition(response, subscriptionIdentifier, roleDefinitionId);
+                    break;
+                }
+                default:
+                    response.StatusCode = HttpStatusCode.NotFound;
+                    break;
+            }
         }
         catch(Exception ex)
         {
@@ -27,5 +62,71 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
         }
         
         return response;
+    }
+
+    private void HandleDeleteRoleDefinition(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, RoleDefinitionIdentifier roleDefinitionId)
+    {
+        logger.LogDebug(nameof(SubscriptionAuthorizationEndpoint), nameof(HandleDeleteRoleDefinition), "Executing {0}.", nameof(HandleDeleteRoleDefinition));
+        
+        var existingDefinition = _controlPlane.Get(subscriptionIdentifier, roleDefinitionId);
+        switch (existingDefinition.Result)
+        {
+            case OperationResult.NotFound:
+                // For some reason, the API for role definitions is supposed to return HTTP 204
+                // when a role is already deleted or non-existing
+                response.StatusCode = HttpStatusCode.NoContent;
+                return;
+            case OperationResult.Failed:
+                response.StatusCode = HttpStatusCode.InternalServerError;
+                return;
+            default:
+                var operation = _controlPlane.Delete(subscriptionIdentifier, roleDefinitionId);
+                response.StatusCode = HttpStatusCode.OK;
+                response.Content = new StringContent(operation.Resource!.ToString());
+                break;
+        }
+    }
+
+    private void HandleGetRoleDefinition(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, RoleDefinitionIdentifier roleDefinitionIdentifier)
+    {
+        logger.LogDebug(nameof(SubscriptionAuthorizationEndpoint), nameof(HandleGetRoleDefinition), "Executing {0}.", nameof(HandleGetRoleDefinition));
+        
+        var operation = _controlPlane.Get(subscriptionIdentifier, roleDefinitionIdentifier);
+        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(operation.Resource.ToString());
+    }
+
+    private void HandleCreateUpdateRoleDefinition(HttpResponseMessage response,
+        SubscriptionIdentifier subscriptionIdentifier, RoleDefinitionIdentifier roleDefinitionId, Stream input)
+    {
+        using var reader = new StreamReader(input);
+
+        var content = reader.ReadToEnd();
+        var request =
+            JsonSerializer.Deserialize<CreateOrUpdateRoleDefinitionRequest>(content, GlobalSettings.JsonOptions);
+
+        if (request == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        var operation = _controlPlane.CreateOrUpdateRoleDefinition(subscriptionIdentifier, roleDefinitionId, request);
+        if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated ||
+            operation.Resource == null)
+        {
+            response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode,
+                $"Unknown error when performing CreateOrUpdate operation.");
+            return;
+        }
+
+        response.StatusCode = HttpStatusCode.Created;
+        response.Content = new StringContent(operation.Resource.ToString());
     }
 }

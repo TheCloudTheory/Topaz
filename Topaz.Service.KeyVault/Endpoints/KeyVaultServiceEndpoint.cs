@@ -271,7 +271,7 @@ internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDe
                 response.StatusCode = HttpStatusCode.InternalServerError;
                 return;
             default:
-                _controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
+                _ = _controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
                 response.StatusCode = HttpStatusCode.OK;
                 break;
         }

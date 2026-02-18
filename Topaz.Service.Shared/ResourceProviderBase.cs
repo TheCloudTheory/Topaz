@@ -79,7 +79,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return segments.Length > 3 ? string.Join("/",  segments.Take(segments.Length - 3)) : path;
     }
 
-    public T? GetAs<T>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string? id = null)
+    public T? GetAs<T>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id = null)
     {
         var raw = Get(subscriptionIdentifier, resourceGroupIdentifier, id);
         if(string.IsNullOrEmpty(raw)) return default;
@@ -187,10 +187,12 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     }
 
     public void CreateOrUpdate<TModel>(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string? id, TModel model, bool createOperation = false, bool recoverInstance = false)
+        ResourceGroupIdentifier? resourceGroupIdentifier, string? id, TModel model, bool createOperation = false, bool recoverInstance = false)
     {
+        if(resourceGroupIdentifier == null && string.IsNullOrWhiteSpace(id)) throw new InvalidOperationException("When creating an instance both resource group and instance's ID cannot be null.");
+        
         var instanceName = string.IsNullOrWhiteSpace(id)
-            ? resourceGroupIdentifier.Value
+            ? resourceGroupIdentifier!.Value
             : id;
 
         var existingInstance = GlobalDnsEntries.GetEntry(TService.UniqueName, instanceName);
@@ -216,7 +218,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             return;
         }
 
-        GlobalDnsEntries.AddEntry(TService.UniqueName, subscriptionIdentifier.Value, resourceGroupIdentifier.Value,
+        GlobalDnsEntries.AddEntry(TService.UniqueName, subscriptionIdentifier.Value, resourceGroupIdentifier!.Value,
             instanceName);
     }
 

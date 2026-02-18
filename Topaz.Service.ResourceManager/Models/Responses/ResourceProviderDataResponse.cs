@@ -20,7 +20,8 @@ public sealed class ResourceProviderDataResponse(string providerName)
     public IReadOnlyList<ResourceProviderResourceType>? ResourceTypes { get; init; }  =
         new List<ResourceProviderResourceType>
         {
-            new("vaults")
+            new("vaults"),
+            new("roleDefinitions")
         };
 
     public string? ProviderAuthorizationConsentState { get; init; } =

@@ -185,24 +185,14 @@ internal sealed class KeyVaultControlPlane(
         return (OperationResult.Success, filteredResources.ToArray());
     }
 
-    public void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName)
+    public ControlPlaneOperationResult Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName)
     {
         var resource = provider.GetAs<KeyVaultFullResource>(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
-        if (resource == null)
+        if (resource == null || !resource.IsInSubscription(subscriptionIdentifier) || !resource.IsInResourceGroup(resourceGroupIdentifier))
         {
-            return;
+            return new ControlPlaneOperationResult(OperationResult.NotFound, string.Format(KeyVaultNotFoundMessageTemplate, keyVaultName), KeyVaultNotFoundCode);
         }
 
-        if (!resource.IsInSubscription(subscriptionIdentifier))
-        {
-            return;
-        }
-        
-        if (!resource.IsInResourceGroup(resourceGroupIdentifier))
-        {
-            return;
-        }
-        
         resource.DeletionDate = DateTimeOffset.Now;
         resource.ScheduledPurgeDate = DateTimeOffset.Now.AddDays(resource.Properties.SoftDeleteRetentionInDays);
         
@@ -211,6 +201,8 @@ internal sealed class KeyVaultControlPlane(
         
         // Note that Azure Key Vault is soft deleted
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, true);
+        
+        return new ControlPlaneOperationResult(OperationResult.Success, null, null);
     }
 
     public OperationResult Deploy(GenericResource resource)
