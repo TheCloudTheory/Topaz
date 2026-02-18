@@ -97,7 +97,6 @@ public class AuthorizationTests
     }
 
     [Test]
-    [Ignore("TO BE IMPLEMENTED")]
     public async Task RoleAssignment_CreateAndDelete_EmulatedCorrectly()
     {
         var credential = new AzureLocalCredential();
@@ -106,7 +105,7 @@ public class AuthorizationTests
         var roleDefinitions = subscription.GetAuthorizationRoleDefinitions();
         
         var roleDefinitionIdGuid = Guid.NewGuid();
-        var roleDefinitionId = new ResourceIdentifier($"/subscriptions/{SubscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionIdGuid}");
+        var roleDefinitionId = new ResourceIdentifier($"{roleDefinitionIdGuid}");
         var roleDefinitionForAssign = new AuthorizationRoleDefinitionData { RoleName = "assignment-role", Description = "For assignment" };
         roleDefinitionForAssign.Permissions.Add(new RoleDefinitionPermission { Actions = { "*" } });
         roleDefinitionForAssign.AssignableScopes.Add($"/subscriptions/{SubscriptionId}");
@@ -115,7 +114,7 @@ public class AuthorizationTests
 
         var roleAssignments = subscription.GetRoleAssignments();
         var roleAssignmentIdGuid = Guid.NewGuid();
-        var roleAssignmentId = new ResourceIdentifier($"/subscriptions/{SubscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentIdGuid}");
+        var roleAssignmentId = new ResourceIdentifier($"{roleAssignmentIdGuid}");
         var principalId = Guid.NewGuid();
         var assignmentData = new RoleAssignmentCreateOrUpdateContent(roleDefinitionId, principalId);
 

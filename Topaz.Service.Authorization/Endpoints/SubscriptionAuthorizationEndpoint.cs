@@ -16,8 +16,11 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
     
     public string[] Endpoints => [
         "PUT /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}",
+        "PUT /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}",
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}",
-        "DELETE /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}"
+        "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}",
+        "DELETE /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}",
+        "DELETE /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}"
     ];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
@@ -30,22 +33,42 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
         {
             var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
             var roleDefinitionId = RoleDefinitionIdentifier.From(path.ExtractValueFromPath(6));
+            var roleAssignmentName = RoleAssignmentName.From(path.ExtractValueFromPath(6));
+            var isRoleDefinition = path.Contains("roleDefinitions");
             
             switch (method)
             {
                 case "PUT":
                 {
-                    HandleCreateUpdateRoleDefinition(response, subscriptionIdentifier, roleDefinitionId, input);
+                    if (isRoleDefinition)
+                    {
+                        HandleCreateUpdateRoleDefinition(response, subscriptionIdentifier, roleDefinitionId, input);
+                        break;
+                    }
+
+                    HandleCreateUpdateRoleAssignment(response, subscriptionIdentifier, roleAssignmentName, input);
                     break;
                 }
                 case "GET":
                 {
-                    HandleGetRoleDefinition(response, subscriptionIdentifier, roleDefinitionId);
+                    if (isRoleDefinition)
+                    {
+                        HandleGetRoleDefinition(response, subscriptionIdentifier, roleDefinitionId);
+                        break;
+                    }
+                    
+                    HandleGetRoleAssignment(response, subscriptionIdentifier, roleAssignmentName);
                     break;
                 }
                 case "DELETE":
                 {
-                    HandleDeleteRoleDefinition(response, subscriptionIdentifier, roleDefinitionId);
+                    if (isRoleDefinition)
+                    {
+                        HandleDeleteRoleDefinition(response, subscriptionIdentifier, roleDefinitionId);
+                        break;
+                    }
+                    
+                    HandleDeleteRoleAssignment(response, subscriptionIdentifier, roleAssignmentName);
                     break;
                 }
                 default:
@@ -62,6 +85,73 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
         }
         
         return response;
+    }
+
+    private void HandleDeleteRoleAssignment(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, RoleAssignmentName roleAssignmentName)
+    {
+        logger.LogDebug(nameof(SubscriptionAuthorizationEndpoint), nameof(HandleDeleteRoleAssignment), "Executing {0}.", nameof(HandleDeleteRoleAssignment));
+        
+        var existingDefinition = _controlPlane.Get(subscriptionIdentifier, roleAssignmentName);
+        switch (existingDefinition.Result)
+        {
+            case OperationResult.NotFound:
+                // For some reason, the API for role assignments is supposed to return HTTP 204
+                // when a role is already deleted or non-existing
+                response.StatusCode = HttpStatusCode.NoContent;
+                return;
+            case OperationResult.Failed:
+                response.StatusCode = HttpStatusCode.InternalServerError;
+                return;
+            default:
+                var operation = _controlPlane.Delete(subscriptionIdentifier, roleAssignmentName);
+                response.StatusCode = HttpStatusCode.OK;
+                response.Content = new StringContent(operation.Resource!.ToString());
+                break;
+        }
+    }
+
+    private void HandleGetRoleAssignment(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, RoleAssignmentName roleAssignmentName)
+    {
+        logger.LogDebug(nameof(SubscriptionAuthorizationEndpoint), nameof(HandleGetRoleAssignment), "Executing {0}.", nameof(HandleGetRoleAssignment));
+        
+        var operation = _controlPlane.Get(subscriptionIdentifier, roleAssignmentName);
+        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(operation.Resource.ToString());
+    }
+
+    private void HandleCreateUpdateRoleAssignment(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, RoleAssignmentName roleAssignmentName, Stream input)
+    {
+        logger.LogDebug(nameof(SubscriptionAuthorizationEndpoint), nameof(HandleCreateUpdateRoleAssignment), "Executing {0}.", nameof(HandleCreateUpdateRoleAssignment));
+        
+        using var reader = new StreamReader(input);
+
+        var content = reader.ReadToEnd();
+        var request =
+            JsonSerializer.Deserialize<CreateOrUpdateRoleAssignmentRequest>(content, GlobalSettings.JsonOptions);
+
+        if (request == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        var operation = _controlPlane.CreateOrUpdateRoleAssignment(subscriptionIdentifier, roleAssignmentName, request);
+        if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated ||
+            operation.Resource == null)
+        {
+            response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode,
+                $"Unknown error when performing CreateOrUpdate operation.");
+            return;
+        }
+
+        response.StatusCode = HttpStatusCode.Created;
+        response.Content = new StringContent(operation.Resource.ToString());
     }
 
     private void HandleDeleteRoleDefinition(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, RoleDefinitionIdentifier roleDefinitionId)
