@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Authorization.Domain;
 using Topaz.Service.Authorization.Models.Requests;
+using Topaz.Service.Authorization.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -19,6 +20,7 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
         "PUT /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}",
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}",
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}",
+        "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions",
         "DELETE /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}",
         "DELETE /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}"
     ];
@@ -31,10 +33,11 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
         
         try
         {
+            var segmentsCount = path.Split('/').Length;
             var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
-            var roleDefinitionId = RoleDefinitionIdentifier.From(path.ExtractValueFromPath(6));
-            var roleAssignmentName = RoleAssignmentName.From(path.ExtractValueFromPath(6));
             var isRoleDefinition = path.Contains("roleDefinitions");
+            var roleDefinitionId = segmentsCount > 6 ? RoleDefinitionIdentifier.From(path.ExtractValueFromPath(6)) : null;
+            var roleAssignmentName = segmentsCount > 6 && !isRoleDefinition ? RoleAssignmentName.From(path.ExtractValueFromPath(6)) : null;
             
             switch (method)
             {
@@ -42,33 +45,39 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
                 {
                     if (isRoleDefinition)
                     {
-                        HandleCreateUpdateRoleDefinition(response, subscriptionIdentifier, roleDefinitionId, input);
+                        HandleCreateUpdateRoleDefinition(response, subscriptionIdentifier, roleDefinitionId!, input);
                         break;
                     }
 
-                    HandleCreateUpdateRoleAssignment(response, subscriptionIdentifier, roleAssignmentName, input);
+                    HandleCreateUpdateRoleAssignment(response, subscriptionIdentifier, roleAssignmentName!, input);
                     break;
                 }
                 case "GET":
                 {
                     if (isRoleDefinition)
                     {
+                        if (roleDefinitionId == null)
+                        {
+                            HandleListRoleDefinition(response, subscriptionIdentifier);
+                            break;
+                        }
+                        
                         HandleGetRoleDefinition(response, subscriptionIdentifier, roleDefinitionId);
                         break;
                     }
                     
-                    HandleGetRoleAssignment(response, subscriptionIdentifier, roleAssignmentName);
+                    HandleGetRoleAssignment(response, subscriptionIdentifier, roleAssignmentName!);
                     break;
                 }
                 case "DELETE":
                 {
                     if (isRoleDefinition)
                     {
-                        HandleDeleteRoleDefinition(response, subscriptionIdentifier, roleDefinitionId);
+                        HandleDeleteRoleDefinition(response, subscriptionIdentifier, roleDefinitionId!);
                         break;
                     }
                     
-                    HandleDeleteRoleAssignment(response, subscriptionIdentifier, roleAssignmentName);
+                    HandleDeleteRoleAssignment(response, subscriptionIdentifier, roleAssignmentName!);
                     break;
                 }
                 default:
@@ -85,6 +94,28 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
         }
         
         return response;
+    }
+
+    private void HandleListRoleDefinition(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier)
+    {
+        logger.LogDebug(nameof(SubscriptionAuthorizationEndpoint), nameof(HandleListRoleDefinition),
+            "Executing {0}: Attempting to list role definitions for subscription ID `{1}`.",
+            nameof(HandleListRoleDefinition), subscriptionIdentifier);
+
+        var definitions = _controlPlane.ListBySubscription(subscriptionIdentifier);
+        if (definitions.Result != OperationResult.Success || definitions.Resource == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        var result = new ListSubscriptionRoleDefinitionsResponse
+        {
+            Value = definitions.Resource.Select(ListSubscriptionRoleDefinitionsResponse.RoleDefinition.From).ToArray()
+        };
+        
+        response.Content = new StringContent(result.ToString());
+        response.StatusCode = HttpStatusCode.OK;
     }
 
     private void HandleDeleteRoleAssignment(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, RoleAssignmentName roleAssignmentName)
@@ -179,7 +210,8 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
 
     private void HandleGetRoleDefinition(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, RoleDefinitionIdentifier roleDefinitionIdentifier)
     {
-        logger.LogDebug(nameof(SubscriptionAuthorizationEndpoint), nameof(HandleGetRoleDefinition), "Executing {0}.", nameof(HandleGetRoleDefinition));
+        logger.LogDebug(nameof(SubscriptionAuthorizationEndpoint), nameof(HandleGetRoleDefinition),
+            "Looking for role {0} in subscription {1}.", roleDefinitionIdentifier, subscriptionIdentifier);
         
         var operation = _controlPlane.Get(subscriptionIdentifier, roleDefinitionIdentifier);
         if (operation.Result == OperationResult.NotFound || operation.Resource == null)

@@ -81,6 +81,9 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
     public T? GetAs<T>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id = null)
     {
+        _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(GetAs),
+            "Looking for a resource `{0}` in resource group `{1}` in subscription {2}.", id, resourceGroupIdentifier, subscriptionIdentifier);
+        
         var raw = Get(subscriptionIdentifier, resourceGroupIdentifier, id);
         if(string.IsNullOrEmpty(raw)) return default;
         var json = JsonSerializer.Deserialize<T>(raw, GlobalSettings.JsonOptions);
@@ -107,7 +110,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var servicePathSegments = TService.LocalDirectoryPath.Split("/");
         var defaultLookForNoOfSegments = servicePathSegments.Length + 2; // Local path will contain two additional segments: root directory and metadata filename 
         
-        _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(List),$"[{nameof(ResourceProviderBase<TService>)}:{nameof(List)}]: If lookForNoOfSegments parameter wasn't provided (was {lookForNoOfSegments}) will default to {defaultLookForNoOfSegments} segments lookup.");
+        _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(List),$"If lookForNoOfSegments parameter wasn't provided (was {lookForNoOfSegments}) will default to {defaultLookForNoOfSegments} segments lookup.");
         
         return metadataFiles.Where(file => file.Split("/").Length == (lookForNoOfSegments.HasValue ? lookForNoOfSegments.Value : defaultLookForNoOfSegments)).Select(File.ReadAllText);
     }

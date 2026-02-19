@@ -18,7 +18,7 @@ internal sealed class RoleDefinitionResource : ArmResource<RoleDefinitionResourc
         string name,
         RoleDefinitionResourceProperties properties)
     {
-        Id = $"/subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/vaults/{name}";
+        Id = $"/subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{name}";
         Name = name;
         Properties = properties;
     }

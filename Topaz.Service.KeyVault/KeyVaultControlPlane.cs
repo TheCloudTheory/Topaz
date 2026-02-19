@@ -171,8 +171,8 @@ internal sealed class KeyVaultControlPlane(
     public (OperationResult result, KeyVaultFullResource?[]? resource) ListBySubscription(SubscriptionIdentifier subscriptionIdentifier)
     {
         var resources = provider.ListAs<KeyVaultFullResource>(subscriptionIdentifier, null, null, 8);
-
         var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier));
+        
         return (OperationResult.Success, filteredResources.ToArray());
     }
     

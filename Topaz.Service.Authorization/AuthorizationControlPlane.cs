@@ -75,7 +75,28 @@ internal sealed class AuthorizationControlPlane(
     internal ControlPlaneOperationResult<RoleDefinitionResource> Get(SubscriptionIdentifier subscriptionIdentifier,
         RoleDefinitionIdentifier roleDefinitionIdentifier)
     {
+        logger.LogDebug(nameof(AuthorizationControlPlane), nameof(Get),
+            "Looking for role `{0}` in subscription `{1}`.", roleDefinitionIdentifier, subscriptionIdentifier);
+        
         var resource = subscriptionAuthorizationProvider.GetAs<RoleDefinitionResource>(subscriptionIdentifier, null, roleDefinitionIdentifier.Value);
+        if (resource != null)
+            return new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.Success, resource, null,
+                null);
+
+        logger.LogDebug(nameof(AuthorizationControlPlane), nameof(Get),
+            "Looking for role `{0}` in subscription `{1}` failed when looking for an exact match. Falling back to filtering using `roleName`.",
+            roleDefinitionIdentifier, subscriptionIdentifier);
+        
+        // Here's the thing - a role definition can be found be either its `name` - which is a GUID
+        // or `roleName` - which is a human-friendly string. If a role definition is created via SDK,
+        // then a user has control over the identifier used there. For Azure CLI however, the
+        // identifier is generated and cannot be provided explicitly. Topaz saves a role definition
+        // using that generated GUID, but a user may query the emulator using `roleName`.
+        var availableDefinitions =
+            ListBySubscription(subscriptionIdentifier);
+            
+        resource = availableDefinitions.Resource?.FirstOrDefault(definition => definition.Properties.RoleName == roleDefinitionIdentifier.Value);
+
         return resource == null
             ? new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.NotFound, null,
                 string.Format(RoleDefinitionNotFoundMessageTemplate, roleDefinitionIdentifier),
@@ -158,5 +179,13 @@ internal sealed class AuthorizationControlPlane(
                 string.Format(RoleDefinitionNotFoundMessageTemplate, roleAssignmentName),
                 RoleDefinitionNotFoundMessageCode)
             : new ControlPlaneOperationResult<RoleAssignmentResource>(OperationResult.Success, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult<RoleDefinitionResource[]> ListBySubscription(SubscriptionIdentifier subscriptionIdentifier)
+    {
+        var resources = subscriptionAuthorizationProvider.ListAs<RoleDefinitionResource>(subscriptionIdentifier, null, null, 6);
+        var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier));
+        
+        return new ControlPlaneOperationResult<RoleDefinitionResource[]>(OperationResult.Success, filteredResources.ToArray(), null, null);
     }
 }

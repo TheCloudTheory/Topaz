@@ -13,8 +13,8 @@ public class TopazFixture
                                                          {
                                                            "endpoints":{
                                                              "resourceManager": "https://topaz.local.dev:8899",
-                                                             "activeDirectoryGraphResourceId": "https://topaz.local.dev:8899/",
-                                                             "microsoft_graph_resource_id": "https://topaz.local.dev:8899/"
+                                                             "activeDirectoryGraphResourceId": "https://graph.microsoft.com/",
+                                                             "microsoft_graph_resource_id": "https://graph.microsoft.com/"
                                                            },
                                                            "suffixes": {
                                                              "keyvault_dns": "https://topaz.local.dev:8898/"

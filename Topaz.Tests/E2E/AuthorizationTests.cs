@@ -126,4 +126,45 @@ public class AuthorizationTests
         await createdAssignment.Value.DeleteAsync(WaitUntil.Completed, roleAssignmentId);
         Assert.ThrowsAsync<RequestFailedException>(async () => await roleAssignments.GetAsync(roleAssignmentId));
     }
+
+    [Test]
+    public async Task RoleDefinition_List_IsEnumerableAndWellFormed()
+    {
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var roleDefinitions = subscription.GetAuthorizationRoleDefinitions();
+
+        // create a role definition to ensure there is at least one to enumerate
+        var roleDefinitionIdGuid = Guid.NewGuid();
+        var roleDefinitionId = new ResourceIdentifier($"{roleDefinitionIdGuid}");
+        var roleDefinitionData = new AuthorizationRoleDefinitionData
+        {
+            RoleName = "list-test-role",
+            Description = "Role used by list test",
+        };
+        roleDefinitionData.Permissions.Add(new RoleDefinitionPermission { Actions = { "Microsoft.Network/*/read" } });
+        roleDefinitionData.AssignableScopes.Add($"/subscriptions/{SubscriptionId}");
+
+        await roleDefinitions.CreateOrUpdateAsync(WaitUntil.Completed, roleDefinitionId, roleDefinitionData);
+
+        var created = await roleDefinitions.GetAsync(roleDefinitionId);
+
+        var foundAny = false;
+        await foreach (var rd in roleDefinitions.GetAllAsync())
+        {
+            foundAny = true;
+            Assert.That(rd.Data, Is.Not.Null);
+            Assert.Multiple(() =>
+            {
+                Assert.That(rd.Data.RoleName, Is.Not.Null.And.Not.Empty);
+                Assert.That(rd.Data.AssignableScopes, Is.Not.Null);
+            });
+        }
+
+        Assert.That(foundAny, Is.True);
+
+        // cleanup
+        await created.Value.DeleteAsync(WaitUntil.Completed);
+    }
 }
