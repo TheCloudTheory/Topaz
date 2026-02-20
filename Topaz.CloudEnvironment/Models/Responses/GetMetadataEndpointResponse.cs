@@ -22,7 +22,7 @@ internal sealed class GetMetadataEndpointResponse
 
     internal class AuthenticationMetadata
     {
-        public string LoginEndpoint => "https://login.microsoftonline.com/";
+        public string LoginEndpoint => "https://topaz.local.dev:8899/";
         
         public string[] Audiences => [
             "https://management.core.windows.net/",

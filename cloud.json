@@ -1,23 +1,25 @@
 {
-  "endpoints":{
+  "endpoints": {
     "resourceManager": "https://topaz.local.dev:8899",
-    "activeDirectoryGraphResourceId": "https://topaz.local.dev:8899/",
-    "microsoftGraphResourceId": "https://topaz.local.dev:8899/"
+    "activeDirectory": "https://topaz.local.dev:8899",
+    "activeDirectoryResourceId": "https://topaz.local.dev:8899",
+    "activeDirectoryGraphResourceId": "https://topaz.local.dev:8899",
+    "microsoft_graph_resource_id": "https://topaz.local.dev:8899"
   },
   "name": "Topaz",
   "suffixes": {
-      "acrLoginServerEndpoint": null,
-      "attestationEndpoint": null,
-      "azureDatalakeAnalyticsCatalogAndJobEndpoint": null,
-      "azureDatalakeStoreFileSystemEndpoint": null,
-      "keyvaultDns": ".vault.microsoftazure.de",
-      "mariadbServerEndpoint": ".mariadb.database.cloudapi.de",
-      "mhsmDns": ".managedhsm.microsoftazure.de",
-      "mysqlServerEndpoint": ".mysql.database.cloudapi.de",
-      "postgresqlServerEndpoint": ".postgres.database.cloudapi.de",
-      "sqlServerHostname": ".database.cloudapi.de",
-      "storageEndpoint": "core.cloudapi.de",
-      "storageSyncEndpoint": null,
-      "synapseAnalyticsEndpoint": null
+    "acrLoginServerEndpoint": null,
+    "attestationEndpoint": null,
+    "azureDatalakeAnalyticsCatalogAndJobEndpoint": null,
+    "azureDatalakeStoreFileSystemEndpoint": null,
+    "keyvaultDns": ".vault.microsoftazure.de",
+    "mariadbServerEndpoint": ".mariadb.database.cloudapi.de",
+    "mhsmDns": ".managedhsm.microsoftazure.de",
+    "mysqlServerEndpoint": ".mysql.database.cloudapi.de",
+    "postgresqlServerEndpoint": ".postgres.database.cloudapi.de",
+    "sqlServerHostname": ".database.cloudapi.de",
+    "storageEndpoint": "core.cloudapi.de",
+    "storageSyncEndpoint": null,
+    "synapseAnalyticsEndpoint": null
   }
 }

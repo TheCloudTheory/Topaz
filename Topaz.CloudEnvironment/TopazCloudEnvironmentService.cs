@@ -15,6 +15,7 @@ public sealed class TopazCloudEnvironmentService : IServiceDefinition
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         new MetadataEndpoint(),
-        new TenantsEndpoint()
+        new TenantsEndpoint(),
+        new OidcEndpoint()
     ];
 }
