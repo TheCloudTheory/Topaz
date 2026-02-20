@@ -1,0 +1,21 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Read access to identity synchronization configuration and sync status.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/22334455-6677-8899-aabb-ccddeeff2233",
+  "name": "22334455-6677-8899-aabb-ccddeeff2233",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/directorySync/read",
+        "Microsoft.AzureActiveDirectory/directorySync/status/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Identity Sync Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

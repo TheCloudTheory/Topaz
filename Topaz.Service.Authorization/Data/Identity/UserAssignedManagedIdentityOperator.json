@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage user-assigned managed identity lifecycle and assignment to resources.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/cc333333-4444-5555-6666-777788889999",
+  "name": "cc333333-4444-5555-6666-777788889999",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ManagedIdentity/userAssignedIdentities/*/write",
+        "Microsoft.ManagedIdentity/userAssignedIdentities/*/delete",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "User Assigned Managed Identity Operator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,34 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Security Admin Role",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/fb1c8493-542b-48eb-b624-b4c8fea62acd",
+  "name": "fb1c8493-542b-48eb-b624-b4c8fea62acd",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Authorization/policyAssignments/*",
+        "Microsoft.Authorization/policyDefinitions/*",
+        "Microsoft.Authorization/policyExemptions/*",
+        "Microsoft.Authorization/policySetDefinitions/*",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Management/managementGroups/read",
+        "Microsoft.operationalInsights/workspaces/*/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Security/*",
+        "Microsoft.IoTSecurity/*",
+        "Microsoft.IoTFirmwareDefense/*",
+        "Microsoft.Support/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Security Admin",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

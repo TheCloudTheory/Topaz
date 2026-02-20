@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Invite guest users to the directory and manage guest invitations.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/89898989-a1a1-b2b2-c3c3-d4d4e5e5f6f6",
+  "name": "89898989-a1a1-b2b2-c3c3-d4d4e5e5f6f6",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/invitations/*",
+        "Microsoft.AzureActiveDirectory/users/create",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Guest Inviter",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

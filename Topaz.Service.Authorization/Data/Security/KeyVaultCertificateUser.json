@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read certificate contents. Only works for key vaults that use the 'Azure role-based access control' permission model.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/db79e9a7-68ee-4b58-9aeb-b90e7c24fcba",
+  "name": "db79e9a7-68ee-4b58-9aeb-b90e7c24fcba",
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.KeyVault/vaults/certificates/read",
+        "Microsoft.KeyVault/vaults/secrets/getSecret/action",
+        "Microsoft.KeyVault/vaults/secrets/readMetadata/action",
+        "Microsoft.KeyVault/vaults/keys/read"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Key Vault Certificate User",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

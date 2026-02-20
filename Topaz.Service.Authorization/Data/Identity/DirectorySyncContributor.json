@@ -1,0 +1,20 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Manage directory synchronization configuration and sync jobs.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/99aabbcc-ddee-ff00-1122-334455667788",
+  "name": "99aabbcc-ddee-ff00-1122-334455667788",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/directorySync/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Directory Synchronization Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,21 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Release keys. Only works for key vaults that use the 'Azure role-based access control' permission model.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/08bbd89e-9f13-488c-ac41-acfcb10c90ab",
+  "name": "08bbd89e-9f13-488c-ac41-acfcb10c90ab",
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.KeyVault/vaults/keys/release/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Key Vault Crypto Service Release User",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

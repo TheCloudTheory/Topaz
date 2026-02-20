@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage directory roles and role assignments (assign/unassign roles).",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/a0a0a0a0-c3c3-d4d4-e5e5-f6f6a7a7b8b8",
+  "name": "a0a0a0a0-c3c3-d4d4-e5e5-f6f6a7a7b8b8",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/roleDefinitions/*/write",
+        "Microsoft.Authorization/roleAssignments/*/write",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Role Administrator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

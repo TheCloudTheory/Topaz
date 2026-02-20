@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Write access to directory objects: create/update users, groups and related directory entries.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/90909090-b2b2-c3c3-d4d4-e5e5f6f6a7a7",
+  "name": "90909090-b2b2-c3c3-d4d4-e5e5f6f6a7a7",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/*/write",
+        "Microsoft.AzureActiveDirectory/users/*/write",
+        "Microsoft.AzureActiveDirectory/groups/*/write",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Directory Writer",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

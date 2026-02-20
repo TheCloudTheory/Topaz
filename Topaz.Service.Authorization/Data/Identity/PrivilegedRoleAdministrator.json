@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage privileged identity management (PIM) settings and privileged role assignments.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/b1b1b1b1-d5d5-e6e6-f7f7-080809090a0a",
+  "name": "b1b1b1b1-d5d5-e6e6-f7f7-080809090a0a",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/privilegedRoleAssignments/*",
+        "Microsoft.Authorization/privilegedRoleSettings/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Privileged Role Administrator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

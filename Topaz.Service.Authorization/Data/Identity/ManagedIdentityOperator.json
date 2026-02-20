@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Operate system-assigned managed identities: assign/remove identities on resources.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/bb222222-3333-4444-5555-666677778888",
+  "name": "bb222222-3333-4444-5555-666677778888",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ManagedIdentity/*/assign/action",
+        "Microsoft.ManagedIdentity/*/remove/action",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Managed Identity Operator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

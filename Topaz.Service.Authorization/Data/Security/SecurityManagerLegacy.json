@@ -1,0 +1,30 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "This is a legacy role. Please use Security Administrator instead",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/e3d13bf0-dd5a-482e-ba6b-9b8433878d10",
+  "name": "e3d13bf0-dd5a-482e-ba6b-9b8433878d10",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.ClassicCompute/*/read",
+        "Microsoft.ClassicCompute/virtualMachines/*/write",
+        "Microsoft.ClassicNetwork/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Security/*",
+        "Microsoft.Support/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Security Manager (Legacy)",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

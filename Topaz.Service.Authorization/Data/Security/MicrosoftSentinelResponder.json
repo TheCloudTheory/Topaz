@@ -1,0 +1,53 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Microsoft Sentinel Responder",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/3e150937-b8fe-4cfb-8069-0eaf05ecd056",
+  "name": "3e150937-b8fe-4cfb-8069-0eaf05ecd056",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.SecurityInsights/*/read",
+        "Microsoft.SecurityInsights/dataConnectorsCheckRequirements/action",
+        "Microsoft.SecurityInsights/automationRules/*",
+        "Microsoft.SecurityInsights/cases/*",
+        "Microsoft.SecurityInsights/incidents/*",
+        "Microsoft.SecurityInsights/entities/runPlaybook/action",
+        "Microsoft.SecurityInsights/threatIntelligence/indicators/appendTags/action",
+        "Microsoft.SecurityInsights/threatIntelligence/indicators/query/action",
+        "Microsoft.SecurityInsights/threatIntelligence/bulkTag/action",
+        "Microsoft.SecurityInsights/threatIntelligence/indicators/replaceTags/action",
+        "Microsoft.SecurityInsights/threatIntelligence/queryIndicators/action",
+        "Microsoft.SecurityInsights/businessApplicationAgents/systems/undoAction/action",
+        "Microsoft.OperationalInsights/workspaces/analytics/query/action",
+        "Microsoft.OperationalInsights/workspaces/*/read",
+        "Microsoft.OperationalInsights/workspaces/dataSources/read",
+        "Microsoft.OperationalInsights/workspaces/savedSearches/read",
+        "Microsoft.OperationsManagement/solutions/read",
+        "Microsoft.OperationalInsights/workspaces/query/read",
+        "Microsoft.OperationalInsights/workspaces/query/*/read",
+        "Microsoft.OperationalInsights/workspaces/dataSources/read",
+        "Microsoft.OperationalInsights/querypacks/*/read",
+        "Microsoft.Insights/workbooks/read",
+        "Microsoft.Insights/myworkbooks/read",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Support/*"
+      ],
+      "notActions": [
+        "Microsoft.SecurityInsights/cases/*/Delete",
+        "Microsoft.SecurityInsights/incidents/*/Delete",
+        "Microsoft.SecurityInsights/ConfidentialWatchlists/*",
+        "Microsoft.OperationalInsights/workspaces/query/ConfidentialWatchlist/*"
+      ],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Microsoft Sentinel Responder",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

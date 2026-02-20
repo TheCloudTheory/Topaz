@@ -1,0 +1,20 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Create and manage conditional access policies and authentication rules.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/23232323-4545-6767-8989-aaaaaaaaaaaa",
+  "name": "23232323-4545-6767-8989-aaaaaaaaaaaa",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/policies/conditionalAccess/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Conditional Access Administrator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

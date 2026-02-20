@@ -1,0 +1,20 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Manage cloud application properties, owners and application settings.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/ff777777-8888-9999-aaaa-bbbbccccdddd",
+  "name": "ff777777-8888-9999-aaaa-bbbbccccdddd",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/cloudApplications/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Cloud Application Administrator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

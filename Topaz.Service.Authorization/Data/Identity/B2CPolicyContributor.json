@@ -1,0 +1,21 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Manage Azure AD B2C policies, user flows and related configuration.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/45454545-6767-8989-9090-cccccccccccc",
+  "name": "45454545-6767-8989-9090-cccccccccccc",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/b2cPolicies/*",
+        "Microsoft.AzureActiveDirectory/userFlows/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "B2C Policy Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

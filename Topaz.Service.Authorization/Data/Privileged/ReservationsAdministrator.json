@@ -3,8 +3,7 @@
   "id": "a8889054-8d42-49c9-bc1c-52486c10e7cd",
   "description": "Lets one read and manage all the reservations in a tenant.",
   "category": "Privileged",
-  "builtIn": true
-}
+  "builtIn": true,
   "assignableScopes": ["/providers/Microsoft.Capacity"],
   "actions": [
     "Microsoft.Capacity/*/read",
@@ -18,3 +17,4 @@
   "notActions": [],
   "dataActions": [],
   "notDataActions": []
+}

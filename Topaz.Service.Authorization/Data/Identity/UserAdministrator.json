@@ -1,0 +1,21 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Create, update and manage user accounts and group membership.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/bb333333-4444-5555-6666-777788889999",
+  "name": "bb333333-4444-5555-6666-777788889999",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/users/*",
+        "Microsoft.AzureActiveDirectory/groups/members/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "User Administrator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

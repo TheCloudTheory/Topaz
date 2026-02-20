@@ -1,0 +1,20 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Read access to external identity providers and federation metadata.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/67676767-8989-9090-1111-eeeeeeeeeeee",
+  "name": "67676767-8989-9090-1111-eeeeeeeeeeee",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/externalIdentityProviders/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "External Identity Provider Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

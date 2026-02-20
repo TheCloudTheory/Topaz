@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read access to access review definitions, instances and results.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/c2c2c2c2-e6e6-f7f7-0808-09090a0a0b0b",
+  "name": "c2c2c2c2-e6e6-f7f7-0808-09090a0a0b0b",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AccessReview/*/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Access Review Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

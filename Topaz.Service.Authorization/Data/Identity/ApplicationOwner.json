@@ -1,0 +1,21 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Full ownership for application registrations including owners and settings.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/33445566-7788-99aa-bbcc-ddeeff334455",
+  "name": "33445566-7788-99aa-bbcc-ddeeff334455",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/applications/*/write",
+        "Microsoft.AzureActiveDirectory/applications/owners/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Application Owner",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

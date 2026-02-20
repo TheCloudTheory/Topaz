@@ -3,9 +3,7 @@
   "id": "18d7d88d-d35e-4fb5-a5c3-7773c20a72d9",
   "description": "Lets you manage user access to Azure resources.",
   "category": "Privileged",
-  "builtIn": true
-}
-  ,
+  "builtIn": true,
   "assignableScopes": ["/"],
   "actions": [
     "*/read",
@@ -15,3 +13,4 @@
   "notActions": [],
   "dataActions": [],
   "notDataActions": []
+}

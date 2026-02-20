@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage identity providers and identity configurations for services.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/ee555555-6666-7777-8888-99990000aaaa",
+  "name": "ee555555-6666-7777-8888-99990000aaaa",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ManagedIdentity/providers/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Identity Provider Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

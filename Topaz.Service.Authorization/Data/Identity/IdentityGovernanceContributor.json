@@ -1,0 +1,20 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Manage identity governance tasks including access reviews and entitlement management.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/34343434-5656-7878-9090-bbbbbbbbbbbb",
+  "name": "34343434-5656-7878-9090-bbbbbbbbbbbb",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.IdentityGovernance/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Identity Governance Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

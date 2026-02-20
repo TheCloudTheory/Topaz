@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Create and manage user-assigned managed identities and assign roles.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/aa111111-2222-3333-4444-555566667777",
+  "name": "aa111111-2222-3333-4444-555566667777",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ManagedIdentity/userAssignedIdentities/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Managed Identity Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

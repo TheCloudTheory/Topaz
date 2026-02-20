@@ -1,0 +1,39 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Microsoft Sentinel Contributor",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/ab8e14d6-4a74-4a29-9ba8-549422addade",
+  "name": "ab8e14d6-4a74-4a29-9ba8-549422addade",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.SecurityInsights/*",
+        "Microsoft.OperationalInsights/workspaces/analytics/query/action",
+        "Microsoft.OperationalInsights/workspaces/*/read",
+        "Microsoft.OperationalInsights/workspaces/savedSearches/*",
+        "Microsoft.OperationsManagement/solutions/read",
+        "Microsoft.OperationalInsights/workspaces/query/read",
+        "Microsoft.OperationalInsights/workspaces/query/*/read",
+        "Microsoft.OperationalInsights/workspaces/dataSources/read",
+        "Microsoft.OperationalInsights/querypacks/*/read",
+        "Microsoft.Insights/workbooks/*",
+        "Microsoft.Insights/myworkbooks/read",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Support/*"
+      ],
+      "notActions": [
+        "Microsoft.SecurityInsights/ConfidentialWatchlists/*",
+        "Microsoft.OperationalInsights/workspaces/query/ConfidentialWatchlist/*"
+      ],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Microsoft Sentinel Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

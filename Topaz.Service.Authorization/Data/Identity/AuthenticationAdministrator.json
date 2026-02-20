@@ -1,0 +1,21 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Manage authentication methods, MFA and authentication policies.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/cc444444-5555-6666-7777-888899990000",
+  "name": "cc444444-5555-6666-7777-888899990000",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/authenticationMethods/*",
+        "Microsoft.AzureActiveDirectory/policies/authentication/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Authentication Administrator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

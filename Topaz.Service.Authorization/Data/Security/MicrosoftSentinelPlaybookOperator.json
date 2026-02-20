@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Microsoft Sentinel Playbook Operator",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/51d6186e-6489-4900-b93f-92e23144cca5",
+  "name": "51d6186e-6489-4900-b93f-92e23144cca5",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Logic/workflows/read",
+        "Microsoft.Logic/workflows/triggers/listCallbackUrl/action",
+        "Microsoft.Web/sites/hostruntime/webhooks/api/workflows/triggers/listCallbackUrl/action",
+        "Microsoft.Web/sites/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Microsoft Sentinel Playbook Operator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

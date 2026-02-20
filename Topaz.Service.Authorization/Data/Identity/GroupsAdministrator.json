@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Create, manage and delete groups and group memberships.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/78787878-9090-abab-cdcd-efef12121212",
+  "name": "78787878-9090-abab-cdcd-efef12121212",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/groups/*",
+        "Microsoft.AzureActiveDirectory/groups/members/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Groups Administrator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

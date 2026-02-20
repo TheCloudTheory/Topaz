@@ -1,0 +1,21 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Manage API permissions and consent for applications and service principals.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/88990011-bbcc-ddee-ff00-112233445566",
+  "name": "88990011-bbcc-ddee-ff00-112233445566",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/apiPermissions/*",
+        "Microsoft.AzureActiveDirectory/servicePrincipals/permissions/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Permission Administrator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,21 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Read-only access to service principals and their credential metadata.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/44556677-8899-aabb-ccdd-eeff44556677",
+  "name": "44556677-8899-aabb-ccdd-eeff44556677",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/servicePrincipals/read",
+        "Microsoft.AzureActiveDirectory/servicePrincipals/credentials/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Principal Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

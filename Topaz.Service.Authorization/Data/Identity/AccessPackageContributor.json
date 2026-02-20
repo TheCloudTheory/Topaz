@@ -1,0 +1,21 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Manage access packages, catalogs, and policy assignments in entitlement management.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/55667788-99aa-bbcc-ddee-ff0011223344",
+  "name": "55667788-99aa-bbcc-ddee-ff0011223344",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EntitlementManagement/accessPackages/*",
+        "Microsoft.EntitlementManagement/catalogs/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Access Package Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

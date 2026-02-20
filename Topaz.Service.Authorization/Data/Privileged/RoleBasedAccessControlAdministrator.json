@@ -3,13 +3,6 @@
   "id": "f58310d9-a9f6-439a-9e8d-f62e7b41a168",
   "description": "Manage access to Azure resources by assigning roles using Azure RBAC. This role does not allow you to manage access using other ways, such as Azure Policy.",
   "category": "Privileged",
-  "builtIn": true
-}
-{
-  "roleName": "Role Based Access Control Administrator",
-  "id": "f58310d9-a9f6-439a-9e8d-f62e7b41a168",
-  "description": "Manage access to Azure resources by assigning roles using Azure RBAC. This role does not allow you to manage access using other ways, such as Azure Policy.",
-  "category": "Privileged",
   "builtIn": true,
   "assignableScopes": ["/"],
   "actions": [

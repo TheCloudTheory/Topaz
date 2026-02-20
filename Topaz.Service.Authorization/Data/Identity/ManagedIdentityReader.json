@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read access to managed identity resources and their principal IDs.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/dd444444-5555-6666-7777-888899990000",
+  "name": "dd444444-5555-6666-7777-888899990000",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ManagedIdentity/*/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Managed Identity Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,21 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Manage external users and their access, including guest account lifecycle.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/12131415-1617-1819-1a1b-1c1d1e1f2021",
+  "name": "12131415-1617-1819-1a1b-1c1d1e1f2021",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/externalUsers/*",
+        "Microsoft.AzureActiveDirectory/invitations/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "External User Administrator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

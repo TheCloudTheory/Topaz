@@ -1,0 +1,21 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Manage privileged authentication features and emergency access policies.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/ee666666-7777-8888-9999-aaaabbbbcccc",
+  "name": "ee666666-7777-8888-9999-aaaabbbbcccc",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureActiveDirectory/privilegedAuthentication/*",
+        "Microsoft.AzureActiveDirectory/policies/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Privileged Authentication Administrator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}
