@@ -4,7 +4,9 @@
   "description": "Allows for full access to Azure Storage blob containers and data, including assigning POSIX access control.",
   "category": "Storage",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [
     "Microsoft.Storage/storageAccounts/blobServices/containers/*",
     "Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action"
@@ -13,5 +15,18 @@
   "dataActions": [
     "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/*"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Storage/storageAccounts/blobServices/containers/*",
+        "Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/*"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

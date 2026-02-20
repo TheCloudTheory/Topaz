@@ -1,0 +1,26 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can approve Microsoft support requests to access specific resources contained within a subscription, or the subscription itself, when Customer Lockbox for Microsoft Azure is enabled on the tenant where the subscription resides.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/4dae6930-7baf-46f5-909e-0383bc931c46",
+  "name": "4dae6930-7baf-46f5-909e-0383bc931c46",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Resources/subscriptions/read",
+        "Microsoft.CustomerLockbox/requests/UpdateApproval/action",
+        "Microsoft.CustomerLockbox/requests/read",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Insights/eventtypes/values/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure Customer Lockbox Approver for Subscription",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

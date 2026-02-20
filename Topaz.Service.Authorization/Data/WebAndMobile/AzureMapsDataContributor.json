@@ -15,5 +15,18 @@
     "Microsoft.Maps/accounts/*/delete",
     "Microsoft.Maps/accounts/*/action"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Maps/accounts/*/read",
+        "Microsoft.Maps/accounts/*/write",
+        "Microsoft.Maps/accounts/*/delete",
+        "Microsoft.Maps/accounts/*/action"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

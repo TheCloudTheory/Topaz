@@ -4,12 +4,25 @@
   "description": "Allows for peek, receive, and delete access to Azure Storage queue messages",
   "category": "Storage",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
     "Microsoft.Storage/storageAccounts/queueServices/queues/messages/read",
     "Microsoft.Storage/storageAccounts/queueServices/queues/messages/process/action"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Storage/storageAccounts/queueServices/queues/messages/read",
+        "Microsoft.Storage/storageAccounts/queueServices/queues/messages/process/action"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

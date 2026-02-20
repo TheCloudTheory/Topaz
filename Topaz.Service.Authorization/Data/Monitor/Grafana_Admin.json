@@ -1,0 +1,21 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage server-wide settings and manage access to resources such as organizations, users, and licenses.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/22926164-76b3-42b3-bc55-97df8dab3e41",
+  "name": "22926164-76b3-42b3-bc55-97df8dab3e41",
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Dashboard/grafana/ActAsGrafanaAdmin/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Grafana Admin",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

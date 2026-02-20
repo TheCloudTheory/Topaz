@@ -1,0 +1,34 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Provides access to manage maintenance configurations with maintenance scope InGuestPatch and corresponding configuration assignments",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/cd08ab90-6b14-449c-ad9a-8f8e549482c6",
+  "name": "cd08ab90-6b14-449c-ad9a-8f8e549482c6",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Maintenance/maintenanceConfigurations/read",
+        "Microsoft.Maintenance/maintenanceConfigurations/write",
+        "Microsoft.Maintenance/maintenanceConfigurations/delete",
+        "Microsoft.Maintenance/configurationAssignments/read",
+        "Microsoft.Maintenance/configurationAssignments/write",
+        "Microsoft.Maintenance/configurationAssignments/delete",
+        "Microsoft.Maintenance/configurationAssignments/maintenanceScope/InGuestPatch/read",
+        "Microsoft.Maintenance/configurationAssignments/maintenanceScope/InGuestPatch/write",
+        "Microsoft.Maintenance/configurationAssignments/maintenanceScope/InGuestPatch/delete",
+        "Microsoft.Maintenance/maintenanceConfigurations/maintenanceScope/InGuestPatch/read",
+        "Microsoft.Maintenance/maintenanceConfigurations/maintenanceScope/InGuestPatch/write",
+        "Microsoft.Maintenance/maintenanceConfigurations/maintenanceScope/InGuestPatch/delete",
+        "Microsoft.Maintenance/applyUpdates/read",
+        "Microsoft.Maintenance/updates/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Scheduled Patching Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

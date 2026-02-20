@@ -4,7 +4,9 @@
   "description": "Can manage CDN and Azure Front Door standard and premium profiles and their endpoints, but can't grant access to other users.",
   "category": "Networking",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [
     "Microsoft.Authorization/*/read",
     "Microsoft.Cdn/edgenodes/read",
@@ -17,5 +19,22 @@
   ],
   "notActions": [],
   "dataActions": [],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Cdn/edgenodes/read",
+        "Microsoft.Cdn/operationresults/*",
+        "Microsoft.Cdn/profiles/*",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Support/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ]
 }

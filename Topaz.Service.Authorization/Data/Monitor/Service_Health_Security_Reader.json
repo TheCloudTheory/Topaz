@@ -1,0 +1,33 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Grants permissions to view sensitive security information present in service health events",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/1a928ab0-1fee-43cf-9266-f9d8c22a8ddb",
+  "name": "1a928ab0-1fee-43cf-9266-f9d8c22a8ddb",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ResourceHealth/events/action",
+        "Microsoft.ResourceHealth/AvailabilityStatuses/read",
+        "Microsoft.ResourceHealth/AvailabilityStatuses/current/read",
+        "Microsoft.ResourceHealth/Operations/read",
+        "Microsoft.ResourceHealth/emergingissues/read",
+        "Microsoft.ResourceHealth/events/read",
+        "Microsoft.ResourceHealth/events/fetchEventDetails/action",
+        "Microsoft.ResourceHealth/events/listSecurityAdvisoryImpactedResources/action",
+        "Microsoft.ResourceHealth/events/impactedResources/read",
+        "Microsoft.ResourceHealth/metadata/read",
+        "Microsoft.ResourceHealth/potentialoutages/read"
+      ],
+      "notActions": [
+        "Microsoft.ResourceHealth/events/fetchBillingCommunicationDetails/action"
+      ],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Health Security Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/providers/Microsoft.Capacity"
+  ],
+  "description": "Lets one read all the reservations in a tenant",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/582fc458-8989-419f-a480-75249bc5db7e",
+  "name": "582fc458-8989-419f-a480-75249bc5db7e",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Capacity/*/read",
+        "Microsoft.Authorization/roleAssignments/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Reservations Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

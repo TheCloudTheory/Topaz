@@ -1,0 +1,21 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "View dashboards, playlists, and query data sources.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/60921a7e-fef1-4a43-9b16-a26c52ad4769",
+  "name": "60921a7e-fef1-4a43-9b16-a26c52ad4769",
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Dashboard/grafana/ActAsGrafanaViewer/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Grafana Viewer",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

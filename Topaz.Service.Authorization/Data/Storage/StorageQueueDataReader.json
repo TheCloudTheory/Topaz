@@ -4,7 +4,9 @@
   "description": "Allows for read access to Azure Storage queues and queue messages",
   "category": "Storage",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [
     "Microsoft.Storage/storageAccounts/queueServices/queues/read"
   ],
@@ -12,5 +14,17 @@
   "dataActions": [
     "Microsoft.Storage/storageAccounts/queueServices/queues/messages/read"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Storage/storageAccounts/queueServices/queues/read"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Storage/storageAccounts/queueServices/queues/messages/read"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

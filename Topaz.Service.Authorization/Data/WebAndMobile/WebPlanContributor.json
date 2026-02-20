@@ -4,7 +4,9 @@
   "description": "Manage the web plans for websites. Does not allow you to assign roles in Azure RBAC.",
   "category": "Web and Mobile",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [
     "Microsoft.Authorization/*/read",
     "Microsoft.Insights/alertRules/*",
@@ -18,5 +20,23 @@
   ],
   "notActions": [],
   "dataActions": [],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Support/*",
+        "Microsoft.Web/serverFarms/*",
+        "Microsoft.Web/hostingEnvironments/Join/Action",
+        "Microsoft.Insights/autoscalesettings/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ]
 }

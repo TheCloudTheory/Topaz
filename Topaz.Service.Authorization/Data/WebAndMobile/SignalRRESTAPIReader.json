@@ -4,7 +4,9 @@
   "description": "Read-only access to Azure SignalR Service REST APIs",
   "category": "Web and Mobile",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
@@ -12,5 +14,17 @@
     "Microsoft.SignalRService/SignalR/clientConnection/read",
     "Microsoft.SignalRService/SignalR/user/read"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.SignalRService/SignalR/group/read",
+        "Microsoft.SignalRService/SignalR/clientConnection/read",
+        "Microsoft.SignalRService/SignalR/user/read"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

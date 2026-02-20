@@ -1,0 +1,52 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Custom Role for AzureStackHCI RP to manage hybrid compute machines and hybrid connectivity endpoints in a resource group",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/f5819b54-e033-4d82-ac66-4fec3cbf3f4c",
+  "name": "f5819b54-e033-4d82-ac66-4fec3cbf3f4c",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.GuestConfiguration/guestConfigurationAssignments/*/read",
+        "Microsoft.GuestConfiguration/guestConfigurationAssignments/read",
+        "Microsoft.GuestConfiguration/guestConfigurationAssignments/write",
+        "Microsoft.HybridCompute/machines/read",
+        "Microsoft.HybridCompute/machines/extensions/read",
+        "Microsoft.HybridCompute/*/read",
+        "Microsoft.HybridCompute/machines/delete",
+        "Microsoft.HybridCompute/machines/extensions/delete",
+        "Microsoft.HybridCompute/machines/extensions/write",
+        "Microsoft.HybridCompute/machines/licenseProfiles/delete",
+        "Microsoft.HybridCompute/machines/licenseProfiles/read",
+        "Microsoft.HybridCompute/machines/licenseProfiles/write",
+        "Microsoft.HybridCompute/machines/UpgradeExtensions/action",
+        "Microsoft.HybridCompute/machines/write",
+        "Microsoft.HybridConnectivity/endpoints/read",
+        "Microsoft.HybridConnectivity/endpoints/serviceConfigurations/read",
+        "Microsoft.HybridConnectivity/endpoints/serviceConfigurations/write",
+        "Microsoft.HybridConnectivity/endpoints/write",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.EdgeMarketplace/locations/operationStatuses/read",
+        "Microsoft.EdgeMarketPlace/offers/getAccessToken/action",
+        "Microsoft.EdgeMarketPlace/offers/generateAccessToken/action",
+        "Microsoft.EdgeMarketplace/publishers/read",
+        "Microsoft.EdgeMarketplace/offers/read",
+        "Microsoft.ExtendedLocation/customLocations/read",
+        "Microsoft.Attestation/attestationProviders/write",
+        "Microsoft.Attestation/attestationProviders/read",
+        "Microsoft.Attestation/attestationProviders/delete",
+        "Microsoft.Attestation/attestationProviders/attestation/read",
+        "Microsoft.Attestation/attestationProviders/attestation/write",
+        "Microsoft.Attestation/attestationProviders/attestation/delete"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure Connected Machine Resource Manager",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

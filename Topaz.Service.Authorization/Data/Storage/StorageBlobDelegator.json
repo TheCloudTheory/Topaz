@@ -4,11 +4,23 @@
   "description": "Allows for generation of a user delegation key which can be used to sign SAS tokens",
   "category": "Storage",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [
     "Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action"
   ],
   "notActions": [],
   "dataActions": [],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ]
 }

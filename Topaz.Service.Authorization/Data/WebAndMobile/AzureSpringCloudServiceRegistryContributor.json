@@ -4,7 +4,9 @@
   "description": "Allow read, write and delete access to Azure Spring Cloud Service Registry",
   "category": "Web and Mobile",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
@@ -12,5 +14,17 @@
     "Microsoft.AppPlatform/Spring/eurekaService/write",
     "Microsoft.AppPlatform/Spring/eurekaService/delete"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.AppPlatform/Spring/eurekaService/read",
+        "Microsoft.AppPlatform/Spring/eurekaService/write",
+        "Microsoft.AppPlatform/Spring/eurekaService/delete"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

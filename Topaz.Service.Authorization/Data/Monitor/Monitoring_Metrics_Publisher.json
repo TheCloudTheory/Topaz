@@ -1,0 +1,26 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Enables publishing metrics against Azure resources",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/3913510d-42f4-4e42-8a64-420c390055eb",
+  "name": "3913510d-42f4-4e42-8a64-420c390055eb",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Insights/Register/Action",
+        "Microsoft.Support/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Insights/Metrics/Write",
+        "Microsoft.Insights/Telemetry/Write"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Monitoring Metrics Publisher",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

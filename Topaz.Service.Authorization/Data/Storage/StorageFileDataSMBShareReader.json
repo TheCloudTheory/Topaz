@@ -4,11 +4,23 @@
   "description": "Allows for read access to Azure File Share over SMB",
   "category": "Storage",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
     "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/read"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/read"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

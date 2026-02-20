@@ -4,7 +4,9 @@
   "description": "Read real-time logs for Spring Cloud Gateway in Azure Spring Apps",
   "category": "Web and Mobile",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [
     "Microsoft.AppPlatform/Spring/read",
     "Microsoft.AppPlatform/Spring/gateways/read"
@@ -13,5 +15,18 @@
   "dataActions": [
     "Microsoft.AppPlatform/Spring/SpringCloudGateway/logstream/action"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AppPlatform/Spring/read",
+        "Microsoft.AppPlatform/Spring/gateways/read"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.AppPlatform/Spring/SpringCloudGateway/logstream/action"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

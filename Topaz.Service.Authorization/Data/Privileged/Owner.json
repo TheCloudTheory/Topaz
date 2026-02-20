@@ -4,9 +4,23 @@
   "description": "Grants full access to manage all resources, including the ability to assign roles in Azure RBAC.",
   "category": "Privileged",
   "builtIn": true,
-  "assignableScopes": ["/"],
-  "actions": ["*"],
+  "assignableScopes": [
+    "/"
+  ],
+  "actions": [
+    "*"
+  ],
   "notActions": [],
   "dataActions": [],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ]
 }

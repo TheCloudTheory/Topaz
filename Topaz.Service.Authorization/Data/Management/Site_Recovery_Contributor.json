@@ -1,0 +1,49 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Lets you manage Site Recovery service except vault creation and role assignment",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/6670b86e-a3f7-4917-ac9b-5d6ab1be4567",
+  "name": "6670b86e-a3f7-4917-ac9b-5d6ab1be4567",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Network/virtualNetworks/read",
+        "Microsoft.RecoveryServices/locations/allocatedStamp/read",
+        "Microsoft.RecoveryServices/locations/allocateStamp/action",
+        "Microsoft.RecoveryServices/Vaults/certificates/write",
+        "Microsoft.RecoveryServices/Vaults/extendedInformation/*",
+        "Microsoft.RecoveryServices/Vaults/read",
+        "Microsoft.RecoveryServices/Vaults/refreshContainers/read",
+        "Microsoft.RecoveryServices/Vaults/registeredIdentities/*",
+        "Microsoft.RecoveryServices/vaults/replicationAlertSettings/*",
+        "Microsoft.RecoveryServices/vaults/replicationEvents/read",
+        "Microsoft.RecoveryServices/vaults/replicationFabrics/*",
+        "Microsoft.RecoveryServices/vaults/replicationJobs/*",
+        "Microsoft.RecoveryServices/vaults/replicationPolicies/*",
+        "Microsoft.RecoveryServices/vaults/replicationRecoveryPlans/*",
+        "Microsoft.RecoveryServices/vaults/replicationVaultSettings/*",
+        "Microsoft.RecoveryServices/Vaults/storageConfig/*",
+        "Microsoft.RecoveryServices/Vaults/tokenInfo/read",
+        "Microsoft.RecoveryServices/Vaults/usages/read",
+        "Microsoft.RecoveryServices/Vaults/vaultTokens/read",
+        "Microsoft.RecoveryServices/Vaults/monitoringAlerts/*",
+        "Microsoft.RecoveryServices/Vaults/monitoringConfigurations/notificationConfiguration/read",
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Storage/storageAccounts/read",
+        "Microsoft.RecoveryServices/vaults/replicationOperationStatus/read",
+        "Microsoft.Support/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Site Recovery Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,28 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Grants read-only access to all SRE Agent data, including chats, incidents, logs, and configurations. Does not permit interaction with the agent.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/a4b156ac-253f-4a1a-9851-96d62b71b047",
+  "name": "a4b156ac-253f-4a1a-9851-96d62b71b047",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.App/agents/read"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.App/agents/threads/read",
+        "Microsoft.App/agents/graph/read",
+        "Microsoft.App/agents/memory/read",
+        "Microsoft.App/agents/incidentManagement/read"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "SRE Agent Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

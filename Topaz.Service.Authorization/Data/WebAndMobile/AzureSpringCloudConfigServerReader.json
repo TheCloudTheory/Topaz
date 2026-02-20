@@ -4,11 +4,23 @@
   "description": "Allow read access to Azure Spring Cloud Config Server",
   "category": "Web and Mobile",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
     "Microsoft.AppPlatform/Spring/configService/read"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.AppPlatform/Spring/configService/read"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

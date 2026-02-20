@@ -4,11 +4,23 @@
   "description": "Allows end user to assume ownership of a file/directory",
   "category": "Storage",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
     "Microsoft.Storage/storageAccounts/fileServices/takeOwnership/action"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Storage/storageAccounts/fileServices/takeOwnership/action"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

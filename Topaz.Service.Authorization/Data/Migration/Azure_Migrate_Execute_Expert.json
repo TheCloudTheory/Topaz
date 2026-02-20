@@ -1,0 +1,81 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Grants restricted access on an Azure Migrate project to only perform migration related operations, including replication, execution of test migrations, tracking and monitoring of migration progress, and initiation of agentless and agent-based migrations.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/1cfa4eac-9a23-481c-a793-bfb6958e836b",
+  "name": "1cfa4eac-9a23-481c-a793-bfb6958e836b",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Resources/subscriptions/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/write",
+        "Microsoft.Resources/subscriptions/locations/read",
+        "Microsoft.Resources/checkResourceName/action",
+        "Microsoft.Resources/deploymentScripts/write",
+        "Microsoft.Resources/deploymentScripts/read",
+        "Microsoft.Resources/links/write",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Authorization/locks/write",
+        "Microsoft.Authorization/locks/delete",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Migrate/*/read",
+        "Microsoft.ApplicationMigration/*/read",
+        "Microsoft.OffAzure/*/read",
+        "Microsoft.MySQLDiscovery/*/read",
+        "Microsoft.Support/*",
+        "Microsoft.Network/networkInterfaces/read",
+        "Microsoft.Network/networkInterfaces/write",
+        "Microsoft.Network/networkInterfaces/delete",
+        "Microsoft.Network/virtualNetworks/read",
+        "Microsoft.Network/virtualNetworks/subnets/read",
+        "Microsoft.Storage/storageAccounts/*/read",
+        "Microsoft.Storage/storageAccounts/*/write",
+        "Microsoft.Storage/storageAccounts/listKeys/action",
+        "Microsoft.Compute/register/action",
+        "Microsoft.Compute/availabilitySets/read",
+        "Microsoft.Compute/availabilitySets/vmSizes/read",
+        "Microsoft.Compute/diskEncryptionSets/read",
+        "Microsoft.Compute/skus/read",
+        "Microsoft.Compute/disks/read",
+        "Microsoft.Compute/disks/write",
+        "Microsoft.Compute/disks/delete",
+        "Microsoft.Compute/virtualMachines/read",
+        "Microsoft.Compute/virtualMachines/write",
+        "Microsoft.Compute/virtualMachines/delete",
+        "Microsoft.RecoveryServices/vaults/*",
+        "Microsoft.RecoveryServices/register/action",
+        "Microsoft.RecoveryServices/operations/read",
+        "Microsoft.Resources/links/read",
+        "Microsoft.DependencyMap/*/read",
+        "Microsoft.DependencyMap/maps/*/action"
+      ],
+      "notActions": [
+        "Microsoft.OffAzure/hypervSites/machines/inventoryinsights/pendingupdates/*",
+        "Microsoft.OffAzure/hypervSites/machines/inventoryinsights/vulnerabilities/*",
+        "Microsoft.OffAzure/serverSites/machines/inventoryinsights/pendingupdates/*",
+        "Microsoft.OffAzure/serverSites/machines/inventoryinsights/vulnerabilities/*",
+        "Microsoft.OffAzure/vmwareSites/machines/inventoryinsights/vulnerabilities/*",
+        "Microsoft.OffAzure/vmwareSites/machines/inventoryinsights/pendingupdates/*"
+      ],
+      "dataActions": [],
+      "notDataActions": []
+    },
+    {
+      "actions": [
+        "Microsoft.Authorization/roleAssignments/write",
+        "Microsoft.Authorization/roleAssignments/delete"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": [],
+      "conditionVersion": "2.0",
+      "condition": "((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{17d1049b-9a84-46fb-8f53-869881c3d3ab, ba92f5b4-2d11-453d-a403-e96b0029c9fe})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{17d1049b-9a84-46fb-8f53-869881c3d3ab, ba92f5b4-2d11-453d-a403-e96b0029c9fe}))"
+    }
+  ],
+  "roleName": "Azure Migrate Execute Expert",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

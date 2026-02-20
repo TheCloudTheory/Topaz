@@ -4,7 +4,9 @@
   "description": "Allows for admin access equivalent to storage account key for end users over SMB.",
   "category": "Storage",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
@@ -16,5 +18,21 @@
     "Microsoft.Storage/storageAccounts/fileServices/writeFileBackupSemantics/action",
     "Microsoft.Storage/storageAccounts/fileServices/takeOwnership/action"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/read",
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/write",
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/delete",
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/modifypermissions/action",
+        "Microsoft.Storage/storageAccounts/fileServices/readFileBackupSemantics/action",
+        "Microsoft.Storage/storageAccounts/fileServices/writeFileBackupSemantics/action",
+        "Microsoft.Storage/storageAccounts/fileServices/takeOwnership/action"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

@@ -1,0 +1,30 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can view costs and manage cost configuration (e.g. budgets, exports)",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/434105ed-43f6-45c7-a02f-909b2ba83430",
+  "name": "434105ed-43f6-45c7-a02f-909b2ba83430",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Consumption/*",
+        "Microsoft.CostManagement/*",
+        "Microsoft.Billing/billingPeriods/read",
+        "Microsoft.Resources/subscriptions/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Support/*",
+        "Microsoft.Advisor/configurations/read",
+        "Microsoft.Advisor/recommendations/read",
+        "Microsoft.Management/managementGroups/read",
+        "Microsoft.Billing/billingProperty/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Cost Management Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

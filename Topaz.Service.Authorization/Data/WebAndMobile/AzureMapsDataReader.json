@@ -4,11 +4,23 @@
   "description": "Grants access to read map related data from an Azure maps account.",
   "category": "Web and Mobile",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
     "Microsoft.Maps/accounts/*/read"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Maps/accounts/*/read"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

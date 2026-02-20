@@ -4,7 +4,9 @@
   "description": "Can view CDN profiles and their endpoints, but can't make changes.",
   "category": "Networking",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [
     "Microsoft.Authorization/*/read",
     "Microsoft.Cdn/edgenodes/read",
@@ -20,5 +22,25 @@
   ],
   "notActions": [],
   "dataActions": [],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Cdn/edgenodes/read",
+        "Microsoft.Cdn/operationresults/*",
+        "Microsoft.Cdn/profiles/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Cdn/profiles/afdendpoints/validateCustomDomain/action",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Support/*",
+        "Microsoft.Cdn/profiles/CheckResourceUsage/action",
+        "Microsoft.Cdn/profiles/endpoints/CheckResourceUsage/action"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ]
 }

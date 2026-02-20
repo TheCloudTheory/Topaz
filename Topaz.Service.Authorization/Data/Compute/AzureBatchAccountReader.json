@@ -15,5 +15,18 @@
   "dataActions": [
     "Microsoft.Batch/*/read"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Batch/*/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Batch/*/read"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

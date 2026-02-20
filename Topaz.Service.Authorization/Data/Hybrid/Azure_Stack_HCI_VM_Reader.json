@@ -1,0 +1,62 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Grants permissions to view VMs",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/4b3fe76c-f777-4d24-a2d7-b027b0f7b273",
+  "name": "4b3fe76c-f777-4d24-a2d7-b027b0f7b273",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureStackHCI/VirtualMachines/Read",
+        "Microsoft.AzureStackHCI/virtualMachineInstances/Read",
+        "Microsoft.AzureStackHCI/VirtualMachines/Extensions/Read",
+        "Microsoft.AzureStackHCI/VirtualNetworks/Read",
+        "Microsoft.AzureStackHCI/LogicalNetworks/Read",
+        "Microsoft.AzureStackHCI/NetworkInterfaces/Read",
+        "Microsoft.AzureStackHCI/VirtualHardDisks/Read",
+        "Microsoft.AzureStackHCI/StorageContainers/Read",
+        "Microsoft.AzureStackHCI/GalleryImages/Read",
+        "Microsoft.AzureStackHCI/MarketplaceGalleryImages/Read",
+        "Microsoft.AzureStackHCI/NetworkSecurityGroups/Read",
+        "Microsoft.AzureStackHCI/NetworkSecurityGroups/SecurityRules/Read",
+        "Microsoft.HybridCompute/licenses/read",
+        "Microsoft.HybridCompute/machines/extensions/read",
+        "Microsoft.HybridCompute/machines/licenseProfiles/read",
+        "Microsoft.HybridCompute/machines/patchAssessmentResults/read",
+        "Microsoft.HybridCompute/machines/patchAssessmentResults/softwarePatches/read",
+        "Microsoft.HybridCompute/machines/patchInstallationResults/read",
+        "Microsoft.HybridCompute/machines/patchInstallationResults/softwarePatches/read",
+        "Microsoft.HybridCompute/machines/read",
+        "Microsoft.HybridCompute/privateLinkScopes/networkSecurityPerimeterConfigurations/read",
+        "Microsoft.HybridCompute/privateLinkScopes/privateEndpointConnections/read",
+        "Microsoft.HybridCompute/privateLinkScopes/read",
+        "Microsoft.Insights/AlertRules/Write",
+        "Microsoft.Insights/AlertRules/Delete",
+        "Microsoft.Insights/AlertRules/Read",
+        "Microsoft.Insights/AlertRules/Activated/Action",
+        "Microsoft.Insights/AlertRules/Resolved/Action",
+        "Microsoft.Insights/AlertRules/Throttled/Action",
+        "Microsoft.Insights/AlertRules/Incidents/Read",
+        "Microsoft.Resources/deployments/read",
+        "Microsoft.Resources/deployments/exportTemplate/action",
+        "Microsoft.Resources/deployments/operations/read",
+        "Microsoft.Resources/deployments/operationstatuses/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/operations/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/operationstatuses/read",
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Resources/subscriptions/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Resources/subscriptions/operationresults/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure Stack HCI VM Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

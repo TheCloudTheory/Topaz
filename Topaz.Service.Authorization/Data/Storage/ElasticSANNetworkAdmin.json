@@ -4,7 +4,9 @@
   "description": "Allows access to create Private Endpoints on SAN resources, and to read SAN resources",
   "category": "Storage",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [
     "Microsoft.ElasticSan/elasticSans/*/read",
     "Microsoft.ElasticSan/elasticSans/PrivateEndpointConnectionsApproval/action",
@@ -14,5 +16,19 @@
   ],
   "notActions": [],
   "dataActions": [],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ElasticSan/elasticSans/*/read",
+        "Microsoft.ElasticSan/elasticSans/PrivateEndpointConnectionsApproval/action",
+        "Microsoft.ElasticSan/elasticSans/privateEndpointConnections/write",
+        "Microsoft.ElasticSan/elasticSans/privateEndpointConnections/delete",
+        "Microsoft.ElasticSan/locations/asyncoperations/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ]
 }

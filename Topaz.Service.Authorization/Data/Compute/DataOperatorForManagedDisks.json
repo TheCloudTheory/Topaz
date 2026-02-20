@@ -4,7 +4,9 @@
   "description": "Provides permissions to upload data to empty managed disks, read, or export data of managed disks (not attached to running VMs) and snapshots using SAS URIs and Azure AD authentication.",
   "category": "Compute",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
@@ -13,5 +15,18 @@
     "Microsoft.Compute/snapshots/download/action",
     "Microsoft.Compute/snapshots/upload/action"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Compute/disks/download/action",
+        "Microsoft.Compute/disks/upload/action",
+        "Microsoft.Compute/snapshots/download/action",
+        "Microsoft.Compute/snapshots/upload/action"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

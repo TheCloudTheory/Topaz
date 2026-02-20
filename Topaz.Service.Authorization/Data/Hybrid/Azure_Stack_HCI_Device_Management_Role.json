@@ -1,0 +1,58 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Microsoft.AzureStackHCI Device Management Role",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/865ae368-6a45-4bd1-8fbf-0d5151f56fc1",
+  "name": "865ae368-6a45-4bd1-8fbf-0d5151f56fc1",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AzureStackHCI/Clusters/*",
+        "Microsoft.AzureStackHCI/EdgeDevices/*",
+        "Microsoft.AzureStackHCI/DevicePools/*/read",
+        "Microsoft.AzureStackHCI/EdgeMachines/*/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.HybridContainerService/register/action",
+        "Microsoft.HybridContainerService/kubernetesVersions/read",
+        "Microsoft.HybridContainerService/kubernetesVersions/write",
+        "Microsoft.HybridContainerService/skus/read",
+        "Microsoft.HybridContainerService/skus/write",
+        "Microsoft.Authorization/roleassignments/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.AzureStackHCI/StorageContainers/Write",
+        "Microsoft.AzureStackHCI/StorageContainers/Read",
+        "Microsoft.AzureStackHCI/LogicalNetworks/Read",
+        "Microsoft.AzureStackHCI/LogicalNetworks/Write",
+        "Microsoft.AzureStackHCI/Register/Action",
+        "Microsoft.GuestConfiguration/guestConfigurationAssignments/read",
+        "Microsoft.KubernetesConfiguration/extensions/write",
+        "Microsoft.KubernetesConfiguration/extensions/read",
+        "Microsoft.KubernetesConfiguration/extensions/delete",
+        "Microsoft.KubernetesConfiguration/extensions/operations/read",
+        "Microsoft.KubernetesConfiguration/namespaces/read",
+        "Microsoft.KubernetesConfiguration/operations/read",
+        "Microsoft.ResourceConnector/appliances/read",
+        "Microsoft.ResourceConnector/appliances/write",
+        "Microsoft.ResourceConnector/appliances/delete",
+        "Microsoft.ResourceConnector/locations/operationresults/read",
+        "Microsoft.ResourceConnector/locations/operationsstatus/read",
+        "Microsoft.ResourceConnector/appliances/listClusterUserCredential/action",
+        "Microsoft.ResourceConnector/appliances/listKeys/action",
+        "Microsoft.ResourceConnector/appliances/upgradeGraphs/read",
+        "Microsoft.ResourceConnector/telemetryconfig/read",
+        "Microsoft.ResourceConnector/operations/read",
+        "Microsoft.ExtendedLocation/customLocations/deploy/action",
+        "Microsoft.ExtendedLocation/customLocations/read",
+        "Microsoft.ExtendedLocation/customLocations/write",
+        "Microsoft.ExtendedLocation/customLocations/delete"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure Stack HCI Device Management Role",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

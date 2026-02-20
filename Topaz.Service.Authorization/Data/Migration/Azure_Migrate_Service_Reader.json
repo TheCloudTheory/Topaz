@@ -1,0 +1,31 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Grants required access to the system assigned managed identity of Azure Migrate project resource.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/ba480ccd-6499-4709-b581-8f38bb215c63",
+  "name": "ba480ccd-6499-4709-b581-8f38bb215c63",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.ApplicationMigration/*/read",
+        "Microsoft.Migrate/*/read",
+        "Microsoft.OffAzure/*/read",
+        "Microsoft.MySQLDiscovery/*/read",
+        "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectableItems/read",
+        "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectedItems/read",
+        "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationMigrationItems/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure Migrate Service Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

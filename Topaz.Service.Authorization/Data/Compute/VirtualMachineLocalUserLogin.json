@@ -4,12 +4,25 @@
   "description": "View Virtual Machines in the portal and login as a local user configured on the Arc server.",
   "category": "Compute",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [
     "Microsoft.HybridCompute/machines/*/read",
     "Microsoft.HybridConnectivity/endpoints/listCredentials/action"
   ],
   "notActions": [],
   "dataActions": [],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.HybridCompute/machines/*/read",
+        "Microsoft.HybridConnectivity/endpoints/listCredentials/action"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ]
 }

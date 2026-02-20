@@ -4,12 +4,25 @@
   "description": "Customer has read access on Azure Storage file shares.",
   "category": "Storage",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
     "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/read",
     "Microsoft.Storage/storageAccounts/fileServices/readFileBackupSemantics/action"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/read",
+        "Microsoft.Storage/storageAccounts/fileServices/readFileBackupSemantics/action"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

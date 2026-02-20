@@ -4,7 +4,9 @@
   "description": "Lets one read and manage all the reservations in a tenant.",
   "category": "Privileged",
   "builtIn": true,
-  "assignableScopes": ["/providers/Microsoft.Capacity"],
+  "assignableScopes": [
+    "/providers/Microsoft.Capacity"
+  ],
   "actions": [
     "Microsoft.Capacity/*/read",
     "Microsoft.Capacity/*/action",
@@ -16,5 +18,21 @@
   ],
   "notActions": [],
   "dataActions": [],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Capacity/*/read",
+        "Microsoft.Capacity/*/action",
+        "Microsoft.Capacity/*/write",
+        "Microsoft.Authorization/roleAssignments/read",
+        "Microsoft.Authorization/roleDefinitions/read",
+        "Microsoft.Authorization/roleAssignments/write",
+        "Microsoft.Authorization/roleAssignments/delete"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ]
 }

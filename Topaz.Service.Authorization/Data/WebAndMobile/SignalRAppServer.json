@@ -4,7 +4,9 @@
   "description": "Lets your app server access SignalR Service with AAD auth options.",
   "category": "Web and Mobile",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
@@ -12,5 +14,17 @@
     "Microsoft.SignalRService/SignalR/serverConnection/write",
     "Microsoft.SignalRService/SignalR/clientConnection/write"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.SignalRService/SignalR/auth/accessKey/action",
+        "Microsoft.SignalRService/SignalR/serverConnection/write",
+        "Microsoft.SignalRService/SignalR/clientConnection/write"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

@@ -4,7 +4,9 @@
   "description": "Lets you manage user access to Azure resources.",
   "category": "Privileged",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [
     "*/read",
     "Microsoft.Authorization/*",
@@ -12,5 +14,17 @@
   ],
   "notActions": [],
   "dataActions": [],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "*/read",
+        "Microsoft.Authorization/*",
+        "Microsoft.Support/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ]
 }

@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Allow read access to Azure Carbon Optimization data",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/fa0d39e6-28e5-40cf-8521-1eb320653a4c",
+  "name": "fa0d39e6-28e5-40cf-8521-1eb320653a4c",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Carbon/carbonEmissionReports/action",
+        "Microsoft.Carbon/carbonEmissionReports/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Carbon Optimization Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

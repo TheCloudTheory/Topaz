@@ -1,0 +1,63 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "This role provides read access to all capabilities of Azure Center for SAP solutions.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/05352d14-a920-4328-a0de-4cbe7430e26b",
+  "name": "05352d14-a920-4328-a0de-4cbe7430e26b",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Advisor/configurations/read",
+        "Microsoft.Advisor/recommendations/read",
+        "Microsoft.Workloads/sapvirtualInstances/*/read",
+        "Microsoft.Workloads/Locations/*/read",
+        "Microsoft.Workloads/Operations/read",
+        "Microsoft.Workloads/Locations/OperationStatuses/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Insights/alertRules/read",
+        "Microsoft.Insights/metrics/read",
+        "Microsoft.Insights/metricDefinitions/read",
+        "Microsoft.Resources/deployments/read",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Resources/subscriptions/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/read",
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Network/virtualNetworks/read",
+        "Microsoft.Network/virtualNetworks/providers/Microsoft.Insights/metricDefinitions/read",
+        "Microsoft.Network/virtualNetworks/subnets/read",
+        "Microsoft.Network/virtualNetworks/subnets/virtualMachines/read",
+        "Microsoft.Network/networkInterfaces/read",
+        "Microsoft.Network/networkInterfaces/ipconfigurations/read",
+        "Microsoft.Network/networkInterfaces/loadBalancers/read",
+        "Microsoft.Network/networkInterfaces/providers/Microsoft.Insights/metricDefinitions/read",
+        "Microsoft.Network/loadBalancers/read",
+        "Microsoft.Network/loadBalancers/backendAddressPools/read",
+        "Microsoft.Network/loadBalancers/frontendIPConfigurations/read",
+        "Microsoft.Network/loadBalancers/loadBalancingRules/read",
+        "Microsoft.Network/loadBalancers/inboundNatRules/read",
+        "Microsoft.Network/loadBalancers/providers/Microsoft.Insights/logDefinitions/read",
+        "Microsoft.Network/loadBalancers/networkInterfaces/read",
+        "Microsoft.Network/loadBalancers/outboundRules/read",
+        "Microsoft.Network/loadBalancers/virtualMachines/read",
+        "Microsoft.Network/loadBalancers/providers/Microsoft.Insights/metricDefinitions/read",
+        "Microsoft.Network/privateEndpoints/read",
+        "Microsoft.Storage/storageAccounts/read",
+        "Microsoft.Storage/storageAccounts/blobServices/read",
+        "Microsoft.Storage/storageAccounts/blobServices/containers/read",
+        "Microsoft.Storage/storageAccounts/fileServices/read",
+        "Microsoft.Storage/storageAccounts/fileServices/shares/read",
+        "Microsoft.Compute/virtualMachines/read",
+        "Microsoft.Compute/availabilitySets/read",
+        "Microsoft.Compute/virtualMachines/extensions/read",
+        "Microsoft.Compute/disks/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure Center for SAP solutions reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

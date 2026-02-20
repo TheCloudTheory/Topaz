@@ -4,12 +4,25 @@
   "description": "Grants access to very limited set of data APIs for common visual web SDK scenarios. Specifically, render and search data APIs.",
   "category": "Web and Mobile",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
     "Microsoft.Maps/accounts/services/render/read",
     "Microsoft.Maps/accounts/services/search/read"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Maps/accounts/services/render/read",
+        "Microsoft.Maps/accounts/services/search/read"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

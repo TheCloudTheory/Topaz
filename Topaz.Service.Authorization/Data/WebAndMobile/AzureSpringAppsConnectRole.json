@@ -4,11 +4,23 @@
   "description": "Azure Spring Apps Connect Role",
   "category": "Web and Mobile",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
     "Microsoft.AppPlatform/Spring/apps/deployments/connect/action"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.AppPlatform/Spring/apps/deployments/connect/action"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

@@ -4,7 +4,9 @@
   "description": "Allows for read, write, and delete access to Azure Storage queues and queue messages",
   "category": "Storage",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [
     "Microsoft.Storage/storageAccounts/queueServices/queues/delete",
     "Microsoft.Storage/storageAccounts/queueServices/queues/read",
@@ -17,5 +19,22 @@
     "Microsoft.Storage/storageAccounts/queueServices/queues/messages/write",
     "Microsoft.Storage/storageAccounts/queueServices/queues/messages/process/action"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Storage/storageAccounts/queueServices/queues/delete",
+        "Microsoft.Storage/storageAccounts/queueServices/queues/read",
+        "Microsoft.Storage/storageAccounts/queueServices/queues/write"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Storage/storageAccounts/queueServices/queues/messages/delete",
+        "Microsoft.Storage/storageAccounts/queueServices/queues/messages/read",
+        "Microsoft.Storage/storageAccounts/queueServices/queues/messages/write",
+        "Microsoft.Storage/storageAccounts/queueServices/queues/messages/process/action"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

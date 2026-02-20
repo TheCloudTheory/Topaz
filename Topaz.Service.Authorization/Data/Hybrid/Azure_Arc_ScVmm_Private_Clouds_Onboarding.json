@@ -1,0 +1,50 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Azure Arc ScVmm Private Clouds Onboarding role has permissions to provision all the required resources for onboard and deboard vmm server instances to Azure.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/6aac74c4-6311-40d2-bbdd-7d01e7c6e3a9",
+  "name": "6aac74c4-6311-40d2-bbdd-7d01e7c6e3a9",
+  "permissions": [
+    {
+      "actions": [
+        "microsoft.scvmm/vmmservers/Read",
+        "microsoft.scvmm/vmmservers/Write",
+        "microsoft.scvmm/vmmservers/Delete",
+        "Microsoft.Insights/AlertRules/Write",
+        "Microsoft.Insights/AlertRules/Delete",
+        "Microsoft.Insights/AlertRules/Read",
+        "Microsoft.Insights/AlertRules/Activated/Action",
+        "Microsoft.Insights/AlertRules/Resolved/Action",
+        "Microsoft.Insights/AlertRules/Throttled/Action",
+        "Microsoft.Insights/AlertRules/Incidents/Read",
+        "Microsoft.Resources/deployments/read",
+        "Microsoft.Resources/deployments/write",
+        "Microsoft.Resources/deployments/delete",
+        "Microsoft.Resources/deployments/cancel/action",
+        "Microsoft.Resources/deployments/validate/action",
+        "Microsoft.Resources/deployments/whatIf/action",
+        "Microsoft.Resources/deployments/exportTemplate/action",
+        "Microsoft.Resources/deployments/operations/read",
+        "Microsoft.Resources/deployments/operationstatuses/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/write",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/operations/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/operationstatuses/read",
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Resources/subscriptions/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Resources/subscriptions/operationresults/read",
+        "Microsoft.ExtendedLocation/customLocations/Read",
+        "Microsoft.ExtendedLocation/customLocations/deploy/action"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure Arc ScVmm Private Clouds Onboarding",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

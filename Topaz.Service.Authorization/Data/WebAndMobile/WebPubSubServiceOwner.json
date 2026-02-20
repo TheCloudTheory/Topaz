@@ -4,11 +4,23 @@
   "description": "Full access to Azure Web PubSub Service REST APIs",
   "category": "Web and Mobile",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
     "Microsoft.SignalRService/WebPubSub/*"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.SignalRService/WebPubSub/*"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

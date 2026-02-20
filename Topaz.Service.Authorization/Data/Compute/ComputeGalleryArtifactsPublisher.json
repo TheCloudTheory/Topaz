@@ -4,7 +4,9 @@
   "description": "This is the role for publishing gallery artifacts.",
   "category": "Compute",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [
     "Microsoft.Compute/galleries/*",
     "Microsoft.Compute/locations/capsOperations/read",
@@ -22,5 +24,27 @@
     "Microsoft.Compute/galleries/share/action"
   ],
   "dataActions": [],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Compute/galleries/*",
+        "Microsoft.Compute/locations/capsOperations/read",
+        "Microsoft.Compute/locations/communityGalleries/*",
+        "Microsoft.Compute/locations/sharedGalleries/*",
+        "Microsoft.Compute/images/*",
+        "Microsoft.Compute/virtualMachines/write",
+        "Microsoft.Compute/disks/write",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [
+        "Microsoft.Compute/galleries/share/action"
+      ],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ]
 }

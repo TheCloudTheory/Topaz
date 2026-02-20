@@ -1,0 +1,30 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "View reviews for a workload and triage recommendations linked to them.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/8aac15f0-d885-4138-8afa-bfb5872f7d13",
+  "name": "8aac15f0-d885-4138-8afa-bfb5872f7d13",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Advisor/resiliencyReviews/read",
+        "Microsoft.Advisor/triageRecommendations/read",
+        "Microsoft.Advisor/triageRecommendations/approve/action",
+        "Microsoft.Advisor/triageRecommendations/reject/action",
+        "Microsoft.Advisor/triageRecommendations/reset/action",
+        "Microsoft.Advisor/triageResources/read",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Advisor Reviews Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

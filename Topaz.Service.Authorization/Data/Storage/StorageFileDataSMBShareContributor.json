@@ -4,7 +4,9 @@
   "description": "Allows for read, write, and delete access in Azure Storage file shares over SMB",
   "category": "Storage",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
@@ -12,5 +14,17 @@
     "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/write",
     "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/delete"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/read",
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/write",
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/delete"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

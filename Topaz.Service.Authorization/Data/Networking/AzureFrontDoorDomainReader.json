@@ -4,7 +4,9 @@
   "description": "For internal use within Azure. Can view Azure Front Door domains, but can't make changes.",
   "category": "Networking",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [
     "Microsoft.Cdn/operationresults/profileresults/customdomainresults/read",
     "Microsoft.Cdn/profiles/customdomains/read",
@@ -12,5 +14,17 @@
   ],
   "notActions": [],
   "dataActions": [],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Cdn/operationresults/profileresults/customdomainresults/read",
+        "Microsoft.Cdn/profiles/customdomains/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ]
 }

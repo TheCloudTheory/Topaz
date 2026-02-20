@@ -1,0 +1,28 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Lets you manage tags on entities, without providing access to the entities themselves.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/4a9ae827-6dc8-4573-8ac7-8239d42aa03f",
+  "name": "4a9ae827-6dc8-4573-8ac7-8239d42aa03f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/resources/read",
+        "Microsoft.Resources/subscriptions/resources/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Support/*",
+        "Microsoft.Resources/tags/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Tag Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

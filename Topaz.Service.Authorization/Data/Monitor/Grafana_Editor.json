@@ -1,0 +1,21 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Create, edit, delete, or view dashboards; create, edit, or delete folders; and edit or view playlists.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/a79a5197-3a5c-4973-a920-486035ffd60f",
+  "name": "a79a5197-3a5c-4973-a920-486035ffd60f",
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Dashboard/grafana/ActAsGrafanaEditor/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Grafana Editor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

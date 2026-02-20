@@ -1,0 +1,54 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Azure Arc ScVmm Private Cloud User has permissions to use the ScVmm resources to deploy VMs.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/c0781e91-8102-4553-8951-97c6d4243cda",
+  "name": "c0781e91-8102-4553-8951-97c6d4243cda",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Insights/AlertRules/Write",
+        "Microsoft.Insights/AlertRules/Delete",
+        "Microsoft.Insights/AlertRules/Read",
+        "Microsoft.Insights/AlertRules/Activated/Action",
+        "Microsoft.Insights/AlertRules/Resolved/Action",
+        "Microsoft.Insights/AlertRules/Throttled/Action",
+        "Microsoft.Insights/AlertRules/Incidents/Read",
+        "Microsoft.Resources/deployments/read",
+        "Microsoft.Resources/deployments/write",
+        "Microsoft.Resources/deployments/delete",
+        "Microsoft.Resources/deployments/cancel/action",
+        "Microsoft.Resources/deployments/validate/action",
+        "Microsoft.Resources/deployments/whatIf/action",
+        "Microsoft.Resources/deployments/exportTemplate/action",
+        "Microsoft.Resources/deployments/operations/read",
+        "Microsoft.Resources/deployments/operationstatuses/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/write",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/operations/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/operationstatuses/read",
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Resources/subscriptions/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Resources/subscriptions/operationresults/read",
+        "microsoft.scvmm/virtualnetworks/join/action",
+        "microsoft.scvmm/virtualnetworks/Read",
+        "microsoft.scvmm/virtualmachinetemplates/clone/action",
+        "microsoft.scvmm/virtualmachinetemplates/Read",
+        "microsoft.scvmm/clouds/deploy/action",
+        "microsoft.scvmm/clouds/Read",
+        "Microsoft.ExtendedLocation/customLocations/Read",
+        "Microsoft.ExtendedLocation/customLocations/deploy/action",
+        "Microsoft.ExtendedLocation/customLocations/enabledresourcetypes/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure Arc ScVmm Private Cloud User",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

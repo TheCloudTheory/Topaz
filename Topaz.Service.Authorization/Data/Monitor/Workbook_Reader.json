@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can read workbooks.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/b279062a-9be3-42a0-92ae-8b3cf002ec4d",
+  "name": "b279062a-9be3-42a0-92ae-8b3cf002ec4d",
+  "permissions": [
+    {
+      "actions": [
+        "microsoft.insights/workbooks/read",
+        "microsoft.insights/workbooks/revisions/read",
+        "microsoft.insights/workbooktemplates/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Workbook Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

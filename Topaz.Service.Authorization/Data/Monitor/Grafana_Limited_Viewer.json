@@ -1,0 +1,21 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "View home page.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/41e04612-9dac-4699-a02b-c82ff2cc3fb5",
+  "name": "41e04612-9dac-4699-a02b-c82ff2cc3fb5",
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Dashboard/grafana/ActAsGrafanaLimitedViewer/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Grafana Limited Viewer",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

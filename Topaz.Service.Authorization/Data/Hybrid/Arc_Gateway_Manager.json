@@ -1,0 +1,29 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Arc Gateway Resources",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/f6e92014-8af2-414d-9948-9b1abf559285",
+  "name": "f6e92014-8af2-414d-9948-9b1abf559285",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.HybridCompute/settings/write",
+        "Microsoft.HybridCompute/settings/read",
+        "Microsoft.HybridCompute/gateways/read",
+        "Microsoft.HybridCompute/gateways/write",
+        "Microsoft.HybridCompute/gateways/delete",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Arc Gateway Manager",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

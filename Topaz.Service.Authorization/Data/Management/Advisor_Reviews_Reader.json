@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "View reviews for a workload and recommendations linked to them.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/c64499e0-74c3-47ad-921c-13865957895c",
+  "name": "c64499e0-74c3-47ad-921c-13865957895c",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Advisor/resiliencyReviews/read",
+        "Microsoft.Advisor/triageRecommendations/read",
+        "Microsoft.Advisor/triageResources/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Advisor Reviews Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

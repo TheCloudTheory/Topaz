@@ -1,0 +1,28 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Full control of the agent—manage chats, incident response plans, and agent run modes; approve and execute commands.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/e79298df-d852-4c6d-84f9-5d13249d1e55",
+  "name": "e79298df-d852-4c6d-84f9-5d13249d1e55",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.App/agents/read"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.App/agents/*/read",
+        "Microsoft.App/agents/*/write",
+        "Microsoft.App/agents/*/delete",
+        "Microsoft.App/agents/threads/approve/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "SRE Agent Administrator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

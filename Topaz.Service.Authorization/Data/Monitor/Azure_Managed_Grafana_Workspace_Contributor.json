@@ -1,0 +1,52 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can manage Azure Managed Grafana resources, without providing access to the workspaces themselves.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/5c2d7e57-b7c2-4d8a-be4f-82afa42c6e95",
+  "name": "5c2d7e57-b7c2-4d8a-be4f-82afa42c6e95",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Dashboard/grafana/write",
+        "Microsoft.Dashboard/grafana/delete",
+        "Microsoft.Dashboard/grafana/PrivateEndpointConnectionsApproval/action",
+        "Microsoft.Dashboard/grafana/managedPrivateEndpoints/action",
+        "Microsoft.Dashboard/locations/operationStatuses/write",
+        "Microsoft.Dashboard/grafana/privateEndpointConnectionProxies/validate/action",
+        "Microsoft.Dashboard/grafana/privateEndpointConnectionProxies/write",
+        "Microsoft.Dashboard/grafana/privateEndpointConnectionProxies/delete",
+        "Microsoft.Dashboard/grafana/privateEndpointConnections/write",
+        "Microsoft.Dashboard/grafana/privateEndpointConnections/delete",
+        "Microsoft.Dashboard/grafana/managedPrivateEndpoints/write",
+        "Microsoft.Dashboard/grafana/managedPrivateEndpoints/delete",
+        "Microsoft.Dashboard/grafana/integrationFabrics/write",
+        "Microsoft.Dashboard/grafana/integrationFabrics/delete",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/AlertRules/Write",
+        "Microsoft.Insights/AlertRules/Delete",
+        "Microsoft.Insights/AlertRules/Read",
+        "Microsoft.Insights/AlertRules/Activated/Action",
+        "Microsoft.Insights/AlertRules/Resolved/Action",
+        "Microsoft.Insights/AlertRules/Throttled/Action",
+        "Microsoft.Insights/AlertRules/Incidents/Read",
+        "Microsoft.Resources/deployments/read",
+        "Microsoft.Resources/deployments/write",
+        "Microsoft.Resources/deployments/delete",
+        "Microsoft.Resources/deployments/cancel/action",
+        "Microsoft.Resources/deployments/validate/action",
+        "Microsoft.Resources/deployments/whatIf/action",
+        "Microsoft.Resources/deployments/exportTemplate/action",
+        "Microsoft.Resources/deployments/operations/read",
+        "Microsoft.Resources/deployments/operationstatuses/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure Managed Grafana Workspace Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

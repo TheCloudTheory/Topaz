@@ -1,0 +1,41 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Automation Operators are able to start, stop, suspend, and resume jobs",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/d3881f73-407a-4167-8283-e981cbba0404",
+  "name": "d3881f73-407a-4167-8283-e981cbba0404",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Automation/automationAccounts/hybridRunbookWorkerGroups/read",
+        "Microsoft.Automation/automationAccounts/jobs/read",
+        "Microsoft.Automation/automationAccounts/jobs/resume/action",
+        "Microsoft.Automation/automationAccounts/jobs/stop/action",
+        "Microsoft.Automation/automationAccounts/jobs/streams/read",
+        "Microsoft.Automation/automationAccounts/jobs/suspend/action",
+        "Microsoft.Automation/automationAccounts/jobs/write",
+        "Microsoft.Automation/automationAccounts/jobSchedules/read",
+        "Microsoft.Automation/automationAccounts/jobSchedules/write",
+        "Microsoft.Automation/automationAccounts/linkedWorkspace/read",
+        "Microsoft.Automation/automationAccounts/read",
+        "Microsoft.Automation/automationAccounts/runbooks/read",
+        "Microsoft.Automation/automationAccounts/schedules/read",
+        "Microsoft.Automation/automationAccounts/schedules/write",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Automation/automationAccounts/jobs/output/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Support/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Automation Operator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

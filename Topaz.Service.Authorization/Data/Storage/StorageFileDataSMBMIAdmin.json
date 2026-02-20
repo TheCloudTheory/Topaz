@@ -4,7 +4,9 @@
   "description": "Allows for admin-level access for managed identities on files/directories in Azure file shares.",
   "category": "Storage",
   "builtIn": true,
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "actions": [],
   "notActions": [],
   "dataActions": [
@@ -17,5 +19,22 @@
     "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/delete",
     "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/modifypermissions/action"
   ],
-  "notDataActions": []
+  "notDataActions": [],
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Storage/storageAccounts/fileServices/readFileBackupSemantics/action",
+        "Microsoft.Storage/storageAccounts/fileServices/writeFileBackupSemantics/action",
+        "Microsoft.Storage/storageAccounts/fileServices/takeOwnership/action",
+        "Microsoft.Storage/storageAccounts/fileServices/runAsBuiltInFileAdministrator/action",
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/read",
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/write",
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/delete",
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/modifypermissions/action"
+      ],
+      "notDataActions": []
+    }
+  ]
 }

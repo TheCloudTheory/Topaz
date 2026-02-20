@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can read all monitoring data.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/43d0d8ad-25c7-4714-9337-8ba259a9fe05",
+  "name": "43d0d8ad-25c7-4714-9337-8ba259a9fe05",
+  "permissions": [
+    {
+      "actions": [
+        "*/read",
+        "Microsoft.OperationalInsights/workspaces/search/action",
+        "Microsoft.Support/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Monitoring Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

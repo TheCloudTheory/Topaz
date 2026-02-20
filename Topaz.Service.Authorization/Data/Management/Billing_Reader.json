@@ -1,0 +1,27 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Allows read access to billing data",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/fa23ad8b-c56e-40d8-ac0c-ce449e1d2c64",
+  "name": "fa23ad8b-c56e-40d8-ac0c-ce449e1d2c64",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Billing/*/read",
+        "Microsoft.Commerce/*/read",
+        "Microsoft.Consumption/*/read",
+        "Microsoft.Management/managementGroups/read",
+        "Microsoft.CostManagement/*/read",
+        "Microsoft.Support/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Billing Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

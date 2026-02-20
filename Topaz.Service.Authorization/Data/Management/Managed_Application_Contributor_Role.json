@@ -1,0 +1,25 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Allows for creating managed application resources.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/641177b8-a67a-45b9-a033-47bc880bb21e",
+  "name": "641177b8-a67a-45b9-a033-47bc880bb21e",
+  "permissions": [
+    {
+      "actions": [
+        "*/read",
+        "Microsoft.Solutions/applications/*",
+        "Microsoft.Solutions/register/action",
+        "Microsoft.Resources/subscriptions/resourceGroups/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Managed Application Contributor Role",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}
