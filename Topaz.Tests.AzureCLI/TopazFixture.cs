@@ -13,6 +13,8 @@ public class TopazFixture
                                                          {
                                                            "endpoints":{
                                                              "resourceManager": "https://topaz.local.dev:8899",
+                                                             "activeDirectory": "https://topaz.local.dev:8899",
+                                                             "activeDirectoryResourceId": "https://topaz.local.dev:8899",
                                                              "activeDirectoryGraphResourceId": "https://topaz.local.dev:8899",
                                                              "microsoft_graph_resource_id": "https://topaz.local.dev:8899"
                                                            },
@@ -73,6 +75,7 @@ public class TopazFixture
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
             .WithBindMount(Path.GetFullPath("./templates"), "/templates")
             .WithEnvironment("REQUESTS_CA_BUNDLE", "/usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem")
+            .WithEnvironment("AZURE_CORE_INSTANCE_DISCOVERY", "false")
             .WithExtraHost("purgevault123.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("deletedvault123.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("deletedvault456.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
