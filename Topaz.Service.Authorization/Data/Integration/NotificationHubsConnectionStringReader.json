@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read access to Notification Hubs connection strings and keys (read-only).",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/b1b0b9b8-a7a6-a5a4-a3a2-a1a0a9a8a7a6",
+  "name": "b1b0b9b8-a7a6-a5a4-a3a2-a1a0a9a8a7a6",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.NotificationHubs/namespaces/authorizationRules/keys/list/action",
+        "Microsoft.NotificationHubs/namespaces/authorizationRules/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Notification Hubs Connection String Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

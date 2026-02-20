@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Logic Apps integration accounts and related artifacts.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/1a0b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
+  "name": "1a0b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Logic/integrationAccounts/*",
+        "Microsoft.Logic/integrationAccounts/agreements/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Logic Apps Integration Account Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

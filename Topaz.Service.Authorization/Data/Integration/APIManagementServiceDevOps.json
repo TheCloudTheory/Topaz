@@ -1,0 +1,21 @@
+{
+  "assignableScopes": ["/"],
+  "description": "DevOps role for API Management: CI/CD operations and deployment automation.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/22334455-6677-8899-aabb-ccddeeff0011",
+  "name": "22334455-6677-8899-aabb-ccddeeff0011",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/deployments/*",
+        "Microsoft.ApiManagement/service/apis/*/write",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Service DevOps",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Create and manage snapshots for App Configuration stores and perform restores.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/dd665544-3322-1100-ffe0-dccbbaa99887",
+  "name": "dd665544-3322-1100-ffe0-dccbbaa99887",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AppConfiguration/configurationStores/snapshots/*",
+        "Microsoft.AppConfiguration/configurationStores/snapshots/restore/action",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "App Configuration Snapshot Manager",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

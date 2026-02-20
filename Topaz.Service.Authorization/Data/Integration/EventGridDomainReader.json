@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read-only access to Event Grid domains and topics.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/20212223-2425-2627-2829-2a2b2c2d2e2f",
+  "name": "20212223-2425-2627-2829-2a2b2c2d2e2f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventGrid/domains/read",
+        "Microsoft.EventGrid/domains/topics/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Grid Domain Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

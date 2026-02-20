@@ -1,0 +1,23 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Operate App Configuration stores: read/write keys and manage feature flags.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/66778899-aabb-ccdd-eeff-001122334455",
+  "name": "66778899-aabb-ccdd-eeff-001122334455",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AppConfiguration/configurationStores/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.AppConfiguration/configurationStores/keyValues/read",
+        "Microsoft.AppConfiguration/configurationStores/keyValues/write"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "App Configuration Operator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

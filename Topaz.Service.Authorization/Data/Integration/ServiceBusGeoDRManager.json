@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Geo-disaster recovery pairing and failover for Service Bus namespaces.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/bb33cc44-dd55-ee66-ff77-001122334455",
+  "name": "bb33cc44-dd55-ee66-ff77-001122334455",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/namespaces/GeoDR/*",
+        "Microsoft.ServiceBus/namespaces/AuthorizationRules/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus GeoDR Manager",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Publish and update content on the API Management developer portal.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/0a1b2c3d-4e5f-6789-0abc-def012345678",
+  "name": "0a1b2c3d-4e5f-6789-0abc-def012345678",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/content/publish/action",
+        "Microsoft.ApiManagement/service/content/write",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Developer Portal Publisher",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

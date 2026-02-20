@@ -1,0 +1,26 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Full access to Event Hubs data including send and receive operations.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/81828384-8586-8788-898a-8b8c8d8e8f90",
+  "name": "81828384-8586-8788-898a-8b8c8d8e8f90",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventHub/*/write",
+        "Microsoft.EventHub/*/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.EventHub/namespaces/eventhubs/send/action",
+        "Microsoft.EventHub/namespaces/eventhubs/receive/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Hub Data Owner",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

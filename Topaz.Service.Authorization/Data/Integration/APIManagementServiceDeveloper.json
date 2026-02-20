@@ -1,0 +1,26 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Developer access to API Management: create and test APIs, but not full administrative rights.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/6b8f9e7d-1c2b-3a4d-5e6f-7a8b9c0d1e2f",
+  "name": "6b8f9e7d-1c2b-3a4d-5e6f-7a8b9c0d1e2f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/apis/*/write",
+        "Microsoft.ApiManagement/service/apis/*/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [
+        "Microsoft.ApiManagement/service/*/delete",
+        "Microsoft.ApiManagement/service/*/write/publish"
+      ],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Service Developer",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

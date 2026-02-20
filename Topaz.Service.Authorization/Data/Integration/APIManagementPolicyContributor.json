@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Contribute to API Management policies and policy fragments (create/update).",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/30313233-3435-3637-3839-3a3b3c3d3e3f",
+  "name": "30313233-3435-3637-3839-3a3b3c3d3e3f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/policies/write",
+        "Microsoft.ApiManagement/service/*/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Policy Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

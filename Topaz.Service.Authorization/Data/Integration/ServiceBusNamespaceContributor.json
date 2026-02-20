@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Service Bus namespace-level settings and entities.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/7f7e7d7c-6b6a-5c5d-4e4f-3a3b3c3d3e3f",
+  "name": "7f7e7d7c-6b6a-5c5d-4e4f-3a3b3c3d3e3f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/namespaces/*",
+        "Microsoft.ServiceBus/namespaces/queues/*",
+        "Microsoft.ServiceBus/namespaces/topics/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus Namespace Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

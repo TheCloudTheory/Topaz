@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage schema registry artifacts and schemas for Event Grid schema registries.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/a1a2a3a4-a5a6-a7a8-a9aa-abacadaeaf10",
+  "name": "a1a2a3a4-a5a6-a7a8-a9aa-abacadaeaf10",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventGrid/schemaRegistries/*",
+        "Microsoft.EventGrid/schemaRegistries/schemas/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Grid Schema Registry Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

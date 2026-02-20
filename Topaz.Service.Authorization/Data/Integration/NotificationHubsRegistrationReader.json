@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read access to Notification Hubs registrations and registration metadata.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/f0123456-7890-abcd-f012-34567890abcd",
+  "name": "f0123456-7890-abcd-f012-34567890abcd",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.NotificationHubs/namespaces/notificationHubs/registrations/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Notification Hubs Registration Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

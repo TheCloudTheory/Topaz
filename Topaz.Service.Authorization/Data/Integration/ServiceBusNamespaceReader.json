@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read-only access to Service Bus namespace configuration and metadata.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/0e9f8a7b-6c5d-4e3f-2a1b-0c9d8e7f6a5b",
+  "name": "0e9f8a7b-6c5d-4e3f-2a1b-0c9d8e7f6a5b",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/namespaces/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus Namespace Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

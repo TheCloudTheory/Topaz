@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read events from Event Hubs.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/9d8c7b6a-5f4e-3d2c-1b0a-9f8e7d6c5b4a",
+  "name": "9d8c7b6a-5f4e-3d2c-1b0a-9f8e7d6c5b4a",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventHub/*/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.EventHub/namespaces/eventhubs/receive/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Hub Data Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

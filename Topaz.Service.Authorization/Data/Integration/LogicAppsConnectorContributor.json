@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Create and manage Logic Apps connectors and connection configurations.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/de45f067-1289-0123-de45-f06712890123",
+  "name": "de45f067-1289-0123-de45-f06712890123",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Web/connections/*",
+        "Microsoft.Web/customApis/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Logic Apps Connector Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

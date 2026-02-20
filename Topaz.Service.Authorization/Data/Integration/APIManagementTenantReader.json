@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read-only access to tenant-level API Management settings and tenant metadata.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/aa22bb33-cc44-dd55-ee66-ff7788990011",
+  "name": "aa22bb33-cc44-dd55-ee66-ff7788990011",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/tenants/read",
+        "Microsoft.ApiManagement/service/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Tenant Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

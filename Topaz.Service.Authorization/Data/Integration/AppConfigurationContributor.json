@@ -1,0 +1,25 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage App Configuration stores including key-values and feature flags.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/ee55ff66-7788-9900-aa11-bb22cc33dd44",
+  "name": "ee55ff66-7788-9900-aa11-bb22cc33dd44",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AppConfiguration/configurationStores/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.AppConfiguration/configurationStores/keyValues/*",
+        "Microsoft.AppConfiguration/configurationStores/featureFlags/*"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "App Configuration Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

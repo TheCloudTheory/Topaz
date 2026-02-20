@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Permission to perform rollbacks for App Configuration stores and restore snapshots.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/dd55ee66-ff77-0011-2233-445566778899",
+  "name": "dd55ee66-ff77-0011-2233-445566778899",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AppConfiguration/configurationStores/snapshots/restore/action",
+        "Microsoft.AppConfiguration/configurationStores/snapshots/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "App Configuration Rollback",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

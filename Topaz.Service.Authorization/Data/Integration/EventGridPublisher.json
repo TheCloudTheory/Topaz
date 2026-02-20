@@ -1,0 +1,25 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Publish events to Event Grid topics and manage event publishing settings.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/2f3e4d5c-6b7a-8109-0c1d-2e3f4a5b6c7d",
+  "name": "2f3e4d5c-6b7a-8109-0c1d-2e3f4a5b6c7d",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventGrid/topics/publish/action",
+        "Microsoft.EventGrid/eventSubscriptions/*/write",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.EventGrid/topics/events/send/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Grid Publisher",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

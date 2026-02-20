@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read-only access to API Management alerts and alert rules.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/aa998877-6655-4433-2211-00ffeeddccbb",
+  "name": "aa998877-6655-4433-2211-00ffeeddccbb",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/alertRules/read",
+        "Microsoft.ApiManagement/service/alerts/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Insights/alertRules/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Alerts Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

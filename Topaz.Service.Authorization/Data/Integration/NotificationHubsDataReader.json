@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read-only access to Notification Hubs data and configuration.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/6a5b4c3d-2e1f-0a9b-8c7d-6e5f4a3b2c1d",
+  "name": "6a5b4c3d-2e1f-0a9b-8c7d-6e5f4a3b2c1d",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.NotificationHubs/*/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.NotificationHubs/namespaces/notificationHubs/read/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Notification Hubs Data Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

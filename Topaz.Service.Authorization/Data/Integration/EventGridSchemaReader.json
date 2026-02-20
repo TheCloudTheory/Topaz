@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read-only access to Event Grid schema registries and schema artifacts.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/d0e1f2a3-b4c5-d6e7-f809-0a1b2c3d4e5f",
+  "name": "d0e1f2a3-b4c5-d6e7-f809-0a1b2c3d4e5f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventGrid/schemaRegistries/read",
+        "Microsoft.EventGrid/schemaRegistries/schemas/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Grid Schema Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

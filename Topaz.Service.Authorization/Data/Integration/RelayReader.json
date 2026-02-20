@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read-only access to Azure Relay namespaces and hybrid connection metadata.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/40414243-4445-4647-4849-4a4b4c4d4e4f",
+  "name": "40414243-4445-4647-4849-4a4b4c4d4e4f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Relay/*/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Relay Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

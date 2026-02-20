@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Design and author Logic Apps workflows and connectors in the designer experience.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/1c2b3a4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+  "name": "1c2b3a4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Logic/workflows/designer/*",
+        "Microsoft.Logic/workflows/*/write",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Logic Apps Designer",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

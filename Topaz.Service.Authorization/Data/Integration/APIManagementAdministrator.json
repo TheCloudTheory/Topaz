@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Full administrative access to API Management service and APIs.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/1a2b3c4d-5e6f-7a8b-9c0d-111213141516",
+  "name": "1a2b3c4d-5e6f-7a8b-9c0d-111213141516",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/*",
+        "Microsoft.ApiManagement/service/*/write",
+        "Microsoft.ApiManagement/service/*/delete",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Administrator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

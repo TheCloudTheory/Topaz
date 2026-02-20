@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read access to Service Bus authorization rules and policies.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/bc23de45-f067-8901-bc23-de45f0678901",
+  "name": "bc23de45-f067-8901-bc23-de45f0678901",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/namespaces/authorizationRules/read",
+        "Microsoft.ServiceBus/namespaces/queues/authorizationRules/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus Policy Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

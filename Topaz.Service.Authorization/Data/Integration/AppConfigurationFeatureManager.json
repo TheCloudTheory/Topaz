@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage feature flags and feature filters in App Configuration stores.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/d4e5f6a7-b8c9-0d1e-2f3a-5b6c7d8e9f01",
+  "name": "d4e5f6a7-b8c9-0d1e-2f3a-5b6c7d8e9f01",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AppConfiguration/configurationStores/featureFlags/*",
+        "Microsoft.AppConfiguration/configurationStores/keyValues/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "App Configuration Feature Manager",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

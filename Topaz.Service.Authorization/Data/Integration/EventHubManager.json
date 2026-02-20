@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Event Hubs namespaces, event hubs, and consumer groups.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/dd44ee55-ff66-7788-9900-aa11bb22cc33",
+  "name": "dd44ee55-ff66-7788-9900-aa11bb22cc33",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventHub/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Hub Manager",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

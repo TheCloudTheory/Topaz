@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read access to API Management policies and policy fragments.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/a9b8c7d6-e5f4-3a2b-1c0d-998877665544",
+  "name": "a9b8c7d6-e5f4-3a2b-1c0d-998877665544",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/policies/read",
+        "Microsoft.ApiManagement/service/*/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Policy Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

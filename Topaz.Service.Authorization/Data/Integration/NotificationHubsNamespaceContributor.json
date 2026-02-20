@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Notification Hubs namespaces, including configuration, authorization rules and hubs.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/ee66ff77-0011-2233-4455-66778899aabb",
+  "name": "ee66ff77-0011-2233-4455-66778899aabb",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.NotificationHubs/namespaces/*",
+        "Microsoft.NotificationHubs/namespaces/notificationHubs/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Notification Hubs Namespace Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

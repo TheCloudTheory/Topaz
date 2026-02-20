@@ -1,0 +1,26 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Full management of Service Bus namespaces and entities, including policy management.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/b1c2d3e4-f5a6-7890-b1c2-d3e4f5a67890",
+  "name": "b1c2d3e4-f5a6-7890-b1c2-d3e4f5a67890",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Authorization/*/read"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.ServiceBus/namespaces/queues/messages/*",
+        "Microsoft.ServiceBus/namespaces/topics/subscriptions/messages/*"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus Manager",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Operator role for Logic Apps: can run, resume and manage workflow runs without full contributor rights.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/5e6f7a8b-9c0d-1e2f-3a4b-515253545556",
+  "name": "5e6f7a8b-9c0d-1e2f-3a4b-515253545556",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Logic/workflows/runs/*",
+        "Microsoft.Logic/workflows/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Logic Apps Operator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

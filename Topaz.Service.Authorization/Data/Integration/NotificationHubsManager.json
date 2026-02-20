@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Notification Hubs resources and namespaces, including configuration and keys.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/3e4f5a6b-7c8d-9012-3a4b-5c6d7e8f9012",
+  "name": "3e4f5a6b-7c8d-9012-3a4b-5c6d7e8f9012",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.NotificationHubs/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Notification Hubs Manager",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

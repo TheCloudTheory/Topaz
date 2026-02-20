@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Contributor for Logic Apps (Standard) resources and runtime components.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/b1b2b3b4-b5b6-b7b8-b9ba-bbbcbdbebf11",
+  "name": "b1b2b3b4-b5b6-b7b8-b9ba-bbbcbdbebf11",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Logic/workflows/*",
+        "Microsoft.AppPlatform/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Logic Apps (Standard) Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

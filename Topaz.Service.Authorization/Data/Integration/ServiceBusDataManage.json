@@ -1,0 +1,25 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Service Bus data entities and policies (send/listen/manage).",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/8d0e1f2a-3b4c-5d6e-7f8a-9b0c1d2e3f4a",
+  "name": "8d0e1f2a-3b4c-5d6e-7f8a-9b0c1d2e3f4a",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.ServiceBus/namespaces/queues/messages/*",
+        "Microsoft.ServiceBus/namespaces/topics/subscriptions/messages/*"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus Data Manage",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

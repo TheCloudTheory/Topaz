@@ -1,0 +1,25 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Subscribe to and receive events from Event Grid topics (consumer role).",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/cc776655-4433-2211-00ff-eeddccbbaa99",
+  "name": "cc776655-4433-2211-00ff-eeddccbbaa99",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventGrid/eventSubscriptions/receive/action",
+        "Microsoft.EventGrid/topics/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.EventGrid/topics/events/read"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Grid Subscriber",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

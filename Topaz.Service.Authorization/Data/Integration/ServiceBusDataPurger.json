@@ -1,0 +1,26 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Permission to purge messages from Service Bus queues and subscriptions.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/cc33dd44-ee55-ff66-7788-9900aa11bb22",
+  "name": "cc33dd44-ee55-ff66-7788-9900aa11bb22",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/namespaces/queues/purge/action",
+        "Microsoft.ServiceBus/namespaces/topics/subscriptions/purge/action",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.ServiceBus/namespaces/queues/messages/delete",
+        "Microsoft.ServiceBus/namespaces/topics/subscriptions/messages/delete"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus Data Purger",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

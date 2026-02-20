@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read access to App Configuration data (keys and feature flags).",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+  "name": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AppConfiguration/configurationStores/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.AppConfiguration/configurationStores/keyValues/read"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "App Configuration Data Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

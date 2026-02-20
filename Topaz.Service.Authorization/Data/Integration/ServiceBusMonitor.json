@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Monitoring access for Service Bus: read metrics and diagnostic settings.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/1f2e3d4c-5b6a-7980-9c8d-7e6f5a4b3c2d",
+  "name": "1f2e3d4c-5b6a-7980-9c8d-7e6f5a4b3c2d",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/*/read",
+        "Microsoft.Insights/metrics/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus Monitor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

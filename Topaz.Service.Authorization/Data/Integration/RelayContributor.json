@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Azure Relay namespaces and hybrid connections.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/7b6c5d4e-3f2a-1b0c-9d8e-7f6a5b4c3d2e",
+  "name": "7b6c5d4e-3f2a-1b0c-9d8e-7f6a5b4c3d2e",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Relay/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Relay Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

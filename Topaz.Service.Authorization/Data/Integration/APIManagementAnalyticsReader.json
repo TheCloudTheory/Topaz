@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read access to API Management analytics, reports and metrics.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/f1e2d3c4-b5a6-7890-c1d2-e3f4a5b6c7d8",
+  "name": "f1e2d3c4-b5a6-7890-c1d2-e3f4a5b6c7d8",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/analytics/read",
+        "Microsoft.ApiManagement/service/reports/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Analytics Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

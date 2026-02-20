@@ -1,0 +1,26 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Contribute to Event Hubs data operations (send/receive/manage consumer groups).",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/8e8d8c8b-9a9b-abad-bcbc-cdcdcecececf",
+  "name": "8e8d8c8b-9a9b-abad-bcbc-cdcdcecececf",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventHub/namespaces/*",
+        "Microsoft.EventHub/namespaces/eventhubs/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.EventHub/namespaces/eventhubs/send/action",
+        "Microsoft.EventHub/namespaces/eventhubs/receive/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Hub Data Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

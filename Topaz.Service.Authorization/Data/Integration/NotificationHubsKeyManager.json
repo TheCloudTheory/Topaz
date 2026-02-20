@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Notification Hubs authorization rules and keys (create/regenerate).",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/ff443322-1100-ffe0-ddcc-bbaa99887766",
+  "name": "ff443322-1100-ffe0-ddcc-bbaa99887766",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.NotificationHubs/namespaces/authorizationRules/*",
+        "Microsoft.NotificationHubs/namespaces/authorizationRules/keys/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Notification Hubs Key Manager",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

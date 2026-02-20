@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage authorization rules for Service Bus namespaces, queues and topics.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/71727374-7576-7778-797a-7b7c7d7e7f80",
+  "name": "71727374-7576-7778-797a-7b7c7d7e7f80",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/namespaces/authorizationRules/*",
+        "Microsoft.ServiceBus/namespaces/queues/authorizationRules/*",
+        "Microsoft.ServiceBus/namespaces/topics/authorizationRules/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus Authorization Rule Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

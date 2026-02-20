@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read access to Logic Apps resources and workflow definitions.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/9e1f2a3b-4c5d-6e7f-8a9b-0c1d2e3f4a5b",
+  "name": "9e1f2a3b-4c5d-6e7f-8a9b-0c1d2e3f4a5b",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Logic/workflows/read",
+        "Microsoft.Logic/integrationAccounts/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Logic Apps Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

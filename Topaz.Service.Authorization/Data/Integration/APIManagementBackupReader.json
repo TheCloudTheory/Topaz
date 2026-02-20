@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read access to API Management backup and restore operations.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/91929394-9596-9798-999a-9b9c9d9e9f00",
+  "name": "91929394-9596-9798-999a-9b9c9d9e9f00",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/backups/read",
+        "Microsoft.ApiManagement/service/backups/list",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Backup Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

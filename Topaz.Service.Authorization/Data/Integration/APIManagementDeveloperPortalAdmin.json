@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Administer developer portal content, users, and settings for API Management.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/bb22cc33-dd44-ee55-ff66-77889900aa11",
+  "name": "bb22cc33-dd44-ee55-ff66-77889900aa11",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/content/*",
+        "Microsoft.ApiManagement/service/users/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Developer Portal Admin",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

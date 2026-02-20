@@ -1,0 +1,26 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Recover and reprocess messages from dead-letter queues and perform message replay operations.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/e1f2g3h4-i5j6-k7l8-m9n0-o1p2q3r4s5t6",
+  "name": "e1f2g3h4-i5j6-k7l8-m9n0-o1p2q3r4s5t6",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/namespaces/queues/deadletter/read",
+        "Microsoft.ServiceBus/namespaces/queues/messages/reprocess/action",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.ServiceBus/namespaces/queues/messages/read",
+        "Microsoft.ServiceBus/namespaces/queues/messages/delete"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus Recoverer",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

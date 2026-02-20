@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read access to Geo-disaster recovery pairing and status for Service Bus namespaces.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/bb887766-5544-3322-1100-99aabbccdde0",
+  "name": "bb887766-5544-3322-1100-99aabbccdde0",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/namespaces/GeoDR/read",
+        "Microsoft.ServiceBus/namespaces/GeoDR/status/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus GeoDR Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

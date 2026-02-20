@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read-only access to Event Hubs namespace configuration and metadata.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/ee554433-2211-00ff-eedd-ccbbaa998877",
+  "name": "ee554433-2211-00ff-eedd-ccbbaa998877",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventHub/namespaces/read",
+        "Microsoft.EventHub/namespaces/eventhubs/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Hub Namespace Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

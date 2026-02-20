@@ -1,0 +1,25 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Receive/listen access to Service Bus messages.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/10111213-1415-1617-1819-1a1b1c1d1e1f",
+  "name": "10111213-1415-1617-1819-1a1b1c1d1e1f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/*/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.ServiceBus/namespaces/queues/messages/receive",
+        "Microsoft.ServiceBus/namespaces/topics/subscriptions/messages/receive"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus Data Receiver",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

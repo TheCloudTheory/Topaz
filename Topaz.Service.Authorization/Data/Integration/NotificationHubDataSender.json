@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Send notifications through Notification Hubs.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/e5f6a7b8-c9d0-1e2f-3a4b-6c7d8e9f0123",
+  "name": "e5f6a7b8-c9d0-1e2f-3a4b-6c7d8e9f0123",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.NotificationHubs/*/write",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.NotificationHubs/namespaces/notificationHubs/send/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Notification Hubs Data Sender",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

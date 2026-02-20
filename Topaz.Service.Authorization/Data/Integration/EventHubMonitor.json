@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Monitor Event Hubs metrics, diagnostic logs and consumer health.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/cd34ef56-0178-9012-cd34-ef5601789012",
+  "name": "cd34ef56-0178-9012-cd34-ef5601789012",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventHub/*/read",
+        "Microsoft.Insights/metrics/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Hub Monitor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage consumer groups for Event Hubs, including create/delete and checkpoint configuration.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/f1e2d3c4-b5a6-7f8e-9d0c-1b2a3c4d5e6f",
+  "name": "f1e2d3c4-b5a6-7f8e-9d0c-1b2a3c4d5e6f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventHub/namespaces/eventhubs/consumerGroups/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Hub Consumer Group Manager",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

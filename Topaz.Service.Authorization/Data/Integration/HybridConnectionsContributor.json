@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Hybrid Connections and related relay resources.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/8c7d6e5f-4a3b-2c1d-0e9f-8a7b6c5d4e3f",
+  "name": "8c7d6e5f-4a3b-2c1d-0e9f-8a7b6c5d4e3f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Web/hybridConnections/*",
+        "Microsoft.Relay/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Hybrid Connections Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

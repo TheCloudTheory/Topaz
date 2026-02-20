@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Event Grid domains and event publishing across domains.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/9d8e7f6a-5b4c-3d2e-1f0a-9b8c7d6e5f4a",
+  "name": "9d8e7f6a-5b4c-3d2e-1f0a-9b8c7d6e5f4a",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventGrid/domains/*",
+        "Microsoft.EventGrid/domains/topics/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Grid Domain Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

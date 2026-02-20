@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read access to specific keys in App Configuration stores.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/a0a1a2a3-b0b1-b2b3-c0c1-c2c3c4c5c6c7",
+  "name": "a0a1a2a3-b0b1-b2b3-c0c1-c2c3c4c5c6c7",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AppConfiguration/configurationStores/keyValues/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.AppConfiguration/configurationStores/keyValues/read"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "App Configuration Key Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

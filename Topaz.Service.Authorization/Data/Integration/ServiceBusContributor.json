@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Service Bus namespaces and entities (queues/topics/subscriptions).",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/3c4d5e6f-7a8b-9c0d-1e2f-313233343536",
+  "name": "3c4d5e6f-7a8b-9c0d-1e2f-313233343536",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

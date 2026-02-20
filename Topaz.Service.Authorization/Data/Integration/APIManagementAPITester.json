@@ -1,0 +1,25 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Test APIs in API Management (invoke/test operations) without publishing rights.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/9f9e9d9c-8b8a-7c7d-6e6f-5a5b5c5d5e5f",
+  "name": "9f9e9d9c-8b8a-7c7d-6e6f-5a5b5c5d5e5f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/apis/invoke/action",
+        "Microsoft.ApiManagement/service/apis/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [
+        "Microsoft.ApiManagement/service/apis/publish/action"
+      ],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management API Tester",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

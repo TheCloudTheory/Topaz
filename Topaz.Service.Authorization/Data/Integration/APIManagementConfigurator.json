@@ -1,0 +1,25 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Configure API Management service settings and policies (non-destructive administrative tasks).",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/ab12cd34-ef56-7890-ab12-cd34ef567890",
+  "name": "ab12cd34-ef56-7890-ab12-cd34ef567890",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/*/write",
+        "Microsoft.ApiManagement/service/diagnostics/*/write",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [
+        "Microsoft.ApiManagement/service/*/delete"
+      ],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Configurator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

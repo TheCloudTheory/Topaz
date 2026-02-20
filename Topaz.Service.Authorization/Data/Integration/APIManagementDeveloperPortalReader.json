@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read-only access to the API Management developer portal content.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/2b3c4d5e-6f7a-8b9c-0d1e-212223242526",
+  "name": "2b3c4d5e-6f7a-8b9c-0d1e-212223242526",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/content/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Developer Portal Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

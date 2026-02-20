@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Event Grid topics and their event publishing configurations.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/cc44dd55-ee66-ff77-0011-223344556677",
+  "name": "cc44dd55-ee66-ff77-0011-223344556677",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventGrid/topics/*",
+        "Microsoft.EventGrid/eventSubscriptions/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Grid Topic Manager",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

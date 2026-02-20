@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read snapshots and history for App Configuration stores.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/0f1e2d3c-4b5a-6c7d-8e9f-0a1b2c3d4e5f",
+  "name": "0f1e2d3c-4b5a-6c7d-8e9f-0a1b2c3d4e5f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AppConfiguration/configurationStores/snapshots/read",
+        "Microsoft.AppConfiguration/configurationStores/keyValues/history/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "App Configuration Snapshot Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

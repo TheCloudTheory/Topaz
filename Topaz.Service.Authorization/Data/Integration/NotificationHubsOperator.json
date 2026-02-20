@@ -1,0 +1,26 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Operate Notification Hubs: send notifications and manage registrations without full management rights.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/60616263-6465-6667-6869-6a6b6c6d6e6f",
+  "name": "60616263-6465-6667-6869-6a6b6c6d6e6f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.NotificationHubs/*/write",
+        "Microsoft.NotificationHubs/*/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.NotificationHubs/namespaces/notificationHubs/send/action",
+        "Microsoft.NotificationHubs/namespaces/notificationHubs/registrations/*"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Notification Hubs Operator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

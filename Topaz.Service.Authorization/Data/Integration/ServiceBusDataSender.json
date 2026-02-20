@@ -1,0 +1,25 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Send access to Service Bus data (send messages to queues/topics).",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/3c7d9b2a-5f4e-4c6a-9a7b-1d2e3f4a5b6c",
+  "name": "3c7d9b2a-5f4e-4c6a-9a7b-1d2e3f4a5b6c",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/*/write",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.ServiceBus/namespaces/queues/messages/send",
+        "Microsoft.ServiceBus/namespaces/topics/subscriptions/messages/send"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus Data Sender",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

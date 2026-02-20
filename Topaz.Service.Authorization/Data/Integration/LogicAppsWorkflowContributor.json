@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Create, update and run Logic Apps workflows (contributor-level for workflows).",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/50515253-5455-5657-5859-5a5b5c5d5e5f",
+  "name": "50515253-5455-5657-5859-5a5b5c5d5e5f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Logic/workflows/*/write",
+        "Microsoft.Logic/workflows/*/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Logic Apps Workflow Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

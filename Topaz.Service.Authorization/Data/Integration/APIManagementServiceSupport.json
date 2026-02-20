@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Support role for API Management: view and diagnose service configuration without full admin rights.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/aa11bb22-cc33-dd44-ee55-ff6677889900",
+  "name": "aa11bb22-cc33-dd44-ee55-ff6677889900",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/*/read",
+        "Microsoft.ApiManagement/service/diagnostics/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Insights/alertRules/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Service Support",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

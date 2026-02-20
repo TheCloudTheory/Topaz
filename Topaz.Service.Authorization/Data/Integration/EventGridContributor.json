@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage Event Grid topics, event subscriptions, and related resources.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/4d5e6f7a-8b9c-0d1e-2f3a-414243444546",
+  "name": "4d5e6f7a-8b9c-0d1e-2f3a-414243444546",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventGrid/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Grid Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

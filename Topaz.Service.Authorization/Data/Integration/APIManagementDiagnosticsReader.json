@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read diagnostics settings and logs for API Management services.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/cf7a8b9c-0d1e-2f3a-4b5c-6d7e8f901234",
+  "name": "cf7a8b9c-0d1e-2f3a-4b5c-6d7e8f901234",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ApiManagement/service/diagnostics/read",
+        "Microsoft.ApiManagement/service/logs/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Insights/alertRules/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "API Management Diagnostics Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

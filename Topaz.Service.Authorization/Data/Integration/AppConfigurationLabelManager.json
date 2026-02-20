@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Manage labels and label-based operations in App Configuration stores.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/ef56f178-2390-1234-ef56-f17823901234",
+  "name": "ef56f178-2390-1234-ef56-f17823901234",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AppConfiguration/configurationStores/labels/*",
+        "Microsoft.AppConfiguration/configurationStores/keyValues/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "App Configuration Label Manager",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}
