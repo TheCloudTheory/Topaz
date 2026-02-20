@@ -234,9 +234,21 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     
     public string GetServiceInstanceDataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string id)
     {
+        ThrowIfIdentifierContainsForbiddenExpressions(subscriptionIdentifier.Value.ToString());
+        ThrowIfIdentifierContainsForbiddenExpressions(resourceGroupIdentifier.Value);
+        ThrowIfIdentifierContainsForbiddenExpressions(id);
+        
         return Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id, "data");
     }
-    
+
+    private static void ThrowIfIdentifierContainsForbiddenExpressions(string identifier)
+    {
+        if (identifier.Contains("..") || identifier.Contains('/') || identifier.Contains('\\'))
+        {
+            throw new InvalidOperationException("Identifier contains forbidden characters.");
+        }
+    }
+
     public void CreateOrUpdateSubresource<TModel>(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string id, string parentId, string subresource, TModel model)
     {
