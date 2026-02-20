@@ -52,7 +52,15 @@ Use 'az account set' to set the active subscription.
 ```
 
 Now you can sign in using `az login` and start using Azure CLI commands as usual.
+
+:::warning
+
+Authentication to a local Entra ID tenant requires you to allow Azure CLI to authenticate to a tenant, which is not whitelisted. This is done by setting `AZURE_CORE_INSTANCE_DISCOVERY` environment variable to `false`. To keep things secure, make sure you restore the value to `true` after emulator is no longer needed.
+
+:::
+
 ```bash
+$ export AZURE_CORE_INSTANCE_DISCOVERY=false
 $ az login
 A web browser has been opened at https://topaz.local.dev:8899/organizations/oauth2/v2.0/authorize. Please continue the login in the web browser. If no web browser is available or if the web browser fails to open, use device code flow with `az login --use-device-code`.
 
