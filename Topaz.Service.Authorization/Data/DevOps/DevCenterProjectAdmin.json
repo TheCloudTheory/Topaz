@@ -1,0 +1,55 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Provides access to manage project resources.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/331c37c6-af14-46d9-b9f4-e1909e1b95a0",
+  "name": "331c37c6-af14-46d9-b9f4-e1909e1b95a0",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.DevCenter/projects/*",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [
+        "Microsoft.DevCenter/projects/write",
+        "Microsoft.DevCenter/projects/delete"
+      ],
+      "dataActions": [
+        "Microsoft.DevCenter/projects/users/devboxes/adminStart/action",
+        "Microsoft.DevCenter/projects/users/devboxes/adminStop/action",
+        "Microsoft.DevCenter/projects/users/devboxes/adminRead/action",
+        "Microsoft.DevCenter/projects/users/devboxes/adminWrite/action",
+        "Microsoft.DevCenter/projects/users/devboxes/adminDelete/action",
+        "Microsoft.DevCenter/projects/users/devboxes/adminAlign/action",
+        "Microsoft.DevCenter/projects/users/devboxes/adminActionRead/action",
+        "Microsoft.DevCenter/projects/users/devboxes/adminActionManage/action",
+        "Microsoft.DevCenter/projects/users/devboxes/userStop/action",
+        "Microsoft.DevCenter/projects/users/devboxes/userStart/action",
+        "Microsoft.DevCenter/projects/users/devboxes/userGetRemoteConnection/action",
+        "Microsoft.DevCenter/projects/users/devboxes/userRead/action",
+        "Microsoft.DevCenter/projects/users/devboxes/userWrite/action",
+        "Microsoft.DevCenter/projects/users/devboxes/userDelete/action",
+        "Microsoft.DevCenter/projects/users/devboxes/userActionRead/action",
+        "Microsoft.DevCenter/projects/users/devboxes/userActionManage/action",
+        "Microsoft.DevCenter/projects/users/devboxes/userCustomize/action",
+        "Microsoft.DevCenter/projects/users/environments/adminRead/action",
+        "Microsoft.DevCenter/projects/users/environments/userWrite/action",
+        "Microsoft.DevCenter/projects/users/environments/adminWrite/action",
+        "Microsoft.DevCenter/projects/users/environments/userDelete/action",
+        "Microsoft.DevCenter/projects/users/environments/adminDelete/action",
+        "Microsoft.DevCenter/projects/users/environments/adminAction/action",
+        "Microsoft.DevCenter/projects/users/environments/adminActionRead/action",
+        "Microsoft.DevCenter/projects/users/environments/adminActionManage/action",
+        "Microsoft.DevCenter/projects/users/environments/adminOutputsRead/action",
+        "Microsoft.DevCenter/projects/pools/align/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "DevCenter Project Admin",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

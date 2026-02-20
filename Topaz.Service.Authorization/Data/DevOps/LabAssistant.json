@@ -1,0 +1,37 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "The lab assistant role",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/ce40b423-cede-4313-a93f-9b28290b72e1",
+  "name": "ce40b423-cede-4313-a93f-9b28290b72e1",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.LabServices/labPlans/images/read",
+        "Microsoft.LabServices/labPlans/read",
+        "Microsoft.LabServices/labs/read",
+        "Microsoft.LabServices/labs/schedules/read",
+        "Microsoft.LabServices/labs/users/read",
+        "Microsoft.LabServices/labs/users/invite/action",
+        "Microsoft.LabServices/labs/virtualMachines/read",
+        "Microsoft.LabServices/labs/virtualMachines/start/action",
+        "Microsoft.LabServices/labs/virtualMachines/stop/action",
+        "Microsoft.LabServices/labs/virtualMachines/reimage/action",
+        "Microsoft.LabServices/labs/virtualMachines/redeploy/action",
+        "Microsoft.LabServices/locations/usages/read",
+        "Microsoft.LabServices/skus/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Lab Assistant",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

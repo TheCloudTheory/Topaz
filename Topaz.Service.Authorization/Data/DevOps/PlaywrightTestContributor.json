@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can create and manage Playwright Test resources, and run and monitor Playwright tests.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/aa8f5e77-7b33-4e9b-8b2a-3a4b5c6d7e8f",
+  "name": "aa8f5e77-7b33-4e9b-8b2a-3a4b5c6d7e8f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.PlaywrightTest/*",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Playwright Test Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

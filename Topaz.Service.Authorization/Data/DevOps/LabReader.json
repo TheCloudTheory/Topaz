@@ -1,0 +1,28 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Lets you read labs under your Azure Lab Accounts.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/4f3a1c6a-6a2b-4ec8-8d1f-5d5d3b6b9b4f",
+  "name": "4f3a1c6a-6a2b-4ec8-8d1f-5d5d3b6b9b4f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.LabServices/labAccounts/*/read",
+        "Microsoft.LabServices/labPlans/read",
+        "Microsoft.LabServices/labs/read",
+        "Microsoft.LabServices/labs/users/read",
+        "Microsoft.LabServices/labs/virtualMachines/read",
+        "Microsoft.LabServices/locations/usages/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Lab Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

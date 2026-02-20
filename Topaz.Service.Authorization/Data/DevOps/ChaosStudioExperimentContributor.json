@@ -1,0 +1,25 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can create, run, and see details for experiments, onboard targets, and manage capabilities.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/7c2e40b7-25eb-482a-82cb-78ba06cb46d5",
+  "name": "7c2e40b7-25eb-482a-82cb-78ba06cb46d5",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Chaos/*",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Chaos Studio Experiment Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

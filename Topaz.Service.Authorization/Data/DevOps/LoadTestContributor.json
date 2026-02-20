@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can create and manage load test resources, and run and monitor load tests.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/96f3fe7f-d6f1-4d3c-9c7b-5a4b6f9e5c1a",
+  "name": "96f3fe7f-d6f1-4d3c-9c7b-5a4b6f9e5c1a",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.LoadTestService/*",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Load Test Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,49 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "The lab contributor role",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/5daaa2af-1fe8-407c-9122-bba179798270",
+  "name": "5daaa2af-1fe8-407c-9122-bba179798270",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.LabServices/labPlans/images/read",
+        "Microsoft.LabServices/labPlans/read",
+        "Microsoft.LabServices/labPlans/saveImage/action",
+        "Microsoft.LabServices/labs/read",
+        "Microsoft.LabServices/labs/write",
+        "Microsoft.LabServices/labs/delete",
+        "Microsoft.LabServices/labs/publish/action",
+        "Microsoft.LabServices/labs/syncGroup/action",
+        "Microsoft.LabServices/labs/schedules/read",
+        "Microsoft.LabServices/labs/schedules/write",
+        "Microsoft.LabServices/labs/schedules/delete",
+        "Microsoft.LabServices/labs/users/read",
+        "Microsoft.LabServices/labs/users/write",
+        "Microsoft.LabServices/labs/users/delete",
+        "Microsoft.LabServices/labs/users/invite/action",
+        "Microsoft.LabServices/labs/virtualMachines/read",
+        "Microsoft.LabServices/labs/virtualMachines/start/action",
+        "Microsoft.LabServices/labs/virtualMachines/stop/action",
+        "Microsoft.LabServices/labs/virtualMachines/reimage/action",
+        "Microsoft.LabServices/labs/virtualMachines/redeploy/action",
+        "Microsoft.LabServices/labs/virtualMachines/resetPassword/action",
+        "Microsoft.LabServices/locations/usages/read",
+        "Microsoft.LabServices/skus/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.LabServices/labPlans/createLab/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Lab Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

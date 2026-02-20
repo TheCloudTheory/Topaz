@@ -1,0 +1,28 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Provides access to manage all Microsoft.DevCenter resources, and to manage access to Microsoft.DevCenter resources by adding or removing role assignments for the DevCenter Project Admin and DevCenter Dev Box roles.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/4c6569b6-f23e-4295-9b90-bd4cc4ff3292",
+  "name": "4c6569b6-f23e-4295-9b90-bd4cc4ff3292",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.DevCenter/*",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Authorization/roleAssignments/write",
+        "Microsoft.Authorization/roleAssignments/delete",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": [],
+      "conditionVersion": "2.0",
+      "condition": "((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{331c37c6-af14-46d9-b9f4-e1909e1b95a0, 45d50f46-0b78-4001-a660-4198cbe8cd05})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{331c37c6-af14-46d9-b9f4-e1909e1b95a0, 45d50f46-0b78-4001-a660-4198cbe8cd05}))"
+    }
+  ],
+  "roleName": "DevCenter Owner",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

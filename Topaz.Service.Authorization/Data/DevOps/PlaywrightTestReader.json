@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can view Playwright Test resources and test results.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/fe7d5c3a-5b4e-4a6b-9c1d-2e3f4b5c6a7d",
+  "name": "fe7d5c3a-5b4e-4a6b-9c1d-2e3f4b5c6a7d",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.PlaywrightTest/*/read",
+        "Microsoft.Insights/alertRules/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Playwright Test Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

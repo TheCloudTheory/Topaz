@@ -1,0 +1,26 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can view targets, capabilities, experiments, and experiment details.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/29e2da8a-229c-4157-8ae8-cc72fc506b74",
+  "name": "29e2da8a-229c-4157-8ae8-cc72fc506b74",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Chaos/*/read",
+        "Microsoft.Chaos/experiments/executions/getExecutionDetails/action",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Chaos Studio Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

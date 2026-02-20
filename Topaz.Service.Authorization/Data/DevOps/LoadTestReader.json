@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can view load tests and results.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/3b1a5c4e-2a56-4d9a-b1b6-7f1c9d2b4e3a",
+  "name": "3b1a5c4e-2a56-4d9a-b1b6-7f1c9d2b4e3a",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.LoadTestService/*/read",
+        "Microsoft.Insights/alertRules/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Load Test Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

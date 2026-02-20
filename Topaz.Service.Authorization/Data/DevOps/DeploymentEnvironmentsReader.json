@@ -1,0 +1,31 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Provides read access to environment resources.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/eb960402-bf75-4cc3-8d68-35b34f960f72",
+  "name": "eb960402-bf75-4cc3-8d68-35b34f960f72",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.DevCenter/projects/read",
+        "Microsoft.DevCenter/projects/*/read",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [
+        "Microsoft.DevCenter/projects/pools/read",
+        "Microsoft.DevCenter/projects/pools/schedules/read"
+      ],
+      "dataActions": [
+        "Microsoft.DevCenter/projects/users/environments/adminRead/action",
+        "Microsoft.DevCenter/projects/users/environments/adminActionRead/action",
+        "Microsoft.DevCenter/projects/users/environments/adminOutputsRead/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Deployment Environments Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}
