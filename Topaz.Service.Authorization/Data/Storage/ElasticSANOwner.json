@@ -1,0 +1,19 @@
+{
+  "roleName": "Elastic SAN Owner",
+  "id": "80dcbedb-47ef-405d-95bd-188a1b4ac406",
+  "description": "Allows for full access to all resources under Azure Elastic SAN including changing network security policies to unblock data path access",
+  "category": "Storage",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.Authorization/*/read",
+    "Microsoft.ResourceHealth/availabilityStatuses/read",
+    "Microsoft.Resources/deployments/*",
+    "Microsoft.Resources/subscriptions/resourceGroups/read",
+    "Microsoft.ElasticSan/elasticSans/*",
+    "Microsoft.ElasticSan/locations/*"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

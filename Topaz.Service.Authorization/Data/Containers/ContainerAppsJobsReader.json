@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read access to ContainerApps jobs",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/edd66693-d32a-450b-997d-0158c03976b0",
+  "name": "edd66693-d32a-450b-997d-0158c03976b0",
+  "permissions": [
+    {
+      "actions": [
+        "microsoft.app/jobs/read",
+        "Microsoft.App/jobs/*/read",
+        "Microsoft.App/managedenvironments/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Container Apps Jobs Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

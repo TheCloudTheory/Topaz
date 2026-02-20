@@ -1,0 +1,55 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Grants a user/group the ability to create, delete and manage clusters within a given cluster pool. Cluster Admin can also run workloads, monitor, and manage all user activity on these clusters.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/fd036e6b-1266-47a0-b0bb-a05d04831731",
+  "name": "fd036e6b-1266-47a0-b0bb-a05d04831731",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.HDInsight/clusterPools/clusters/read",
+        "Microsoft.HDInsight/clusterPools/clusters/write",
+        "Microsoft.HDInsight/clusterPools/clusters/delete",
+        "Microsoft.HDInsight/clusterPools/clusters/resize/action",
+        "Microsoft.HDInsight/clusterpools/clusters/instanceviews/read",
+        "Microsoft.HDInsight/clusterPools/clusters/jobs/read",
+        "Microsoft.HDInsight/clusterPools/clusters/runjob/action",
+        "Microsoft.HDInsight/clusterpools/clusters/serviceconfigs/read",
+        "Microsoft.HDInsight/clusterPools/clusters/availableupgrades/read",
+        "Microsoft.HDInsight/clusterPools/clusters/upgrade/action",
+        "Microsoft.HDInsight/clusterPools/clusters/rollback/action",
+        "Microsoft.HDInsight/clusterPools/clusters/upgradehistories/read",
+        "Microsoft.HDInsight/clusterPools/clusters/libraries/read",
+        "Microsoft.HDInsight/clusterPools/clusters/managelibraries/action",
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Resources/deployments/operations/read",
+        "Microsoft.Resources/deployments/*/read",
+        "Microsoft.Resources/deployments/read",
+        "Microsoft.Resources/deployments/validate/action",
+        "Microsoft.Resources/deployments/write",
+        "Microsoft.Resources/deployments/exportTemplate/action",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/operations/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Resources/subscriptions/operationresults/read",
+        "Microsoft.Insights/AlertRules/Write",
+        "Microsoft.Insights/AlertRules/Delete",
+        "Microsoft.Insights/AlertRules/Read",
+        "Microsoft.Insights/AlertRules/Activated/Action",
+        "Microsoft.Insights/AlertRules/Resolved/Action",
+        "Microsoft.Insights/AlertRules/Throttled/Action",
+        "Microsoft.Insights/AlertRules/Incidents/Read",
+        "Microsoft.Insights/metrics/read",
+        "Microsoft.Insights/logs/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "HDInsight on AKS Cluster Admin",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

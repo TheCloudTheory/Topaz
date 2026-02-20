@@ -1,0 +1,38 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Lets you manage SQL Managed Instances and required network configuration, but can't give access to others.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/4939a1f6-9ae0-4e48-a1e0-f2cbe897382d",
+  "name": "4939a1f6-9ae0-4e48-a1e0-f2cbe897382d",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Network/networkSecurityGroups/*",
+        "Microsoft.Network/routeTables/*",
+        "Microsoft.Sql/locations/*/read",
+        "Microsoft.Sql/locations/instanceFailoverGroups/*",
+        "Microsoft.Sql/managedInstances/*",
+        "Microsoft.Support/*",
+        "Microsoft.Network/virtualNetworks/subnets/*",
+        "Microsoft.Network/virtualNetworks/*",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Insights/metrics/read",
+        "Microsoft.Insights/metricDefinitions/read"
+      ],
+      "notActions": [
+        "Microsoft.Sql/managedInstances/azureADOnlyAuthentications/delete",
+        "Microsoft.Sql/managedInstances/azureADOnlyAuthentications/write"
+      ],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "SQL Managed Instance Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

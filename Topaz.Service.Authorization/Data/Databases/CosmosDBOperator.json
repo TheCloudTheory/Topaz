@@ -1,0 +1,43 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Lets you manage Azure Cosmos DB accounts, but not access data in them. Prevents access to account keys and connection strings.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/230815da-be43-4aae-9cb4-875f7bd000aa",
+  "name": "230815da-be43-4aae-9cb4-875f7bd000aa",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.DocumentDb/databaseAccounts/*",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Support/*",
+        "Microsoft.Network/virtualNetworks/subnets/joinViaServiceEndpoint/action"
+      ],
+      "notActions": [
+        "Microsoft.DocumentDB/databaseAccounts/copyJobs/*",
+        "Microsoft.DocumentDB/databaseAccounts/dataTransferJobs/*",
+        "Microsoft.DocumentDB/databaseAccounts/readonlyKeys/*",
+        "Microsoft.DocumentDB/databaseAccounts/regenerateKey/*",
+        "Microsoft.DocumentDB/databaseAccounts/listKeys/*",
+        "Microsoft.DocumentDB/databaseAccounts/listConnectionStrings/*",
+        "Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions/write",
+        "Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions/delete",
+        "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments/write",
+        "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments/delete",
+        "Microsoft.DocumentDB/databaseAccounts/mongodbRoleDefinitions/write",
+        "Microsoft.DocumentDB/databaseAccounts/mongodbRoleDefinitions/delete",
+        "Microsoft.DocumentDB/databaseAccounts/mongodbUserDefinitions/write",
+        "Microsoft.DocumentDB/databaseAccounts/mongodbUserDefinitions/delete"
+      ],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Cosmos DB Operator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

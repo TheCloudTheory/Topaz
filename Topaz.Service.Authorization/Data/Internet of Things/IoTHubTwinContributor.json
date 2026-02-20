@@ -1,0 +1,21 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Allows for read and write access to all IoT Hub device and module twins.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/494bdba2-168f-4f31-a0a1-191d2f7c028c",
+  "name": "494bdba2-168f-4f31-a0a1-191d2f7c028c",
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Devices/IotHubs/twins/*"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "IoT Hub Twin Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

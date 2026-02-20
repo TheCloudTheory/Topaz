@@ -1,0 +1,16 @@
+{
+  "roleName": "Reader and Data Access",
+  "id": "c12c1c16-33a1-487b-954d-41c89c60f349",
+  "description": "Lets you view everything but will not let you delete or create a storage account or contained resource. It will also allow read/write access to all data contained in a storage account via access to storage account keys.",
+  "category": "Storage",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.Storage/storageAccounts/listKeys/action",
+    "Microsoft.Storage/storageAccounts/ListAccountSas/action",
+    "Microsoft.Storage/storageAccounts/read"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

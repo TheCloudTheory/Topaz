@@ -1,0 +1,25 @@
+{
+  "roleName": "Virtual Machine Administrator Login",
+  "id": "1c0163c0-47e6-4577-8991-ea5c82e286e4",
+  "description": "View Virtual Machines in the portal and login as administrator",
+  "category": "Compute",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.Network/publicIPAddresses/read",
+    "Microsoft.Network/virtualNetworks/read",
+    "Microsoft.Network/loadBalancers/read",
+    "Microsoft.Network/networkInterfaces/read",
+    "Microsoft.Compute/virtualMachines/*/read",
+    "Microsoft.HybridCompute/machines/*/read",
+    "Microsoft.HybridConnectivity/endpoints/listCredentials/action"
+  ],
+  "notActions": [],
+  "dataActions": [
+    "Microsoft.Compute/virtualMachines/login/action",
+    "Microsoft.Compute/virtualMachines/loginAsAdmin/action",
+    "Microsoft.HybridCompute/machines/login/action",
+    "Microsoft.HybridCompute/machines/loginAsAdmin/action"
+  ],
+  "notDataActions": []
+}

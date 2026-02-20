@@ -1,0 +1,21 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "acr delete",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11",
+  "name": "c2f4ef07-c644-48eb-af81-4b1b4947fb11",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ContainerRegistry/registries/artifacts/delete"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "AcrDelete",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

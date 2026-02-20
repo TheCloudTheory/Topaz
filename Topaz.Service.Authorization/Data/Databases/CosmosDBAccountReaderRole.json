@@ -1,0 +1,27 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can read Azure Cosmos DB Accounts data",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/fbdf93bf-df7d-467e-a4d2-9458aa1360c8",
+  "name": "fbdf93bf-df7d-467e-a4d2-9458aa1360c8",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.DocumentDB/*/read",
+        "Microsoft.DocumentDB/databaseAccounts/readonlykeys/action",
+        "Microsoft.Insights/MetricDefinitions/read",
+        "Microsoft.Insights/Metrics/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Support/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Cosmos DB Account Reader Role",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

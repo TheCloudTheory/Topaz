@@ -1,0 +1,43 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Lets you create, read, update, delete and manage keys of Cognitive Services.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68",
+  "name": "25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.CognitiveServices/*",
+        "Microsoft.Features/features/read",
+        "Microsoft.Features/providers/features/read",
+        "Microsoft.Features/providers/features/register/action",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Insights/diagnosticSettings/*",
+        "Microsoft.Insights/logDefinitions/read",
+        "Microsoft.Insights/metricdefinitions/read",
+        "Microsoft.Insights/metrics/read",
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/deployments/operations/read",
+        "Microsoft.Resources/subscriptions/operationresults/read",
+        "Microsoft.Resources/subscriptions/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Support/*"
+      ],
+      "notActions": [
+        "Microsoft.CognitiveServices/raiPolicy/write",
+        "Microsoft.CognitiveServices/raiPolicy/delete",
+        "Microsoft.CognitiveServices/raiExternalSafetyProviders/write",
+        "Microsoft.CognitiveServices/raiExternalSafetyProviders/delete"
+      ],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Cognitive Services Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

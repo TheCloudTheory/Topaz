@@ -1,0 +1,26 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Full access to App Configuration data (read/write/delete keys and feature flags).",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/4f6e2a9d-1234-4b9f-9a2b-5c6d7e8f9012",
+  "name": "4f6e2a9d-1234-4b9f-9a2b-5c6d7e8f9012",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.AppConfiguration/configurationStores/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.AppConfiguration/configurationStores/keyValues/read",
+        "Microsoft.AppConfiguration/configurationStores/keyValues/write",
+        "Microsoft.AppConfiguration/configurationStores/keyValues/delete"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "App Configuration Data Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

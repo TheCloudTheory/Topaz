@@ -1,0 +1,59 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "A Built-In Role that has all control plane permissions to work with Azure AI and its dependencies.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/b78c5d69-af96-48a3-bf8d-a8b4d589de94",
+  "name": "b78c5d69-af96-48a3-bf8d-a8b4d589de94",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.CognitiveServices/*",
+        "Microsoft.ContainerRegistry/registries/*",
+        "Microsoft.DocumentDb/databaseAccounts/*",
+        "Microsoft.Features/features/read",
+        "Microsoft.Features/providers/features/read",
+        "Microsoft.Features/providers/features/register/action",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Insights/components/*",
+        "Microsoft.Insights/diagnosticSettings/*",
+        "Microsoft.Insights/generateLiveToken/read",
+        "Microsoft.Insights/logDefinitions/read",
+        "Microsoft.Insights/metricAlerts/*",
+        "Microsoft.Insights/metricdefinitions/read",
+        "Microsoft.Insights/metrics/read",
+        "Microsoft.Insights/scheduledqueryrules/*",
+        "Microsoft.Insights/topology/read",
+        "Microsoft.Insights/transactions/read",
+        "Microsoft.Insights/webtests/*",
+        "Microsoft.KeyVault/*",
+        "Microsoft.MachineLearningServices/workspaces/*",
+        "Microsoft.Network/virtualNetworks/subnets/joinViaServiceEndpoint/action",
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/deployments/operations/read",
+        "Microsoft.Resources/subscriptions/operationresults/read",
+        "Microsoft.Resources/subscriptions/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/write",
+        "Microsoft.Storage/storageAccounts/*",
+        "Microsoft.Support/*",
+        "Microsoft.Search/searchServices/write",
+        "Microsoft.Search/searchServices/read",
+        "Microsoft.Search/searchServices/delete",
+        "Microsoft.Search/searchServices/indexes/*",
+        "Microsoft.Search/searchServices/listAdminKeys/action",
+        "Microsoft.Search/searchServices/privateEndpointConnections/*",
+        "Microsoft.DataFactory/factories/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure AI Administrator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

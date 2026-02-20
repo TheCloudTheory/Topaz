@@ -1,0 +1,30 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "User can Azure arc connect and deploy Azure IoT Operations securely.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/7b7c71ed-33fa-4ed2-a91a-e56d5da260b5",
+  "name": "7b7c71ed-33fa-4ed2-a91a-e56d5da260b5",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.IoTOperations/*",
+        "Microsoft.DeviceRegistry/register/action",
+        "Microsoft.DeviceRegistry/schemaRegistries/read",
+        "Microsoft.DeviceRegistry/schemaRegistries/write",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Authorization/*/write",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Edge/sites/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure IoT Operations Onboarding",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

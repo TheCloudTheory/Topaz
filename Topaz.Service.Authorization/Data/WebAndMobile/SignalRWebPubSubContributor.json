@@ -1,0 +1,19 @@
+{
+  "roleName": "SignalR/Web PubSub Contributor",
+  "id": "8cf5e20a-e4b2-4e9d-b3a1-5ceb692c2761",
+  "description": "Create, Read, Update, and Delete SignalR service resources",
+  "category": "Web and Mobile",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.SignalRService/*",
+    "Microsoft.Authorization/*/read",
+    "Microsoft.Insights/alertRules/*",
+    "Microsoft.Resources/subscriptions/resourceGroups/read",
+    "Microsoft.Resources/deployments/*",
+    "Microsoft.Support/*"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Allows for read access to Azure Container Registry repositories, but excluding catalog listing.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/b93aa761-3e63-49ed-ac28-beffa264f7ac",
+  "name": "b93aa761-3e63-49ed-ac28-beffa264f7ac",
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.ContainerRegistry/registries/repositories/metadata/read",
+        "Microsoft.ContainerRegistry/registries/repositories/content/read"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Container Registry Repository Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

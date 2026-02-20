@@ -1,0 +1,14 @@
+{
+  "roleName": "Azure Maps Data Reader",
+  "id": "423170ca-a8f6-4b0f-8487-9e4eb8f49bfa",
+  "description": "Grants access to read map related data from an Azure maps account.",
+  "category": "Web and Mobile",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [],
+  "notActions": [],
+  "dataActions": [
+    "Microsoft.Maps/accounts/*/read"
+  ],
+  "notDataActions": []
+}

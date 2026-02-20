@@ -1,0 +1,14 @@
+{
+  "roleName": "Azure Spring Cloud Data Reader",
+  "id": "b5537268-8956-4941-a8f0-646150406f0c",
+  "description": "Allow read access to Azure Spring Cloud Data",
+  "category": "Web and Mobile",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [],
+  "notActions": [],
+  "dataActions": [
+    "Microsoft.AppPlatform/Spring/*/read"
+  ],
+  "notDataActions": []
+}

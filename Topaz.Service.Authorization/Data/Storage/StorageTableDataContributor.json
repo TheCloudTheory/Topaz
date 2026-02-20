@@ -1,0 +1,22 @@
+{
+  "roleName": "Storage Table Data Contributor",
+  "id": "0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3",
+  "description": "Allows for read, write and delete access to Azure Storage tables and entities",
+  "category": "Storage",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.Storage/storageAccounts/tableServices/tables/read",
+    "Microsoft.Storage/storageAccounts/tableServices/tables/write",
+    "Microsoft.Storage/storageAccounts/tableServices/tables/delete"
+  ],
+  "notActions": [],
+  "dataActions": [
+    "Microsoft.Storage/storageAccounts/tableServices/tables/entities/read",
+    "Microsoft.Storage/storageAccounts/tableServices/tables/entities/write",
+    "Microsoft.Storage/storageAccounts/tableServices/tables/entities/delete",
+    "Microsoft.Storage/storageAccounts/tableServices/tables/entities/add/action",
+    "Microsoft.Storage/storageAccounts/tableServices/tables/entities/update/action"
+  ],
+  "notDataActions": []
+}

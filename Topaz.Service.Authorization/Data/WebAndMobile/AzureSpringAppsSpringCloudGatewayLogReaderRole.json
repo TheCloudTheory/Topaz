@@ -1,0 +1,17 @@
+{
+  "roleName": "Azure Spring Apps Spring Cloud Gateway Log Reader Role",
+  "id": "4301dc2a-25a9-44b0-ae63-3636cf7f2bd2",
+  "description": "Read real-time logs for Spring Cloud Gateway in Azure Spring Apps",
+  "category": "Web and Mobile",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.AppPlatform/Spring/read",
+    "Microsoft.AppPlatform/Spring/gateways/read"
+  ],
+  "notActions": [],
+  "dataActions": [
+    "Microsoft.AppPlatform/Spring/SpringCloudGateway/logstream/action"
+  ],
+  "notDataActions": []
+}

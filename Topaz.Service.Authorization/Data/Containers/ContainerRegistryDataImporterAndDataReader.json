@@ -1,0 +1,25 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Provides the ability to import images into a registry through the registry import operation. Provides the ability to list repositories, view images and tags, get manifests, and pull images. Does not provide permissions for importing images through configuring registry transfer pipelines such as import and export pipelines. Does not provide permissions for importing through configuring Artifact Cache or Sync rules.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/577a9874-89fd-4f24-9dbd-b5034d0ad23a",
+  "name": "577a9874-89fd-4f24-9dbd-b5034d0ad23a",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ContainerRegistry/registries/importImage/action",
+        "Microsoft.ContainerRegistry/registries/read",
+        "Microsoft.ContainerRegistry/registries/pull/read"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.ContainerRegistry/registries/repositories/content/read",
+        "Microsoft.ContainerRegistry/registries/repositories/metadata/read",
+        "Microsoft.ContainerRegistry/registries/catalog/read"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Container Registry Data Importer and Data Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

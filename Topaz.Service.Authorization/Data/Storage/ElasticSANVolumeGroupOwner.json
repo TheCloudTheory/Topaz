@@ -1,0 +1,17 @@
+{
+  "roleName": "Elastic SAN Volume Group Owner",
+  "id": "a8281131-f312-4f34-8d98-ae12be9f0d23",
+  "description": "Allows for full access to a volume group in Azure Elastic SAN including changing network security policies to unblock data path access",
+  "category": "Storage",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.Authorization/roleAssignments/read",
+    "Microsoft.Authorization/roleDefinitions/read",
+    "Microsoft.ElasticSan/elasticSans/volumeGroups/*",
+    "Microsoft.ElasticSan/locations/asyncoperations/read"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

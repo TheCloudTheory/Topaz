@@ -1,0 +1,22 @@
+{
+  "roleName": "Web Plan Contributor",
+  "id": "2cc479cb-7b4d-49a8-b449-8c00fd0f0a4b",
+  "description": "Manage the web plans for websites. Does not allow you to assign roles in Azure RBAC.",
+  "category": "Web and Mobile",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.Authorization/*/read",
+    "Microsoft.Insights/alertRules/*",
+    "Microsoft.ResourceHealth/availabilityStatuses/read",
+    "Microsoft.Resources/deployments/*",
+    "Microsoft.Resources/subscriptions/resourceGroups/read",
+    "Microsoft.Support/*",
+    "Microsoft.Web/serverFarms/*",
+    "Microsoft.Web/hostingEnvironments/Join/Action",
+    "Microsoft.Insights/autoscalesettings/*"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

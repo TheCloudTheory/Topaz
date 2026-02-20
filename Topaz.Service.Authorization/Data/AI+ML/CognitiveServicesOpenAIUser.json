@@ -1,0 +1,42 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Ability to view files, models, deployments. Readers can't make any changes They can inference and create images",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/5e0bd9bd-7b93-4f28-af87-19fc36ad61bd",
+  "name": "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.CognitiveServices/*/read",
+        "Microsoft.Authorization/roleAssignments/read",
+        "Microsoft.Authorization/roleDefinitions/read"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.CognitiveServices/accounts/OpenAI/*/read",
+        "Microsoft.CognitiveServices/accounts/OpenAI/engines/completions/action",
+        "Microsoft.CognitiveServices/accounts/OpenAI/engines/search/action",
+        "Microsoft.CognitiveServices/accounts/OpenAI/engines/generate/action",
+        "Microsoft.CognitiveServices/accounts/OpenAI/deployments/audio/action",
+        "Microsoft.CognitiveServices/accounts/OpenAI/deployments/search/action",
+        "Microsoft.CognitiveServices/accounts/OpenAI/deployments/completions/action",
+        "Microsoft.CognitiveServices/accounts/OpenAI/deployments/chat/completions/action",
+        "Microsoft.CognitiveServices/accounts/OpenAI/deployments/realtime/action",
+        "Microsoft.CognitiveServices/accounts/OpenAI/deployments/extensions/chat/completions/action",
+        "Microsoft.CognitiveServices/accounts/OpenAI/deployments/embeddings/action",
+        "Microsoft.CognitiveServices/accounts/OpenAI/images/generations/action",
+        "Microsoft.CognitiveServices/accounts/OpenAI/video/generations/*/action",
+        "Microsoft.CognitiveServices/accounts/OpenAI/video/generations/*/delete",
+        "Microsoft.CognitiveServices/accounts/OpenAI/assistants/*",
+        "Microsoft.CognitiveServices/accounts/OpenAI/responses/*"
+      ],
+      "notDataActions": [
+        "Microsoft.CognitiveServices/accounts/OpenAI/stored-completions/read"
+      ]
+    }
+  ],
+  "roleName": "Cognitive Services OpenAI User",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

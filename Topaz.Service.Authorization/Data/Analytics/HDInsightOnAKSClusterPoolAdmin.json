@@ -1,0 +1,49 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can read, create, modify and delete HDInsight on AKS cluster pools and create clusters",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/7656b436-37d4-490a-a4ab-d39f838f0042",
+  "name": "7656b436-37d4-490a-a4ab-d39f838f0042",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.HDInsight/clusterPools/clusters/read",
+        "Microsoft.HDInsight/clusterPools/clusters/write",
+        "Microsoft.HDInsight/clusterPools/delete",
+        "Microsoft.HDInsight/clusterPools/read",
+        "Microsoft.HDInsight/clusterPools/write",
+        "Microsoft.HDInsight/clusterpools/availableupgrades/read",
+        "Microsoft.HDInsight/clusterpools/upgrade/action",
+        "Microsoft.HDInsight/clusterPools/upgradehistories/read",
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Resources/deployments/operations/read",
+        "Microsoft.Resources/deployments/validate/action",
+        "Microsoft.Resources/deployments/*/read",
+        "Microsoft.Resources/deployments/read",
+        "Microsoft.Resources/deployments/write",
+        "Microsoft.Resources/deployments/exportTemplate/action",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/operations/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Resources/subscriptions/operationresults/read",
+        "Microsoft.Insights/AlertRules/Write",
+        "Microsoft.Insights/AlertRules/Delete",
+        "Microsoft.Insights/AlertRules/Read",
+        "Microsoft.Insights/AlertRules/Activated/Action",
+        "Microsoft.Insights/AlertRules/Resolved/Action",
+        "Microsoft.Insights/AlertRules/Throttled/Action",
+        "Microsoft.Insights/AlertRules/Incidents/Read",
+        "Microsoft.Insights/metrics/read",
+        "Microsoft.Insights/logs/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "HDInsight on AKS Cluster Pool Admin",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

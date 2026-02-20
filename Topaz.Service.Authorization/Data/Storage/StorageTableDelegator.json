@@ -1,0 +1,14 @@
+{
+  "roleName": "Storage Table Delegator",
+  "id": "965033a5-c8eb-4f35-b82f-fef460a3606d",
+  "description": "Allows for generation of a user delegation key for table service",
+  "category": "Storage",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.Storage/storageAccounts/tableServices/generateUserDelegationKey/action"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

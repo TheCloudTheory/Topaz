@@ -1,0 +1,22 @@
+{
+  "roleName": "Desktop Virtualization Application Group Reader",
+  "id": "aebf23d0-b568-4e86-b8f9-fe83a2c6ab55",
+  "description": "Reader of the Desktop Virtualization Application Group.",
+  "category": "Compute",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.DesktopVirtualization/applicationgroups/*/read",
+    "Microsoft.DesktopVirtualization/applicationgroups/read",
+    "Microsoft.DesktopVirtualization/hostpools/read",
+    "Microsoft.DesktopVirtualization/hostpools/sessionhosts/read",
+    "Microsoft.Resources/subscriptions/resourceGroups/read",
+    "Microsoft.Resources/deployments/read",
+    "Microsoft.Authorization/*/read",
+    "Microsoft.Insights/alertRules/read",
+    "Microsoft.Support/*"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

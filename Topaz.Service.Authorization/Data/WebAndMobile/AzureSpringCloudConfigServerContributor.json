@@ -1,0 +1,16 @@
+{
+  "roleName": "Azure Spring Cloud Config Server Contributor",
+  "id": "a06f5c24-21a7-4e1a-aa2b-f19eb6684f5b",
+  "description": "Allow read, write and delete access to Azure Spring Cloud Config Server",
+  "category": "Web and Mobile",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [],
+  "notActions": [],
+  "dataActions": [
+    "Microsoft.AppPlatform/Spring/configService/read",
+    "Microsoft.AppPlatform/Spring/configService/write",
+    "Microsoft.AppPlatform/Spring/configService/delete"
+  ],
+  "notDataActions": []
+}

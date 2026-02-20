@@ -1,0 +1,32 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Grants full to manage AI project and accounts. Grants reader access to AI projects, reader access to AI accounts, and data actions for an AI project.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/c883944f-8b7b-4483-af10-35834be79c4a",
+  "name": "c883944f-8b7b-4483-af10-35834be79c4a",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.CognitiveServices/*",
+        "Microsoft.ResourceHealth/availabilityStatuses/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/deployments/operations/read",
+        "Microsoft.Resources/subscriptions/operationresults/read",
+        "Microsoft.Resources/subscriptions/read",
+        "Microsoft.Resources/subscriptions/resourcegroups/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Support/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.CognitiveServices/*"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure AI Owner",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

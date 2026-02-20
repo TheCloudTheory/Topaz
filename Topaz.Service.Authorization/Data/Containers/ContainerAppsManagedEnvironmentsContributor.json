@@ -1,0 +1,25 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Full management of Container Apps ManagedEnvironments, including creation, deletion, and updates.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/57cc5028-e6a7-4284-868d-0611c5923f8d",
+  "name": "57cc5028-e6a7-4284-868d-0611c5923f8d",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.App/managedEnvironments/*/read",
+        "Microsoft.App/managedEnvironments/*/write",
+        "Microsoft.App/managedEnvironments/*/delete",
+        "Microsoft.App/managedEnvironments/*/action",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Container Apps ManagedEnvironments Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

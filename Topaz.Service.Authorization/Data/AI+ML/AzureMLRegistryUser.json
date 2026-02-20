@@ -1,0 +1,22 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can perform all actions on Machine Learning Services Registry assets as well as get Registry resources.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/1823dd4f-9b8c-4ab6-ab4e-7397a3684615",
+  "name": "1823dd4f-9b8c-4ab6-ab4e-7397a3684615",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.MachineLearningServices/registries/read",
+        "Microsoft.MachineLearningServices/registries/assets/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "AzureML Registry User",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

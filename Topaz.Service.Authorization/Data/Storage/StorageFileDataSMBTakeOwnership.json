@@ -1,0 +1,14 @@
+{
+  "roleName": "Storage File Data SMB Take Ownership",
+  "id": "5d9bac3f-34b2-432f-bde5-78aa8e73ce6b",
+  "description": "Allows end user to assume ownership of a file/directory",
+  "category": "Storage",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [],
+  "notActions": [],
+  "dataActions": [
+    "Microsoft.Storage/storageAccounts/fileServices/takeOwnership/action"
+  ],
+  "notDataActions": []
+}

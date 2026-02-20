@@ -1,0 +1,24 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Allows for read, write, and delete access to Azure Container Registry repositories, but excluding catalog listing.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/2efddaa5-3f1f-4df3-97df-af3f13818f4c",
+  "name": "2efddaa5-3f1f-4df3-97df-af3f13818f4c",
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.ContainerRegistry/registries/repositories/metadata/read",
+        "Microsoft.ContainerRegistry/registries/repositories/content/read",
+        "Microsoft.ContainerRegistry/registries/repositories/metadata/write",
+        "Microsoft.ContainerRegistry/registries/repositories/content/write",
+        "Microsoft.ContainerRegistry/registries/repositories/metadata/delete",
+        "Microsoft.ContainerRegistry/registries/repositories/content/delete"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Container Registry Repository Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

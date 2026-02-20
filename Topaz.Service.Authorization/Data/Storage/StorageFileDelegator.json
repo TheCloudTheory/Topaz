@@ -1,0 +1,14 @@
+{
+  "roleName": "Storage File Delegator",
+  "id": "765a04e0-5de8-4bb2-9bf6-b2a30bc03e91",
+  "description": "Allows for generation of a user delegation key, which can then be used to create a shared access signature for a file or Azure file share that is signed with Entra ID credentials.",
+  "category": "Storage",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.Storage/storageAccounts/fileServices/generateUserDelegationKey/action"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

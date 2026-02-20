@@ -1,0 +1,21 @@
+{
+  "assignableScopes": ["/"],
+  "description": "acr quarantine data reader",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/cdda3590-29a3-44f6-95f2-9f980659eb04",
+  "name": "cdda3590-29a3-44f6-95f2-9f980659eb04",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ContainerRegistry/registries/quarantine/read"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.ContainerRegistry/registries/quarantinedArtifacts/read"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "AcrQuarantineReader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

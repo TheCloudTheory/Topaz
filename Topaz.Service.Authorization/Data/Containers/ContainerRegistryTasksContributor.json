@@ -1,0 +1,42 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Provides permissions to configure, read, list, trigger, or cancel Container Registry Tasks, Task Runs, Task Logs, Quick Runs, Quick Builds, and Task Agent Pools. Permissions granted for Tasks management can be used for full registry data plane permissions including reading/writing/deleting container images in registries. Permissions granted for Tasks management can also be used to run customer authored build directives and run scripts to build software artifacts.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/fb382eab-e894-4461-af04-94435c366c3f",
+  "name": "fb382eab-e894-4461-af04-94435c366c3f",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ContainerRegistry/registries/agentpools/read",
+        "Microsoft.ContainerRegistry/registries/agentpools/write",
+        "Microsoft.ContainerRegistry/registries/agentpools/delete",
+        "Microsoft.ContainerRegistry/registries/agentpools/listQueueStatus/action",
+        "Microsoft.ContainerRegistry/registries/agentpools/operationResults/status/read",
+        "Microsoft.ContainerRegistry/registries/agentpools/operationStatuses/read",
+        "Microsoft.ContainerRegistry/registries/tasks/read",
+        "Microsoft.ContainerRegistry/registries/tasks/write",
+        "Microsoft.ContainerRegistry/registries/tasks/delete",
+        "Microsoft.ContainerRegistry/registries/tasks/listDetails/action",
+        "Microsoft.ContainerRegistry/registries/scheduleRun/action",
+        "Microsoft.ContainerRegistry/registries/listBuildSourceUploadUrl/action",
+        "Microsoft.ContainerRegistry/registries/runs/read",
+        "Microsoft.ContainerRegistry/registries/runs/write",
+        "Microsoft.ContainerRegistry/registries/runs/listLogSasUrl/action",
+        "Microsoft.ContainerRegistry/registries/runs/cancel/action",
+        "Microsoft.ContainerRegistry/registries/taskruns/read",
+        "Microsoft.ContainerRegistry/registries/taskruns/write",
+        "Microsoft.ContainerRegistry/registries/taskruns/delete",
+        "Microsoft.ContainerRegistry/registries/taskruns/listDetails/action",
+        "Microsoft.ContainerRegistry/registries/taskruns/operationStatuses/read",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.ContainerRegistry/registries/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Container Registry Tasks Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

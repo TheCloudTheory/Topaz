@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Contributor access to Azure API for FHIR services and resources.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/0f1e2d3c-4b5a-6978-0c9d-8e7f6a5b4c3d",
+  "name": "0f1e2d3c-4b5a-6978-0c9d-8e7f6a5b4c3d",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.HealthcareApis/services/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.HealthcareApis/services/fhir/*"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "FHIR Service Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

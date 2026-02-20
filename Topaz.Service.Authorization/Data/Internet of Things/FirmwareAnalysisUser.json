@@ -1,0 +1,30 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Upload and analyze firmware images but not perform any workspace configuration",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/53b2724d-1e51-44fa-b586-bcace0c82609",
+  "name": "53b2724d-1e51-44fa-b586-bcace0c82609",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.IoTFirmwareDefense/*",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [
+        "Microsoft.IoTFirmwareDefense/firmwareGroups/*",
+        "Microsoft.IoTFirmwareDefense/register/action",
+        "Microsoft.IoTFirmwareDefense/unregister/action",
+        "Microsoft.IoTFirmwareDefense/workspaces/write",
+        "Microsoft.IoTFirmwareDefense/workspaces/delete"
+      ],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Firmware Analysis User",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Allows send access to Azure Event Hubs resources.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/2b629674-e913-4c01-ae53-ef4638d8f975",
+  "name": "2b629674-e913-4c01-ae53-ef4638d8f975",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventHub/*/eventhubs/read"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.EventHub/*/send/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure Event Hubs Data Sender",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,21 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Allows for full access to Device Provisioning Service data-plane operations.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/dfce44e4-17b7-4bd1-a6d1-04996ec95633",
+  "name": "dfce44e4-17b7-4bd1-a6d1-04996ec95633",
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.Devices/provisioningServices/*"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Device Provisioning Service Data Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

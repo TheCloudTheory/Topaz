@@ -1,0 +1,29 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Full access to Service Bus data, including send, listen, and manage rights.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d",
+  "name": "7f951dda-4ed3-4680-a7ca-43fe172d538d",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceBus/*/write",
+        "Microsoft.ServiceBus/*/read",
+        "Microsoft.ServiceBus/*/delete",
+        "Microsoft.ServiceBus/namespaces/queues/*",
+        "Microsoft.ServiceBus/namespaces/topics/*",
+        "Microsoft.ServiceBus/namespaces/subscriptions/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.ServiceBus/namespaces/queues/messages/*",
+        "Microsoft.ServiceBus/namespaces/topics/subscriptions/messages/*"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Bus Data Owner",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

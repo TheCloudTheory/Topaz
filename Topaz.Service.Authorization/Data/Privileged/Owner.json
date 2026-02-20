@@ -1,0 +1,12 @@
+{
+  "roleName": "Owner",
+  "id": "8e3af657-a8ff-443c-a75c-2fe8c4bcb635",
+  "description": "Grants full access to manage all resources, including the ability to assign roles in Azure RBAC.",
+  "category": "Privileged",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": ["*"],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

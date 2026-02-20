@@ -1,0 +1,28 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Manage your Service Fabric Cluster resources. Includes clusters, application types, application type versions, applications, and services. You will need additional permissions to deploy and manage the cluster's underlying resources such as virtual machine scale sets, storage accounts, networks, etc.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/b6efc156-f0da-4e90-a50a-8c000140b017",
+  "name": "b6efc156-f0da-4e90-a50a-8c000140b017",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.ServiceFabric/clusters/*",
+        "Microsoft.ServiceFabric/operations/read",
+        "Microsoft.ServiceFabric/locations/clusterVersions/read",
+        "Microsoft.ServiceFabric/locations/environments/clusterVersions/read",
+        "Microsoft.ServiceFabric/locations/operationresults/read",
+        "Microsoft.ServiceFabric/locations/operations/read",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Insights/alertRules/*",
+        "Microsoft.Resources/deployments/*",
+        "Microsoft.Resources/subscriptions/resourceGroups/read"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Service Fabric Cluster Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

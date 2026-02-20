@@ -1,0 +1,14 @@
+{
+  "roleName": "Azure Spring Apps Connect Role",
+  "id": "80558df3-64f9-4c0f-b32d-e5094b036b0b",
+  "description": "Azure Spring Apps Connect Role",
+  "category": "Web and Mobile",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [],
+  "notActions": [],
+  "dataActions": [
+    "Microsoft.AppPlatform/Spring/apps/deployments/connect/action"
+  ],
+  "notDataActions": []
+}

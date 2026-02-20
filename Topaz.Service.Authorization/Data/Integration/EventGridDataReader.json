@@ -1,0 +1,25 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Read access to Event Grid topics and subscriptions.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/2b2f3d4e-8c9a-4b3c-9d1e-2f3a4b5c6d7e",
+  "name": "2b2f3d4e-8c9a-4b3c-9d1e-2f3a4b5c6d7e",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventGrid/topics/read",
+        "Microsoft.EventGrid/eventSubscriptions/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.EventGrid/topics/events/read"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Grid Data Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,18 @@
+{
+  "roleName": "Elastic SAN Network Admin",
+  "id": "fa6cecf6-5db3-4c43-8470-c540bcb4eafa",
+  "description": "Allows access to create Private Endpoints on SAN resources, and to read SAN resources",
+  "category": "Storage",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.ElasticSan/elasticSans/*/read",
+    "Microsoft.ElasticSan/elasticSans/PrivateEndpointConnectionsApproval/action",
+    "Microsoft.ElasticSan/elasticSans/privateEndpointConnections/write",
+    "Microsoft.ElasticSan/elasticSans/privateEndpointConnections/delete",
+    "Microsoft.ElasticSan/locations/asyncoperations/read"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

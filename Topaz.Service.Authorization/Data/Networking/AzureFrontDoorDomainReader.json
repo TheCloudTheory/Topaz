@@ -1,0 +1,16 @@
+{
+  "roleName": "Azure Front Door Domain Reader",
+  "id": "0f99d363-226e-4dca-9920-b807cf8e1a5f",
+  "description": "For internal use within Azure. Can view Azure Front Door domains, but can't make changes.",
+  "category": "Networking",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.Cdn/operationresults/profileresults/customdomainresults/read",
+    "Microsoft.Cdn/profiles/customdomains/read",
+    "Microsoft.Resources/subscriptions/resourceGroups/read"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

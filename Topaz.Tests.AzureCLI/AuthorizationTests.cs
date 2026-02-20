@@ -3,7 +3,6 @@ namespace Topaz.Tests.AzureCLI;
 public class AuthorizationTests : TopazFixture
 {
 	[Test]
-	[Ignore("Requires support for Entra ID principals first.")]
 	public async Task RoleAssignment_Create_List_Update_ListChangelogs_And_Delete()
 	{
 		var clientId = Guid.NewGuid().ToString();

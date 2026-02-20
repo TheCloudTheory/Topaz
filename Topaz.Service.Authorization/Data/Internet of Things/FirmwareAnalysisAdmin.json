@@ -1,0 +1,24 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Administrative user that can upload/view firmwares & configure firmware workspaces",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/9c1607d1-791d-4c68-885d-c7b7aaff7c8a",
+  "name": "9c1607d1-791d-4c68-885d-c7b7aaff7c8a",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.IoTFirmwareDefense/*",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Firmware Analysis Admin",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

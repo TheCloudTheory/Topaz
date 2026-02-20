@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Allows for full access to Azure Event Hubs resources.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/f526a384-b230-433a-b45c-95f59c4a2dec",
+  "name": "f526a384-b230-433a-b45c-95f59c4a2dec",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventHub/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.EventHub/*"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure Event Hubs Data Owner",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

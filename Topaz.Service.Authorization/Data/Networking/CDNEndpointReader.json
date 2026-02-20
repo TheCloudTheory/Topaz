@@ -1,0 +1,22 @@
+{
+  "roleName": "CDN Endpoint Reader",
+  "id": "871e35f6-b5c1-49cc-a043-bde969a0f2cd",
+  "description": "Can view CDN endpoints, but can't make changes.",
+  "category": "Networking",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.Authorization/*/read",
+    "Microsoft.Cdn/edgenodes/read",
+    "Microsoft.Cdn/operationresults/*",
+    "Microsoft.Cdn/profiles/endpoints/*/read",
+    "Microsoft.Cdn/profiles/afdendpoints/validateCustomDomain/action",
+    "Microsoft.Insights/alertRules/*",
+    "Microsoft.Resources/deployments/*",
+    "Microsoft.Resources/subscriptions/resourceGroups/read",
+    "Microsoft.Support/*"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

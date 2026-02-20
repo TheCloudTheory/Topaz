@@ -1,0 +1,43 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Can perform all actions within an Azure AI resource besides managing the resource itself.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/64702f94-c441-49e6-a78b-ef80e0188fee",
+  "name": "64702f94-c441-49e6-a78b-ef80e0188fee",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.MachineLearningServices/workspaces/*/read",
+        "Microsoft.MachineLearningServices/workspaces/*/action",
+        "Microsoft.MachineLearningServices/workspaces/*/delete",
+        "Microsoft.MachineLearningServices/workspaces/*/write",
+        "Microsoft.MachineLearningServices/locations/*/read",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [
+        "Microsoft.MachineLearningServices/workspaces/delete",
+        "Microsoft.MachineLearningServices/workspaces/write",
+        "Microsoft.MachineLearningServices/workspaces/listKeys/action",
+        "Microsoft.MachineLearningServices/workspaces/hubs/write",
+        "Microsoft.MachineLearningServices/workspaces/hubs/delete",
+        "Microsoft.MachineLearningServices/workspaces/featurestores/write",
+        "Microsoft.MachineLearningServices/workspaces/featurestores/delete",
+        "Microsoft.MachineLearningServices/workspaces/evaluations/results/labels/read",
+        "Microsoft.MachineLearningServices/workspaces/evaluations/results/reasonings/read",
+        "Microsoft.MachineLearningServices/workspaces/simulations/results/images/read"
+      ],
+      "dataActions": [
+        "Microsoft.CognitiveServices/accounts/OpenAI/*",
+        "Microsoft.CognitiveServices/accounts/SpeechServices/*",
+        "Microsoft.CognitiveServices/accounts/ContentSafety/*",
+        "Microsoft.CognitiveServices/accounts/MaaS/*"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Azure AI Developer",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

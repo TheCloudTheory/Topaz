@@ -1,0 +1,14 @@
+{
+  "roleName": "Storage Queue Data Message Sender",
+  "id": "c6a89b2d-59bc-44d0-9896-0f6e12d7b80a",
+  "description": "Allows for sending of Azure Storage queue messages",
+  "category": "Storage",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [],
+  "notActions": [],
+  "dataActions": [
+    "Microsoft.Storage/storageAccounts/queueServices/queues/messages/add/action"
+  ],
+  "notDataActions": []
+}

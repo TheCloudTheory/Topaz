@@ -1,0 +1,15 @@
+{
+  "roleName": "Compute Gallery Image Reader",
+  "id": "cf7c76d2-98a3-4358-a134-615aa78bf44d",
+  "description": "This is the role for reading gallery images.",
+  "category": "Compute",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.Compute/galleries/images/read",
+    "Microsoft.Compute/galleries/images/versions/read"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

@@ -1,0 +1,28 @@
+{
+  "roleName": "Contributor",
+  "id": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+  "description": "Grants full access to manage all resources, but does not allow you to assign roles in Azure RBAC, manage assignments in Azure Blueprints, or share image galleries.",
+  "category": "Privileged",
+  "builtIn": true,
+  "assignableScopes": [
+    "/"
+  ],
+  "actions": [
+    "*"
+  ],
+  "notActions": [
+    "Microsoft.Authorization/*/Delete",
+    "Microsoft.Authorization/*/Write",
+    "Microsoft.Authorization/elevateAccess/Action",
+    "Microsoft.Blueprint/blueprintAssignments/write",
+    "Microsoft.Blueprint/blueprintAssignments/delete",
+    "Microsoft.Compute/galleries/share/action",
+    "Microsoft.Purview/consents/write",
+    "Microsoft.Purview/consents/delete",
+    "Microsoft.Resources/deploymentStacks/manageDenySetting/action",
+    "Microsoft.Subscription/cancel/action",
+    "Microsoft.Subscription/enable/action"
+  ],
+  "dataActions": [],
+  "notDataActions": []
+}

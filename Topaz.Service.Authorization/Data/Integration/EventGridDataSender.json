@@ -1,0 +1,25 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Send events to Event Grid topics and event subscriptions.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/6a9d7a6b-3c3a-4f1b-9f2a-0d6d0c2a1a1b",
+  "name": "6a9d7a6b-3c3a-4f1b-9f2a-0d6d0c2a1a1b",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.EventGrid/topics/publish/action",
+        "Microsoft.EventGrid/eventSubscriptions/*/write",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.EventGrid/topics/events/send/action"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Event Grid Data Sender",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

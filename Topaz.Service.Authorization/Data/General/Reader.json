@@ -1,0 +1,16 @@
+{
+  "roleName": "Reader",
+  "id": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
+  "description": "View all resources, but does not allow you to make any changes.",
+  "category": "General",
+  "builtIn": true,
+  "assignableScopes": [
+    "/"
+  ],
+  "actions": [
+    "*/read"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

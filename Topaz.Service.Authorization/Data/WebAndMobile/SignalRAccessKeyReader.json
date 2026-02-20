@@ -1,0 +1,18 @@
+{
+  "roleName": "SignalR AccessKey Reader",
+  "id": "04165923-9d83-45d5-8227-78b77b0a687e",
+  "description": "Read SignalR Service Access Keys",
+  "category": "Web and Mobile",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.SignalRService/*/read",
+    "Microsoft.SignalRService/SignalR/listkeys/action",
+    "Microsoft.Authorization/*/read",
+    "Microsoft.Resources/subscriptions/resourceGroups/read",
+    "Microsoft.Support/*"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

@@ -1,0 +1,19 @@
+{
+  "assignableScopes": ["/"],
+  "description": "Allows for listing all repositories in an Azure Container Registry.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/bfdb9389-c9a5-478a-bb2f-ba9ca092c3c7",
+  "name": "bfdb9389-c9a5-478a-bb2f-ba9ca092c3c7",
+  "permissions": [
+    {
+      "actions": [],
+      "notActions": [],
+      "dataActions": [
+        "Microsoft.ContainerRegistry/registries/catalog/read"
+      ],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Container Registry Repository Catalog Lister",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,30 @@
+{
+  "roleName": "Azure Front Door Profile Reader",
+  "id": "662802e2-50f6-46b0-aed2-e834bacc6d12",
+  "description": "Can view AFD standard and premium profiles and their endpoints, but can't make changes.",
+  "category": "Networking",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.Authorization/*/read",
+    "Microsoft.Cdn/edgenodes/read",
+    "Microsoft.Cdn/operationresults/*",
+    "Microsoft.Cdn/profiles/*/read",
+    "Microsoft.Insights/alertRules/*",
+    "Microsoft.Resources/deployments/*",
+    "Microsoft.Resources/subscriptions/resourceGroups/read",
+    "Microsoft.Cdn/operationresults/profileresults/afdendpointresults/CheckCustomDomainDNSMappingStatus/action",
+    "Microsoft.Cdn/profiles/queryloganalyticsmetrics/action",
+    "Microsoft.Cdn/profiles/queryloganalyticsrankings/action",
+    "Microsoft.Cdn/profiles/querywafloganalyticsmetrics/action",
+    "Microsoft.Cdn/profiles/querywafloganalyticsrankings/action",
+    "Microsoft.Cdn/profiles/afdendpoints/CheckCustomDomainDNSMappingStatus/action",
+    "Microsoft.Cdn/profiles/Usages/action",
+    "Microsoft.Cdn/profiles/afdendpoints/Usages/action",
+    "Microsoft.Cdn/profiles/origingroups/Usages/action",
+    "Microsoft.Cdn/profiles/rulesets/Usages/action"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

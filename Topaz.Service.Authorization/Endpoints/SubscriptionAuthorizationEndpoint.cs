@@ -21,6 +21,7 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}",
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}",
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions",
+        "GET /{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions",
         "DELETE /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}",
         "DELETE /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}"
     ];
@@ -34,7 +35,9 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
         try
         {
             var segmentsCount = path.Split('/').Length;
-            var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
+            var subscriptionIdentifier = path.StartsWith("/subscriptions")
+                ? SubscriptionIdentifier.From(path.ExtractValueFromPath(2))
+                : SubscriptionIdentifier.From(path.ExtractValueFromPath(1));
             var isRoleDefinition = path.Contains("roleDefinitions");
             var roleDefinitionId = segmentsCount > 6 ? RoleDefinitionIdentifier.From(path.ExtractValueFromPath(6)) : null;
             var roleAssignmentName = segmentsCount > 6 && !isRoleDefinition ? RoleAssignmentName.From(path.ExtractValueFromPath(6)) : null;

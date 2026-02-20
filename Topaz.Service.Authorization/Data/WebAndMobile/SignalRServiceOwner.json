@@ -1,0 +1,14 @@
+{
+  "roleName": "SignalR Service Owner",
+  "id": "7e4f1700-ea5a-4f59-8f37-079cfe29dce3",
+  "description": "Full access to Azure SignalR Service REST APIs",
+  "category": "Web and Mobile",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [],
+  "notActions": [],
+  "dataActions": [
+    "Microsoft.SignalRService/SignalR/*"
+  ],
+  "notDataActions": []
+}

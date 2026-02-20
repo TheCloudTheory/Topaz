@@ -1,0 +1,20 @@
+{
+  "roleName": "Network Contributor",
+  "id": "4d97b98b-1d4f-4787-a291-c67834d212e7",
+  "description": "Lets you manage networks, but not access to them.",
+  "category": "Networking",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.Authorization/*/read",
+    "Microsoft.Insights/alertRules/*",
+    "Microsoft.Network/*",
+    "Microsoft.ResourceHealth/availabilityStatuses/read",
+    "Microsoft.Resources/deployments/*",
+    "Microsoft.Resources/subscriptions/resourceGroups/read",
+    "Microsoft.Support/*"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

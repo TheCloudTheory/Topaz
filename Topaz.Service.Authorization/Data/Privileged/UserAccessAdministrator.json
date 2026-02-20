@@ -1,0 +1,17 @@
+{
+  "roleName": "User Access Administrator",
+  "id": "18d7d88d-d35e-4fb5-a5c3-7773c20a72d9",
+  "description": "Lets you manage user access to Azure resources.",
+  "category": "Privileged",
+  "builtIn": true
+}
+  ,
+  "assignableScopes": ["/"],
+  "actions": [
+    "*/read",
+    "Microsoft.Authorization/*",
+    "Microsoft.Support/*"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []

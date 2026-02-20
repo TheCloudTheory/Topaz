@@ -1,0 +1,15 @@
+{
+  "roleName": "Storage File Data Privileged Reader",
+  "id": "b8eda974-7b85-4f76-af95-65846b26df6d",
+  "description": "Customer has read access on Azure Storage file shares.",
+  "category": "Storage",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [],
+  "notActions": [],
+  "dataActions": [
+    "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/read",
+    "Microsoft.Storage/storageAccounts/fileServices/readFileBackupSemantics/action"
+  ],
+  "notDataActions": []
+}

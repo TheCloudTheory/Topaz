@@ -1,0 +1,18 @@
+{
+  "roleName": "Azure Front Door Domain Contributor",
+  "id": "0ab34830-df19-4f8c-b84e-aa85b8afa6e8",
+  "description": "For internal use within Azure. Can manage Azure Front Door domains, but can't grant access to other users.",
+  "category": "Networking",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [
+    "Microsoft.Cdn/operationresults/profileresults/customdomainresults/read",
+    "Microsoft.Cdn/profiles/customdomains/read",
+    "Microsoft.Cdn/profiles/customdomains/write",
+    "Microsoft.Cdn/profiles/customdomains/delete",
+    "Microsoft.Resources/subscriptions/resourceGroups/read"
+  ],
+  "notActions": [],
+  "dataActions": [],
+  "notDataActions": []
+}

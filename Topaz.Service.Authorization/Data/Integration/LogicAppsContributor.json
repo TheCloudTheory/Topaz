@@ -1,0 +1,23 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "Contributor access to Logic Apps resources, enabling create/update and run operations.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/9a1b2c3d-4e5f-6789-0abc-def123456789",
+  "name": "9a1b2c3d-4e5f-6789-0abc-def123456789",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.Logic/workflows/*",
+        "Microsoft.Logic/integrationAccounts/*",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Logic Apps Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}

@@ -1,0 +1,18 @@
+{
+  "roleName": "SignalR REST API Owner",
+  "id": "fd53cd77-2268-407a-8f46-7e7863d0f521",
+  "description": "Full access to Azure SignalR Service REST APIs",
+  "category": "Web and Mobile",
+  "builtIn": true,
+  "assignableScopes": ["/"],
+  "actions": [],
+  "notActions": [],
+  "dataActions": [
+    "Microsoft.SignalRService/SignalR/auth/clientToken/action",
+    "Microsoft.SignalRService/SignalR/hub/*",
+    "Microsoft.SignalRService/SignalR/group/*",
+    "Microsoft.SignalRService/SignalR/clientConnection/*",
+    "Microsoft.SignalRService/SignalR/user/*"
+  ],
+  "notDataActions": []
+}

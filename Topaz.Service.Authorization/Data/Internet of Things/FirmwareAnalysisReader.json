@@ -1,0 +1,29 @@
+{
+  "assignableScopes": [
+    "/"
+  ],
+  "description": "View firmware images but not upload them or perform any workspace configuration",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/2a94a2fd-3c4f-45d1-847d-6585ba88af94",
+  "name": "2a94a2fd-3c4f-45d1-847d-6585ba88af94",
+  "permissions": [
+    {
+      "actions": [
+        "Microsoft.IoTFirmwareDefense/*/read",
+        "Microsoft.IoTFirmwareDefense/workspaces/firmwares/*",
+        "Microsoft.Authorization/*/read",
+        "Microsoft.Resources/subscriptions/resourceGroups/read",
+        "Microsoft.Resources/deployments/*"
+      ],
+      "notActions": [
+        "Microsoft.IoTFirmwareDefense/firmwareGroups/*",
+        "Microsoft.IoTFirmwareDefense/workspaces/firmwares/write",
+        "Microsoft.IoTFirmwareDefense/workspaces/firmwares/delete"
+      ],
+      "dataActions": [],
+      "notDataActions": []
+    }
+  ],
+  "roleName": "Firmware Analysis Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
+}
