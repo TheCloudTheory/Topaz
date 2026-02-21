@@ -18,7 +18,6 @@ internal sealed class OidcEndpoint : IEndpointDefinition
         "GET /organizations/v2.0/.well-known/openid-configuration",
         "GET /organizations/oauth2/v2.0/authorize",
         "GET /{tenantId}/v2.0/.well-known/openid-configuration",
-        "GET /v1.0/servicePrincipals",
         "POST /organizations/oauth2/v2.0/token",
     ];
 
@@ -37,10 +36,6 @@ internal sealed class OidcEndpoint : IEndpointDefinition
         {
             HandleTokenRequest(response, input, query);
         }
-        else if (path.EndsWith("/servicePrincipals"))
-        {
-            HandleGetServicePrincipalsRequest(response);
-        }
         else
         {
             var config = new OpenIdConfigurationResponse();
@@ -48,12 +43,6 @@ internal sealed class OidcEndpoint : IEndpointDefinition
         }
 
         return response;
-    }
-
-    private void HandleGetServicePrincipalsRequest(HttpResponseMessage response)
-    {
-        response.Content = new StringContent(new ServicePrincipalsListResponse().ToString());
-        response.StatusCode = HttpStatusCode.OK;
     }
 
     private void HandleTokenRequest(HttpResponseMessage response, Stream input, QueryString query)
@@ -65,33 +54,6 @@ internal sealed class OidcEndpoint : IEndpointDefinition
                 .TrimEnd('=')
                 .Replace('+', '-')
                 .Replace('/', '_');
-        }
-
-        static string CreateIdToken(string issuer, string audience, string? nonce)
-        {
-            var header = new { alg = "none", typ = "JWT" };
-            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            var payload = new Dictionary<string, object>
-            {
-                { "iss", issuer },
-                { "aud", audience },
-                { "iat", now },
-                { "exp", now + 3600 },
-                { "oid", Guid.NewGuid().ToString() },
-                { "tid", "TopazTenant" },
-                { "sub", Guid.NewGuid().ToString() },
-                { "preferred_username", "topaz@local" }
-            };
-
-            if (!string.IsNullOrEmpty(nonce))
-            {
-                payload["nonce"] = nonce!;
-            }
-
-            var headerJson = JsonSerializer.Serialize(header);
-            var payloadJson = JsonSerializer.Serialize(payload);
-
-            return Base64UrlEncode(headerJson) + "." + Base64UrlEncode(payloadJson) + ".";
         }
 
         // Parse POST form body to obtain the authorization 'code'.
@@ -117,7 +79,8 @@ internal sealed class OidcEndpoint : IEndpointDefinition
             form.TryGetValue("code", out code);
         }
 
-        var clientId = form.TryGetValue("client_id", out var cid) ? cid : query.TryGetValueForKey("client_id", out var qcid) ? qcid : "04b07795-8ddb-461a-bbee-02f9e1bf7b46";
+        var clientId = form.TryGetValue("client_id", out var cid) ? cid :
+            query.TryGetValueForKey("client_id", out var qcid) ? qcid : "04b07795-8ddb-461a-bbee-02f9e1bf7b46";
         var issuer = "https://topaz.local.dev:8899/organizations/v2.0";
 
         // Look up and remove stored nonce for this code if present.
@@ -127,15 +90,43 @@ internal sealed class OidcEndpoint : IEndpointDefinition
         {
             AccessToken = "TopazAccessToken" + Guid.NewGuid().ToString("N"),
             RefreshToken = "TopazRefreshToken" + Guid.NewGuid().ToString("N"),
-            IdToken = CreateIdToken(issuer, clientId, storedNonce),
+            IdToken = CreateIdToken(issuer, clientId!, storedNonce),
             Scope = form.TryGetValue("scope", out var scope) ? scope : (query.TryGetValueForKey("scope", out var qscope) ? qscope : "openid profile offline_access")
         };
 
         response.Content = new StringContent(token.ToString());
         response.StatusCode = HttpStatusCode.OK;
+        return;
+
+        static string CreateIdToken(string issuer, string audience, string? nonce)
+        {
+            var header = new { alg = "none", typ = "JWT" };
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var payload = new Dictionary<string, object>
+            {
+                { "iss", issuer },
+                { "aud", audience },
+                { "iat", now },
+                { "exp", now + 3600 },
+                { "oid", Guid.NewGuid().ToString() },
+                { "tid", "TopazTenant" },
+                { "sub", Guid.NewGuid().ToString() },
+                { "preferred_username", "topaz@local" }
+            };
+
+            if (!string.IsNullOrEmpty(nonce))
+            {
+                payload["nonce"] = nonce;
+            }
+
+            var headerJson = JsonSerializer.Serialize(header);
+            var payloadJson = JsonSerializer.Serialize(payload);
+
+            return Base64UrlEncode(headerJson) + "." + Base64UrlEncode(payloadJson) + ".";
+        }
     }
 
-    private void HandleAuthorizeRequest(HttpResponseMessage response, QueryString query)
+    private static void HandleAuthorizeRequest(HttpResponseMessage response, QueryString query)
     {
         if(!query.TryGetValueForKey("state", out var state))
         {

@@ -69,6 +69,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Authorization
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Insights", "Topaz.Service.Insights\Topaz.Service.Insights.csproj", "{844B794C-2335-44E3-A397-2AFE73310791}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Entra", "Topaz.Service.Entra\Topaz.Service.Entra.csproj", "{B24193D0-443D-4D7C-B9CF-8455435D1826}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -191,6 +193,10 @@ Global
 		{844B794C-2335-44E3-A397-2AFE73310791}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{844B794C-2335-44E3-A397-2AFE73310791}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{844B794C-2335-44E3-A397-2AFE73310791}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B24193D0-443D-4D7C-B9CF-8455435D1826}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B24193D0-443D-4D7C-B9CF-8455435D1826}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B24193D0-443D-4D7C-B9CF-8455435D1826}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B24193D0-443D-4D7C-B9CF-8455435D1826}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -219,5 +225,6 @@ Global
 		{C7123F8D-86CD-458A-BFC1-F4B5423BDF2E} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
 		{7723D695-A569-4D0D-BAEA-881B72AFAAC7} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
 		{844B794C-2335-44E3-A397-2AFE73310791} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
+		{B24193D0-443D-4D7C-B9CF-8455435D1826} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
 	EndGlobalSection
 EndGlobal

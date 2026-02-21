@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Topaz.Shared;
 
-namespace Topaz.CloudEnvironment.Models.Responses;
+namespace Topaz.Service.Entra.Models.Responses;
 
 internal sealed class ServicePrincipalsListResponse
 {
