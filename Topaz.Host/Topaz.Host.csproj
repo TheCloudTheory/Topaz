@@ -16,6 +16,7 @@
     <ProjectReference Include="..\Topaz.Dns\Topaz.Dns.csproj" />
     <ProjectReference Include="..\Topaz.Service.Authorization\Topaz.Service.Authorization.csproj" />
     <ProjectReference Include="..\Topaz.Service.EventHub\Topaz.Service.EventHub.csproj" />
+    <ProjectReference Include="..\Topaz.Service.Insights\Topaz.Service.Insights.csproj" />
     <ProjectReference Include="..\Topaz.Service.ManagedIdentity\Topaz.Service.ManagedIdentity.csproj" />
     <ProjectReference Include="..\Topaz.Service.ResourceManager\Topaz.Service.ResourceManager.csproj" />
     <ProjectReference Include="..\Topaz.Service.ServiceBus\Topaz.Service.ServiceBus.csproj" />

@@ -13,6 +13,7 @@ using Topaz.Dns;
 using Topaz.Host.AMQP;
 using Topaz.Service.Authorization;
 using Topaz.Service.EventHub;
+using Topaz.Service.Insights;
 using Topaz.Service.KeyVault;
 using Topaz.Service.ManagedIdentity;
 using Topaz.Service.ResourceGroup;
@@ -75,7 +76,8 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             new ManagedIdentityService(logger),
             new ResourceAuthorizationService(logger),
             new ResourceGroupAuthorizationService(logger),
-            new SubscriptionAuthorizationService(logger)
+            new SubscriptionAuthorizationService(logger),
+            new InsightsService(logger)
         };
         
         logger.ConfigureIdFactory(idFactory);
