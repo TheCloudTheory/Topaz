@@ -93,7 +93,7 @@ internal sealed class AuthorizationControlPlane(
         // identifier is generated and cannot be provided explicitly. Topaz saves a role definition
         // using that generated GUID, but a user may query the emulator using `roleName`.
         var availableDefinitions =
-            ListBySubscription(subscriptionIdentifier);
+            ListRoleDefinitionsBySubscription(subscriptionIdentifier);
             
         resource = availableDefinitions.Resource?.FirstOrDefault(definition => definition.Properties.RoleName == roleDefinitionIdentifier.Value);
 
@@ -152,6 +152,7 @@ internal sealed class AuthorizationControlPlane(
         if (createOperation)
         {
             var properties = RoleAssignmentResourceProperties.FromRequest(request);
+            properties.Scope = $"/subscriptions/{subscriptionIdentifier.Value}";
             properties.CreatedOn = DateTimeOffset.UtcNow;
             properties.UpdatedOn = DateTimeOffset.UtcNow;
             
@@ -181,11 +182,33 @@ internal sealed class AuthorizationControlPlane(
             : new ControlPlaneOperationResult<RoleAssignmentResource>(OperationResult.Success, resource, null, null);
     }
 
-    public ControlPlaneOperationResult<RoleDefinitionResource[]> ListBySubscription(SubscriptionIdentifier subscriptionIdentifier)
+    public ControlPlaneOperationResult<RoleDefinitionResource[]> ListRoleDefinitionsBySubscription(SubscriptionIdentifier subscriptionIdentifier, string? roleName = null)
     {
-        var resources = subscriptionAuthorizationProvider.ListAs<RoleDefinitionResource>(subscriptionIdentifier, null, null, 6);
+        var resources =
+            subscriptionAuthorizationProvider.ListAs<RoleDefinitionResource>(subscriptionIdentifier, null, null, 6);
         var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier));
         
+        // There are also built-in roles which should be included for every request
+        // listing role definitions
+        var builtInRoles = subscriptionAuthorizationProvider.ListBuiltInRoles(subscriptionIdentifier);
+        filteredResources = filteredResources.Concat(builtInRoles);
+        
+        // If filter was provided, use it to limit roles
+        if (roleName != null)
+        {
+            filteredResources = filteredResources.Where(resource =>
+                resource.Name == roleName || resource.Properties.RoleName == roleName);
+        }
+        
         return new ControlPlaneOperationResult<RoleDefinitionResource[]>(OperationResult.Success, filteredResources.ToArray(), null, null);
+    }
+
+    public ControlPlaneOperationResult<RoleAssignmentResource[]> ListRoleAssignmentsBySubscription(SubscriptionIdentifier subscriptionIdentifier, string? roleName = null)
+    {
+        var resources =
+            subscriptionAuthorizationProvider.ListAs<RoleAssignmentResource>(subscriptionIdentifier, null, null, 6);
+        var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier));
+        
+        return new ControlPlaneOperationResult<RoleAssignmentResource[]>(OperationResult.Success, filteredResources.ToArray(), null, null);
     }
 }

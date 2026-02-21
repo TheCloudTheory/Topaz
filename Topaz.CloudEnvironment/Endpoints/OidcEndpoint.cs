@@ -18,6 +18,7 @@ internal sealed class OidcEndpoint : IEndpointDefinition
         "GET /organizations/v2.0/.well-known/openid-configuration",
         "GET /organizations/oauth2/v2.0/authorize",
         "GET /{tenantId}/v2.0/.well-known/openid-configuration",
+        "GET /v1.0/servicePrincipals",
         "POST /organizations/oauth2/v2.0/token",
     ];
 
@@ -36,6 +37,10 @@ internal sealed class OidcEndpoint : IEndpointDefinition
         {
             HandleTokenRequest(response, input, query);
         }
+        else if (path.EndsWith("/servicePrincipals"))
+        {
+            HandleGetServicePrincipalsRequest(response);
+        }
         else
         {
             var config = new OpenIdConfigurationResponse();
@@ -44,7 +49,13 @@ internal sealed class OidcEndpoint : IEndpointDefinition
 
         return response;
     }
-    
+
+    private void HandleGetServicePrincipalsRequest(HttpResponseMessage response)
+    {
+        response.Content = new StringContent(new ServicePrincipalsListResponse().ToString());
+        response.StatusCode = HttpStatusCode.OK;
+    }
+
     private void HandleTokenRequest(HttpResponseMessage response, Stream input, QueryString query)
     {
         // Build a minimal unsigned JWT (header.payload.) so MSAL can decode the id_token payload.

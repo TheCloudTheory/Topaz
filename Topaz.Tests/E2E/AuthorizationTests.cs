@@ -128,6 +128,93 @@ public class AuthorizationTests
     }
 
     [Test]
+    public async Task RoleAssignment_List_IsEnumerableAndContainsCreatedAssignment()
+    {
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+
+        var roleDefinitions = subscription.GetAuthorizationRoleDefinitions();
+
+        var roleDefinitionIdGuid = Guid.NewGuid();
+        var roleDefinitionId = new ResourceIdentifier($"{roleDefinitionIdGuid}");
+        var roleDefinitionForAssign = new AuthorizationRoleDefinitionData { RoleName = "list-assignment-role", Description = "For assignment list" };
+        roleDefinitionForAssign.Permissions.Add(new RoleDefinitionPermission { Actions = { "*" } });
+        roleDefinitionForAssign.AssignableScopes.Add($"/subscriptions/{SubscriptionId}");
+
+        await roleDefinitions.CreateOrUpdateAsync(WaitUntil.Completed, roleDefinitionId, roleDefinitionForAssign);
+
+        var roleAssignments = subscription.GetRoleAssignments();
+        var roleAssignmentIdGuid = Guid.NewGuid();
+        var roleAssignmentId = new ResourceIdentifier($"{roleAssignmentIdGuid}");
+        var principalId = Guid.NewGuid();
+        var assignmentData = new RoleAssignmentCreateOrUpdateContent(roleDefinitionId, principalId);
+
+        await roleAssignments.CreateOrUpdateAsync(WaitUntil.Completed, roleAssignmentId, assignmentData);
+
+        try
+        {
+            var found = false;
+            await foreach (var ra in roleAssignments.GetAllAsync())
+            {
+                if (ra.Data.PrincipalId != principalId) continue;
+                found = true;
+                break;
+            }
+
+            Assert.That(found, Is.True);
+        }
+        finally
+        {
+            var createdAssignment = await roleAssignments.GetAsync(roleAssignmentId);
+            await createdAssignment.Value.DeleteAsync(WaitUntil.Completed, roleAssignmentId);
+
+            var createdRole = await roleDefinitions.GetAsync(roleDefinitionId);
+            await createdRole.Value.DeleteAsync(WaitUntil.Completed);
+        }
+    }
+
+    [Test]
+    public async Task RoleAssignment_CreateWithSubscriptionScope_SetsScopeToSubscription()
+    {
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+
+        var roleDefinitions = subscription.GetAuthorizationRoleDefinitions();
+
+        var roleDefinitionIdGuid = Guid.NewGuid();
+        var roleDefinitionId = new ResourceIdentifier($"{roleDefinitionIdGuid}");
+        var roleDefinitionForAssign = new AuthorizationRoleDefinitionData { RoleName = "scope-test-role", Description = "For scope test" };
+        roleDefinitionForAssign.Permissions.Add(new RoleDefinitionPermission { Actions = { "*" } });
+        roleDefinitionForAssign.AssignableScopes.Add($"/subscriptions/{SubscriptionId}");
+
+        await roleDefinitions.CreateOrUpdateAsync(WaitUntil.Completed, roleDefinitionId, roleDefinitionForAssign);
+
+        var roleAssignments = subscription.GetRoleAssignments();
+        var roleAssignmentIdGuid = Guid.NewGuid();
+        var roleAssignmentId = new ResourceIdentifier($"{roleAssignmentIdGuid}");
+        var principalId = Guid.NewGuid();
+        var assignmentData = new RoleAssignmentCreateOrUpdateContent(roleDefinitionId, principalId);
+
+        await roleAssignments.CreateOrUpdateAsync(WaitUntil.Completed, roleAssignmentId, assignmentData);
+
+        try
+        {
+            var created = await roleAssignments.GetAsync(roleAssignmentId);
+            Assert.That(created.Value.Data.Scope, Is.EqualTo($"/subscriptions/{SubscriptionId}"));
+        }
+        finally
+        {
+            var createdAssignment = await roleAssignments.GetAsync(roleAssignmentId);
+            await createdAssignment.Value.DeleteAsync(WaitUntil.Completed, roleAssignmentId);
+
+            var createdRole = await roleDefinitions.GetAsync(roleDefinitionId);
+            await createdRole.Value.DeleteAsync(WaitUntil.Completed);
+        }
+    }
+
+    [Test]
     public async Task RoleDefinition_List_IsEnumerableAndWellFormed()
     {
         var credential = new AzureLocalCredential();
@@ -166,5 +253,66 @@ public class AuthorizationTests
 
         // cleanup
         await created.Value.DeleteAsync(WaitUntil.Completed);
+    }
+
+    [Test]
+    public async Task RoleDefinition_List_IncludesBuiltInRole()
+    {
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var roleDefinitions = subscription.GetAuthorizationRoleDefinitions();
+
+        var containsBuiltIn = false;
+        await foreach (var rd in roleDefinitions.GetAllAsync())
+        {
+            if (!string.Equals(rd.Data.RoleName, "Reader", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(rd.Data.RoleName, "Contributor", StringComparison.OrdinalIgnoreCase)) continue;
+            
+            containsBuiltIn = true;
+            break;
+        }
+
+        Assert.That(containsBuiltIn, Is.True);
+    }
+
+    [Test]
+    public async Task RoleDefinition_List_FilterFindsSpecificRole()
+    {
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var roleDefinitions = subscription.GetAuthorizationRoleDefinitions();
+
+        var roleDefinitionIdGuid = Guid.NewGuid();
+        var roleDefinitionId = new ResourceIdentifier($"{roleDefinitionIdGuid}");
+        var roleName = $"filter-test-role-{roleDefinitionIdGuid:N}";
+        var roleDefinitionData = new AuthorizationRoleDefinitionData
+        {
+            RoleName = roleName,
+            Description = "Role used by filter test",
+        };
+        roleDefinitionData.Permissions.Add(new RoleDefinitionPermission { Actions = { "Microsoft.Network/*/read" } });
+        roleDefinitionData.AssignableScopes.Add($"/subscriptions/{SubscriptionId}");
+
+        await roleDefinitions.CreateOrUpdateAsync(WaitUntil.Completed, roleDefinitionId, roleDefinitionData);
+
+        try
+        {
+            var results = new List<AuthorizationRoleDefinitionResource>();
+            var filter = $"roleName eq '{roleName}'";
+            await foreach (var rd in roleDefinitions.GetAllAsync(filter))
+            {
+                results.Add(rd);
+            }
+
+            Assert.That(results.Any(r => string.Equals(r.Data.RoleName, roleName, StringComparison.OrdinalIgnoreCase)), Is.True, "Expected at least one result matching the filter");
+            Assert.That(results.All(r => string.Equals(r.Data.RoleName, roleName, StringComparison.OrdinalIgnoreCase)), Is.True, "Found role definitions that do not match the filter");
+        }
+        finally
+        {
+            var created = await roleDefinitions.GetAsync(roleDefinitionId);
+            await created.Value.DeleteAsync(WaitUntil.Completed);
+        }
     }
 }

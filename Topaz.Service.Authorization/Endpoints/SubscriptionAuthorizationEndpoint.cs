@@ -18,8 +18,10 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
     public string[] Endpoints => [
         "PUT /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}",
         "PUT /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}",
+        "PUT /{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}",
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}",
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}",
+        "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments",
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions",
         "GET /{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions",
         "DELETE /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}",
@@ -40,7 +42,7 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
                 : SubscriptionIdentifier.From(path.ExtractValueFromPath(1));
             var isRoleDefinition = path.Contains("roleDefinitions");
             var roleDefinitionId = segmentsCount > 6 ? RoleDefinitionIdentifier.From(path.ExtractValueFromPath(6)) : null;
-            var roleAssignmentName = segmentsCount > 6 && !isRoleDefinition ? RoleAssignmentName.From(path.ExtractValueFromPath(6)) : null;
+            var roleAssignmentName = ExtractRoleAssignmentNameFromPath(path, isRoleDefinition, segmentsCount);
             
             switch (method)
             {
@@ -61,11 +63,17 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
                     {
                         if (roleDefinitionId == null)
                         {
-                            HandleListRoleDefinition(response, subscriptionIdentifier);
+                            HandleListRoleDefinition(response, subscriptionIdentifier, query);
                             break;
                         }
                         
                         HandleGetRoleDefinition(response, subscriptionIdentifier, roleDefinitionId);
+                        break;
+                    }
+
+                    if (roleAssignmentName == null)
+                    {
+                        HandleListRoleAssignments(response, subscriptionIdentifier, query);
                         break;
                     }
                     
@@ -99,13 +107,61 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
         return response;
     }
 
-    private void HandleListRoleDefinition(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier)
+    private static RoleAssignmentName? ExtractRoleAssignmentNameFromPath(string path, bool isRoleDefinition, int segmentsCount)
+    {
+        return !isRoleDefinition && segmentsCount > 6
+            ?
+            RoleAssignmentName.From(path.ExtractValueFromPath(6))
+            :
+            !isRoleDefinition && segmentsCount > 5 && !path.StartsWith("/subscriptions/")
+                ? RoleAssignmentName.From(path.ExtractValueFromPath(5))
+                : null;
+    }
+
+    private void HandleListRoleAssignments(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, QueryString query)
+    {
+        logger.LogDebug(nameof(SubscriptionAuthorizationEndpoint), nameof(HandleListRoleAssignments),
+            "Executing {0}: Attempting to list role assignments for subscription ID `{1}`.",
+            nameof(HandleListRoleDefinition), subscriptionIdentifier);
+        
+        string? roleName = null;
+        if (query.TryGetValueForKey("$filter", out var filter))
+        {
+            // A filter is basically an expression looking like this: $filter=roleName eq 'Contributor'
+            roleName = ExtractRoleNamerFromFilter(filter);
+        }
+        
+        var assignments = _controlPlane.ListRoleAssignmentsBySubscription(subscriptionIdentifier, roleName);
+        if (assignments.Result != OperationResult.Success || assignments.Resource == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        var result = new ListSubscriptionRoleAssignmentsResponse
+        {
+            Value = assignments.Resource.Select(ListSubscriptionRoleAssignmentsResponse.RoleAssignment.From).ToArray()
+        };
+        
+        response.Content = new StringContent(result.ToString());
+        response.StatusCode = HttpStatusCode.OK;
+    }
+
+    private void HandleListRoleDefinition(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
+        QueryString query)
     {
         logger.LogDebug(nameof(SubscriptionAuthorizationEndpoint), nameof(HandleListRoleDefinition),
-            "Executing {0}: Attempting to list role definitions for subscription ID `{1}`.",
-            nameof(HandleListRoleDefinition), subscriptionIdentifier);
+            "Executing {0}: Attempting to list role definitions for subscription ID `{1}` and query `{2}`.",
+            nameof(HandleListRoleDefinition), subscriptionIdentifier, query.Value);
 
-        var definitions = _controlPlane.ListBySubscription(subscriptionIdentifier);
+        string? roleName = null;
+        if (query.TryGetValueForKey("$filter", out var filter))
+        {
+            // A filter is basically an expression looking like this: $filter=roleName eq 'Contributor'
+            roleName = ExtractRoleNamerFromFilter(filter);
+        }
+
+        var definitions = _controlPlane.ListRoleDefinitionsBySubscription(subscriptionIdentifier, roleName);
         if (definitions.Result != OperationResult.Success || definitions.Resource == null)
         {
             response.StatusCode = HttpStatusCode.InternalServerError;
@@ -119,6 +175,14 @@ public sealed class SubscriptionAuthorizationEndpoint(ITopazLogger logger) : IEn
         
         response.Content = new StringContent(result.ToString());
         response.StatusCode = HttpStatusCode.OK;
+    }
+
+    private static string? ExtractRoleNamerFromFilter(string? filter)
+    {
+        if (string.IsNullOrEmpty(filter)) return null;
+        var segments = filter.Split(' ');
+        
+        return segments.Length > 1 ? segments[2].Replace("'", string.Empty) : null;
     }
 
     private void HandleDeleteRoleAssignment(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier, RoleAssignmentName roleAssignmentName)

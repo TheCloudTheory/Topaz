@@ -11,4 +11,10 @@
       <ProjectReference Include="..\Topaz.Service.Shared\Topaz.Service.Shared.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include="Data\**\*">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
 </Project>

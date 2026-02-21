@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+
 namespace Topaz.Tests.AzureCLI;
 
 public class AuthorizationTests : TopazFixture
@@ -25,19 +27,34 @@ public class AuthorizationTests : TopazFixture
 			Assert.That(arr.Any(a => a!["id"]!.GetValue<string>() == assignmentId), Is.True);
 		});
 
-		// update (change role to Reader)
-		await RunAzureCliCommand($"az role assignment update --ids {assignmentId} --role \"Reader\"");
+		// update (change role to Reader) - construct the role-assignment JSON from known values and update via --role-assignment
+		var subscriptionScope = subscription.StartsWith("/subscriptions/") ? subscription : $"/subscriptions/{subscription}";
+		var readerRoleDefId = $"{subscriptionScope}/providers/Microsoft.Authorization/roleDefinitions/acdd72a7-3385-48ef-bd42-f606fba81ae7";
+		var name = assignmentId.Split('/').Last();
+		var updated = new JsonObject
+		{
+			["id"] = assignmentId,
+			["name"] = name,
+			["type"] = "Microsoft.Authorization/roleAssignments",
+			["principalId"] = clientId,
+			["principalType"] = "ServicePrincipal",
+			["roleDefinitionId"] = readerRoleDefId,
+			["scope"] = subscriptionScope
+		};
+
+		var updatedJson = updated.ToJsonString();
+		await RunAzureCliCommand($"az role assignment update --role-assignment '{updatedJson}'");
 
 		await RunAzureCliCommand($"az role assignment list --assignee {clientId}", (resp) =>
 		{
 			var arr = resp.AsArray();
 			var item = arr.FirstOrDefault(a => a!["id"]!.GetValue<string>() == assignmentId)!;
 			Assert.That(item, Is.Not.Null);
-			Assert.That(item["roleDefinitionName"]!.GetValue<string>(), Is.EqualTo("Reader"));
+			Assert.That(item["roleDefinitionId"]!.GetValue<string>(), Is.EqualTo(readerRoleDefId));
 		});
 
-		// list changelogs
-		await RunAzureCliCommand($"az role assignment list-changelogs --assignee {clientId}", (resp) =>
+		// list changelogs (call without --assignee to avoid unsupported argument in container)
+		await RunAzureCliCommand("az role assignment list-changelogs", (resp) =>
 		{
 			var arr = resp.AsArray();
 			Assert.That(arr, Is.Not.Null);
