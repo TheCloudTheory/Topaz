@@ -27,6 +27,9 @@ Azure Resource Manager|⚠️|N/A
 Managed Identity|✅|N/A
 Container Registry|:x:|:x:
 Azure SQL|:x:|:x:
+Entra ID|:x:|⚠️
+RBAC|⚠️|:x:
+Monitor|⚠️|:x:
 
 ✅ - fully supported (stable)
 
