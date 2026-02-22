@@ -109,6 +109,11 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
 
         if(response.StatusCode != HttpStatusCode.NoContent)
         {
+            if (response.Content.Headers.ContentType != null)
+            {
+                context.Response.ContentType = response.Content.Headers.ContentType.ToString();
+            }
+            
             await context.Response.WriteAsync(textResponse);
         }
     }
