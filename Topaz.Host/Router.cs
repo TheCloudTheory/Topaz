@@ -111,6 +111,8 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
         {
             if (response.Content.Headers.ContentType != null)
             {
+                logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "Setting content type for response as `{0}`.", response.Content.Headers.ContentType.MediaType);
+                
                 context.Response.ContentType = response.Content.Headers.ContentType.ToString();
             }
             

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -76,7 +77,7 @@ public sealed class SubscriptionEndpoint(SubscriptionResourceProvider provider, 
 
         var subscriptions = new ListSubscriptionsResponse(operation.resource);
         
-        response.Content = new StringContent(subscriptions.ToString());
+        response.Content = new StringContent(subscriptions.ToString(), Encoding.UTF8, "application/json");
         response.StatusCode = HttpStatusCode.OK;
     }
 

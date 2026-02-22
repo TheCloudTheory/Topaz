@@ -1,18 +1,15 @@
 using System.Net;
-using System.Net.Http.Headers;
-using System.Text;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Entra.Models.Responses;
 using Topaz.Service.Shared;
 
-namespace Topaz.Service.Entra;
+namespace Topaz.Service.Entra.Endpoints;
 
-internal sealed class EntraGraphEndpoint : IEndpointDefinition
+internal sealed class EntraServicePrincipalGraphEndpoint : IEndpointDefinition
 {
     public string[] Endpoints =>
     [
-        "GET /v1.0/servicePrincipals",
-        "GET /me"
+        "GET /v1.0/servicePrincipals"
     ];
     
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol  => ([8899], Protocol.Https);
@@ -25,12 +22,6 @@ internal sealed class EntraGraphEndpoint : IEndpointDefinition
         switch (method)
         {
             case "GET":
-                if (path == "/me")
-                {
-                    HandleMeRequest(response);
-                    break;
-                }
-                
                 HandleGetServicePrincipalsRequest(response);
                 break;
             default:
@@ -39,13 +30,6 @@ internal sealed class EntraGraphEndpoint : IEndpointDefinition
         }
         
         return response;
-    }
-
-    private static void HandleMeRequest(HttpResponseMessage response)
-    {
-        response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(new GetUserResponse().ToString());
-        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
 
     private void HandleGetServicePrincipalsRequest(HttpResponseMessage response)
