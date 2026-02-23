@@ -26,6 +26,7 @@ Topaz offers a simplified DevEx by tightly integrating with moderns and popular 
 * Dedicated helpers for simplified connection and authentication
 * Emulation of Azure resources' hierarchy including subscriptions and resource groups
 * Emulation of ARM deployments using ARM Templates / Bicep
+* Emulation of Microsoft Entra ID tenant
 
 There's also a backlog of features planned for future releases:
 * UI for easier management of resources
