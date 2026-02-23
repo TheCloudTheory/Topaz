@@ -14,7 +14,7 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new EntraUserGraphEndpoint(),
+        new EntraUserGraphEndpoint(logger),
         new EntraServicePrincipalGraphEndpoint()
     ];
 }

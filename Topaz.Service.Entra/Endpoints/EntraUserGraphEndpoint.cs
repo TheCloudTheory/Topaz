@@ -1,17 +1,24 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Topaz.Service.Entra.Models.Requests;
 using Topaz.Service.Entra.Models.Responses;
+using Topaz.Service.Entra.Planes;
 using Topaz.Service.Shared;
+using Topaz.Shared;
 
 namespace Topaz.Service.Entra.Endpoints;
 
-internal sealed class EntraUserGraphEndpoint : IEndpointDefinition
+internal sealed class EntraUserGraphEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
+    private readonly UserDataPlane _dataPlane = new(new EntraResourceProvider(logger), logger);
+    
     public string[] Endpoints =>
     [
         "GET /me",
-        "POST /v1.0/users"
+        "POST /v1.0/users",
+        "POST /users"
     ];
     
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol  => ([8899], Protocol.Https);
@@ -44,7 +51,31 @@ internal sealed class EntraUserGraphEndpoint : IEndpointDefinition
 
     private void HandleCreateUserRequest(HttpResponseMessage response, Stream input)
     {
+        logger.LogDebug(nameof(EntraUserGraphEndpoint), nameof(HandleCreateUserRequest), "Creating a user.");
         
+        using var reader = new StreamReader(input);
+
+        var content = reader.ReadToEnd();
+        var request =
+            JsonSerializer.Deserialize<CreateUserRequest>(content, GlobalSettings.JsonOptions);
+
+        if (request == null)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+        
+        var operation = _dataPlane.CreateUser(request);
+        if (operation.Result != OperationResult.Created  ||
+            operation.Resource == null)
+        {
+            response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode,
+                "Unknown error when performing CreateUser operation.");
+            return;
+        }
+
+        response.StatusCode = HttpStatusCode.Created;
+        response.Content = new StringContent(operation.Resource.ToString());
     }
 
     private static void HandleMeRequest(HttpResponseMessage response)

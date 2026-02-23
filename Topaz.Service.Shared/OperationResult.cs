@@ -7,5 +7,6 @@ public enum OperationResult
     Failed,
     NotFound,
     Success,
-    Deleted
+    Deleted,
+    BadRequest
 }

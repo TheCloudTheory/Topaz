@@ -2,7 +2,7 @@ namespace Topaz.Tests.AzureCLI;
 
 public class EntraTests : TopazFixture
 {
-	[Test, Ignore("Under construction")]
+	[Test]
 	public async Task User_Create_With_AzureCli_Creates_User()
 	{
 		var upn = $"topaz-{Guid.NewGuid():N}@mytenant.onmicrosoft.com";
