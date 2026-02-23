@@ -5,7 +5,7 @@ namespace Topaz.Service.Entra;
 
 internal sealed class EntraResourceProvider(ITopazLogger logger) : ResourceProviderBase<EntraService>(logger)
 {
-    private const string UsersDirectoryName = "users";
+    internal const string UsersDirectoryName = "users";
     
     public string GetServiceInstanceUsersDataPath()
     {

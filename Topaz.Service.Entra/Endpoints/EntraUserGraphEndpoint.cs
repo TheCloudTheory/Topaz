@@ -2,11 +2,13 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Topaz.Service.Entra.Domain;
 using Topaz.Service.Entra.Models.Requests;
 using Topaz.Service.Entra.Models.Responses;
 using Topaz.Service.Entra.Planes;
 using Topaz.Service.Shared;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Entra.Endpoints;
 
@@ -17,8 +19,10 @@ internal sealed class EntraUserGraphEndpoint(ITopazLogger logger) : IEndpointDef
     public string[] Endpoints =>
     [
         "GET /me",
+        "GET /users/{userId}",
         "POST /v1.0/users",
-        "POST /users"
+        "POST /users",
+        "DELETE /users/{userId}"
     ];
     
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol  => ([8899], Protocol.Https);
@@ -37,16 +41,55 @@ internal sealed class EntraUserGraphEndpoint(ITopazLogger logger) : IEndpointDef
                     break;
                 }
 
+                var userIdentifier = UserIdentifier.From(path.ExtractValueFromPath(2));
+                HandleGetUserRequest(response, userIdentifier);
+                
                 break;
             case "POST":
                 HandleCreateUserRequest(response, input);
+                break;
+            case "DELETE":
+                HandleDeleteUserRequest(response, UserIdentifier.From(path.ExtractValueFromPath(2)));
                 break;
             default:
                 response.StatusCode = HttpStatusCode.NotFound;
                 break;
         }
         
+        // It's important to set the content type header for response because Graph SDK
+        // checks for its value and if can't find it, it fallbacks to `null` result.
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        
         return response;
+    }
+
+    private void HandleDeleteUserRequest(HttpResponseMessage response, UserIdentifier userIdentifier)
+    {
+        logger.LogDebug(nameof(EntraUserGraphEndpoint), nameof(HandleDeleteUserRequest), "Deleting a user `{0}`.",  userIdentifier);
+        
+        var operation = _dataPlane.Delete(userIdentifier);
+        if (operation.Result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        response.StatusCode = HttpStatusCode.NoContent;
+    }
+
+    private void HandleGetUserRequest(HttpResponseMessage response, UserIdentifier userIdentifier)
+    {
+        logger.LogDebug(nameof(EntraUserGraphEndpoint), nameof(HandleGetUserRequest), "Fetching a user `{0}`.",  userIdentifier);
+        
+        var operation = _dataPlane.Get(userIdentifier);
+        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+        
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(operation.Resource.ToString());
     }
 
     private void HandleCreateUserRequest(HttpResponseMessage response, Stream input)
@@ -65,7 +108,7 @@ internal sealed class EntraUserGraphEndpoint(ITopazLogger logger) : IEndpointDef
             return;
         }
         
-        var operation = _dataPlane.CreateUser(request);
+        var operation = _dataPlane.Create(request);
         if (operation.Result != OperationResult.Created  ||
             operation.Resource == null)
         {
@@ -82,9 +125,5 @@ internal sealed class EntraUserGraphEndpoint(ITopazLogger logger) : IEndpointDef
     {
         response.StatusCode = HttpStatusCode.OK;
         response.Content = new StringContent(new GetUserResponse().ToString());
-        
-        // It's important to set the content type header for response because Graph SDK
-        // checks for its value and if can't find it, it fallbacks to `null` result.
-        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
 }

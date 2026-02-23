@@ -84,6 +84,12 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         
         logger.ConfigureIdFactory(idFactory);
         
+        Console.WriteLine("Bootstrapping services...");
+        foreach (var service in services)
+        {
+            service.Bootstrap();
+        }
+        
         Console.WriteLine();
         Console.WriteLine("Enabled services:");
         
