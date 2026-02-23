@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
@@ -9,7 +10,7 @@ namespace Topaz.Service.Insights;
 internal sealed class InsightsServiceEndpoint : IEndpointDefinition
 {
     public string[] Endpoints => [
-        "GET /subscriptions/{susbcriptionId}/providers/Microsoft.Insights/eventtypes/management/values"
+        "GET /subscriptions/{subscriptionId}/providers/Microsoft.Insights/eventtypes/management/values"
     ];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
@@ -24,6 +25,7 @@ internal sealed class InsightsServiceEndpoint : IEndpointDefinition
 
         response.StatusCode = HttpStatusCode.OK;
         response.Content = new StringContent(JsonSerializer.Serialize(result, GlobalSettings.JsonOptions));
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
         
         return response;
     }

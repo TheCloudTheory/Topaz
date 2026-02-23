@@ -79,6 +79,7 @@ public sealed class ResourceGroupEndpoint(ResourceGroupResourceProvider groupRes
             return response;
         }
 
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
         return response;
     }
 

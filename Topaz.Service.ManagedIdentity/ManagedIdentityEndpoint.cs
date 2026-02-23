@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.ManagedIdentity.Models.Requests;
@@ -96,6 +97,7 @@ public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefi
             return response;
         }
 
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
         return response;
     }
 

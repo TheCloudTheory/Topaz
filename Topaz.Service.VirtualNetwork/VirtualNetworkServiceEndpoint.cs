@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
@@ -57,6 +58,7 @@ internal sealed class VirtualNetworkServiceEndpoint(ITopazLogger logger) : IEndp
             response.StatusCode = HttpStatusCode.InternalServerError;
         }
         
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
         return response;
     }
 

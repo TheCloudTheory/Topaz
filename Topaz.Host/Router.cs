@@ -109,14 +109,33 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
 
         if(response.StatusCode != HttpStatusCode.NoContent)
         {
-            if (response.Content.Headers.ContentType != null)
-            {
-                logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "Setting content type for response as `{0}`.", response.Content.Headers.ContentType.MediaType);
-                
-                context.Response.ContentType = response.Content.Headers.ContentType.ToString();
-            }
-            
+            SetResponseContentType(context, response);
+
             await context.Response.WriteAsync(textResponse);
+        }
+    }
+
+    /// <summary>
+    /// Sets the content type for the HTTP response based on the response message's content headers.
+    /// If no content type is specified in the response, defaults to "application/json".
+    /// </summary>
+    /// <param name="context">The HTTP context containing the response to modify.</param>
+    /// <param name="response">The HTTP response message containing the content type information.</param>
+    private void SetResponseContentType(HttpContext context, HttpResponseMessage response)
+    {
+        if (response.Content.Headers.ContentType != null)
+        {
+            logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint),
+                "Setting content type for response as `{0}`.", response.Content.Headers.ContentType.MediaType);
+                
+            context.Response.ContentType = response.Content.Headers.ContentType.ToString();
+        }
+        else
+        {
+            logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint),
+                "No content type set for response, defaulting to `application/json`.");
+                
+            context.Response.ContentType = "application/json";
         }
     }
 

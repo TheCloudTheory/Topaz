@@ -22,7 +22,9 @@ internal sealed class EntraUserGraphEndpoint(ITopazLogger logger) : IEndpointDef
         "GET /users/{userId}",
         "POST /v1.0/users",
         "POST /users",
-        "DELETE /users/{userId}"
+        "POST /v1.0/users",
+        "DELETE /users/{userId}",
+        "DELETE /v1.0/users/{userId}"
     ];
     
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol  => ([8899], Protocol.Https);
