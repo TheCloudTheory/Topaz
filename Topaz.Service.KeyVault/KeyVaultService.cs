@@ -17,4 +17,8 @@ public sealed class KeyVaultService(ITopazLogger logger) : IServiceDefinition
         new KeyVaultEndpoint(logger),
         new KeyVaultServiceEndpoint(logger)
     ];
+
+    public void Bootstrap()
+    {
+    }
 }

@@ -16,4 +16,8 @@ public sealed class ResourceGroupAuthorizationService(ITopazLogger logger) : ISe
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new ResourceGroupAuthorizationEndpoint(logger)
     ];
+
+    public void Bootstrap()
+    {
+    }
 }

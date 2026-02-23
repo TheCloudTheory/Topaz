@@ -19,4 +19,8 @@ public class EventHubService(ITopazLogger logger) : IServiceDefinition
         new EventHubServiceEndpoint(logger),
         new EventHubAmqpEndpoint()
     ];
+
+    public void Bootstrap()
+    {
+    }
 }

@@ -16,4 +16,8 @@ public sealed class ManagedIdentityService(ITopazLogger logger) : IServiceDefini
     [
         new ManagedIdentityEndpoint(logger)
     ];
+
+    public void Bootstrap()
+    {
+    }
 }

@@ -16,4 +16,8 @@ public sealed class TableStorageService(ITopazLogger logger) : IServiceDefinitio
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new TableEndpoint(logger),
     ];
+
+    public void Bootstrap()
+    {
+    }
 }

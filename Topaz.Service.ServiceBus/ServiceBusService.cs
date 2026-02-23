@@ -24,4 +24,8 @@ public sealed class ServiceBusService(ITopazLogger logger) : IServiceDefinition
         new ServiceBusServiceEndpoint(logger),
         new ServiceBusServiceAdditionalEndpoint(logger)
     ];
+
+    public void Bootstrap()
+    {
+    }
 }

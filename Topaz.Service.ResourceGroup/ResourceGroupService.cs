@@ -16,4 +16,8 @@ public sealed class ResourceGroupService(ITopazLogger logger) : IServiceDefiniti
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new ResourceGroupEndpoint(new ResourceGroupResourceProvider(logger), logger)
     ];
+
+    public void Bootstrap()
+    {
+    }
 }

@@ -16,4 +16,8 @@ public sealed class SubscriptionAuthorizationService(ITopazLogger logger) : ISer
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new SubscriptionAuthorizationEndpoint(logger)
     ];
+
+    public void Bootstrap()
+    {
+    }
 }

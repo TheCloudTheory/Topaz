@@ -9,5 +9,6 @@ public interface IServiceDefinition
     
     string Name { get; }
     IReadOnlyCollection<IEndpointDefinition> Endpoints { get; }
-    
+
+    void Bootstrap();
 }

@@ -17,4 +17,8 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
         new EntraUserGraphEndpoint(logger),
         new EntraServicePrincipalGraphEndpoint()
     ];
+
+    public void Bootstrap()
+    {
+    }
 }

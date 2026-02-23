@@ -16,4 +16,8 @@ public sealed class InsightsService(ITopazLogger logger) : IServiceDefinition
     [
         new InsightsServiceEndpoint()
     ];
+
+    public void Bootstrap()
+    {
+    }
 }

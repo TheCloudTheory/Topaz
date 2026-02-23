@@ -17,4 +17,8 @@ public sealed class VirtualNetworkService(ITopazLogger logger) : IServiceDefinit
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new VirtualNetworkServiceEndpoint(logger)
     ];
+
+    public void Bootstrap()
+    {
+    }
 }

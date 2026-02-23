@@ -16,4 +16,8 @@ public class BlobStorageService(ITopazLogger logger) : IServiceDefinition
     [
         new BlobEndpoint(logger)
     ];
+
+    public void Bootstrap()
+    {
+    }
 }

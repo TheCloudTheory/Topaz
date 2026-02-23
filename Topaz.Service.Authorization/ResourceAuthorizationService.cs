@@ -15,4 +15,8 @@ public sealed class ResourceAuthorizationService(ITopazLogger logger) : IService
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new ResourceAuthorizationEndpoint(logger)
     ];
+
+    public void Bootstrap()
+    {
+    }
 }

@@ -29,4 +29,8 @@ public sealed class ResourceManagerService : IServiceDefinition
     [
         new ResourceManagerEndpoint(_logger, _deploymentOrchestrator!),
     ];
+
+    public void Bootstrap()
+    {
+    }
 }

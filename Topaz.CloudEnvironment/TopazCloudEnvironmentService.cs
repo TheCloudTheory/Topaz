@@ -18,4 +18,8 @@ public sealed class TopazCloudEnvironmentService : IServiceDefinition
         new TenantsEndpoint(),
         new OidcEndpoint()
     ];
+
+    public void Bootstrap()
+    {
+    }
 }
