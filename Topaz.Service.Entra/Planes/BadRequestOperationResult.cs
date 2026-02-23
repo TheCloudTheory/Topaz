@@ -20,4 +20,10 @@ internal sealed class BadRequestOperationResult<TResource>(TResource? resource, 
     {
         return new BadRequestOperationResult<TResource>(default, string.Format(NotFoundErrorMessage, userIdentifier.Value));
     }
+    
+    public static DataPlaneOperationResult<TResource> ForNotFound(ServicePrincipalIdentifier servicePrincipalIdentifier)
+    {
+        return new BadRequestOperationResult<TResource>(default,
+            string.Format(NotFoundErrorMessage, servicePrincipalIdentifier.Value));
+    }
 }

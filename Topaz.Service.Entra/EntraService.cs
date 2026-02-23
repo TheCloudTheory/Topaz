@@ -15,7 +15,7 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         new EntraUserGraphEndpoint(logger),
-        new EntraServicePrincipalGraphEndpoint()
+        new EntraServicePrincipalGraphEndpoint(logger)
     ];
 
     public void Bootstrap()
@@ -24,11 +24,15 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
         
         var servicePath = Path.Combine(GlobalSettings.MainEmulatorDirectory, LocalDirectoryPath);
         var userPath = Path.Combine(servicePath, EntraResourceProvider.UsersDirectoryName);
+        var servicePrincipalPath = Path.Combine(servicePath, EntraResourceProvider.ServicePrincipalsDirectoryName);
         var userDataPath = Path.Combine(userPath, "data");
+        var servicePrincipalDataPath = Path.Combine(servicePrincipalPath, "data");
         
         CreateServiceDirectory(servicePath);
         CreateServiceDirectory(userPath);
         CreateServiceDirectory(userDataPath);
+        CreateServiceDirectory(servicePrincipalPath);
+        CreateServiceDirectory(servicePrincipalDataPath);
     }
 
     private void CreateServiceDirectory(string servicePath)

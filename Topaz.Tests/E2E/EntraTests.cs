@@ -60,4 +60,45 @@ public class EntraTests
             }
         }
     }
+    
+    [Test]
+    public async Task EntraTests_CanCreateAndFindServicePrincipal()
+    {
+        // Prepare a unique service principal
+        var client = GraphClient;
+        var unique = Guid.NewGuid().ToString("N");
+        var appId = Guid.NewGuid().ToString();
+        var servicePrincipal = new ServicePrincipal
+        {
+            AppId = appId,
+            DisplayName = $"Test Service Principal {unique}",
+            ServicePrincipalType = "Application",
+            AccountEnabled = true,
+            Tags = ["WindowsAzureActiveDirectoryIntegratedApp"]
+        };
+
+        // Create
+        var created = await client.ServicePrincipals.PostAsync(servicePrincipal);
+        Assert.That(created, Is.Not.Null);
+
+        try
+        {
+            // Retrieve by id
+            var found = await client.ServicePrincipals[created.Id].GetAsync();
+            Assert.That(found, Is.Not.Null);
+            Assert.Multiple(() =>
+            {
+                Assert.That(found.AppId, Is.EqualTo(appId));
+                Assert.That(found.DisplayName, Is.EqualTo($"Test Service Principal {unique}"));
+            });
+        }
+        finally
+        {
+            // Clean up
+            if (created?.Id is not null)
+            {
+                await client.ServicePrincipals[created.Id].DeleteAsync();
+            }
+        }
+    }
 }

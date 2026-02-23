@@ -81,7 +81,7 @@ internal sealed class EntraUserGraphEndpoint(ITopazLogger logger) : IEndpointDef
 
     private void HandleGetUserRequest(HttpResponseMessage response, UserIdentifier userIdentifier)
     {
-        logger.LogDebug(nameof(EntraUserGraphEndpoint), nameof(HandleGetUserRequest), "Fetching a user `{0}`.",  userIdentifier);
+        logger.LogDebug(nameof(EntraUserGraphEndpoint), nameof(HandleGetUserRequest), "Fetching a user `{0}`.", userIdentifier);
         
         var operation = _dataPlane.Get(userIdentifier);
         if (operation.Result == OperationResult.NotFound || operation.Resource == null)

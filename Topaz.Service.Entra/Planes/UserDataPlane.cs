@@ -11,7 +11,7 @@ internal sealed class UserDataPlane(EntraResourceProvider provider, ITopazLogger
 {
     public DataPlaneOperationResult<User> Create(CreateUserRequest request)
     {
-        logger.LogDebug(nameof(UserDataPlane), nameof(Create), "Creating a user.");
+        logger.LogDebug(nameof(UserDataPlane), nameof(Create), "Creating a user `{0}`.", request.UserPrincipalName);
         
         var entityPath = BuildLocalUserEntityPath(UserIdentifier.From(request.UserPrincipalName));
 
