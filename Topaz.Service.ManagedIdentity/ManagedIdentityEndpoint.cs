@@ -4,10 +4,8 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.ManagedIdentity.Models.Requests;
 using Topaz.Service.ManagedIdentity.Models.Responses;
-using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
@@ -15,12 +13,7 @@ namespace Topaz.Service.ManagedIdentity;
 
 public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly ManagedIdentityControlPlane _controlPlane = new(
-        new ManagedIdentityResourceProvider(logger),
-        ResourceGroupControlPlane.New(logger),
-        SubscriptionControlPlane.New(logger),
-        logger
-    );
+    private readonly ManagedIdentityControlPlane _controlPlane = ManagedIdentityControlPlane.New(logger);
 
     public string[] Endpoints =>
     [

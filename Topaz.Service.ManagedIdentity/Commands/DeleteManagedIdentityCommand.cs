@@ -3,10 +3,8 @@ using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
-using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
 
 namespace Topaz.Service.ManagedIdentity.Commands;
 
@@ -22,13 +20,7 @@ public sealed class DeleteManagedIdentityCommand(ITopazLogger logger) : Command<
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var managedIdentityIdentifier = ManagedIdentityIdentifier.From(settings.Name!);
-        
-        var controlPlane = new ManagedIdentityControlPlane(
-            new ManagedIdentityResourceProvider(logger),
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger),
-            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), 
-            logger);
+        var controlPlane = ManagedIdentityControlPlane.New(logger);
         
         var operation = controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
         

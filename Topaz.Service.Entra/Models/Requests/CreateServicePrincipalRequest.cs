@@ -73,4 +73,10 @@ internal sealed class CreateServicePrincipalRequest
         public string? SecretText { get; init; }
         public DateTimeOffset? StartDateTime { get; init; }
     }
+    
+    public static CreateServicePrincipalRequest Generate(string name) => new()
+    {
+        AppId = Guid.NewGuid().ToString(),
+        DisplayName = name
+    };
 }   

@@ -2,6 +2,7 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ManagedServiceIdentities;
+using Microsoft.Graph;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
@@ -12,6 +13,7 @@ public class ManagedIdentityTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
     private static readonly Guid SubscriptionId = Guid.Parse("B1C2D3E4-F5A6-4B7C-8D9E-123456789DEF");
+    private static GraphServiceClient GraphClient => new(new HttpClient(), null, "https://topaz.local.dev:8899");
     
     private const string SubscriptionName = "sub-test-identity";
     private const string ResourceGroupName = "rg-test-identity";
@@ -277,5 +279,55 @@ public class ManagedIdentityTests
             Assert.That(identity.Value.Data.TenantId, Is.Not.EqualTo(Guid.Empty));
             Assert.That(identity.Value.Data.ClientId, Is.Not.EqualTo(identity.Value.Data.PrincipalId));
         });
+    }
+    
+    [Test]
+    public async Task ManagedIdentityTests_WhenIdentityIsCreatedUsingSDK_ServicePrincipalShouldAlsoExist()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential();
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+
+        var operation = new UserAssignedIdentityData(AzureLocation.WestEurope);
+        var testIdentityName = $"testidentity-sp-{Guid.NewGuid():N}".ToLowerInvariant();
+
+        // Act (create managed identity via ARM SDK)
+        var identityCollection = resourceGroup.Value.GetUserAssignedIdentities();
+        await identityCollection.CreateOrUpdateAsync(WaitUntil.Completed, testIdentityName, operation, CancellationToken.None);
+
+        var identity = await resourceGroup.Value.GetUserAssignedIdentityAsync(testIdentityName);
+        var clientId = identity.Value.Data.ClientId;
+
+        // Assert (managed identity has a client id)
+        Assert.That(clientId, Is.Not.Null);
+        Assert.That(clientId, Is.Not.EqualTo(Guid.Empty));
+
+        // Assert (service principal exists in Entra for that appId/clientId)
+        var servicePrincipal = await WaitForServicePrincipalByAppIdAsync(GraphClient, clientId.Value.ToString());
+        Assert.That(servicePrincipal, Is.Not.Null);
+        Assert.That(servicePrincipal!.AppId, Is.EqualTo(clientId.Value.ToString()));
+    }
+    
+    private static async Task<Microsoft.Graph.Models.ServicePrincipal?> WaitForServicePrincipalByAppIdAsync(
+        GraphServiceClient client,
+        string appId,
+        int maxAttempts = 20,
+        int delayMs = 250)
+    {
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            var result = await client.ServicePrincipals[appId].GetAsync();
+            if (result is not null)
+            {
+                return result;
+            }
+
+            await Task.Delay(delayMs);
+        }
+
+        Assert.Fail($"Service principal with appId '{appId}' was not found after {maxAttempts} attempts.");
+        return null;
     }
 }

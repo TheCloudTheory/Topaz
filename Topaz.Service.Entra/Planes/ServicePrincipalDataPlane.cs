@@ -9,6 +9,8 @@ namespace Topaz.Service.Entra.Planes;
 
 internal sealed class ServicePrincipalDataPlane(EntraResourceProvider provider, ITopazLogger logger)
 {
+    public static ServicePrincipalDataPlane New(ITopazLogger logger) => new(new EntraResourceProvider(logger), logger);
+    
     public DataPlaneOperationResult<ServicePrincipal> Create(CreateServicePrincipalRequest request)
     {
         logger.LogDebug(nameof(ServicePrincipalDataPlane), nameof(Create), "Creating a service principal `{0}`.", request.AppId);
@@ -59,7 +61,7 @@ internal sealed class ServicePrincipalDataPlane(EntraResourceProvider provider, 
                 : new DataPlaneOperationResult<ServicePrincipal>(OperationResult.Success, servicePrincipal, null, null);
         }
 
-        servicePrincipal = JsonSerializer.Deserialize<ServicePrincipal>(File.ReadAllText(entityPath));
+        servicePrincipal = JsonSerializer.Deserialize<ServicePrincipal>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions);
         return new DataPlaneOperationResult<ServicePrincipal>(OperationResult.Success, servicePrincipal, null, null);
     }
 

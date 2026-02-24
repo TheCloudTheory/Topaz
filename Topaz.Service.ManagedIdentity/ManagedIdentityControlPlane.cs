@@ -1,4 +1,7 @@
 using Topaz.ResourceManager;
+using Topaz.Service.Entra.Models;
+using Topaz.Service.Entra.Models.Requests;
+using Topaz.Service.Entra.Planes;
 using Topaz.Service.ManagedIdentity.Models;
 using Topaz.Service.ManagedIdentity.Models.Requests;
 using Topaz.Service.ResourceGroup;
@@ -13,6 +16,7 @@ internal sealed class ManagedIdentityControlPlane(
     ManagedIdentityResourceProvider provider,
     ResourceGroupControlPlane resourceGroupControlPlane,
     SubscriptionControlPlane subscriptionControlPlane,
+    ServicePrincipalDataPlane servicePrincipalDataPlane,
     ITopazLogger logger
 ) : IControlPlane
 {
@@ -24,6 +28,7 @@ internal sealed class ManagedIdentityControlPlane(
         new ManagedIdentityResourceProvider(logger),
         ResourceGroupControlPlane.New(logger),
         SubscriptionControlPlane.New(logger),
+        ServicePrincipalDataPlane.New(logger),
         logger);
     
     public ControlPlaneOperationResult<ManagedIdentityResource> CreateOrUpdate(
@@ -48,10 +53,28 @@ internal sealed class ManagedIdentityControlPlane(
 
         var managedIdentityOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
         var isCreateOperation = managedIdentityOperation.Result == OperationResult.NotFound;
+
+        ServicePrincipal? servicePrincipal = null;
+        if (isCreateOperation)
+        {
+            var createServicePrincipalOperation =
+                servicePrincipalDataPlane.Create(
+                    CreateServicePrincipalRequest.Generate(managedIdentityIdentifier.Value));
+            
+            if (createServicePrincipalOperation.Result != OperationResult.Created)
+            {
+                return new ControlPlaneOperationResult<ManagedIdentityResource>(OperationResult.Failed, null,
+                    createServicePrincipalOperation.Reason,
+                    createServicePrincipalOperation.Code);
+            }
+            
+            servicePrincipal = createServicePrincipalOperation.Resource;
+        }
+        
         var resource = isCreateOperation
             ? new ManagedIdentityResource(subscriptionIdentifier, resourceGroupIdentifier,
                 managedIdentityIdentifier.Value, request.Location, request.Tags,
-                ManagedIdentityResourceProperties.From(request.Properties))
+                ManagedIdentityResourceProperties.From(request.Properties, servicePrincipal!))
             : managedIdentityOperation.Resource!;
 
         if (!isCreateOperation)
