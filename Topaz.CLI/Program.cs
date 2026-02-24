@@ -6,6 +6,7 @@ using Spectre.Console.Cli;
 using Topaz.CLI.Commands;
 using Topaz.Dns;
 using Topaz.Documentation.Command;
+using Topaz.Service.Entra;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
 using Topaz.Service.ManagedIdentity.Commands;
@@ -108,6 +109,9 @@ internal class Program
             Directory.CreateDirectory(GlobalSettings.MainEmulatorDirectory);
             Console.WriteLine("Emulator directory created.");
         }
+        
+        var entra = new EntraService(new PrettyTopazLogger());
+        entra.Bootstrap();
         
         if (File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))
         {
