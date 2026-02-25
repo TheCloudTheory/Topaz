@@ -1,4 +1,5 @@
 ﻿using Topaz.Service.Shared;
+using Topaz.Service.Subscription.Endpoints;
 using Topaz.Shared;
 
 namespace Topaz.Service.Subscription;
@@ -14,7 +15,9 @@ public sealed class SubscriptionService(ITopazLogger logger) : IServiceDefinitio
     public string Name => "Subscription";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new SubscriptionEndpoint(new SubscriptionResourceProvider(logger), logger)
+        new GetSubscriptionEndpoint(logger),
+        new CreateSubscriptionEndpoint(logger),
+        new ListSubscriptionsEndpoint(logger)
     ];
 
     public void Bootstrap()

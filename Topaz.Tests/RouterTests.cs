@@ -18,7 +18,7 @@ public class RouterTests
         var router = new Router(new GlobalOptions(), logger);
         var endpoints = new IEndpointDefinition[]
         {
-            new EventHubServiceEndpoint(logger),
+            new GetNamespaceEndpoint(logger),
             new ServiceBusServiceEndpoint(logger)
         };
         var context = new DefaultHttpContext()
