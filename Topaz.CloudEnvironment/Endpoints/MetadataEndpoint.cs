@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Topaz.CloudEnvironment.Models.Responses;
 using Topaz.Service.Shared;
+using Topaz.Shared;
 
 namespace Topaz.CloudEnvironment.Endpoints;
 
@@ -10,16 +11,12 @@ public sealed class MetadataEndpoint : IEndpointDefinition
     [
         "GET /metadata/endpoints"
     ];
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([8899], Protocol.Https);
-    
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
-        QueryString query, GlobalOptions options)
+
+    public string[] Permissions => [];
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var response = new HttpResponseMessage();
         var metadata = new GetMetadataEndpointResponse();
-        
         response.Content = new StringContent(metadata.ToString());
-        
-        return response;
     }
 }

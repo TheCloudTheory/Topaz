@@ -70,7 +70,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             new KeyVaultService(logger),
             new EventHubService(logger),
             new BlobStorageService(logger),
-            new TopazCloudEnvironmentService(),
+            new TopazCloudEnvironmentService(logger),
             new ServiceBusService(logger),
             new ResourceManagerService(logger, cancellationToken),
             new VirtualNetworkService(logger),

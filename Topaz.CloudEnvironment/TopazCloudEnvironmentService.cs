@@ -1,10 +1,11 @@
 ﻿using Topaz.CloudEnvironment.Endpoints;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
+using Topaz.Shared;
 
 namespace Topaz.CloudEnvironment;
 
-public sealed class TopazCloudEnvironmentService : IServiceDefinition
+public sealed class TopazCloudEnvironmentService(ITopazLogger logger) : IServiceDefinition
 {
     public static string UniqueName => "cloudenvironment";
     public string Name => "CloudEnvironment";
@@ -16,7 +17,9 @@ public sealed class TopazCloudEnvironmentService : IServiceDefinition
     [
         new MetadataEndpoint(),
         new TenantsEndpoint(),
-        new OidcEndpoint()
+        new OidcEndpoint(),
+        new AuthorizeEndpoint(logger),
+        new TokenEndpoint(logger)
     ];
 
     public void Bootstrap()
