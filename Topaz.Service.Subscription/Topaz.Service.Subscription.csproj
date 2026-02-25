@@ -10,6 +10,7 @@
     <ProjectReference Include="../Topaz.Service.Shared/Topaz.Service.Shared.csproj" />
     <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
     <ProjectReference Include="..\Documentation\Topaz.Documentation\Topaz.Documentation.csproj" />
+    <ProjectReference Include="..\Topaz.EventPipeline\Topaz.EventPipeline.csproj" />
     <ProjectReference Include="..\Topaz.ResourceManager\Topaz.ResourceManager.csproj" />
   </ItemGroup>
 

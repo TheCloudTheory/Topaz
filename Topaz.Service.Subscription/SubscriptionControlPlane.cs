@@ -1,16 +1,19 @@
 using System.Text.Json;
+using Topaz.EventPipeline;
+using Topaz.EventPipeline.Events;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.Subscription;
 
-internal sealed class SubscriptionControlPlane(SubscriptionResourceProvider provider)
+internal sealed class SubscriptionControlPlane(Pipeline eventPipeline, SubscriptionResourceProvider provider)
 {
     private const string SubscriptionNotFoundMessageTemplate = "Subscription {0} not found";
     private const string SubscriptionNotFoundCode = "SubscriptionNotFound";
-    
-    public static SubscriptionControlPlane New(ITopazLogger logger) => new(new SubscriptionResourceProvider(logger));
+
+    public static SubscriptionControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
+        new(eventPipeline, new SubscriptionResourceProvider(logger));
     
     public ControlPlaneOperationResult<Models.Subscription> Get(SubscriptionIdentifier subscriptionIdentifier)
     {
@@ -30,6 +33,17 @@ internal sealed class SubscriptionControlPlane(SubscriptionResourceProvider prov
         var model = new Models.Subscription(subscriptionIdentifier, name);
 
         provider.Create(subscriptionIdentifier, null, null, model);
+        
+        // We publish this particular event because there are other services (like Authorization)
+        // which will listen to it and perform additional actions (like assigning super admin
+        // to a new subscription).
+        eventPipeline.TriggerEvent(new SubscriptionCreatedEvent
+        {
+            Data = new SubscriptionCreatedEventData
+            {
+                SubscriptionId = subscriptionIdentifier.Value.ToString()
+            }
+        });
 
         return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Created, model, null, null);
     }

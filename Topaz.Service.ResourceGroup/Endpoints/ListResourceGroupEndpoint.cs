@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -9,9 +10,9 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ResourceGroup.Endpoints;
 
-public class ListResourceGroupEndpoint(ITopazLogger logger) : IEndpointDefinition
+public class ListResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly ResourceGroupControlPlane _controlPlane = ResourceGroupControlPlane.New(logger);
+    private readonly ResourceGroupControlPlane _controlPlane = ResourceGroupControlPlane.New(eventPipeline, logger);
     
     public string[] Endpoints =>
     [

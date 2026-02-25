@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -10,9 +11,9 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ResourceGroup.Endpoints;
 
-public class CreateUpdateResourceGroupEndpoint(ITopazLogger logger) : IEndpointDefinition
+public class CreateUpdateResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly ResourceGroupControlPlane _controlPlane = ResourceGroupControlPlane.New(logger);
+    private readonly ResourceGroupControlPlane _controlPlane = ResourceGroupControlPlane.New(eventPipeline, logger);
     
     public string[] Endpoints =>
     [

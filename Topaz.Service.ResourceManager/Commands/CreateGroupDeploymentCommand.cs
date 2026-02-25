@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ResourceManager.Deployment;
 using Topaz.Service.Shared;
@@ -14,7 +15,7 @@ namespace Topaz.Service.ResourceManager.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("deployment group create", "deployment", "Creates a new deployment on a resource group level")]
-public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateGroupDeploymentCommand.CreateGroupDeploymentCommandSettings>
+public class CreateGroupDeploymentCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateGroupDeploymentCommand.CreateGroupDeploymentCommandSettings>
 {
     public override int Execute(CommandContext context, CreateGroupDeploymentCommandSettings settings)
     {
@@ -22,7 +23,7 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
 
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
         var resourceGroupOperation = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound || resourceGroupOperation.Resource == null)
         {
@@ -31,7 +32,7 @@ public class CreateGroupDeploymentCommand(ITopazLogger logger) : Command<CreateG
         }
 
         var provider = new ResourceManagerResourceProvider(logger);
-        var controlPlane = new ResourceManagerControlPlane(provider, new TemplateDeploymentOrchestrator(provider, logger));
+        var controlPlane = new ResourceManagerControlPlane(provider, new TemplateDeploymentOrchestrator(eventPipeline, provider, logger));
         var fakeRequest = GetTemplate(settings.TemplateFile);
 
         var deploymentName = DetermineDeploymentName(settings);

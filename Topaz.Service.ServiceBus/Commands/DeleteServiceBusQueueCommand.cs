@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -10,7 +11,7 @@ using Topaz.Shared;
 namespace Topaz.Service.ServiceBus.Commands;
 
 [UsedImplicitly]
-public sealed class DeleteServiceBusQueueCommand(ITopazLogger logger) : Command<DeleteServiceBusQueueCommand.DeleteServiceBusQueueCommandSettings>
+public sealed class DeleteServiceBusQueueCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<DeleteServiceBusQueueCommand.DeleteServiceBusQueueCommandSettings>
 {
     public override int Execute(CommandContext context, DeleteServiceBusQueueCommandSettings settings)
     {
@@ -19,7 +20,7 @@ public sealed class DeleteServiceBusQueueCommand(ITopazLogger logger) : Command<
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
         var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
         if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {

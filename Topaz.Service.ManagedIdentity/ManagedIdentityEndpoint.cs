@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.ManagedIdentity.Models.Requests;
 using Topaz.Service.ManagedIdentity.Models.Responses;
 using Topaz.Service.Shared;
@@ -11,9 +12,9 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ManagedIdentity;
 
-public sealed class ManagedIdentityEndpoint(ITopazLogger logger) : IEndpointDefinition
+public sealed class ManagedIdentityEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly ManagedIdentityControlPlane _controlPlane = ManagedIdentityControlPlane.New(logger);
+    private readonly ManagedIdentityControlPlane _controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
 
     public string[] Endpoints =>
     [

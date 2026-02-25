@@ -3,6 +3,7 @@ using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ManagedIdentity.Commands;
@@ -10,7 +11,7 @@ namespace Topaz.Service.ManagedIdentity.Commands;
 [UsedImplicitly]
 [CommandDefinition("identity show", "managed-identity", "Shows details of a user-assigned managed identity.")]
 [CommandExample("Shows a managed identity", "topaz identity show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"myIdentity\" \\\n    --resource-group \"rg-local\"")]
-public sealed class ShowManagedIdentityCommand(ITopazLogger logger) : Command<ShowManagedIdentityCommand.ShowManagedIdentityCommandSettings>
+public sealed class ShowManagedIdentityCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<ShowManagedIdentityCommand.ShowManagedIdentityCommandSettings>
 {
     public override int Execute(CommandContext context, ShowManagedIdentityCommandSettings settings)
     {
@@ -19,7 +20,7 @@ public sealed class ShowManagedIdentityCommand(ITopazLogger logger) : Command<Sh
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var managedIdentityIdentifier = ManagedIdentityIdentifier.From(settings.Name!);
-        var controlPlane = ManagedIdentityControlPlane.New(logger);
+        var controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
         
         var operation = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
         

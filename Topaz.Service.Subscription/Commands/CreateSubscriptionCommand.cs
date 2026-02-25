@@ -2,19 +2,20 @@ using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.Subscription.Commands;
 
 [UsedImplicitly]
-public sealed class CreateSubscriptionCommand(ITopazLogger logger) : Command<CreateSubscriptionCommand.CreateSubscriptionCommandSettings>
+public sealed class CreateSubscriptionCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateSubscriptionCommand.CreateSubscriptionCommandSettings>
 {
     public override int Execute(CommandContext context, CreateSubscriptionCommandSettings settings)
     {
         logger.LogInformation("Creating subscription...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
-        var controlPlane = new SubscriptionControlPlane(new SubscriptionResourceProvider(logger));
+        var controlPlane = new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger));
         var sa = controlPlane.Create(subscriptionIdentifier, settings.Name!);
 
         logger.LogInformation(sa.ToString());

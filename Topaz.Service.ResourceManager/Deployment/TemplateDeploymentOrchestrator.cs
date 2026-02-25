@@ -2,6 +2,7 @@ using System.Text.Json;
 using Azure.Deployments.Core.Definitions.Schema;
 using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
 using Newtonsoft.Json.Linq;
+using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.EventHub;
 using Topaz.Service.KeyVault;
@@ -15,7 +16,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.ResourceManager.Deployment;
 
-public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvider provider, ITopazLogger logger)
+public sealed class TemplateDeploymentOrchestrator(Pipeline eventPipeline, ResourceManagerResourceProvider provider, ITopazLogger logger)
 {
     private static Queue<TemplateDeployment> DeploymentQueue { get; } = new();
     private static Thread? OrchestratorThread { get; set; }
@@ -77,13 +78,13 @@ public sealed class TemplateDeploymentOrchestrator(ResourceManagerResourceProvid
             switch (resource.Type.Value)
             {
                 case "Microsoft.KeyVault/vaults":
-                    controlPlane = KeyVaultControlPlane.New(logger);
+                    controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
                     break;
                 case "Microsoft.Network/virtualNetworks":
-                    controlPlane = VirtualNetworkControlPlane.New(logger);
+                    controlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
                     break;
                 case "Microsoft.ManagedIdentity/userAssignedIdentities":
-                    controlPlane = ManagedIdentityControlPlane.New(logger);
+                    controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
                     break;
                 case "Microsoft.EventHub/namespaces":
                     controlPlane = EventHubServiceControlPlane.New(logger);

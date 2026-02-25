@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription.Models.Requests;
@@ -9,9 +10,9 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Subscription.Endpoints;
 
-public class CreateSubscriptionEndpoint(ITopazLogger logger) : IEndpointDefinition
+public class CreateSubscriptionEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly SubscriptionControlPlane _controlPlane = SubscriptionControlPlane.New(logger);
+    private readonly SubscriptionControlPlane _controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
 
     public string[] Endpoints =>
     [

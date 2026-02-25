@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.EventPipeline;
 using Topaz.Service.EventHub.Models.Requests;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
@@ -14,7 +15,7 @@ namespace Topaz.Service.EventHub.Commands;
 [UsedImplicitly]
 [CommandDefinition("eventhubs namespace create",  "event-hub", "Creates new Event Hub namespace.")]
 [CommandExample("Creates Event Hub namespace", "topaz eventhubs namespace create \\\n    --resource-group rg-test \\\n    --location \"westeurope\" \\\n    --name \"eh-namespace\" \\\n    --subscription-id \"07CB2605-9C16-46E9-A2BD-0A8D39E049E8\"")]
-public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Command<CreateEventHubNamespaceCommand.CreateEventHubCommandSettings>
+public sealed class CreateEventHubNamespaceCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateEventHubNamespaceCommand.CreateEventHubCommandSettings>
 {
     public override int Execute(CommandContext context, CreateEventHubCommandSettings settings)
     {
@@ -22,8 +23,11 @@ public sealed class CreateEventHubNamespaceCommand(ITopazLogger logger) : Comman
         
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
-        var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(Guid.Parse(settings.SubscriptionId)), resourceGroupIdentifier);
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
+                new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+        var resourceGroup =
+            resourceGroupControlPlane.Get(SubscriptionIdentifier.From(Guid.Parse(settings.SubscriptionId)),
+                resourceGroupIdentifier);
         if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {
             logger.LogError($"ResourceGroup {resourceGroupIdentifier} not found.");

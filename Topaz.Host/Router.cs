@@ -2,15 +2,16 @@ using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using Topaz.EventPipeline;
 using Topaz.Service.Authorization;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
 namespace Topaz.Host;
 
-internal sealed class Router(GlobalOptions options, ITopazLogger logger)
+internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITopazLogger logger)
 {
-    private readonly AzureAuthorizationAdapter _authorizationAdapter = new(logger);
+    private readonly AzureAuthorizationAdapter _authorizationAdapter = new(eventPipeline, logger);
     
     internal async Task MatchAndExecuteEndpoint(IEndpointDefinition[] httpEndpoints, HttpContext context)
     {

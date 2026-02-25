@@ -1,15 +1,16 @@
 using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Subscription.Models.Responses;
 using Topaz.Shared;
 
 namespace Topaz.Service.Subscription.Endpoints;
 
-public class ListSubscriptionsEndpoint(ITopazLogger logger) : IEndpointDefinition
+public class ListSubscriptionsEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly SubscriptionControlPlane _controlPlane = SubscriptionControlPlane.New(logger);
+    private readonly SubscriptionControlPlane _controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
 
     public string[] Endpoints =>
     [

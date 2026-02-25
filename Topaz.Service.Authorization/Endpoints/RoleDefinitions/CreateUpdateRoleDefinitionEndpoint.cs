@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.Authorization.Domain;
 using Topaz.Service.Authorization.Models.Requests;
 using Topaz.Service.Shared;
@@ -11,9 +12,9 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Authorization.Endpoints.RoleDefinitions;
 
-internal sealed class CreateUpdateRoleDefinitionEndpoint(ITopazLogger logger) : IEndpointDefinition
+internal sealed class CreateUpdateRoleDefinitionEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(logger);
+    private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
     
     public string[] Endpoints => [
         "PUT /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}"

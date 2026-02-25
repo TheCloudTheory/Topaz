@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.KeyVault.Models.Requests;
 using Topaz.Service.KeyVault.Models.Responses;
 using Topaz.Service.ResourceGroup;
@@ -14,13 +15,13 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.KeyVault.Endpoints;
 
-internal sealed class KeyVaultServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
+internal sealed class KeyVaultServiceEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly KeyVaultControlPlane _controlPlane = new(
         new KeyVaultResourceProvider(logger),
         new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger),
-        new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+            new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger),
+        new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
 
     public string[] Endpoints =>
     [

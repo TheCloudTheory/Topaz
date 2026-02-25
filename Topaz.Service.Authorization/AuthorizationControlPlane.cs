@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.Authorization.Domain;
 using Topaz.Service.Authorization.Models;
@@ -24,8 +25,8 @@ internal sealed class AuthorizationControlPlane(
         "Role assignment '{0}' could not be found";
     private const string RoleAssignmentNotFoundMessageCode = "RoleAssignmentNotFound";
 
-    public static AuthorizationControlPlane New(ITopazLogger logger) => new(
-        new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)),
+    public static AuthorizationControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(
+        new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)),
         new ResourceAuthorizationResourceProvider(logger),
         new ResourceGroupAuthorizationResourceProvider(logger),
         new SubscriptionAuthorizationResourceProvider(logger),

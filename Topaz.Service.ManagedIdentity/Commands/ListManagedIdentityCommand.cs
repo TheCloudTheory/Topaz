@@ -3,6 +3,7 @@ using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 
@@ -12,14 +13,14 @@ namespace Topaz.Service.ManagedIdentity.Commands;
 [CommandDefinition("identity list", "managed-identity", "Lists user-assigned managed identities.")]
 [CommandExample("Lists managed identities by resource group", "topaz identity list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \"rg-local\"")]
 [CommandExample("Lists managed identities by subscription", "topaz identity list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae")]
-public sealed class ListManagedIdentityCommand(ITopazLogger logger) : Command<ListManagedIdentityCommand.ListManagedIdentityCommandSettings>
+public sealed class ListManagedIdentityCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<ListManagedIdentityCommand.ListManagedIdentityCommandSettings>
 {
     public override int Execute(CommandContext context, ListManagedIdentityCommandSettings settings)
     {
         logger.LogInformation("Listing user-assigned managed identities...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var controlPlane = ManagedIdentityControlPlane.New(logger);
+        var controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
 
         if (!string.IsNullOrEmpty(settings.ResourceGroup))
         {

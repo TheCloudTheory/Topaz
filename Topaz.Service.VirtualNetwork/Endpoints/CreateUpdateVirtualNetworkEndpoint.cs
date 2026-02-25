@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.VirtualNetwork.Models.Requests;
@@ -9,9 +10,9 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.VirtualNetwork.Endpoints;
 
-public class CreateUpdateVirtualNetworkEndpoint(ITopazLogger logger) : IEndpointDefinition
+public class CreateUpdateVirtualNetworkEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly VirtualNetworkControlPlane _controlPlane = new(new VirtualNetworkResourceProvider(logger), logger);
+    private readonly VirtualNetworkControlPlane _controlPlane = new(eventPipeline, new VirtualNetworkResourceProvider(logger), logger);
     
     public string[] Endpoints =>
     [

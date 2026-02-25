@@ -1,5 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -7,9 +8,9 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ResourceGroup.Endpoints;
 
-public class DeleteResourceGroupEndpoint(ITopazLogger logger) : IEndpointDefinition
+public class DeleteResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly ResourceGroupControlPlane _controlPlane = ResourceGroupControlPlane.New(logger);
+    private readonly ResourceGroupControlPlane _controlPlane = ResourceGroupControlPlane.New(eventPipeline, logger);
     
     public string[] Endpoints =>
     [

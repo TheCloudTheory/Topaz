@@ -1,5 +1,6 @@
 using Azure.Core;
 using Topaz.Dns;
+using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.KeyVault.Models;
 using Topaz.Service.KeyVault.Models.Requests;
@@ -24,10 +25,10 @@ internal sealed class KeyVaultControlPlane(
     private const string InvalidVaultNameMessageTemplate =
         "The vault name '{0}' is invalid. A vault's name must be between 3-24 alphanumeric characters. The name must begin with a letter, end with a letter or digit, and not contain consecutive hyphens.";
 
-    public static KeyVaultControlPlane New(ITopazLogger logger) => new(new KeyVaultResourceProvider(logger),
+    public static KeyVaultControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(new KeyVaultResourceProvider(logger),
         new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger),
-        new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+            new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger),
+        new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
     
     public ControlPlaneOperationResult<KeyVaultResource> Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location, string keyVaultName)
     {

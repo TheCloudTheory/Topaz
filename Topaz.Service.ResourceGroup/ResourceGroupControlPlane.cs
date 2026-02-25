@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Azure.Core;
+using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup.Models;
 using Topaz.Service.ResourceGroup.Models.Requests;
 using Topaz.Service.Shared;
@@ -15,9 +16,9 @@ internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider gr
         "Resource group '{0}' could not be found";
     private const string ResourceGroupNotFoundMessageCode = "ResourceGroupNotFound";
 
-    public static ResourceGroupControlPlane New(ITopazLogger logger) => new(
+    public static ResourceGroupControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(
         new ResourceGroupResourceProvider(logger),
-        new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+        new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
     
     public ControlPlaneOperationResult<ResourceGroupResource> Get(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
     {

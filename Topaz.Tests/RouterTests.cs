@@ -1,5 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Host;
 using Topaz.Service.EventHub.Endpoints;
 using Topaz.Service.ServiceBus.Endpoints;
@@ -15,7 +16,7 @@ public class RouterTests
     {
         // Arrange
         var logger = new PrettyTopazLogger();
-        var router = new Router(new GlobalOptions(), logger);
+        var router = new Router(new Pipeline(logger), new GlobalOptions(), logger);
         var endpoints = new IEndpointDefinition[]
         {
             new GetNamespaceEndpoint(logger),

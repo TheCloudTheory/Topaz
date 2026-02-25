@@ -6,6 +6,7 @@ using Spectre.Console.Cli;
 using Topaz.CLI.Commands;
 using Topaz.Dns;
 using Topaz.Documentation.Command;
+using Topaz.EventPipeline;
 using Topaz.Service.Entra;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
@@ -48,6 +49,7 @@ internal class Program
     private static void RegisterDependencies(ServiceCollection registrations)
     {
         registrations.AddSingleton<ITopazLogger, PrettyTopazLogger>();
+        registrations.AddSingleton<Pipeline, Pipeline>();
     }
 
     private static Task<int> BootstrapCli(string[] args, TypeRegistrar registrar)

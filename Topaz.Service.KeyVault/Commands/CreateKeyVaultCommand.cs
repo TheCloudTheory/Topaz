@@ -3,6 +3,7 @@ using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -13,7 +14,7 @@ namespace Topaz.Service.KeyVault.Commands;
 [UsedImplicitly]
 [CommandDefinition("keyvault create",  "key-vault", "Creates a new Azure Key Vault.")]
 [CommandExample("Creates a new Key Vault", "topaz keyvault create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"kvlocal\" \\\n    --location \"westeurope\" \\\n    --resource-group \"rg-local\"")]
-public class CreateKeyVaultCommand(ITopazLogger logger) : Command<CreateKeyVaultCommand.CreateKeyVaultCommandSettings>
+public class CreateKeyVaultCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateKeyVaultCommand.CreateKeyVaultCommandSettings>
 {
     public override int Execute(CommandContext context, CreateKeyVaultCommandSettings settings)
     {
@@ -23,8 +24,8 @@ public class CreateKeyVaultCommand(ITopazLogger logger) : Command<CreateKeyVault
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger),
-            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+                new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger),
+            new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
         var existingKeyVault = controlPlane.CheckName(subscriptionIdentifier, settings.Name!, null);
 
         if (!existingKeyVault.response.NameAvailable)

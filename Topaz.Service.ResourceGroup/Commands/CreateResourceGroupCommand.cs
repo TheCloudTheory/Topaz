@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
@@ -9,7 +10,7 @@ using Topaz.Service.Subscription;
 namespace Topaz.Service.ResourceGroup.Commands;
 
 [UsedImplicitly]
-public sealed class CreateResourceGroupCommand(ITopazLogger logger) : Command<CreateResourceGroupCommand.CreateResourceGroupCommandSettings>
+public sealed class CreateResourceGroupCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateResourceGroupCommand.CreateResourceGroupCommandSettings>
 {
     public override int Execute(CommandContext context, CreateResourceGroupCommandSettings settings)
     {
@@ -17,7 +18,7 @@ public sealed class CreateResourceGroupCommand(ITopazLogger logger) : Command<Cr
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.Name!);
-        var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+        var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
         var operation = controlPlane.Create(subscriptionIdentifier, resourceGroupIdentifier, settings.Location!);
 
         if (operation.Result != OperationResult.Created)

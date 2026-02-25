@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.Authorization.Domain;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -9,9 +10,9 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Authorization.Endpoints.RoleAssignments;
 
-internal sealed class GetRoleAssignmentEndpoint(ITopazLogger logger) : IEndpointDefinition
+internal sealed class GetRoleAssignmentEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(logger);
+    private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
     
     public string[] Endpoints => [
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}"

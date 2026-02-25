@@ -8,12 +8,7 @@ internal sealed class TypeResolver(IServiceProvider provider) : ITypeResolver, I
 
     public object? Resolve(Type? type)
     {
-        if (type == null)
-        {
-            return null;
-        }
-
-        return _provider.GetService(type);
+        return type == null ? null : _provider.GetService(type);
     }
 
     public void Dispose()

@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
@@ -9,7 +10,7 @@ using Topaz.Service.Subscription;
 namespace Topaz.Service.KeyVault.Commands;
 
 [UsedImplicitly]
-public sealed class DeleteKeyVaultCommand(ITopazLogger logger) : Command<DeleteKeyVaultCommand.DeleteKeyVaultCommandSettings>
+public sealed class DeleteKeyVaultCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<DeleteKeyVaultCommand.DeleteKeyVaultCommandSettings>
 {
     public override int Execute(CommandContext context, DeleteKeyVaultCommandSettings settings)
     {
@@ -19,8 +20,8 @@ public sealed class DeleteKeyVaultCommand(ITopazLogger logger) : Command<DeleteK
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger),
-            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+                new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger),
+            new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
         
         controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 

@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ResourceManager.Deployment;
 using Topaz.Service.Shared;
@@ -14,20 +15,22 @@ public sealed class ResourceManagerService : IServiceDefinition
     public static IReadOnlyCollection<string> Subresources => [];
     
     private static TemplateDeploymentOrchestrator? _deploymentOrchestrator;
-    
+
+    private readonly Pipeline _eventPipeline;
     private readonly ITopazLogger _logger;
 
-    public ResourceManagerService(ITopazLogger logger, CancellationToken cancellationToken)
+    public ResourceManagerService(Pipeline eventPipeline, ITopazLogger logger, CancellationToken cancellationToken)
     {
+        _eventPipeline = eventPipeline;
         _logger = logger;
         
-        _deploymentOrchestrator = new TemplateDeploymentOrchestrator(new ResourceManagerResourceProvider(logger), logger);
+        _deploymentOrchestrator = new TemplateDeploymentOrchestrator(eventPipeline, new ResourceManagerResourceProvider(logger), logger);
         _deploymentOrchestrator.Start(cancellationToken);
     }
     
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new ResourceManagerEndpoint(_logger, _deploymentOrchestrator!),
+        new ResourceManagerEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
     ];
 
     public void Bootstrap()

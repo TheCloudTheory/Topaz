@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ResourceGroup.Models;
 using Topaz.Service.ResourceManager.Deployment;
@@ -15,10 +16,13 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ResourceManager;
 
-public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploymentOrchestrator deploymentOrchestrator) : IEndpointDefinition
+public sealed class ResourceManagerEndpoint(Pipeline eventPipeline, ITopazLogger logger, TemplateDeploymentOrchestrator deploymentOrchestrator) : IEndpointDefinition
 {
-    private readonly SubscriptionControlPlane _subscriptionControlPlane = new(new SubscriptionResourceProvider(logger));
-    private readonly ResourceGroupControlPlane _resourceGroupControlPlane = new(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+    private readonly SubscriptionControlPlane _subscriptionControlPlane = new(eventPipeline, new SubscriptionResourceProvider(logger));
+
+    private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
+        new(new ResourceGroupResourceProvider(logger),
+            new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
     private readonly ResourceManagerControlPlane _controlPlane = new(new ResourceManagerResourceProvider(logger), deploymentOrchestrator);
     
     public string[] Endpoints =>

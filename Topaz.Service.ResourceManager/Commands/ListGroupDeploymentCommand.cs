@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ResourceManager.Deployment;
 using Topaz.Service.Shared;
@@ -14,7 +15,7 @@ namespace Topaz.Service.ResourceManager.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("deployment group list", "deployment", "Returns a list of all deployments for the given resource group")]
-public class ListGroupDeploymentCommand(ITopazLogger logger) : Command<ListGroupDeploymentCommand.ListGroupDeploymentCommandSettings>
+public class ListGroupDeploymentCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<ListGroupDeploymentCommand.ListGroupDeploymentCommandSettings>
 {
     public override int Execute(CommandContext context, ListGroupDeploymentCommandSettings settings)
     {
@@ -23,7 +24,7 @@ public class ListGroupDeploymentCommand(ITopazLogger logger) : Command<ListGroup
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
         var resourceGroupOperation = resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound || resourceGroupOperation.Resource == null)
         {
@@ -32,7 +33,7 @@ public class ListGroupDeploymentCommand(ITopazLogger logger) : Command<ListGroup
         }
 
         var provider = new ResourceManagerResourceProvider(logger);
-        var controlPlane = new ResourceManagerControlPlane(provider, new TemplateDeploymentOrchestrator(provider, logger));
+        var controlPlane = new ResourceManagerControlPlane(provider, new TemplateDeploymentOrchestrator(eventPipeline, provider, logger));
         var deployments = controlPlane.GetDeployments(subscriptionIdentifier, resourceGroupIdentifier);
         
         logger.LogInformation(JsonSerializer.Serialize(deployments.resource));

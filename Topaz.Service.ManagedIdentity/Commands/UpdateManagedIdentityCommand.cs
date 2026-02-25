@@ -3,6 +3,7 @@ using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.EventPipeline;
 using Topaz.Service.ManagedIdentity.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -12,7 +13,7 @@ namespace Topaz.Service.ManagedIdentity.Commands;
 [UsedImplicitly]
 [CommandDefinition("identity update", "managed-identity", "Updates a user-assigned managed identity.")]
 [CommandExample("Updates a managed identity with tags", "topaz identity update --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"myIdentity\" \\\n    --resource-group \"rg-local\" \\\n    --tags environment=production team=devops")]
-public sealed class UpdateManagedIdentityCommand(ITopazLogger logger) : Command<UpdateManagedIdentityCommand.UpdateManagedIdentityCommandSettings>
+public sealed class UpdateManagedIdentityCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<UpdateManagedIdentityCommand.UpdateManagedIdentityCommandSettings>
 {
     public override int Execute(CommandContext context, UpdateManagedIdentityCommandSettings settings)
     {
@@ -21,7 +22,7 @@ public sealed class UpdateManagedIdentityCommand(ITopazLogger logger) : Command<
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var managedIdentityIdentifier = ManagedIdentityIdentifier.From(settings.Name!);
-        var controlPlane = ManagedIdentityControlPlane.New(logger);
+        var controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
 
         var existingIdentity = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
         if (existingIdentity.Resource == null)

@@ -1,11 +1,12 @@
-﻿using Topaz.Service.KeyVault.Endpoints;
+﻿using Topaz.EventPipeline;
+using Topaz.Service.KeyVault.Endpoints;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault;
 
-public sealed class KeyVaultService(ITopazLogger logger) : IServiceDefinition
+public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".azure-key-vault");
@@ -15,7 +16,7 @@ public sealed class KeyVaultService(ITopazLogger logger) : IServiceDefinition
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new KeyVaultEndpoint(logger),
-        new KeyVaultServiceEndpoint(logger)
+        new KeyVaultServiceEndpoint(eventPipeline, logger)
     ];
 
     public void Bootstrap()

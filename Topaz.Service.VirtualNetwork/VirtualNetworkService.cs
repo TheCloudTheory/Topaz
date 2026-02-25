@@ -1,11 +1,12 @@
-﻿using Topaz.Service.ResourceGroup;
+﻿using Topaz.EventPipeline;
+using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.VirtualNetwork.Endpoints;
 using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork;
 
-public sealed class VirtualNetworkService(ITopazLogger logger) : IServiceDefinition
+public sealed class VirtualNetworkService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".azure-virtual-network");
@@ -16,8 +17,8 @@ public sealed class VirtualNetworkService(ITopazLogger logger) : IServiceDefinit
     public string Name => "Virtual Network";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new CreateUpdateVirtualNetworkEndpoint(logger),
-        new GetVirtualNetworkEndpoint(logger)
+        new CreateUpdateVirtualNetworkEndpoint(eventPipeline, logger),
+        new GetVirtualNetworkEndpoint(eventPipeline, logger)
     ];
 
     public void Bootstrap()

@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using Topaz.Identity;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -5,9 +6,9 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Authorization;
 
-public sealed class AzureAuthorizationAdapter(ITopazLogger logger)
+public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogger logger)
 {
-    private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(logger);
+    private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
     
     public bool IsAuthorized(string[] requiredPermissions, string token, string scope)
     {

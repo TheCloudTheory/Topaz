@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.Entra.Models;
 using Topaz.Service.Entra.Models.Requests;
@@ -24,10 +25,10 @@ internal sealed class ManagedIdentityControlPlane(
     private const string ManagedIdentityNotFoundMessageTemplate =
         "Managed Identity '{0}' could not be found";
     
-    public static ManagedIdentityControlPlane New(ITopazLogger logger) => new(
+    public static ManagedIdentityControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(
         new ManagedIdentityResourceProvider(logger),
-        ResourceGroupControlPlane.New(logger),
-        SubscriptionControlPlane.New(logger),
+        ResourceGroupControlPlane.New(eventPipeline, logger),
+        SubscriptionControlPlane.New(eventPipeline, logger),
         ServicePrincipalDataPlane.New(logger),
         logger);
     

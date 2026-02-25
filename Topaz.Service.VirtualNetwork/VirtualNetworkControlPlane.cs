@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
@@ -9,7 +10,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork;
 
-internal sealed class VirtualNetworkControlPlane(VirtualNetworkResourceProvider provider, ITopazLogger logger) : IControlPlane
+internal sealed class VirtualNetworkControlPlane(Pipeline eventPipeline, VirtualNetworkResourceProvider provider, ITopazLogger logger) : IControlPlane
 {
     private const string VirtualNetworkNotFoundCode = "VirtualNetworkNotFound";
     private const string VirtualNetworkNotFoundMessageTemplate =
@@ -17,10 +18,10 @@ internal sealed class VirtualNetworkControlPlane(VirtualNetworkResourceProvider 
 
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger),
-            new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+            new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
 
-    public static VirtualNetworkControlPlane New(ITopazLogger logger) =>
-        new(new VirtualNetworkResourceProvider(logger), logger);
+    public static VirtualNetworkControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
+        new(eventPipeline, new VirtualNetworkResourceProvider(logger), logger);
     
     public OperationResult Deploy(GenericResource resource)
     {

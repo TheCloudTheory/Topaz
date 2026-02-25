@@ -1,10 +1,11 @@
-﻿using Topaz.Service.Shared;
+﻿using Topaz.EventPipeline;
+using Topaz.Service.Shared;
 using Topaz.Service.Subscription.Endpoints;
 using Topaz.Shared;
 
 namespace Topaz.Service.Subscription;
 
-public sealed class SubscriptionService(ITopazLogger logger) : IServiceDefinition
+public sealed class SubscriptionService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(".subscription", "{subscriptionId}");
@@ -15,9 +16,9 @@ public sealed class SubscriptionService(ITopazLogger logger) : IServiceDefinitio
     public string Name => "Subscription";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new GetSubscriptionEndpoint(logger),
-        new CreateSubscriptionEndpoint(logger),
-        new ListSubscriptionsEndpoint(logger)
+        new GetSubscriptionEndpoint(eventPipeline, logger),
+        new CreateSubscriptionEndpoint(eventPipeline, logger),
+        new ListSubscriptionsEndpoint(eventPipeline, logger)
     ];
 
     public void Bootstrap()

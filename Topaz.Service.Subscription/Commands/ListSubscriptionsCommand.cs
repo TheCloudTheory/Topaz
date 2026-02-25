@@ -1,19 +1,20 @@
 using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console.Cli;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
 namespace Topaz.Service.Subscription.Commands;
 
 [UsedImplicitly]
-public sealed class ListSubscriptionsCommand(ITopazLogger logger) : Command
+public sealed class ListSubscriptionsCommand(Pipeline eventPipeline, ITopazLogger logger) : Command
 {
     public override int Execute(CommandContext context)
     {
         logger.LogInformation("Listing available subscriptions...");
 
-        var controlPlane = new SubscriptionControlPlane(new SubscriptionResourceProvider(logger));
+        var controlPlane = new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger));
         var operation = controlPlane.List();
 
         if (operation.result == OperationResult.Failed)

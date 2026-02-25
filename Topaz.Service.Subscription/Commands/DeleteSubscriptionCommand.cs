@@ -2,19 +2,20 @@ using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.Subscription.Commands;
 
 [UsedImplicitly]
-public class DeleteSubscriptionCommand(ITopazLogger logger) : Command<DeleteSubscriptionCommand.DeleteSubscriptionCommandSettings>
+public class DeleteSubscriptionCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<DeleteSubscriptionCommand.DeleteSubscriptionCommandSettings>
 {
     public override int Execute(CommandContext context, DeleteSubscriptionCommandSettings settings)
     {
         logger.LogInformation("Deleting subscription...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
-        var controlPlane = new SubscriptionControlPlane(new SubscriptionResourceProvider(logger));
+        var controlPlane = new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger));
         controlPlane.Delete(subscriptionIdentifier);
 
         logger.LogInformation("Subscription deleted.");

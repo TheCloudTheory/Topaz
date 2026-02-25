@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Topaz.CloudEnvironment;
 using Topaz.Dns;
+using Topaz.EventPipeline;
 using Topaz.Host.AMQP;
 using Topaz.Service.Authorization;
 using Topaz.Service.Entra;
@@ -29,7 +30,7 @@ using Topaz.Shared;
 
 namespace Topaz.Host;
 
-public class Host(GlobalOptions options, ITopazLogger logger)
+public class Host
 {
     private static bool IsRunningInsideContainer()
     {
@@ -38,15 +39,28 @@ public class Host(GlobalOptions options, ITopazLogger logger)
     }
 
     private static readonly List<Thread> Threads = [];
-
-    private readonly Router _router = new(options, logger);
+    
+    private readonly Pipeline _eventPipeline;
+    private readonly Router _router;
 
     /// <summary>
     /// IP address used by Topaz to listen to incoming requests. Note that address is controlled by the
     /// host itself while ports and protocols are the responsibility of appropriate services.
     /// </summary>
-    private readonly string _topazIpAddress = IsRunningInsideContainer() ? "0.0.0.0" :
-        string.IsNullOrWhiteSpace(options.EmulatorIpAddress) ? "127.0.0.1" : options.EmulatorIpAddress;
+    private readonly string _topazIpAddress;
+
+    private readonly GlobalOptions _options;
+    private readonly ITopazLogger _logger;
+
+    public Host(GlobalOptions options, ITopazLogger logger)
+    {
+        _options = options;
+        _logger = logger;
+        _eventPipeline = new Pipeline(logger);
+        _router = new Router(_eventPipeline, options, logger);
+        _topazIpAddress = IsRunningInsideContainer() ? "0.0.0.0" :
+            string.IsNullOrWhiteSpace(options.EmulatorIpAddress) ? "127.0.0.1" : options.EmulatorIpAddress;
+    }
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
@@ -59,30 +73,30 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         Console.WriteLine("==============================");
         Console.WriteLine("");
         
-        GlobalDnsEntries.ConfigureLogger(logger);
+        GlobalDnsEntries.ConfigureLogger(_logger);
         
         var idFactory = new CorrelationIdFactory();
         var services = new IServiceDefinition[] {
-            new AzureStorageService(logger),
-            new TableStorageService(logger),
-            new ResourceGroupService(logger),
-            new SubscriptionService(logger),
-            new KeyVaultService(logger),
-            new EventHubService(logger),
-            new BlobStorageService(logger),
-            new TopazCloudEnvironmentService(logger),
-            new ServiceBusService(logger),
-            new ResourceManagerService(logger, cancellationToken),
-            new VirtualNetworkService(logger),
-            new ManagedIdentityService(logger),
-            new ResourceAuthorizationService(logger),
-            new ResourceGroupAuthorizationService(logger),
-            new SubscriptionAuthorizationService(logger),
-            new InsightsService(logger),
-            new EntraService(logger)
+            new AzureStorageService(_logger),
+            new TableStorageService(_logger),
+            new ResourceGroupService(_eventPipeline, _logger),
+            new SubscriptionService(_eventPipeline, _logger),
+            new KeyVaultService(_eventPipeline, _logger),
+            new EventHubService(_logger),
+            new BlobStorageService(_logger),
+            new TopazCloudEnvironmentService(_logger),
+            new ServiceBusService(_logger),
+            new ResourceManagerService(_eventPipeline, _logger, cancellationToken),
+            new VirtualNetworkService(_eventPipeline, _logger),
+            new ManagedIdentityService(_eventPipeline, _logger),
+            new ResourceAuthorizationService(_logger),
+            new ResourceGroupAuthorizationService(_logger),
+            new SubscriptionAuthorizationService(_eventPipeline, _logger),
+            new InsightsService(_logger),
+            new EntraService(_logger)
         };
         
-        logger.ConfigureIdFactory(idFactory);
+        _logger.ConfigureIdFactory(idFactory);
         
         Console.WriteLine("Bootstrapping services...");
         foreach (var service in services)
@@ -99,16 +113,16 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                 $"- {service.Name}: {string.Join(", ", service.Endpoints.Select(e => $"{e.PortsAndProtocol.Protocol} -> {string.Join(", ", e.PortsAndProtocol.Ports)}"))}");
         }
 
-        if (options.DefaultSubscription.HasValue)
+        if (_options.DefaultSubscription.HasValue)
         {
             Console.WriteLine();
             Console.WriteLine("Creating a default subscription...");
 
-            var subscriptionControlPlane = new SubscriptionControlPlane(new SubscriptionResourceProvider(logger));
-            var existingSubscriptionOperation = subscriptionControlPlane.Get(SubscriptionIdentifier.From(options.DefaultSubscription.Value));
+            var subscriptionControlPlane = new SubscriptionControlPlane(_eventPipeline, new SubscriptionResourceProvider(_logger));
+            var existingSubscriptionOperation = subscriptionControlPlane.Get(SubscriptionIdentifier.From(_options.DefaultSubscription.Value));
             if (existingSubscriptionOperation.Result == OperationResult.NotFound)
             {
-                subscriptionControlPlane.Create(SubscriptionIdentifier.From(options.DefaultSubscription.Value), "Topaz - Default");
+                subscriptionControlPlane.Create(SubscriptionIdentifier.From(_options.DefaultSubscription.Value), "Topaz - Default");
                 Console.WriteLine("Default subscription created.");
             }
         }
@@ -139,7 +153,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             
             // Also create AMQPS listener with TLS (for MassTransit and other clients that require TLS)
             // Use port+1 for TLS version (e.g., 8889 -> 8890 for TLS)
-            if ((!string.IsNullOrEmpty(options.CertificateFile) && !string.IsNullOrEmpty(options.CertificateKey)) ||
+            if ((!string.IsNullOrEmpty(_options.CertificateFile) && !string.IsNullOrEmpty(_options.CertificateKey)) ||
                 File.Exists("topaz.crt"))
             {
                 CreateAmqpListener(endpoint, useTls: true);
@@ -170,13 +184,13 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         
         listener.RegisterRequestProcessor("$cbs", new CbsProcessor());
         listener.RegisterRequestProcessor("$management", new ManagementProcessor());
-        listener.RegisterLinkProcessor(new LinkProcessor(logger));
+        listener.RegisterLinkProcessor(new LinkProcessor(_logger));
 
         // Frame traces should be enabled only if LogLevel is set to Debug
-        if (logger.LogLevel == LogLevel.Debug)
+        if (_logger.LogLevel == LogLevel.Debug)
         {
             Trace.TraceLevel = TraceLevel.Frame;
-            Trace.TraceListener = (l, f, a) => logger.LogDebug(nameof(Host), nameof(CreateAmqpListener), $"[{address.Scheme}://{address.Host}:{address.Port}]: {string.Format(f, a)}");
+            Trace.TraceListener = (l, f, a) => _logger.LogDebug(nameof(Host), nameof(CreateAmqpListener), $"[{address.Scheme}://{address.Host}:{address.Port}]: {string.Format(f, a)}");
         }
 
         Threads.Add(new Thread(() =>
@@ -186,11 +200,11 @@ public class Host(GlobalOptions options, ITopazLogger logger)
             try
             {
                 listener.Open();
-                logger.LogInformation($"AMQP listener started: {listenerAddress}");
+                _logger.LogInformation($"AMQP listener started: {listenerAddress}");
             }
             catch (Exception ex)
             {
-                logger.LogError($"Failed to open Topaz host listener for AMQP ({listenerAddress}). Error: {ex.Message}.");
+                _logger.LogError($"Failed to open Topaz host listener for AMQP ({listenerAddress}). Error: {ex.Message}.");
             }
         }));
    
@@ -201,15 +215,15 @@ public class Host(GlobalOptions options, ITopazLogger logger)
     {
         foreach (var service in services)
         {
-            logger.LogDebug(nameof(Host), nameof(ExtractEndpointsForProtocols), $"Processing {service.Name} service...");
+            _logger.LogDebug(nameof(Host), nameof(ExtractEndpointsForProtocols), $"Processing {service.Name} service...");
 
             foreach (var endpoint in service.Endpoints)
             {
-                logger.LogDebug(nameof(Host), nameof(ExtractEndpointsForProtocols),$"Processing {service.Name} endpoints...");
+                _logger.LogDebug(nameof(Host), nameof(ExtractEndpointsForProtocols),$"Processing {service.Name} endpoints...");
 
                 if (!protocols.Contains(endpoint.PortsAndProtocol.Protocol)) continue;
                 
-                logger.LogDebug(nameof(Host), nameof(ExtractEndpointsForProtocols),$"Processing endpoint of {service.Name} service.");
+                _logger.LogDebug(nameof(Host), nameof(ExtractEndpointsForProtocols),$"Processing endpoint of {service.Name} service.");
                 httpEndpoints.Add(endpoint);
             }
         }
@@ -230,12 +244,12 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                             {
                                 if (usedPorts.Contains(port))
                                 {
-                                    logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),
+                                    _logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),
                                         "Using port {0} will be skipped as it's already registered.", Guid.Empty, port);
                                     continue;
                                 }
                                 
-                                logger.LogInformation($"Topaz will listen to HTTP requests on: {_topazIpAddress}:{port}");
+                                _logger.LogInformation($"Topaz will listen to HTTP requests on: {_topazIpAddress}:{port}");
                                 hostOptions.Listen(IPAddress.Parse(_topazIpAddress), port);
                                 
                                 usedPorts.Add(port);
@@ -245,33 +259,33 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                         case Protocol.Https:
                             foreach (var port in httpEndpoint.PortsAndProtocol.Ports)
                             {
-                                logger.LogInformation($"Starting HTTPS endpoint: {_topazIpAddress}:{port}");
+                                _logger.LogInformation($"Starting HTTPS endpoint: {_topazIpAddress}:{port}");
                                 
                                 if (usedPorts.Contains(port))
                                 {
-                                    logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),$"Using port {port} will be skipped as it's already registered.");
+                                    _logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),$"Using port {port} will be skipped as it's already registered.");
                                     continue;
                                 }
 
                                 if (!IsRunningInsideContainer() && port == GlobalSettings.AdditionalResourceManagerPort)
                                 {
-                                    logger.LogWarning("Port 443 used by HTTPS endpoint will be skipped as Topaz isn't running inside a container.");
+                                    _logger.LogWarning("Port 443 used by HTTPS endpoint will be skipped as Topaz isn't running inside a container.");
                                     continue;
                                 }
                                 
                                 if (!IsRunningInsideContainer() && port == GlobalSettings.AmqpTlsConnectionPort)
                                 {
-                                    logger.LogWarning($"Port {GlobalSettings.AmqpTlsConnectionPort} used by HTTPS endpoint will be skipped as Topaz isn't running inside a container.");
+                                    _logger.LogWarning($"Port {GlobalSettings.AmqpTlsConnectionPort} used by HTTPS endpoint will be skipped as Topaz isn't running inside a container.");
                                     continue;
                                 }
                             
                                 hostOptions.Listen(IPAddress.Parse(_topazIpAddress), port, listenOptions =>
                                 {
-                                    logger.LogInformation($"Topaz will listen to HTTPS requests on: {_topazIpAddress}:{port}");
+                                    _logger.LogInformation($"Topaz will listen to HTTPS requests on: {_topazIpAddress}:{port}");
                                     
                                     if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                                     {
-                                        logger.LogInformation($"Using the provided PFX certificate for listening to requests on [{port}, {httpEndpoint.PortsAndProtocol.Protocol}].");
+                                        _logger.LogInformation($"Using the provided PFX certificate for listening to requests on [{port}, {httpEndpoint.PortsAndProtocol.Protocol}].");
                                         listenOptions.UseHttps("topaz.pfx", "qwerty");
                                     }
                                     else
@@ -306,7 +320,7 @@ public class Host(GlobalOptions options, ITopazLogger logger)
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-                        logger.LogError(ex);
+                        _logger.LogError(ex);
 
                         await context.Response.WriteAsync(ex.Message, cancellationToken: cancellationToken);
                     }
@@ -322,12 +336,12 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         string certPem;
         string keyPem;
                                     
-        if (!string.IsNullOrEmpty(options.CertificateFile) &&
-            !string.IsNullOrEmpty(options.CertificateKey))
+        if (!string.IsNullOrEmpty(_options.CertificateFile) &&
+            !string.IsNullOrEmpty(_options.CertificateKey))
         {
-            logger.LogInformation("Loading certificate for AMQP TLS from provided files.");
-            certPem = File.ReadAllText(options.CertificateFile);
-            keyPem = File.ReadAllText(options.CertificateKey);
+            _logger.LogInformation("Loading certificate for AMQP TLS from provided files.");
+            certPem = File.ReadAllText(_options.CertificateFile);
+            keyPem = File.ReadAllText(_options.CertificateKey);
         }
         else
         {
@@ -343,13 +357,13 @@ public class Host(GlobalOptions options, ITopazLogger logger)
         string? certPem;
         string? keyPem;
                                     
-        if (!string.IsNullOrEmpty(options.CertificateFile) &&
-            !string.IsNullOrEmpty(options.CertificateKey))
+        if (!string.IsNullOrEmpty(_options.CertificateFile) &&
+            !string.IsNullOrEmpty(_options.CertificateKey))
         {
-            logger.LogInformation("Using provided certificate file instead of the default one.");
+            _logger.LogInformation("Using provided certificate file instead of the default one.");
                                         
-            certPem = File.ReadAllText(options.CertificateFile);
-            keyPem = File.ReadAllText(options.CertificateKey);
+            certPem = File.ReadAllText(_options.CertificateFile);
+            keyPem = File.ReadAllText(_options.CertificateKey);
         }
         else
         {

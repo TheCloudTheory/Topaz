@@ -1,10 +1,11 @@
+using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
 namespace Topaz.Service.ManagedIdentity;
 
-public sealed class ManagedIdentityService(ITopazLogger logger) : IServiceDefinition
+public sealed class ManagedIdentityService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
     public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".managed-identity");
@@ -14,7 +15,7 @@ public sealed class ManagedIdentityService(ITopazLogger logger) : IServiceDefini
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new ManagedIdentityEndpoint(logger)
+        new ManagedIdentityEndpoint(eventPipeline, logger)
     ];
 
     public void Bootstrap()

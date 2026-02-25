@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ServiceBus.Models.Requests;
 using Topaz.Service.Shared;
@@ -11,7 +12,7 @@ using Topaz.Shared;
 namespace Topaz.Service.ServiceBus.Commands;
 
 [UsedImplicitly]
-public class CreateServiceBusQueueCommand(ITopazLogger logger) : Command<CreateServiceBusQueueCommand.CreateServiceBusQueueCommandSettings>
+public class CreateServiceBusQueueCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateServiceBusQueueCommand.CreateServiceBusQueueCommandSettings>
 {
     public override int Execute(CommandContext context, CreateServiceBusQueueCommandSettings settings)
     {
@@ -20,7 +21,7 @@ public class CreateServiceBusQueueCommand(ITopazLogger logger) : Command<CreateS
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(new SubscriptionResourceProvider(logger)), logger);
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
         var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
         if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {
