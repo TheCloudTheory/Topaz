@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Authorization.Domain;
 using Topaz.Service.Shared;
@@ -38,6 +39,7 @@ public class DeleteRoleDefinitionEndpoint(ITopazLogger logger) : IEndpointDefini
                 var operation = _controlPlane.Delete(subscriptionIdentifier, roleDefinitionIdentifier);
                 response.StatusCode = HttpStatusCode.OK;
                 response.Content = new StringContent(operation.Resource!.ToString());
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
                 break;
         }
     }

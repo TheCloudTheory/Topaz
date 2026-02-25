@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.ResourceGroup.Models.Requests;
@@ -45,11 +46,13 @@ public class CreateUpdateResourceGroupEndpoint(ITopazLogger logger) : IEndpointD
             case OperationResult.Failed:
                 response.StatusCode = HttpStatusCode.InternalServerError;
                 response.Content = new StringContent(operation.ToString());
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             
                 return;
             case OperationResult.NotFound:
                 response.StatusCode = HttpStatusCode.NotFound;
                 response.Content = new StringContent(operation.ToString());
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             
                 return;
             case OperationResult.Created:
@@ -59,6 +62,7 @@ public class CreateUpdateResourceGroupEndpoint(ITopazLogger logger) : IEndpointD
             default:
                 response.StatusCode = operation.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
                 response.Content = new StringContent(operation.Resource!.ToString()!);
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
                 break;
         }
     }

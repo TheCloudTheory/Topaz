@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Authorization.Domain;
 using Topaz.Service.Shared;
@@ -13,7 +14,7 @@ public class DeleteRoleAssignmentEndpoint(ITopazLogger logger) : IEndpointDefini
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(logger);
     
     public string[] Endpoints => [
-        "DELETE /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}"
+        "DELETE /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}"
     ];
 
     public string[] Permissions => [];
@@ -38,6 +39,7 @@ public class DeleteRoleAssignmentEndpoint(ITopazLogger logger) : IEndpointDefini
                 var operation = _controlPlane.Delete(subscriptionIdentifier, roleAssignmentName);
                 response.StatusCode = HttpStatusCode.OK;
                 response.Content = new StringContent(operation.Resource!.ToString());
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
                 break;
         }
     }

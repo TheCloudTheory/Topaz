@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Authorization.Domain;
@@ -10,12 +11,13 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Authorization.Endpoints.RoleAssignments;
 
-internal sealed class CreateUpdateRoleDefinitionAssignmentEndpoint(ITopazLogger logger) : IEndpointDefinition
+internal sealed class CreateUpdateRoleAssignmentEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(logger);
     
     public string[] Endpoints => [
-        "PUT /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}"
+        "PUT /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}",
+        "PUT /{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}"
     ];
 
     public string[] Permissions => [];
@@ -24,8 +26,15 @@ internal sealed class CreateUpdateRoleDefinitionAssignmentEndpoint(ITopazLogger 
     {
         using var reader = new StreamReader(context.Request.Body);
 
-        var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
-        var roleAssignmentName = RoleAssignmentName.From(context.Request.Path.Value.ExtractValueFromPath(6));
+        var path = context.Request.Path.Value;
+        var subscriptionIdentifier = path.StartsWith("/subscriptions") ?
+            SubscriptionIdentifier.From(path.ExtractValueFromPath(2))
+            : SubscriptionIdentifier.From(path.ExtractValueFromPath(1));
+        
+        var roleAssignmentName = path.StartsWith("/subscriptions") ? 
+            RoleAssignmentName.From(path.ExtractValueFromPath(6))
+            : RoleAssignmentName.From(path.ExtractValueFromPath(5));
+        
         var content = reader.ReadToEnd();
         var request =
             JsonSerializer.Deserialize<CreateOrUpdateRoleAssignmentRequest>(content, GlobalSettings.JsonOptions);
@@ -47,5 +56,6 @@ internal sealed class CreateUpdateRoleDefinitionAssignmentEndpoint(ITopazLogger 
 
         response.StatusCode = HttpStatusCode.Created;
         response.Content = new StringContent(operation.Resource.ToString());
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
 }

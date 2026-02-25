@@ -20,7 +20,7 @@ public sealed class SubscriptionAuthorizationService(ITopazLogger logger) : ISer
         new ListRoleDefinitionsEndpoint(logger),
         new GetRoleDefinitionEndpoint(logger),
         new DeleteRoleDefinitionEndpoint(logger),
-        new CreateUpdateRoleDefinitionAssignmentEndpoint(logger),
+        new CreateUpdateRoleAssignmentEndpoint(logger),
         new ListRoleAssignmentsEndpoint(logger),
         new GetRoleAssignmentEndpoint(logger),
         new DeleteRoleAssignmentEndpoint(logger),

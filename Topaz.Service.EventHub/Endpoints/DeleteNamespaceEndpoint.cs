@@ -13,7 +13,7 @@ public class DeleteNamespaceEndpoint(ITopazLogger logger) : IEndpointDefinition
     
     public string[] Endpoints =>
     [
-        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
+        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
     ];
 
     public string[] Permissions => [];

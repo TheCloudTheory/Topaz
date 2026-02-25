@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Entra.Domain;
 using Topaz.Service.Entra.Planes;
@@ -37,5 +38,6 @@ public class GetServicePrincipalEndpoint(ITopazLogger logger) : IEndpointDefinit
         
         response.StatusCode = HttpStatusCode.OK;
         response.Content = new StringContent(operation.Resource.ToString());
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
 }

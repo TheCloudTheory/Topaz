@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Authorization.Models.Responses;
 using Topaz.Service.Shared;
@@ -13,7 +14,7 @@ public class ListRoleAssignmentsEndpoint(ITopazLogger logger) : IEndpointDefinit
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(logger);
     
     public string[] Endpoints => [
-        "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions"
+        "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments"
     ];
 
     public string[] Permissions => [];
@@ -23,7 +24,7 @@ public class ListRoleAssignmentsEndpoint(ITopazLogger logger) : IEndpointDefinit
         var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
         
         logger.LogDebug(nameof(ListRoleAssignmentsEndpoint), nameof(GetResponse),
-            "Attempting to list role assignments for subscription ID `{1}`.", subscriptionIdentifier);
+            "Attempting to list role assignments for subscription ID `{0}`.", subscriptionIdentifier);
         
         string? roleName = null;
         if (context.Request.QueryString.TryGetValueForKey("$filter", out var filter))
@@ -46,6 +47,7 @@ public class ListRoleAssignmentsEndpoint(ITopazLogger logger) : IEndpointDefinit
         
         response.Content = new StringContent(result.ToString());
         response.StatusCode = HttpStatusCode.OK;
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
     
     private static string? ExtractRoleNamerFromFilter(string? filter)

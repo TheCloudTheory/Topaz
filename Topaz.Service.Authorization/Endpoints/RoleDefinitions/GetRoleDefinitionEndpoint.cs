@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Authorization.Domain;
 using Topaz.Service.Shared;
@@ -35,5 +36,6 @@ internal sealed class GetRoleDefinitionEndpoint(ITopazLogger logger) : IEndpoint
         
         response.StatusCode = HttpStatusCode.OK;
         response.Content = new StringContent(operation.Resource.ToString());
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
 }

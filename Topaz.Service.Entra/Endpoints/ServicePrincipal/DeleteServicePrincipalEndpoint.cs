@@ -14,7 +14,7 @@ public class DeleteServicePrincipalEndpoint(ITopazLogger logger) : IEndpointDefi
     
     public string[] Endpoints =>
     [
-        "POST /servicePrincipals",
+        "DELETE /servicePrincipals/{servicePrincipalId}",
     ];
 
     public string[] Permissions => [];

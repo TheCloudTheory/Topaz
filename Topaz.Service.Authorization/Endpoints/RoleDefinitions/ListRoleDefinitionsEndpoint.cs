@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Authorization.Models.Responses;
 using Topaz.Service.Shared;
@@ -26,7 +27,7 @@ public class ListRoleDefinitionsEndpoint(ITopazLogger logger) : IEndpointDefinit
             : SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(1));
         
         logger.LogDebug(nameof(ListRoleDefinitionsEndpoint), nameof(GetResponse),
-            "Attempting to list role definitions for subscription ID `{1}` and query `{2}`.",
+            "Attempting to list role definitions for subscription ID `{0}` and query `{1}`.",
              subscriptionIdentifier, context.Request.QueryString);
 
         string? roleName = null;
@@ -50,6 +51,7 @@ public class ListRoleDefinitionsEndpoint(ITopazLogger logger) : IEndpointDefinit
         
         response.Content = new StringContent(result.ToString());
         response.StatusCode = HttpStatusCode.OK;
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
     
     private static string? ExtractRoleNamerFromFilter(string? filter)

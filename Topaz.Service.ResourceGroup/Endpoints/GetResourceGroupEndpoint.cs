@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -34,5 +35,6 @@ public class GetResourceGroupEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         response.StatusCode = HttpStatusCode.OK;
         response.Content = new StringContent(operation.Resource.ToString());
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
 }

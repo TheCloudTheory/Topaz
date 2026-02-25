@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Authorization.Domain;
 using Topaz.Service.Shared;
@@ -13,7 +14,7 @@ internal sealed class GetRoleAssignmentEndpoint(ITopazLogger logger) : IEndpoint
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(logger);
     
     public string[] Endpoints => [
-        "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}"
+        "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}"
     ];
 
     public string[] Permissions => [];
@@ -32,5 +33,6 @@ internal sealed class GetRoleAssignmentEndpoint(ITopazLogger logger) : IEndpoint
         
         response.StatusCode = HttpStatusCode.OK;
         response.Content = new StringContent(operation.Resource.ToString());
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
 }

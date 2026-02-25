@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Entra.Models.Requests;
@@ -48,5 +49,6 @@ public class CreateUserEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         response.StatusCode = HttpStatusCode.Created;
         response.Content = new StringContent(operation.Resource.ToString());
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
 }

@@ -19,7 +19,8 @@ public class EventHubService(ITopazLogger logger) : IServiceDefinition
         new EventHubAmqpEndpoint(),
         new GetNamespaceEndpoint(logger),
         new CreateUpdateHubEndpoint(logger),
-        new CreateUpdateNamespaceEndpoint(logger)
+        new CreateUpdateNamespaceEndpoint(logger),
+        new DeleteNamespaceEndpoint(logger)
     ];
 
     public void Bootstrap()
