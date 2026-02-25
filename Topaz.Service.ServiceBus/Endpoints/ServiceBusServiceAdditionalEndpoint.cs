@@ -28,14 +28,13 @@ public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : I
         "PUT /{entity}/{messageType}/Subscriptions/{subscription}"
     ];
 
+    public string[] Permissions => [];
+
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.AmqpTlsConnectionPort, GlobalSettings.AdditionalServiceBusPort], Protocol.Https);
 
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query,
-        GlobalOptions options)
+    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var response = new HttpResponseMessage();
-
         try
         {
             logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Handling a request via an additional resource endpoint.");
@@ -43,7 +42,7 @@ public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : I
             // SDK of any kind is expected to send a Host header with the following structure:
             // [namespace].servicebus.topaz.local.dev:[port]
             // so we just fetch the name of the namespace from it.
-            var namespaceIdentifierFromHeader = headers["Host"].ToString().Split(".")[0];
+            var namespaceIdentifierFromHeader = context.Request.Headers["Host"].ToString().Split(".")[0];
             var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(namespaceIdentifierFromHeader);
             
             logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Handling a request for `{0}` namespace.", namespaceIdentifier);
@@ -52,19 +51,21 @@ public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : I
             // what kind of entity they are sent for. As the SDK sends a request for an entity,
             // we will make the assumption that if an entity exists, such a type of the entity
             // should be handled.
-            var entityName = path.Contains("/Subscriptions") ? GetSubscriptionNameFromPath(path) : path.ExtractValueFromPath(1);
+            var entityName = context.Request.Path.Value.Contains("/Subscriptions")
+                ? GetSubscriptionNameFromPath(context.Request.Path.Value)
+                : context.Request.Path.Value.ExtractValueFromPath(1);
             var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
             if (identifiersOperation.result == OperationResult.NotFound)
             {
                 logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleCreateOrUpdateSubscriptionRequest), "No identifier found for {0}/{1}.", namespaceIdentifier, entityName);
             
                 response.StatusCode = HttpStatusCode.NotFound;
-                return response;
+                return;
             }
             
             // We will read the content early from the request as the payload will help us
             // understand what kind of entity is going to be handled.
-            using var reader = new StreamReader(input);
+            using var reader = new StreamReader(context.Request.Body);
             var content = reader.ReadToEnd();
         
             logger.LogDebug(nameof(ServiceBusServiceAdditionalEndpoint), nameof(GetResponse), "Received payload: {0}", content);
@@ -74,14 +75,14 @@ public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : I
             switch (entityType)
             {
                 case ServiceBusEntityType.Topic:
-                    HandleTopicRequests(path, method, content, response, namespaceIdentifier);
-                    return response;
+                    HandleTopicRequests(context.Request.Path.Value, context.Request.Method, content, response, namespaceIdentifier);
+                    return;
                 case ServiceBusEntityType.Subscription:
-                    HandleSubscriptionRequest(path, method, content, response, namespaceIdentifier);
-                    return response;
+                    HandleSubscriptionRequest(context.Request.Path.Value, context.Request.Method, content, response, namespaceIdentifier);
+                    return;
                 case ServiceBusEntityType.Queue:
-                    HandleQueueRequests(path, method, content, response, namespaceIdentifier);
-                    return response;
+                    HandleQueueRequests(context.Request.Path.Value, context.Request.Method, content, response, namespaceIdentifier);
+                    return;
                 default:
                     response.StatusCode = HttpStatusCode.NotFound;
                     break;
@@ -92,8 +93,6 @@ public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : I
             logger.LogError(ex);
             response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode, ex.Message);
         }
-        
-        return response;
     }
 
     private static string? GetSubscriptionNameFromPath(string path)

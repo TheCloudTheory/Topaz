@@ -1,5 +1,6 @@
 ﻿using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
+using Topaz.Service.VirtualNetwork.Endpoints;
 using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork;
@@ -15,7 +16,8 @@ public sealed class VirtualNetworkService(ITopazLogger logger) : IServiceDefinit
     public string Name => "Virtual Network";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new VirtualNetworkServiceEndpoint(logger)
+        new CreateUpdateVirtualNetworkEndpoint(logger),
+        new GetVirtualNetworkEndpoint(logger)
     ];
 
     public void Bootstrap()

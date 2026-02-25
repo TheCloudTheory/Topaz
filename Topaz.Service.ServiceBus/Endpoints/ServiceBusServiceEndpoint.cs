@@ -23,26 +23,24 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/topics/{topicName}",
     ];
 
+    public string[] Permissions => [];
+
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => (
     [
         GlobalSettings.DefaultResourceManagerPort, GlobalSettings.AdditionalResourceManagerPort
     ], Protocol.Https);
 
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
-        QueryString query,
-        GlobalOptions options)
+    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var response = new HttpResponseMessage();
-
         try
         {
             logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Handling request via an standard resource endpoint.");
             
-            var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
-            var resourceGroupIdentifier = ResourceGroupIdentifier.From(path.ExtractValueFromPath(4));
-            var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(path.ExtractValueFromPath(8));
-            var queueOrTopicName = path.ExtractValueFromPath(10);
-            var isQueueRequest = path.Contains("/queues");
+            var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+            var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
+            var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(8));
+            var queueOrTopicName = context.Request.Path.Value.ExtractValueFromPath(10);
+            var isQueueRequest = context.Request.Path.Value.Contains("/queues");
 
             if (!string.IsNullOrWhiteSpace(queueOrTopicName))
             {
@@ -50,10 +48,11 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
                 {
                     logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Request considered to be a queue request.");
                     
-                    switch (method)
+                    switch (context.Request.Method)
                     {
                         case "PUT":
-                            HandleCreateOrUpdateQueueRequest(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueOrTopicName, input);
+                            HandleCreateOrUpdateQueueRequest(response, subscriptionIdentifier, resourceGroupIdentifier,
+                                namespaceIdentifier, queueOrTopicName, context.Request.Body);
                             break;
                         case "GET":
                             HandleGetQueueRequest(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueOrTopicName);
@@ -67,10 +66,11 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
                 {
                     logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Request considered to be a topic request.");
                     
-                    switch (method)
+                    switch (context.Request.Method)
                     {
                         case "PUT":
-                            HandleCreateOrUpdateTopicRequest(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueOrTopicName, input);
+                            HandleCreateOrUpdateTopicRequest(response, subscriptionIdentifier, resourceGroupIdentifier,
+                                namespaceIdentifier, queueOrTopicName, context.Request.Body);
                             break;
                         case "GET":
                             HandleGetTopicRequest(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueOrTopicName);
@@ -85,10 +85,10 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
             {
                 logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(GetResponse), "Request considered to be a namespace request.");
                 
-                switch (method)
+                switch (context.Request.Method)
                 {
                     case "PUT":
-                        HandleCreateOrUpdateNamespace(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, input);
+                        HandleCreateOrUpdateNamespace(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, context.Request.Body);
                         break;
                     case "GET":
                         HandleGetNamespace(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
@@ -104,8 +104,6 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
             logger.LogError(ex);
             response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode, ex.Message);
         }
-
-        return response;
     }
 
     private void HandleCreateOrUpdateTopicRequest(HttpResponseMessage response,

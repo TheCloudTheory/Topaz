@@ -7,12 +7,12 @@ namespace Topaz.Service.ServiceBus.Endpoints;
 public sealed class ServiceBusEndpoint : IEndpointDefinition
 {
     public string[] Endpoints => [];
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultServiceBusAmqpPort], Protocol.Amqp);
+    public string[] Permissions => [];
 
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
-        QueryString query,
-        GlobalOptions options)
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultServiceBusAmqpPort], Protocol.Amqp);
+
+    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        throw new NotImplementedException();
     }
 }

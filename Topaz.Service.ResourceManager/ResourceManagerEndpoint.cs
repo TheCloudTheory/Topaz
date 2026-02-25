@@ -31,20 +31,17 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploym
         "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}/validate"
     ];
 
+    public string[] Permissions => [];
+
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
-
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
-        QueryString query,
-        GlobalOptions options)
+    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var response = new HttpResponseMessage();
-
         try
         {
-            var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
-            var resourceGroupIdentifier = ResourceGroupIdentifier.From(path.ExtractValueFromPath(4));
-            var deploymentName = path.ExtractValueFromPath(8);
-            var segments = path.Split('/');
+            var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+            var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
+            var deploymentName = context.Request.Path.Value.ExtractValueFromPath(8);
+            var segments = context.Request.Path.Value.Split('/');
             
             var subscriptionOperation = _subscriptionControlPlane.Get(subscriptionIdentifier);
             if (subscriptionOperation.Result == OperationResult.NotFound)
@@ -52,7 +49,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploym
                 response.StatusCode =  HttpStatusCode.NotFound;
                 response.Content = new StringContent(subscriptionOperation.ToString());
                 
-                return response;
+                return;
             }
 
             var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
@@ -61,21 +58,21 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploym
                 response.StatusCode = HttpStatusCode.NotFound;
                 response.Content = new StringContent(subscriptionOperation.ToString());
                 
-                return response;
+                return;
             }
 
-            switch (method)
+            switch (context.Request.Method)
             {
                 case "PUT":
                     if (!string.IsNullOrWhiteSpace(deploymentName))
                     {
-                        HandleCreateOrUpdateDeployment(response, subscriptionIdentifier, resourceGroupOperation.Resource!, deploymentName, input);
+                        HandleCreateOrUpdateDeployment(response, subscriptionIdentifier, resourceGroupOperation.Resource!, deploymentName, context.Request.Body);
                     }
                     break;
                 case "GET":
                     if (segments.Length == 5)
                     {
-                        var providerName = path.ExtractValueFromPath(4);
+                        var providerName = context.Request.Path.Value.ExtractValueFromPath(4);
                         HandleGetResourceProviderData(response, subscriptionIdentifier, providerName!);
                         break;
                     }
@@ -99,7 +96,7 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploym
                     if (!string.IsNullOrWhiteSpace(deploymentName))
                     {
                         HandleValidateDeployment(response, subscriptionIdentifier, resourceGroupIdentifier,
-                            deploymentName, input);
+                            deploymentName, context.Request.Body);
                     }
                     break;
                 default:
@@ -113,8 +110,6 @@ public sealed class ResourceManagerEndpoint(ITopazLogger logger, TemplateDeploym
             
             response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode, ex.Message);
         }
-        
-        return response;
     }
 
     private static bool CanHandleRequestBasedOnAvailableData(string[] segments, ControlPlaneOperationResult<ResourceGroupResource> resourceGroupOperation)
