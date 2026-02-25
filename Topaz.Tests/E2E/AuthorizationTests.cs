@@ -306,8 +306,11 @@ public class AuthorizationTests
                 results.Add(rd);
             }
 
-            Assert.That(results.Any(r => string.Equals(r.Data.RoleName, roleName, StringComparison.OrdinalIgnoreCase)), Is.True, "Expected at least one result matching the filter");
-            Assert.That(results.All(r => string.Equals(r.Data.RoleName, roleName, StringComparison.OrdinalIgnoreCase)), Is.True, "Found role definitions that do not match the filter");
+            Assert.Multiple(() =>
+            {
+                Assert.That(results.Any(r => string.Equals(r.Data.RoleName, roleName, StringComparison.OrdinalIgnoreCase)), Is.True, "Expected at least one result matching the filter");
+                Assert.That(results.All(r => string.Equals(r.Data.RoleName, roleName, StringComparison.OrdinalIgnoreCase)), Is.True, "Found role definitions that do not match the filter");
+            });
         }
         finally
         {
