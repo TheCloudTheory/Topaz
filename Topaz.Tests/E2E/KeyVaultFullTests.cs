@@ -80,7 +80,7 @@ public class KeyVaultFullTests
     public void KeyVaultTests_WhenKeyVaultIsCreatedViaSDKAndSecretsAreCreated_TheyShouldBeAvailable()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup("test");

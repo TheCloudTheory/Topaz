@@ -93,7 +93,7 @@ public class EventServiceHubTests
     {
         // Arrange
         const string namespaceName = "eh-ns-test";
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
@@ -119,7 +119,7 @@ public class EventServiceHubTests
     {
         // Arrange
         const string namespaceName = "eh-ns-update-test";
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
@@ -152,7 +152,7 @@ public class EventServiceHubTests
     public async Task EventHubTests_WhenNewHubIsRequested_ItShouldBeCreated()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
@@ -177,7 +177,7 @@ public class EventServiceHubTests
         const string deploymentName = "deployment-vnet";
             
         var subscriptionId = Guid.NewGuid();
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
         using var topaz = new TopazArmClient();
         await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);

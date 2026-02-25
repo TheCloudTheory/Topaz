@@ -64,7 +64,7 @@ public class VirtualNetworkTests
     public async Task VirtualNetworkTests_WhenVirtualNetworkIsCreatedUsingSDK_ItShouldBeAvailable()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
@@ -111,7 +111,7 @@ public class VirtualNetworkTests
         const string deploymentName = "deployment-vnet";
             
         var subscriptionId = Guid.NewGuid();
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
         using var topaz = new TopazArmClient();
         await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);

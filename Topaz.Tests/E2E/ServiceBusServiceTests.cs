@@ -77,7 +77,7 @@ public class ServiceBusServiceTests
     public async Task ServiceBusServiceTests_WhenNamespaceIsCreatedUsingSDK_ItShouldBeAvailable()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
@@ -98,7 +98,7 @@ public class ServiceBusServiceTests
     public async Task ServiceBusServiceTests_WhenQueueIsCreatedUsingSDK_ItShouldBeAvailable()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
@@ -121,7 +121,7 @@ public class ServiceBusServiceTests
     public async Task ServiceBusServiceTests_WhenTopicIsCreatedUsingSDK_ItShouldBeAvailable()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);

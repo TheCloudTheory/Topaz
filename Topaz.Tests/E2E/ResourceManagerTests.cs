@@ -20,7 +20,7 @@ public class ResourceManagerTests
         // Arrange
         const string subscriptionName = "test-sub";
         var subscriptionId = Guid.NewGuid();
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
         using var topaz = new TopazArmClient();
         
@@ -46,7 +46,7 @@ public class ResourceManagerTests
         const string deploymentName = "deployment";
         
         var subscriptionId = Guid.NewGuid();
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
         using var topaz = new TopazArmClient();
         await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
@@ -78,7 +78,7 @@ public class ResourceManagerTests
         const string deploymentName = "deployment-to-delete";
         
         var subscriptionId = Guid.NewGuid();
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
         using var topaz = new TopazArmClient();
         await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
@@ -111,7 +111,7 @@ public class ResourceManagerTests
         const string deploymentName = "deployment-keyvault";
             
         var subscriptionId = Guid.NewGuid();
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
         using var topaz = new TopazArmClient();
         await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
@@ -149,7 +149,7 @@ public class ResourceManagerTests
         const string deploymentName = "deployment-parameters";
             
         var subscriptionId = Guid.NewGuid();
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
         using var topaz = new TopazArmClient();
         await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);

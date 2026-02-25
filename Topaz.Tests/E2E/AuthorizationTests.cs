@@ -62,7 +62,7 @@ public class AuthorizationTests
     [Test]
     public async Task RoleDefinition_CreateUpdateDelete_EmulatedCorrectly()
     {
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var roleDefinitions = subscription.GetAuthorizationRoleDefinitions();
@@ -99,7 +99,7 @@ public class AuthorizationTests
     [Test]
     public async Task RoleAssignment_CreateAndDelete_EmulatedCorrectly()
     {
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var roleDefinitions = subscription.GetAuthorizationRoleDefinitions();
@@ -130,7 +130,7 @@ public class AuthorizationTests
     [Test]
     public async Task RoleAssignment_List_IsEnumerableAndContainsCreatedAssignment()
     {
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
 
@@ -177,7 +177,7 @@ public class AuthorizationTests
     [Test]
     public async Task RoleAssignment_CreateWithSubscriptionScope_SetsScopeToSubscription()
     {
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
 
@@ -217,7 +217,7 @@ public class AuthorizationTests
     [Test]
     public async Task RoleDefinition_List_IsEnumerableAndWellFormed()
     {
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var roleDefinitions = subscription.GetAuthorizationRoleDefinitions();
@@ -258,7 +258,7 @@ public class AuthorizationTests
     [Test]
     public async Task RoleDefinition_List_IncludesBuiltInRole()
     {
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var roleDefinitions = subscription.GetAuthorizationRoleDefinitions();
@@ -279,7 +279,7 @@ public class AuthorizationTests
     [Test]
     public async Task RoleDefinition_List_FilterFindsSpecificRole()
     {
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var roleDefinitions = subscription.GetAuthorizationRoleDefinitions();

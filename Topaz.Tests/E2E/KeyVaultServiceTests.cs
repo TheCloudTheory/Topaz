@@ -64,7 +64,7 @@ public class KeyVaultServiceTests
     public void KeyVaultTests_WhenKeyVaultIsCreatedUsingSDK_ItShouldBeAvailable()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
@@ -93,7 +93,7 @@ public class KeyVaultServiceTests
     public void KeyVaultTests_WhenKeyVaultIsDeletedUsingSDK_ItShouldNotBeAvailable()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
@@ -115,7 +115,7 @@ public class KeyVaultServiceTests
     public void KeyVaultTests_WhenKeyVaultIsUpdatedUsingSDK_TheProvidedPropertiesShouldBeUpdated()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
@@ -158,7 +158,7 @@ public class KeyVaultServiceTests
     public void KeyVaultTests_WhenKeyVaultIsDeletedAndThenRecovered_ItShouldBeAvailable()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);

@@ -83,7 +83,7 @@ public class KeyVaultTests
     public void KeyVaultTests_WhenSecretIsCreated_ItShouldBePossibleToFetch()
     {
         // Arrange
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions
         {
             DisableChallengeResourceVerification = true
@@ -106,7 +106,7 @@ public class KeyVaultTests
     public void KeyVaultTests_WhenSecretIsNotCreated_ItShouldNotBePossibleToFetch()
     {
         // Arrange
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions()
         {
             DisableChallengeResourceVerification = true
@@ -120,7 +120,7 @@ public class KeyVaultTests
     public void KeyVaultTests_WhenSecretIsCreatedTwice_ItShouldHaveTwoVersions()
     {
         // Arrange
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions()
         {
             DisableChallengeResourceVerification = true
@@ -147,7 +147,7 @@ public class KeyVaultTests
     public void KeyVaultTests_WhenListOfSecretsIsRequested_TheyMustBeReturned()
     {
         // Arrange
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions()
         {
             DisableChallengeResourceVerification = true
@@ -176,7 +176,7 @@ public class KeyVaultTests
     public void KeyVaultTests_SecretIsRemoved_ThenItShouldNoLongerBeAvailable()
     {
         // Arrange
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions()
         {
             DisableChallengeResourceVerification = true

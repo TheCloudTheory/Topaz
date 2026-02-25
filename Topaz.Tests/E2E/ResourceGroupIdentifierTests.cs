@@ -51,7 +51,7 @@ public class ResourceGroupIdentifierTests
     public void ResourceGroupTests_WhenNewResourceGroupIsCreated_ItShouldReturnBeAvailable()
     {
         // Arrange 
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroups = subscription.GetResourceGroups();
@@ -72,7 +72,7 @@ public class ResourceGroupIdentifierTests
     public void ResourceGroupTests_WhenResourceGroupIsCheckedForExistence_ItShouldReturnCorrectResult()
     {
         // Arrange 
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroups = subscription.GetResourceGroups();
@@ -91,7 +91,7 @@ public class ResourceGroupIdentifierTests
     {
         // Arrange
         var names = new [] { "rg1", "rg2", "rg3" };
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroups = subscription.GetResourceGroups();

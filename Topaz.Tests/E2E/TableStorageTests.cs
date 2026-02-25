@@ -87,7 +87,7 @@ namespace Topaz.Tests.E2E
                 SubscriptionId.ToString()
             ]);
         
-            var credential = new AzureLocalCredential();
+            var credential = new AzureLocalCredential(Globals.GlobalAdminId);
             var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
             var subscription = await armClient.GetDefaultSubscriptionAsync();
             var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);

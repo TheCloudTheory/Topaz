@@ -64,7 +64,7 @@ public class ManagedIdentityTests
     public void ManagedIdentityTests_WhenIdentityIsCreatedUsingSDK_ItShouldBeAvailable()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
@@ -93,7 +93,7 @@ public class ManagedIdentityTests
     public void ManagedIdentityTests_WhenIdentityIsDeletedUsingSDK_ItShouldNotBeAvailable()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
@@ -114,7 +114,7 @@ public class ManagedIdentityTests
     public void ManagedIdentityTests_WhenIdentityIsCreatedWithTags_TheTagsShouldBePersisted()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
@@ -151,7 +151,7 @@ public class ManagedIdentityTests
     public void ManagedIdentityTests_WhenIdentityIsUpdated_ThePropertiesShouldBeUpdated()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
@@ -195,7 +195,7 @@ public class ManagedIdentityTests
     public void ManagedIdentityTests_WhenListingIdentitiesInResourceGroup_AllIdentitiesShouldBeReturned()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
@@ -228,7 +228,7 @@ public class ManagedIdentityTests
     public void ManagedIdentityTests_WhenListingIdentitiesBySubscription_AllIdentitiesShouldBeReturned()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
@@ -258,7 +258,7 @@ public class ManagedIdentityTests
     public void ManagedIdentityTests_WhenIdentityHasGeneratedProperties_TheyShouldBeUnique()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = armClient.GetDefaultSubscription();
         var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
@@ -285,7 +285,7 @@ public class ManagedIdentityTests
     public async Task ManagedIdentityTests_WhenIdentityIsCreatedUsingSDK_ServicePrincipalShouldAlsoExist()
     {
         // Arrange
-        var credential = new AzureLocalCredential();
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);

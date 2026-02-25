@@ -64,7 +64,7 @@ public class ScenariosTests
     public async Task ScenariosTests_WhenKeyVaultAndManagedIdentityAreCreatedUsingSDK_AndIdentityHasNoSubscriptionRole_ThenIdentityCannotDoControlPlaneOpsOnKeyVault()
     {
         // Arrange (create resources as an "admin" caller)
-        var adminCredential = new AzureLocalCredential();
+        var adminCredential = new AzureLocalCredential(Globals.GlobalAdminId);
         var adminArmClient = new ArmClient(adminCredential, SubscriptionId.ToString(), ArmClientOptions);
 
         var subscription = await adminArmClient.GetDefaultSubscriptionAsync();

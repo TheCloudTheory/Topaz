@@ -31,7 +31,7 @@ public class SubscriptionTests
             "sub-test"
         ]);
 
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, Guid.Empty.ToString(), ArmClientOptions);
         
         // Act

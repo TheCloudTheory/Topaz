@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using Topaz.Service.Authorization;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -9,6 +10,8 @@ namespace Topaz.Host;
 
 internal sealed class Router(GlobalOptions options, ITopazLogger logger)
 {
+    private readonly AzureAuthorizationAdapter _authorizationAdapter = new();
+    
     internal async Task MatchAndExecuteEndpoint(IEndpointDefinition[] httpEndpoints, HttpContext context)
     {
         var path = context.Request.Path.ToString();
@@ -121,6 +124,14 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
         
         try
         {
+            var isAuthorized = _authorizationAdapter.IsAuthorized(endpoint.Permissions,
+                context.Request.Headers["Authorization"].ToString());
+            if (!isAuthorized)
+            {
+                response.StatusCode = HttpStatusCode.Unauthorized;
+                return response;
+            }
+            
             endpoint.GetResponse(context, response, options);
         }
         catch(Exception ex)
