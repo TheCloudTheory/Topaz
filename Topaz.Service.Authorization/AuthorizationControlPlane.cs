@@ -211,4 +211,14 @@ internal sealed class AuthorizationControlPlane(
         
         return new ControlPlaneOperationResult<RoleAssignmentResource[]>(OperationResult.Success, filteredResources.ToArray(), null, null);
     }
+    
+    public ControlPlaneOperationResult<RoleAssignmentResource[]> ListSubscriptionRoleAssignmentsByEntraObject(SubscriptionIdentifier subscriptionIdentifier, string objectId)
+    {
+        var resources =
+            subscriptionAuthorizationProvider.ListAs<RoleAssignmentResource>(subscriptionIdentifier, null, null, 6);
+        var filteredResources = resources.Where(resource =>
+            resource.IsInSubscription(subscriptionIdentifier) && resource.Properties.PrincipalId == objectId);
+        
+        return new ControlPlaneOperationResult<RoleAssignmentResource[]>(OperationResult.Success, filteredResources.ToArray(), null, null);
+    }
 }

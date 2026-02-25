@@ -10,7 +10,7 @@ namespace Topaz.Host;
 
 internal sealed class Router(GlobalOptions options, ITopazLogger logger)
 {
-    private readonly AzureAuthorizationAdapter _authorizationAdapter = new();
+    private readonly AzureAuthorizationAdapter _authorizationAdapter = new(logger);
     
     internal async Task MatchAndExecuteEndpoint(IEndpointDefinition[] httpEndpoints, HttpContext context)
     {
@@ -125,7 +125,7 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
         try
         {
             var isAuthorized = _authorizationAdapter.IsAuthorized(endpoint.Permissions,
-                context.Request.Headers["Authorization"].ToString());
+                context.Request.Headers["Authorization"].ToString(), context.Request.Path.Value);
             if (!isAuthorized)
             {
                 response.StatusCode = HttpStatusCode.Unauthorized;

@@ -26,4 +26,39 @@ public static class JwtHelper
         var tokenString = tokenHandler.WriteToken(token);
         return tokenString;
     }
+    
+    public static JwtSecurityToken? ValidateJwt(string jwt)
+    {
+        jwt = NormalizeBearerToken(jwt);
+        
+        var tokenHandler = new JwtSecurityTokenHandler();
+
+        tokenHandler.ValidateToken(jwt, new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(SecretKey),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero
+        }, out var validatedToken);
+
+        return (JwtSecurityToken)validatedToken;
+    }
+    
+    private static string NormalizeBearerToken(string? token)
+    {
+        token = token?.Trim();
+
+        if (string.IsNullOrWhiteSpace(token))
+            return string.Empty;
+
+        const string bearerPrefix = "Bearer ";
+        if (token.StartsWith(bearerPrefix, StringComparison.OrdinalIgnoreCase))
+            token = token[bearerPrefix.Length..].Trim();
+
+        // Common copy/paste / serialization artifacts
+        token = token.Trim().Trim('"');
+
+        return token;
+    }
 }
