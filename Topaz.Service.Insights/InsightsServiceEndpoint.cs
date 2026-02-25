@@ -9,15 +9,18 @@ namespace Topaz.Service.Insights;
 
 internal sealed class InsightsServiceEndpoint : IEndpointDefinition
 {
-    public string[] Endpoints => [
+    public string[] Endpoints =>
+    [
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Insights/eventtypes/management/values"
     ];
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers, QueryString query,
-        GlobalOptions options)
+    public string[] Permissions => [];
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+
+    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var response = new HttpResponseMessage();
         var result = new
         {
             value = Array.Empty<object>()
@@ -26,7 +29,5 @@ internal sealed class InsightsServiceEndpoint : IEndpointDefinition
         response.StatusCode = HttpStatusCode.OK;
         response.Content = new StringContent(JsonSerializer.Serialize(result, GlobalSettings.JsonOptions));
         response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-        
-        return response;
     }
 }

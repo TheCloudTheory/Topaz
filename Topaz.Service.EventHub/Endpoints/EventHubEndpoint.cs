@@ -6,12 +6,10 @@ namespace Topaz.Service.EventHub.Endpoints;
 
 public sealed class EventHubEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly ITopazLogger _topazLogger = logger;
     public string[] Endpoints => ["/{eventHubPath}/messages"];
+    public string[] Permissions => [];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultEventHubPort], Protocol.Http);
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
-        QueryString query, GlobalOptions options)
+    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        throw new NotImplementedException();
     }
 }

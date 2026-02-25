@@ -7,10 +7,9 @@ namespace Topaz.Service.EventHub.Endpoints;
 public sealed class EventHubAmqpEndpoint : IEndpointDefinition
 {
     public string[] Endpoints => [];
+    public string[] Permissions => [];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultEventHubAmqpPort], Protocol.Amqp);
-    public HttpResponseMessage GetResponse(string path, string method, Stream input, IHeaderDictionary headers,
-        QueryString query, GlobalOptions options)
+    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        throw new NotImplementedException();
     }
 }
