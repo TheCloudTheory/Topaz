@@ -1,5 +1,7 @@
 ﻿using Topaz.Service.Entra.Endpoints.ServicePrincipal;
 using Topaz.Service.Entra.Endpoints.User;
+using Topaz.Service.Entra.Models.Requests;
+using Topaz.Service.Entra.Planes;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -40,6 +42,28 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
         CreateServiceDirectory(userDataPath);
         CreateServiceDirectory(servicePrincipalPath);
         CreateServiceDirectory(servicePrincipalDataPath);
+        
+        logger.LogDebug(nameof(EntraService), nameof(Bootstrap),$"Entra service directory directory initialized.");
+        
+        CreateSuperAdminUser();
+    }
+
+    private void CreateSuperAdminUser()
+    {
+        logger.LogDebug(nameof(EntraService), nameof(CreateSuperAdminUser),$"Creating super admin user.");
+        
+        var dataPlane = UserDataPlane.New(logger);
+        _ = dataPlane.CreateSuperadmin(new CreateUserRequest
+        {
+            DisplayName = "Topaz Admin",
+            MailNickname = "topazadmin",
+            UserPrincipalName = "topazadmin@topaz.local",
+            PasswordProfile = new CreateUserRequest.PasswordProfileData
+            {
+                ForceChangePasswordNextSignIn = true,
+                Password = "admin"
+            }
+        });
     }
 
     private void CreateServiceDirectory(string servicePath)

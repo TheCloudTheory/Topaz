@@ -47,6 +47,12 @@ public sealed class PrettyTopazLogger : ITopazLogger
         Log(message, LogLevel.Error, GetCorrelationId());
     }
 
+    public void LogError(string className, string methodName, string template, params object?[] parameters)
+    {
+        var message = $"[{className}.{methodName}]: {string.Format(template, parameters)}";
+        Log(message, LogLevel.Error, GetCorrelationId());
+    }
+
     public void LogWarning(string message)
     {
         Log(message, LogLevel.Warning, GetCorrelationId());

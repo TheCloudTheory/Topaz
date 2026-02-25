@@ -26,11 +26,11 @@ internal sealed class User : DirectoryObject
     public string? CompanyName { get; set; }
     public string? EmployeeId { get; set; }
     
-    public static User FromRequest(CreateUserRequest request)
+    public static User FromRequest(CreateUserRequest request, Guid? id = null)
     {
         return new User
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = id.HasValue ? id.Value.ToString() : Guid.NewGuid().ToString(),
             BusinessPhones = request.BusinessPhones ?? [],
             DisplayName = request.DisplayName,
             GivenName = request.GivenName,

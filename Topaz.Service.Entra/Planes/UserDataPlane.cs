@@ -9,6 +9,26 @@ namespace Topaz.Service.Entra.Planes;
 
 internal sealed class UserDataPlane(EntraResourceProvider provider, ITopazLogger logger)
 {
+    public static UserDataPlane New(ITopazLogger logger) => new(new EntraResourceProvider(logger), logger);
+
+    public DataPlaneOperationResult<User> CreateSuperadmin(CreateUserRequest request)
+    {
+        logger.LogDebug(nameof(UserDataPlane), nameof(Create), "Creating a superadmin user `{0}`.", request.UserPrincipalName);
+        
+        var entityPath = BuildLocalUserEntityPath(UserIdentifier.From(request.UserPrincipalName));
+
+        if (File.Exists(entityPath))
+        {
+            logger.LogDebug(nameof(UserDataPlane), nameof(Create), "Superadmin user `{0}` already exists.", request.UserPrincipalName);
+            return new DataPlaneOperationResult<User>(OperationResult.Success, null, null, null);;
+        }
+
+        var user = User.FromRequest(request, Guid.Empty);
+        File.WriteAllText(entityPath, user.ToString());
+        
+        return new DataPlaneOperationResult<User>(OperationResult.Created, user, null, null);
+    }
+    
     public DataPlaneOperationResult<User> Create(CreateUserRequest request)
     {
         logger.LogDebug(nameof(UserDataPlane), nameof(Create), "Creating a user `{0}`.", request.UserPrincipalName);

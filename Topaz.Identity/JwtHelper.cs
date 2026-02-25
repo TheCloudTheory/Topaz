@@ -6,12 +6,12 @@ namespace Topaz.Identity;
 
 public static class JwtHelper
 {
-    private static readonly byte[] SecretKey = "azurelocal"u8.ToArray();
+    private static readonly byte[] SecretKey =
+        "yD1sMV1WcwVjSfNUxxLNfVHn5sbqD056LwOnkXCkIDnWkXcrg95plLQ3T1tvinLAnuNNiRRZrKyUvs6YzZnJ/A=="u8.ToArray();
 
     internal static string GenerateJwt(string objectId)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = "your-32-byte-secret-key-here"u8.ToArray();
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity([new Claim("sub", objectId)]),
