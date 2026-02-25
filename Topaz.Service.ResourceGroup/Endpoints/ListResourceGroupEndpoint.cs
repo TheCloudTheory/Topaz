@@ -1,0 +1,38 @@
+using System.Net;
+using Microsoft.AspNetCore.Http;
+using Topaz.Service.ResourceGroup.Models.Responses;
+using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
+using Topaz.Shared.Extensions;
+
+namespace Topaz.Service.ResourceGroup.Endpoints;
+
+public class ListResourceGroupEndpoint(ITopazLogger logger) : IEndpointDefinition
+{
+    private readonly ResourceGroupControlPlane _controlPlane = ResourceGroupControlPlane.New(logger);
+    
+    public string[] Endpoints =>
+    [
+        "GET /subscriptions/{subscriptionId}/resourceGroups",
+    ];
+
+    public string[] Permissions => [];
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+
+    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    {
+        var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+        var operation = _controlPlane.List(subscriptionIdentifier);
+        if (operation.result == OperationResult.Failed)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(new ListResourceGroupsResponse(operation.resources).ToString());
+    }
+}

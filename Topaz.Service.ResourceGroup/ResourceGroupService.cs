@@ -1,4 +1,5 @@
-﻿using Topaz.Service.Shared;
+﻿using Topaz.Service.ResourceGroup.Endpoints;
+using Topaz.Service.Shared;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
 
@@ -14,7 +15,10 @@ public sealed class ResourceGroupService(ITopazLogger logger) : IServiceDefiniti
     public string Name => "Resource Group";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new ResourceGroupEndpoint(new ResourceGroupResourceProvider(logger), logger)
+        new CreateUpdateResourceGroupEndpoint(logger),
+        new GetResourceGroupEndpoint(logger),
+        new ListResourceGroupEndpoint(logger),
+        new DeleteResourceGroupEndpoint(logger),
     ];
 
     public void Bootstrap()
