@@ -82,7 +82,7 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
         logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "The selected handler for an endpoint will be {0}", endpoint.GetType().Name);
         logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "[{0}] {1}{2}", method, path, query);
 
-        var response = endpoint.GetResponse(path, method, context.Request.Body, context.Request.Headers, query, options);
+        var response = CallEndpoint(endpoint, context);
         var textResponse = await response.Content.ReadAsStringAsync();
 
         logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}][{response.StatusCode}] {textResponse}");
@@ -113,6 +113,25 @@ internal sealed class Router(GlobalOptions options, ITopazLogger logger)
 
             await context.Response.WriteAsync(textResponse);
         }
+    }
+
+    private HttpResponseMessage CallEndpoint(IEndpointDefinition endpoint, HttpContext context)
+    {
+        var response = new HttpResponseMessage();
+        
+        try
+        {
+            endpoint.GetResponse(context, response, options);
+        }
+        catch(Exception ex)
+        {
+            logger.LogError(ex);
+
+            response.Content = new StringContent(ex.Message);
+            response.StatusCode = HttpStatusCode.InternalServerError;
+        }
+        
+        return response;
     }
 
     /// <summary>

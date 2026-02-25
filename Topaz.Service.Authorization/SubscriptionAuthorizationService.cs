@@ -1,4 +1,6 @@
 ﻿using Topaz.Service.Authorization.Endpoints;
+using Topaz.Service.Authorization.Endpoints.RoleAssignments;
+using Topaz.Service.Authorization.Endpoints.RoleDefinitions;
 using Topaz.Service.Shared;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
@@ -14,7 +16,14 @@ public sealed class SubscriptionAuthorizationService(ITopazLogger logger) : ISer
     public string Name => "Subscription Authorization";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new SubscriptionAuthorizationEndpoint(logger)
+        new CreateUpdateRoleDefinitionEndpoint(logger),
+        new ListRoleDefinitionsEndpoint(logger),
+        new GetRoleDefinitionEndpoint(logger),
+        new DeleteRoleDefinitionEndpoint(logger),
+        new CreateUpdateRoleDefinitionAssignmentEndpoint(logger),
+        new ListRoleAssignmentsEndpoint(logger),
+        new GetRoleAssignmentEndpoint(logger),
+        new DeleteRoleAssignmentEndpoint(logger),
     ];
 
     public void Bootstrap()
