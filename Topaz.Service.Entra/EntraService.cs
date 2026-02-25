@@ -1,4 +1,5 @@
-﻿using Topaz.Service.Entra.Endpoints;
+﻿using Topaz.Service.Entra.Endpoints.ServicePrincipal;
+using Topaz.Service.Entra.Endpoints.User;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -14,8 +15,14 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new EntraUserGraphEndpoint(logger),
-        new EntraServicePrincipalGraphEndpoint(logger)
+        new MeEndpoint(logger),
+        new GetUserEndpoint(logger),
+        new CreateUserEndpoint(logger),
+        new DeleteUserEndpoint(logger),
+        new ListServicePrincipalsEndpoint(logger),
+        new GetServicePrincipalEndpoint(logger),
+        new CreateServicePrincipalEndpoint(logger),
+        new DeleteServicePrincipalEndpoint(logger),
     ];
 
     public void Bootstrap()
