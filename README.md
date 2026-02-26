@@ -37,3 +37,14 @@ If you want to work with emulators for Azure services, you have a couple of opti
 * Azurite - https://github.com/Azure/Azurite
 * Azure Cosmos DB Emulator - https://github.com/Azure/azure-cosmos-db-emulator-docker
 * Azure Service Bus Emulator - https://github.com/Azure/azure-service-bus-emulator-installer
+
+## Responsible AI
+Topaz is being developed with a help of various AI agents and assistants (mainly GitHub Copilot and JetBrains AI Chat). Use of those AI tools is limited though to the following activities:
+* generating models, DTOs and POCO objects
+* generating or extracting content such as built-in role definitions in Azure
+* providing explanation to methods inside codebase
+* debugging
+* generating boilerplate code
+* small and generic refactors
+
+Conceptual work, implementation of the core logic and emulator's architecture is stil done manually.
