@@ -176,6 +176,44 @@ internal sealed class AuthorizationControlPlane(
             resource, null, null);
     }
     
+    public ControlPlaneOperationResult<RoleAssignmentResource?> CreateRoleAssignment(
+        SubscriptionIdentifier subscriptionIdentifier, RoleAssignmentName roleAssignmentName,
+        CreateOrUpdateRoleAssignmentRequest request)
+    {
+        var subscriptionOperation = subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscriptionOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<RoleAssignmentResource?>(OperationResult.Failed, null,
+                subscriptionOperation.Reason,
+                subscriptionOperation.Code);
+        }
+
+        RoleAssignmentResource resource;
+        var roleDefinitionOperation = Get(subscriptionIdentifier, roleAssignmentName);
+        var createOperation = roleDefinitionOperation.Result == OperationResult.NotFound;
+        if (createOperation)
+        {
+            var properties = RoleAssignmentResourceProperties.FromRequest(request);
+            properties.Scope = $"/subscriptions/{subscriptionIdentifier.Value}";
+            properties.CreatedOn = DateTimeOffset.UtcNow;
+            properties.UpdatedOn = DateTimeOffset.UtcNow;
+            
+            resource = new RoleAssignmentResource(subscriptionIdentifier, roleAssignmentName.Value.ToString(), properties);
+        }
+        else
+        {
+            return new ControlPlaneOperationResult<RoleAssignmentResource?>(OperationResult.BadRequest, null,
+                "Role assignment already exists.",
+                "RoleAssignmentAlreadyExists");
+        }
+        
+        roleAssignmentResourceProvider.Create(subscriptionIdentifier, null, roleAssignmentName.Value.ToString(), resource);
+        
+        return new ControlPlaneOperationResult<RoleAssignmentResource?>(
+            OperationResult.Created,
+            resource, null, null);
+    }
+    
     internal ControlPlaneOperationResult<RoleAssignmentResource> Get(SubscriptionIdentifier subscriptionIdentifier,
         RoleAssignmentName roleAssignmentName)
     {

@@ -8,6 +8,7 @@ using Topaz.Dns;
 using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
 using Topaz.Service.Authorization;
+using Topaz.Service.Authorization.Commands;
 using Topaz.Service.Entra;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
@@ -82,7 +83,8 @@ internal class Program
             typeof(GenericServiceBusCommand),
             typeof(GenericStorageCommand),
             typeof(GenericSubscriptionCommand),
-            typeof(GenericManagedIdentityCommand)
+            typeof(GenericManagedIdentityCommand),
+            typeof(GenericRoleCommand)
         };
         
         var commands = Assembly.GetExecutingAssembly()

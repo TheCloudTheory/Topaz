@@ -97,13 +97,12 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
                 continue;
             }
 
-            if (PermissionChecks.HasAnyRequiredPermission(definition.Resource.Properties.Permissions,
-                    requiredPermissions))
-            {
-                logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
-                    "Found required permissions in role definition: {0}", definition.Resource.Id);
-                return true;
-            }
+            if (!PermissionChecks.HasAnyRequiredPermission(definition.Resource.Properties.Permissions,
+                    requiredPermissions)) continue;
+            
+            logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
+                "Found required permissions in role definition: {0}", definition.Resource.Id);
+            return true;
         }
         
         logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
