@@ -10,20 +10,11 @@ internal sealed class RoleDefinitionResourceProperties
 	public string? Description { get; set; }
 	public string? Type { get; set; }
 	public string[]? AssignableScopes { get; set; }
-	public Permission[]? Permissions { get; set; }
-
+	public RoleDefinition.Permission[]? Permissions { get; set; }
 	public DateTimeOffset? CreatedOn { get; set; }
 	public string? CreatedBy { get; set; }
 	public DateTimeOffset? UpdatedOn { get; set; }
 	public string? UpdatedBy { get; set; }
-
-	internal sealed class Permission
-	{
-		public string[]? Actions { get; set; }
-		public string[]? NotActions { get; set; }
-		public string[]? DataActions { get; set; }
-		public string[]? NotDataActions { get; set; }
-	}
 
 	public static RoleDefinitionResourceProperties FromRequest(CreateOrUpdateRoleDefinitionRequest request)
 	{
@@ -36,7 +27,7 @@ internal sealed class RoleDefinitionResourceProperties
 	        Description = request.Properties.Description,
 	        Type = request.Properties.RoleType,
 	        AssignableScopes = request.Properties.AssignableScopes.ToArray(),
-	        Permissions = request.Properties.Permissions.Select(p => new Permission
+	        Permissions = request.Properties.Permissions.Select(p => new RoleDefinition.Permission
 	        {
 		        Actions = p.Actions.ToArray(),
 		        NotActions = p.NotActions.ToArray(),
@@ -66,7 +57,7 @@ internal sealed class RoleDefinitionResourceProperties
 
 		properties.AssignableScopes = req.AssignableScopes.ToArray();
 
-		properties.Permissions = req.Permissions.Select(p => new Permission
+		properties.Permissions = req.Permissions.Select(p => new RoleDefinition.Permission
 		{
 			Actions = p.Actions?.ToArray(),
 			NotActions = p.NotActions?.ToArray(),

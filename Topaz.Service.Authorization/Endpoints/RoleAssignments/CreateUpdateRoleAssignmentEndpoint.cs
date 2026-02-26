@@ -12,30 +12,35 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Authorization.Endpoints.RoleAssignments;
 
-internal sealed class CreateUpdateRoleAssignmentEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class CreateUpdateRoleAssignmentEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : IEndpointDefinition
 {
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
-    
-    public string[] Endpoints => [
+
+    public string[] Endpoints =>
+    [
         "PUT /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}",
         "PUT /{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}"
     ];
 
     public string[] Permissions => ["Microsoft.Authorization/roleAssignments/write"];
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         using var reader = new StreamReader(context.Request.Body);
 
         var path = context.Request.Path.Value;
-        var subscriptionIdentifier = path.StartsWith("/subscriptions") ?
-            SubscriptionIdentifier.From(path.ExtractValueFromPath(2))
+        var subscriptionIdentifier = path.StartsWith("/subscriptions")
+            ? SubscriptionIdentifier.From(path.ExtractValueFromPath(2))
             : SubscriptionIdentifier.From(path.ExtractValueFromPath(1));
-        
-        var roleAssignmentName = path.StartsWith("/subscriptions") ? 
-            RoleAssignmentName.From(path.ExtractValueFromPath(6))
+
+        var roleAssignmentName = path.StartsWith("/subscriptions")
+            ? RoleAssignmentName.From(path.ExtractValueFromPath(6))
             : RoleAssignmentName.From(path.ExtractValueFromPath(5));
-        
+
         var content = reader.ReadToEnd();
         var request =
             JsonSerializer.Deserialize<CreateOrUpdateRoleAssignmentRequest>(content, GlobalSettings.JsonOptions);

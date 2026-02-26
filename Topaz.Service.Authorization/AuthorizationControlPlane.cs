@@ -95,8 +95,10 @@ internal sealed class AuthorizationControlPlane(
         // using that generated GUID, but a user may query the emulator using `roleName`.
         var availableDefinitions =
             ListRoleDefinitionsBySubscription(subscriptionIdentifier);
-            
-        resource = availableDefinitions.Resource?.FirstOrDefault(definition => definition.Properties.RoleName == roleDefinitionIdentifier.Value);
+
+        resource = availableDefinitions.Resource?.FirstOrDefault(definition =>
+            definition.Properties.RoleName == roleDefinitionIdentifier.Value ||
+            definition.Id.Contains(roleDefinitionIdentifier.Value));
 
         return resource == null
             ? new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.NotFound, null,

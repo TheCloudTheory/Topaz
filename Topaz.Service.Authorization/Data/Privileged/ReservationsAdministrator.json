@@ -1,24 +1,10 @@
 {
-  "roleName": "Reservations Administrator",
-  "id": "a8889054-8d42-49c9-bc1c-52486c10e7cd",
-  "description": "Lets one read and manage all the reservations in a tenant.",
-  "category": "Privileged",
-  "builtIn": true,
   "assignableScopes": [
     "/providers/Microsoft.Capacity"
   ],
-  "actions": [
-    "Microsoft.Capacity/*/read",
-    "Microsoft.Capacity/*/action",
-    "Microsoft.Capacity/*/write",
-    "Microsoft.Authorization/roleAssignments/read",
-    "Microsoft.Authorization/roleDefinitions/read",
-    "Microsoft.Authorization/roleAssignments/write",
-    "Microsoft.Authorization/roleAssignments/delete"
-  ],
-  "notActions": [],
-  "dataActions": [],
-  "notDataActions": [],
+  "description": "Lets one read and manage all the reservations in a tenant",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/a8889054-8d42-49c9-bc1c-52486c10e7cd",
+  "name": "a8889054-8d42-49c9-bc1c-52486c10e7cd",
   "permissions": [
     {
       "actions": [
@@ -34,5 +20,8 @@
       "dataActions": [],
       "notDataActions": []
     }
-  ]
+  ],
+  "roleName": "Reservations Administrator",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
 }

@@ -1,5 +1,6 @@
 using Topaz.EventPipeline;
 using Topaz.Identity;
+using Topaz.Service.Authorization.Domain;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
@@ -43,8 +44,30 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
                 "No permissions defined for the endpoint.");
             return false;
         }
+
+        foreach (var assignment in assignments.Resource)
+        {
+            var definition = _controlPlane.Get(subscriptionIdentifier,
+                RoleDefinitionIdentifier.From(assignment.Properties.RoleDefinitionId));
+            
+            if (definition.Resource == null)
+            {
+                logger.LogError(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
+                    "Failed to retrieve role definition for assignment: `{0}`, reason: `{1}`", assignment.Id, definition.Reason);
+                continue;
+            }
+
+            if (PermissionChecks.HasAnyRequiredPermission(definition.Resource.Properties.Permissions,
+                    requiredPermissions))
+            {
+                logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
+                    "Found required permissions in role definition: {0}", definition.Resource.Id);
+                return true;
+            }
+        }
         
-        return true;
+        logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
+            "No required permissions found in any role definition for the given subscription and object ID.");
+        return false;
     }
-    
 }

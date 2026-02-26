@@ -32,7 +32,7 @@ internal sealed class RoleDefinition
             Description = Description,
             Type = RoleType,
             AssignableScopes = AssignableScopes,
-            Permissions = Permissions?.Select(p => new RoleDefinitionResourceProperties.Permission
+            Permissions = Permissions?.Select(p => new Permission
             {
                 Actions = p.Actions,
                 NotActions = p.NotActions,
