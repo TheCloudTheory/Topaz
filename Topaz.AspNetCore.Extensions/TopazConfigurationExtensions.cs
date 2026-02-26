@@ -21,10 +21,11 @@ public static class TopazConfigurationExtensions
     /// </summary>
     /// <param name="builder">The configuration builder instance.</param>
     /// <param name="defaultSubscriptionId">The GUID of the default Azure subscription to use.</param>
+    /// <param name="objectId">Object ID of the principal performing the operation</param>
     /// <returns>A new TopazEnvironmentBuilder instance configured with the default subscription.</returns>
-    public static TopazEnvironmentBuilder AddTopaz(this IConfigurationBuilder builder, Guid defaultSubscriptionId)
+    public static TopazEnvironmentBuilder AddTopaz(this IConfigurationBuilder builder, Guid defaultSubscriptionId, string objectId)
     {
-        return new TopazEnvironmentBuilder(defaultSubscriptionId);
+        return new TopazEnvironmentBuilder(defaultSubscriptionId, objectId);
     }
 
     /// <summary>
@@ -35,9 +36,9 @@ public static class TopazConfigurationExtensions
     /// <param name="subscriptionName">The display name for the new subscription.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the updated TopazEnvironmentBuilder.</returns>
     public static async Task<TopazEnvironmentBuilder> AddSubscription(this TopazEnvironmentBuilder builder,
-        Guid subscriptionId, string subscriptionName)
+        Guid subscriptionId, string subscriptionName, AzureLocalCredential credentials)
     {
-        using var topaz = new TopazArmClient();
+        using var topaz = new TopazArmClient(credentials);
         await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
         
         return builder;
@@ -51,13 +52,15 @@ public static class TopazConfigurationExtensions
     /// <param name="resourceGroupName">The name of the resource group to create or update.</param>
     /// <param name="location">The location of the resource group</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the updated TopazEnvironmentBuilder.</returns>
-    public static async Task<TopazEnvironmentBuilder> AddResourceGroup(this Task<TopazEnvironmentBuilder> builder, Guid subscriptionId, string resourceGroupName, AzureLocation location)
+    public static async Task<TopazEnvironmentBuilder> AddResourceGroup(this Task<TopazEnvironmentBuilder> builder,
+        Guid subscriptionId, string resourceGroupName, AzureLocation location)
     {
         var concrete = await builder;
         var subscription = await concrete.ArmClient.GetDefaultSubscriptionAsync();
         var resourceGroups = subscription.GetResourceGroups();
-        
-        _ = await resourceGroups.CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName, new ResourceGroupData(location));
+
+        _ = await resourceGroups.CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(location));
 
         return concrete;
     }
@@ -90,15 +93,17 @@ public static class TopazConfigurationExtensions
     /// <param name="keyVaultName">The name of the Key Vault to create or update.</param>
     /// <param name="operation">The Key Vault creation or update configuration.</param>
     /// <param name="secrets">A dictionary of secret names and values to store in the Key Vault.</param>
+    /// <param name="objectId">Object ID of the principal performing the operation</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the updated TopazEnvironmentBuilder.</returns>
     /// <remarks>This method first creates the Key Vault, then adds all the specified secrets to it.</remarks>
-    public static async Task<TopazEnvironmentBuilder> AddKeyVault(this Task<TopazEnvironmentBuilder> builder, ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName,
-        KeyVaultCreateOrUpdateContent operation, IDictionary<string, string> secrets)
+    public static async Task<TopazEnvironmentBuilder> AddKeyVault(this Task<TopazEnvironmentBuilder> builder,
+        ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName,
+        KeyVaultCreateOrUpdateContent operation, IDictionary<string, string> secrets, string objectId)
     {
         await builder.AddKeyVault(resourceGroupIdentifier, keyVaultName, operation);
-        
+
         var concrete = await builder;
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(objectId);
         var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(keyVaultName),
             credential: credentials, new SecretClientOptions
             {
@@ -142,6 +147,7 @@ public static class TopazConfigurationExtensions
     /// <param name="storageAccountName">The name of the storage account to get the connection string for.</param>
     /// <param name="keyVaultName">The name of the Key Vault where the secret will be stored.</param>
     /// <param name="secretName">The name of the secret that will contain the connection string.</param>
+    /// <param name="objectId">Object ID of the principal performing the operation</param>
     /// <param name="keyIndex">The index of the storage account key to use (default is 0 for primary key).</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the updated TopazEnvironmentBuilder.</returns>
     /// <remarks>
@@ -149,20 +155,21 @@ public static class TopazConfigurationExtensions
     /// generates a connection string using TopazResourceHelpers, and stores it as a Key Vault secret.
     /// </remarks>
     public static async Task<TopazEnvironmentBuilder> AddStorageAccountConnectionStringAsSecret(
-        this Task<TopazEnvironmentBuilder> builder, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string keyVaultName, string secretName, ushort keyIndex = 0)
+        this Task<TopazEnvironmentBuilder> builder, ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName, string keyVaultName, string secretName, string objectId, ushort keyIndex = 0)
     {
         var concrete = await builder;
         var subscription = await concrete.ArmClient.GetDefaultSubscriptionAsync();
         var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupIdentifier.Value);
         var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(storageAccountName);
         var keys = new List<StorageAccountKey>();
-        
+
         await foreach (var key in storageAccount.Value.GetKeysAsync())
         {
             keys.Add(key);
         }
-        
-        var credentials = new AzureLocalCredential();
+
+        var credentials = new AzureLocalCredential(objectId);
         var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(keyVaultName),
             credential: credentials, new SecretClientOptions
             {
@@ -172,7 +179,7 @@ public static class TopazConfigurationExtensions
         var selectedKey = keys[keyIndex];
         await client.SetSecretAsync(new KeyVaultSecret(secretName,
             TopazResourceHelpers.GetAzureStorageConnectionString(storageAccountName, selectedKey.Value)));
-        
+
         return concrete;
     }
 

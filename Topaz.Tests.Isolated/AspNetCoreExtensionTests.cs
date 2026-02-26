@@ -71,15 +71,16 @@ public class AspNetCoreExtensionTests
         const string secretName = "connectionString-storageAccount";
         var subscriptionId = Guid.NewGuid();
         var builder = new ConfigurationBuilder();
-        var credentials = new AzureLocalCredential();
+        var objectId = Globals.GlobalAdminId;
+        var credentials = new AzureLocalCredential(objectId);
         var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(KeyVaultName), credential: credentials, new SecretClientOptions
         {
             DisableChallengeResourceVerification = true
         });
         
         // Act
-        await builder.AddTopaz(subscriptionId)
-            .AddSubscription(subscriptionId, SubscriptionName)
+        await builder.AddTopaz(subscriptionId, objectId)
+            .AddSubscription(subscriptionId, SubscriptionName, credentials)
             .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope)
             .AddStorageAccount(ResourceGroupIdentifier.From(ResourceGroupName), StorageAccountName,
                 new StorageAccountCreateOrUpdateContent(new StorageSku(StorageSkuName.StandardLrs),
@@ -88,8 +89,9 @@ public class AspNetCoreExtensionTests
                 new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
                     new KeyVaultProperties(Guid.Empty,
                         new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))))
-            .AddStorageAccountConnectionStringAsSecret(ResourceGroupIdentifier.From(ResourceGroupName), StorageAccountName, KeyVaultName,
-                secretName);
+            .AddStorageAccountConnectionStringAsSecret(ResourceGroupIdentifier.From(ResourceGroupName),
+                StorageAccountName, KeyVaultName,
+                secretName, objectId);
         
         var secret = await client.GetSecretAsync(secretName);
         var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
@@ -109,12 +111,13 @@ public class AspNetCoreExtensionTests
     {
         // Arrange
         var builder = new ConfigurationBuilder();
-        var credentials = new AzureLocalCredential();
+        var objectId = Globals.GlobalAdminId;
+        var credentials = new AzureLocalCredential(objectId);
         var subscriptionId = Guid.NewGuid();
         
         // Act
-        await builder.AddTopaz(subscriptionId)
-            .AddSubscription(subscriptionId, SubscriptionName)
+        await builder.AddTopaz(subscriptionId, objectId)
+            .AddSubscription(subscriptionId, SubscriptionName, credentials)
             .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope)
             .AddServiceBusNamespace(ResourceGroupIdentifier.From(ResourceGroupName), ServiceBusNamespaceIdentifier.From(ServiceBusNamespaceName),
                 new ServiceBusNamespaceData(AzureLocation.WestEurope));
@@ -135,13 +138,14 @@ public class AspNetCoreExtensionTests
     {
         // Arrange
         var builder = new ConfigurationBuilder();
-        var credentials = new AzureLocalCredential();
+        var objectId = Globals.GlobalAdminId;
+        var credentials = new AzureLocalCredential(objectId);
         var subscriptionId = Guid.NewGuid();
         const string namespaceName = "sb-test2";
         
         // Act
-        await builder.AddTopaz(subscriptionId)
-            .AddSubscription(subscriptionId, SubscriptionName)
+        await builder.AddTopaz(subscriptionId, objectId)
+            .AddSubscription(subscriptionId, SubscriptionName, credentials)
             .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope)
             .AddServiceBusNamespace(ResourceGroupIdentifier.From(ResourceGroupName), ServiceBusNamespaceIdentifier.From(namespaceName),
                 new ServiceBusNamespaceData(AzureLocation.WestEurope))
@@ -164,13 +168,14 @@ public class AspNetCoreExtensionTests
     {
         // Arrange
         var builder = new ConfigurationBuilder();
-        var credentials = new AzureLocalCredential();
+        var objectId = Globals.GlobalAdminId;
+        var credentials = new AzureLocalCredential(objectId);
         var subscriptionId = Guid.NewGuid();
         const string namespaceName = "sb-test3";
         
         // Act
-        await builder.AddTopaz(subscriptionId)
-            .AddSubscription(subscriptionId, SubscriptionName)
+        await builder.AddTopaz(subscriptionId, objectId)
+            .AddSubscription(subscriptionId, SubscriptionName, credentials)
             .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope)
             .AddServiceBusNamespace(ResourceGroupIdentifier.From(ResourceGroupName), ServiceBusNamespaceIdentifier.From(namespaceName),
                 new ServiceBusNamespaceData(AzureLocation.WestEurope))
