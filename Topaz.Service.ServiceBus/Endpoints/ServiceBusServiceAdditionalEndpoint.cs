@@ -28,7 +28,7 @@ public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : I
         "PUT /{entity}/{messageType}/Subscriptions/{subscription}"
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["*"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.AmqpTlsConnectionPort, GlobalSettings.AdditionalServiceBusPort], Protocol.Https);

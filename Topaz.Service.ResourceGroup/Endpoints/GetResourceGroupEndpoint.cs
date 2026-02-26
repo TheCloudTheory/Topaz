@@ -18,7 +18,7 @@ public class GetResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger logge
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}",
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["Microsoft.Resources/subscriptions/resourceGroups/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

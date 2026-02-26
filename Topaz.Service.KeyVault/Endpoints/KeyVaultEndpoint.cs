@@ -25,7 +25,7 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
         "GET /secrets/",
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["*"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultKeyVaultPort], Protocol.Https);

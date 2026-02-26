@@ -1,9 +1,8 @@
-﻿using Topaz.EventPipeline;
+using Topaz.EventPipeline;
 using Topaz.EventPipeline.Events;
 using Topaz.Identity;
 using Topaz.Service.Authorization.Domain;
 using Topaz.Service.Authorization.Endpoints.RoleAssignments;
-using Topaz.Service.Authorization.Endpoints.RoleDefinitions;
 using Topaz.Service.Authorization.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -12,19 +11,18 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Authorization;
 
-public sealed class SubscriptionAuthorizationService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
+public sealed class RoleAssignmentService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
     public static bool IsGlobalService => false;
-    public static string LocalDirectoryPath => Path.Combine(SubscriptionService.LocalDirectoryPath, ".authorization");
-    public static IReadOnlyCollection<string>? Subresources => null;
-    public static string UniqueName => "subscription-authorization";
-    public string Name => "Subscription Authorization";
+    public static string LocalDirectoryPath => Path.Combine(SubscriptionService.LocalDirectoryPath, ".role-assignment");
 
-    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new CreateUpdateRoleDefinitionEndpoint(eventPipeline, logger),
-        new ListRoleDefinitionsEndpoint(eventPipeline, logger),
-        new GetRoleDefinitionEndpoint(eventPipeline, logger),
-        new DeleteRoleDefinitionEndpoint(eventPipeline, logger),
+    public static IReadOnlyCollection<string> Subresources => [];
+
+    public static string UniqueName => "subscription-role-assignment";
+    public string Name => "Subscription Role Assignment";
+
+    public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
+    [
         new CreateUpdateRoleAssignmentEndpoint(eventPipeline, logger),
         new ListRoleAssignmentsEndpoint(eventPipeline, logger),
         new GetRoleAssignmentEndpoint(eventPipeline, logger),

@@ -18,7 +18,7 @@ public class DeleteUserEndpoint(ITopazLogger logger) : IEndpointDefinition
         "DELETE /v1.0/users/{userId}"
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["*"];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
     
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)

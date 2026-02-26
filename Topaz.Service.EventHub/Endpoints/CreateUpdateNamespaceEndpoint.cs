@@ -12,14 +12,16 @@ namespace Topaz.Service.EventHub.Endpoints;
 public class CreateUpdateNamespaceEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly EventHubServiceControlPlane _controlPlane = new(new EventHubResourceProvider(logger), logger);
-    
+
     public string[] Endpoints =>
     [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
     ];
 
-    public string[] Permissions => [];
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+    public string[] Permissions => ["Microsoft.EventHub/namespaces/eventhubs/write"];
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
@@ -37,8 +39,9 @@ public class CreateUpdateNamespaceEndpoint(ITopazLogger logger) : IEndpointDefin
             response.StatusCode = HttpStatusCode.InternalServerError;
             return;
         }
-        
-        var operation = _controlPlane.CreateOrUpdateNamespace(subscriptionIdentifier, resourceGroupIdentifier, request.Location!, namespaceIdentifier, request);
+
+        var operation = _controlPlane.CreateOrUpdateNamespace(subscriptionIdentifier, resourceGroupIdentifier,
+            request.Location!, namespaceIdentifier, request);
         if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated ||
             operation.Resource == null)
         {

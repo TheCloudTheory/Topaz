@@ -117,7 +117,7 @@ internal class Program
         var entra = new EntraService(logger);
         entra.Bootstrap();
         
-        var subscriptionAuthorizationService = new SubscriptionAuthorizationService(new Pipeline(logger), logger);
+        var subscriptionAuthorizationService = new RoleAssignmentService(new Pipeline(logger), logger);
         subscriptionAuthorizationService.Bootstrap();
         
         if (File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))

@@ -18,7 +18,7 @@ public class GetUserEndpoint(ITopazLogger logger) : IEndpointDefinition
         "GET /users/{userId}"
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["*"];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
     
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)

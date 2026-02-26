@@ -13,23 +13,27 @@ namespace Topaz.Service.Authorization.Endpoints.RoleDefinitions;
 public class ListRoleDefinitionsEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
-    
-    public string[] Endpoints => [
+
+    public string[] Endpoints =>
+    [
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions",
         "GET /{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions",
     ];
 
-    public string[] Permissions => [];
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+    public string[] Permissions => ["Microsoft.Authorization/roleDefinitions/read"];
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var subscriptionIdentifier = context.Request.Path.Value.StartsWith("/subscriptions") ? 
-            SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2))
+        var subscriptionIdentifier = context.Request.Path.Value.StartsWith("/subscriptions")
+            ? SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2))
             : SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(1));
-        
+
         logger.LogDebug(nameof(ListRoleDefinitionsEndpoint), nameof(GetResponse),
             "Attempting to list role definitions for subscription ID `{0}` and query `{1}`.",
-             subscriptionIdentifier, context.Request.QueryString);
+            subscriptionIdentifier, context.Request.QueryString);
 
         string? roleName = null;
         if (context.Request.QueryString.TryGetValueForKey("$filter", out var filter))
@@ -49,17 +53,17 @@ public class ListRoleDefinitionsEndpoint(Pipeline eventPipeline, ITopazLogger lo
         {
             Value = definitions.Resource.Select(ListSubscriptionRoleDefinitionsResponse.RoleDefinition.From).ToArray()
         };
-        
+
         response.Content = new StringContent(result.ToString());
         response.StatusCode = HttpStatusCode.OK;
         response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
-    
+
     private static string? ExtractRoleNamerFromFilter(string? filter)
     {
         if (string.IsNullOrEmpty(filter)) return null;
         var segments = filter.Split(' ');
-        
+
         return segments.Length > 1 ? segments[2].Replace("'", string.Empty) : null;
     }
 }

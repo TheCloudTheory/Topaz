@@ -17,7 +17,7 @@ public class DeleteResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger lo
         "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}",
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["Microsoft.Resources/subscriptions/resourceGroups/delete"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

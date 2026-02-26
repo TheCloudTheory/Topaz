@@ -6,7 +6,7 @@ namespace Topaz.Service.ServiceBus.Endpoints;
 
 public sealed class ServiceBusEndpoint : IEndpointDefinition
 {
-    public string[] Endpoints => [];
+    public string[] Endpoints => ["*"];
     public string[] Permissions => [];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>

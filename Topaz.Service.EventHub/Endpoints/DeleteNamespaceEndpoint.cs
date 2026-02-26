@@ -10,14 +10,16 @@ namespace Topaz.Service.EventHub.Endpoints;
 public class DeleteNamespaceEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly EventHubServiceControlPlane _controlPlane = new(new EventHubResourceProvider(logger), logger);
-    
+
     public string[] Endpoints =>
     [
         "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",
     ];
 
-    public string[] Permissions => [];
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+    public string[] Permissions => ["Microsoft.EventHub/namespaces/delete"];
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
@@ -26,7 +28,7 @@ public class DeleteNamespaceEndpoint(ITopazLogger logger) : IEndpointDefinition
         var namespaceIdentifier = EventHubNamespaceIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(8));
         var existingNamespace =
             _controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
-        
+
         switch (existingNamespace.Result)
         {
             case OperationResult.NotFound:

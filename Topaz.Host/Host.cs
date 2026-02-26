@@ -91,7 +91,8 @@ public class Host
             new ManagedIdentityService(_eventPipeline, _logger),
             new ResourceAuthorizationService(_logger),
             new ResourceGroupAuthorizationService(_logger),
-            new SubscriptionAuthorizationService(_eventPipeline, _logger),
+            new RoleDefinitionService(_eventPipeline, _logger),
+            new RoleAssignmentService(_eventPipeline, _logger),
             new InsightsService(_logger),
             new EntraService(_logger)
         };

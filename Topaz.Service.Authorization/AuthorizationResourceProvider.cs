@@ -8,19 +8,20 @@ namespace Topaz.Service.Authorization;
 
 internal sealed class ResourceAuthorizationResourceProvider(ITopazLogger logger) : ResourceProviderBase<ResourceAuthorizationService>(logger);
 internal sealed class ResourceGroupAuthorizationResourceProvider(ITopazLogger logger) : ResourceProviderBase<ResourceGroupAuthorizationService>(logger);
-internal sealed class SubscriptionAuthorizationResourceProvider(ITopazLogger logger) : ResourceProviderBase<SubscriptionAuthorizationService>(logger)
+internal sealed class RoleAssignmentResourceProvider(ITopazLogger logger) : ResourceProviderBase<RoleAssignmentService>(logger);
+internal sealed class RoleDefinitionResourceProvider(ITopazLogger logger) : ResourceProviderBase<RoleDefinitionService>(logger)
 {
     private readonly ITopazLogger _logger = logger;
 
     public RoleDefinitionResource[] ListBuiltInRoles(SubscriptionIdentifier subscriptionIdentifier)
     {
-        _logger.LogDebug(nameof(SubscriptionAuthorizationResourceProvider), nameof(ListBuiltInRoles), "List built-in roles for `{0}` subscription.", subscriptionIdentifier);
+        _logger.LogDebug(nameof(RoleDefinitionResourceProvider), nameof(ListBuiltInRoles), "List built-in roles for `{0}` subscription.", subscriptionIdentifier);
         
         var definitions = new List<RoleDefinitionResource>();
         var rawFiles = Directory.EnumerateFiles("Data", "*.json", SearchOption.AllDirectories);
         foreach (var file in rawFiles)
         {
-            _logger.LogDebug(nameof(SubscriptionAuthorizationResourceProvider), nameof(ListBuiltInRoles), "Loading contents of a `{0}` file as role definition.", file);
+            _logger.LogDebug(nameof(RoleDefinitionResourceProvider), nameof(ListBuiltInRoles), "Loading contents of a `{0}` file as role definition.", file);
             
             var content = File.ReadAllText(file);
             var fileModel = JsonSerializer.Deserialize<RoleDefinition>(content, GlobalSettings.JsonOptions);

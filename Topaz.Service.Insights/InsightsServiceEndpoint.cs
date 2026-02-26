@@ -14,7 +14,7 @@ internal sealed class InsightsServiceEndpoint : IEndpointDefinition
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Insights/eventtypes/management/values"
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["*"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

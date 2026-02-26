@@ -20,7 +20,7 @@ public class CreateUpdateResourceGroupEndpoint(Pipeline eventPipeline, ITopazLog
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}",
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["Microsoft.Resources/subscriptions/resourceGroups/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

@@ -23,7 +23,7 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/topics/{topicName}",
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["*"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => (
     [

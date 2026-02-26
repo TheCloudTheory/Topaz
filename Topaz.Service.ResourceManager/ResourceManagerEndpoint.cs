@@ -35,7 +35,7 @@ public sealed class ResourceManagerEndpoint(Pipeline eventPipeline, ITopazLogger
         "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}/validate"
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["*"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)

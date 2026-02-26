@@ -36,7 +36,7 @@ public class BlobEndpoint(ITopazLogger logger) : IEndpointDefinition
         "DELETE /{containerName}/...",
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["*"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultBlobStoragePort], Protocol.Http);

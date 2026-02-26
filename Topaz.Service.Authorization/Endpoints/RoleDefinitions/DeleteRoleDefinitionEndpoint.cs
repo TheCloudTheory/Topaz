@@ -13,18 +13,23 @@ namespace Topaz.Service.Authorization.Endpoints.RoleDefinitions;
 public class DeleteRoleDefinitionEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
-    
-    public string[] Endpoints => [
+
+    public string[] Endpoints =>
+    [
         "DELETE /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}"
     ];
 
-    public string[] Permissions => [];
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+    public string[] Permissions => ["Microsoft.Authorization/roleDefinitions/delete"];
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
-        var roleDefinitionIdentifier = RoleDefinitionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(6));
-        
+        var roleDefinitionIdentifier =
+            RoleDefinitionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(6));
+
         var existingDefinition = _controlPlane.Get(subscriptionIdentifier, roleDefinitionIdentifier);
         switch (existingDefinition.Result)
         {

@@ -40,7 +40,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         @"PATCH /^.*?\(PartitionKey='.*?',RowKey='.*?'\)$",
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["*"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);

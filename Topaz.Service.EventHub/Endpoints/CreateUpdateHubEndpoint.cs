@@ -18,7 +18,7 @@ public class CreateUpdateHubEndpoint(ITopazLogger logger) : IEndpointDefinition
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/eventhubs/{eventHubName}"
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["Microsoft.EventHub/namespaces/write"];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
