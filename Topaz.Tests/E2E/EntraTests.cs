@@ -1,11 +1,13 @@
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
+using Topaz.Identity;
 
 namespace Topaz.Tests.E2E;
 
 public class EntraTests
 {
-    private static GraphServiceClient GraphClient => new(new HttpClient(), null, "https://topaz.local.dev:8899");
+    private static GraphServiceClient GraphClient => new(new HttpClient(),
+        new LocalGraphAuthenticationProvider(), "https://topaz.local.dev:8899");
     
     [Test]
     public async Task EntraTests_CanAuthenticateToEmulatedTenant()

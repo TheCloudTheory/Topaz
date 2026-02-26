@@ -9,14 +9,14 @@ public static class JwtHelper
     private static readonly byte[] SecretKey =
         "yD1sMV1WcwVjSfNUxxLNfVHn5sbqD056LwOnkXCkIDnWkXcrg95plLQ3T1tvinLAnuNNiRRZrKyUvs6YzZnJ/A=="u8.ToArray();
 
-    internal static string GenerateJwt(string objectId)
+    internal static string GenerateJwt(string objectId, bool isForGraph = false)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity([new Claim("sub", objectId)]),
             Issuer = "https://topaz.local.dev:8899",
-            Audience = "https://topaz.local.dev:8899",
+            Audience = isForGraph ? "https://topaz.local.dev:8899/.graph" : "https://topaz.local.dev:8899",
             NotBefore = DateTime.UtcNow,
             IssuedAt = DateTime.UtcNow,
             Expires = DateTime.UtcNow.AddHours(1),
