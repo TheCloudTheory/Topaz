@@ -39,6 +39,14 @@ curl --location 'https://localhost:8899/subscriptions/36a28ebb-9370-46d8-981c-84
     --data '{"subscriptionId":"36a28ebb-9370-46d8-981c-84efe02048ae",\
     "subscriptionName":"DEV-Local-Topaz"}'
 ```
+You can also simplify this step by supplying the `--default-subscription` option when starting the emulator. Providing a subscription GUID to `topaz start` will cause the emulator to create that subscription automatically at startup, so you don't need to run `topaz subscription create` separately. Example:
+
+```bash
+$ topaz start --tenant-id <tenant-id> --default-subscription 36a28ebb-9370-46d8-981c-84efe02048ae
+```
+
+The subscription will be provisioned as the emulator comes up and will be immediately available for Azure CLI to use.
+
 With the subscription created you can proceed to the next step.
 
 ## Setting up new environment

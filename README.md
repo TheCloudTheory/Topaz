@@ -27,10 +27,10 @@ Topaz offers a simplified DevEx by tightly integrating with moderns and popular 
 * Emulation of Azure resources' hierarchy including subscriptions and resource groups
 * Emulation of ARM deployments using ARM Templates / Bicep
 * Emulation of Microsoft Entra ID tenant
+* Emulation of Azure RBAC
 
 There's also a backlog of features planned for future releases:
 * UI for easier management of resources
-* Emulation of Azure RBAC
 
 ## Alternatives
 If you want to work with emulators for Azure services, you have a couple of options:
