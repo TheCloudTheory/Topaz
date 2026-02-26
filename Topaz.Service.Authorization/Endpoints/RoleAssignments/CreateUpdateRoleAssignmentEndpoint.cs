@@ -21,7 +21,7 @@ internal sealed class CreateUpdateRoleAssignmentEndpoint(Pipeline eventPipeline,
         "PUT /{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}"
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["Microsoft.Authorization/roleAssignments/write"];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

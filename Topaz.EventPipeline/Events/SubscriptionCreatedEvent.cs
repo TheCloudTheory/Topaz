@@ -2,7 +2,9 @@ namespace Topaz.EventPipeline.Events;
 
 public class SubscriptionCreatedEvent : IEventDefinition<SubscriptionCreatedEventData>
 {
-    public string Name => "SubscriptionCreated";
+    public const string EventName = "SubscriptionCreated";
+    
+    public string Name => EventName;
     public required SubscriptionCreatedEventData Data { get; init; }
 }
 

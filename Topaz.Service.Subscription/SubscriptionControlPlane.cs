@@ -37,7 +37,7 @@ internal sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscript
         // We publish this particular event because there are other services (like Authorization)
         // which will listen to it and perform additional actions (like assigning super admin
         // to a new subscription).
-        eventPipeline.TriggerEvent(new SubscriptionCreatedEvent
+        eventPipeline.TriggerEvent<SubscriptionCreatedEventData, IEventDefinition<SubscriptionCreatedEventData>>(new SubscriptionCreatedEvent
         {
             Data = new SubscriptionCreatedEventData
             {

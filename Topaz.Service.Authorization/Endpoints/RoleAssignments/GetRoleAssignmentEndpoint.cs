@@ -18,7 +18,7 @@ internal sealed class GetRoleAssignmentEndpoint(Pipeline eventPipeline, ITopazLo
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}"
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => ["Microsoft.Authorization/roleAssignments/read"];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

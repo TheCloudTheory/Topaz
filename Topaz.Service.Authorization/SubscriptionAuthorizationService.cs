@@ -1,8 +1,12 @@
 ﻿using Topaz.EventPipeline;
-using Topaz.Service.Authorization.Endpoints;
+using Topaz.EventPipeline.Events;
+using Topaz.Identity;
+using Topaz.Service.Authorization.Domain;
 using Topaz.Service.Authorization.Endpoints.RoleAssignments;
 using Topaz.Service.Authorization.Endpoints.RoleDefinitions;
+using Topaz.Service.Authorization.Models.Requests;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
 
@@ -29,5 +33,20 @@ public sealed class SubscriptionAuthorizationService(Pipeline eventPipeline, ITo
 
     public void Bootstrap()
     {
+        var controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
+
+        eventPipeline.RegisterHandler<SubscriptionCreatedEventData>(
+            SubscriptionCreatedEvent.EventName,
+            data => controlPlane.CreateOrUpdateRoleAssignment(SubscriptionIdentifier.From(data!.SubscriptionId),
+                RoleAssignmentName.From(Guid.Empty),
+                new CreateOrUpdateRoleAssignmentRequest
+                {
+                    Properties = new RoleAssignmentProperties
+                    {
+                        PrincipalId = Globals.GlobalAdminId,
+                        RoleDefinitionId = "8e3af657-a8ff-443c-a75c-2fe8c4bcb635",
+                        Scope = $"/subscriptions/{data!.SubscriptionId}"
+                    }
+                }));
     }
 }

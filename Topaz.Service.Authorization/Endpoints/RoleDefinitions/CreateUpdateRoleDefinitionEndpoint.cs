@@ -12,16 +12,21 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Authorization.Endpoints.RoleDefinitions;
 
-internal sealed class CreateUpdateRoleDefinitionEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class CreateUpdateRoleDefinitionEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : IEndpointDefinition
 {
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
-    
-    public string[] Endpoints => [
+
+    public string[] Endpoints =>
+    [
         "PUT /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}"
     ];
 
-    public string[] Permissions => [];
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+    public string[] Permissions => ["Microsoft.Authorization/roleDefinitions/write"];
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         using var reader = new StreamReader(context.Request.Body);

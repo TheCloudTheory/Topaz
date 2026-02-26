@@ -7,6 +7,7 @@ using Topaz.CLI.Commands;
 using Topaz.Dns;
 using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
+using Topaz.Service.Authorization;
 using Topaz.Service.Entra;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
@@ -111,9 +112,13 @@ internal class Program
             Directory.CreateDirectory(GlobalSettings.MainEmulatorDirectory);
             Console.WriteLine("Emulator directory created.");
         }
-        
-        var entra = new EntraService(new PrettyTopazLogger());
+
+        var logger = new PrettyTopazLogger();
+        var entra = new EntraService(logger);
         entra.Bootstrap();
+        
+        var subscriptionAuthorizationService = new SubscriptionAuthorizationService(new Pipeline(logger), logger);
+        subscriptionAuthorizationService.Bootstrap();
         
         if (File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))
         {

@@ -18,7 +18,9 @@ public class GetSubscriptionEndpoint(Pipeline eventPipeline, ITopazLogger logger
         "GET /subscriptions/{subscriptionId}",
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions => [
+        "Microsoft.Resources/subscriptions/read"
+    ];
     
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)

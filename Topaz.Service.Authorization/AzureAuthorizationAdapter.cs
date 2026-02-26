@@ -36,6 +36,13 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
                 "No role assignments found for the given subscription and object ID.");
             return false;
         }
+
+        if (requiredPermissions.Length == 0)
+        {
+            logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
+                "No permissions defined for the endpoint.");
+            return false;
+        }
         
         return true;
     }
