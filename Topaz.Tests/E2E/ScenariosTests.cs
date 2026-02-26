@@ -91,20 +91,28 @@ public class ScenariosTests
 
         await kvCollection.CreateOrUpdateAsync(WaitUntil.Completed, kvName, kvCreate, CancellationToken.None);
 
-        // Act (attempt control-plane operation as the managed identity WITHOUT any role assignment)
+        // Act (attempt control-plane operations as the managed identity WITHOUT any role assignment)
         var managedIdentityCredential = new ManagedIdentityLocalCredential(identity.Value.Data.PrincipalId!.Value);
         var miArmClient = new ArmClient(managedIdentityCredential, SubscriptionId.ToString(), ArmClientOptions);
 
-        var miSubscription = await miArmClient.GetDefaultSubscriptionAsync();
-        var miResourceGroup = await miSubscription.GetResourceGroupAsync(ResourceGroupName);
+        // Assert (a MI with no roles can't even read the subscription)
+        var subEx = Assert.ThrowsAsync<RequestFailedException>(async () =>
+            await miArmClient.GetDefaultSubscriptionAsync(CancellationToken.None));
 
-        // We use GET as the minimal control-plane operation (read). If your authorization model allows read but blocks write,
-        // switch this to Update/Delete and assert 403 there instead.
-        var ex = Assert.ThrowsAsync<RequestFailedException>(async () =>
-            await miResourceGroup.Value.GetKeyVaultAsync(kvName, CancellationToken.None));
+        Assert.That(subEx, Is.Not.Null);
+        Assert.That(subEx!.Status, Is.EqualTo(401),
+            $"Expected 401 Not Authorized when reading subscription, got {subEx.Status}. ErrorCode: {subEx.ErrorCode}");
 
-        // Assert
-        Assert.That(ex, Is.Not.Null);
-        Assert.That(ex!.Status, Is.EqualTo(403), $"Expected 403 Forbidden, got {ex.Status}. ErrorCode: {ex.ErrorCode}");
+        // Optional: also assert Key Vault GET is forbidden when addressed directly (without going via subscription/RG listing)
+        var kvId =
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.KeyVault/vaults/{kvName}";
+        var kvResourceIdentifier = new ResourceIdentifier(kvId);
+
+        var kvEx = Assert.ThrowsAsync<RequestFailedException>(async () =>
+            await miArmClient.GetKeyVaultResource(kvResourceIdentifier).GetAsync(CancellationToken.None));
+
+        Assert.That(kvEx, Is.Not.Null);
+        Assert.That(kvEx!.Status, Is.EqualTo(401),
+            $"Expected 401 Not Authorized when reading Key Vault, got {kvEx.Status}. ErrorCode: {kvEx.ErrorCode}");
     }
 }

@@ -48,7 +48,10 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
 
     public async Task PurgeKeyVault(Guid subscriptionId, string keyVaultName, string location)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, $"subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/locations/{location}/deletedVaults/{keyVaultName}/purge");
+        var request = new HttpRequestMessage(HttpMethod.Post,
+            $"subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/locations/{location}/deletedVaults/{keyVaultName}/purge");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
         var response = await _httpClient.SendAsync(request);
         
         response.EnsureSuccessStatusCode();
