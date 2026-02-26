@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
@@ -53,5 +54,6 @@ public class CreateUpdateVirtualNetworkEndpoint(Pipeline eventPipeline, ITopazLo
 
         response.StatusCode = operation.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
         response.Content = new StringContent(operation.Resource!.ToString());
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
 }

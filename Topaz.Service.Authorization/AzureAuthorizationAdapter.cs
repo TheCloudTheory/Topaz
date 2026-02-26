@@ -16,6 +16,13 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
         logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
             "Attempting to check authorization for {0} token against {1} permissions...", token,
             requiredPermissions.Length);
+        
+        if (requiredPermissions.Length == 0)
+        {
+            logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
+                "No permissions defined for the endpoint. It's treated as a public endpoint.");
+            return true;
+        }
 
         if (canBypass)
         {
@@ -59,6 +66,13 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
                 "Token is for global admin - skipping authorization.");
             return true; 
         }
+
+        if (!scope.Contains("/subscriptions/"))
+        {
+            logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
+                "Scope does not contain `/subscriptions/` - skipping authorization.");
+            return true;
+        }
         
         var subscriptionIdentifier = SubscriptionIdentifier.From(scope.ExtractValueFromPath(2));
         var assignments =
@@ -68,13 +82,6 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
                 "No role assignments found for the given subscription and object ID.");
-            return false;
-        }
-
-        if (requiredPermissions.Length == 0)
-        {
-            logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
-                "No permissions defined for the endpoint.");
             return false;
         }
 

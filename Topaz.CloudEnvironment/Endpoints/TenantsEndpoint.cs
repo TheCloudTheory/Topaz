@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.CloudEnvironment.Models.Responses;
 using Topaz.Service.Shared;
@@ -28,5 +29,6 @@ internal sealed class TenantsEndpoint : IEndpointDefinition
 
         var metadata = new ListTenantsResponse(options.TenantId.Value);
         response.Content = new StringContent(metadata.ToString());
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
 }

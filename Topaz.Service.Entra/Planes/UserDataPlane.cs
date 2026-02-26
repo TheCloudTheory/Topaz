@@ -78,7 +78,7 @@ internal sealed class UserDataPlane(EntraResourceProvider provider, ITopazLogger
                 : new DataPlaneOperationResult<User>(OperationResult.Success, user, null, null);
         }
 
-        user = JsonSerializer.Deserialize<User>(File.ReadAllText(entityPath));
+        user = JsonSerializer.Deserialize<User>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions);
         return new DataPlaneOperationResult<User>(OperationResult.Success, user, null, null);
     }
 
