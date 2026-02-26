@@ -24,18 +24,22 @@ public sealed class SubscriptionTool
         [Description("ID of the subscription to create.")]
         Guid subscriptionId,
         [Description("Name of the subscription to create.")]
-        string subscriptionName)
+        string subscriptionName,
+        [Description("Object ID of the user who will perform the operation. You can use empty GUID to indicate superadmin.")]
+        string objectId)
     {
-        await builder.AddTopaz(subscriptionId)
-            .AddSubscription(subscriptionId, subscriptionName);
+        await builder.AddTopaz(subscriptionId, objectId)
+            .AddSubscription(subscriptionId, subscriptionName, new AzureLocalCredential(objectId));
     }
     
     [McpServerTool]
     [Description("List available subscriptions in Topaz")]
     [UsedImplicitly]
-    public static async Task<List<Subscription>> ListSubscriptions()
+    public static async Task<List<Subscription>> ListSubscriptions(
+        [Description("Object ID of the user who will perform the operation. You can use empty GUID to indicate superadmin.")]
+        string objectId)
     {
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(objectId);
         var armClient = new ArmClient(credentials, Guid.Empty.ToString(), ArmClientOptions);
         var subscriptions = new List<Subscription>();
         
