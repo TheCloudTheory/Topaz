@@ -82,7 +82,7 @@ internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider gr
     
     public (OperationResult result, ResourceGroupResource[] resources) List(SubscriptionIdentifier subscriptionIdentifier)
     {
-        var resources = groupResourceProvider.List(subscriptionIdentifier, null);
+        var resources = groupResourceProvider.List(subscriptionIdentifier, null, filter: ".resource-group");
         var groups = resources
             .Select(r => JsonSerializer.Deserialize<ResourceGroupResource>(r, GlobalSettings.JsonOptions)!)
             .Where(g => g.Id.Contains(subscriptionIdentifier.Value.ToString())).ToArray();

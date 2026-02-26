@@ -13,7 +13,9 @@ public class ManagedIdentityTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
     private static readonly Guid SubscriptionId = Guid.Parse("B1C2D3E4-F5A6-4B7C-8D9E-123456789DEF");
-    private static GraphServiceClient GraphClient => new(new HttpClient(), null, "https://topaz.local.dev:8899");
+
+    private static GraphServiceClient GraphClient => new(new HttpClient(), new LocalGraphAuthenticationProvider(),
+        "https://topaz.local.dev:8899");
     
     private const string SubscriptionName = "sub-test-identity";
     private const string ResourceGroupName = "rg-test-identity";

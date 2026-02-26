@@ -91,28 +91,41 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return json;
     }
 
-    public IEnumerable<string> List(SubscriptionIdentifier? subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier, string? id = null, uint? lookForNoOfSegments = null)
+    public IEnumerable<string> List(SubscriptionIdentifier? subscriptionIdentifier,
+        ResourceGroupIdentifier? resourceGroupIdentifier, string? id = null, uint? lookForNoOfSegments = null, string? filter = null)
     {
-        var servicePath = string.IsNullOrWhiteSpace(id) ?
-            Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier))
-            : Path.Combine(BaseEmulatorPath, GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id);
-        
+        var servicePath = string.IsNullOrWhiteSpace(id)
+            ? Path.Combine(BaseEmulatorPath,
+                GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier))
+            : Path.Combine(BaseEmulatorPath,
+                GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id);
+
         if (!Directory.Exists(servicePath))
         {
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(List),$"Used `{servicePath}` to check if a service exists.");
-            _logger.LogWarning("Trying to list resources for a non-existing service. If you see this warning, make sure you created a service (e.g subscription) before accessing its data.");
-            
+            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(List),
+                $"Used `{servicePath}` to check if a service exists.");
+            _logger.LogWarning(
+                "Trying to list resources for a non-existing service. If you see this warning, make sure you created a service (e.g subscription) before accessing its data.");
+
             return [];
         }
-        
+
         // Add a parameter which will allow to explicitly say how many segments should be looked for.
         var metadataFiles = Directory.EnumerateFiles(servicePath, "metadata.json", SearchOption.AllDirectories);
         var servicePathSegments = TService.LocalDirectoryPath.Split("/");
-        var defaultLookForNoOfSegments = servicePathSegments.Length + 2; // Local path will contain two additional segments: root directory and metadata filename 
-        
-        _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(List),$"If lookForNoOfSegments parameter wasn't provided (was {lookForNoOfSegments}) will default to {defaultLookForNoOfSegments} segments lookup.");
-        
-        return metadataFiles.Where(file => file.Split("/").Length == (lookForNoOfSegments.HasValue ? lookForNoOfSegments.Value : defaultLookForNoOfSegments)).Select(File.ReadAllText);
+        var defaultLookForNoOfSegments =
+            servicePathSegments.Length +
+            2; // Local path will contain two additional segments: root directory and metadata filename 
+
+        _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(List),
+            $"If lookForNoOfSegments parameter wasn't provided (was {lookForNoOfSegments}) will default to {defaultLookForNoOfSegments} segments lookup.");
+
+        return metadataFiles
+            .Where(file =>
+                file.Split("/").Length ==
+                (lookForNoOfSegments.HasValue ? lookForNoOfSegments.Value : defaultLookForNoOfSegments)
+                && (filter == null || file.Contains(filter)))
+            .Select(File.ReadAllText);
     }
 
     public IEnumerable<T> ListAs<T>(SubscriptionIdentifier subscriptionIdentifier,
