@@ -19,6 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Topaz.Identity\Topaz.Identity.csproj" />
       <ProjectReference Include="..\Topaz.Service.Shared\Topaz.Service.Shared.csproj">
         <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
         <IncludeAssets>Topaz.Service.Shared.dll</IncludeAssets>

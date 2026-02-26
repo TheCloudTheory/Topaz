@@ -46,6 +46,13 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
                 "Token is for Microsoft Graph - skipping authorization. This behaviour may change in the future.");
             return true;
         }
+
+        if (validatedToken.Subject == Globals.GlobalAdminId)
+        {
+            logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
+                "Token is for global admin - skipping authorization.");
+            return true;
+        }
         
         var subscriptionIdentifier = SubscriptionIdentifier.From(scope.ExtractValueFromPath(2));
         var assignments =

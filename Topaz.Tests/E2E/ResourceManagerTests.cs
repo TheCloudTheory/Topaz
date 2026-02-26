@@ -22,7 +22,7 @@ public class ResourceManagerTests
         var subscriptionId = Guid.NewGuid();
         var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
-        using var topaz = new TopazArmClient();
+        using var topaz = new TopazArmClient(credentials);
         
         // Act
         await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
@@ -48,7 +48,7 @@ public class ResourceManagerTests
         var subscriptionId = Guid.NewGuid();
         var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
-        using var topaz = new TopazArmClient();
+        using var topaz = new TopazArmClient(credentials);
         await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
@@ -80,7 +80,7 @@ public class ResourceManagerTests
         var subscriptionId = Guid.NewGuid();
         var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
-        using var topaz = new TopazArmClient();
+        using var topaz = new TopazArmClient(credentials);
         await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
@@ -113,7 +113,7 @@ public class ResourceManagerTests
         var subscriptionId = Guid.NewGuid();
         var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
-        using var topaz = new TopazArmClient();
+        using var topaz = new TopazArmClient(credentials);
         await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
@@ -151,7 +151,7 @@ public class ResourceManagerTests
         var subscriptionId = Guid.NewGuid();
         var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
-        using var topaz = new TopazArmClient();
+        using var topaz = new TopazArmClient(credentials);
         await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,

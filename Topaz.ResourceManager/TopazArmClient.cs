@@ -1,16 +1,20 @@
+using System.ClientModel.Primitives;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
+using Azure.Core;
+using Topaz.Identity;
 using Topaz.Shared;
 
 namespace Topaz.ResourceManager;
 
-public sealed class TopazArmClient : IDisposable
+public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposable
 {
     private const ushort EmulatorPort = GlobalSettings.DefaultResourceManagerPort;
 
     private readonly HttpClient _httpClient = new()
     {
-        BaseAddress = new Uri($"https://topaz.local.dev:{EmulatorPort}/"),
+        BaseAddress = new Uri($"https://topaz.local.dev:{EmulatorPort}/")
     };
 
     /// <summary>
@@ -19,6 +23,9 @@ public sealed class TopazArmClient : IDisposable
     public async Task CreateSubscriptionAsync(Guid subscriptionId, string subscriptionName)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, $"subscriptions/{subscriptionId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+           (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+        
         var payload = new
         {
             SubscriptionName = subscriptionName,
