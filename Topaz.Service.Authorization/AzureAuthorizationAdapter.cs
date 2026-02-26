@@ -29,7 +29,7 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
             return false;
         }
 
-        if (token.StartsWith("SharedKey"))
+        if (token.StartsWith("SharedKey") || token.StartsWith("SharedAccessSignature"))
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
                 "Shared key token - skipping authorization as it's offloaded to the service.");
