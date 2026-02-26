@@ -11,11 +11,17 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
 {
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
     
-    public bool IsAuthorized(string[] requiredPermissions, string token, string scope)
+    public bool IsAuthorized(string[] requiredPermissions, string token, string scope, bool canBypass = false)
     {
         logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
             "Attempting to check authorization for {0} token against {1} permissions...", token,
             requiredPermissions.Length);
+
+        if (canBypass)
+        {
+            logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized), "Bypassing authorization.");
+            return true;
+        }
 
         if (string.IsNullOrWhiteSpace(token))
         {
@@ -51,7 +57,7 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
                 "Token is for global admin - skipping authorization.");
-            return true;
+            return true; 
         }
         
         var subscriptionIdentifier = SubscriptionIdentifier.From(scope.ExtractValueFromPath(2));

@@ -125,8 +125,10 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         
         try
         {
+            var canBypassAuthorization = !context.Request.Headers.ContainsKey("Authorization") &&
+                                         context.Request.Host.Host.EndsWith(".keyvault.topaz.local.dev");
             var isAuthorized = _authorizationAdapter.IsAuthorized(endpoint.Permissions,
-                context.Request.Headers["Authorization"].ToString(), context.Request.Path.Value);
+                context.Request.Headers["Authorization"].ToString(), context.Request.Path.Value, canBypassAuthorization);
             if (!isAuthorized)
             {
                 response.StatusCode = HttpStatusCode.Unauthorized;
