@@ -1,0 +1,70 @@
+@page "/subscriptions"
+@using Topaz.Portal.Models.Subscriptions
+@inject TopazClient TopazClient
+
+<h1>Subscriptions</h1>
+
+@if (_loading)
+{
+    <p>Loading…</p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger" role="alert">
+        @_error
+    </div>
+}
+else if (_subscriptions.Length == 0)
+{
+    <p>No subscriptions found.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle">
+            <thead>
+            <tr>
+                <th>Display name</th>
+                <th>Subscription ID</th>
+                <th class="text-muted">Resource ID</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var s in _subscriptions)
+            {
+                <tr>
+                    <td>@(s.DisplayName ?? "(no name)")</td>
+                    <td><code>@(s.SubscriptionId ?? "(unknown)")</code></td>
+                    <td class="text-muted"><small>@(s.Id ?? "")</small></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code
+{
+    private bool _loading = true;
+    private string? _error;
+    private SubscriptionDto[] _subscriptions = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var client = TopazClient;
+            var resp = await client.ListSubscriptions();
+            
+            _subscriptions = resp?.Value ?? [];
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load subscriptions: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

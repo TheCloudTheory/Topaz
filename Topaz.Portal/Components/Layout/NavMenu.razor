@@ -1,0 +1,96 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Topaz Portal</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Dashboard
+            </NavLink>
+        </div>
+
+        <!-- Core -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="subscriptions">
+                <span class="bi bi-collection-nav-menu" aria-hidden="true"></span> Subscriptions
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="resource-groups">
+                <span class="bi bi-folder2-open-nav-menu" aria-hidden="true"></span> Resource groups
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="portal/resource-manager">
+                <span class="bi bi-diagram-3-nav-menu" aria-hidden="true"></span> Resource Manager
+            </NavLink>
+        </div>
+
+        <!-- Identity + Access -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="portal/authorization">
+                <span class="bi bi-shield-lock-nav-menu" aria-hidden="true"></span> Authorization (RBAC)
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="portal/managed-identities">
+                <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Managed identities
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="portal/entra">
+                <span class="bi bi-people-nav-menu" aria-hidden="true"></span> Entra
+            </NavLink>
+        </div>
+
+        <!-- Security -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="portal/key-vault">
+                <span class="bi bi-key-nav-menu" aria-hidden="true"></span> Key Vault
+            </NavLink>
+        </div>
+
+        <!-- Integration -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="portal/event-hubs">
+                <span class="bi bi-broadcast-nav-menu" aria-hidden="true"></span> Event Hubs
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="portal/service-bus">
+                <span class="bi bi-inbox-nav-menu" aria-hidden="true"></span> Service Bus
+            </NavLink>
+        </div>
+
+        <!-- Storage -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="portal/storage">
+                <span class="bi bi-hdd-stack-nav-menu" aria-hidden="true"></span> Storage
+            </NavLink>
+        </div>
+
+        <!-- Networking -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="portal/virtual-networks">
+                <span class="bi bi-diagram-2-nav-menu" aria-hidden="true"></span> Virtual networks
+            </NavLink>
+        </div>
+
+        <!-- Observability -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="portal/insights">
+                <span class="bi bi-graph-up-nav-menu" aria-hidden="true"></span> Insights
+            </NavLink>
+        </div>
+    </nav>
+</div>

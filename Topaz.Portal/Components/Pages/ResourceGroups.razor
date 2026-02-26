@@ -1,0 +1,74 @@
+@page "/resource-groups"
+@using Topaz.Portal.Models.ResourceGroups
+@inject TopazClient TopazClient
+
+<h1>Resource groups</h1>
+
+@if (_loading)
+{
+    <p>Loading…</p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger" role="alert">
+        @_error
+    </div>
+}
+else if (_resourceGroups.Length == 0)
+{
+    <p>No resource groups found.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Location</th>
+                <th class="text-muted">Resource ID</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var rg in _resourceGroups)
+            {
+                <tr>
+                    <td>@(rg.Name ?? "(unknown)")</td>
+                    <td><code>@(rg.Location ?? "-")</code></td>
+                    <td class="text-muted"><small>@(rg.Id ?? "")</small></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code
+{
+    private bool _loading;
+    private string? _error;
+    private ResourceGroupDto[] _resourceGroups = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _error = null;
+        _resourceGroups = [];
+        _loading = true;
+        
+        try
+        {
+            var client = TopazClient;
+            var resp = await client.ListResourceGroups();
+
+            _resourceGroups = resp.Value ?? [];
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load resource groups: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

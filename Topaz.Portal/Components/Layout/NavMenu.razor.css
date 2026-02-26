@@ -1,0 +1,154 @@
+.navbar-toggler {
+    appearance: none;
+    cursor: pointer;
+    width: 3.5rem;
+    height: 2.5rem;
+    color: white;
+    position: absolute;
+    top: 0.5rem;
+    right: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.75rem rgba(255, 255, 255, 0.1);
+}
+
+.navbar-toggler:checked {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.top-row {
+    height: 3.5rem;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.navbar-brand {
+    font-size: 1.1rem;
+}
+
+.bi {
+    display: inline-block;
+    position: relative;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.75rem;
+    top: -1px;
+    background-size: cover;
+}
+
+.bi-house-door-fill-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-house-door-fill' viewBox='0 0 16 16'%3E%3Cpath d='M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5Z'/%3E%3C/svg%3E");
+}
+
+.bi-plus-square-fill-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-plus-square-fill' viewBox='0 0 16 16'%3E%3Cpath d='M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm6.5 4.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 1 0z'/%3E%3C/svg%3E");
+}
+
+.bi-list-nested-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-list-nested' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M4.5 11.5A.5.5 0 0 1 5 11h10a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 1 3h10a.5.5 0 0 1 0 1H1a.5.5 0 0 1-.5-.5z'/%3E%3C/svg%3E");
+}
+
+/* Topaz Portal service icons (simple inline SVGs) */
+.bi-collection-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M2 3.5A1.5 1.5 0 0 1 3.5 2h9A1.5 1.5 0 0 1 14 3.5v9A1.5 1.5 0 0 1 12.5 14h-9A1.5 1.5 0 0 1 2 12.5v-9Zm2 0.5h8v2H4V4Zm0 3h8v5H4V7Z'/%3E%3C/svg%3E");
+}
+
+.bi-folder2-open-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M1.5 4A1.5 1.5 0 0 1 3 2.5h3l1 1h6.5A1.5 1.5 0 0 1 15 5v1H2V4.5A.5.5 0 0 0 1.5 4Zm.7 3H15l-1.1 5.5A1.5 1.5 0 0 1 12.4 14H3.6a1.5 1.5 0 0 1-1.47-1.2L2.2 7Z'/%3E%3C/svg%3E");
+}
+
+.bi-diagram-3-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M6 2.5A1.5 1.5 0 0 1 7.5 1h1A1.5 1.5 0 0 1 10 2.5v1A1.5 1.5 0 0 1 8.5 5h-1A1.5 1.5 0 0 1 6 3.5v-1ZM3.5 11A1.5 1.5 0 0 1 2 9.5v-1A1.5 1.5 0 0 1 3.5 7h1A1.5 1.5 0 0 1 6 8.5v1A1.5 1.5 0 0 1 4.5 11h-1Zm8 0A1.5 1.5 0 0 1 10 9.5v-1A1.5 1.5 0 0 1 11.5 7h1A1.5 1.5 0 0 1 14 8.5v1A1.5 1.5 0 0 1 12.5 11h-1ZM8 5.2v1.2H4v.9h1v.9H4V9h4v1h1V9h4v-.8h-1v-.9h1v-.9H9V5.2H8Z'/%3E%3C/svg%3E");
+}
+
+.bi-shield-lock-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M8 1 2.5 3v4.6c0 3.1 2.1 5.8 5.5 7.4 3.4-1.6 5.5-4.3 5.5-7.4V3L8 1Zm0 6.2a1.6 1.6 0 0 1 1.6 1.6v1.7h.4c.3 0 .5.2.5.5v1.9c0 .3-.2.5-.5.5H6c-.3 0-.5-.2-.5-.5V11c0-.3.2-.5.5-.5h.4V8.8A1.6 1.6 0 0 1 8 7.2Zm.7 3.3V8.8a.7.7 0 1 0-1.4 0v1.7h1.4Z'/%3E%3C/svg%3E");
+}
+
+.bi-person-badge-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M4 2.5A1.5 1.5 0 0 1 5.5 1h5A1.5 1.5 0 0 1 12 2.5v11A1.5 1.5 0 0 1 10.5 15h-5A1.5 1.5 0 0 1 4 13.5v-11ZM8 7.6A1.7 1.7 0 1 0 8 4.2a1.7 1.7 0 0 0 0 3.4Zm-2.2 5c.5-1.3 1.6-2.1 2.2-2.1s1.7.8 2.2 2.1H5.8Z'/%3E%3C/svg%3E");
+}
+
+.bi-people-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M6.2 7.3a2 2 0 1 1 0-4 2 2 0 0 1 0 4ZM10.2 7.8a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2ZM2.7 12.8c.4-2 2-3.2 3.5-3.2s3.1 1.2 3.5 3.2H2.7Zm7.2-.1c-.1-.9-.5-1.7-1-2.3.4-.4.9-.6 1.3-.6 1.2 0 2.4 1 2.7 2.9H9.9Z'/%3E%3C/svg%3E");
+}
+
+.bi-key-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M10 1.5a4.5 4.5 0 0 0-4.4 5.4L1 11.5V15h3.5l1.2-1.2V12h1.8l1.2-1.2V9h1.3l.9-.9A4.5 4.5 0 0 0 10 1.5Zm0 2a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm1 .8a.7.7 0 1 0 0 1.4.7.7 0 0 0 0-1.4Z'/%3E%3C/svg%3E");
+}
+
+.bi-broadcast-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M8 9.6a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2ZM3.6 12.4a6 6 0 0 1 0-8.8l1.1 1.1a4.4 4.4 0 0 0 0 6.6l-1.1 1.1Zm8.8 0-1.1-1.1a4.4 4.4 0 0 0 0-6.6l1.1-1.1a6 6 0 0 1 0 8.8ZM1.8 14.2a8.5 8.5 0 0 1 0-12.4l1.1 1.1a6.9 6.9 0 0 0 0 10.2l-1.1 1.1Zm12.4 0-1.1-1.1a6.9 6.9 0 0 0 0-10.2l1.1-1.1a8.5 8.5 0 0 1 0 12.4Z'/%3E%3C/svg%3E");
+}
+
+.bi-inbox-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M2 2.5A1.5 1.5 0 0 1 3.5 1h9A1.5 1.5 0 0 1 14 2.5v9A1.5 1.5 0 0 1 12.5 13H10.6a2.6 2.6 0 0 1-5.2 0H3.5A1.5 1.5 0 0 1 2 11.5v-9ZM4 7h2l1 1h2l1-1h2V3H4v4Z'/%3E%3C/svg%3E");
+}
+
+.bi-hdd-stack-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M2 3.2C2 2 4.7 1 8 1s6 1 6 2.2S11.3 5.4 8 5.4 2 4.4 2 3.2Zm0 4C2 6 4.7 5 8 5s6 1 6 2.2S11.3 9.4 8 9.4 2 8.4 2 7.2Zm0 4C2 10 4.7 9 8 9s6 1 6 2.2S11.3 13.4 8 13.4 2 12.4 2 11.2Zm10.8.1a.7.7 0 1 0 0 1.4.7.7 0 0 0 0-1.4Z'/%3E%3C/svg%3E");
+}
+
+.bi-diagram-2-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M6 2.5A1.5 1.5 0 0 1 7.5 1h1A1.5 1.5 0 0 1 10 2.5v1A1.5 1.5 0 0 1 8.5 5h-1A1.5 1.5 0 0 1 6 3.5v-1ZM3.5 14A1.5 1.5 0 0 1 2 12.5v-1A1.5 1.5 0 0 1 3.5 10h1A1.5 1.5 0 0 1 6 11.5v1A1.5 1.5 0 0 1 4.5 14h-1Zm8 0A1.5 1.5 0 0 1 10 12.5v-1A1.5 1.5 0 0 1 11.5 10h1A1.5 1.5 0 0 1 14 11.5v1A1.5 1.5 0 0 1 12.5 14h-1ZM8 5.2v2.1H4.8v.9H8v1H4.8v.9H8V12h1V9.2h2.2v-.9H9V7.3h2.2v-.9H9V5.2H8Z'/%3E%3C/svg%3E");
+}
+
+.bi-graph-up-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M2 13.5V2.5c0-.3.2-.5.5-.5s.5.2.5.5v10.5H14c.3 0 .5.2.5.5s-.2.5-.5.5H2.5a.5.5 0 0 1-.5-.5Zm3.2-3.6 2.1-2.1 1.6 1.6 3.4-3.4.7.7-4.1 4.1-1.6-1.6-1.4 1.4-.7-.7Z'/%3E%3C/svg%3E");
+}
+
+.nav-item {
+    font-size: 0.9rem;
+    padding-bottom: 0.5rem;
+}
+
+.nav-item:first-of-type {
+    padding-top: 1rem;
+}
+
+.nav-item:last-of-type {
+    padding-bottom: 1rem;
+}
+
+.nav-item ::deep .nav-link {
+    color: #d7d7d7;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    line-height: 3rem;
+    width: 100%;
+}
+
+.nav-item ::deep a.active {
+    background-color: rgba(255,255,255,0.37);
+    color: white;
+}
+
+.nav-item ::deep .nav-link:hover {
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.nav-scrollable {
+    display: none;
+}
+
+.navbar-toggler:checked ~ .nav-scrollable {
+    display: block;
+}
+
+@media (min-width: 641px) {
+    .navbar-toggler {
+        display: none;
+    }
+
+    .nav-scrollable {
+        /* Never collapse the sidebar for wide screens */
+        display: block;
+
+        /* Allow sidebar to scroll for tall menus */
+        height: calc(100vh - 3.5rem);
+        overflow-y: auto;
+    }
+}
