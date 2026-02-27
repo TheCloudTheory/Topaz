@@ -5,22 +5,26 @@ namespace Topaz.Dns;
 
 public record GlobalDnsEntries
 {
-    public IDictionary<string, IDictionary<string, List<DnsEntry>>> Services { get; init; } = new Dictionary<string, IDictionary<string, List<DnsEntry>>>();
+    public IDictionary<string, IDictionary<string, List<DnsEntry>>> Services { get; init; } =
+        new Dictionary<string, IDictionary<string, List<DnsEntry>>>();
 
     private static ITopazLogger? _logger;
-    
-    public static ITopazLogger ConfigureLogger(ITopazLogger logger) => _logger = logger; 
 
-    public static void AddEntry(string serviceName, Guid subscriptionIdentifier, string? resourceGroupIdentifier, string instanceName)
+    public static ITopazLogger ConfigureLogger(ITopazLogger logger) => _logger = logger;
+
+    public static void AddEntry(string serviceName, Guid subscriptionIdentifier, string? resourceGroupIdentifier,
+        string instanceName)
     {
-        _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(AddEntry), "Adding entry for `{0}`, `{1}`, `{2}`...", serviceName, resourceGroupIdentifier!, instanceName);
-        
+        _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(AddEntry), "Adding entry for `{0}`, `{1}`, `{2}`...",
+            serviceName, resourceGroupIdentifier!, instanceName);
+
         var existingEntry = GetEntry(serviceName, instanceName);
         if (existingEntry != null)
         {
-            throw new InvalidOperationException($"Service {serviceName} entry with key {instanceName} already exists ({existingEntry.Value.subscription}:{existingEntry.Value.resourceGroup})");
+            throw new InvalidOperationException(
+                $"Service {serviceName} entry with key {instanceName} already exists ({existingEntry.Value.subscription}:{existingEntry.Value.resourceGroup})");
         }
-        
+
         var entries = GetDnsEntriesFromFile();
 
         if (entries == null) throw new InvalidOperationException();
@@ -36,24 +40,32 @@ public record GlobalDnsEntries
             }
             else
             {
-                value[GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier)] = [new DnsEntry
-                {
-                    Name = instanceName
-                }];
+                value[GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier)] =
+                [
+                    new DnsEntry
+                    {
+                        Name = instanceName
+                    }
+                ];
             }
         }
         else
         {
-            entries.Services[serviceName] = new  Dictionary<string, List<DnsEntry>>
+            entries.Services[serviceName] = new Dictionary<string, List<DnsEntry>>
             {
-                {GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier), [new DnsEntry
                 {
-                    Name = instanceName
-                }]}
+                    GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier), [
+                        new DnsEntry
+                        {
+                            Name = instanceName
+                        }
+                    ]
+                }
             };
         }
-        
-        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, JsonSerializer.Serialize(entries, GlobalSettings.JsonOptionsCli));
+
+        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath,
+            JsonSerializer.Serialize(entries, GlobalSettings.JsonOptionsCli));
     }
 
     private static GlobalDnsEntries? GetDnsEntriesFromFile()
@@ -70,9 +82,10 @@ public record GlobalDnsEntries
             : $"{subscriptionIdentifier}:{resourceGroupIdentifier}";
     }
 
-    public static (Guid subscription, string resourceGroup)? GetEntry(string serviceName, string instanceName)
+    public static (Guid subscription, string? resourceGroup)? GetEntry(string serviceName, string instanceName)
     {
-        _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(GetEntry), "Loading service `{0}` with key `{1}`...", serviceName, instanceName);
+        _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(GetEntry), "Loading service `{0}` with key `{1}`...",
+            serviceName, instanceName);
         var entries = GetDnsEntriesFromFile();
 
         if (entries == null) throw new InvalidOperationException();
@@ -83,10 +96,12 @@ public record GlobalDnsEntries
         }
 
         var existingEntry = globalServiceEntries
-            .SingleOrDefault(serviceEntries => serviceEntries.Value.SingleOrDefault(entry => entry.Name == instanceName) != null).Key;
+            .SingleOrDefault(serviceEntries =>
+                serviceEntries.Value.SingleOrDefault(entry => entry.Name == instanceName) != null).Key;
         if (string.IsNullOrWhiteSpace(existingEntry))
         {
-            _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(GetEntry), $"Service `{serviceName}` entry with key {instanceName} not found.");
+            _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(GetEntry),
+                $"Service `{serviceName}` entry with key {instanceName} not found.");
             return null;
         }
 
@@ -118,7 +133,7 @@ public record GlobalDnsEntries
 
             entry.SoftDeleted = true;
         }
-        
+
         if (string.IsNullOrWhiteSpace(instanceName) && string.IsNullOrWhiteSpace(resourceGroupIdentifier))
         {
             // If both the name of an instance and a resource group are null,
@@ -148,7 +163,7 @@ public record GlobalDnsEntries
                 }
             }
         }
-            
+
         var newEntries = JsonSerializer.Serialize(entries, GlobalSettings.JsonOptionsCli);
         File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, newEntries);
     }
@@ -156,19 +171,20 @@ public record GlobalDnsEntries
     public static bool IsSoftDeleted(string serviceName, string instanceName)
     {
         _logger?.LogDebug(nameof(IsSoftDeleted), $"Checking if {instanceName} is soft deleted...");
-        
+
         var entries = GetDnsEntriesFromFile();
 
         if (entries == null) throw new InvalidOperationException();
         if (!entries.Services.TryGetValue(serviceName, out var globalServiceEntries)) return false;
 
-        _logger?.LogDebug(nameof(IsSoftDeleted), $"Loading entries: {JsonSerializer.Serialize(globalServiceEntries, GlobalSettings.JsonOptionsCli)}");
-        
+        _logger?.LogDebug(nameof(IsSoftDeleted),
+            $"Loading entries: {JsonSerializer.Serialize(globalServiceEntries, GlobalSettings.JsonOptionsCli)}");
+
         var existingEntry = globalServiceEntries
             .SingleOrDefault(serviceEntries =>
                 serviceEntries.Value.SingleOrDefault(entry => entry.Name == instanceName) != null).Value
             .SingleOrDefault(entry => entry.Name == instanceName);
-        
+
         return existingEntry is { SoftDeleted: true };
     }
 
@@ -185,10 +201,11 @@ public record GlobalDnsEntries
             .SingleOrDefault(entry => entry.Name == instanceName);
 
         if (existingEntry == null) return;
-        
+
         existingEntry.SoftDeleted = false;
-        
-        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, JsonSerializer.Serialize(entries, GlobalSettings.JsonOptionsCli));
+
+        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath,
+            JsonSerializer.Serialize(entries, GlobalSettings.JsonOptionsCli));
     }
 }
 

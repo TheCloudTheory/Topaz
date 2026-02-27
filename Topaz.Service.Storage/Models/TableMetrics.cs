@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Azure.Data.Tables;
-
 namespace Topaz.Service.Storage.Models;
 
 public class TableMetrics

@@ -32,8 +32,8 @@ internal class KeyVaultResource
     public sealed override string Id { get; init; }
     public sealed override string Name { get; init; }
     public override string Type { get; init; } = "Microsoft.KeyVault/vaults";
-    public sealed override string Location { get; set; }
-    public sealed override IDictionary<string, string> Tags { get; set; }
+    public sealed override string? Location { get; set; }
+    public sealed override IDictionary<string, string>? Tags { get; set; }
     public override ResourceSku? Sku { get; init; }
     public override string? Kind { get; init; }
     public sealed override KeyVaultResourceProperties Properties { get; init; }

@@ -53,7 +53,7 @@ public class BlobEnumerationResult : IXmlSerializable
                 if (blob.Properties is not null)
                 {
                     writer.WriteStartElement("Properties");
-                    writer.WriteElementString("Last-Modified", blob.Properties.LastModified.ToString());
+                    writer.WriteElementString("Last-Modified", blob.Properties.LastModified);
                     writer.WriteElementString("Etag", blob.Properties.ETag.ToString());
                     writer.WriteEndElement();
                 }

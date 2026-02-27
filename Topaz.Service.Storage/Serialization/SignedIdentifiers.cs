@@ -4,18 +4,9 @@ using System.Xml.Serialization;
 
 namespace Topaz.Service.Storage.Serialization;
 
-public sealed class SignedIdentifiers : IXmlSerializable
+public sealed class SignedIdentifiers(TableSignedIdentifier[] identifiers) : IXmlSerializable
 {
-    public SignedIdentifiers()
-    {
-    }
-
-    public SignedIdentifiers(TableSignedIdentifier[] identifiers)
-    {
-        Identifiers = identifiers;
-    }
-    
-    public TableSignedIdentifier[]? Identifiers { get; set; }
+    private TableSignedIdentifier[]? Identifiers { get; } = identifiers;
 
     public XmlSchema? GetSchema()
     {
@@ -28,6 +19,8 @@ public sealed class SignedIdentifiers : IXmlSerializable
 
     public void WriteXml(XmlWriter writer)
     {
+        if (Identifiers is null) return;
+        
         foreach (var identifier in Identifiers)
         {
             writer.WriteStartElement("SignedIdentifier");
