@@ -1,6 +1,5 @@
-using System.Collections.ObjectModel;
+using Azure.Deployments.Core.Components;
 using Azure.Deployments.Core.Configuration;
-using Azure.Deployments.Core.Definitions.Extensibility;
 using Azure.Deployments.Core.Definitions.Schema;
 using Azure.Deployments.Core.Diagnostics;
 using Azure.Deployments.Templates.Engines;
@@ -25,14 +24,17 @@ internal sealed class ArmTemplateEngineFacade
         ResourceGroupIdentifier resourceGroupIdentifier, Template template,
         InsensitiveDictionary<JToken> metadataInsensitive, BinaryData? propertiesParameters)
     {
-        var inputParameters = propertiesParameters == null || propertiesParameters.IsEmpty ? InsensitiveDictionary<JToken>.Empty :
-            propertiesParameters?.ToObjectFromJson<Dictionary<string, CreateDeploymentRequest.ParameterValue>>(
-                GlobalSettings.JsonOptions).ToInsensitiveDictionary(meta => meta.Key, meta => JToken.Parse(meta.Value.ToString()));
-        
+        var inputParameters = propertiesParameters == null || propertiesParameters.IsEmpty
+            ? InsensitiveDictionary<JToken>.Empty
+            : propertiesParameters?.ToObjectFromJson<Dictionary<string, CreateDeploymentRequest.ParameterValue>>(
+                    GlobalSettings.JsonOptions)
+                .ToInsensitiveDictionary(meta => meta.Key, meta => JToken.Parse(meta.Value.ToString()));
+
         TemplateEngine.ProcessTemplateLanguageExpressions("topaz", subscriptionIdentifier.Value.ToString(),
             resourceGroupIdentifier.Value, template, "", inputParameters!,
             metadataInsensitive,
-            TemplateFunctionProviders.GetProviders(),
+            new PreprocessingTemplateExtensionResolver(template, null, null,
+                new FactBasedExtensionConfigSchemaDirectoryFactory().GetOrCreateDirectory()),
             new TemplateMetricsRecorder(), InsensitiveDictionary<JToken>.Empty);
     }
 

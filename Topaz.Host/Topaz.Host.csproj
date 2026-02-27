@@ -26,9 +26,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AMQPNetLite" Version="2.4.11" />
-    <PackageReference Include="Microsoft.AspNetCore" Version="2.3.0" />
-    <PackageReference Include="Microsoft.Azure.Amqp" Version="2.6.11" />
+    <PackageReference Include="AMQPNetLite" Version="2.5.1" />
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.3.9" />
+    <PackageReference Include="Microsoft.Azure.Amqp" Version="2.7.0" />
+    <PackageReference Update="Nerdbank.GitVersioning">
+      <Version>3.9.50</Version>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

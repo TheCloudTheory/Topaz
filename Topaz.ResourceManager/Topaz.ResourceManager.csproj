@@ -15,7 +15,10 @@
     </Target>
 
     <ItemGroup>
-      <PackageReference Include="Azure.ResourceManager" Version="1.13.1" />
+      <PackageReference Include="Azure.ResourceManager" Version="1.14.0" />
+      <PackageReference Update="Nerdbank.GitVersioning">
+        <Version>3.9.50</Version>
+      </PackageReference>
     </ItemGroup>
 
     <ItemGroup>

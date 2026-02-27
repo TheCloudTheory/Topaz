@@ -8,9 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.17.0" />
+    <PackageReference Include="Azure.Identity" Version="1.18.0" />
     <PackageReference Include="Microsoft.Kiota.Abstractions" Version="1.21.3" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.16.0" />
+    <PackageReference Update="Nerdbank.GitVersioning">
+      <Version>3.9.50</Version>
+    </PackageReference>
   </ItemGroup>
 
   <Target Name="SetNuGetManifestProperties" DependsOnTargets="GetBuildVersion">

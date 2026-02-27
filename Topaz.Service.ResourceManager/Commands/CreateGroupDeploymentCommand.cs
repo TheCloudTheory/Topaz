@@ -38,7 +38,7 @@ public class CreateGroupDeploymentCommand(Pipeline eventPipeline, ITopazLogger l
         var deploymentName = DetermineDeploymentName(settings);
         var deployment = controlPlane.CreateOrUpdateDeployment(resourceGroupOperation.Resource.GetSubscription(),
             resourceGroupIdentifier, deploymentName, fakeRequest, null,
-            resourceGroupOperation.Resource.Location, settings.Mode.ToString());
+            resourceGroupOperation.Resource.Location!, settings.Mode.ToString());
 
         logger.LogInformation(deployment.resource.ToString());
 

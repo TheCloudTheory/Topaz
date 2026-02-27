@@ -18,8 +18,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Azure.Deployments.Templates" Version="1.527.0" />
+      <PackageReference Include="Azure.Deployments.Templates" Version="1.590.0" />
       <PackageReference Include="Azure.ResourceManager.Resources" Version="1.11.2" />
+      <PackageReference Update="Nerdbank.GitVersioning">
+        <Version>3.9.50</Version>
+      </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
