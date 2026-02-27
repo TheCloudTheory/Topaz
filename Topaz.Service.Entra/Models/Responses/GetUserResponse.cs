@@ -3,9 +3,9 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Entra.Models.Responses;
 
-public sealed class GetUserResponse
+internal sealed class GetUserResponse
 {
-    public string Id => Guid.NewGuid().ToString();
+    public string? Id { get; set; }
 
     public string[] BusinessPhones { get; set; } = [];
 
@@ -46,4 +46,31 @@ public sealed class GetUserResponse
     public string? EmployeeId { get; set; }
 
     public override string ToString() => JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
+
+    public static GetUserResponse From(User operationResource)
+    {
+        return new GetUserResponse
+        {
+            Id = operationResource.Id,
+            BusinessPhones = operationResource.BusinessPhones,
+            DisplayName = operationResource.DisplayName,
+            GivenName = operationResource.GivenName,
+            Surname = operationResource.Surname,
+            Mail = operationResource.Mail,
+            UserPrincipalName = operationResource.UserPrincipalName,
+            MailNickname = operationResource.MailNickname,
+            JobTitle = operationResource.JobTitle,
+            MobilePhone = operationResource.MobilePhone,
+            OfficeLocation = operationResource.OfficeLocation,
+            PreferredLanguage = operationResource.PreferredLanguage,
+            AccountEnabled = operationResource.AccountEnabled,
+            CreatedDateTime = operationResource.CreatedDateTime,
+            OtherMails = operationResource.OtherMails ?? [],
+            OnPremisesSamAccountName = operationResource.OnPremisesSamAccountName,
+            OnPremisesImmutableId = operationResource.OnPremisesImmutableId,
+            Department = operationResource.Department,
+            CompanyName = operationResource.CompanyName,
+            EmployeeId = operationResource.EmployeeId,
+        };
+    }
 }

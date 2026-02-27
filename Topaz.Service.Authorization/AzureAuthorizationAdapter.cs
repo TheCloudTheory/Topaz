@@ -1,3 +1,5 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Topaz.EventPipeline;
 using Topaz.Identity;
 using Topaz.Service.Authorization.Domain;
@@ -11,7 +13,7 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
 {
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
     
-    public bool IsAuthorized(string[] requiredPermissions, string token, string scope, bool canBypass = false)
+    public (bool isAuthorized, ClaimsPrincipal? principal) IsAuthorized(string[] requiredPermissions, string token, string scope, bool canBypass = false)
     {
         logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
             "Attempting to check authorization for {0} token against {1} permissions...", token,
@@ -21,33 +23,33 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
                 "No permissions defined for the endpoint. It's treated as a public endpoint.");
-            return true;
+            return (true, null);
         }
 
         if (canBypass)
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized), "Bypassing authorization.");
-            return true;
+            return (true, null);
         }
 
         if (string.IsNullOrWhiteSpace(token))
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized), "No token provided.");
-            return false;
+            return (false, null);
         }
 
         if (token.StartsWith("SharedKey") || token.StartsWith("SharedAccessSignature"))
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
                 "Shared key token - skipping authorization as it's offloaded to the service.");
-            return true;
+            return (true, null);;
         }
         
         var validatedToken = JwtHelper.ValidateJwt(token);
         if (validatedToken == null)
         {
             logger.LogError(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized), "Invalid token.");
-            return false;
+            return (false, null);;
         }
 
         logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
@@ -57,21 +59,21 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
                 "Token is for Microsoft Graph - skipping authorization. This behaviour may change in the future.");
-            return true;
+            return (true, GetClaimsPrincipal(validatedToken));
         }
 
         if (validatedToken.Subject == Globals.GlobalAdminId)
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
                 "Token is for global admin - skipping authorization.");
-            return true; 
+            return (true, GetClaimsPrincipal(validatedToken)); 
         }
 
         if (!scope.Contains("/subscriptions/"))
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
                 "Scope does not contain `/subscriptions/` - skipping authorization.");
-            return true;
+            return (true, GetClaimsPrincipal(validatedToken));
         }
         
         var subscriptionIdentifier = SubscriptionIdentifier.From(scope.ExtractValueFromPath(2));
@@ -82,7 +84,7 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
                 "No role assignments found for the given subscription and object ID.");
-            return false;
+            return (true, GetClaimsPrincipal(validatedToken));
         }
 
         foreach (var assignment in assignments.Resource)
@@ -102,11 +104,18 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
             
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
                 "Found required permissions in role definition: {0}", definition.Resource.Id);
-            return true;
+            return (true, GetClaimsPrincipal(validatedToken));
         }
         
         logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
             "No required permissions found in any role definition for the given subscription and object ID.");
-        return false;
+        return (false, null);
+    }
+
+    private static ClaimsPrincipal GetClaimsPrincipal(JwtSecurityToken validatedToken)
+    {
+        return new ClaimsPrincipal(new ClaimsIdentity([
+            new Claim(ClaimTypes.NameIdentifier, validatedToken.Subject)
+        ]));
     }
 }

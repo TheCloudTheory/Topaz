@@ -30,7 +30,8 @@ Topaz offers a simplified DevEx by tightly integrating with moderns and popular 
 * Emulation of Azure RBAC
 
 There's also a backlog of features planned for future releases:
-* UI for easier management of resources
+* UI for easier management of resources (in progress)
+* Chaos testing
 
 ## Alternatives
 If you want to work with emulators for Azure services, you have a couple of options:

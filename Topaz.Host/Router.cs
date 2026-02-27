@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
@@ -127,14 +128,16 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         {
             var canBypassAuthorization = !context.Request.Headers.ContainsKey("Authorization") &&
                                          context.Request.Host.Host.EndsWith(".keyvault.topaz.local.dev");
-            var isAuthorized = _authorizationAdapter.IsAuthorized(endpoint.Permissions,
+            var (isAuthorized, principal) = _authorizationAdapter.IsAuthorized(endpoint.Permissions,
                 context.Request.Headers["Authorization"].ToString(), context.Request.Path.Value, canBypassAuthorization);
+            
             if (!isAuthorized)
             {
                 response.StatusCode = HttpStatusCode.Unauthorized;
                 return response;
             }
-            
+
+            context.User = principal;
             endpoint.GetResponse(context, response, options);
         }
         catch(Exception ex)
