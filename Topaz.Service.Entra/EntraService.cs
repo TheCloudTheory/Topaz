@@ -28,6 +28,9 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
         new DeleteServicePrincipalEndpoint(logger),
         new UpdateServicePrincipalEndpoint(logger),
         new ListApplicationsEndpoint(logger),
+        new CreateApplicationEndpoint(logger),
+        new UpdateApplicationEndpoint(logger),
+        new DeleteApplicationEndpoint(logger),
     ];
 
     public void Bootstrap()

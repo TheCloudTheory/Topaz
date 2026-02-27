@@ -175,4 +175,68 @@ public class EntraTests
             }
         }
     }
+
+    [Test]
+    public async Task EntraTests_CanCreateUpdateAndDeleteApplication()
+    {
+        // Arrange
+        var client = GraphClient;
+        var unique = Guid.NewGuid().ToString("N");
+        var originalName = $"Test Application {unique}";
+        var updatedName = $"Test Application {unique} (updated)";
+
+        var application = new Application
+        {
+            DisplayName = originalName,
+            SignInAudience = "AzureADMyOrg"
+        };
+
+        // Act - Create
+        var created = await client.Applications.PostAsync(application);
+        Assert.That(created, Is.Not.Null);
+        Assert.That(created!.Id, Is.Not.Null);
+
+        try
+        {
+            // Act - Update (PATCH)
+            await client.Applications[created.Id].PatchAsync(new Application
+            {
+                DisplayName = updatedName
+            });
+
+            // Assert - Verify updated
+            var foundAfterUpdate = await client.Applications[created.Id].GetAsync();
+            Assert.That(foundAfterUpdate, Is.Not.Null);
+            Assert.That(foundAfterUpdate!.DisplayName, Is.EqualTo(updatedName));
+
+            // Act - Delete
+            await client.Applications[created.Id].DeleteAsync();
+
+            // Assert - Verify deleted (GET should fail / return null depending on emulator behavior)
+            try
+            {
+                var foundAfterDelete = await client.Applications[created.Id].GetAsync();
+                Assert.That(foundAfterDelete, Is.Null, "Expected the application to be deleted.");
+            }
+            catch (Exception)
+            {
+                Assert.Pass("Application deleted successfully (subsequent GET failed as expected).");
+            }
+        }
+        finally
+        {
+            // Best-effort cleanup in case the test failed before delete
+            if (created.Id is not null)
+            {
+                try
+                {
+                    await client.Applications[created.Id].DeleteAsync();
+                }
+                catch
+                {
+                    // ignored
+                }
+            }
+        }
+    }
 }

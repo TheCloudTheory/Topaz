@@ -1,4 +1,6 @@
 using System.Text.Json;
+using Topaz.Service.Entra.Domain;
+using Topaz.Service.Entra.Models.Requests;
 using Topaz.Shared;
 
 namespace Topaz.Service.Entra.Models;
@@ -6,47 +8,47 @@ namespace Topaz.Service.Entra.Models;
 internal class Application : DirectoryObject
 {
     // Core
-    public AddInData[]? AddIns { get; init; }
-    public ApiApplicationData? Api { get; init; }
+    public AddInData[]? AddIns { get; set; }
+    public ApiApplicationData? Api { get; set; }
     public string? AppId { get; init; }
     public string? ApplicationTemplateId { get; init; }
-    public AppRoleData[]? AppRoles { get; init; }
+    public AppRoleData[]? AppRoles { get; set; }
     public DateTimeOffset? CreatedDateTime { get; init; }
     public DirectoryObject? CreatedOnBehalfOf { get; init; }
     public string? DefaultRedirectUri { get; init; }
-    public string? Description { get; init; }
+    public string? Description { get; set; }
     public string? DisabledByMicrosoftStatus { get; init; }
-    public string? DisplayName { get; init; }
-    public string? GroupMembershipClaims { get; init; }
-    public string[]? IdentifierUris { get; init; }
+    public string? DisplayName { get; set; }
+    public string? GroupMembershipClaims { get; set; }
+    public string[]? IdentifierUris { get; set; }
 
     // Info / UX
-    public InformationalUrlData? Info { get; init; }
+    public InformationalUrlData? Info { get; set; }
     public bool? IsDeviceOnlyAuthSupported { get; init; }
-    public bool? IsFallbackPublicClient { get; init; }
+    public bool? IsFallbackPublicClient { get; set; }
     public byte[]? Logo { get; init; }
-    public string? Notes { get; init; }
+    public string? Notes { get; set; }
     public bool? Oauth2RequirePostResponse { get; init; }
 
     // Claims / auth configuration
-    public OptionalClaimsData? OptionalClaims { get; init; }
-    public ParentalControlSettingsData? ParentalControlSettings { get; init; }
-    public PublicClientApplicationData? PublicClient { get; init; }
+    public OptionalClaimsData? OptionalClaims { get; set; }
+    public ParentalControlSettingsData? ParentalControlSettings { get; set; }
+    public PublicClientApplicationData? PublicClient { get; set; }
     public string? PublisherDomain { get; init; }
     public VerifiedPublisherData? VerifiedPublisher { get; init; }
-    public RequiredResourceAccessData[]? RequiredResourceAccess { get; init; }
+    public RequiredResourceAccessData[]? RequiredResourceAccess { get; set; }
     public string? SamlMetadataUrl { get; init; }
     public string? ServiceManagementReference { get; init; }
-    public string? SignInAudience { get; init; }
-    public SpaApplicationData? Spa { get; init; }
-    public string[]? Tags { get; init; }
-    public string? TokenEncryptionKeyId { get; init; }
+    public string? SignInAudience { get; set; }
+    public SpaApplicationData? Spa { get; set; }
+    public string[]? Tags { get; set; }
+    public string? TokenEncryptionKeyId { get; set; }
     public string? UniqueName { get; init; }
-    public WebApplicationData? Web { get; init; }
+    public WebApplicationData? Web { get; set; }
 
     // Credentials
-    public KeyCredentialData[]? KeyCredentials { get; init; }
-    public PasswordCredentialData[]? PasswordCredentials { get; init; }
+    public KeyCredentialData[]? KeyCredentials { get; set; }
+    public PasswordCredentialData[]? PasswordCredentials { get; set; }
 
     // Misc (as documented on the Graph resource)
     public CertificationData? Certification { get; init; }
@@ -215,5 +217,287 @@ internal class Application : DirectoryObject
     public override string ToString()
     {
         return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
+    }
+
+    public static Application FromRequest(ApplicationIdentifier applicationIdentifier, CreateApplicationRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return new Application
+        {
+            // Entity / DirectoryObject
+            Id = Guid.NewGuid().ToString(),
+            DeletedDateTime = null,
+
+            // Core
+            AddIns = request.AddIns,
+            Api = request.Api,
+            AppId = applicationIdentifier.Value,
+            ApplicationTemplateId = request.ApplicationTemplateId,
+            AppRoles = request.AppRoles,
+            CreatedDateTime = DateTimeOffset.UtcNow,
+            CreatedOnBehalfOf = request.CreatedOnBehalfOf,
+            DefaultRedirectUri = request.DefaultRedirectUri,
+            Description = request.Description,
+            DisabledByMicrosoftStatus = request.DisabledByMicrosoftStatus,
+            DisplayName = request.DisplayName,
+            GroupMembershipClaims = request.GroupMembershipClaims,
+            IdentifierUris = request.IdentifierUris,
+
+            // Info / UX
+            Info = request.Info,
+            IsDeviceOnlyAuthSupported = request.IsDeviceOnlyAuthSupported,
+            IsFallbackPublicClient = request.IsFallbackPublicClient,
+            Logo = request.Logo,
+            Notes = request.Notes,
+            Oauth2RequirePostResponse = request.Oauth2RequirePostResponse,
+
+            // Claims / auth configuration
+            OptionalClaims = request.OptionalClaims,
+            ParentalControlSettings = request.ParentalControlSettings,
+            PublicClient = request.PublicClient,
+            PublisherDomain = request.PublisherDomain,
+            VerifiedPublisher = request.VerifiedPublisher,
+            RequiredResourceAccess = request.RequiredResourceAccess,
+            SamlMetadataUrl = request.SamlMetadataUrl,
+            ServiceManagementReference = request.ServiceManagementReference,
+            SignInAudience = request.SignInAudience,
+            Spa = request.Spa,
+            Tags = request.Tags,
+            TokenEncryptionKeyId = request.TokenEncryptionKeyId,
+            UniqueName = request.UniqueName,
+            Web = request.Web,
+
+            // Credentials
+            KeyCredentials = request.KeyCredentials,
+            PasswordCredentials = request.PasswordCredentials,
+
+            // Misc
+            Certification = request.Certification,
+            RequestSignatureVerification = request.RequestSignatureVerification
+        };
+    }
+
+    public void UpdateFrom(UpdateApplicationRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        // Simple scalars / collections
+        if (request.DisplayName is not null) DisplayName = request.DisplayName;
+        if (request.Description is not null) Description = request.Description;
+        if (request.SignInAudience is not null) SignInAudience = request.SignInAudience;
+        if (request.IdentifierUris is not null) IdentifierUris = request.IdentifierUris;
+        if (request.GroupMembershipClaims is not null) GroupMembershipClaims = request.GroupMembershipClaims;
+        if (request.Tags is not null) Tags = request.Tags;
+        if (request.Notes is not null) Notes = request.Notes;
+
+        // Complex shapes (replace-as-a-whole, which matches typical PATCH semantics for nested objects)
+        if (request.AddIns is not null)
+        {
+            AddIns = request.AddIns
+                .Select(a => new AddInData
+                {
+                    Id = a.Id,
+                    Type = a.Type,
+                    Properties = a.Properties
+                })
+                .ToArray();
+        }
+
+        if (request.Api is not null)
+        {
+            Api = new ApiApplicationData
+            {
+                KnownClientApplications = request.Api.KnownClientApplications,
+                RequestedAccessTokenVersion = request.Api.RequestedAccessTokenVersion,
+                AcceptMappedClaims = request.Api.AcceptMappedClaims,
+                PreAuthorizedApplications = request.Api.PreAuthorizedApplications?
+                    .Select(p => new PreAuthorizedApplicationData
+                    {
+                        AppId = p.AppId,
+                        DelegatedPermissionIds = p.DelegatedPermissionIds
+                    })
+                    .ToArray(),
+                Oauth2PermissionScopes = request.Api.Oauth2PermissionScopes?
+                    .Select(s => new PermissionScopeData
+                    {
+                        Id = s.Id,
+                        AdminConsentDescription = s.AdminConsentDescription,
+                        AdminConsentDisplayName = s.AdminConsentDisplayName,
+                        IsEnabled = s.IsEnabled,
+                        Type = s.Type,
+                        UserConsentDescription = s.UserConsentDescription,
+                        UserConsentDisplayName = s.UserConsentDisplayName,
+                        Value = s.Value
+                    })
+                    .ToArray()
+            };
+        }
+
+        if (request.AppRoles is not null)
+        {
+            AppRoles = request.AppRoles
+                .Select(r => new AppRoleData
+                {
+                    Id = r.Id,
+                    AllowedMemberTypes = r.AllowedMemberTypes is null ? null : string.Join(",", r.AllowedMemberTypes),
+                    Description = r.Description,
+                    DisplayName = r.DisplayName,
+                    IsEnabled = r.IsEnabled,
+                    Origin = r.Origin,
+                    Value = r.Value
+                })
+                .ToArray();
+        }
+
+        if (request.Info is not null)
+        {
+            Info = new InformationalUrlData
+            {
+                LogoUrl = request.Info.LogoUrl,
+                MarketingUrl = request.Info.MarketingUrl,
+                PrivacyStatementUrl = request.Info.PrivacyStatementUrl,
+                SupportUrl = request.Info.SupportUrl,
+                TermsOfServiceUrl = request.Info.TermsOfServiceUrl
+            };
+        }
+
+        if (request.IsFallbackPublicClient is not null)
+        {
+            IsFallbackPublicClient = request.IsFallbackPublicClient;
+        }
+
+        if (request.OptionalClaims is not null)
+        {
+            OptionalClaims = new OptionalClaimsData
+            {
+                AccessToken = request.OptionalClaims.AccessToken?
+                    .Select(c => new OptionalClaimData
+                    {
+                        Name = c.Name,
+                        Source = c.Source,
+                        Essential = c.Essential,
+                        AdditionalProperties = c.AdditionalProperties
+                    })
+                    .ToArray(),
+                IdToken = request.OptionalClaims.IdToken?
+                    .Select(c => new OptionalClaimData
+                    {
+                        Name = c.Name,
+                        Source = c.Source,
+                        Essential = c.Essential,
+                        AdditionalProperties = c.AdditionalProperties
+                    })
+                    .ToArray(),
+                Saml2Token = request.OptionalClaims.Saml2Token?
+                    .Select(c => new OptionalClaimData
+                    {
+                        Name = c.Name,
+                        Source = c.Source,
+                        Essential = c.Essential,
+                        AdditionalProperties = c.AdditionalProperties
+                    })
+                    .ToArray()
+            };
+        }
+
+        if (request.ParentalControlSettings is not null)
+        {
+            ParentalControlSettings = new ParentalControlSettingsData
+            {
+                CountriesBlockedForMinors = request.ParentalControlSettings.CountriesBlockedForMinors,
+                LegalAgeGroupRule = request.ParentalControlSettings.LegalAgeGroupRule
+            };
+        }
+
+        if (request.PublicClient is not null)
+        {
+            PublicClient = new PublicClientApplicationData
+            {
+                RedirectUris = request.PublicClient.RedirectUris
+            };
+        }
+
+        if (request.RequiredResourceAccess is not null)
+        {
+            RequiredResourceAccess = request.RequiredResourceAccess
+                .Select(rra => new RequiredResourceAccessData
+                {
+                    ResourceAppId = rra.ResourceAppId,
+                    ResourceAccess = rra.ResourceAccess?
+                        .Select(ra => new ResourceAccessData
+                        {
+                            Id = ra.Id,
+                            Type = ra.Type
+                        })
+                        .ToArray()
+                })
+                .ToArray();
+        }
+
+        if (request.Spa is not null)
+        {
+            Spa = new SpaApplicationData
+            {
+                RedirectUris = request.Spa.RedirectUris
+            };
+        }
+
+        if (request.Web is not null)
+        {
+            Web = new WebApplicationData
+            {
+                HomePageUrl = request.Web.HomePageUrl,
+                LogoutUrl = request.Web.LogoutUrl,
+                RedirectUris = request.Web.RedirectUris,
+                RedirectUriSettings = request.Web.RedirectUriSettings,
+                ImplicitGrantSettings = request.Web.ImplicitGrantSettings is null
+                    ? null
+                    : new ImplicitGrantSettingsData
+                    {
+                        EnableAccessTokenIssuance = request.Web.ImplicitGrantSettings.EnableAccessTokenIssuance,
+                        EnableIdTokenIssuance = request.Web.ImplicitGrantSettings.EnableIdTokenIssuance
+                    }
+            };
+        }
+
+        // Credentials / keys
+        if (request.KeyCredentials is not null)
+        {
+            KeyCredentials = request.KeyCredentials
+                .Select(kc => new KeyCredentialData
+                {
+                    CustomKeyIdentifier = kc.CustomKeyIdentifier,
+                    DisplayName = kc.DisplayName,
+                    EndDateTime = kc.EndDateTime,
+                    Key = kc.Key,
+                    KeyId = kc.KeyId,
+                    StartDateTime = kc.StartDateTime,
+                    Type = kc.Type,
+                    Usage = kc.Usage
+                })
+                .ToArray();
+        }
+
+        if (request.PasswordCredentials is not null)
+        {
+            PasswordCredentials = request.PasswordCredentials
+                .Select(pc => new PasswordCredentialData
+                {
+                    CustomKeyIdentifier = pc.CustomKeyIdentifier,
+                    DisplayName = pc.DisplayName,
+                    EndDateTime = pc.EndDateTime,
+                    Hint = pc.Hint,
+                    KeyId = pc.KeyId,
+                    SecretText = pc.SecretText,
+                    StartDateTime = pc.StartDateTime
+                })
+                .ToArray();
+        }
+
+        if (request.TokenEncryptionKeyId is not null)
+        {
+            TokenEncryptionKeyId = request.TokenEncryptionKeyId;
+        }
     }
 }
