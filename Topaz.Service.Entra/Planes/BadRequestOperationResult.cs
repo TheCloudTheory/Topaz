@@ -27,3 +27,27 @@ internal sealed class BadRequestOperationResult<TResource>(TResource? resource, 
             string.Format(NotFoundErrorMessage, servicePrincipalIdentifier.Value));
     }
 }
+
+internal sealed class BadRequestOperationResult(string reason) 
+    : DataPlaneOperationResult(OperationResult.BadRequest, reason, "Request_BadRequest")
+{
+    private const string DuplicateErrorMessage =
+        "Another object with the same value for property {0} already exists.";
+    private const string NotFoundErrorMessage =
+        "Resource '{0}' does not exist or one of its queried reference-property objects are not present.";
+    
+    public static BadRequestOperationResult ForDuplicate(string propertyName)
+    {
+        return new BadRequestOperationResult(string.Format(DuplicateErrorMessage, propertyName));
+    }
+
+    public static DataPlaneOperationResult ForNotFound(UserIdentifier userIdentifier)
+    {
+        return new BadRequestOperationResult(string.Format(NotFoundErrorMessage, userIdentifier.Value));
+    }
+    
+    public static DataPlaneOperationResult ForNotFound(ServicePrincipalIdentifier servicePrincipalIdentifier)
+    {
+        return new BadRequestOperationResult(string.Format(NotFoundErrorMessage, servicePrincipalIdentifier.Value));
+    }
+}

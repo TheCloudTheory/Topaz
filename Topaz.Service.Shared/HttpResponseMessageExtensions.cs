@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 namespace Topaz.Service.Shared;
@@ -49,5 +50,13 @@ public static class HttpResponseMessageExtensions
         }
 
         response.Content = JsonContent.Create(error);
+    }
+
+    public static void CreateJsonContentResponse(this HttpResponseMessage response, object resource,
+        HttpStatusCode code = HttpStatusCode.OK)
+    {
+        response.Content = new StringContent(resource.ToString()!);
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        response.StatusCode = code;
     }
 }

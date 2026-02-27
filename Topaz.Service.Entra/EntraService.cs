@@ -1,4 +1,5 @@
-﻿using Topaz.Service.Entra.Endpoints.ServicePrincipal;
+﻿using Topaz.Service.Entra.Endpoints.Applications;
+using Topaz.Service.Entra.Endpoints.ServicePrincipal;
 using Topaz.Service.Entra.Endpoints.User;
 using Topaz.Service.Entra.Models.Requests;
 using Topaz.Service.Entra.Planes;
@@ -25,6 +26,8 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
         new GetServicePrincipalEndpoint(logger),
         new CreateServicePrincipalEndpoint(logger),
         new DeleteServicePrincipalEndpoint(logger),
+        new UpdateServicePrincipalEndpoint(logger),
+        new ListApplicationsEndpoint(logger),
     ];
 
     public void Bootstrap()
@@ -34,14 +37,18 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
         var servicePath = Path.Combine(GlobalSettings.MainEmulatorDirectory, LocalDirectoryPath);
         var userPath = Path.Combine(servicePath, EntraResourceProvider.UsersDirectoryName);
         var servicePrincipalPath = Path.Combine(servicePath, EntraResourceProvider.ServicePrincipalsDirectoryName);
+        var applicationsPath = Path.Combine(servicePath, EntraResourceProvider.ApplicationsDirectoryName);
         var userDataPath = Path.Combine(userPath, "data");
         var servicePrincipalDataPath = Path.Combine(servicePrincipalPath, "data");
+        var applicationsDataPath = Path.Combine(applicationsPath, "data");
         
         CreateServiceDirectory(servicePath);
         CreateServiceDirectory(userPath);
         CreateServiceDirectory(userDataPath);
         CreateServiceDirectory(servicePrincipalPath);
         CreateServiceDirectory(servicePrincipalDataPath);
+        CreateServiceDirectory(applicationsPath);
+        CreateServiceDirectory(applicationsDataPath);
         
         logger.LogDebug(nameof(EntraService), nameof(Bootstrap),$"Entra service directory directory initialized.");
         

@@ -22,3 +22,20 @@ public class DataPlaneOperationResult<TResource>(
         return JsonSerializer.Serialize(this, GlobalSettings.JsonOptionsCli);
     }
 }
+
+public class DataPlaneOperationResult(
+    OperationResult result,
+    string? reason,
+    string? code)
+{
+    [JsonIgnore]
+    public OperationResult Result { get; } = result;
+    
+    public string? Reason { get; } = reason;
+    public string? Code { get; } = code;
+
+    public override string ToString()
+    {
+        return JsonSerializer.Serialize(this, GlobalSettings.JsonOptionsCli);
+    }
+}

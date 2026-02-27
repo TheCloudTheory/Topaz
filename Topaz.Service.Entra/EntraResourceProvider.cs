@@ -7,7 +7,8 @@ internal sealed class EntraResourceProvider(ITopazLogger logger) : ResourceProvi
 {
     internal const string UsersDirectoryName = "users";
     internal const string ServicePrincipalsDirectoryName = "service-principals";
-    
+    internal const string ApplicationsDirectoryName = "applications";
+
     public string GetServiceInstanceUsersDataPath()
     {
         return Path.Combine(BaseEmulatorPath, EntraService.LocalDirectoryPath, UsersDirectoryName, "data");
@@ -16,5 +17,10 @@ internal sealed class EntraResourceProvider(ITopazLogger logger) : ResourceProvi
     public string GetServiceInstanceServicePrincipalsDataPath()
     {
         return Path.Combine(BaseEmulatorPath, EntraService.LocalDirectoryPath, ServicePrincipalsDirectoryName, "data");
+    }
+    
+    public string GetServiceInstanceApplicationsDataPath()
+    {
+        return Path.Combine(BaseEmulatorPath, EntraService.LocalDirectoryPath, ApplicationsDirectoryName, "data");
     }
 }

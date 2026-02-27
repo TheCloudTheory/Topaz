@@ -69,8 +69,8 @@ internal sealed class ServicePrincipalDataPlane(EntraResourceProvider provider, 
     {
         logger.LogDebug(nameof(ServicePrincipalDataPlane), nameof(Delete), "Deleting a service principal `{0}`.", servicePrincipalIdentifier);
 
-        var existingUserOperation = Get(servicePrincipalIdentifier);
-        if (existingUserOperation.Result == OperationResult.NotFound || existingUserOperation.Resource == null)
+        var existingServicePrincipal = Get(servicePrincipalIdentifier);
+        if (existingServicePrincipal.Result == OperationResult.NotFound || existingServicePrincipal.Resource == null)
         {
             return BadRequestOperationResult<ServicePrincipal>.ForNotFound(servicePrincipalIdentifier);
         }
@@ -79,5 +79,24 @@ internal sealed class ServicePrincipalDataPlane(EntraResourceProvider provider, 
         File.Delete(entityPath);
         
         return new DataPlaneOperationResult<ServicePrincipal>(OperationResult.Deleted, null, null, null);
+    }
+
+    public DataPlaneOperationResult Update(ServicePrincipalIdentifier servicePrincipalIdentifier,
+        UpdateServicePrincipalRequest request)
+    {
+        logger.LogDebug(nameof(ServicePrincipalDataPlane), nameof(Update), "Updating a service principal `{0}`.", servicePrincipalIdentifier);
+        
+        var existingServicePrincipal = Get(servicePrincipalIdentifier);
+        if (existingServicePrincipal.Result == OperationResult.NotFound || existingServicePrincipal.Resource == null)
+        {
+            return BadRequestOperationResult.ForNotFound(servicePrincipalIdentifier);
+        }
+        
+        existingServicePrincipal.Resource.UpdateFrom(request);
+        
+        var entityPath = BuildLocalServicePrincipalEntityPath(servicePrincipalIdentifier);
+        File.WriteAllText(entityPath, existingServicePrincipal.Resource.ToString());
+
+        return new DataPlaneOperationResult(OperationResult.Updated, null, null);
     }
 }

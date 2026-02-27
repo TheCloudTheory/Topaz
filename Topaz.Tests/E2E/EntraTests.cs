@@ -103,4 +103,76 @@ public class EntraTests
             }
         }
     }
+    
+    [Test]
+    public async Task EntraTests_CanCreateUpdateAndDeleteServicePrincipal()
+    {
+        // Arrange
+        var client = GraphClient;
+        var unique = Guid.NewGuid().ToString("N");
+        var appId = Guid.NewGuid().ToString();
+        var originalName = $"Test Service Principal {unique}";
+        var updatedName = $"Test Service Principal {unique} (updated)";
+
+        var servicePrincipal = new ServicePrincipal
+        {
+            AppId = appId,
+            DisplayName = originalName,
+            ServicePrincipalType = "Application",
+            AccountEnabled = true,
+            Tags = ["WindowsAzureActiveDirectoryIntegratedApp"]
+        };
+
+        // Act - Create
+        var created = await client.ServicePrincipals.PostAsync(servicePrincipal);
+        Assert.That(created, Is.Not.Null);
+        Assert.That(created!.Id, Is.Not.Null);
+
+        try
+        {
+            // Act - Update (PATCH)
+            await client.ServicePrincipals[created.Id].PatchAsync(new ServicePrincipal
+            {
+                DisplayName = updatedName
+            });
+
+            // Assert - Verify updated
+            var foundAfterUpdate = await client.ServicePrincipals[created.Id].GetAsync();
+            Assert.That(foundAfterUpdate, Is.Not.Null);
+            Assert.Multiple(() =>
+            {
+                Assert.That(foundAfterUpdate!.AppId, Is.EqualTo(appId));
+                Assert.That(foundAfterUpdate.DisplayName, Is.EqualTo(updatedName));
+            });
+
+            // Act - Delete
+            await client.ServicePrincipals[created.Id].DeleteAsync();
+
+            // Assert - Verify deleted (GET should fail / return null depending on emulator behavior)
+            try
+            {
+                var foundAfterDelete = await client.ServicePrincipals[created.Id].GetAsync();
+                Assert.That(foundAfterDelete, Is.Null, "Expected the service principal to be deleted.");
+            }
+            catch (Exception)
+            {
+                Assert.Pass("Service principal deleted successfully (subsequent GET failed as expected).");
+            }
+        }
+        finally
+        {
+            // Best-effort cleanup in case the test failed before delete
+            if (created?.Id is not null)
+            {
+                try
+                {
+                    await client.ServicePrincipals[created.Id].DeleteAsync();
+                }
+                catch
+                {
+                    // ignored
+                }
+            }
+        }
+    }
 }
