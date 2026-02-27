@@ -84,7 +84,7 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
                 "No role assignments found for the given subscription and object ID.");
-            return (true, GetClaimsPrincipal(validatedToken));
+            return (false, null);
         }
 
         foreach (var assignment in assignments.Resource)
