@@ -48,7 +48,7 @@ internal class Application : DirectoryObject
 
     // Credentials
     public KeyCredentialData[]? KeyCredentials { get; set; }
-    public PasswordCredentialData[]? PasswordCredentials { get; set; }
+    public PasswordCredentialData[]? PasswordCredentials { get; set; } = [];
 
     // Misc (as documented on the Graph resource)
     public CertificationData? Certification { get; init; }
@@ -269,8 +269,8 @@ internal class Application : DirectoryObject
             Web = request.Web,
 
             // Credentials
-            KeyCredentials = request.KeyCredentials,
-            PasswordCredentials = request.PasswordCredentials,
+            KeyCredentials = request.KeyCredentials ?? [],
+            PasswordCredentials = request.PasswordCredentials ?? [],
 
             // Misc
             Certification = request.Certification,

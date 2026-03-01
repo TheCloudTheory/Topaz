@@ -121,7 +121,7 @@ public class TopazFixture
             $"`{command}` command failed. STDOUT: {result.Stdout}, STDERR: {result.Stderr}");
         
         Console.WriteLine(result.Stdout);
-
+ 
         assertion?.Invoke(JsonNode.Parse(result.Stdout)!);
     }
 }
