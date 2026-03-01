@@ -9,6 +9,11 @@ namespace Topaz.Service.Entra.Planes;
 
 internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITopazLogger logger)
 {
+    public static ApplicationsDataPlane New(ITopazLogger topazLogger)
+    {
+        return new ApplicationsDataPlane(new EntraResourceProvider(topazLogger), topazLogger);
+    }
+    
     public DataPlaneOperationResult<Application[]> ListApplications()
     {
         logger.LogDebug(nameof(ApplicationsDataPlane), nameof(ListApplications), "Listing applications");
@@ -80,12 +85,13 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
         {
             logger.LogDebug(nameof(ServicePrincipalDataPlane), nameof(Get),
                 "Didn't find an application `{0}` so will perform a full search.", applicationIdentifier);
-            
+
             // Application entities are created using the generated appId, but they may
             // be fetched using their object ID
             var path = provider.GetServiceInstanceApplicationsDataPath();
             application = Directory.EnumerateFiles(path, "*.json")
-                .Select(file => JsonSerializer.Deserialize<Application>(File.ReadAllText(file), GlobalSettings.JsonOptions))
+                .Select(file =>
+                    JsonSerializer.Deserialize<Application>(File.ReadAllText(file), GlobalSettings.JsonOptions))
                 .SingleOrDefault(u => u?.Id == applicationIdentifier.Value);
 
             return application == null
@@ -102,8 +108,8 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
         logger.LogDebug(nameof(ApplicationsDataPlane), nameof(Delete), "Deleting an application `{0}`.",
             applicationIdentifier);
 
-        var existingServicePrincipal = Get(applicationIdentifier);
-        if (existingServicePrincipal.Result == OperationResult.NotFound || existingServicePrincipal.Resource == null)
+        var existingApplication = Get(applicationIdentifier);
+        if (existingApplication.Result == OperationResult.NotFound || existingApplication.Resource == null)
         {
             return BadRequestOperationResult.ForNotFound(applicationIdentifier);
         }
@@ -112,5 +118,31 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
         File.Delete(entityPath);
 
         return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
+    }
+
+    public DataPlaneOperationResult<Application.PasswordCredentialData> AddPassword(
+        ApplicationIdentifier applicationIdentifier, AddApplicationPasswordRequest request)
+    {
+        logger.LogDebug(nameof(ApplicationsDataPlane), nameof(AddPassword),
+            "Adding a password to an application `{0}`.",
+            applicationIdentifier);
+
+        var existingApplication = Get(applicationIdentifier);
+        if (existingApplication.Result == OperationResult.NotFound || existingApplication.Resource == null)
+        {
+            return BadRequestOperationResult<Application.PasswordCredentialData>.ForNotFound(applicationIdentifier);
+        }
+
+        var credentials = (existingApplication.Resource.PasswordCredentials ?? []).Concat(new[]
+        {
+            Application.PasswordCredentialData.From(request)
+        });
+
+        var updatedCredentials =
+            credentials as Application.PasswordCredentialData[] ?? credentials.ToArray();
+        existingApplication.Resource.PasswordCredentials = updatedCredentials.ToArray();
+
+        return new DataPlaneOperationResult<Application.PasswordCredentialData>(OperationResult.Created,
+            updatedCredentials.Last(), null, null);
     }
 }

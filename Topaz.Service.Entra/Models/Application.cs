@@ -198,6 +198,26 @@ internal class Application : DirectoryObject
         public Guid? KeyId { get; init; }
         public string? SecretText { get; init; }
         public DateTimeOffset? StartDateTime { get; init; }
+
+        public static PasswordCredentialData From(AddApplicationPasswordRequest request)
+        {
+            var password = PasswordEmulation.GenerateEntraLikeStrongPassword();
+            
+            return new PasswordCredentialData
+            {
+                DisplayName = request.DisplayName,
+                EndDateTime = request.EndDateTime,
+                Hint = password[..2],
+                KeyId = Guid.NewGuid(),
+                SecretText = password,
+                StartDateTime = request.StartDateTime,
+            };
+        }
+
+        public override string ToString()
+        {
+            return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
+        }
     }
 
     internal sealed class CertificationData

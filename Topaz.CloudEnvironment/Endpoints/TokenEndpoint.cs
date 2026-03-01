@@ -17,7 +17,8 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private const string Issuer = "https://topaz.local.dev:8899/organizations/v2.0";
     
-    private readonly UserDataPlane _dataPlane = UserDataPlane.New(logger);
+    private readonly UserDataPlane _userDataPlane = UserDataPlane.New(logger);
+    private readonly ApplicationsDataPlane _applicationsDataPlane = ApplicationsDataPlane.New(logger);
     
     public string[] Endpoints =>
     [
@@ -83,7 +84,7 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
         {
             logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse), "Looking up user `{0}`...", username);
             
-            var userOperation = _dataPlane.Get(UserIdentifier.From(username));
+            var userOperation = _userDataPlane.Get(UserIdentifier.From(username));
             if (userOperation.Resource == null || userOperation.Result != OperationResult.Success)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
@@ -100,6 +101,7 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
             var refreshToken = ExtractValueForToken(context, form, "refresh_token", null);
             if (refreshToken == null)
             {
+                logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract refresh token.");
                 response.StatusCode = HttpStatusCode.BadRequest;
                 return;
             }
@@ -107,6 +109,7 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
             var validatedToken = JwtHelper.ValidateJwt(refreshToken);
             if (validatedToken == null)
             {
+                logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not validate refresh token.");
                 response.StatusCode = HttpStatusCode.BadRequest;
                 return;
             }
@@ -114,8 +117,49 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
             objectId = validatedToken.Subject;
         }
 
+        if (grantType == "client_credentials")
+        {
+            logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse), "Extracting app ID and client secret from client credentials...");
+            
+            var clientSecret = ExtractValueForToken(context, form, "client_secret", null);
+            if (clientSecret == null)
+            {
+                logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract client secret.");
+                response.StatusCode = HttpStatusCode.BadRequest;
+                return;
+            }
+            
+            var appId = ExtractValueForToken(context, form, "client_id", null);
+            if (appId == null)
+            {
+                logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract app ID.");
+                response.StatusCode = HttpStatusCode.BadRequest;
+                return;
+            }
+            
+            var appOperation = _applicationsDataPlane.Get(ApplicationIdentifier.From(appId));
+            if (appOperation.Resource == null || appOperation.Result != OperationResult.Success)
+            {
+                logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not find app.");
+                response.StatusCode = HttpStatusCode.BadRequest;
+                return;
+            }
+
+            if (appOperation.Resource.PasswordCredentials!.All(credentials =>
+                    !string.Equals(Uri.EscapeDataString(credentials.SecretText!), clientSecret,
+                        StringComparison.Ordinal)))
+            {
+                logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Invalid client secret.");
+                response.StatusCode = HttpStatusCode.BadRequest;
+                return;
+            }
+
+            objectId = appOperation.Resource.Id;
+        }
+
         if (objectId == null)
         {
+            logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract object ID from request.");
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
@@ -134,8 +178,7 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                     : "openid profile offline_access")
         };
 
-        response.Content = new StringContent(token.ToString());
-        response.StatusCode = HttpStatusCode.OK;
+        response.CreateJsonContentResponse(token);
         return;
 
         static string CreateIdToken(string issuer, string audience, string? nonce)
