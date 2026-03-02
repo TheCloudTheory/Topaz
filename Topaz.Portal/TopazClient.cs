@@ -105,6 +105,33 @@ public class TopazClient
             Value = resourceGroups.ToArray()
         };
     }
+    
+    public async Task<ResourceGroupDto?> GetResourceGroup(Guid subscriptionId, string resourceGroupName,
+        CancellationToken cancellationToken = default)
+    {
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        if (string.IsNullOrWhiteSpace(resourceGroupName))
+            throw new ArgumentException("Resource group name is required.", nameof(resourceGroupName));
+
+        var subscription = await _armClient
+            .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}")).GetAsync(cancellationToken);
+        var rgResponse = await _armClient
+            .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
+            .GetResourceGroupAsync(resourceGroupName, cancellationToken);
+
+        var rg = rgResponse.Value;
+
+        return new ResourceGroupDto
+        {
+            Id = rg.Id.ToString(),
+            Name = rg.Data.Name,
+            Location = rg.Data.Location,
+            SubscriptionId = subscriptionId.ToString(),
+            SubscriptionName = subscription.Value.Data.DisplayName
+        };
+    }
 
     public async Task<ListDeploymentsResponse> ListDeployments(Guid subscriptionId, string resourceGroupName,
         CancellationToken cancellationToken = default)

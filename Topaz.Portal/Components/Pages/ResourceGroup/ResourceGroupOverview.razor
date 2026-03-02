@@ -1,0 +1,79 @@
+@* Topaz.Portal/Components/Pages/ResourceGroups/ResourceGroupOverview.razor *@
+@page "/resource-groups/{SubscriptionId:guid}/{ResourceGroupName}"
+@using System.Net
+@using Topaz.Portal.Models.ResourceGroups
+@inject TopazClient TopazClient
+
+<h1 class="mb-3">Resource group</h1>
+
+<ResourceGroupDetailsShell SubscriptionId="SubscriptionId" ResourceGroupName="@DecodedName">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_error is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @_error
+        </div>
+    }
+    else if (_rg is null)
+    {
+        <p class="mb-0">Resource group not found.</p>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Overview</h5>
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Name</dt>
+                    <dd class="col-sm-9">@(_rg.Name ?? "-")</dd>
+
+                    <dt class="col-sm-3">Location</dt>
+                    <dd class="col-sm-9"><code>@(_rg.Location ?? "-")</code></dd>
+                    
+                    <dt class="col-sm-3">Subscription ID</dt>
+                    <dd class="col-sm-9">@(_rg.SubscriptionId ?? "-")</dd>
+
+                    <dt class="col-sm-3">Subscription Name</dt>
+                    <dd class="col-sm-9">@( _rg.SubscriptionName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Resource ID</dt>
+                    <dd class="col-sm-9"><small class="text-muted">@(_rg.Id ?? "-")</small></dd>
+                </dl>
+            </div>
+        </div>
+    }
+</ResourceGroupDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _error;
+    private ResourceGroupDto? _rg;
+
+    private string DecodedName => WebUtility.UrlDecode(ResourceGroupName) ?? ResourceGroupName;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            _rg = await TopazClient.GetResourceGroup(SubscriptionId, DecodedName);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

@@ -1,0 +1,23 @@
+@* Topaz.Portal/Components/Pages/ResourceGroups/ResourceGroupIam.razor *@
+@page "/resource-groups/{SubscriptionId:guid}/{ResourceGroupName}/iam"
+@using System.Net
+
+<h1 class="mb-3">Resource group</h1>
+
+<ResourceGroupDetailsShell SubscriptionId="SubscriptionId" ResourceGroupName="@DecodedName">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title mb-3">IAM</h5>
+            <p class="mb-0 text-muted">
+                IAM view goes here (role assignments, role definitions, principals, etc.).
+            </p>
+        </div>
+    </div>
+</ResourceGroupDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+
+    private string DecodedName => WebUtility.UrlDecode(ResourceGroupName) ?? ResourceGroupName;
+}

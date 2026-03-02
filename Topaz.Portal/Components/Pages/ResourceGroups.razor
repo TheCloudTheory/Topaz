@@ -1,7 +1,9 @@
 @page "/resource-groups"
+@using System.Net
 @using Topaz.Portal.Models.ResourceGroups
 @using Topaz.Portal.Models.Subscriptions
 @inject TopazClient TopazClient
+@inject NavigationManager Nav
 
 <div class="d-flex align-items-center justify-content-between mb-3">
     <h1 class="mb-0">Resource groups</h1>
@@ -100,7 +102,18 @@
                             @foreach (var rg in FilteredResourceGroups)
                             {
                                 <tr>
-                                    <td>@(rg.Name ?? "(unknown)")</td>
+                                    <td>
+                                        @if (Guid.TryParse(rg.SubscriptionId, out var subId) && !string.IsNullOrWhiteSpace(rg.Name))
+                                        {
+                                            <a href="@GetResourceGroupHref(subId, rg.Name)">
+                                                @rg.Name
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            @(rg.Name ?? "(unknown)")
+                                        }
+                                    </td>
                                     <td>@(rg.SubscriptionName ?? "(unknown)")</td>
                                     <td><code>@(rg.Location ?? "-")</code></td>
                                     <td class="text-muted"><small>@(rg.Id ?? "")</small></td>
@@ -219,6 +232,9 @@
     {
         await LoadAsync();
     }
+
+    private string GetResourceGroupHref(Guid subscriptionId, string resourceGroupName)
+        => $"/resource-groups/{subscriptionId:D}/{WebUtility.UrlEncode(resourceGroupName)}";
 
     private async Task LoadAsync()
     {

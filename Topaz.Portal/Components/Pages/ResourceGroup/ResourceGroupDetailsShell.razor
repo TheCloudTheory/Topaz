@@ -1,0 +1,52 @@
+@* Topaz.Portal/Components/Pages/ResourceGroups/ResourceGroupDetailsShell.razor *@
+@using System.Net
+
+<div class="row g-3">
+    <div class="col-12 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="fw-semibold mb-2">Resource group</div>
+
+                <div class="small text-muted text-truncate" title="@ResourceGroupName">
+                    @ResourceGroupName
+                </div>
+
+                <hr />
+
+                <div class="list-group list-group-flush">
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@OverviewHref"
+                             Match="NavLinkMatch.All">
+                        Overview
+                    </NavLink>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@IamHref">
+                        IAM
+                    </NavLink>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@TagsHref">
+                        Tags
+                    </NavLink>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-9">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public RenderFragment ChildContent { get; set; } = default!;
+
+    private string EncodedName => WebUtility.UrlEncode(ResourceGroupName);
+
+    private string OverviewHref => $"/resource-groups/{SubscriptionId:D}/{EncodedName}";
+    private string IamHref => $"/resource-groups/{SubscriptionId:D}/{EncodedName}/iam";
+    private string TagsHref => $"/resource-groups/{SubscriptionId:D}/{EncodedName}/tags";
+}
