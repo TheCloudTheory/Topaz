@@ -1,66 +1,237 @@
 @page "/resource-groups"
 @using Topaz.Portal.Models.ResourceGroups
+@using Topaz.Portal.Models.Subscriptions
 @inject TopazClient TopazClient
 
-<h1>Resource groups</h1>
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="mb-0">Resource groups</h1>
 
-@if (_loading)
-{
-    <p>Loading…</p>
-}
-else if (_error is not null)
-{
-    <div class="alert alert-danger" role="alert">
-        @_error
+    <button class="btn btn-primary btn-sm"
+            @onclick="ToggleCreate"
+            disabled="@(_loading || _creatingBusy)">
+        New resource group
+    </button>
+</div>
+
+<div class="row g-3">
+    <div class="@(_showCreate ? "col-12 col-lg-8" : "col-12")">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <strong>Filter</strong>
+                        <span class="text-muted small">
+                            @(_selectedSubscriptionIds.Count == 0 ? "All subscriptions" : $"{_selectedSubscriptionIds.Count} selected")
+                        </span>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="ToggleFilter"
+                                disabled="@_loading">
+                            @(_showFilter ? "Hide" : "Show")
+                        </button>
+
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="ClearFilter"
+                                disabled="@(_loading || _selectedSubscriptionIds.Count == 0)">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+
+                @if (_showFilter)
+                {
+                    <div class="border rounded p-2 mb-3" style="max-height: 180px; overflow:auto;">
+                        @if (_subscriptions.Length == 0)
+                        {
+                            <div class="text-muted small">No subscriptions loaded.</div>
+                        }
+                        else
+                        {
+                            @foreach (var s in _subscriptions)
+                            {
+                                var id = s.SubscriptionId ?? "";
+                                var isChecked = !string.IsNullOrWhiteSpace(id) && _selectedSubscriptionIds.Contains(id);
+
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="@($"sub-filter-{id}")"
+                                           checked="@isChecked"
+                                           @onchange="(e) => OnSubscriptionFilterChanged(id, e)" />
+                                    <label class="form-check-label" for="@($"sub-filter-{id}")">
+                                        @(s.DisplayName ?? "(no name)")
+                                        <span class="text-muted small">(@id)</span>
+                                    </label>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+
+                @if (_loading)
+                {
+                    <p>Loading…</p>
+                }
+                else if (_error is not null)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @_error
+                    </div>
+                }
+                else if (FilteredResourceGroups.Length == 0)
+                {
+                    <p class="mb-0">No resource groups found.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Subscription</th>
+                                <th>Location</th>
+                                <th class="text-muted">Resource ID</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var rg in FilteredResourceGroups)
+                            {
+                                <tr>
+                                    <td>@(rg.Name ?? "(unknown)")</td>
+                                    <td>@(rg.SubscriptionName ?? "(unknown)")</td>
+                                    <td><code>@(rg.Location ?? "-")</code></td>
+                                    <td class="text-muted"><small>@(rg.Id ?? "")</small></td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
     </div>
-}
-else if (_resourceGroups.Length == 0)
-{
-    <p>No resource groups found.</p>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-sm table-hover align-middle">
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Location</th>
-                <th class="text-muted">Resource ID</th>
-            </tr>
-            </thead>
-            <tbody>
-            @foreach (var rg in _resourceGroups)
-            {
-                <tr>
-                    <td>@(rg.Name ?? "(unknown)")</td>
-                    <td><code>@(rg.Location ?? "-")</code></td>
-                    <td class="text-muted"><small>@(rg.Id ?? "")</small></td>
-                </tr>
-            }
-            </tbody>
-        </table>
-    </div>
-}
+
+    @if (_showCreate)
+    {
+        <div class="col-12 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <h5 class="card-title mb-0">Create resource group</h5>
+
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="CloseCreate"
+                                disabled="@_creatingBusy">
+                            Close
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(_createError))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @_createError
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label">Subscription</label>
+                        <select class="form-select"
+                                @bind="_selectedSubscriptionId"
+                                disabled="@_creatingBusy">
+                            <option value="">Select a subscription…</option>
+                            @foreach (var s in _subscriptions)
+                            {
+                                <option value="@(s.SubscriptionId ?? "")">
+                                    @(s.DisplayName ?? "(no name)") (@(s.SubscriptionId ?? ""))
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Resource group name</label>
+                        <input class="form-control"
+                               @bind="_newResourceGroupName"
+                               placeholder="e.g. rg-dev"
+                               disabled="@_creatingBusy" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Location</label>
+                        <input class="form-control"
+                               @bind="_newResourceGroupLocation"
+                               placeholder="e.g. westeurope"
+                               disabled="@_creatingBusy" />
+                        <div class="form-text">
+                            Use an Azure location name like <code>westeurope</code>, <code>eastus</code>.
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success"
+                                @onclick="CreateResourceGroupAsync"
+                                disabled="@_creatingBusy">
+                            Create
+                        </button>
+
+                        <button class="btn btn-outline-secondary"
+                                @onclick="CloseCreate"
+                                disabled="@_creatingBusy">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
 
 @code
 {
-    private bool _loading;
+    private bool _loading = true;
     private string? _error;
     private ResourceGroupDto[] _resourceGroups = [];
 
+    private SubscriptionDto[] _subscriptions = [];
+    private bool _showCreate;
+    private bool _creatingBusy;
+    private string? _createError;
+
+    private string _selectedSubscriptionId = "";
+    private string _newResourceGroupName = "";
+    private string _newResourceGroupLocation = "westeurope";
+
+    private bool _showFilter = true;
+    private readonly HashSet<string> _selectedSubscriptionIds = new(StringComparer.OrdinalIgnoreCase);
+
+    private ResourceGroupDto[] FilteredResourceGroups =>
+        _selectedSubscriptionIds.Count == 0
+            ? _resourceGroups
+            : _resourceGroups.Where(rg =>
+                    !string.IsNullOrWhiteSpace(rg.SubscriptionId) &&
+                    _selectedSubscriptionIds.Contains(rg.SubscriptionId))
+                .ToArray();
+
     protected override async Task OnInitializedAsync()
     {
-        _error = null;
-        _resourceGroups = [];
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
         _loading = true;
-        
+        _error = null;
+
         try
         {
-            var client = TopazClient;
-            var resp = await client.ListResourceGroups();
+            var subs = await TopazClient.ListSubscriptions();
+            _subscriptions = subs?.Value ?? [];
 
-            _resourceGroups = resp.Value ?? [];
+            var rgs = await TopazClient.ListResourceGroups();
+            _resourceGroups = rgs.Value ?? [];
         }
         catch (Exception ex)
         {
@@ -69,6 +240,83 @@ else
         finally
         {
             _loading = false;
+        }
+    }
+
+    private void ToggleFilter() => _showFilter = !_showFilter;
+
+    private void ClearFilter() => _selectedSubscriptionIds.Clear();
+
+    private void OnSubscriptionFilterChanged(string subscriptionId, ChangeEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(subscriptionId))
+            return;
+
+        var isChecked = e.Value as bool? ?? false;
+
+        if (isChecked)
+            _selectedSubscriptionIds.Add(subscriptionId);
+        else
+            _selectedSubscriptionIds.Remove(subscriptionId);
+    }
+
+    private void ToggleCreate()
+    {
+        _showCreate = !_showCreate;
+        _createError = null;
+    }
+
+    private void CloseCreate()
+    {
+        _showCreate = false;
+        _createError = null;
+    }
+
+    private async Task CreateResourceGroupAsync()
+    {
+        _createError = null;
+
+        if (string.IsNullOrWhiteSpace(_selectedSubscriptionId))
+        {
+            _createError = "Please select a subscription.";
+            return;
+        }
+
+        if (!Guid.TryParse(_selectedSubscriptionId, out var subscriptionId))
+        {
+            _createError = "Subscription ID is invalid.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_newResourceGroupName))
+        {
+            _createError = "Please enter a resource group name.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_newResourceGroupLocation))
+        {
+            _createError = "Please enter a location (e.g. westeurope).";
+            return;
+        }
+
+        _creatingBusy = true;
+        try
+        {
+            await TopazClient.CreateResourceGroup(subscriptionId, _newResourceGroupName, _newResourceGroupLocation);
+
+            _newResourceGroupName = "";
+            _showCreate = false;
+
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _createError = ex.Message;
+        }
+        finally
+        {
+            _creatingBusy = false;
         }
     }
 }

@@ -11,4 +11,7 @@ public sealed class ResourceGroupDto
     public string? Name { get; init; }
     public string? Location { get; init; }
     public string? Type { get; init; }
+    
+    public string? SubscriptionId { get; init; }
+    public string? SubscriptionName { get; init; }
 }

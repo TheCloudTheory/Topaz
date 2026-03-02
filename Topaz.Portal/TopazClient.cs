@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
@@ -78,7 +79,7 @@ public class TopazClient
     public async Task<ListResourceGroupsResponse> ListResourceGroups()
     {
         var subscriptions = await ListSubscriptions();
-        var resourceGroups = new List<ResourceGroupResource>();
+        var resourceGroups = new List<ResourceGroupDto>();
 
         foreach (var subscription in subscriptions.Value)
         {
@@ -87,19 +88,46 @@ public class TopazClient
                                    new ResourceIdentifier($"/subscriptions/{subscription.SubscriptionId}"))
                                .GetResourceGroups().GetAllAsync())
             {
-                resourceGroups.Add(rg);
+                resourceGroups.Add(new ResourceGroupDto
+                {
+                    Id = rg.Id.ToString(),
+                    Name = rg.Data.Name,
+                    Location = rg.Data.Location,
+                    SubscriptionId = subscription.SubscriptionId,
+                    SubscriptionName = subscription.DisplayName
+                });
             }
         }
-        
+
         return new ListResourceGroupsResponse
         {
-            Value = resourceGroups.Select(rg => new ResourceGroupDto
-            {
-                Id = rg.Id.ToString(),
-                Name = rg.Data.Name,
-                Location = rg.Data.Location
-            }).ToArray()
-        };       
+            Value = resourceGroups.ToArray()
+        };
+    }
+    
+    public async Task CreateResourceGroup(Guid subscriptionId, string resourceGroupName, string location, CancellationToken cancellationToken = default)
+    {
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        if (string.IsNullOrWhiteSpace(resourceGroupName))
+            throw new ArgumentException("Resource group name is required.", nameof(resourceGroupName));
+
+        if (string.IsNullOrWhiteSpace(location))
+            throw new ArgumentException("Location is required.", nameof(location));
+
+        var subscription = _armClient.GetSubscriptionResource(
+            new ResourceIdentifier($"/subscriptions/{subscriptionId}"));
+
+        var rgCollection = subscription.GetResourceGroups();
+
+        var rgData = new ResourceGroupData(new AzureLocation(location));
+
+        _ = await rgCollection.CreateOrUpdateAsync(
+            WaitUntil.Completed,
+            resourceGroupName,
+            rgData,
+            cancellationToken);
     }
 
     public async Task<TokenResponse?> GetAuthToken(string username, string password)
