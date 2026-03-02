@@ -2,46 +2,119 @@
 @using Topaz.Portal.Models.Subscriptions
 @inject TopazClient TopazClient
 
-<h1>Subscriptions</h1>
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="mb-0">Subscriptions</h1>
 
-@if (_loading)
-{
-    <p>Loading…</p>
-}
-else if (_error is not null)
-{
-    <div class="alert alert-danger" role="alert">
-        @_error
+    <button class="btn btn-primary btn-sm"
+            @onclick="ToggleCreate"
+            disabled="@(_loading || _creatingBusy)">
+        New subscription
+    </button>
+</div>
+
+<div class="row g-3">
+    <div class="@(_showCreate ? "col-12 col-lg-8" : "col-12")">
+        <div class="card h-100">
+            <div class="card-body">
+                @if (_loading)
+                {
+                    <p>Loading…</p>
+                }
+                else if (_error is not null)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @_error
+                    </div>
+                }
+                else if (_subscriptions.Length == 0)
+                {
+                    <p>No subscriptions found.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Display name</th>
+                                <th>Subscription ID</th>
+                                <th class="text-muted">Resource ID</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var s in _subscriptions)
+                            {
+                                <tr>
+                                    <td>@(s.DisplayName ?? "(no name)")</td>
+                                    <td><code>@(s.SubscriptionId ?? "(unknown)")</code></td>
+                                    <td class="text-muted"><small>@(s.Id ?? "")</small></td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
     </div>
-}
-else if (_subscriptions.Length == 0)
-{
-    <p>No subscriptions found.</p>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-sm table-hover align-middle">
-            <thead>
-            <tr>
-                <th>Display name</th>
-                <th>Subscription ID</th>
-                <th class="text-muted">Resource ID</th>
-            </tr>
-            </thead>
-            <tbody>
-            @foreach (var s in _subscriptions)
-            {
-                <tr>
-                    <td>@(s.DisplayName ?? "(no name)")</td>
-                    <td><code>@(s.SubscriptionId ?? "(unknown)")</code></td>
-                    <td class="text-muted"><small>@(s.Id ?? "")</small></td>
-                </tr>
-            }
-            </tbody>
-        </table>
-    </div>
-}
+
+    @if (_showCreate)
+    {
+        <div class="col-12 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <h5 class="card-title mb-0">Create subscription</h5>
+
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="CloseCreate"
+                                disabled="@_creatingBusy">
+                            Close
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(_createError))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @_createError
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label">Display name</label>
+                        <input class="form-control"
+                               @bind="_newSubscriptionName"
+                               placeholder="e.g. Dev Subscription"
+                               disabled="@_creatingBusy" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Subscription ID (optional)</label>
+                        <input class="form-control"
+                               @bind="_newSubscriptionIdText"
+                               placeholder="leave empty to auto-generate"
+                               title="If empty, a new GUID will be generated."
+                               disabled="@_creatingBusy" />
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success"
+                                @onclick="CreateSubscriptionAsync"
+                                disabled="@_creatingBusy">
+                            Create
+                        </button>
+
+                        <button class="btn btn-outline-secondary"
+                                @onclick="CloseCreate"
+                                disabled="@_creatingBusy">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
 
 @code
 {
@@ -49,13 +122,25 @@ else
     private string? _error;
     private SubscriptionDto[] _subscriptions = [];
 
+    private bool _showCreate;
+    private bool _creatingBusy;
+    private string? _createError;
+    private string _newSubscriptionName = "";
+    private string _newSubscriptionIdText = "";
+
     protected override async Task OnInitializedAsync()
     {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
         try
         {
-            var client = TopazClient;
-            var resp = await client.ListSubscriptions();
-            
+            var resp = await TopazClient.ListSubscriptions();
             _subscriptions = resp?.Value ?? [];
         }
         catch (Exception ex)
@@ -65,6 +150,60 @@ else
         finally
         {
             _loading = false;
+        }
+    }
+
+    private void ToggleCreate()
+    {
+        _showCreate = !_showCreate;
+        _createError = null;
+    }
+
+    private void CloseCreate()
+    {
+        _showCreate = false;
+        _createError = null;
+    }
+
+    private async Task CreateSubscriptionAsync()
+    {
+        _createError = null;
+
+        if (string.IsNullOrWhiteSpace(_newSubscriptionName))
+        {
+            _createError = "Please enter a display name.";
+            return;
+        }
+
+        Guid subscriptionId;
+        if (string.IsNullOrWhiteSpace(_newSubscriptionIdText))
+        {
+            subscriptionId = Guid.NewGuid();
+        }
+        else if (!Guid.TryParse(_newSubscriptionIdText, out subscriptionId))
+        {
+            _createError = "Subscription ID must be a valid GUID (or leave it empty).";
+            return;
+        }
+
+        _creatingBusy = true;
+        try
+        {
+            await TopazClient.CreateSubscription(subscriptionId, _newSubscriptionName);
+
+            _newSubscriptionName = "";
+            _newSubscriptionIdText = "";
+            _showCreate = false;
+
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _createError = ex.Message;
+        }
+        finally
+        {
+            _creatingBusy = false;
         }
     }
 }

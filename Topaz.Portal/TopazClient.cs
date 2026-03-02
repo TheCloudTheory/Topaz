@@ -15,11 +15,18 @@ public class TopazClient
     private readonly ArmClient _armClient;
     private readonly HttpClient _httpClient;
 
-    public TopazClient(IHttpClientFactory httpClientFactory)
+    public TopazClient(IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
         var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         _armClient = new ArmClient(credentials, Guid.Empty.ToString(), TopazArmClientOptions.New);
+
         _httpClient = httpClientFactory.CreateClient();
+
+        var armBaseUrl = configuration["Topaz:ArmBaseUrl"];
+        if (!string.IsNullOrWhiteSpace(armBaseUrl))
+        {
+            _httpClient.BaseAddress = new Uri(armBaseUrl);
+        }
     }
 
     public async Task<ListSubscriptionsResponse> ListSubscriptions()
@@ -40,6 +47,32 @@ public class TopazClient
                 Id = sub.Id.ToString()
             }).ToArray()
         };
+    }
+
+    public async Task CreateSubscription(Guid subscriptionId, string subscriptionName,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(subscriptionName))
+            throw new ArgumentException("Subscription name is required.", nameof(subscriptionName));
+
+        if (_httpClient.BaseAddress is null)
+            throw new InvalidOperationException("Topaz:ArmBaseUrl is not configured.");
+
+        var payload = new
+        {
+            SubscriptionId = subscriptionId,
+            SubscriptionName = subscriptionName
+        };
+
+        using var resp =
+            await _httpClient.PostAsJsonAsync($"/subscriptions/{subscriptionId}", payload, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException(
+                $"Create subscription failed: {(int)resp.StatusCode} {resp.ReasonPhrase}. {body}");
+        }
     }
 
     public async Task<ListResourceGroupsResponse> ListResourceGroups()
