@@ -144,7 +144,7 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
             "Adding a password to an application `{0}`.",
             applicationIdentifier);
 
-        var existingApplication = Get(applicationIdentifier);
+        var existingApplication = Get(applicationIdentifier, true);
         if (existingApplication.Result == OperationResult.NotFound || existingApplication.Resource == null)
         {
             return BadRequestOperationResult<Application.PasswordCredentialData>.ForNotFound(applicationIdentifier);

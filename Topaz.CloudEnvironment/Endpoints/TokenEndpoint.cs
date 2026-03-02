@@ -143,7 +143,7 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                     return;
                 }
 
-                var appOperation = _applicationsDataPlane.Get(ApplicationIdentifier.From(appId));
+                var appOperation = _applicationsDataPlane.Get(ApplicationIdentifier.From(appId), true);
                 if (appOperation.Resource == null || appOperation.Result != OperationResult.Success)
                 {
                     logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not find app.");
