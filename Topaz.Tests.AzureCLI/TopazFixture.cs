@@ -117,10 +117,20 @@ public class TopazFixture
             command
         });
         
+        Console.WriteLine($"Command: {command}");
+
+        if (result.ExitCode == 0)
+        {
+            Console.WriteLine($"Command STDOUT: {result.Stdout}");
+        }
+
+        if (result.ExitCode != 0)
+        {
+            await Console.Error.WriteLineAsync($"Command STDERR: {result.Stderr}");
+        }
+        
         Assert.That(result.ExitCode, Is.EqualTo(exitCode), 
             $"`{command}` command failed. STDOUT: {result.Stdout}, STDERR: {result.Stderr}");
-        
-        Console.WriteLine(result.Stdout);
  
         assertion?.Invoke(JsonNode.Parse(result.Stdout)!);
     }
