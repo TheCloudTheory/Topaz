@@ -1,0 +1,223 @@
+@page "/resource-manager"
+@using Topaz.Portal.Models.ResourceGroups
+@using Topaz.Portal.Models.ResourceManager
+@using Topaz.Portal.Models.Subscriptions
+@inject TopazClient TopazClient
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="mb-0">Deployments</h1>
+
+    <button class="btn btn-outline-secondary btn-sm"
+            @onclick="LoadAsync"
+            disabled="@_loading">
+        Refresh
+    </button>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-lg-5">
+                <label class="form-label">Subscription</label>
+                <select class="form-select"
+                        @bind="_selectedSubscriptionId"
+                        @bind:after="OnSubscriptionChanged"
+                        disabled="@_loading">
+                    <option value="">Select a subscription…</option>
+                    @foreach (var s in _subscriptions)
+                    {
+                        <option value="@(s.SubscriptionId ?? "")">
+                            @(s.DisplayName ?? "(no name)") (@(s.SubscriptionId ?? ""))
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-12 col-lg-5">
+                <label class="form-label">Resource group</label>
+                <select class="form-select"
+                        @bind="_selectedResourceGroupName"
+                        disabled="@(_loading || string.IsNullOrWhiteSpace(_selectedSubscriptionId))">
+                    <option value="">Select a resource group…</option>
+                    @foreach (var rg in FilteredResourceGroups)
+                    {
+                        <option value="@(rg.Name ?? "")">
+                            @(rg.Name ?? "(unknown)")
+                            <span class="text-muted">(@(rg.Location ?? "-"))</span>
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-12 col-lg-2">
+                <div class="d-grid">
+                    <button class="btn btn-primary"
+                            @onclick="LoadDeploymentsAsync"
+                            disabled="@(_loading || !CanLoadDeployments)">
+                        Load
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_hint))
+        {
+            <div class="form-text mt-2">@_hint</div>
+        }
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        @if (_loading)
+        {
+            <p class="mb-0">Loading…</p>
+        }
+        else if (_error is not null)
+        {
+            <div class="alert alert-danger" role="alert">
+                @_error
+            </div>
+        }
+        else if (_deployments.Length == 0)
+        {
+            <p class="mb-0">No deployments found.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>State</th>
+                        <th>Timestamp</th>
+                        <th class="text-muted">Resource ID</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var d in _deployments)
+                    {
+                        <tr>
+                            <td>@(d.Name ?? "(unknown)")</td>
+                            <td>
+                                <code>@(d.Properties?.ProvisioningState ?? "-")</code>
+                            </td>
+                            <td class="text-muted small">
+                                @(d.Properties?.Timestamp?.ToString("u") ?? "-")
+                            </td>
+                            <td class="text-muted"><small>@(d.Id ?? "")</small></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code
+{
+    private bool _loading = true;
+    private string? _error;
+
+    private SubscriptionDto[] _subscriptions = [];
+    private ResourceGroupDto[] _resourceGroups = [];
+    private DeploymentDto[] _deployments = [];
+
+    private string _selectedSubscriptionId = "";
+    private string _selectedResourceGroupName = "";
+
+    private string? _hint;
+
+    private bool CanLoadDeployments =>
+        Guid.TryParse(_selectedSubscriptionId, out _) &&
+        !string.IsNullOrWhiteSpace(_selectedResourceGroupName);
+
+    private ResourceGroupDto[] FilteredResourceGroups
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_selectedSubscriptionId))
+                return [];
+
+            return _resourceGroups
+                .Where(rg => string.Equals(rg.SubscriptionId, _selectedSubscriptionId, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(rg => rg.Name)
+                .ToArray();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        _hint = null;
+
+        try
+        {
+            var subs = await TopazClient.ListSubscriptions();
+            _subscriptions = subs?.Value ?? [];
+
+            var rgs = await TopazClient.ListResourceGroups();
+            _resourceGroups = rgs.Value ?? [];
+
+            _deployments = [];
+            _hint = "Select a subscription and resource group, then click Load.";
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load page data: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OnSubscriptionChanged()
+    {
+        // Reset RG + results when subscription changes
+        _selectedResourceGroupName = "";
+        _deployments = [];
+    }
+
+    private async Task LoadDeploymentsAsync()
+    {
+        _error = null;
+        _hint = null;
+
+        if (!Guid.TryParse(_selectedSubscriptionId, out var subscriptionId))
+        {
+            _error = "Subscription ID is invalid.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_selectedResourceGroupName))
+        {
+            _error = "Please select a resource group.";
+            return;
+        }
+
+        _loading = true;
+        try
+        {
+            var resp = await TopazClient.ListDeployments(subscriptionId, _selectedResourceGroupName);
+            _deployments = resp.Value;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _deployments = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

@@ -15,6 +15,7 @@
 
     <ItemGroup>
       <PackageReference Include="Azure.ResourceManager" Version="1.13.2" />
+      <PackageReference Include="Azure.ResourceManager.Resources" Version="1.11.2" />
       <PackageReference Include="TheCloudTheory.Topaz.Identity" Version="1.0.409-alpha" />
       <PackageReference Include="TheCloudTheory.Topaz.ResourceManager" Version="1.0.409-alpha" />
     </ItemGroup>

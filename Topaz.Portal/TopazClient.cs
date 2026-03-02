@@ -6,6 +6,7 @@ using Azure.ResourceManager.Resources;
 using Topaz.Identity;
 using Topaz.Portal.Models.Auth;
 using Topaz.Portal.Models.ResourceGroups;
+using Topaz.Portal.Models.ResourceManager;
 using Topaz.Portal.Models.Subscriptions;
 using Topaz.ResourceManager;
 
@@ -104,8 +105,50 @@ public class TopazClient
             Value = resourceGroups.ToArray()
         };
     }
-    
-    public async Task CreateResourceGroup(Guid subscriptionId, string resourceGroupName, string location, CancellationToken cancellationToken = default)
+
+    public async Task<ListDeploymentsResponse> ListDeployments(Guid subscriptionId, string resourceGroupName,
+        CancellationToken cancellationToken = default)
+    {
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        if (string.IsNullOrWhiteSpace(resourceGroupName))
+            throw new ArgumentException("Resource group name is required.", nameof(resourceGroupName));
+
+        var rg = await _armClient.GetSubscriptionResource(
+                new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
+            .GetResourceGroupAsync(resourceGroupName, cancellationToken);
+        var deployments = new List<DeploymentDto>();
+        await foreach (var deployment in rg.Value.GetArmDeployments()
+                           .GetAllAsync(cancellationToken: cancellationToken))
+        {
+            deployments.Add(new DeploymentDto
+            {
+                Id = deployment.Id.ToString(),
+                Name = deployment.Data.Name,
+                Type = deployment.Data.ResourceType,
+                Location = deployment.Data.Location,
+                Properties = new DeploymentPropertiesDto
+                {
+                    Mode = deployment.Data.Properties.Mode.HasValue
+                        ? deployment.Data.Properties.Mode.Value.ToString()
+                        : string.Empty,
+                    ProvisioningState = deployment.Data.Properties.ProvisioningState.HasValue
+                        ? deployment.Data.Properties.ProvisioningState.Value.ToString()
+                        : string.Empty,
+                    Timestamp = deployment.Data.Properties.Timestamp,
+                }
+            });
+        }
+
+        return new ListDeploymentsResponse()
+        {
+            Value = deployments.ToArray()
+        };
+    }
+
+    public async Task CreateResourceGroup(Guid subscriptionId, string resourceGroupName, string location,
+        CancellationToken cancellationToken = default)
     {
         if (subscriptionId == Guid.Empty)
             throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
@@ -136,7 +179,7 @@ public class TopazClient
             $"https://topaz.local.dev:8899/organizations/oauth2/v2.0/token?grant_type=password&client_id={Guid.NewGuid()}&username={username}&password={password}");
         var response = await _httpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();
-        
+
         var content = await response.Content.ReadAsStringAsync();
         var token = JsonSerializer.Deserialize<TokenResponse>(content);
 
