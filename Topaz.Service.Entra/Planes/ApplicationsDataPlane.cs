@@ -112,7 +112,7 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
 
     private void ClearPasswordsForResponse(Application? application, bool includePasswords)
     {
-        if (application?.PasswordCredentials == null || !includePasswords) return;
+        if (application?.PasswordCredentials == null || includePasswords) return;
 
         foreach (var password in application.PasswordCredentials)
         {
