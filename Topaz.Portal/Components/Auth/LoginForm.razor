@@ -6,6 +6,12 @@
 <div class="container" style="max-width: 520px; margin-top: 64px;">
     <div class="card">
         <div class="card-body">
+            <div class="text-center mb-3">
+                <img src="/topaz-logo.png"
+                     alt="Topaz"
+                     style="max-height: 128px; width: auto;" />
+            </div>
+
             <h3 class="card-title mb-3">Sign in</h3>
 
             @if (!string.IsNullOrWhiteSpace(_error))
@@ -29,7 +35,7 @@
                     <InputText class="form-control" type="password" @bind-Value="_model.Password" />
                 </div>
 
-                <button class="btn btn-primary" disabled="_busy" type="submit">
+                <button class="btn btn-primary" disabled="@_busy" type="submit">
                     Sign in
                 </button>
             </EditForm>

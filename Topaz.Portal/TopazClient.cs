@@ -1,7 +1,9 @@
+using System.Text.Json;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Topaz.Identity;
+using Topaz.Portal.Models.Auth;
 using Topaz.Portal.Models.ResourceGroups;
 using Topaz.Portal.Models.Subscriptions;
 using Topaz.ResourceManager;
@@ -11,11 +13,13 @@ namespace Topaz.Portal;
 public class TopazClient
 {
     private readonly ArmClient _armClient;
+    private readonly HttpClient _httpClient;
 
-    public TopazClient()
+    public TopazClient(IHttpClientFactory httpClientFactory)
     {
         var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         _armClient = new ArmClient(credentials, Guid.Empty.ToString(), TopazArmClientOptions.New);
+        _httpClient = httpClientFactory.CreateClient();
     }
 
     public async Task<ListSubscriptionsResponse> ListSubscriptions()
@@ -63,5 +67,18 @@ public class TopazClient
                 Location = rg.Data.Location
             }).ToArray()
         };       
+    }
+
+    public async Task<TokenResponse?> GetAuthToken(string username, string password)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post,
+            $"https://topaz.local.dev:8899/organizations/oauth2/v2.0/token?grant_type=password&client_id={Guid.NewGuid()}&username={username}&password={password}");
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        
+        var content = await response.Content.ReadAsStringAsync();
+        var token = JsonSerializer.Deserialize<TokenResponse>(content);
+
+        return token;
     }
 }

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 namespace Topaz.Portal;
 
-public sealed class AccountSession(ProtectedSessionStorage sessionStorage)
+public sealed class AccountSession(ProtectedSessionStorage sessionStorage, TopazClient client)
 {
     private const string SelectedAccountKey = "topaz.selected-account";
     private const string UsernameKey = "topaz.username";
@@ -21,10 +21,10 @@ public sealed class AccountSession(ProtectedSessionStorage sessionStorage)
 
     public async Task<bool> SignInAsync(string username, string password)
     {
-        // TODO: Replace with real validation (Topaz.Identity, your backend API, etc.)
-        // This is intentionally minimal: requires both fields non-empty.
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             return false;
+
+        var token = await client.GetAuthToken(username, password);
 
         // Interpret "selected account" as "user has chosen/entered an account identity".
         SelectedAccount = username.Trim();

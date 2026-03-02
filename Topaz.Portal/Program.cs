@@ -7,8 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddHttpClient();
 builder.Services.AddSingleton<TopazClient>();
-
 builder.Services.AddScoped<ProtectedSessionStorage>();
 builder.Services.AddScoped<AccountSession>();
 
