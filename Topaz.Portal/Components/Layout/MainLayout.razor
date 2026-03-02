@@ -1,4 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@using Topaz.Portal
+@inject AccountSession AccountSession
+@inject NavigationManager Nav
 
 <div class="page">
     <div class="sidebar">
@@ -7,6 +10,12 @@
 
     <main>
         <div class="top-row px-4">
+            @if (!string.IsNullOrWhiteSpace(AccountSession.SelectedAccount))
+            {
+                <span class="me-2">Account: @AccountSession.SelectedAccount</span>
+                <a href="" @onclick="SignOutAsync" @onclick:preventDefault="true">Sign out</a>
+                <span class="mx-2">|</span>
+            }
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
         </div>
 
@@ -21,3 +30,11 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code {
+    private async Task SignOutAsync()
+    {
+        await AccountSession.SignOutAsync();
+        Nav.NavigateTo("/", forceLoad: true);
+    }
+}

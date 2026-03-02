@@ -1,0 +1,47 @@
+@using Topaz.Portal
+@inject AccountSession AccountSession
+
+@if (_loaded is false)
+{
+    <div class="p-4">Loading…</div>
+}
+else if (string.IsNullOrWhiteSpace(AccountSession.SelectedAccount))
+{
+    <LoginForm OnSignedIn="HandleSignedIn" />
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    private bool _loaded;
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        // IMPORTANT:
+        // ProtectedSessionStorage uses JS interop, which is unavailable during prerender.
+        // So we load in OnAfterRenderAsync instead.
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        await AccountSession.LoadAsync();
+        _loaded = true;
+
+        StateHasChanged();
+    }
+
+    private Task HandleSignedIn()
+    {
+        // Re-render and allow the app to show.
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}

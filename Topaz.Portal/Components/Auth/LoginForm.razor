@@ -1,0 +1,74 @@
+@* Topaz.Portal/Components/Auth/LoginForm.razor *@
+@using System.ComponentModel.DataAnnotations
+@using Topaz.Portal
+@inject AccountSession AccountSession
+
+<div class="container" style="max-width: 520px; margin-top: 64px;">
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title mb-3">Sign in</h3>
+
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <div class="alert alert-danger" role="alert">
+                    @_error
+                </div>
+            }
+
+            <EditForm Model="_model" OnValidSubmit="SubmitAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <InputText class="form-control" @bind-Value="_model.Username" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <InputText class="form-control" type="password" @bind-Value="_model.Password" />
+                </div>
+
+                <button class="btn btn-primary" disabled="_busy" type="submit">
+                    Sign in
+                </button>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly LoginModel _model = new();
+    private bool _busy;
+    private string? _error;
+
+    [Parameter] public EventCallback OnSignedIn { get; set; }
+
+    private async Task SubmitAsync()
+    {
+        _busy = true;
+        _error = null;
+
+        try
+        {
+            var ok = await AccountSession.SignInAsync(_model.Username!, _model.Password!);
+            if (!ok)
+            {
+                _error = "Invalid username or password.";
+                return;
+            }
+
+            await OnSignedIn.InvokeAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private sealed class LoginModel
+    {
+        [Required] public string? Username { get; set; }
+        [Required] public string? Password { get; set; }
+    }
+}
