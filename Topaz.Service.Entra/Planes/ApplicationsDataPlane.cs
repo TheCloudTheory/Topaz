@@ -13,7 +13,7 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
     {
         return new ApplicationsDataPlane(new EntraResourceProvider(topazLogger), topazLogger);
     }
-    
+
     public DataPlaneOperationResult<Application[]> ListApplications()
     {
         logger.LogDebug(nameof(ApplicationsDataPlane), nameof(ListApplications), "Listing applications");
@@ -29,7 +29,7 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
 
     public DataPlaneOperationResult<Application> Create(CreateApplicationRequest request)
     {
-        logger.LogDebug(nameof(UserDataPlane), nameof(Create), "Creating an application `{0}`.", request.AppId);
+        logger.LogDebug(nameof(ApplicationsDataPlane), nameof(Create), "Creating an application `{0}`.", request.AppId);
 
         var applicationIdentifier = ApplicationIdentifier.From(Guid.NewGuid().ToString());
         var entityPath = BuildLocalApplicationEntityPath(applicationIdentifier);
@@ -73,7 +73,7 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
         return new DataPlaneOperationResult(OperationResult.Updated, null, null);
     }
 
-    public DataPlaneOperationResult<Application> Get(ApplicationIdentifier applicationIdentifier)
+    public DataPlaneOperationResult<Application> Get(ApplicationIdentifier applicationIdentifier, bool includePasswords = false)
     {
         logger.LogDebug(nameof(ApplicationsDataPlane), nameof(Get), "Fetching an application `{0}`.",
             applicationIdentifier);
@@ -83,7 +83,7 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
 
         if (!File.Exists(entityPath))
         {
-            logger.LogDebug(nameof(ServicePrincipalDataPlane), nameof(Get),
+            logger.LogDebug(nameof(ApplicationsDataPlane), nameof(Get),
                 "Didn't find an application `{0}` so will perform a full search.", applicationIdentifier);
 
             // Application entities are created using the generated appId, but they may
@@ -94,13 +94,30 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
                     JsonSerializer.Deserialize<Application>(File.ReadAllText(file), GlobalSettings.JsonOptions))
                 .SingleOrDefault(u => u?.Id == applicationIdentifier.Value);
 
-            return application == null
-                ? BadRequestOperationResult<Application>.ForNotFound(applicationIdentifier)
-                : new DataPlaneOperationResult<Application>(OperationResult.Success, application, null, null);
+            if (application == null)
+            {
+                return BadRequestOperationResult<Application>.ForNotFound(applicationIdentifier);
+            }
+
+            ClearPasswordsForResponse(application, includePasswords);
+            return new DataPlaneOperationResult<Application>(OperationResult.Success, application, null, null);
         }
 
         application = JsonSerializer.Deserialize<Application>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions);
+
+        ClearPasswordsForResponse(application, includePasswords);
+
         return new DataPlaneOperationResult<Application>(OperationResult.Success, application, null, null);
+    }
+
+    private void ClearPasswordsForResponse(Application? application, bool includePasswords)
+    {
+        if (application?.PasswordCredentials == null || !includePasswords) return;
+
+        foreach (var password in application.PasswordCredentials)
+        {
+            password.SecretText = null;
+        }
     }
 
     public DataPlaneOperationResult Delete(ApplicationIdentifier applicationIdentifier)
@@ -133,14 +150,17 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
             return BadRequestOperationResult<Application.PasswordCredentialData>.ForNotFound(applicationIdentifier);
         }
 
-        var credentials = (existingApplication.Resource.PasswordCredentials ?? []).Concat(new[]
-        {
+        var credentials = (existingApplication.Resource.PasswordCredentials ?? []).Concat([
             Application.PasswordCredentialData.From(request)
-        });
+        ]);
 
         var updatedCredentials =
             credentials as Application.PasswordCredentialData[] ?? credentials.ToArray();
         existingApplication.Resource.PasswordCredentials = updatedCredentials.ToArray();
+
+        var entityPath =
+            BuildLocalApplicationEntityPath(ApplicationIdentifier.From(existingApplication.Resource.AppId));
+        File.WriteAllText(entityPath, existingApplication.Resource.ToString());
 
         return new DataPlaneOperationResult<Application.PasswordCredentialData>(OperationResult.Created,
             updatedCredentials.Last(), null, null);

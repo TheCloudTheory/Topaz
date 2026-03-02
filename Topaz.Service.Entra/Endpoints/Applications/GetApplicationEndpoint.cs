@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Entra.Domain;
+using Topaz.Service.Entra.Models.Responses;
 using Topaz.Service.Entra.Planes;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -36,8 +37,6 @@ internal sealed class GetApplicationEndpoint(ITopazLogger logger) : IEndpointDef
             return;
         }
         
-        response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(operation.Resource.ToString());
-        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        response.CreateJsonContentResponse(operation.Resource);
     }
 }

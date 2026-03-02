@@ -17,6 +17,7 @@ internal sealed class AddApplicationPasswordEndpoint(ITopazLogger logger) : IEnd
     public string[] Endpoints =>
     [
         "POST /v1.0/applications/{applicationId}/addPassword",
+        "POST /applications/{applicationId}/addPassword",
     ];
 
     public string[] Permissions => [];
@@ -24,7 +25,9 @@ internal sealed class AddApplicationPasswordEndpoint(ITopazLogger logger) : IEnd
     
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var applicationIdentifier = ApplicationIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(3));
+        var applicationIdentifier = context.Request.Path.Value.StartsWith("/v1.0")
+            ? ApplicationIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(3))
+            : ApplicationIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
         
         logger.LogDebug(nameof(AddApplicationPasswordEndpoint), nameof(GetResponse),
             "Add a password to an application `{0}`.", applicationIdentifier);

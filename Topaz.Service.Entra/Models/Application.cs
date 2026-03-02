@@ -196,7 +196,7 @@ internal class Application : DirectoryObject
         public DateTimeOffset? EndDateTime { get; init; }
         public string? Hint { get; init; }
         public Guid? KeyId { get; init; }
-        public string? SecretText { get; init; }
+        public string? SecretText { get; set; }
         public DateTimeOffset? StartDateTime { get; init; }
 
         public static PasswordCredentialData From(AddApplicationPasswordRequest request)
@@ -205,12 +205,12 @@ internal class Application : DirectoryObject
             
             return new PasswordCredentialData
             {
-                DisplayName = request.DisplayName,
-                EndDateTime = request.EndDateTime,
+                DisplayName = request.PasswordCredential?.DisplayName,
+                EndDateTime = request.PasswordCredential?.EndDateTime,
                 Hint = password[..2],
                 KeyId = Guid.NewGuid(),
                 SecretText = password,
-                StartDateTime = request.StartDateTime,
+                StartDateTime = request.PasswordCredential?.StartDateTime,
             };
         }
 
@@ -509,7 +509,6 @@ internal class Application : DirectoryObject
                     EndDateTime = pc.EndDateTime,
                     Hint = pc.Hint,
                     KeyId = pc.KeyId,
-                    SecretText = pc.SecretText,
                     StartDateTime = pc.StartDateTime
                 })
                 .ToArray();

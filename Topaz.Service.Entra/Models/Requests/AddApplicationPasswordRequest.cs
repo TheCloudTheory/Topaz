@@ -2,12 +2,17 @@ namespace Topaz.Service.Entra.Models.Requests;
 
 public class AddApplicationPasswordRequest
 {
-    public string? DisplayName { get; set; }
-    public DateTimeOffset? EndDateTime { get; set; }
-    public DateTimeOffset? StartDateTime { get; set; } = DateTimeOffset.UtcNow;
+    public PasswordCredentialData? PasswordCredential { get; init; }
 
-    public AddApplicationPasswordRequest()
+    public class PasswordCredentialData
     {
-        EndDateTime = StartDateTime?.AddYears(2);
+        public string? DisplayName { get; init; }
+        public DateTimeOffset? EndDateTime { get; init; }
+        public DateTimeOffset? StartDateTime { get; init; } = DateTimeOffset.UtcNow;
+
+        public PasswordCredentialData()
+        {
+            EndDateTime = StartDateTime?.AddYears(2);
+        }
     }
 }

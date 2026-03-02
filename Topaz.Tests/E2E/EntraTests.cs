@@ -1,4 +1,5 @@
 using Microsoft.Graph;
+using Microsoft.Graph.Applications.Item.AddPassword;
 using Microsoft.Graph.Models;
 using Topaz.Identity;
 
@@ -226,6 +227,79 @@ public class EntraTests
         finally
         {
             // Best-effort cleanup in case the test failed before delete
+            if (created.Id is not null)
+            {
+                try
+                {
+                    await client.Applications[created.Id].DeleteAsync();
+                }
+                catch
+                {
+                    // ignored
+                }
+            }
+        }
+    }
+
+    [Test]
+    public async Task EntraTests_CanAddPasswordToApplication()
+    {
+        // Arrange
+        var client = GraphClient;
+        var unique = Guid.NewGuid().ToString("N");
+
+        var application = new Application
+        {
+            DisplayName = $"Test Application (add password) {unique}",
+            SignInAudience = "AzureADMyOrg"
+        };
+
+        var created = await client.Applications.PostAsync(application);
+        Assert.That(created, Is.Not.Null);
+        Assert.That(created!.Id, Is.Not.Null);
+
+        try
+        {
+            var start = DateTimeOffset.UtcNow;
+            var end = start.AddDays(30);
+
+            // Act - Add password
+            var added = await client.Applications[created.Id].AddPassword.PostAsync(
+                new AddPasswordPostRequestBody
+                {
+                    PasswordCredential = new PasswordCredential
+                    {
+                        DisplayName = $"pwd-{unique}",
+                        StartDateTime = start,
+                        EndDateTime = end
+                    }
+                });
+
+            // Assert - Action result contains generated secret (returned only at creation time)
+            Assert.That(added, Is.Not.Null);
+            Assert.Multiple(() =>
+            {
+                Assert.That(added!.KeyId, Is.Not.Null);
+                Assert.That(added.SecretText, Is.Not.Null.And.Not.Empty);
+                Assert.That(added.DisplayName, Is.EqualTo($"pwd-{unique}"));
+            });
+
+            // Assert - Application now contains the password credential reference
+            var found = await client.Applications[created.Id].GetAsync();
+            Assert.That(found, Is.Not.Null);
+
+            var creds = found!.PasswordCredentials ?? [];
+            Assert.Multiple(() =>
+            {
+                Assert.That(creds.Any(c => c.KeyId == added.KeyId), Is.True,
+                            "Expected the added password credential to be present on the application.");
+                Assert.That(creds.All(c => c.SecretText == null), Is.True,
+                    "Expected all password credentials to have a null secret.");
+            });
+        }
+        finally
+        {
+            // Clean up
             if (created.Id is not null)
             {
                 try

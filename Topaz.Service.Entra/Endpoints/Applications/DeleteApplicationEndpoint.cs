@@ -15,6 +15,7 @@ internal sealed class DeleteApplicationEndpoint(ITopazLogger logger) : IEndpoint
     public string[] Endpoints =>
     [
         "DELETE /applications/{applicationId}",
+        "DELETE /v1.0/applications/{applicationId}",
     ];
 
     public string[] Permissions => ["*"];
@@ -22,7 +23,9 @@ internal sealed class DeleteApplicationEndpoint(ITopazLogger logger) : IEndpoint
     
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var applicationIdentifier = ApplicationIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+        var applicationIdentifier = context.Request.Path.Value.StartsWith("/v1.0")
+            ? ApplicationIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(3))
+            : ApplicationIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
         
         logger.LogDebug(nameof(DeleteApplicationEndpoint), nameof(GetResponse),
             "Deleting an application `{0}`.", applicationIdentifier);

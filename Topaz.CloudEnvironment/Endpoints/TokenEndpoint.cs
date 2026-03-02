@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Topaz.CloudEnvironment.Models.Responses;
 using Topaz.Identity;
 using Topaz.Service.Entra.Domain;
+using Topaz.Service.Entra.Models;
 using Topaz.Service.Entra.Planes;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -16,17 +17,19 @@ namespace Topaz.CloudEnvironment.Endpoints;
 public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private const string Issuer = "https://topaz.local.dev:8899/organizations/v2.0";
-    
+
     private readonly UserDataPlane _userDataPlane = UserDataPlane.New(logger);
     private readonly ApplicationsDataPlane _applicationsDataPlane = ApplicationsDataPlane.New(logger);
-    
+
     public string[] Endpoints =>
     [
         "POST /organizations/oauth2/v2.0/token",
     ];
 
     public string[] Permissions => [];
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
@@ -83,78 +86,84 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
         if (!string.IsNullOrEmpty(username) && grantType == "password")
         {
             logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse), "Looking up user `{0}`...", username);
-            
+
             var userOperation = _userDataPlane.Get(UserIdentifier.From(username));
             if (userOperation.Resource == null || userOperation.Result != OperationResult.Success)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
                 return;
             }
-            
+
             objectId = userOperation.Resource.Id;
         }
 
-        if (grantType == "refresh_token")
+        switch (grantType)
         {
-            logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse), "Extracting object ID from refresh token...");
-            
-            var refreshToken = ExtractValueForToken(context, form, "refresh_token", null);
-            if (refreshToken == null)
+            case "refresh_token":
             {
-                logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract refresh token.");
-                response.StatusCode = HttpStatusCode.BadRequest;
-                return;
-            }
-            
-            var validatedToken = JwtHelper.ValidateJwt(refreshToken);
-            if (validatedToken == null)
-            {
-                logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not validate refresh token.");
-                response.StatusCode = HttpStatusCode.BadRequest;
-                return;
-            }
+                logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse), "Extracting object ID from refresh token...");
 
-            objectId = validatedToken.Subject;
-        }
+                var refreshToken = ExtractValueForToken(context, form, "refresh_token", null);
+                if (refreshToken == null)
+                {
+                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract refresh token.");
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return;
+                }
 
-        if (grantType == "client_credentials")
-        {
-            logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse), "Extracting app ID and client secret from client credentials...");
-            
-            var clientSecret = ExtractValueForToken(context, form, "client_secret", null);
-            if (clientSecret == null)
-            {
-                logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract client secret.");
-                response.StatusCode = HttpStatusCode.BadRequest;
-                return;
-            }
-            
-            var appId = ExtractValueForToken(context, form, "client_id", null);
-            if (appId == null)
-            {
-                logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract app ID.");
-                response.StatusCode = HttpStatusCode.BadRequest;
-                return;
-            }
-            
-            var appOperation = _applicationsDataPlane.Get(ApplicationIdentifier.From(appId));
-            if (appOperation.Resource == null || appOperation.Result != OperationResult.Success)
-            {
-                logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not find app.");
-                response.StatusCode = HttpStatusCode.BadRequest;
-                return;
-            }
+                var validatedToken = JwtHelper.ValidateJwt(refreshToken);
+                if (validatedToken == null)
+                {
+                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not validate refresh token.");
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return;
+                }
 
-            if (appOperation.Resource.PasswordCredentials!.All(credentials =>
-                    !string.Equals(Uri.EscapeDataString(credentials.SecretText!), clientSecret,
-                        StringComparison.Ordinal)))
-            {
-                logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Invalid client secret.");
-                response.StatusCode = HttpStatusCode.BadRequest;
-                return;
+                objectId = validatedToken.Subject;
+                break;
             }
+            case "client_credentials":
+            {
+                logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse),
+                    "Extracting app ID and client secret from client credentials...");
 
-            objectId = appOperation.Resource.Id;
+                var clientSecret = ExtractValueForToken(context, form, "client_secret", null);
+                if (clientSecret == null)
+                {
+                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract client secret.");
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return;
+                }
+
+                var appId = ExtractValueForToken(context, form, "client_id", null);
+                if (appId == null)
+                {
+                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract app ID.");
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return;
+                }
+
+                var appOperation = _applicationsDataPlane.Get(ApplicationIdentifier.From(appId));
+                if (appOperation.Resource == null || appOperation.Result != OperationResult.Success)
+                {
+                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not find app.");
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return;
+                }
+
+                var applicationCredentials =
+                    FindCredentialsForClientSecret(appOperation.Resource.PasswordCredentials!, clientSecret);
+
+                if (!applicationCredentials)
+                {
+                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Invalid client secret.");
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    return;
+                }
+
+                objectId = appOperation.Resource.Id;
+                break;
+            }
         }
 
         if (objectId == null)
@@ -170,7 +179,7 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                 .GetToken(new TokenRequestContext(), CancellationToken.None).Token,
             RefreshToken = new AzureLocalCredential(objectId!)
                 .GetToken(new TokenRequestContext(), CancellationToken.None).Token,
-            IdToken = CreateIdToken(Issuer, clientId!, storedNonce),
+            IdToken = CreateIdToken(Issuer, clientId!, storedNonce, username ?? objectId),
             Scope = form.TryGetValue("scope", out var scope)
                 ? scope
                 : (context.Request.QueryString.TryGetValueForKey("scope", out var qscope)
@@ -181,7 +190,7 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
         response.CreateJsonContentResponse(token);
         return;
 
-        static string CreateIdToken(string issuer, string audience, string? nonce)
+        static string CreateIdToken(string issuer, string audience, string? nonce, string userName)
         {
             var header = new { alg = "none", typ = "JWT" };
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -194,7 +203,7 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                 { "oid", Guid.NewGuid().ToString() },
                 { "tid", "TopazTenant" },
                 { "sub", Guid.NewGuid().ToString() },
-                { "preferred_username", "topaz@local" }
+                { "preferred_username", userName }
             };
 
             if (!string.IsNullOrEmpty(nonce))
@@ -207,6 +216,50 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
 
             return Base64UrlEncode(headerJson) + "." + Base64UrlEncode(payloadJson) + ".";
         }
+    }
+
+    private bool FindCredentialsForClientSecret(Application.PasswordCredentialData[] resourcePasswordCredentials,
+        string clientSecret)
+    {
+        logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
+            "Finding credentials for client secret: {0}", clientSecret);
+
+        foreach (var credential in resourcePasswordCredentials)
+        {
+            logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
+                "Checking credential: {0}", credential);
+
+            var storedCredentials = credential.SecretText;
+            if (storedCredentials == null)
+            {
+                logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
+                    "Credential secret text is null for credential: {0}", credential);
+                continue;
+            }
+            
+            logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
+                "Checking credential: {0} against {1}", credential, clientSecret);
+            
+            if (string.Equals(storedCredentials, clientSecret, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
+                "Match for raw credentials failed, try with encoded one.");
+
+            var encodedCredentials = Uri.EscapeDataString(storedCredentials);
+            logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
+                "Checking credential: {0} (encoded: {1})", credential, encodedCredentials);
+
+            if (!string.Equals(encodedCredentials, clientSecret, StringComparison.OrdinalIgnoreCase)) continue;
+            logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
+                "Credential found for client secret: {0}", clientSecret);
+
+            return true;
+        }
+
+        logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
+            "No matching credential found for client secret: {0}", clientSecret);
+        return false;
     }
 
     private static string? ExtractValueForToken(HttpContext context, Dictionary<string, string> form, string key,
