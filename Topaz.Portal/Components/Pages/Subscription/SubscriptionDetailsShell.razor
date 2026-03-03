@@ -1,0 +1,39 @@
+@* Topaz.Portal/Components/Pages/Subscription/SubscriptionDetailsShell.razor *@
+<div class="row g-3">
+    <div class="col-12 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@OverviewHref"
+                             Match="NavLinkMatch.All">
+                        Overview
+                    </NavLink>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@IamHref">
+                        IAM
+                    </NavLink>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@TagsHref">
+                        Tags
+                    </NavLink>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-9">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; } = default!;
+
+    private string OverviewHref => $"/subscriptions/{SubscriptionId:D}";
+    private string IamHref => $"/subscriptions/{SubscriptionId:D}/iam";
+    private string TagsHref => $"/subscriptions/{SubscriptionId:D}/tags";
+}

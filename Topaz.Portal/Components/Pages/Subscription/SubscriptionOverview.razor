@@ -1,0 +1,74 @@
+@* Topaz.Portal/Components/Pages/Subscription/SubscriptionOverview.razor *@
+@page "/subscriptions/{SubscriptionId:guid}"
+@using Topaz.Portal.Models.Subscriptions
+@inject TopazClient TopazClient
+
+<h1 class="mb-3">@(_subscription?.DisplayName ?? "Subscription")</h1>
+
+<SubscriptionDetailsShell SubscriptionId="SubscriptionId">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_error is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @_error
+        </div>
+    }
+    else if (_subscription is null)
+    {
+        <p class="mb-0">Subscription not found.</p>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Overview</h5>
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Display name</dt>
+                    <dd class="col-sm-9">@(_subscription.DisplayName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Subscription ID</dt>
+                    <dd class="col-sm-9"><code>@(_subscription.SubscriptionId ?? "-")</code></dd>
+
+                    <dt class="col-sm-3">Resource ID</dt>
+                    <dd class="col-sm-9"><small class="text-muted">@(_subscription.Id ?? "-")</small></dd>
+                </dl>
+            </div>
+        </div>
+    }
+</SubscriptionDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+
+    private bool _loading = true;
+    private string? _error;
+    private SubscriptionDto? _subscription;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            // Uses the existing ListSubscriptions() call so you don't need a new API endpoint yet.
+            var resp = await TopazClient.ListSubscriptions();
+            var subs = resp?.Value ?? [];
+
+            _subscription = subs.FirstOrDefault(s =>
+                Guid.TryParse(s.SubscriptionId, out var id) && id == SubscriptionId);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

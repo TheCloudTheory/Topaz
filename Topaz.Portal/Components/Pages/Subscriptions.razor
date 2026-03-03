@@ -45,7 +45,18 @@
                             @foreach (var s in _subscriptions)
                             {
                                 <tr>
-                                    <td>@(s.DisplayName ?? "(no name)")</td>
+                                    <td>
+                                        @if (Guid.TryParse(s.SubscriptionId, out var subId))
+                                        {
+                                            <a href="@GetSubscriptionHref(subId)">
+                                                @(s.DisplayName ?? "(no name)")
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            @(s.DisplayName ?? "(no name)")
+                                        }
+                                    </td>
                                     <td><code>@(s.SubscriptionId ?? "(unknown)")</code></td>
                                     <td class="text-muted"><small>@(s.Id ?? "")</small></td>
                                 </tr>
@@ -132,6 +143,9 @@
     {
         await LoadAsync();
     }
+
+    private string GetSubscriptionHref(Guid subscriptionId)
+        => $"/subscriptions/{subscriptionId:D}";
 
     private async Task LoadAsync()
     {

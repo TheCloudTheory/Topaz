@@ -1,0 +1,19 @@
+@* Topaz.Portal/Components/Pages/Subscription/SubscriptionTags.razor *@
+@page "/subscriptions/{SubscriptionId:guid}/tags"
+
+<h1 class="mb-3">Subscription</h1>
+
+<SubscriptionDetailsShell SubscriptionId="SubscriptionId">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Tags</h5>
+            <p class="mb-0 text-muted">
+                Tags view goes here (list/edit tags).
+            </p>
+        </div>
+    </div>
+</SubscriptionDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+}

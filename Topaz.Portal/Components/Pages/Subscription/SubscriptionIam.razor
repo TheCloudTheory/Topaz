@@ -1,0 +1,19 @@
+@* Topaz.Portal/Components/Pages/Subscription/SubscriptionIam.razor *@
+@page "/subscriptions/{SubscriptionId:guid}/iam"
+
+<h1 class="mb-3">Subscription</h1>
+
+<SubscriptionDetailsShell SubscriptionId="SubscriptionId">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title mb-3">IAM</h5>
+            <p class="mb-0 text-muted">
+                IAM view goes here (role assignments, role definitions, principals, etc.).
+            </p>
+        </div>
+    </div>
+</SubscriptionDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+}
