@@ -2,7 +2,7 @@
 @page "/resource-groups/{SubscriptionId:guid}/{ResourceGroupName}/tags"
 @using System.Net
 
-<h1 class="mb-3">Resource group</h1>
+<h1 class="mb-3">@ResourceGroupName</h1>
 
 <ResourceGroupDetailsShell SubscriptionId="SubscriptionId" ResourceGroupName="@DecodedName">
     <div class="card">

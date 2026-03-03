@@ -4,7 +4,7 @@
 @using Topaz.Portal.Models.ResourceGroups
 @inject TopazClient TopazClient
 
-<h1 class="mb-3">Resource group</h1>
+<h1 class="mb-3">@ResourceGroupName</h1>
 
 <ResourceGroupDetailsShell SubscriptionId="SubscriptionId" ResourceGroupName="@DecodedName">
     @if (_loading)
