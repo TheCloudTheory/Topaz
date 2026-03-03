@@ -1,3 +1,49 @@
+:root {
+    /* Topaz-ish palette (tweak freely) */
+    --topaz-surface: #ffffff;
+    --topaz-bg: #f6f9ff;
+    --topaz-border: #e5e7eb;
+
+    --topaz-blue-50: #eff6ff;
+    --topaz-blue-200: #bfdbfe;
+    --topaz-blue-600: #2563eb;
+    --topaz-blue-700: #1d4ed8;
+    --topaz-blue-800: #0f3a75;
+    --topaz-blue-900: #0b2b57;
+
+    --topaz-focus: rgba(37, 99, 235, 0.35);
+    --topaz-sidebar-top-bg: #0b2b57;
+}
+
+html, body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: var(--topaz-bg);
+    color: #0f172a;
+}
+
+a, .btn-link {
+    color: var(--topaz-blue-700);
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: var(--topaz-blue-700);
+    border-color: var(--topaz-blue-700);
+}
+
+.btn-primary:hover {
+    background-color: var(--topaz-blue-600);
+    border-color: var(--topaz-blue-600);
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--topaz-focus);
+}
+
+.content {
+    padding-top: 1.1rem;
+}
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
