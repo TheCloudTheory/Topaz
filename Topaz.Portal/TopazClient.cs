@@ -3,6 +3,7 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
+using Microsoft.Graph;
 using Topaz.Identity;
 using Topaz.Portal.Models.Auth;
 using Topaz.Portal.Models.ResourceGroups;
@@ -16,6 +17,7 @@ public class TopazClient
 {
     private readonly ArmClient _armClient;
     private readonly HttpClient _httpClient;
+    private readonly GraphServiceClient _graphClient;
 
     public TopazClient(IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
@@ -29,6 +31,9 @@ public class TopazClient
         {
             _httpClient.BaseAddress = new Uri(armBaseUrl);
         }
+
+        _graphClient = new GraphServiceClient(httpClientFactory.CreateClient(),
+            new LocalGraphAuthenticationProvider(), armBaseUrl);
     }
 
     public async Task<ListSubscriptionsResponse> ListSubscriptions()
@@ -211,5 +216,10 @@ public class TopazClient
         var token = JsonSerializer.Deserialize<TokenResponse>(content);
 
         return token;
+    }
+
+    public async Task GetDirectoryInfo()
+    {
+        var directory = await _graphClient.TenantRelationships.GetAsync();
     }
 }

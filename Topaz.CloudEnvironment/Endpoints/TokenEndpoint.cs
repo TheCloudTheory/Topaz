@@ -101,7 +101,8 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
         {
             case "refresh_token":
             {
-                logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse), "Extracting object ID from refresh token...");
+                logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse),
+                    "Extracting object ID from refresh token...");
 
                 var refreshToken = ExtractValueForToken(context, form, "refresh_token", null);
                 if (refreshToken == null)
@@ -179,7 +180,8 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                 .GetToken(new TokenRequestContext(), CancellationToken.None).Token,
             RefreshToken = new AzureLocalCredential(objectId!)
                 .GetToken(new TokenRequestContext(), CancellationToken.None).Token,
-            IdToken = CreateIdToken(Issuer, clientId!, storedNonce, username ?? objectId),
+            IdToken = CreateIdToken(Issuer, clientId!, storedNonce, username ?? objectId, objectId,
+                options.TenantId.GetValueOrDefault().ToString()),
             Scope = form.TryGetValue("scope", out var scope)
                 ? scope
                 : (context.Request.QueryString.TryGetValueForKey("scope", out var qscope)
@@ -190,7 +192,8 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
         response.CreateJsonContentResponse(token);
         return;
 
-        static string CreateIdToken(string issuer, string audience, string? nonce, string userName)
+        static string CreateIdToken(string issuer, string audience, string? nonce, string userName, string objectId,
+            string tenantId)
         {
             var header = new { alg = "none", typ = "JWT" };
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -200,9 +203,9 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                 { "aud", audience },
                 { "iat", now },
                 { "exp", now + 3600 },
-                { "oid", Guid.NewGuid().ToString() },
-                { "tid", "TopazTenant" },
-                { "sub", Guid.NewGuid().ToString() },
+                { "oid", objectId },
+                { "tid", tenantId },
+                { "sub", objectId },
                 { "preferred_username", userName }
             };
 
@@ -236,10 +239,10 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                     "Credential secret text is null for credential: {0}", credential);
                 continue;
             }
-            
+
             logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
                 "Checking credential: {0} against {1}", credential, clientSecret);
-            
+
             if (string.Equals(storedCredentials, clientSecret, StringComparison.OrdinalIgnoreCase))
                 return true;
 
