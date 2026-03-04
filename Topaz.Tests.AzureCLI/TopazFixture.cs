@@ -97,7 +97,7 @@ public class TopazFixture
 
         await RunAzureCliCommand("az cloud register -n Topaz --cloud-config @\"cloud.json\"");
         await RunAzureCliCommand("az cloud set -n Topaz");
-        await RunAzureCliCommand("az login --username topazadmin@topaz.local --password admin");
+        await RunAzureCliCommand("az login --username topazadmin@topaz.local.dev --password admin");
     }
 
     [OneTimeTearDown]
