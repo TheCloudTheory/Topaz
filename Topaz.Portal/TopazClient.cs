@@ -9,6 +9,7 @@ using Topaz.Portal.Models.Auth;
 using Topaz.Portal.Models.ResourceGroups;
 using Topaz.Portal.Models.ResourceManager;
 using Topaz.Portal.Models.Subscriptions;
+using Topaz.Portal.Models.Tenant;
 using Topaz.ResourceManager;
 
 namespace Topaz.Portal;
@@ -218,8 +219,12 @@ public class TopazClient
         return token;
     }
 
-    public async Task GetDirectoryInfo()
+    public async Task<TenantInformationResponse> GetDirectoryInfo()
     {
-        var directory = await _graphClient.TenantRelationships.GetAsync();
+        var directory = await _graphClient.Directory.GetAsync();
+        var tenantInformation =
+            await _graphClient.TenantRelationships.FindTenantInformationByTenantIdWithTenantId(directory!.Id).GetAsync();
+        
+        return TenantInformationResponse.FromGraph(tenantInformation!);      
     }
 }

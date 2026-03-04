@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.CloudEnvironment.Models.Responses;
+using Topaz.Service.Entra;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -21,13 +22,7 @@ internal sealed class TenantsEndpoint : IEndpointDefinition
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!options.TenantId.HasValue)
-        {
-            response.StatusCode = HttpStatusCode.BadRequest;
-            return;
-        }
-
-        var metadata = new ListTenantsResponse(options.TenantId.Value);
+        var metadata = new ListTenantsResponse(EntraService.TenantId);
         response.Content = new StringContent(metadata.ToString());
         response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }

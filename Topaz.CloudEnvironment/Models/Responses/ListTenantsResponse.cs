@@ -13,7 +13,7 @@ internal sealed class ListTenantsResponse
     {
     }
 
-    public ListTenantsResponse(Guid tenantId)
+    public ListTenantsResponse(string tenantId)
     {
         Value = [new TenantData(tenantId, "Topaz Cloud Environment")];
     }
@@ -29,7 +29,7 @@ internal sealed class ListTenantsResponse
         {
         }
 
-        public TenantData(Guid tenantId, string displayName)
+        public TenantData(string tenantId, string displayName)
         {
             Id = $"/tenants/{tenantId}";
             TenantId = tenantId;
@@ -37,7 +37,7 @@ internal sealed class ListTenantsResponse
         }
         
         public string Id { get; init; }
-        public Guid TenantId { get; init; }
+        public string TenantId { get; init; }
         public string DisplayName { get; init; }
         public string TenantType => "AAD";
         public string DefaultDomain => "topaz.local.dev";

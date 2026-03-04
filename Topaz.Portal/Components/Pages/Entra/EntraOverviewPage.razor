@@ -1,60 +1,106 @@
 @* Topaz.Portal/Components/Pages/Entra/EntraOverviewPage.razor *@
 @page "/entra"
 @inject TopazClient TopazClient
+@using Topaz.Portal.Models.Tenant
 
 <EntraTenantShell>
     <div class="card">
         <div class="card-body">
-            <h3 class="card-title mb-3">Tenant overview</h3>
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h3 class="card-title mb-0">Tenant overview</h3>
 
-            <div class="row g-3">
-                <div class="col-12 col-md-6">
-                    <div class="border rounded p-3 h-100">
-                        <div class="fw-semibold">Basics</div>
-                        <div class="text-muted small">Tenant name, tenant ID, default domain, region…</div>
-                        <hr />
-                        <div class="small">
-                            <div>
-                                <span class="text-muted">Tenant:</span>
-                                <span>@("_directoryInfo?.DisplayName" ?? "—")</span>
+                <button class="btn btn-outline-secondary btn-sm"
+                        @onclick="LoadAsync"
+                        disabled="@_loading">
+                    Refresh
+                </button>
+            </div>
+
+            @if (_loading)
+            {
+                <p class="mb-0">Loading…</p>
+            }
+            else if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <div class="alert alert-danger" role="alert">
+                    @_error
+                </div>
+            }
+            else
+            {
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="border rounded p-3 h-100">
+                            <div class="fw-semibold">Basics</div>
+                            <hr />
+                            <div class="small">
+                                <div>
+                                    <span class="text-muted">Tenant:</span>
+                                    <span>@(_tenantInfo?.DisplayName ?? "—")</span>
+                                </div>
+                                <div>
+                                    <span class="text-muted">Tenant ID:</span>
+                                    <span>@(_tenantInfo?.TenantId ?? "—")</span>
+                                </div>
+                                <div>
+                                    <span class="text-muted">Primary domain:</span>
+                                    <span>@(_tenantInfo?.DefaultDomainName ?? "—")</span>
+                                </div>
+                                <div>
+                                    <span class="text-muted">Federation brand:</span>
+                                    <span>@(_tenantInfo?.FederationBrandName ?? "—")</span>
+                                </div>
                             </div>
-                            <div>
-                                <span class="text-muted">Tenant ID:</span>
-                                <span>@("_directoryInfo?.TenantId" ?? "—")</span>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <div class="border rounded p-3 h-100">
+                            <div class="fw-semibold">Summary</div>
+                            <hr />
+                            <div class="small">
+                                <div><span class="text-muted">Users:</span> <span>—</span></div>
+                                <div><span class="text-muted">Groups:</span> <span>—</span></div>
+                                <div><span class="text-muted">Service principals:</span> <span>—</span></div>
+                                <div><span class="text-muted">Applications:</span> <span>—</span></div>
                             </div>
-                            <div><span class="text-muted">Primary domain:</span> <span>[placeholder]</span></div>
                         </div>
                     </div>
                 </div>
-
-                <div class="col-12 col-md-6">
-                    <div class="border rounded p-3 h-100">
-                        <div class="fw-semibold">Summary</div>
-                        <div class="text-muted small">Quick counts for identity objects.</div>
-                        <hr />
-                        <div class="small">
-                            <div><span class="text-muted">Users:</span> <span>[placeholder]</span></div>
-                            <div><span class="text-muted">Groups:</span> <span>[placeholder]</span></div>
-                            <div><span class="text-muted">Service principals:</span> <span>[placeholder]</span></div>
-                            <div><span class="text-muted">Applications:</span> <span>[placeholder]</span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-3 text-muted small">
-                Wire these placeholders to your emulator’s Entra tenant model/API when ready.
-            </div>
+            }
         </div>
     </div>
 </EntraTenantShell>
 
 @code
 {
-    //private DirectoryInfoDto? _directoryInfo;
+    private bool _loading = true;
+    private string? _error;
+
+    private TenantInformationResponse? _tenantInfo;
 
     protected override async Task OnInitializedAsync()
     {
-        await TopazClient.GetDirectoryInfo();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            _tenantInfo = await TopazClient.GetDirectoryInfo();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load tenant info: {ex.Message}";
+            _tenantInfo = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 }

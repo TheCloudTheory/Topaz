@@ -4,6 +4,7 @@ using Topaz.Service.Entra.Models;
 using Topaz.Service.Entra.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Shared;
+using Directory = System.IO.Directory;
 
 namespace Topaz.Service.Entra.Planes;
 

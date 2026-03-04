@@ -21,12 +21,6 @@ public sealed class StartCommand(ITopazLogger logger) : AsyncCommand<StartComman
             logger.SetLoggingLevel(settings.LogLevel.Value);
         }
 
-        if (settings.TenantId == null)
-        {
-            Console.WriteLine(
-                "No tenant specified. Using --tenant-id options is required if you want to use Topaz with Azure CLI.");
-        }
-
         if (settings.EnableLoggingToFile)
         {
             logger.EnableLoggingToFile(settings.RefreshLog);
@@ -35,7 +29,6 @@ public sealed class StartCommand(ITopazLogger logger) : AsyncCommand<StartComman
         
         var host = new Topaz.Host.Host(new GlobalOptions
         {
-            TenantId = settings.TenantId,
             CertificateFile = settings.CertificateFile,
             CertificateKey = settings.CertificateKey,
             EnableLoggingToFile = settings.EnableLoggingToFile,
@@ -61,10 +54,6 @@ public sealed class StartCommand(ITopazLogger logger) : AsyncCommand<StartComman
         [CommandOptionDefinition("Sets the log level. Available values are: Debug, Information, Warning, Error")]
         [CommandOption("-l|--log-level")]
         public LogLevel? LogLevel { get; set; }
-
-        [CommandOptionDefinition("Configures the tenant ID used when providing metadata endpoints")]
-        [CommandOption("--tenant-id")]
-        public Guid? TenantId { get; set; }
 
         [CommandOptionDefinition(
             "Allows you to bring your own certificate (BYOC). Must be an RFC 7468 PEM-encoded certificate.")]

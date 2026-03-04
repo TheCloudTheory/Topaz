@@ -5,6 +5,7 @@ using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Topaz.CloudEnvironment.Models.Responses;
 using Topaz.Identity;
+using Topaz.Service.Entra;
 using Topaz.Service.Entra.Domain;
 using Topaz.Service.Entra.Models;
 using Topaz.Service.Entra.Planes;
@@ -181,7 +182,7 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
             RefreshToken = new AzureLocalCredential(objectId!)
                 .GetToken(new TokenRequestContext(), CancellationToken.None).Token,
             IdToken = CreateIdToken(Issuer, clientId!, storedNonce, username ?? objectId, objectId,
-                options.TenantId.GetValueOrDefault().ToString()),
+                EntraService.TenantId),
             Scope = form.TryGetValue("scope", out var scope)
                 ? scope
                 : (context.Request.QueryString.TryGetValueForKey("scope", out var qscope)

@@ -1,5 +1,7 @@
 ﻿using Topaz.Service.Entra.Endpoints.Applications;
+using Topaz.Service.Entra.Endpoints.Directory;
 using Topaz.Service.Entra.Endpoints.ServicePrincipal;
+using Topaz.Service.Entra.Endpoints.TenantRelationships;
 using Topaz.Service.Entra.Endpoints.User;
 using Topaz.Service.Entra.Models.Requests;
 using Topaz.Service.Entra.Planes;
@@ -14,6 +16,16 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
     public static string LocalDirectoryPath => ".entra";
     public static IReadOnlyCollection<string>? Subresources => null;
     public static string UniqueName => "entra";
+    
+    /// <summary>
+    /// A static identifier of the Entra ID tenant. As Topaz supports only one tenant, this value can't be changed..
+    /// </summary>
+    public static string TenantId => "50717675-3E5E-4A1E-8CB5-C62D8BE8CA48";
+    
+    public static string TenantDisplayName => "Topaz";
+    public static string DefaultDomainName => "topaz.local.dev";
+    public static string FederationBrandName => "Topaz";
+    
     public string Name => "Entra ID";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
@@ -32,7 +44,9 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
         new UpdateApplicationEndpoint(logger),
         new DeleteApplicationEndpoint(logger),
         new GetApplicationEndpoint(logger),
-        new AddApplicationPasswordEndpoint(logger)
+        new AddApplicationPasswordEndpoint(logger),
+        new GetDirectoryEndpoint(logger),
+        new FindTenantInformationByTenantIdEndpoint(logger),
     ];
 
     public void Bootstrap()
@@ -69,7 +83,7 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
         {
             DisplayName = "Topaz Admin",
             MailNickname = "topazadmin",
-            UserPrincipalName = "topazadmin@topaz.local",
+            UserPrincipalName = "topazadmin@topaz.local.dev",
             PasswordProfile = new CreateUserRequest.PasswordProfileData
             {
                 ForceChangePasswordNextSignIn = true,
