@@ -1,5 +1,6 @@
 ﻿using Topaz.Service.Entra.Endpoints.Applications;
 using Topaz.Service.Entra.Endpoints.Directory;
+using Topaz.Service.Entra.Endpoints.Groups;
 using Topaz.Service.Entra.Endpoints.ServicePrincipal;
 using Topaz.Service.Entra.Endpoints.TenantRelationships;
 using Topaz.Service.Entra.Endpoints.User;
@@ -34,6 +35,7 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
         new GetUserEndpoint(logger),
         new CreateUserEndpoint(logger),
         new DeleteUserEndpoint(logger),
+        new ListUsersEndpoint(logger),
         new ListServicePrincipalsEndpoint(logger),
         new GetServicePrincipalEndpoint(logger),
         new CreateServicePrincipalEndpoint(logger),
@@ -47,6 +49,7 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
         new AddApplicationPasswordEndpoint(logger),
         new GetDirectoryEndpoint(logger),
         new FindTenantInformationByTenantIdEndpoint(logger),
+        new ListGroupsEndpoint(logger)
     ];
 
     public void Bootstrap()
@@ -57,9 +60,11 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
         var userPath = Path.Combine(servicePath, EntraResourceProvider.UsersDirectoryName);
         var servicePrincipalPath = Path.Combine(servicePath, EntraResourceProvider.ServicePrincipalsDirectoryName);
         var applicationsPath = Path.Combine(servicePath, EntraResourceProvider.ApplicationsDirectoryName);
+        var groupsPath = Path.Combine(servicePath, EntraResourceProvider.GroupsDirectoryName);
         var userDataPath = Path.Combine(userPath, "data");
         var servicePrincipalDataPath = Path.Combine(servicePrincipalPath, "data");
         var applicationsDataPath = Path.Combine(applicationsPath, "data");
+        var groupsDataPath = Path.Combine(groupsPath, "data");
         
         CreateServiceDirectory(servicePath);
         CreateServiceDirectory(userPath);
@@ -68,6 +73,8 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
         CreateServiceDirectory(servicePrincipalDataPath);
         CreateServiceDirectory(applicationsPath);
         CreateServiceDirectory(applicationsDataPath);
+        CreateServiceDirectory(groupsPath);
+        CreateServiceDirectory(groupsDataPath);
         
         logger.LogDebug(nameof(EntraService), nameof(Bootstrap),$"Entra service directory directory initialized.");
         

@@ -98,4 +98,17 @@ internal sealed class UserDataPlane(EntraResourceProvider provider, ITopazLogger
         
         return new DataPlaneOperationResult<User>(OperationResult.Deleted, null, null, null);
     }
+
+    public DataPlaneOperationResult<User[]> ListUsers()
+    {
+        logger.LogDebug(nameof(UserDataPlane), nameof(ListUsers), "Listing users");
+
+        var path = provider.GetServiceInstanceUsersDataPath();
+        var files = Directory.EnumerateFiles(path, "*.json");
+
+        return new DataPlaneOperationResult<User[]>(OperationResult.Success,
+            files.Select(file =>
+                JsonSerializer.Deserialize<User>(File.ReadAllText(file), GlobalSettings.JsonOptions)!).ToArray(),
+            null, null);
+    }
 }

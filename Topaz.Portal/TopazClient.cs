@@ -111,7 +111,7 @@ public class TopazClient
             Value = resourceGroups.ToArray()
         };
     }
-    
+
     public async Task<ResourceGroupDto?> GetResourceGroup(Guid subscriptionId, string resourceGroupName,
         CancellationToken cancellationToken = default)
     {
@@ -122,7 +122,8 @@ public class TopazClient
             throw new ArgumentException("Resource group name is required.", nameof(resourceGroupName));
 
         var subscription = await _armClient
-            .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}")).GetAsync(cancellationToken);
+            .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
+            .GetAsync(cancellationToken);
         var rgResponse = await _armClient
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
             .GetResourceGroupAsync(resourceGroupName, cancellationToken);
@@ -223,8 +224,42 @@ public class TopazClient
     {
         var directory = await _graphClient.Directory.GetAsync();
         var tenantInformation =
-            await _graphClient.TenantRelationships.FindTenantInformationByTenantIdWithTenantId(directory!.Id).GetAsync();
-        
-        return TenantInformationResponse.FromGraph(tenantInformation!);      
+            await _graphClient.TenantRelationships.FindTenantInformationByTenantIdWithTenantId(directory!.Id)
+                .GetAsync();
+
+        var users = await _graphClient.Users.GetAsync(cfg =>
+        {
+            cfg.QueryParameters.Top = 1;
+            cfg.QueryParameters.Count = true;
+            cfg.Headers.Add("ConsistencyLevel", "eventual");
+        });
+
+        var groups = await _graphClient.Groups.GetAsync(cfg =>
+        {
+            cfg.QueryParameters.Top = 1;
+            cfg.QueryParameters.Count = true;
+            cfg.Headers.Add("ConsistencyLevel", "eventual");
+        });
+
+        var servicePrincipals = await _graphClient.ServicePrincipals.GetAsync(cfg =>
+        {
+            cfg.QueryParameters.Top = 1;
+            cfg.QueryParameters.Count = true;
+            cfg.Headers.Add("ConsistencyLevel", "eventual");
+        });
+
+        var applications = await _graphClient.Applications.GetAsync(cfg =>
+        {
+            cfg.QueryParameters.Top = 1;
+            cfg.QueryParameters.Count = true;
+            cfg.Headers.Add("ConsistencyLevel", "eventual");
+        });
+
+        return TenantInformationResponse.FromGraph(
+            tenantInformation!,
+            users?.OdataCount,
+            groups?.OdataCount,
+            servicePrincipals?.OdataCount,
+            applications?.OdataCount);
     }
 }

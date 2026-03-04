@@ -12,7 +12,8 @@ internal sealed class ListApplicationsEndpoint(ITopazLogger logger) : IEndpointD
     
     public string[] Endpoints =>
     [
-        "GET /v1.0/applications"
+        "GET /v1.0/applications",
+        "GET /applications"
     ];
 
     public string[] Permissions => [];

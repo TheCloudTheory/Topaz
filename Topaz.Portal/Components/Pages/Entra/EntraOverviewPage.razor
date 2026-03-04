@@ -32,7 +32,7 @@
                     <div class="col-12 col-md-6">
                         <div class="border rounded p-3 h-100">
                             <div class="fw-semibold">Basics</div>
-                            <hr />
+                            <hr/>
                             <div class="small">
                                 <div>
                                     <span class="text-muted">Tenant:</span>
@@ -57,12 +57,15 @@
                     <div class="col-12 col-md-6">
                         <div class="border rounded p-3 h-100">
                             <div class="fw-semibold">Summary</div>
-                            <hr />
+                            <hr/>
                             <div class="small">
-                                <div><span class="text-muted">Users:</span> <span>—</span></div>
-                                <div><span class="text-muted">Groups:</span> <span>—</span></div>
-                                <div><span class="text-muted">Service principals:</span> <span>—</span></div>
-                                <div><span class="text-muted">Applications:</span> <span>—</span></div>
+                                <div><span class="text-muted">Users:</span> <span>@_tenantInfo?.UsersCount</span></div>
+                                <div><span class="text-muted">Groups:</span> <span>@_tenantInfo?.GroupsCount</span>
+                                </div>
+                                <div><span class="text-muted">Service principals:</span>
+                                    <span>@_tenantInfo?.ServicePrincipalsCount</span></div>
+                                <div><span class="text-muted">Applications:</span>
+                                    <span>@_tenantInfo?.ApplicationsCount</span></div>
                             </div>
                         </div>
                     </div>

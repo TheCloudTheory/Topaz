@@ -17,52 +17,13 @@ internal sealed class ServicePrincipalsListResponse
 
     public ServicePrincipal[] Value { get; init; } = [];
 
-    public record ServicePrincipal
-    {
-        public string? Id { get; init; }
-        public string? AppId { get; init; }
-        public string? DisplayName { get; init; }
-        public string? AppDisplayName { get; init; }
-        public string? ServicePrincipalType { get; init; }
-        public bool? AccountEnabled { get; init; }
-        public string[]? ServicePrincipalNames { get; init; }
-        public string? PublisherName { get; init; }
-        public string? AppOwnerOrganizationId { get; init; }
-        public string[]? Tags { get; init; }
-        public DateTimeOffset? CreatedDateTime { get; init; }
-        public PasswordCredential[]? PasswordCredentials { get; init; }
-        public KeyCredential[]? KeyCredentials { get; init; }
-    }
-
-    public record PasswordCredential
-    {
-        [JsonPropertyName("keyId")]
-        public string? KeyId { get; init; }
-
-        [JsonPropertyName("startDateTime")]
-        public DateTimeOffset? StartDateTime { get; init; }
-
-        [JsonPropertyName("endDateTime")]
-        public DateTimeOffset? EndDateTime { get; init; }
-
-        [JsonPropertyName("displayName")]
-        public string? DisplayName { get; init; }
-    }
-
-    public record KeyCredential
-    {
-        [JsonPropertyName("keyId")]
-        public string? KeyId { get; init; }
-
-        [JsonPropertyName("startDateTime")]
-        public DateTimeOffset? StartDateTime { get; init; }
-
-        [JsonPropertyName("endDateTime")]
-        public DateTimeOffset? EndDateTime { get; init; }
-
-        [JsonPropertyName("displayName")]
-        public string? DisplayName { get; init; }
-    }
-
     public override string ToString() => JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
+
+    public static ServicePrincipalsListResponse From(Models.ServicePrincipal[] servicePrincipals)
+    {
+        return new ServicePrincipalsListResponse
+        {
+            Value = servicePrincipals
+        };
+    }
 }
