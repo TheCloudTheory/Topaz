@@ -60,7 +60,7 @@ public class EntraTests : TopazFixture
 		{
 			// Restore admin login for any subsequent tests in this fixture.
 			await RunAzureCliCommand("az logout");
-			await RunAzureCliCommand("az login --username topazadmin@topaz.local --password admin");
+			await RunAzureCliCommand("az login --username topazadmin@topaz.local.dev --password admin");
 
 			if (!string.IsNullOrEmpty(createdId))
 			{
@@ -115,12 +115,59 @@ public class EntraTests : TopazFixture
 		{
 			// Restore admin login for any subsequent tests in this fixture.
 			await RunAzureCliCommand("az logout");
-			await RunAzureCliCommand("az login --username topazadmin@topaz.local --password admin");
+			await RunAzureCliCommand("az login --username topazadmin@topaz.local.dev --password admin");
 
 			// Cleanup the created application (also removes the linked service principal).
 			if (!string.IsNullOrWhiteSpace(appId))
 			{
 				await RunAzureCliCommand($"az ad app delete --id \"{appId}\"");
+			}
+		}
+	}
+	
+	[Test]
+	public async Task User_Cannot_Login_With_Invalid_Username_Or_Password()
+	{
+		var upn = $"topaz-{Guid.NewGuid():N}@mytenant.onmicrosoft.com";
+		const string correctPassword = "P@ssw0rd!";
+		const string wrongPassword = "WrongPassword!123";
+		string createdId = null!;
+
+		try
+		{
+			await RunAzureCliCommand(
+				$"az ad user create --display-name \"Topaz Test User\" --user-principal-name \"{upn}\" --password \"{correctPassword}\" --force-change-password-next-sign-in false -o json",
+				(resp) =>
+				{
+					Assert.That(resp["id"], Is.Not.Null);
+					createdId = resp["id"]!.GetValue<string>();
+					Assert.That(resp["userPrincipalName"]!.GetValue<string>(), Is.EqualTo(upn));
+				});
+
+			// Ensure we are not accidentally using the admin session from OneTimeSetUp.
+			await RunAzureCliCommand("az logout");
+
+			// Wrong password should not authenticate.
+			await RunAzureCliCommand(
+				$"az login --username \"{upn}\" --password \"{wrongPassword}\" --allow-no-subscriptions",
+				assertion: null,
+				exitCode: 1);
+
+			// Wrong username should not authenticate.
+			var invalidUpn = $"does-not-exist-{Guid.NewGuid():N}@mytenant.onmicrosoft.com";
+			await RunAzureCliCommand(
+				$"az login --username \"{invalidUpn}\" --password \"{correctPassword}\" --allow-no-subscriptions",
+				assertion: null,
+				exitCode: 1);
+		}
+		finally
+		{
+			// Restore admin login for any subsequent tests in this fixture.
+			await RunAzureCliCommand("az login --username topazadmin@topaz.local.dev --password admin");
+
+			if (!string.IsNullOrEmpty(createdId))
+			{
+				await RunAzureCliCommand($"az ad user delete --id {createdId}");
 			}
 		}
 	}

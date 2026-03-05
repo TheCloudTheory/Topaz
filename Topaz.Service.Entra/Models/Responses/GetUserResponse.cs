@@ -47,30 +47,30 @@ internal sealed class GetUserResponse
 
     public override string ToString() => JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
 
-    public static GetUserResponse From(User operationResource)
+    public static GetUserResponse From(User user)
     {
         return new GetUserResponse
         {
-            Id = operationResource.Id,
-            BusinessPhones = operationResource.BusinessPhones,
-            DisplayName = operationResource.DisplayName,
-            GivenName = operationResource.GivenName,
-            Surname = operationResource.Surname,
-            Mail = operationResource.Mail,
-            UserPrincipalName = operationResource.UserPrincipalName,
-            MailNickname = operationResource.MailNickname,
-            JobTitle = operationResource.JobTitle,
-            MobilePhone = operationResource.MobilePhone,
-            OfficeLocation = operationResource.OfficeLocation,
-            PreferredLanguage = operationResource.PreferredLanguage,
-            AccountEnabled = operationResource.AccountEnabled,
-            CreatedDateTime = operationResource.CreatedDateTime,
-            OtherMails = operationResource.OtherMails ?? [],
-            OnPremisesSamAccountName = operationResource.OnPremisesSamAccountName,
-            OnPremisesImmutableId = operationResource.OnPremisesImmutableId,
-            Department = operationResource.Department,
-            CompanyName = operationResource.CompanyName,
-            EmployeeId = operationResource.EmployeeId,
+            Id = user.Id,
+            BusinessPhones = user.BusinessPhones,
+            DisplayName = user.DisplayName,
+            GivenName = user.GivenName,
+            Surname = user.Surname,
+            Mail = user.Mail,
+            UserPrincipalName = user.UserPrincipalName,
+            MailNickname = user.MailNickname,
+            JobTitle = user.JobTitle,
+            MobilePhone = user.MobilePhone,
+            OfficeLocation = user.OfficeLocation,
+            PreferredLanguage = user.PreferredLanguage,
+            AccountEnabled = user.AccountEnabled,
+            CreatedDateTime = user.CreatedDateTime,
+            OtherMails = user.OtherMails ?? [],
+            OnPremisesSamAccountName = user.OnPremisesSamAccountName,
+            OnPremisesImmutableId = user.OnPremisesImmutableId,
+            Department = user.Department,
+            CompanyName = user.CompanyName,
+            EmployeeId = user.EmployeeId,
         };
     }
 }

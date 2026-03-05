@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Http;
+using Topaz.Service.Entra.Models.Responses;
 using Topaz.Service.Shared;
-using Topaz.CloudEnvironment.Models.Responses;
 
-namespace Topaz.CloudEnvironment.Endpoints;
+namespace Topaz.Service.Entra.Endpoints;
 
 internal sealed class OidcEndpoint : IEndpointDefinition
 {

@@ -5,7 +5,7 @@ using Topaz.Service.Shared;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.CloudEnvironment.Endpoints;
+namespace Topaz.Service.Entra.Endpoints;
 
 public class AuthorizeEndpoint(ITopazLogger logger) : IEndpointDefinition
 {

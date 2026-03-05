@@ -3,17 +3,16 @@ using System.Text;
 using System.Text.Json;
 using Azure.Core;
 using Microsoft.AspNetCore.Http;
-using Topaz.CloudEnvironment.Models.Responses;
 using Topaz.Identity;
-using Topaz.Service.Entra;
 using Topaz.Service.Entra.Domain;
 using Topaz.Service.Entra.Models;
+using Topaz.Service.Entra.Models.Responses;
 using Topaz.Service.Entra.Planes;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.CloudEnvironment.Endpoints;
+namespace Topaz.Service.Entra.Endpoints;
 
 public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
@@ -35,13 +34,6 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         // Build a minimal unsigned JWT (header.payload.) so MSAL can decode the id_token payload.
-        static string Base64UrlEncode(string input)
-        {
-            return Convert.ToBase64String(Encoding.UTF8.GetBytes(input))
-                .TrimEnd('=')
-                .Replace('+', '-')
-                .Replace('/', '_');
-        }
 
         // Parse POST form body to obtain the authorization 'code'.
         string body;
@@ -91,7 +83,20 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
             var userOperation = _userDataPlane.Get(UserIdentifier.From(username));
             if (userOperation.Resource == null || userOperation.Result != OperationResult.Success)
             {
-                response.StatusCode = HttpStatusCode.BadRequest;
+                response.CreateJsonContentResponse(ErrorResponse.Create(ErrorResponse.InvalidClient, "Invalid user."),
+                    HttpStatusCode.BadRequest);
+                return;
+            }
+
+            var savedPassword = userOperation.Resource.PasswordProfile?.Password;
+            var password = ExtractValueForToken(context, form, "password", null);
+
+            if (savedPassword == null || !string.Equals(savedPassword, password, StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Invalid password.");
+                response.CreateJsonContentResponse(
+                    ErrorResponse.Create(ErrorResponse.InvalidClient, "Invalid password."),
+                    HttpStatusCode.BadRequest);
                 return;
             }
 
@@ -109,7 +114,9 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                 if (refreshToken == null)
                 {
                     logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract refresh token.");
-                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.CreateJsonContentResponse(
+                        ErrorResponse.Create(ErrorResponse.InvalidRequest, "Could not extract refresh token."),
+                        HttpStatusCode.BadRequest);
                     return;
                 }
 
@@ -117,7 +124,9 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                 if (validatedToken == null)
                 {
                     logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not validate refresh token.");
-                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.CreateJsonContentResponse(
+                        ErrorResponse.Create(ErrorResponse.InvalidClient, "Could not validate refresh token."),
+                        HttpStatusCode.Unauthorized);
                     return;
                 }
 
@@ -133,7 +142,9 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                 if (clientSecret == null)
                 {
                     logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract client secret.");
-                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.CreateJsonContentResponse(
+                        ErrorResponse.Create(ErrorResponse.InvalidRequest, "Could not extract client secret."),
+                        HttpStatusCode.BadRequest);
                     return;
                 }
 
@@ -141,7 +152,9 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                 if (appId == null)
                 {
                     logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract app ID.");
-                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.CreateJsonContentResponse(
+                        ErrorResponse.Create(ErrorResponse.InvalidRequest, "Could not extract app ID."),
+                        HttpStatusCode.BadRequest);
                     return;
                 }
 
@@ -149,7 +162,9 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                 if (appOperation.Resource == null || appOperation.Result != OperationResult.Success)
                 {
                     logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not find app.");
-                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.CreateJsonContentResponse(
+                        ErrorResponse.Create(ErrorResponse.InvalidClient, "Could not find app."),
+                        HttpStatusCode.BadRequest);
                     return;
                 }
 
@@ -159,7 +174,9 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                 if (!applicationCredentials)
                 {
                     logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Invalid client secret.");
-                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.CreateJsonContentResponse(
+                        ErrorResponse.Create(ErrorResponse.InvalidClient, "Invalid client secret."),
+                        HttpStatusCode.BadRequest);
                     return;
                 }
 
@@ -171,27 +188,46 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
         if (objectId == null)
         {
             logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract object ID from request.");
-            response.StatusCode = HttpStatusCode.BadRequest;
+            response.CreateJsonContentResponse(
+                ErrorResponse.Create(ErrorResponse.InvalidRequest, "Could not extract object ID from request."),
+                HttpStatusCode.BadRequest);
             return;
         }
 
-        var token = new TokenResponse
-        {
-            AccessToken = new AzureLocalCredential(objectId!)
-                .GetToken(new TokenRequestContext(), CancellationToken.None).Token,
-            RefreshToken = new AzureLocalCredential(objectId!)
-                .GetToken(new TokenRequestContext(), CancellationToken.None).Token,
-            IdToken = CreateIdToken(Issuer, clientId!, storedNonce, username ?? objectId, objectId,
-                EntraService.TenantId),
-            Scope = form.TryGetValue("scope", out var scope)
-                ? scope
-                : (context.Request.QueryString.TryGetValueForKey("scope", out var qscope)
-                    ? qscope
-                    : "openid profile offline_access")
-        };
+        var token = CreateTokenResponse(context, objectId, clientId, storedNonce, username, form);
 
         response.CreateJsonContentResponse(token);
-        return;
+    }
+
+    private static TokenResponse CreateTokenResponse(HttpContext context, string objectId, string? clientId,
+        string? storedNonce,
+        string? username, Dictionary<string, string> form)
+    {
+        {
+            var token = new TokenResponse
+            {
+                AccessToken = new AzureLocalCredential(objectId)
+                    .GetToken(new TokenRequestContext(), CancellationToken.None).Token,
+                RefreshToken = new AzureLocalCredential(objectId)
+                    .GetToken(new TokenRequestContext(), CancellationToken.None).Token,
+                IdToken = CreateIdToken(Issuer, clientId!, storedNonce, username ?? objectId, objectId,
+                    EntraService.TenantId),
+                Scope = form.TryGetValue("scope", out var scope)
+                    ? scope
+                    : context.Request.QueryString.TryGetValueForKey("scope", out var qscope)
+                        ? qscope
+                        : "openid profile offline_access"
+            };
+            return token;
+        }
+
+        static string Base64UrlEncode(string input)
+        {
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(input))
+                .TrimEnd('=')
+                .Replace('+', '-')
+                .Replace('/', '_');
+        }
 
         static string CreateIdToken(string issuer, string audience, string? nonce, string userName, string objectId,
             string tenantId)

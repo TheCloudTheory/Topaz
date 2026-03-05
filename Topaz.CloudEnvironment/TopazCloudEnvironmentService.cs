@@ -16,10 +16,7 @@ public sealed class TopazCloudEnvironmentService(ITopazLogger logger) : IService
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         new MetadataEndpoint(),
-        new TenantsEndpoint(),
-        new OidcEndpoint(),
-        new AuthorizeEndpoint(logger),
-        new TokenEndpoint(logger)
+        new TenantsEndpoint()
     ];
 
     public void Bootstrap()

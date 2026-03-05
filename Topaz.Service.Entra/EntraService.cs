@@ -1,4 +1,5 @@
-﻿using Topaz.Service.Entra.Endpoints.Applications;
+﻿using Topaz.Service.Entra.Endpoints;
+using Topaz.Service.Entra.Endpoints.Applications;
 using Topaz.Service.Entra.Endpoints.Directory;
 using Topaz.Service.Entra.Endpoints.Groups;
 using Topaz.Service.Entra.Endpoints.ServicePrincipal;
@@ -49,7 +50,10 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
         new AddApplicationPasswordEndpoint(logger),
         new GetDirectoryEndpoint(logger),
         new FindTenantInformationByTenantIdEndpoint(logger),
-        new ListGroupsEndpoint(logger)
+        new ListGroupsEndpoint(logger),
+        new OidcEndpoint(),
+        new AuthorizeEndpoint(logger),
+        new TokenEndpoint(logger)
     ];
 
     public void Bootstrap()
