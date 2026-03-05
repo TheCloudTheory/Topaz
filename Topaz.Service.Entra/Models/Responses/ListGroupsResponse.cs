@@ -5,30 +5,29 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Entra.Models.Responses;
 
-internal sealed class ListApplicationsResponse
+internal sealed class ListGroupsResponse
 {
     [JsonPropertyName("@odata.context")]
-    [UsedImplicitly]
     public string OdataContext
     {
         get;
         set;
-    } = "https://graph.microsoft.com/v1.0/$metadata#applications";
+    } = "https://graph.microsoft.com/v1.0/$metadata#groups";
     
     [JsonPropertyName("@odata.count")]
     public int? OdataCount
     {
-        [UsedImplicitly] get;
+        get;
         set;
     }
     
-    public Application[] Value { [UsedImplicitly] get; init; } = [];
+    public Group[] Value { [UsedImplicitly] get; init; } = [];
 
-    public static ListApplicationsResponse From(Application[]? applications)
+    public static ListGroupsResponse From(Group[]? groups)
     {
-        return new ListApplicationsResponse
+        return new ListGroupsResponse
         {
-            Value = applications ?? []
+            Value = groups ?? []
         };
     }
 

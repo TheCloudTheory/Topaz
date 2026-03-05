@@ -21,7 +21,16 @@ internal sealed class ListGroupsEndpoint(ITopazLogger logger) : IEndpointDefinit
         logger.LogDebug(nameof(ListGroupsEndpoint), nameof(GetResponse), "Fetching groups.");
 
         var operation = _dataPlane.ListServicePrincipals();
+        var result = ListGroupsResponse.From(operation.Resource!);
+        
+        if (context.Request.Query.ContainsKey("$count"))
+        {
+            logger.LogDebug(nameof(ListGroupsEndpoint), nameof(GetResponse),
+                "$count parameter was provided - calculating the total number of groups.");
+            
+            result.OdataCount = operation.Resource!.Length;
+        }
 
-        response.CreateJsonContentResponse(ListGroupsResponse.From(operation.Resource!));
+        response.CreateJsonContentResponse(result);
     }
 }

@@ -26,7 +26,16 @@ internal sealed class ListApplicationsEndpoint(ITopazLogger logger) : IEndpointD
         logger.LogDebug(nameof(ListApplicationsEndpoint), nameof(GetResponse), "Fetching applications.");
         
         var operation = _dataPlane.ListApplications();
+        var result = ListApplicationsResponse.From(operation.Resource);
         
-        response.CreateJsonContentResponse(ListApplicationsResponse.From(operation.Resource));
+        if (context.Request.Query.ContainsKey("$count"))
+        {
+            logger.LogDebug(nameof(ListApplicationsEndpoint), nameof(GetResponse),
+                "$count parameter was provided - calculating the total number of applications.");
+            
+            result.OdataCount = operation.Resource!.Length;
+        }
+        
+        response.CreateJsonContentResponse(result);
     }
 }

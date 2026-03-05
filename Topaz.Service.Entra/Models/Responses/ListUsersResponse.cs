@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 using Topaz.Shared;
 
 namespace Topaz.Service.Entra.Models.Responses;
@@ -7,6 +8,7 @@ namespace Topaz.Service.Entra.Models.Responses;
 internal sealed class ListUsersResponse
 {
     [JsonPropertyName("@odata.context")]
+    [UsedImplicitly]
     public string OdataContext
     {
         get;
@@ -16,11 +18,11 @@ internal sealed class ListUsersResponse
     [JsonPropertyName("@odata.count")]
     public int? OdataCount
     {
-        get;
+        [UsedImplicitly] get;
         set;
     }
     
-    public User[] Value { get; init; } = [];
+    public User[] Value { [UsedImplicitly] get; init; } = [];
 
     public static ListUsersResponse From(User[]? users)
     {
