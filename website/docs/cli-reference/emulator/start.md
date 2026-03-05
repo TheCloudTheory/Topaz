@@ -7,7 +7,6 @@ Starts the emulator.
 
 ## Options
 * `-l, --log-level` - Sets the log level. Available values are: Debug, Information, Warning, Error
-* `--tenant-id` - Configures the tenant ID used when providing metadata endpoints
 * `--certificate-file` - Allows you to bring your own certificate (BYOC). Must be an RFC 7468 PEM-encoded certificate.
 * `--certificate-key` - Allows you to bring your own certificate (BYOC).
 * `--enable-logging-to-file` - Tells the emulator to save logs to a file.
