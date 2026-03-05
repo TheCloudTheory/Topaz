@@ -106,7 +106,7 @@ internal sealed class User : DirectoryObject
             Id = id.HasValue ? id.Value.ToString() : Guid.NewGuid().ToString(),
 
             // Core identity/profile
-            AccountEnabled = request.AccountEnabled,
+            AccountEnabled = request.AccountEnabled ?? true,
             DisplayName = request.DisplayName,
             GivenName = request.GivenName,
             Surname = request.Surname,

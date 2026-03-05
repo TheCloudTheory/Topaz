@@ -99,7 +99,8 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
             {
                 ForceChangePasswordNextSignIn = true,
                 Password = "admin"
-            }
+            },
+            Mail = "topazadmin@topaz.local.dev"
         });
     }
 

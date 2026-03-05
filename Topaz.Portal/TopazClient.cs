@@ -4,6 +4,7 @@ using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Microsoft.Graph;
+using Microsoft.Graph.Models;
 using Topaz.Identity;
 using Topaz.Portal.Models.Auth;
 using Topaz.Portal.Models.ResourceGroups;
@@ -244,6 +245,31 @@ public class TopazClient
             return (null, "Sign-in failed: token was missing.");
 
         return (token, null);
+    }
+    
+    public async Task<IReadOnlyList<User>> ListUsers(
+        int top = 50,
+        CancellationToken cancellationToken = default)
+    {
+        var resp = await _graphClient.Users.GetAsync(cfg =>
+        {
+            cfg.QueryParameters.Top = top;
+
+            // Keep payload small and UI-focused
+            cfg.QueryParameters.Select =
+            [
+                "id",
+                "displayName",
+                "userPrincipalName",
+                "mail",
+                "accountEnabled",
+                "userType"
+            ];
+
+            cfg.QueryParameters.Orderby = ["displayName"];
+        }, cancellationToken);
+
+        return resp?.Value ?? [];
     }
 
     public async Task<TenantInformationResponse> GetDirectoryInfo()

@@ -10,7 +10,8 @@ public static class GlobalSettings
     {
          PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
          PropertyNameCaseInsensitive = true,
-         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
     
     public static readonly JsonSerializerOptions JsonOptionsCli = new()

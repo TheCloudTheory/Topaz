@@ -1,13 +1,110 @@
 @* Topaz.Portal/Components/Pages/Entra/EntraUsersPage.razor *@
 @page "/entra/users"
+@using Microsoft.Graph.Models
+@inject TopazClient TopazClient
 
 <EntraTenantShell>
     <div class="card">
         <div class="card-body">
-            <h3 class="card-title mb-3">Users</h3>
-            <div class="text-muted">
-                List/search users here (UPN, display name, object ID, status…).
+            <div class="d-flex align-items-start justify-content-between gap-3">
+                <div>
+                    <h3 class="card-title mb-2">Users</h3>
+                </div>
+
+                <button class="btn btn-outline-primary" @onclick="ReloadAsync" disabled="@_loading">
+                    Refresh
+                </button>
             </div>
+
+            <hr />
+
+            @if (_loading)
+            {
+                <div class="text-muted">Loading users…</div>
+            }
+            else if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <div class="alert alert-danger mb-0">@_error</div>
+            }
+            else if (_users.Count == 0)
+            {
+                <div class="text-muted">No users found.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                        <tr>
+                            <th>Display name</th>
+                            <th>UPN</th>
+                            <th>Mail</th>
+                            <th>Enabled</th>
+                            <th class="text-muted">Id</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var u in _users)
+                        {
+                            <tr>
+                                <td>@(u.DisplayName ?? "(no display name)")</td>
+                                <td>@(u.UserPrincipalName ?? "-")</td>
+                                <td>@(u.Mail ?? "-")</td>
+                                <td>
+                                    @switch (u.AccountEnabled)
+                                    {
+                                        case null:
+                                            <span class="text-muted">-</span>
+                                            break;
+                                        case true:
+                                            <span class="badge text-bg-success">Yes</span>
+                                            break;
+                                        default:
+                                            <span class="badge text-bg-secondary">No</span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="text-muted"><code>@u.Id</code></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
     </div>
 </EntraTenantShell>
+
+@code
+{
+    private bool _loading;
+    private string? _error;
+    private List<User> _users = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            var users = await TopazClient.ListUsers(top: 50);
+            _users = users.ToList();
+        }
+        catch (Exception ex)
+        {
+            // Keep message UI-friendly; log details elsewhere if you have logging wired to the UI layer.
+            _error = $"Failed to load users. {ex.Message}";
+            _users.Clear();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}
