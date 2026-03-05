@@ -1,0 +1,540 @@
+@page "/authorization"
+@using Topaz.Portal.Models.Subscriptions
+@using Topaz.Portal.Models.Rbac
+@inject TopazClient TopazClient
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="mb-0">Authorization (RBAC)</h1>
+
+    <button class="btn btn-outline-primary btn-sm"
+            @onclick="RefreshAsync"
+            disabled="@_loading">
+        Refresh
+    </button>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-6 col-lg-4">
+                <label class="form-label">Subscription</label>
+                <select class="form-select"
+                        @bind="_selectedSubscriptionId"
+                        disabled="@(_loading || _subscriptions.Length == 0)">
+                    @if (_subscriptions.Length == 0)
+                    {
+                        <option value="">(no subscriptions)</option>
+                    }
+                    else
+                    {
+                        @foreach (var s in _subscriptions)
+                        {
+                            <option value="@s.SubscriptionId">
+                                @(s.DisplayName ?? "(no name)") (@s.SubscriptionId)
+                            </option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-4">
+                <label class="form-label">Filter (role name equals)</label>
+                <input class="form-control"
+                       @bind="_roleNameFilter"
+                       placeholder="e.g. Contributor"
+                       disabled="@_loading" />
+            </div>
+
+            <div class="col-12 col-lg-4">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary w-100"
+                            @onclick="LoadAuthorizationAsync"
+                            disabled="@_loading || string.IsNullOrWhiteSpace(_selectedSubscriptionId)">
+                        Load
+                    </button>
+
+                    <button class="btn btn-outline-secondary w-100"
+                            @onclick="ClearFilter"
+                            disabled="@_loading">
+                        Clear filter
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <div class="alert alert-danger mt-3 mb-0" role="alert">
+                @_error
+            </div>
+        }
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Role definitions -->
+    <div class="col-12 col-xl-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between mb-2">
+                    <div>
+                        <h5 class="card-title mb-0">Role definitions</h5>
+                        <div class="text-muted small">Built-in and custom roles</div>
+                    </div>
+                    <span class="badge text-bg-light">@(_roleDefinitions.Length) loaded</span>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
+                    <div>
+                        <label class="form-label small mb-1">Page size</label>
+                        <select class="form-select form-select-sm"
+                                style="width: 140px;"
+                                value="@_roleDefinitionsPageSize"
+                                @onchange="OnRoleDefinitionsPageSizeChanged"
+                                disabled="@_loading">
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+
+                    <div class="ms-auto d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="LoadRoleDefinitionsPrevAsync"
+                                disabled="@_loading || _roleDefinitionsPrevTokens.Count == 0">
+                            Prev
+                        </button>
+
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="LoadRoleDefinitionsNextAsync"
+                                disabled="@_loading || string.IsNullOrWhiteSpace(_roleDefinitionsContinuationToken)">
+                            Next
+                        </button>
+                    </div>
+                </div>
+
+                @if (_loading)
+                {
+                    <p class="mb-0">Loading…</p>
+                }
+                else if (_roleDefinitions.Length == 0)
+                {
+                    <p class="mb-0">No role definitions found.</p>
+                }
+                else
+                {
+                    var builtIn = _roleDefinitions.Where(r => r.Properties?.IsBuiltIn == true).ToArray();
+                    var custom = _roleDefinitions.Where(r => r.Properties?.IsCustom == true).ToArray();
+                    var unknown = _roleDefinitions.Where(r => r.Properties?.IsBuiltIn != true && r.Properties?.IsCustom != true).ToArray();
+
+                    <div class="mb-3">
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge text-bg-secondary">Built-in: @builtIn.Length</span>
+                            <span class="badge text-bg-secondary">Custom: @custom.Length</span>
+                            @if (unknown.Length > 0)
+                            {
+                                <span class="badge text-bg-warning">Unknown: @unknown.Length</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th class="text-muted">Id</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var rd in _roleDefinitionsPageItems)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">@(rd.Properties?.RoleName ?? rd.Name ?? "(unknown)")</div>
+                                        @if (!string.IsNullOrWhiteSpace(rd.Properties?.Description))
+                                        {
+                                            <div class="text-muted small">@rd.Properties.Description</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge text-bg-light">
+                                            @(rd.Properties?.RoleType ?? "(unknown)")
+                                        </span>
+                                    </td>
+                                    <td class="text-muted">
+                                        <small><code>@(rd.Id ?? "")</code></small>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Role assignments -->
+    <div class="col-12 col-xl-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between mb-2">
+                    <div>
+                        <h5 class="card-title mb-0">Role assignments</h5>
+                        <div class="text-muted small">Assignments at subscription scope</div>
+                    </div>
+                    <span class="badge text-bg-light">@(_roleAssignments.Length) loaded</span>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
+                    <div>
+                        <label class="form-label small mb-1">Page size</label>
+                        <select class="form-select form-select-sm"
+                                style="width: 140px;"
+                                value="@_roleAssignmentsPageSize"
+                                @onchange="OnRoleAssignmentsPageSizeChanged"
+                                disabled="@_loading">
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+
+                    <div class="ms-auto d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="LoadRoleAssignmentsPrevAsync"
+                                disabled="@_loading || _roleAssignmentsPrevTokens.Count == 0">
+                            Prev
+                        </button>
+
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="LoadRoleAssignmentsNextAsync"
+                                disabled="@_loading || string.IsNullOrWhiteSpace(_roleAssignmentsContinuationToken)">
+                            Next
+                        </button>
+                    </div>
+                </div>
+
+                @if (_loading)
+                {
+                    <p class="mb-0">Loading…</p>
+                }
+                else if (_roleAssignments.Length == 0)
+                {
+                    <p class="mb-0">No role assignments found.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Principal</th>
+                                <th>Role</th>
+                                <th class="text-muted">Scope</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var ra in _roleAssignmentsPageItems)
+                            {
+                                var roleName = ResolveRoleName(ra.Properties?.RoleDefinitionId);
+
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">
+                                            <code>@(ra.Properties?.PrincipalId ?? "(unknown)")</code>
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(ra.Properties?.PrincipalType))
+                                        {
+                                            <div class="text-muted small">@ra.Properties.PrincipalType</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">@roleName</div>
+                                        <div class="text-muted small">
+                                            <small><code>@(ra.Properties?.RoleDefinitionId ?? "")</code></small>
+                                        </div>
+                                    </td>
+                                    <td class="text-muted">
+                                        <small>@(ra.Properties?.Scope ?? ra.Id ?? "")</small>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code
+{
+    private bool _loading;
+    private string? _error;
+
+    private SubscriptionDto[] _subscriptions = [];
+    private string? _selectedSubscriptionId;
+
+    private string _roleNameFilter = "";
+
+    private RoleDefinitionDto[] _roleDefinitions = [];
+    private RoleAssignmentDto[] _roleAssignments = [];
+
+    private int _roleDefinitionsPageSize = 50;
+    private int _roleDefinitionsPageIndex = 1;
+    private string? _roleDefinitionsContinuationToken;
+    private Stack<string?> _roleDefinitionsPrevTokens = new();
+
+    private int _roleAssignmentsPageSize = 50;
+    private int _roleAssignmentsPageIndex = 1;
+    private string? _roleAssignmentsContinuationToken;
+    private Stack<string?> _roleAssignmentsPrevTokens = new();
+    
+    private IEnumerable<RoleDefinitionDto> _roleDefinitionsPageItems =>
+        _roleDefinitions
+            .OrderBy(r => r.Properties?.RoleName)
+            .Skip((_roleDefinitionsPageIndex - 1) * _roleDefinitionsPageSize)
+            .Take(_roleDefinitionsPageSize);
+
+    private IEnumerable<RoleAssignmentDto> _roleAssignmentsPageItems =>
+        _roleAssignments
+            .Skip((_roleAssignmentsPageIndex - 1));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        _error = null;
+        _loading = true;
+
+        try
+        {
+            var subs = await TopazClient.ListSubscriptions();
+            _subscriptions = subs?.Value ?? [];
+
+            _selectedSubscriptionId ??= _subscriptions.FirstOrDefault()?.SubscriptionId;
+
+            if (!string.IsNullOrWhiteSpace(_selectedSubscriptionId))
+            {
+                await LoadAuthorizationAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load subscriptions: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ClearFilter() => _roleNameFilter = "";
+
+    private async Task LoadAuthorizationAsync()
+    {
+        _error = null;
+
+        if (string.IsNullOrWhiteSpace(_selectedSubscriptionId) || !Guid.TryParse(_selectedSubscriptionId, out var subId))
+        {
+            _error = "Please select a valid subscription.";
+            return;
+        }
+
+        _roleDefinitionsPrevTokens.Clear();
+        _roleAssignmentsPrevTokens.Clear();
+        _roleDefinitionsContinuationToken = null;
+        _roleAssignmentsContinuationToken = null;
+
+        _loading = true;
+        try
+        {
+            var roleName = string.IsNullOrWhiteSpace(_roleNameFilter) ? null : _roleNameFilter.Trim();
+
+            var defsResp = await TopazClient.ListRoleDefinitions(
+                subId, roleName, pageSize: _roleDefinitionsPageSize, continuationToken: null);
+
+            _roleDefinitions = defsResp?.Value ?? [];
+            _roleDefinitionsContinuationToken = defsResp?.ContinuationToken;
+
+            var assignmentsResp = await TopazClient.ListRoleAssignments(
+                subId, roleName, pageSize: _roleAssignmentsPageSize, continuationToken: null);
+
+            _roleAssignments = assignmentsResp?.Value ?? [];
+            _roleAssignmentsContinuationToken = assignmentsResp?.ContinuationToken;
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load authorization data: {ex.Message}";
+            _roleDefinitions = [];
+            _roleAssignments = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadRoleDefinitionsNextAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedSubscriptionId) || !Guid.TryParse(_selectedSubscriptionId, out var subId))
+            return;
+
+        if (string.IsNullOrWhiteSpace(_roleDefinitionsContinuationToken))
+            return;
+
+        _loading = true;
+        try
+        {
+            var roleName = string.IsNullOrWhiteSpace(_roleNameFilter) ? null : _roleNameFilter.Trim();
+
+            _roleDefinitionsPrevTokens.Push(_roleDefinitionsContinuationToken);
+
+            var resp = await TopazClient.ListRoleDefinitions(
+                subId, roleName, pageSize: _roleDefinitionsPageSize, continuationToken: _roleDefinitionsContinuationToken);
+
+            _roleDefinitions = resp?.Value ?? [];
+            _roleDefinitionsContinuationToken = resp?.ContinuationToken;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadRoleDefinitionsPrevAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedSubscriptionId) || !Guid.TryParse(_selectedSubscriptionId, out var subId))
+            return;
+
+        if (_roleDefinitionsPrevTokens.Count == 0)
+            return;
+
+        _loading = true;
+        try
+        {
+            var roleName = string.IsNullOrWhiteSpace(_roleNameFilter) ? null : _roleNameFilter.Trim();
+
+            var prevToken = _roleDefinitionsPrevTokens.Count <= 1 ? null : _roleDefinitionsPrevTokens.Pop();
+
+            var resp = await TopazClient.ListRoleDefinitions(
+                subId, roleName, pageSize: _roleDefinitionsPageSize, continuationToken: prevToken);
+
+            _roleDefinitions = resp?.Value ?? [];
+            _roleDefinitionsContinuationToken = resp?.ContinuationToken;
+
+            if (_roleDefinitionsPrevTokens.Count == 0)
+            {
+                // ensure we’re consistent when returning to the first page
+                _roleDefinitionsPrevTokens.Clear();
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadRoleAssignmentsNextAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedSubscriptionId) || !Guid.TryParse(_selectedSubscriptionId, out var subId))
+            return;
+
+        if (string.IsNullOrWhiteSpace(_roleAssignmentsContinuationToken))
+            return;
+
+        _loading = true;
+        try
+        {
+            var roleName = string.IsNullOrWhiteSpace(_roleNameFilter) ? null : _roleNameFilter.Trim();
+
+            _roleAssignmentsPrevTokens.Push(_roleAssignmentsContinuationToken);
+
+            var resp = await TopazClient.ListRoleAssignments(
+                subId, roleName, pageSize: _roleAssignmentsPageSize, continuationToken: _roleAssignmentsContinuationToken);
+
+            _roleAssignments = resp?.Value ?? [];
+            _roleAssignmentsContinuationToken = resp?.ContinuationToken;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadRoleAssignmentsPrevAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedSubscriptionId) || !Guid.TryParse(_selectedSubscriptionId, out var subId))
+            return;
+
+        if (_roleAssignmentsPrevTokens.Count == 0)
+            return;
+
+        _loading = true;
+        try
+        {
+            var roleName = string.IsNullOrWhiteSpace(_roleNameFilter) ? null : _roleNameFilter.Trim();
+
+            var prevToken = _roleAssignmentsPrevTokens.Count <= 1 ? null : _roleAssignmentsPrevTokens.Pop();
+
+            var resp = await TopazClient.ListRoleAssignments(
+                subId, roleName, pageSize: _roleAssignmentsPageSize, continuationToken: prevToken);
+
+            _roleAssignments = resp?.Value ?? [];
+            _roleAssignmentsContinuationToken = resp?.ContinuationToken;
+
+            if (_roleAssignmentsPrevTokens.Count == 0)
+            {
+                _roleAssignmentsPrevTokens.Clear();
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OnRoleDefinitionsPageSizeChanged(ChangeEventArgs e)
+    {
+        if (e.Value is null) return;
+        if (!int.TryParse(e.Value.ToString(), out var size)) return;
+
+        _roleDefinitionsPageSize = size;
+
+        _roleDefinitionsPrevTokens.Clear();
+        _roleDefinitionsContinuationToken = null;
+
+        await LoadAuthorizationAsync();
+    }
+
+    private async Task OnRoleAssignmentsPageSizeChanged(ChangeEventArgs e)
+    {
+        if (e.Value is null) return;
+        if (!int.TryParse(e.Value.ToString(), out var size)) return;
+
+        _roleAssignmentsPageSize = size;
+
+        _roleAssignmentsPrevTokens.Clear();
+        _roleAssignmentsContinuationToken = null;
+
+        await LoadAuthorizationAsync();
+    }
+
+    private string ResolveRoleName(string? roleDefinitionId)
+    {
+        if (string.IsNullOrWhiteSpace(roleDefinitionId))
+            return "(unknown role)";
+
+        var match = _roleDefinitions.FirstOrDefault(d =>
+            string.Equals(d.Id, roleDefinitionId, StringComparison.OrdinalIgnoreCase));
+
+        return match?.Properties?.RoleName ?? match?.Name ?? "(unknown role)";
+    }
+}
