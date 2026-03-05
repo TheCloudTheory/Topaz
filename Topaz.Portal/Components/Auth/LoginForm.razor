@@ -57,10 +57,10 @@
 
         try
         {
-            var ok = await AccountSession.SignInAsync(_model.Username!, _model.Password!);
+            var (ok, errorMessage) = await AccountSession.SignInWithErrorAsync(_model.Username!, _model.Password!);
             if (!ok)
             {
-                _error = "Invalid username or password.";
+                _error = errorMessage ?? "Invalid username or password.";
                 return;
             }
 

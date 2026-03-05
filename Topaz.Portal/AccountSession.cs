@@ -18,22 +18,23 @@ public sealed class AccountSession(ProtectedSessionStorage sessionStorage, Topaz
         var user = await sessionStorage.GetAsync<string>(UsernameKey);
         Username = user.Success ? user.Value : null;
     }
-
-    public async Task<bool> SignInAsync(string username, string password)
+    
+    public async Task<(bool Ok, string? ErrorMessage)> SignInWithErrorAsync(string username, string password)
     {
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-            return false;
+            return (false, "Username and password are required.");
 
-        var token = await client.GetAuthToken(username, password);
+        var (token, error) = await client.GetAuthTokenWithError(username, password);
+        if (token is null)
+            return (false, error ?? "Sign-in failed.");
 
-        // Interpret "selected account" as "user has chosen/entered an account identity".
         SelectedAccount = username.Trim();
         Username = username.Trim();
 
         await sessionStorage.SetAsync(SelectedAccountKey, SelectedAccount);
         await sessionStorage.SetAsync(UsernameKey, Username);
 
-        return true;
+        return (true, null);
     }
 
     public async Task SignOutAsync()
