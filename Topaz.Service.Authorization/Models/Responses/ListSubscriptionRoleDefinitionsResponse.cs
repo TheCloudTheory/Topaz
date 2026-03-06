@@ -25,7 +25,7 @@ internal sealed class ListSubscriptionRoleDefinitionsResponse
 				{
 					RoleName = resource.Properties.RoleName,
 					Description = resource.Properties.Description,
-					RoleType = resource.Properties.Type,
+					Type = resource.Properties.Type,
 					AssignableScopes = resource.Properties.AssignableScopes,
 					Permissions = resource.Properties.Permissions?.Select(p => new Permission
 					{
@@ -47,7 +47,7 @@ internal sealed class ListSubscriptionRoleDefinitionsResponse
 	{
 		public string? RoleName { get; init; }
 		public string? Description { get; init; }
-		public string? RoleType { get; init; }
+		public string? Type { get; init; }
 		public string[]? AssignableScopes { get; init; }
 		public Permission[]? Permissions { get; init; }
 		public DateTimeOffset? CreatedOn { get; init; }
