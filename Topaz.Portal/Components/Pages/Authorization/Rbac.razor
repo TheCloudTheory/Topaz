@@ -83,7 +83,7 @@
                         <h5 class="card-title mb-0">Role definitions</h5>
                         <div class="text-muted small">Built-in and custom roles</div>
                     </div>
-                    <span class="badge text-bg-light">@(_roleDefinitions.Length) loaded</span>
+                    <span class="badge text-bg-light">@RoleDefinitionsPageItems.Count() displayed</span>
                 </div>
 
                 <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
@@ -103,13 +103,13 @@
                     <div class="ms-auto d-flex gap-2">
                         <button class="btn btn-sm btn-outline-secondary"
                                 @onclick="LoadRoleDefinitionsPrevAsync"
-                                disabled="@_loading || _roleDefinitionsPrevTokens.Count == 0">
+                                disabled="@(_loading || !CanGoToPreviousRoleDefinitionsPage)">
                             Prev
                         </button>
 
                         <button class="btn btn-sm btn-outline-secondary"
                                 @onclick="LoadRoleDefinitionsNextAsync"
-                                disabled="@_loading || string.IsNullOrWhiteSpace(_roleDefinitionsContinuationToken)">
+                                disabled="@(_loading || !CanGoToNextRoleDefinitionsPage)">
                             Next
                         </button>
                     </div>
@@ -125,9 +125,9 @@
                 }
                 else
                 {
-                    var builtIn = _roleDefinitions.Where(r => r.Properties?.IsBuiltIn == true).ToArray();
-                    var custom = _roleDefinitions.Where(r => r.Properties?.IsCustom == true).ToArray();
-                    var unknown = _roleDefinitions.Where(r => r.Properties?.IsBuiltIn != true && r.Properties?.IsCustom != true).ToArray();
+                    var builtIn = RoleDefinitionsPageItems.Where(r => r.Properties?.IsBuiltIn == true).ToArray();
+                    var custom = RoleDefinitionsPageItems.Where(r => r.Properties?.IsCustom == true).ToArray();
+                    var unknown = RoleDefinitionsPageItems.Where(r => r.Properties?.IsBuiltIn != true && r.Properties?.IsCustom != true).ToArray();
 
                     <div class="mb-3">
                         <div class="d-flex flex-wrap gap-2">
@@ -154,8 +154,7 @@
                             {
                                 <tr>
                                     <td>
-                                        <div
-                                            class="fw-semibold">@(rd.Properties?.RoleName ?? rd.Name ?? "(unknown)")</div>
+                                        <div class="fw-semibold">@(rd.Properties?.RoleName ?? rd.Name ?? "(unknown)")</div>
                                         @if (!string.IsNullOrWhiteSpace(rd.Properties?.Description))
                                         {
                                             <div class="text-muted small">@rd.Properties.Description</div>
@@ -188,7 +187,7 @@
                         <h5 class="card-title mb-0">Role assignments</h5>
                         <div class="text-muted small">Assignments at subscription scope</div>
                     </div>
-                    <span class="badge text-bg-light">@(_roleAssignments.Length) loaded</span>
+                    <span class="badge text-bg-light">@RoleAssignmentsPageItems.Count() displayed</span>
                 </div>
 
                 <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
@@ -290,16 +289,27 @@
     private int _roleDefinitionsPageSize = 5;
     private string? _roleDefinitionsContinuationToken;
     private Stack<string?> _roleDefinitionsPrevTokens = new();
+    private int _roleDefinitionsLocalPageIndex;
 
     private int _roleAssignmentsPageSize = 5;
     private string? _roleAssignmentsContinuationToken;
     private Stack<string?> _roleAssignmentsPrevTokens = new();
 
     private IEnumerable<RoleDefinitionDto> RoleDefinitionsPageItems =>
-        _roleDefinitions.OrderBy(r => r.Properties?.RoleName);
+        _roleDefinitions
+            .OrderBy(r => r.Properties?.RoleName)
+            .Skip(_roleDefinitionsLocalPageIndex * _roleDefinitionsPageSize)
+            .Take(_roleDefinitionsPageSize);
 
     private IEnumerable<RoleAssignmentDto> RoleAssignmentsPageItems =>
-        _roleAssignments;
+        _roleAssignments.Take(_roleAssignmentsPageSize);
+
+    private bool CanGoToPreviousRoleDefinitionsPage =>
+        _roleDefinitionsLocalPageIndex > 0 || _roleDefinitionsPrevTokens.Count > 0;
+
+    private bool CanGoToNextRoleDefinitionsPage =>
+        ((_roleDefinitionsLocalPageIndex + 1) * _roleDefinitionsPageSize) < _roleDefinitions.Length
+        || !string.IsNullOrWhiteSpace(_roleDefinitionsContinuationToken);
 
     protected override async Task OnInitializedAsync()
     {
@@ -353,6 +363,7 @@
         _roleAssignmentsPrevTokens.Clear();
         _roleDefinitionsContinuationToken = null;
         _roleAssignmentsContinuationToken = null;
+        _roleDefinitionsLocalPageIndex = 0;
 
         _loading = true;
         try
@@ -385,6 +396,13 @@
 
     private async Task LoadRoleDefinitionsNextAsync()
     {
+        var nextLocalPageIndex = _roleDefinitionsLocalPageIndex + 1;
+        if ((nextLocalPageIndex * _roleDefinitionsPageSize) < _roleDefinitions.Length)
+        {
+            _roleDefinitionsLocalPageIndex = nextLocalPageIndex;
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_selectedSubscriptionId) || !Guid.TryParse(_selectedSubscriptionId, out var subId))
             return;
 
@@ -404,6 +422,7 @@
 
             _roleDefinitions = resp?.Value ?? [];
             _roleDefinitionsContinuationToken = resp?.ContinuationToken;
+            _roleDefinitionsLocalPageIndex = 0;
         }
         finally
         {
@@ -413,6 +432,12 @@
 
     private async Task LoadRoleDefinitionsPrevAsync()
     {
+        if (_roleDefinitionsLocalPageIndex > 0)
+        {
+            _roleDefinitionsLocalPageIndex--;
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_selectedSubscriptionId) || !Guid.TryParse(_selectedSubscriptionId, out var subId))
             return;
 
@@ -430,6 +455,7 @@
 
             _roleDefinitions = resp?.Value ?? [];
             _roleDefinitionsContinuationToken = resp?.ContinuationToken;
+            _roleDefinitionsLocalPageIndex = Math.Max(0, (_roleDefinitions.Length - 1) / _roleDefinitionsPageSize - 1);
 
             if (_roleDefinitionsPrevTokens.Count == 0)
             {
@@ -507,6 +533,7 @@
         if (!int.TryParse(e.Value.ToString(), out var size)) return;
 
         _roleDefinitionsPageSize = size;
+        _roleDefinitionsLocalPageIndex = 0;
 
         _roleDefinitionsPrevTokens.Clear();
         _roleDefinitionsContinuationToken = null;
