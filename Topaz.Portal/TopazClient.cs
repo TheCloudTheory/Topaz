@@ -320,7 +320,7 @@ public class TopazClient
     public async Task<ListRoleDefinitionsResponse?> ListRoleDefinitions(
         Guid subscriptionId,
         string? roleNameFilter = null,
-        int pageSize = 50,
+        int pageSize = 5,
         string? continuationToken = null,
         CancellationToken cancellationToken = default)
     {
@@ -373,7 +373,7 @@ public class TopazClient
     public async Task<ListRoleAssignmentsResponse?> ListRoleAssignments(
         Guid subscriptionId,
         string? roleNameFilter = null,
-        int pageSize = 50,
+        int pageSize = 5,
         string? continuationToken = null,
         CancellationToken cancellationToken = default)
     {
