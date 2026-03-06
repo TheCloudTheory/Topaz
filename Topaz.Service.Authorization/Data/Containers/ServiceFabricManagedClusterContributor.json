@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Deploy and manage your Service Fabric Managed Cluster resources. Includes managed clusters, node types, application types, application type versions, applications, and services.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/83f80186-3729-438c-ad2d-39e94d718838",
   "name": "83f80186-3729-438c-ad2d-39e94d718838",

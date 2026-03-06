@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Manage Azure AD B2C policies, user flows and related configuration.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/45454545-6767-8989-9090-cccccccccccc",
   "name": "45454545-6767-8989-9090-cccccccccccc",

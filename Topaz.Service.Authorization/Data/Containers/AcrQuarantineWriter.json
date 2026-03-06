@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "acr quarantine data writer",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/c8d4ff99-41c3-41a8-9f60-21dfdad59608",
   "name": "c8d4ff99-41c3-41a8-9f60-21dfdad59608",

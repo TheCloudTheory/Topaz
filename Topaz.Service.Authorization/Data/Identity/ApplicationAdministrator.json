@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Manage application registrations and application credentials.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/aa222222-3333-4444-5555-666677778888",
   "name": "aa222222-3333-4444-5555-666677778888",

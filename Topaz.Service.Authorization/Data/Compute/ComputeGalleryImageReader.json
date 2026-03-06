@@ -1,19 +1,10 @@
 {
-  "roleName": "Compute Gallery Image Reader",
-  "id": "cf7c76d2-98a3-4358-a134-615aa78bf44d",
-  "description": "This is the role for reading gallery images.",
-  "category": "Compute",
-  "builtIn": true,
   "assignableScopes": [
     "/"
   ],
-  "actions": [
-    "Microsoft.Compute/galleries/images/read",
-    "Microsoft.Compute/galleries/images/versions/read"
-  ],
-  "notActions": [],
-  "dataActions": [],
-  "notDataActions": [],
+  "description": "This is the role for reading gallery images.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/cf7c76d2-98a3-4358-a134-615aa78bf44d",
+  "name": "cf7c76d2-98a3-4358-a134-615aa78bf44d",
   "permissions": [
     {
       "actions": [
@@ -24,5 +15,8 @@
       "dataActions": [],
       "notDataActions": []
     }
-  ]
+  ],
+  "roleName": "Compute Gallery Image Reader",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
 }

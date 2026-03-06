@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Manage directory synchronization configuration and sync jobs.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/99aabbcc-ddee-ff00-1122-334455667788",
   "name": "99aabbcc-ddee-ff00-1122-334455667788",

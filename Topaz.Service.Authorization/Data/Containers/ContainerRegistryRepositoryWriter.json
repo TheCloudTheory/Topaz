@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Allows for read and write access to Azure Container Registry repositories, but excluding catalog listing.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/2a1e307c-b015-4ebd-883e-5b7698a07328",
   "name": "2a1e307c-b015-4ebd-883e-5b7698a07328",

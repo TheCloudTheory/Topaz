@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Purge events from Event Hubs (delete messages) when required for maintenance.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/44556677-8899-aabb-ccdd-eeff00112233",
   "name": "44556677-8899-aabb-ccdd-eeff00112233",

@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Operate App Configuration stores: read/write keys and manage feature flags.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/66778899-aabb-ccdd-eeff-001122334455",
   "name": "66778899-aabb-ccdd-eeff-001122334455",

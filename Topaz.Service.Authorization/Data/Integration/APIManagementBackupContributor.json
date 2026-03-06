@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Contribute to API Management backup and restore operations.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/11223344-5566-7788-99aa-bbccddeeff00",
   "name": "11223344-5566-7788-99aa-bbccddeeff00",

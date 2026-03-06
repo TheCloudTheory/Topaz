@@ -1,21 +1,10 @@
 {
-  "roleName": "Azure Spring Apps Application Configuration Service Config File Pattern Reader Role",
-  "id": "25211fc6-dc78-40b6-b205-e4ac934fd9fd",
-  "description": "Read content of config file pattern for Application Configuration Service in Azure Spring Apps",
-  "category": "Web and Mobile",
-  "builtIn": true,
   "assignableScopes": [
     "/"
   ],
-  "actions": [
-    "Microsoft.AppPlatform/Spring/read",
-    "Microsoft.AppPlatform/Spring/configurationServices/read"
-  ],
-  "notActions": [],
-  "dataActions": [
-    "Microsoft.AppPlatform/Spring/ApplicationConfigurationService/read"
-  ],
-  "notDataActions": [],
+  "description": "Read content of config file pattern for Application Configuration Service in Azure Spring Apps",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/25211fc6-dc78-40b6-b205-e4ac934fd9fd",
+  "name": "25211fc6-dc78-40b6-b205-e4ac934fd9fd",
   "permissions": [
     {
       "actions": [
@@ -28,5 +17,8 @@
       ],
       "notDataActions": []
     }
-  ]
+  ],
+  "roleName": "Azure Spring Apps Application Configuration Service Config File Pattern Reader Role",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
 }

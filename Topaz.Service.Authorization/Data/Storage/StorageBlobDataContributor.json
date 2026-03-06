@@ -1,27 +1,10 @@
 {
-  "roleName": "Storage Blob Data Contributor",
-  "id": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
-  "description": "Allows for read, write and delete access to Azure Storage blob containers and data",
-  "category": "Storage",
-  "builtIn": true,
   "assignableScopes": [
     "/"
   ],
-  "actions": [
-    "Microsoft.Storage/storageAccounts/blobServices/containers/delete",
-    "Microsoft.Storage/storageAccounts/blobServices/containers/read",
-    "Microsoft.Storage/storageAccounts/blobServices/containers/write",
-    "Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action"
-  ],
-  "notActions": [],
-  "dataActions": [
-    "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete",
-    "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
-    "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write",
-    "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/move/action",
-    "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/add/action"
-  ],
-  "notDataActions": [],
+  "description": "Allows for read, write and delete access to Azure Storage blob containers and data",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe",
+  "name": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
   "permissions": [
     {
       "actions": [
@@ -40,5 +23,8 @@
       ],
       "notDataActions": []
     }
-  ]
+  ],
+  "roleName": "Storage Blob Data Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
 }

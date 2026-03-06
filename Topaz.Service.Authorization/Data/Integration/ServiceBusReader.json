@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Read-only access to Service Bus resources and configuration.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/33445566-7788-99aa-bbcc-ddeeff001122",
   "name": "33445566-7788-99aa-bbcc-ddeeff001122",

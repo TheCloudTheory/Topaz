@@ -21,9 +21,12 @@ internal sealed class AuthorizationControlPlane(
 {
     private const string RoleDefinitionNotFoundMessageTemplate =
         "Role definition '{0}' could not be found";
+
     private const string RoleDefinitionNotFoundMessageCode = "RoleDefinitionNotFound";
+
     private const string RoleAssignmentNotFoundMessageTemplate =
         "Role assignment '{0}' could not be found";
+
     private const string RoleAssignmentNotFoundMessageCode = "RoleAssignmentNotFound";
 
     public static AuthorizationControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(
@@ -34,13 +37,14 @@ internal sealed class AuthorizationControlPlane(
         new RoleAssignmentResourceProvider(logger),
         logger
     );
-    
+
     public OperationResult Deploy(GenericResource resource)
     {
         throw new NotImplementedException();
-    }   
-    
-    public ControlPlaneOperationResult<RoleDefinitionResource?> CreateOrUpdateRoleDefinition(SubscriptionIdentifier subscriptionIdentifier,
+    }
+
+    public ControlPlaneOperationResult<RoleDefinitionResource?> CreateOrUpdateRoleDefinition(
+        SubscriptionIdentifier subscriptionIdentifier,
         RoleDefinitionIdentifier roleDefinitionIdentifier, CreateOrUpdateRoleDefinitionRequest request)
     {
         var subscriptionOperation = subscriptionControlPlane.Get(subscriptionIdentifier);
@@ -59,7 +63,7 @@ internal sealed class AuthorizationControlPlane(
             var properties = RoleDefinitionResourceProperties.FromRequest(request);
             properties.CreatedOn = DateTimeOffset.UtcNow;
             properties.UpdatedOn = DateTimeOffset.UtcNow;
-            
+
             resource = new RoleDefinitionResource(subscriptionIdentifier, roleDefinitionIdentifier.Value, properties);
         }
         else
@@ -67,21 +71,24 @@ internal sealed class AuthorizationControlPlane(
             RoleDefinitionResourceProperties.UpdateFromRequest(roleDefinitionOperation.Resource!, request);
             resource = roleDefinitionOperation.Resource!;
         }
-        
-        roleDefinitionProvider.CreateOrUpdate(subscriptionIdentifier, null, roleDefinitionIdentifier.Value, resource, createOperation);
-        
+
+        roleDefinitionProvider.CreateOrUpdate(subscriptionIdentifier, null, roleDefinitionIdentifier.Value, resource,
+            createOperation);
+
         return new ControlPlaneOperationResult<RoleDefinitionResource?>(
             createOperation ? OperationResult.Created : OperationResult.Updated,
             resource, null, null);
     }
-    
+
     internal ControlPlaneOperationResult<RoleDefinitionResource> Get(SubscriptionIdentifier subscriptionIdentifier,
         RoleDefinitionIdentifier roleDefinitionIdentifier)
     {
         logger.LogDebug(nameof(AuthorizationControlPlane), nameof(Get),
             "Looking for role `{0}` in subscription `{1}`.", roleDefinitionIdentifier, subscriptionIdentifier);
-        
-        var resource = roleDefinitionProvider.GetAs<RoleDefinitionResource>(subscriptionIdentifier, null, roleDefinitionIdentifier.Value);
+
+        var resource =
+            roleDefinitionProvider.GetAs<RoleDefinitionResource>(subscriptionIdentifier, null,
+                roleDefinitionIdentifier.Value);
         if (resource != null)
             return new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.Success, resource, null,
                 null);
@@ -89,7 +96,7 @@ internal sealed class AuthorizationControlPlane(
         logger.LogDebug(nameof(AuthorizationControlPlane), nameof(Get),
             "Looking for role `{0}` in subscription `{1}` failed when looking for an exact match. Falling back to filtering using `roleName`.",
             roleDefinitionIdentifier, subscriptionIdentifier);
-        
+
         // Here's the thing - a role definition can be found be either its `name` - which is a GUID
         // or `roleName` - which is a human-friendly string. If a role definition is created via SDK,
         // then a user has control over the identifier used there. For Azure CLI however, the
@@ -109,9 +116,12 @@ internal sealed class AuthorizationControlPlane(
             : new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.Success, resource, null, null);
     }
 
-    public ControlPlaneOperationResult<RoleDefinitionResource?> Delete(SubscriptionIdentifier subscriptionIdentifier, RoleDefinitionIdentifier roleDefinitionIdentifier)
+    public ControlPlaneOperationResult<RoleDefinitionResource?> Delete(SubscriptionIdentifier subscriptionIdentifier,
+        RoleDefinitionIdentifier roleDefinitionIdentifier)
     {
-        var resource = roleDefinitionProvider.GetAs<RoleDefinitionResource>(subscriptionIdentifier, null, roleDefinitionIdentifier.Value);
+        var resource =
+            roleDefinitionProvider.GetAs<RoleDefinitionResource>(subscriptionIdentifier, null,
+                roleDefinitionIdentifier.Value);
         if (resource == null || !resource.IsInSubscription(subscriptionIdentifier))
         {
             return new ControlPlaneOperationResult<RoleDefinitionResource?>(OperationResult.NotFound, null,
@@ -120,13 +130,15 @@ internal sealed class AuthorizationControlPlane(
         }
 
         roleDefinitionProvider.Delete(subscriptionIdentifier, null, roleDefinitionIdentifier.Value);
-        
+
         return new ControlPlaneOperationResult<RoleDefinitionResource?>(OperationResult.Success, resource, null, null);
     }
-    
-    public ControlPlaneOperationResult<RoleAssignmentResource?> Delete(SubscriptionIdentifier subscriptionIdentifier, RoleAssignmentName roleAssignmentName)
+
+    public ControlPlaneOperationResult<RoleAssignmentResource?> Delete(SubscriptionIdentifier subscriptionIdentifier,
+        RoleAssignmentName roleAssignmentName)
     {
-        var resource = roleAssignmentResourceProvider.GetAs<RoleAssignmentResource>(subscriptionIdentifier, null, roleAssignmentName.Value.ToString());
+        var resource = roleAssignmentResourceProvider.GetAs<RoleAssignmentResource>(subscriptionIdentifier, null,
+            roleAssignmentName.Value.ToString());
         if (resource == null || !resource.IsInSubscription(subscriptionIdentifier))
         {
             return new ControlPlaneOperationResult<RoleAssignmentResource?>(OperationResult.NotFound, null,
@@ -135,7 +147,7 @@ internal sealed class AuthorizationControlPlane(
         }
 
         roleAssignmentResourceProvider.Delete(subscriptionIdentifier, null, roleAssignmentName.Value.ToString());
-        
+
         return new ControlPlaneOperationResult<RoleAssignmentResource?>(OperationResult.Success, resource, null, null);
     }
 
@@ -160,22 +172,24 @@ internal sealed class AuthorizationControlPlane(
             properties.Scope = $"/subscriptions/{subscriptionIdentifier.Value}";
             properties.CreatedOn = DateTimeOffset.UtcNow;
             properties.UpdatedOn = DateTimeOffset.UtcNow;
-            
-            resource = new RoleAssignmentResource(subscriptionIdentifier, roleAssignmentName.Value.ToString(), properties);
+
+            resource = new RoleAssignmentResource(subscriptionIdentifier, roleAssignmentName.Value.ToString(),
+                properties);
         }
         else
         {
             RoleAssignmentResourceProperties.UpdateFromRequest(roleDefinitionOperation.Resource!, request);
             resource = roleDefinitionOperation.Resource!;
         }
-        
-        roleAssignmentResourceProvider.CreateOrUpdate(subscriptionIdentifier, null, roleAssignmentName.Value.ToString(), resource, createOperation);
-        
+
+        roleAssignmentResourceProvider.CreateOrUpdate(subscriptionIdentifier, null, roleAssignmentName.Value.ToString(),
+            resource, createOperation);
+
         return new ControlPlaneOperationResult<RoleAssignmentResource?>(
             createOperation ? OperationResult.Created : OperationResult.Updated,
             resource, null, null);
     }
-    
+
     public ControlPlaneOperationResult<RoleAssignmentResource?> CreateRoleAssignment(
         SubscriptionIdentifier subscriptionIdentifier, RoleAssignmentName roleAssignmentName,
         CreateOrUpdateRoleAssignmentRequest request)
@@ -197,8 +211,9 @@ internal sealed class AuthorizationControlPlane(
             properties.Scope = $"/subscriptions/{subscriptionIdentifier.Value}";
             properties.CreatedOn = DateTimeOffset.UtcNow;
             properties.UpdatedOn = DateTimeOffset.UtcNow;
-            
-            resource = new RoleAssignmentResource(subscriptionIdentifier, roleAssignmentName.Value.ToString(), properties);
+
+            resource = new RoleAssignmentResource(subscriptionIdentifier, roleAssignmentName.Value.ToString(),
+                properties);
         }
         else
         {
@@ -206,18 +221,20 @@ internal sealed class AuthorizationControlPlane(
                 "Role assignment already exists.",
                 "RoleAssignmentAlreadyExists");
         }
-        
-        roleAssignmentResourceProvider.Create(subscriptionIdentifier, null, roleAssignmentName.Value.ToString(), resource);
-        
+
+        roleAssignmentResourceProvider.Create(subscriptionIdentifier, null, roleAssignmentName.Value.ToString(),
+            resource);
+
         return new ControlPlaneOperationResult<RoleAssignmentResource?>(
             OperationResult.Created,
             resource, null, null);
     }
-    
+
     internal ControlPlaneOperationResult<RoleAssignmentResource> Get(SubscriptionIdentifier subscriptionIdentifier,
         RoleAssignmentName roleAssignmentName)
     {
-        var resource = roleAssignmentResourceProvider.GetAs<RoleAssignmentResource>(subscriptionIdentifier, null, roleAssignmentName.Value.ToString());
+        var resource = roleAssignmentResourceProvider.GetAs<RoleAssignmentResource>(subscriptionIdentifier, null,
+            roleAssignmentName.Value.ToString());
         return resource == null
             ? new ControlPlaneOperationResult<RoleAssignmentResource>(OperationResult.NotFound, null,
                 string.Format(RoleDefinitionNotFoundMessageTemplate, roleAssignmentName),
@@ -225,43 +242,49 @@ internal sealed class AuthorizationControlPlane(
             : new ControlPlaneOperationResult<RoleAssignmentResource>(OperationResult.Success, resource, null, null);
     }
 
-    public ControlPlaneOperationResult<RoleDefinitionResource[]> ListRoleDefinitionsBySubscription(SubscriptionIdentifier subscriptionIdentifier, string? roleName = null)
+    public ControlPlaneOperationResult<RoleDefinitionResource[]> ListRoleDefinitionsBySubscription(
+        SubscriptionIdentifier subscriptionIdentifier, string? roleName = null)
     {
         var resources =
             roleDefinitionProvider.ListAs<RoleDefinitionResource>(subscriptionIdentifier, null, null, 6);
         var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier));
-        
+
         // There are also built-in roles which should be included for every request
         // listing role definitions
         var builtInRoles = roleDefinitionProvider.ListBuiltInRoles(subscriptionIdentifier);
         filteredResources = filteredResources.Concat(builtInRoles);
-        
+
         // If filter was provided, use it to limit roles
         if (roleName != null)
         {
             filteredResources = filteredResources.Where(resource =>
                 resource.Name == roleName || resource.Properties.RoleName == roleName);
         }
-        
-        return new ControlPlaneOperationResult<RoleDefinitionResource[]>(OperationResult.Success, filteredResources.ToArray(), null, null);
+
+        return new ControlPlaneOperationResult<RoleDefinitionResource[]>(OperationResult.Success,
+            filteredResources.ToArray(), null, null);
     }
 
-    public ControlPlaneOperationResult<RoleAssignmentResource[]> ListRoleAssignmentsBySubscription(SubscriptionIdentifier subscriptionIdentifier, string? roleName = null)
+    public ControlPlaneOperationResult<RoleAssignmentResource[]> ListRoleAssignmentsBySubscription(
+        SubscriptionIdentifier subscriptionIdentifier, string? roleName = null)
     {
         var resources =
             roleAssignmentResourceProvider.ListAs<RoleAssignmentResource>(subscriptionIdentifier, null, null, 6);
         var filteredResources = resources.Where(resource => resource.IsInSubscription(subscriptionIdentifier));
-        
-        return new ControlPlaneOperationResult<RoleAssignmentResource[]>(OperationResult.Success, filteredResources.ToArray(), null, null);
+
+        return new ControlPlaneOperationResult<RoleAssignmentResource[]>(OperationResult.Success,
+            filteredResources.ToArray(), null, null);
     }
-    
-    public ControlPlaneOperationResult<RoleAssignmentResource[]> ListSubscriptionRoleAssignmentsByEntraObject(SubscriptionIdentifier subscriptionIdentifier, string objectId)
+
+    public ControlPlaneOperationResult<RoleAssignmentResource[]> ListSubscriptionRoleAssignmentsByEntraObject(
+        SubscriptionIdentifier subscriptionIdentifier, string objectId)
     {
         var resources =
             roleAssignmentResourceProvider.ListAs<RoleAssignmentResource>(subscriptionIdentifier, null, null, 6);
         var filteredResources = resources.Where(resource =>
             resource.IsInSubscription(subscriptionIdentifier) && resource.Properties.PrincipalId == objectId);
-        
-        return new ControlPlaneOperationResult<RoleAssignmentResource[]>(OperationResult.Success, filteredResources.ToArray(), null, null);
+
+        return new ControlPlaneOperationResult<RoleAssignmentResource[]>(OperationResult.Success,
+            filteredResources.ToArray(), null, null);
     }
 }

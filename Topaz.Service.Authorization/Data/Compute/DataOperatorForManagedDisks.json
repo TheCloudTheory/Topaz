@@ -1,21 +1,10 @@
 {
-  "roleName": "Data Operator for Managed Disks",
-  "id": "959f8984-c045-4866-89c7-12bf9737be2e",
-  "description": "Provides permissions to upload data to empty managed disks, read, or export data of managed disks (not attached to running VMs) and snapshots using SAS URIs and Azure AD authentication.",
-  "category": "Compute",
-  "builtIn": true,
   "assignableScopes": [
     "/"
   ],
-  "actions": [],
-  "notActions": [],
-  "dataActions": [
-    "Microsoft.Compute/disks/download/action",
-    "Microsoft.Compute/disks/upload/action",
-    "Microsoft.Compute/snapshots/download/action",
-    "Microsoft.Compute/snapshots/upload/action"
-  ],
-  "notDataActions": [],
+  "description": "Provides permissions to upload data to empty managed disks, read, or export data of managed disks (not attached to running VMs) and snapshots using SAS URIs and Azure AD authentication.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/959f8984-c045-4866-89c7-12bf9737be2e",
+  "name": "959f8984-c045-4866-89c7-12bf9737be2e",
   "permissions": [
     {
       "actions": [],
@@ -28,5 +17,8 @@
       ],
       "notDataActions": []
     }
-  ]
+  ],
+  "roleName": "Data Operator for Managed Disks",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
 }

@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Read-only access to directory resources and objects.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/dd555555-6666-7777-8888-99990000aaaa",
   "name": "dd555555-6666-7777-8888-99990000aaaa",

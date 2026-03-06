@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Manage invitation lifecycle and guest access settings.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/aabbccdd-eeff-0011-2233-445566778899",
   "name": "aabbccdd-eeff-0011-2233-445566778899",

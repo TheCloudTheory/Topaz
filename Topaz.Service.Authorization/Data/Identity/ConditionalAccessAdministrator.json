@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Create and manage conditional access policies and authentication rules.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/23232323-4545-6767-8989-aaaaaaaaaaaa",
   "name": "23232323-4545-6767-8989-aaaaaaaaaaaa",

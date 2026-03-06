@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Lightweight viewer for Event Grid topology and basic metrics.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/55667788-99aa-bbcc-ddee-ff0011223344",
   "name": "55667788-99aa-bbcc-ddee-ff0011223344",

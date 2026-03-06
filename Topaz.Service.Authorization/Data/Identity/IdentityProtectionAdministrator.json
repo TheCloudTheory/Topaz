@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Manage identity protection alerts, risk policies and remediation tasks.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/56565656-7878-9090-1010-dddddddddddd",
   "name": "56565656-7878-9090-1010-dddddddddddd",

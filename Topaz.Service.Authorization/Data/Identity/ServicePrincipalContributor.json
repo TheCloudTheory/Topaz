@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Create and manage service principals and their credentials.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/77889900-aabb-ccdd-eeff-001122334455",
   "name": "77889900-aabb-ccdd-eeff-001122334455",

@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Provides permissions to configure, read, list, trigger, or cancel Container Registry Tasks, Task Runs, Task Logs, Quick Runs, Quick Builds, and Task Agent Pools. Permissions granted for Tasks management can be used for full registry data plane permissions including reading/writing/deleting container images in registries. Permissions granted for Tasks management can also be used to run customer authored build directives and run scripts to build software artifacts.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/fb382eab-e894-4461-af04-94435c366c3f",
   "name": "fb382eab-e894-4461-af04-94435c366c3f",

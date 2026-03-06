@@ -1,25 +1,10 @@
 {
-  "roleName": "Desktop Virtualization Application Group Contributor",
-  "id": "86240b0e-9422-4c43-887b-b61143f32ba8",
-  "description": "Contributor of the Desktop Virtualization Application Group.",
-  "category": "Compute",
-  "builtIn": true,
   "assignableScopes": [
     "/"
   ],
-  "actions": [
-    "Microsoft.DesktopVirtualization/applicationgroups/*",
-    "Microsoft.DesktopVirtualization/hostpools/read",
-    "Microsoft.DesktopVirtualization/hostpools/sessionhosts/read",
-    "Microsoft.Resources/subscriptions/resourceGroups/read",
-    "Microsoft.Resources/deployments/*",
-    "Microsoft.Authorization/*/read",
-    "Microsoft.Insights/alertRules/*",
-    "Microsoft.Support/*"
-  ],
-  "notActions": [],
-  "dataActions": [],
-  "notDataActions": [],
+  "description": "Contributor of the Desktop Virtualization Application Group.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/86240b0e-9422-4c43-887b-b61143f32ba8",
+  "name": "86240b0e-9422-4c43-887b-b61143f32ba8",
   "permissions": [
     {
       "actions": [
@@ -36,5 +21,8 @@
       "dataActions": [],
       "notDataActions": []
     }
-  ]
+  ],
+  "roleName": "Desktop Virtualization Application Group Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
 }

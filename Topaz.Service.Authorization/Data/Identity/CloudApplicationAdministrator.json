@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Manage cloud application properties, owners and application settings.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/ff777777-8888-9999-aaaa-bbbbccccdddd",
   "name": "ff777777-8888-9999-aaaa-bbbbccccdddd",

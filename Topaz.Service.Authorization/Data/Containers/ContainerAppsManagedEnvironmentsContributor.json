@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Full management of Container Apps ManagedEnvironments, including creation, deletion, and updates.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/57cc5028-e6a7-4284-868d-0611c5923f8d",
   "name": "57cc5028-e6a7-4284-868d-0611c5923f8d",

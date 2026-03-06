@@ -1,24 +1,10 @@
 {
-  "roleName": "Traffic Manager Contributor",
-  "id": "a4b10055-b0c7-44c2-b00f-c7b5b3550cf7",
-  "description": "Lets you manage Traffic Manager profiles, but does not let you control who has access to them.",
-  "category": "Networking",
-  "builtIn": true,
   "assignableScopes": [
     "/"
   ],
-  "actions": [
-    "Microsoft.Authorization/*/read",
-    "Microsoft.Insights/alertRules/*",
-    "Microsoft.Network/trafficManagerProfiles/*",
-    "Microsoft.ResourceHealth/availabilityStatuses/read",
-    "Microsoft.Resources/deployments/*",
-    "Microsoft.Resources/subscriptions/resourceGroups/read",
-    "Microsoft.Support/*"
-  ],
-  "notActions": [],
-  "dataActions": [],
-  "notDataActions": [],
+  "description": "Lets you manage Traffic Manager profiles, but does not let you control who has access to them.",
+  "id": "/providers/Microsoft.Authorization/roleDefinitions/a4b10055-b0c7-44c2-b00f-c7b5b3550cf7",
+  "name": "a4b10055-b0c7-44c2-b00f-c7b5b3550cf7",
   "permissions": [
     {
       "actions": [
@@ -34,5 +20,8 @@
       "dataActions": [],
       "notDataActions": []
     }
-  ]
+  ],
+  "roleName": "Traffic Manager Contributor",
+  "roleType": "BuiltInRole",
+  "type": "Microsoft.Authorization/roleDefinitions"
 }

@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "Full management of Container Apps, including creation, deletion, and updates.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/358470bc-b998-42bd-ab17-a7e34c199c0f",
   "name": "358470bc-b998-42bd-ab17-a7e34c199c0f",

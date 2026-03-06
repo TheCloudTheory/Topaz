@@ -1,5 +1,7 @@
 {
-  "assignableScopes": ["/"],
+  "assignableScopes": [
+    "/"
+  ],
   "description": "DevOps role for API Management: CI/CD operations and deployment automation.",
   "id": "/providers/Microsoft.Authorization/roleDefinitions/22334455-6677-8899-aabb-ccddeeff0011",
   "name": "22334455-6677-8899-aabb-ccddeeff0011",
