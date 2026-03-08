@@ -55,9 +55,58 @@ public class TopazClient
             {
                 DisplayName = sub.Data.DisplayName,
                 SubscriptionId = sub.Data.SubscriptionId,
-                Id = sub.Id.ToString()
+                Id = sub.Id.ToString(),
+                Tags = sub.Data.Tags is null
+                    ? new Dictionary<string, string>()
+                    : new Dictionary<string, string>(sub.Data.Tags, StringComparer.OrdinalIgnoreCase)
             }).ToArray()
         };
+    }
+    
+    public async Task<SubscriptionDto?> GetSubscription(
+        Guid subscriptionId,
+        CancellationToken cancellationToken = default)
+    {
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        var subscription = await _armClient
+            .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId:D}"))
+            .GetAsync(cancellationToken);
+
+        return new SubscriptionDto
+        {
+            DisplayName = subscription.Value.Data.DisplayName,
+            SubscriptionId = subscription.Value.Data.SubscriptionId,
+            Id = subscription.Value.Id.ToString(),
+            Tags = subscription.Value.Data.Tags is null
+                ? new Dictionary<string, string>()
+                : new Dictionary<string, string>(subscription.Value.Data.Tags, StringComparer.OrdinalIgnoreCase)
+        };
+    }
+    
+    public async Task CreateOrUpdateSubscriptionTag(
+        Guid subscriptionId,
+        string tagName,
+        string tagValue,
+        CancellationToken cancellationToken = default)
+    {
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        if (string.IsNullOrWhiteSpace(tagName))
+            throw new ArgumentException("Tag name is required.", nameof(tagName));
+
+        if (string.IsNullOrWhiteSpace(tagValue))
+            throw new ArgumentException("Tag value is required.", nameof(tagValue));
+
+        var subscription = _armClient.GetSubscriptionResource(
+            new ResourceIdentifier($"/subscriptions/{subscriptionId:D}"));
+
+        await subscription.CreateOrUpdatePredefinedTagValueAsync(
+            tagName.Trim(),
+            tagValue.Trim(),
+            cancellationToken);
     }
 
     public async Task CreateSubscription(Guid subscriptionId, string subscriptionName,

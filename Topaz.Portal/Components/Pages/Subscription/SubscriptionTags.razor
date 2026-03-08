@@ -1,19 +1,202 @@
 @* Topaz.Portal/Components/Pages/Subscription/SubscriptionTags.razor *@
 @page "/subscriptions/{SubscriptionId:guid}/tags"
+@inject TopazClient TopazClient
 
-<h1 class="mb-3">Subscription</h1>
+<h1 class="mb-3">@(_subscriptionName ?? "Subscription")</h1>
 
 <SubscriptionDetailsShell SubscriptionId="SubscriptionId">
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title mb-3">Tags</h5>
-            <p class="mb-0 text-muted">
-                Tags view goes here (list/edit tags).
-            </p>
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_loadError is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @_loadError
         </div>
-    </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Tags</h5>
+
+                <div class="row g-3 align-items-end mb-4">
+                    <div class="col-12 col-md-5">
+                        <label class="form-label" for="tagName">Tag</label>
+                        <input id="tagName"
+                               class="form-control"
+                               @bind="_newTag"
+                               @bind:event="oninput"
+                               placeholder="e.g. environment"
+                               disabled="@_saving" />
+                    </div>
+
+                    <div class="col-12 col-md-5">
+                        <label class="form-label" for="tagValue">Value</label>
+                        <input id="tagValue"
+                               class="form-control"
+                               @bind="_newValue"
+                               @bind:event="oninput"
+                               placeholder="e.g. production"
+                               disabled="@_saving" />
+                    </div>
+
+                    <div class="col-12 col-md-2">
+                        <button class="btn btn-primary w-100"
+                                @onclick="AddTagAsync"
+                                disabled="@(!CanAddTag || _saving)">
+                            @(_saving ? "Saving…" : "Add tag")
+                        </button>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_editError))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @_editError
+                    </div>
+                }
+
+                @if (_tags.Count == 0)
+                {
+                    <p class="mb-0 text-muted">No tags assigned to this subscription.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Tag</th>
+                                    <th>Value</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var tag in _tags)
+                                {
+                                    <tr>
+                                        <td><code>@tag.Key</code></td>
+                                        <td>@tag.Value</td>
+                                        <td class="text-end">
+                                            <button class="btn btn-outline-danger btn-sm"
+                                                    @onclick="() => RemoveTag(tag.Key)">
+                                                Remove
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    }
 </SubscriptionDetailsShell>
 
 @code {
     [Parameter] public Guid SubscriptionId { get; set; }
+
+    private bool _loading = true;
+    private bool _saving;
+    private string? _loadError;
+    private string? _editError;
+    private string? _subscriptionName;
+    private string _newTag = string.Empty;
+    private string _newValue = string.Empty;
+    private List<TagItem> _tags = [];
+
+    private bool CanAddTag =>
+        !string.IsNullOrWhiteSpace(_newTag) &&
+        !string.IsNullOrWhiteSpace(_newValue);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadSubscriptionAsync();
+    }
+
+    private async Task LoadSubscriptionAsync()
+    {
+        _loading = true;
+        _loadError = null;
+        _editError = null;
+
+        try
+        {
+            var subscription = await TopazClient.GetSubscription(SubscriptionId);
+
+            if (subscription is null)
+            {
+                _subscriptionName = "Subscription";
+                _tags = [];
+                _loadError = "Subscription not found.";
+                return;
+            }
+
+            _subscriptionName = subscription.DisplayName ?? "Subscription";
+            _tags = subscription.Tags
+                .OrderBy(t => t.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(t => new TagItem(t.Key, t.Value))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _subscriptionName = "Subscription";
+            _tags = [];
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task AddTagAsync()
+    {
+        _editError = null;
+
+        var tag = _newTag.Trim();
+        var value = _newValue.Trim();
+
+        if (string.IsNullOrWhiteSpace(tag) || string.IsNullOrWhiteSpace(value))
+        {
+            _editError = "Both tag and value are required.";
+            return;
+        }
+
+        if (_tags.Any(t => string.Equals(t.Key, tag, StringComparison.OrdinalIgnoreCase)))
+        {
+            _editError = $"The tag '{tag}' already exists.";
+            return;
+        }
+
+        try
+        {
+            _saving = true;
+
+            await TopazClient.CreateOrUpdateSubscriptionTag(SubscriptionId, tag, value);
+
+            _newTag = string.Empty;
+            _newValue = string.Empty;
+
+            await LoadSubscriptionAsync();
+        }
+        catch (Exception ex)
+        {
+            _editError = ex.Message;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void RemoveTag(string key)
+    {
+        _editError = "Tag removal is not persisted yet.";
+    }
+
+    private sealed record TagItem(string Key, string Value);
 }
