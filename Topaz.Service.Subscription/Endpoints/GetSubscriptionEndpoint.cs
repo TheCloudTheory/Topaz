@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription.Models.Responses;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
@@ -37,6 +38,6 @@ public class GetSubscriptionEndpoint(Pipeline eventPipeline, ITopazLogger logger
             return;
         }
 
-        response.CreateJsonContentResponse(operation.Resource);
+        response.CreateJsonContentResponse(GetSubscriptionResponse.From(operation.Resource));
     }
 }

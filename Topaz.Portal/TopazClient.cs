@@ -99,14 +99,28 @@ public class TopazClient
 
         if (string.IsNullOrWhiteSpace(tagValue))
             throw new ArgumentException("Tag value is required.", nameof(tagValue));
+        
+        var subscription = await _armClient
+            .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId:D}"))
+            .GetAsync(cancellationToken);
+        
+        var payload = new
+        {
+            SubscriptionName = subscription.Value.Data.DisplayName,
+            Tags = subscription.Value.Data.Tags is null
+                ? new Dictionary<string, string> { { tagName, tagValue } }
+                : new Dictionary<string, string>(subscription.Value.Data.Tags, StringComparer.OrdinalIgnoreCase) { { tagName, tagValue } }
+        };
 
-        var subscription = _armClient.GetSubscriptionResource(
-            new ResourceIdentifier($"/subscriptions/{subscriptionId:D}"));
-
-        await subscription.CreateOrUpdatePredefinedTagValueAsync(
-            tagName.Trim(),
-            tagValue.Trim(),
-            cancellationToken);
+        using var resp =
+            await _httpClient.PatchAsJsonAsync($"/subscriptions/{subscriptionId}", payload, cancellationToken);
+        
+        if (!resp.IsSuccessStatusCode)
+        {
+            var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException(
+                $"Updating subscription failed: {(int)resp.StatusCode} {resp.ReasonPhrase}. {body}");
+        }
     }
 
     public async Task CreateSubscription(Guid subscriptionId, string subscriptionName,

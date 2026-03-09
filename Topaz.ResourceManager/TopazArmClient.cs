@@ -57,6 +57,33 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task UpdateSubscriptionAsync(Guid subscriptionId, string subscriptionName,
+        Dictionary<string, string> tags)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch, $"subscriptions/{subscriptionId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+        
+        var payload = new
+        {
+            SubscriptionName = subscriptionName,
+            Tags = tags
+        };
+        var content = new StringContent(JsonSerializer.Serialize(payload, GlobalSettings.JsonOptions));
+        request.Content = content;
+        var response = await _httpClient.SendAsync(request);
+        
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            // Throw a meaningful exception rather than a vague `Response status code does not indicate success: 400 (Bad Request).`
+            // This helps in debugging.
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(message);
+        }
+        
+        response.EnsureSuccessStatusCode();
+    }
+
     public void Dispose()
     {
         _httpClient.Dispose();

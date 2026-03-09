@@ -3,6 +3,7 @@ using Topaz.EventPipeline;
 using Topaz.EventPipeline.Events;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription.Models.Requests;
 using Topaz.Shared;
 
 namespace Topaz.Service.Subscription;
@@ -73,14 +74,30 @@ internal sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscript
         }
         
         subscription.Resource.UpdateTags(tagName, tagValue);
-        Update(subscriptionIdentifier, subscription.Resource);
+        
+        Update(subscriptionIdentifier, new UpdateSubscriptionRequest
+        {
+            SubscriptionName = subscription.Resource.DisplayName,
+            Tags = subscription.Resource.Tags
+        });
         
         return new ControlPlaneOperationResult(OperationResult.Updated, null, null);
     }
-    
-    public ControlPlaneOperationResult<Models.Subscription> Update(SubscriptionIdentifier subscriptionIdentifier, Models.Subscription subscription)
+
+    public ControlPlaneOperationResult<Models.Subscription> Update(SubscriptionIdentifier subscriptionIdentifier,
+        UpdateSubscriptionRequest request)
     {
-        provider.CreateOrUpdate(subscriptionIdentifier, null, null, subscription);
-        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Updated, subscription, null, null);
+        var subscriptionOperation = Get(subscriptionIdentifier);
+        if (subscriptionOperation.Resource == null || subscriptionOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.NotFound, null,
+                SubscriptionNotFoundMessageTemplate, SubscriptionNotFoundCode);
+        }
+        
+        subscriptionOperation.Resource.UpdateFrom(request);
+        
+        provider.CreateOrUpdate(subscriptionIdentifier, null, null, subscriptionOperation.Resource);
+        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Updated, subscriptionOperation.Resource,
+            null, null);
     }
 }

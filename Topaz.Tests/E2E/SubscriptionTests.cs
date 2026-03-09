@@ -33,7 +33,7 @@ public class SubscriptionTests
 
         var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var armClient = new ArmClient(credentials, Guid.Empty.ToString(), ArmClientOptions);
-        
+
         // Act
         var subscription = await armClient.GetDefaultSubscriptionAsync();
 
@@ -45,7 +45,7 @@ public class SubscriptionTests
             Assert.That(subscription.Data.DisplayName, Is.EqualTo("sub-test"));
         });
     }
-    
+
     [Test]
     public async Task SubscriptionTests_WhenSubscriptionTagsAreUpdated_TheyShouldShouldBeAvailable()
     {
@@ -70,11 +70,12 @@ public class SubscriptionTests
         ]);
 
         var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
         var armClient = new ArmClient(credentials, subscriptionId, ArmClientOptions);
-        var subscription = await armClient.GetDefaultSubscriptionAsync();
-        
+
         // Act
-        await subscription.CreateOrUpdatePredefinedTagValueAsync("test-key", "test-value");
+        await topaz.UpdateSubscriptionAsync(Guid.Parse(subscriptionId), "sub-test",
+            tags: new Dictionary<string, string> { { "test-key", "test-value" } });
         var updatedSubscription = await armClient.GetSubscriptions().GetAsync(subscriptionId);
 
         // Assert
@@ -84,7 +85,7 @@ public class SubscriptionTests
             Assert.That(updatedSubscription.Value.Data.Tags["test-key"], Is.EqualTo("test-value"));
         });
     }
-    
+
     [Test]
     public async Task SubscriptionTests_WhenSubscriptionTagsValuesAreUpdated_TheyShouldShouldBeCorrect()
     {
@@ -111,11 +112,12 @@ public class SubscriptionTests
         ]);
 
         var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
         var armClient = new ArmClient(credentials, subscriptionId, ArmClientOptions);
-        var subscription = await armClient.GetDefaultSubscriptionAsync();
-        
+
         // Act
-        await subscription.CreateOrUpdatePredefinedTagValueAsync("test-key", "test-value-updated");
+        await topaz.UpdateSubscriptionAsync(Guid.Parse(subscriptionId), "sub-test",
+            tags: new Dictionary<string, string> { { "test-key", "test-value-updated" } });
         var updatedSubscription = await armClient.GetSubscriptions().GetAsync(subscriptionId);
 
         // Assert
@@ -123,6 +125,47 @@ public class SubscriptionTests
         {
             Assert.That(updatedSubscription.Value.Data.Tags, Contains.Key("test-key"));
             Assert.That(updatedSubscription.Value.Data.Tags["test-key"], Is.EqualTo("test-value-updated"));
+        });
+    }
+
+    [Test]
+    public async Task SubscriptionTests_WhenSubscriptionTagsAreRemoved_TheyShouldNotBePresent()
+    {
+        // Arrange 
+        var subscriptionId = Guid.NewGuid().ToString();
+        await Program.Main(
+        [
+            "subscription",
+            "delete",
+            "--id",
+            subscriptionId
+        ]);
+
+        await Program.Main(
+        [
+            "subscription",
+            "create",
+            "--id",
+            subscriptionId,
+            "--name",
+            "sub-test",
+            "--tag",
+            "test-key=test-value"
+        ]);
+
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        var armClient = new ArmClient(credentials, subscriptionId, ArmClientOptions);
+
+        // Act
+        await topaz.UpdateSubscriptionAsync(Guid.Parse(subscriptionId), "sub-test",
+            tags: new Dictionary<string, string>());
+        var updatedSubscription = await armClient.GetSubscriptions().GetAsync(subscriptionId);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(updatedSubscription.Value.Data.Tags, Does.Not.ContainKey("test-key"));
         });
     }
 }

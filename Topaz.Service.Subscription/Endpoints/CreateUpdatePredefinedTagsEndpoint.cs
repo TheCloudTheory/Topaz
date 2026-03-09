@@ -9,7 +9,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Subscription.Endpoints;
 
-internal sealed class UpdateSubscriptionTagsSubscriptionEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class CreateUpdatePredefinedTagsEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly SubscriptionControlPlane _controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
 
@@ -41,7 +41,7 @@ internal sealed class UpdateSubscriptionTagsSubscriptionEndpoint(Pipeline eventP
         var tagValue = context.Request.Path.Value.ExtractValueFromPath(6);
         if (string.IsNullOrWhiteSpace(tagName) || string.IsNullOrWhiteSpace(tagValue))
         {
-            logger.LogDebug(nameof(UpdateSubscriptionTagsSubscriptionEndpoint), nameof(GetResponse), "Invalid tag name or value.");
+            logger.LogDebug(nameof(CreateUpdatePredefinedTagsEndpoint), nameof(GetResponse), "Invalid tag name or value.");
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }

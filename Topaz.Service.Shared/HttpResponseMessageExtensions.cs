@@ -52,6 +52,15 @@ public static class HttpResponseMessageExtensions
         response.Content = JsonContent.Create(error);
     }
 
+    public static void CreateErrorResponse(this HttpResponseMessage response, string code, string message,
+        HttpStatusCode codeToReturn = HttpStatusCode.InternalServerError)
+    {
+        var error = new GenericErrorResponse(code, message);
+
+        response.StatusCode = codeToReturn;
+        response.Content = JsonContent.Create(error);
+    }
+
     public static void CreateJsonContentResponse(this HttpResponseMessage response, object resource,
         HttpStatusCode code = HttpStatusCode.OK)
     {

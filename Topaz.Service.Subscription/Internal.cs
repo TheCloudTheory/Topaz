@@ -10,3 +10,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Topaz.Service.ManagedIdentity")]
 [assembly: InternalsVisibleTo("Topaz.Service.Authorization")]
 [assembly: InternalsVisibleTo("Topaz.Host")]
+[assembly: InternalsVisibleTo("Topaz.Tests")]
