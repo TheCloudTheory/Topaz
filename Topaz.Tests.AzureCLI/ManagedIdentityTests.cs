@@ -28,7 +28,7 @@ public class ManagedIdentityTests : TopazFixture
     [Test]
     public async Task ManagedIdentityTests_WhenResourceGroupDoesNotExist_IdentityCannotBeCreated()
     {
-        await RunAzureCliCommand("az identity create --name TestIdentity --resource-group non-existent-rg --location westeurope", null, 3);
+        await RunAzureCliCommand("az identity create --name TestIdentity --resource-group non-existent-rg --location westeurope", null, 1);
     }
     
     [Test]

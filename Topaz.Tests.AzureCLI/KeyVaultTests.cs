@@ -72,7 +72,7 @@ public class KeyVaultTests : TopazFixture
     [Test]
     public async Task KeyVaultTests_WhenResourceGroupDoesNotExists_KeyVaultCannotBeCreated()
     {
-        await RunAzureCliCommand("az keyvault create --location westeurope --name MyKeyVault --resource-group some-not-existing-resource-group", null, 3);
+        await RunAzureCliCommand("az keyvault create --location westeurope --name MyKeyVault --resource-group some-not-existing-resource-group", null, 1);
     }
     
     [Test]

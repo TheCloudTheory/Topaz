@@ -41,6 +41,13 @@ public class TopazFixture
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
+        var templatesPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "templates"));
+        if (!Directory.Exists(templatesPath))
+        {
+            throw new DirectoryNotFoundException(
+                $"Templates directory was not found: '{templatesPath}'.");
+        }
+        
         _network = new NetworkBuilder()
             .WithName(Guid.NewGuid().ToString("D"))
             .Build();
@@ -73,7 +80,7 @@ public class TopazFixture
             .WithCommand("-c", "tail -f /dev/null")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CloudEnvironmentConfiguration), "cloud.json")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
-            .WithBindMount(Path.GetFullPath("./templates"), "/templates")
+            .WithBindMount(templatesPath, "/templates")
             .WithEnvironment("REQUESTS_CA_BUNDLE", "/usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem")
             .WithEnvironment("AZURE_CORE_INSTANCE_DISCOVERY", "false")
             .WithExtraHost("purgevault123.keyvault.topaz.local.dev", _containerTopaz.IpAddress)

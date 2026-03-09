@@ -10,14 +10,17 @@ internal sealed class GetSubscriptionResponse
         return new GetSubscriptionResponse
         {
             Id = subscription.Id,
-            SubscriptionName = subscription.DisplayName,
+            SubscriptionId = subscription.SubscriptionId,
+            DisplayName = subscription.DisplayName,
             Tags = subscription.Tags
         };
     }
 
-    public IDictionary<string, string>? Tags { get; set; }
-    public string? SubscriptionName { get; set; }
     public string? Id { get; set; }
+    public string? SubscriptionId { get; set; }
+    public string? DisplayName { get; set; }
+    public IDictionary<string, string>? Tags { get; set; }
+
 
     public override string ToString()
     {
