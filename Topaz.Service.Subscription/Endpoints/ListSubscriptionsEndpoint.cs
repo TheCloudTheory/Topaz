@@ -36,7 +36,6 @@ public class ListSubscriptionsEndpoint(Pipeline eventPipeline, ITopazLogger logg
 
         var subscriptions = new ListSubscriptionsResponse(operation.Resource);
 
-        response.Content = new StringContent(subscriptions.ToString(), Encoding.UTF8, "application/json");
-        response.StatusCode = HttpStatusCode.OK;
+        response.CreateJsonContentResponse(subscriptions);
     }
 }

@@ -133,6 +133,28 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                 objectId = validatedToken.Subject;
                 break;
             }
+            case "authorization_code":
+            {
+                logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse),
+                    "Extracting object ID from authorization code...");
+
+                // For now if authorization code is provided, we're authenticating the user as a global admin
+                objectId = Globals.GlobalAdminId;
+                
+                var userOperation = _userDataPlane.Get(UserIdentifier.From(objectId));
+                if (userOperation.Resource == null || userOperation.Result != OperationResult.Success)
+                {
+                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not find user.");
+                    response.CreateJsonContentResponse(
+                        ErrorResponse.Create(ErrorResponse.InvalidClient, "Could not find user."),
+                        HttpStatusCode.BadRequest);
+                    return;
+                }
+                
+                username = userOperation.Resource.UserPrincipalName;
+                
+                break;
+            }
             case "client_credentials":
             {
                 logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse),
