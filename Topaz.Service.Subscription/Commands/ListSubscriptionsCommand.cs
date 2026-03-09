@@ -17,13 +17,13 @@ public sealed class ListSubscriptionsCommand(Pipeline eventPipeline, ITopazLogge
         var controlPlane = new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger));
         var operation = controlPlane.List();
 
-        if (operation.result == OperationResult.Failed)
+        if (operation.Result == OperationResult.Failed)
         {
             logger.LogError("Failed to list subscriptions.");
             return 1;
         }
 
-        logger.LogInformation(JsonSerializer.Serialize(operation.resource, GlobalSettings.JsonOptionsCli));
+        logger.LogInformation(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
 
         return 0;
     }

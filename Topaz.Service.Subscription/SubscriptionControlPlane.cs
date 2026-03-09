@@ -53,12 +53,33 @@ internal sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscript
         provider.Delete(subscriptionIdentifier, null, null);
     }
 
-    internal (OperationResult result, Models.Subscription[] resource) List()
+    internal ControlPlaneOperationResult<Models.Subscription[]> List()
     {
         var rawSubscriptions = provider.List(null, null);
         var subscriptions = rawSubscriptions
             .Select(s => JsonSerializer.Deserialize<Models.Subscription>(s, GlobalSettings.JsonOptions)!).ToArray();
         
-        return (OperationResult.Success, subscriptions);
+        return new ControlPlaneOperationResult<Models.Subscription[]>(OperationResult.Success, subscriptions, null, null);
+    }
+
+    public ControlPlaneOperationResult UpdateTags(SubscriptionIdentifier subscriptionIdentifier, string tagName, string tagValue)
+    {
+        var subscription = Get(subscriptionIdentifier);
+        if (subscription.Resource == null || subscription.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound, SubscriptionNotFoundMessageTemplate,
+                SubscriptionNotFoundCode);
+        }
+        
+        subscription.Resource.UpdateTags(tagName, tagValue);
+        Update(subscriptionIdentifier, subscription.Resource);
+        
+        return new ControlPlaneOperationResult(OperationResult.Updated, null, null);
+    }
+    
+    public ControlPlaneOperationResult<Models.Subscription> Update(SubscriptionIdentifier subscriptionIdentifier, Models.Subscription subscription)
+    {
+        provider.CreateOrUpdate(subscriptionIdentifier, null, null, subscription);
+        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Updated, subscription, null, null);
     }
 }

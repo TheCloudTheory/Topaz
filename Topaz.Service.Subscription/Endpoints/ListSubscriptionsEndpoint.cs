@@ -17,7 +17,10 @@ public class ListSubscriptionsEndpoint(Pipeline eventPipeline, ITopazLogger logg
         "GET /subscriptions",
     ];
 
-    public string[] Permissions => [];
+    public string[] Permissions =>
+    [
+        "Microsoft.Resources/subscriptions/read"
+    ];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
@@ -25,14 +28,14 @@ public class ListSubscriptionsEndpoint(Pipeline eventPipeline, ITopazLogger logg
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         var operation = _controlPlane.List();
-        if (operation.result == OperationResult.Failed)
+        if (operation.Result == OperationResult.Failed || operation.Resource == null)
         {
             response.StatusCode = HttpStatusCode.InternalServerError;
             return;
         }
 
-        var subscriptions = new ListSubscriptionsResponse(operation.resource);
-        
+        var subscriptions = new ListSubscriptionsResponse(operation.Resource);
+
         response.Content = new StringContent(subscriptions.ToString(), Encoding.UTF8, "application/json");
         response.StatusCode = HttpStatusCode.OK;
     }
