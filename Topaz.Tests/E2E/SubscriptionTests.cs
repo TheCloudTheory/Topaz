@@ -84,4 +84,45 @@ public class SubscriptionTests
             Assert.That(updatedSubscription.Value.Data.Tags["test-key"], Is.EqualTo("test-value"));
         });
     }
+    
+    [Test]
+    public async Task SubscriptionTests_WhenSubscriptionTagsValuesAreUpdated_TheyShouldShouldBeCorrect()
+    {
+        // Arrange 
+        var subscriptionId = Guid.NewGuid().ToString();
+        await Program.Main(
+        [
+            "subscription",
+            "delete",
+            "--id",
+            subscriptionId
+        ]);
+
+        await Program.Main(
+        [
+            "subscription",
+            "create",
+            "--id",
+            subscriptionId,
+            "--name",
+            "sub-test",
+            "--tag",
+            "test-key=test-value"
+        ]);
+
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId, ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        
+        // Act
+        await subscription.CreateOrUpdatePredefinedTagValueAsync("test-key", "test-value-updated");
+        var updatedSubscription = await armClient.GetSubscriptions().GetAsync(subscriptionId);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(updatedSubscription.Value.Data.Tags, Contains.Key("test-key"));
+            Assert.That(updatedSubscription.Value.Data.Tags["test-key"], Is.EqualTo("test-value-updated"));
+        });
+    }
 }

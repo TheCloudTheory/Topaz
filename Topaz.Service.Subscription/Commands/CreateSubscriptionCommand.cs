@@ -17,7 +17,7 @@ public sealed class CreateSubscriptionCommand(Pipeline eventPipeline, ITopazLogg
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
         var controlPlane = new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger));
-        var sa = controlPlane.Create(subscriptionIdentifier, settings.Name!);
+        var sa = controlPlane.Create(subscriptionIdentifier, settings.Name!, settings.Tags);
 
         logger.LogInformation(sa.ToString());
 
@@ -43,7 +43,7 @@ public sealed class CreateSubscriptionCommand(Pipeline eventPipeline, ITopazLogg
     public sealed class CreateSubscriptionCommandSettings : CommandSettings
     {
         [CommandOption("-i|--id")] public string? Id { get; set; }
-
         [CommandOption("-n|--name")] public string? Name { get; set; }
+        [CommandOption("-t|--tag")] public IDictionary<string, string>? Tags { get; set; }
     }
 }

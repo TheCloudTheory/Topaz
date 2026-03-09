@@ -28,9 +28,10 @@ internal sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscript
         return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Success, model, null, null);
     }
 
-    public ControlPlaneOperationResult<Models.Subscription> Create(SubscriptionIdentifier subscriptionIdentifier, string name)
+    public ControlPlaneOperationResult<Models.Subscription> Create(SubscriptionIdentifier subscriptionIdentifier,
+        string name, IDictionary<string, string>? tags)
     {
-        var model = new Models.Subscription(subscriptionIdentifier, name);
+        var model = new Models.Subscription(subscriptionIdentifier, name, tags);
 
         provider.Create(subscriptionIdentifier, null, null, model);
         

@@ -11,9 +11,9 @@ public class SubscriptionTests
     {
         var subscriptions = new List<Subscription>
         {
-            new(SubscriptionIdentifier.From(Guid.NewGuid().ToString()), "sub1"),
-            new(SubscriptionIdentifier.From(Guid.NewGuid().ToString()), "sub2"),
-            new(SubscriptionIdentifier.From(Guid.NewGuid().ToString()), "sub2")
+            new(SubscriptionIdentifier.From(Guid.NewGuid().ToString()), "sub1", null),
+            new(SubscriptionIdentifier.From(Guid.NewGuid().ToString()), "sub2", null),
+            new(SubscriptionIdentifier.From(Guid.NewGuid().ToString()), "sub2", null)
         };
 
         foreach (var subscription in subscriptions)

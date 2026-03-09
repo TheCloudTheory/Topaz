@@ -20,10 +20,12 @@ public record Subscription
     {
     }
 
-    public Subscription(SubscriptionIdentifier subscriptionIdentifier, string displayName)
+    public Subscription(SubscriptionIdentifier subscriptionIdentifier, string displayName,
+        IDictionary<string, string>? tags)
     {
         SubscriptionId = subscriptionIdentifier.ToString();
         DisplayName = displayName;
+        Tags = tags ?? new Dictionary<string, string>();
     }
 
     public override string ToString()

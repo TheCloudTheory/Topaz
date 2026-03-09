@@ -55,7 +55,7 @@ public class CreateSubscriptionEndpoint(Pipeline eventPipeline, ITopazLogger log
             return;
         }
 
-        _controlPlane.Create(subscriptionIdentifier, request.SubscriptionName);
+        _controlPlane.Create(subscriptionIdentifier, request.SubscriptionName, request.Tags);
         response.StatusCode = HttpStatusCode.Created;
     }
 }
