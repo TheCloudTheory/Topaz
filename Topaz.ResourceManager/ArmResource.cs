@@ -34,7 +34,7 @@ public abstract class ArmResource<T>
     public bool IsInResourceGroup(ResourceGroupIdentifier resourceGroupIdentifier)
     {
         var segments = Id.Split("/");
-        return segments[4] == resourceGroupIdentifier.Value.ToString();
+        return segments[4] == resourceGroupIdentifier.Value;
     }
 
     public override string ToString()

@@ -417,4 +417,30 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             $"Deleting subresource '{subresourcePath}'.");
         Directory.Delete(subresourcePath, true);
     }
+
+    public T[] ListSubresourcesAs<T>(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string parentId, string subresource)
+    {
+        if (TService.Subresources == null)
+        {
+            throw new InvalidOperationException(
+                "You can't get a subresource for a parent service which defines not subresources.");
+        }
+
+        if (!TService.Subresources.Contains(subresource))
+        {
+            throw new InvalidOperationException(
+                $"You can't get a subresource '{subresource}' for a parent service which doesn't define that subresource.");
+        }
+        
+        var subresourcePath = Path.Combine(BaseEmulatorPath,
+            GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), parentId,
+            subresource);
+        var metadataFiles = Directory.GetFiles(subresourcePath, "*.json", SearchOption.AllDirectories);
+
+        return metadataFiles.Length == 0
+            ? []
+            : metadataFiles.Select(x => JsonSerializer.Deserialize<T>(File.ReadAllText(x), GlobalSettings.JsonOptions)!)
+                .ToArray();
+    }
 }

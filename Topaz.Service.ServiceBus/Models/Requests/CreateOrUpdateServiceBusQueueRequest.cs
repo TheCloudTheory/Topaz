@@ -4,7 +4,7 @@ namespace Topaz.Service.ServiceBus.Models.Requests;
 
 public sealed class CreateOrUpdateServiceBusQueueRequest
 {
-    public CreateOrUpdateServiceBusQueueRequestProperties? Properties { get; private init; } = new();
+    public CreateOrUpdateServiceBusQueueRequestProperties? Properties { get; init; }
 
     public static CreateOrUpdateServiceBusQueueRequest From(GenericResource resource)
     {

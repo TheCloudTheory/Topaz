@@ -90,7 +90,7 @@ public sealed class TemplateDeploymentOrchestrator(Pipeline eventPipeline, Resou
                     controlPlane = EventHubServiceControlPlane.New(logger);
                     break;
                 case "Microsoft.ServiceBus/namespaces":
-                    controlPlane = ServiceBusServiceControlPlane.New(logger);
+                    controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
                     break;
                 default:
                     logger.LogWarning($"Deployment of {resource.Type} is not yet supported.");

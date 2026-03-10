@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.ServiceBus.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -9,15 +10,14 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ServiceBus.Endpoints;
 
-public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDefinition
+public sealed class ServiceBusServiceEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly ServiceBusServiceControlPlane _controlPlane = new(new ServiceBusResourceProvider(logger), logger);
+    private readonly ServiceBusServiceControlPlane _controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
     
     public string[] Endpoints =>
     [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}",
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}",
-        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/queues/{queueName}",
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/queues/{queueName}",
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/topics/{topicName}",
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/topics/{topicName}",
@@ -50,10 +50,6 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
                     
                     switch (context.Request.Method)
                     {
-                        case "PUT":
-                            HandleCreateOrUpdateQueueRequest(response, subscriptionIdentifier, resourceGroupIdentifier,
-                                namespaceIdentifier, queueOrTopicName, context.Request.Body);
-                            break;
                         case "GET":
                             HandleGetQueueRequest(response, subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, queueOrTopicName);
                             break;
@@ -130,10 +126,8 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
                 $"Unknown error when performing CreateOrUpdate operation.");
             return;
         }
-
-        response.StatusCode = HttpStatusCode.OK;
-        response.Content =
-            new StringContent(operation.Resource.ToString());
+        
+        response.CreateJsonContentResponse(operation.Resource);
     }
 
     private void HandleGetTopicRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
@@ -147,8 +141,7 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
             return;
         }
         
-        response.Content = new StringContent(operation.Resource.ToString());
-        response.StatusCode = HttpStatusCode.OK;
+        response.CreateJsonContentResponse(operation.Resource);
     }
 
     private void HandleGetQueueRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
@@ -161,51 +154,20 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
             return;
         }
         
-        response.Content = new StringContent(operation.Resource.ToString());
-        response.StatusCode = HttpStatusCode.OK;
-    }
-
-    private void HandleCreateOrUpdateQueueRequest(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier,
-        string queueName, Stream input)
-    {
-        using var reader = new StreamReader(input);
-
-        var content = reader.ReadToEnd();
-        var request =
-            JsonSerializer.Deserialize<CreateOrUpdateServiceBusQueueRequest>(content, GlobalSettings.JsonOptions);
-
-        if (request == null)
-        {
-            response.StatusCode = HttpStatusCode.InternalServerError;
-            return;
-        }
-
-        var operation = _controlPlane.CreateOrUpdateQueue(subscriptionIdentifier, resourceGroupIdentifier, @namespaceIdentifier, queueName, request);
-        if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated ||
-            operation.Resource == null)
-        {
-            response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode,
-                $"Unknown error when performing CreateOrUpdate operation.");
-            return;
-        }
-
-        response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(operation.Resource.ToString());
+        response.CreateJsonContentResponse(operation.Resource);
     }
 
     private void HandleGetNamespace(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, ServiceBusNamespaceIdentifier namespaceIdentifier)
     {
         var operation = _controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
-        if (operation.result == OperationResult.NotFound || operation.resource == null)
+        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
         
-        response.Content = new StringContent(operation.resource.ToString());
-        response.StatusCode = HttpStatusCode.OK;
+        response.CreateJsonContentResponse(operation.Resource);
     }
 
     private void HandleCreateOrUpdateNamespace(HttpResponseMessage response,
@@ -229,8 +191,8 @@ public sealed class ServiceBusServiceEndpoint(ITopazLogger logger) : IEndpointDe
             response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode, $"Unknown error when performing CreateOrUpdate operation.");
             return;
         }
-        
-        response.StatusCode = operation.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
-        response.Content = new StringContent(operation.Resource.ToString());
+
+        response.CreateJsonContentResponse(operation.Resource,
+            operation.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK);
     }
 }

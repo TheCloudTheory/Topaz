@@ -139,4 +139,142 @@ public class ServiceBusServiceTests
         Assert.That(topic.Value, Is.Not.Null);
         Assert.That(topic.Value.Data.Name, Is.EqualTo(TopicName));
     }
+    
+    [Test]
+    public async Task ServiceBusServiceTests_WhenListingNamespacesUsingSDK_ItShouldReturnCreatedNamespaces()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var data = new ServiceBusNamespaceData(AzureLocation.WestEurope);
+        
+        // Act
+        _ = await resourceGroup.Value.GetServiceBusNamespaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, NamespaceName, data);
+        
+        var namespaces = resourceGroup.Value.GetServiceBusNamespaces().GetAllAsync();
+        var namespaceList = new List<ServiceBusNamespaceResource>();
+        await foreach (var ns in namespaces)
+        {
+            namespaceList.Add(ns);
+        }
+        
+        // Assert
+        Assert.That(namespaceList, Is.Not.Null);
+        Assert.That(namespaceList, Is.Not.Empty);
+        Assert.That(namespaceList.Any(ns => ns.Data.Name == NamespaceName), Is.True);
+    }
+    
+    [Test]
+    public async Task ServiceBusServiceTests_WhenListingNamespacesUsingSDKWhenThereIsNotNamespace_ItShouldReturnEmptyResult()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        
+        // Act
+        var namespaces = resourceGroup.Value.GetServiceBusNamespaces().GetAllAsync();
+        var namespaceList = new List<ServiceBusNamespaceResource>();
+        await foreach (var ns in namespaces)
+        {
+            namespaceList.Add(ns);
+        }
+        
+        // Assert
+        Assert.That(namespaceList, Is.Not.Null);
+        Assert.That(namespaceList, Is.Empty);
+    }
+    
+    [Test]
+    public async Task ServiceBusServiceTests_WhenDeletingNamespaceUsingSDK_ItShouldBeRemoved()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var data = new ServiceBusNamespaceData(AzureLocation.WestEurope);
+        
+        // Act
+        _ = await resourceGroup.Value.GetServiceBusNamespaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, NamespaceName, data);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaces().GetAsync(NamespaceName);
+        await @namespace.Value.DeleteAsync(WaitUntil.Completed);
+        
+        // Assert - verify namespace is no longer in the list
+        var namespaces = resourceGroup.Value.GetServiceBusNamespaces().GetAllAsync();
+        var namespaceList = new List<ServiceBusNamespaceResource>();
+        await foreach (var ns in namespaces)
+        {
+            namespaceList.Add(ns);
+        }
+        
+        Assert.That(namespaceList.Any(ns => ns.Data.Name == NamespaceName), Is.False);
+    }
+    
+    [Test]
+    public async Task ServiceBusServiceTests_WhenListingQueuesUsingSDK_ItShouldReturnCreatedQueues()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var namespaceData = new ServiceBusNamespaceData(AzureLocation.WestEurope);
+        
+        // Act
+        _ = await resourceGroup.Value.GetServiceBusNamespaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, NamespaceName, namespaceData);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaces().GetAsync(NamespaceName);
+        
+        _ = await @namespace.Value.GetServiceBusQueues()
+            .CreateOrUpdateAsync(WaitUntil.Completed, QueueName, new ServiceBusQueueData());
+        
+        var queues = @namespace.Value.GetServiceBusQueues().GetAllAsync();
+        var queueList = new List<ServiceBusQueueResource>();
+        await foreach (var queue in queues)
+        {
+            queueList.Add(queue);
+        }
+        
+        // Assert
+        Assert.That(queueList, Is.Not.Null);
+        Assert.That(queueList, Is.Not.Empty);
+        Assert.That(queueList.Any(q => q.Data.Name == QueueName), Is.True);
+    }
+    
+    [Test]
+    public async Task ServiceBusServiceTests_WhenUpdatingQueueUsingSDK_ItShouldReflectChanges()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var namespaceData = new ServiceBusNamespaceData(AzureLocation.WestEurope);
+        
+        // Act
+        _ = await resourceGroup.Value.GetServiceBusNamespaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, NamespaceName, namespaceData);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaces().GetAsync(NamespaceName);
+        
+        var initialQueueData = new ServiceBusQueueData { MaxDeliveryCount = 10 };
+        _ = await @namespace.Value.GetServiceBusQueues()
+            .CreateOrUpdateAsync(WaitUntil.Completed, QueueName, initialQueueData);
+        
+        var updatedQueueData = new ServiceBusQueueData { MaxDeliveryCount = 20 };
+        _ = await @namespace.Value.GetServiceBusQueues()
+            .CreateOrUpdateAsync(WaitUntil.Completed, QueueName, updatedQueueData);
+        
+        var queue = await @namespace.Value.GetServiceBusQueues().GetAsync(QueueName);
+        
+        // Assert
+        Assert.That(queue, Is.Not.Null);
+        Assert.That(queue.Value, Is.Not.Null);
+        Assert.That(queue.Value.Data.MaxDeliveryCount, Is.EqualTo(20));
+    }
 }

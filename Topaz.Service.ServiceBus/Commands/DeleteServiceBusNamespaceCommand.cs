@@ -1,24 +1,28 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using Topaz.Service.ResourceGroup;
-using Topaz.Service.Shared;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.ServiceBus.Commands;
 
 [UsedImplicitly]
-public sealed class DeleteServiceBusNamespaceCommand(ITopazLogger logger) : Command<DeleteServiceBusNamespaceCommand.DeleteServiceBusNamespaceCommandSettings>
+public sealed class DeleteServiceBusNamespaceCommand(Pipeline eventPipeline, ITopazLogger logger)
+    : Command<DeleteServiceBusNamespaceCommand.DeleteServiceBusNamespaceCommandSettings>
 {
     public override int Execute(CommandContext context, DeleteServiceBusNamespaceCommandSettings settings)
     {
-        logger.LogDebug(nameof(DeleteServiceBusNamespaceCommand), nameof(Execute), "Executing {0}.{1}.", nameof(DeleteServiceBusNamespaceCommand), nameof(Execute));
-        
+        logger.LogDebug(nameof(DeleteServiceBusNamespaceCommand), nameof(Execute), "Executing {0}.{1}.",
+            nameof(DeleteServiceBusNamespaceCommand), nameof(Execute));
+
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = new ServiceBusServiceControlPlane(new ServiceBusResourceProvider(logger), logger);
-        _ = controlPlane.DeleteNamespace(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
+        var serviceBusNamespaceIdentifier = ServiceBusNamespaceIdentifier.From(settings.Name!);
+        var controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
+
+        _ = controlPlane.DeleteNamespace(subscriptionIdentifier, resourceGroupIdentifier,
+            serviceBusNamespaceIdentifier);
 
         logger.LogInformation("Service Bus namespace deleted.");
 
@@ -27,17 +31,17 @@ public sealed class DeleteServiceBusNamespaceCommand(ITopazLogger logger) : Comm
 
     public override ValidationResult Validate(CommandContext context, DeleteServiceBusNamespaceCommandSettings settings)
     {
-        if(string.IsNullOrEmpty(settings.Name))
+        if (string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Service Bus namespace name can't be null.");
         }
-        
-        if(string.IsNullOrEmpty(settings.ResourceGroup))
+
+        if (string.IsNullOrEmpty(settings.ResourceGroup))
         {
             return ValidationResult.Error("Service Bus namespace resource group can't be null.");
         }
-        
-        if(string.IsNullOrEmpty(settings.SubscriptionId))
+
+        if (string.IsNullOrEmpty(settings.SubscriptionId))
         {
             return ValidationResult.Error("Service Bus subscription ID can't be null.");
         }
@@ -49,16 +53,14 @@ public sealed class DeleteServiceBusNamespaceCommand(ITopazLogger logger) : Comm
 
         return base.Validate(context, settings);
     }
-    
+
     [UsedImplicitly]
     public sealed class DeleteServiceBusNamespaceCommandSettings : CommandSettings
     {
-        [CommandOption("-n|--name")]
-        public string? Name { get; set; }
-        
-        [CommandOption("-g|--resource-group")]
-        public string? ResourceGroup { get; set; }
-        
+        [CommandOption("-n|--name")] public string? Name { get; set; }
+
+        [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
+
         [CommandOption("-s|--subscription-id")]
         public string SubscriptionId { get; set; } = null!;
     }

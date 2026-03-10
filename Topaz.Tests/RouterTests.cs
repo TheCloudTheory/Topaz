@@ -18,12 +18,13 @@ public class RouterTests
     {
         // Arrange
         var logger = new PrettyTopazLogger();
-        var router = new Router(new Pipeline(logger), new GlobalOptions(), logger);
+        var pipeline = new Pipeline(logger);
+        var router = new Router(pipeline, new GlobalOptions(), logger);
         var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var endpoints = new IEndpointDefinition[]
         {
             new GetNamespaceEndpoint(logger),
-            new ServiceBusServiceEndpoint(logger)
+            new ServiceBusServiceEndpoint(pipeline, logger)
         };
         var context = new DefaultHttpContext()
         {

@@ -28,10 +28,10 @@ public sealed class DeleteServiceBusQueueCommand(Pipeline eventPipeline, ITopazL
             return 1;
         }
 
-        var controlPlane = new ServiceBusServiceControlPlane(new ServiceBusResourceProvider(logger), logger);
+        var controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
         var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(settings.NamespaceName!);
         var @namespace = controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
-        if (@namespace.result == OperationResult.NotFound || @namespace.resource == null)
+        if (@namespace.Result == OperationResult.NotFound || @namespace.Resource == null)
         {
             logger.LogError($"Namespace {namespaceIdentifier} not found.");
             return 1;

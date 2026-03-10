@@ -7,6 +7,7 @@ internal sealed class CreateOrUpdateServiceBusNamespaceRequest
 {
     public ResourceSku? Sku { get; init; }
     public string? Location { get; init; }
+    public IDictionary<string, string>? Tags { get; init; }
     public CreateOrUpdateServiceBusNamespaceRequestProperties? Properties { get; init; } = new();
 
     [UsedImplicitly]
@@ -31,7 +32,8 @@ internal sealed class CreateOrUpdateServiceBusNamespaceRequest
         {
             Sku = resource.Sku,
             Location = resource.Location,
-            Properties = resource.Properties as CreateOrUpdateServiceBusNamespaceRequestProperties
+            Properties = resource.Properties as CreateOrUpdateServiceBusNamespaceRequestProperties,
+            Tags = resource.Tags
         };
     }
 }

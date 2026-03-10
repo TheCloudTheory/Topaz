@@ -1,6 +1,7 @@
 using System.Net;
 using System.Xml.Serialization;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.ServiceBus.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -9,9 +10,9 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ServiceBus.Endpoints;
 
-public sealed class ServiceBusServiceAdditionalEndpoint(ITopazLogger logger) : IEndpointDefinition
+public sealed class ServiceBusServiceAdditionalEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly ServiceBusServiceControlPlane _controlPlane = new(new ServiceBusResourceProvider(logger), logger);
+    private readonly ServiceBusServiceControlPlane _controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
     
     public string[] Endpoints =>
     [
