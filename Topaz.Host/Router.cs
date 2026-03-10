@@ -1,5 +1,6 @@
 using System.Net;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
@@ -123,14 +124,33 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
     private HttpResponseMessage CallEndpoint(IEndpointDefinition endpoint, HttpContext context)
     {
         var response = new HttpResponseMessage();
-        
+        string? requestBodyContent = null;
+
         try
         {
+            // Enable buffering and read body content for potential error logging
+            context.Request.EnableBuffering();
+            
+            if (context.Request.Body.CanSeek && context.Request.ContentLength > 0)
+            {
+                using (var reader = new StreamReader(context.Request.Body, leaveOpen: true))
+                {
+                    requestBodyContent = reader.ReadToEnd();
+                }
+                
+                context.Request.Body.Position = 0; // Reset for endpoint to read
+            }
+            
+            // Yes, this is hacky as heck, but as Topaz acts as a gateway for RPs
+            // and actual host, there's no easy way to say when and how to handle
+            // all those pesky edge cases.
             var canBypassAuthorization = !context.Request.Headers.ContainsKey("Authorization") &&
                                          context.Request.Host.Host.EndsWith(".keyvault.topaz.local.dev");
-            var (isAuthorized, principal) = _authorizationAdapter.IsAuthorized(endpoint.Permissions,
-                context.Request.Headers["Authorization"].ToString(), context.Request.Path.Value, canBypassAuthorization);
             
+            var (isAuthorized, principal) = _authorizationAdapter.IsAuthorized(endpoint.Permissions,
+                context.Request.Headers["Authorization"].ToString(), context.Request.Path.Value,
+                canBypassAuthorization);
+
             if (!isAuthorized)
             {
                 response.StatusCode = HttpStatusCode.Unauthorized;
@@ -140,10 +160,21 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
             context.User = principal;
             endpoint.GetResponse(context, response, options);
         }
+        catch (JsonException ex)
+        {
+            // Log the cached request body if available
+            if (!string.IsNullOrEmpty(requestBodyContent))
+            {
+                logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "Request body: {0}", requestBodyContent);
+            }
+            
+            response.Content = new StringContent(ex.Message);
+            response.StatusCode = HttpStatusCode.InternalServerError;
+        }
         catch(Exception ex)
         {
             logger.LogError(ex);
-
+            
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

@@ -11,7 +11,12 @@ public static class GlobalSettings
          PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
          PropertyNameCaseInsensitive = true,
          Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+         Converters =
+         {
+             new Iso8601TimeSpanConverter(),
+             new Iso8601NullableTimeSpanConverter()
+         }
     };
     
     public static readonly JsonSerializerOptions JsonOptionsCli = new()
