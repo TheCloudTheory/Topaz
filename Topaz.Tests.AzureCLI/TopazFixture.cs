@@ -8,7 +8,7 @@ namespace Topaz.Tests.AzureCLI;
 
 public class TopazFixture
 {
-    private const string AzureCliContainerImage = "mcr.microsoft.com/azure-cli:2.78.0";
+    private const string AzureCliContainerImage = "mcr.microsoft.com/azure-cli:2.84.0";
     private const string CloudEnvironmentConfiguration = """
                                                          {
                                                            "endpoints":{
@@ -78,9 +78,9 @@ public class TopazFixture
             .WithNetwork(_network)
             .WithEntrypoint("/bin/sh")
             .WithCommand("-c", "tail -f /dev/null")
+            .WithResourceMapping(Encoding.UTF8.GetBytes(await File.ReadAllTextAsync(Path.Combine(templatesPath, "empty-deployment.json"))), "/templates/empty-deployment.json")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CloudEnvironmentConfiguration), "cloud.json")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
-            .WithBindMount(templatesPath, "/templates")
             .WithEnvironment("REQUESTS_CA_BUNDLE", "/usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem")
             .WithEnvironment("AZURE_CORE_INSTANCE_DISCOVERY", "false")
             .WithExtraHost("purgevault123.keyvault.topaz.local.dev", _containerTopaz.IpAddress)

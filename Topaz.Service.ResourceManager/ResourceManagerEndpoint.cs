@@ -172,9 +172,7 @@ public sealed class ResourceManagerEndpoint(
         ResourceGroupIdentifier resourceGroupIdentifier)
     {
         var result = _controlPlane.GetDeployments(subscriptionIdentifier, resourceGroupIdentifier);
-
-        response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(new DeploymentListResult(result.resource!).ToString());
+        response.CreateJsonContentResponse(new DeploymentListResult(result.resource));
     }
 
     private void HandleDeleteDeployment(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
@@ -208,9 +206,8 @@ public sealed class ResourceManagerEndpoint(
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
-
-        response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(deploymentOperation.Resource.ToString());
+        
+        response.CreateJsonContentResponse(deploymentOperation.Resource);
     }
 
     private void HandleCreateOrUpdateDeployment(HttpResponseMessage response,
@@ -223,6 +220,12 @@ public sealed class ResourceManagerEndpoint(
 
         logger.LogDebug(nameof(ResourceManagerEndpoint), nameof(HandleCreateOrUpdateDeployment),
             "Attempting to deserialize into {0}: {1}", nameof(CreateDeploymentRequest), content);
+        
+        // Attempt to fix broken Azure CLI serialization
+        content = content.Replace(", template:{", ", \"template\":{");
+        
+        logger.LogDebug(nameof(ResourceManagerEndpoint), nameof(HandleCreateOrUpdateDeployment),
+            "[#2] Attempting to deserialize into {0}: {1}", nameof(CreateDeploymentRequest), content);
 
         var request = JsonSerializer.Deserialize<CreateDeploymentRequest>(content, GlobalSettings.JsonOptions);
         if (request?.Properties == null || string.IsNullOrWhiteSpace(request.Properties.Mode))
@@ -235,9 +238,7 @@ public sealed class ResourceManagerEndpoint(
             deploymentName, JsonSerializer.Serialize(request.Properties.Template),
             request.Properties.Parameters?.Parameters, resourceGroup.Location!,
             request.Properties.Mode);
-
-        response.StatusCode = HttpStatusCode.Created;
-        response.Content = new StringContent(JsonSerializer.Serialize(result.resource, GlobalSettings.JsonOptions),
-            Encoding.UTF8, "application/json");
+        
+        response.CreateJsonContentResponse(result.resource, HttpStatusCode.Created);
     }
 }
