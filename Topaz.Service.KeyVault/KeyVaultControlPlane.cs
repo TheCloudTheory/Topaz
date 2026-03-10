@@ -215,22 +215,30 @@ internal sealed class KeyVaultControlPlane(
             return OperationResult.Failed;
         }
 
-        var result = CreateOrUpdate(keyVault.GetSubscription(), keyVault.GetResourceGroup(), keyVault.Name,
-            new CreateOrUpdateKeyVaultRequest
-            {
-                Location = keyVault.Location,
-                Properties = new CreateOrUpdateKeyVaultRequest.KeyVaultProperties
+        try
+        {
+            var result = CreateOrUpdate(keyVault.GetSubscription(), keyVault.GetResourceGroup(), keyVault.Name,
+                new CreateOrUpdateKeyVaultRequest
                 {
-                    Sku = new CreateOrUpdateKeyVaultRequest.KeyVaultProperties.KeyVaultSku
+                    Location = keyVault.Location,
+                    Properties = new CreateOrUpdateKeyVaultRequest.KeyVaultProperties
                     {
-                        Name = keyVault.Sku!.Name,
-                        Family = keyVault.Sku.Family
-                    },
-                    TenantId = keyVault.Properties.TenantId
-                }
-            });
+                        Sku = new CreateOrUpdateKeyVaultRequest.KeyVaultProperties.KeyVaultSku
+                        {
+                            Name = keyVault.Sku!.Name,
+                            Family = keyVault.Sku.Family
+                        },
+                        TenantId = keyVault.Properties.TenantId
+                    }
+                });
 
-        return result.Result;
+            return result.Result;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex);
+            return OperationResult.Failed;
+        }
     }
 
     public (OperationResult result, KeyVaultResource?[]? resource) ListByResourceGroup(

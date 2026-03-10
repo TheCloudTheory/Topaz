@@ -103,7 +103,7 @@ internal sealed class ResourceManagerControlPlane(
 
     public ControlPlaneOperationResult<DeploymentValidateResult> ValidateDeployment(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
-        string deploymentName, string input)
+        string deploymentName, CreateDeploymentRequest request)
     {
         var deploymentOperation = GetDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
         if (deploymentOperation.Result == OperationResult.NotFound)
@@ -115,7 +115,7 @@ internal sealed class ResourceManagerControlPlane(
                 }, deploymentOperation.Reason, deploymentOperation.Code);
         }
 
-        _templateEngineFacade.Validate(deploymentOperation.Resource!.AsTemplate());
+        _templateEngineFacade.Validate(request.ToTemplate());
 
         return new ControlPlaneOperationResult<DeploymentValidateResult>(OperationResult.Success,
             new DeploymentValidateResult

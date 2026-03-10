@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Azure.Core;
 using Microsoft.AspNetCore.Http;
+using Microsoft.IdentityModel.Tokens;
 using Topaz.Identity;
 using Topaz.Service.Entra.Domain;
 using Topaz.Service.Entra.Models;
@@ -120,17 +121,28 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                     return;
                 }
 
-                var validatedToken = JwtHelper.ValidateJwt(refreshToken);
-                if (validatedToken == null)
+                try
                 {
-                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not validate refresh token.");
-                    response.CreateJsonContentResponse(
-                        ErrorResponse.Create(ErrorResponse.InvalidClient, "Could not validate refresh token."),
-                        HttpStatusCode.Unauthorized);
-                    return;
-                }
+                    var validatedToken = JwtHelper.ValidateJwt(refreshToken);
+                    if (validatedToken == null)
+                    {
+                        logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not validate refresh token.");
+                        response.CreateJsonContentResponse(
+                            ErrorResponse.Create(ErrorResponse.InvalidClient, "Could not validate refresh token."),
+                            HttpStatusCode.Unauthorized);
+                        return;
+                    }
 
-                objectId = validatedToken.Subject;
+                    objectId = validatedToken.Subject;
+                }
+                catch (SecurityTokenExpiredException ex)
+                {
+                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), $"Refresh token expired - {ex.Message}");
+                    response.CreateJsonContentResponse(
+                        ErrorResponse.Create(ErrorResponse.InvalidRequest, "Refresh token expired"),
+                        HttpStatusCode.BadRequest);
+                }
+                
                 break;
             }
             case "authorization_code":

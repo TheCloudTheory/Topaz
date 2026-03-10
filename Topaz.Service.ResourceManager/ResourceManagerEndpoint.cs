@@ -162,8 +162,16 @@ public sealed class ResourceManagerEndpoint(
         using var reader = new StreamReader(input);
 
         var content = reader.ReadToEnd();
+        
+        // Attempt to fix broken Azure CLI serialization
+        content = content.Replace(", template:{", ", \"template\":{");
+        
+        logger.LogDebug(nameof(ResourceManagerEndpoint), nameof(HandleCreateOrUpdateDeployment),
+            "Attempting to deserialize into {0}: {1}", nameof(CreateDeploymentRequest), content);
+
+        var request = JsonSerializer.Deserialize<CreateDeploymentRequest>(content, GlobalSettings.JsonOptions);
         var result =
-            _controlPlane.ValidateDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, content);
+            _controlPlane.ValidateDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, request!);
 
         // TODO: Finish validating a deployment
     }
