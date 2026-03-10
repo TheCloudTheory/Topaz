@@ -11,7 +11,31 @@ As Topaz exposes HTTPS endpoints using a self-signed certificate, Azure CLI may 
 ```bash
 Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate
 ```
-Please follow the [instruction](https://learn.microsoft.com/en-gb/cli/azure/use-azure-cli-successfully-troubleshooting?view=azure-cli-latest#work-behind-a-proxy) which explains how to use a self-signed certificate locally.
+
+### Automated configuration (recommended)
+Topaz provides an automated script to configure Azure CLI to trust the Topaz certificate. The script locates Azure CLI's bundled certificate store and adds the Topaz certificate to it:
+
+```bash
+$ ./install/configure-azure-cli-cert.sh
+```
+
+The script will:
+1. **Locate the Azure CLI certificate bundle** - automatically detects the correct path based on your OS and architecture:
+   - **macOS Intel**: `/usr/local/Cellar/azure-cli/*/libexec/lib/python*/site-packages/certifi/cacert.pem`
+   - **macOS Apple Silicon**: `/opt/homebrew/Cellar/azure-cli/*/libexec/lib/python*/site-packages/certifi/cacert.pem`
+   - **Ubuntu/Debian**: `/opt/az/lib/python*/site-packages/certifi/cacert.pem`
+   - **RHEL/CentOS/SUSE**: `/usr/lib64/az/lib/python*/site-packages/certifi/cacert.pem`
+
+2. **Create a timestamped backup** of the original certificate bundle before making any changes
+
+3. **Add the Topaz certificate** to the bundle (requires `sudo` permissions)
+
+4. **Test the configuration** by running a simple Azure CLI command
+
+The script is idempotent and can be run multiple times safely. If the certificate is already installed, it will prompt whether you want to reinstall it. To restore the original bundle, the script provides instructions using the backup file created during installation.
+
+### Manual configuration
+Alternatively, you can follow the [official Azure CLI documentation](https://learn.microsoft.com/en-gb/cli/azure/use-azure-cli-successfully-troubleshooting?view=azure-cli-latest#work-behind-a-proxy) to manually configure the certificate trust.
 
 ## Starting the emulator
 Azure CLI requires you to authenticate against a real tenant before you can use the selected cloud environment. It will also try to obtain the metadata endpoints from it. To ensure the process goes smoothly, you will need to run the emulator in the background and include `--tenant-id` option:
