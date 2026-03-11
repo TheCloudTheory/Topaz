@@ -4,6 +4,14 @@
 @using Topaz.Portal.Models.ResourceGroups
 @inject TopazClient TopazClient
 
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/subscriptions">Subscriptions</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/subscriptions/{SubscriptionId:D}")">@(_rg?.SubscriptionName ?? "Subscription")</BreadcrumbItem>
+    <BreadcrumbItem Href="/resource-groups">Resource Groups</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">@DecodedName</BreadcrumbItem>
+</Breadcrumb>
+
 <h1 class="mb-3">@ResourceGroupName</h1>
 
 <ResourceGroupDetailsShell SubscriptionId="SubscriptionId" ResourceGroupName="@DecodedName">

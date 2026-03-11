@@ -3,6 +3,12 @@
 @using Topaz.Portal.Models.Subscriptions
 @inject TopazClient TopazClient
 
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/subscriptions">Subscriptions</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">@(_subscription?.DisplayName ?? "Subscription")</BreadcrumbItem>
+</Breadcrumb>
+
 <h1 class="mb-3">@(_subscription?.DisplayName ?? "Subscription")</h1>
 
 <SubscriptionDetailsShell SubscriptionId="SubscriptionId">

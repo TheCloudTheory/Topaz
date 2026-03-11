@@ -1,6 +1,17 @@
 @* Topaz.Portal/Components/Pages/ResourceGroups/ResourceGroupTags.razor *@
 @page "/resource-groups/{SubscriptionId:guid}/{ResourceGroupName}/tags"
 @using System.Net
+@using Topaz.Portal.Models.ResourceGroups
+@inject TopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/subscriptions">Subscriptions</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/subscriptions/{SubscriptionId:D}")">@(_rg?.SubscriptionName ?? "Subscription")</BreadcrumbItem>
+    <BreadcrumbItem Href="/resource-groups">Resource Groups</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/resource-groups/{SubscriptionId:D}/{ResourceGroupName}")">@DecodedName</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Tags</BreadcrumbItem>
+</Breadcrumb>
 
 <h1 class="mb-3">@ResourceGroupName</h1>
 
@@ -20,4 +31,17 @@
     [Parameter] public string ResourceGroupName { get; set; } = "";
 
     private string DecodedName => WebUtility.UrlDecode(ResourceGroupName) ?? ResourceGroupName;
+    private ResourceGroupDto? _rg;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            _rg = await TopazClient.GetResourceGroup(SubscriptionId, DecodedName);
+        }
+        catch
+        {
+            // Ignore errors loading resource group
+        }
+    }
 }

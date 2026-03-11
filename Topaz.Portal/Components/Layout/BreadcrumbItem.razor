@@ -1,0 +1,19 @@
+@* Topaz.Portal/Components/Layout/BreadcrumbItem.razor *@
+@if (IsActive)
+{
+    <li class="breadcrumb-item active" aria-current="page">@ChildContent</li>
+}
+else if (!string.IsNullOrEmpty(Href))
+{
+    <li class="breadcrumb-item"><a href="@Href">@ChildContent</a></li>
+}
+else
+{
+    <li class="breadcrumb-item">@ChildContent</li>
+}
+
+@code {
+    [Parameter] public string? Href { get; set; }
+    [Parameter] public bool IsActive { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; } = default!;
+}

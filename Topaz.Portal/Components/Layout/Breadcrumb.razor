@@ -1,0 +1,10 @@
+@* Topaz.Portal/Components/Layout/Breadcrumb.razor *@
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        @ChildContent
+    </ol>
+</nav>
+
+@code {
+    [Parameter] public RenderFragment ChildContent { get; set; } = default!;
+}

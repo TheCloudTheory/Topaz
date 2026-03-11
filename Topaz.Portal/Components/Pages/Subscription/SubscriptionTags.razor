@@ -2,6 +2,13 @@
 @page "/subscriptions/{SubscriptionId:guid}/tags"
 @inject TopazClient TopazClient
 
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/subscriptions">Subscriptions</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/subscriptions/{SubscriptionId:D}")">@(_subscriptionName ?? "Subscription")</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Tags</BreadcrumbItem>
+</Breadcrumb>
+
 <h1 class="mb-3">@(_subscriptionName ?? "Subscription")</h1>
 
 <SubscriptionDetailsShell SubscriptionId="SubscriptionId">

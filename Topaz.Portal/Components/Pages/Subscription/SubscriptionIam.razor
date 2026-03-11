@@ -1,7 +1,16 @@
 @* Topaz.Portal/Components/Pages/Subscription/SubscriptionIam.razor *@
 @page "/subscriptions/{SubscriptionId:guid}/iam"
+@using Topaz.Portal.Models.Subscriptions
+@inject TopazClient TopazClient
 
-<h1 class="mb-3">Subscription</h1>
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/subscriptions">Subscriptions</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/subscriptions/{SubscriptionId:D}")">@(_subscriptionName ?? "Subscription")</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">IAM</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@(_subscriptionName ?? "Subscription")</h1>
 
 <SubscriptionDetailsShell SubscriptionId="SubscriptionId">
     <div class="card">
@@ -16,4 +25,22 @@
 
 @code {
     [Parameter] public Guid SubscriptionId { get; set; }
+
+    private string? _subscriptionName;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            var resp = await TopazClient.ListSubscriptions();
+            var subs = resp?.Value ?? [];
+            var sub = subs.FirstOrDefault(s =>
+                Guid.TryParse(s.SubscriptionId, out var id) && id == SubscriptionId);
+            _subscriptionName = sub?.DisplayName;
+        }
+        catch
+        {
+            // Ignore errors loading subscription name
+        }
+    }
 }
