@@ -49,6 +49,8 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
     {
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
         {
+            logger.LogDebug(nameof(TableEndpoint), nameof(GetResponse), "Storage account not found.");
+            
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
@@ -106,6 +108,9 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 
                     return;
                 case "POST":
+                    logger.LogDebug(nameof(TableEndpoint), nameof(GetResponse), "Received a POST request.");
+                    logger.LogDebug(nameof(TableEndpoint), nameof(GetResponse), "Request path: {0}", context.Request.Path);
+                    
                     switch (context.Request.Path)
                     {
                         case "/Tables":
@@ -279,6 +284,8 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         string storageAccountName,
         HttpResponseMessage response)
     {
+        logger.LogDebug(nameof(TableEndpoint), nameof(HandleCreateTable), "Executing {0}.", nameof(HandleCreateTable));
+        
         using var sr = new StreamReader(input);
 
         var rawContent = sr.ReadToEnd();

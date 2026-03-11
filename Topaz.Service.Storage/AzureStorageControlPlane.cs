@@ -104,7 +104,7 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         var resource = new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, request.Location!,
             request.Sku!, request.Kind!, request.Properties!);
 
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, resource);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, resource, existingAccount == null);
 
         InitializeServicePropertiesFiles(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 

@@ -1,5 +1,6 @@
 using System.Text;
 using Azure.Core;
+using Azure.Data.Tables;
 using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.ServiceBus;
@@ -46,10 +47,10 @@ public class AspNetCoreExtensionTests
             .WithPortBinding(8898)
             .WithPortBinding(8897)
             .WithPortBinding(8891)
-            .WithHostname("topaz.local.dev")
+            .WithName("topaz.local.dev")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateKey), "/app/topaz.key")
-            .WithCommand("start", "--certificate-file", "topaz.crt", "--certificate-key", "topaz.key", "--skip-dns-registration")
+            .WithCommand("start", "--certificate-file", "topaz.crt", "--certificate-key", "topaz.key", "--log-level", "Debug")
             .Build();
 
         await _container.StartAsync()
@@ -191,5 +192,55 @@ public class AspNetCoreExtensionTests
         Assert.That(topic, Is.Not.Null);
         Assert.That(topic.Value, Is.Not.Null);
         Assert.That(topic.Value.Data.Name, Is.EqualTo(ServiceBusTopicName));
+    }
+    
+    [Test]
+    public async Task WhenStorageAccountIsCreated_TableCanBeCreatedAndIsAvailable()
+    {
+        // Arrange
+        const string tableName = "testtable";
+        const string storageAccountName = "testsa2topaz";
+        var builder = new ConfigurationBuilder();
+        var objectId = Globals.GlobalAdminId;
+        var credentials = new AzureLocalCredential(objectId);
+        var subscriptionId = Guid.NewGuid();
+        
+        // Act
+        await builder.AddTopaz(subscriptionId, objectId)
+            .AddSubscription(subscriptionId, SubscriptionName, credentials)
+            .AddResourceGroup(subscriptionId, ResourceGroupName, AzureLocation.WestEurope)
+            .AddStorageAccount(ResourceGroupIdentifier.From(ResourceGroupName), storageAccountName,
+                new StorageAccountCreateOrUpdateContent(new StorageSku(StorageSkuName.StandardLrs),
+                    StorageKind.StorageV2, AzureLocation.WestEurope));
+        
+        // Get storage account key
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(storageAccountName);
+        var key = storageAccount.Value.GetKeys().ToArray()[0];
+        
+        // Create table using Azure SDK
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(storageAccountName, key.Value);
+        var tableServiceClient = new TableServiceClient(connectionString);
+
+        try
+        {
+            await tableServiceClient.CreateTableIfNotExistsAsync(tableName);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+        
+        // Verify table exists
+        var tableClient = tableServiceClient.GetTableClient(tableName);
+        var tableExists = await tableClient.CreateIfNotExistsAsync();
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(tableClient, Is.Not.Null);
+            Assert.That(tableExists.GetRawResponse().Status, Is.EqualTo(409));
+        });
     }
 }

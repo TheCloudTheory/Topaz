@@ -16,15 +16,14 @@ var storageAccountName = builder.Configuration["Azure:StorageAccountName"]!;
 
 if (builder.Environment.IsDevelopment())
 {
-    var container = new ContainerBuilder()
-        .WithImage("thecloudtheory/topaz-cli:v1.0.229-alpha")
+    var container = new ContainerBuilder("thecloudtheory/topaz-cli:v1.0.450-alpha")
         .WithPortBinding(8890)
         .WithPortBinding(8899)
         .WithPortBinding(8898)
         .WithPortBinding(8897)
         .WithPortBinding(8891)
         .WithName("topaz.local.dev")
-        .WithCommand("start", "--skip-dns-registration", "--log-level", "Debug")
+        .WithCommand("start", "--log-level", "Debug")
         .Build();
 
     await container.StartAsync()
@@ -32,11 +31,12 @@ if (builder.Environment.IsDevelopment())
 
     await Task.Delay(5000);
 
+    var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
     var subscriptionId = Guid.NewGuid();
     const string resourceGroupName = "rg-topaz-webapp-example";
 
-    await builder.Configuration.AddTopaz(subscriptionId)
-        .AddSubscription(subscriptionId, "topaz-webapp-example")
+    await builder.Configuration.AddTopaz(subscriptionId, Globals.GlobalAdminId)
+        .AddSubscription(subscriptionId, "topaz-webapp-example", credentials)
         .AddResourceGroup(subscriptionId, resourceGroupName, AzureLocation.WestEurope)
         .AddStorageAccount(ResourceGroupIdentifier.From(resourceGroupName), storageAccountName,
             new StorageAccountCreateOrUpdateContent(new StorageSku(StorageSkuName.StandardLrs), StorageKind.StorageV2,
@@ -47,16 +47,16 @@ if (builder.Environment.IsDevelopment())
             secrets: new Dictionary<string, string>
             {
                 { "secrets-generic-secret", "This is just example secret!" }
-            })
+            }, Globals.GlobalAdminId)
         .AddStorageAccountConnectionStringAsSecret(ResourceGroupIdentifier.From(resourceGroupName), storageAccountName, keyVaultName,
-            "connectionstring-storageaccount");
+            "connectionstring-storageaccount", Globals.GlobalAdminId);
 }
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Configuration.AddAzureKeyVault(
-    TopazResourceHelpers.GetKeyVaultEndpoint(keyVaultName), new AzureLocalCredential());
+    TopazResourceHelpers.GetKeyVaultEndpoint(keyVaultName), new AzureLocalCredential(Globals.GlobalAdminId));
 
 var app = builder.Build();
 
@@ -82,9 +82,12 @@ app.MapPost("/todoitem", async ([FromBody] ToDoItem item, IConfiguration configu
         
         var tableClient = serviceClient.GetTableClient("testtable");
 
-        await tableClient.AddEntityAsync(new ToDoItemEntity()
+        await tableClient.AddEntityAsync(new ToDoItemEntity
         {
-            Name = item.Name
+            Name = item.Name,
+            Description = item.Description,
+            IsCompleted = item.IsCompleted,
+            CreatedBy = item.CreatedBy ?? Globals.GlobalAdminId
         });
     })
     .WithName("AddToDoItem")
@@ -103,7 +106,7 @@ app.MapGet("/todoitem", async (IConfiguration configuration) =>
 
         await foreach (var item in query)
         {
-            items.Add(new ToDoItem(item.Name));
+            items.Add(new ToDoItem(item.Name, item.Description, item.IsCompleted, item.CreatedBy));
         }
         
         return items;
@@ -114,13 +117,16 @@ app.MapGet("/todoitem", async (IConfiguration configuration) =>
 
 app.Run();
 
-public record ToDoItem(string Name);
+internal record ToDoItem(string? Name, string? Description = null, bool IsCompleted = false, string? CreatedBy = null);
 
-public record ToDoItemEntity : ITableEntity
+internal record ToDoItemEntity : ITableEntity
 {
     public string PartitionKey { get; set; } = "todoitem";
     public string RowKey { get; set; } = Guid.NewGuid().ToString();
     public DateTimeOffset? Timestamp { get; set; }
     public ETag ETag { get; set; }
-    public string Name { get; set; }
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public bool IsCompleted { get; set; }
+    public string? CreatedBy { get; set; }
 }
