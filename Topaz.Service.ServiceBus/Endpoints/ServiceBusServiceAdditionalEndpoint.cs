@@ -230,24 +230,27 @@ public sealed class ServiceBusServiceAdditionalEndpoint(Pipeline eventPipeline, 
         }
     }
 
-    private void HandleDeleteQueueRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string queueName)
+    private void HandleDeleteQueueRequest(HttpResponseMessage response,
+        ServiceBusNamespaceIdentifier namespaceIdentifier, string queueName)
     {
-        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleDeleteQueueRequest), "Executing for {0}/{1}.", namespaceIdentifier, queueName);
-        
+        logger.LogDebug(nameof(ServiceBusServiceEndpoint), nameof(HandleDeleteQueueRequest), "Executing for {0}/{1}.",
+            namespaceIdentifier, queueName);
+
         var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
         if (identifiersOperation.result == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
-        
-        var operation = _controlPlane.DeleteQueue(identifiersOperation.subscriptionIdentifier!, identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, queueName);
-        if (operation == OperationResult.NotFound)
+
+        var operation = _controlPlane.DeleteQueue(identifiersOperation.subscriptionIdentifier!,
+            identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, queueName);
+        if (operation.Result == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
-        
+
         response.StatusCode = HttpStatusCode.OK;
     }
 

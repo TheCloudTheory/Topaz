@@ -25,8 +25,8 @@ public class ControlPlaneOperationResult<TResource>(
 
 public class ControlPlaneOperationResult(
     OperationResult result,
-    string? reason,
-    string? code)
+    string? reason = null,
+    string? code = null)
 {
     [JsonIgnore]
     public OperationResult Result { get; } = result;

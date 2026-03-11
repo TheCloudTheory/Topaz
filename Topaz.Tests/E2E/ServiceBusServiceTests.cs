@@ -277,4 +277,36 @@ public class ServiceBusServiceTests
         Assert.That(queue.Value, Is.Not.Null);
         Assert.That(queue.Value.Data.MaxDeliveryCount, Is.EqualTo(20));
     }
+    
+    [Test]
+    public async Task ServiceBusServiceTests_WhenDeletingQueueUsingSDK_ItShouldBeRemoved()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var namespaceData = new ServiceBusNamespaceData(AzureLocation.WestEurope);
+        
+        // Act
+        _ = await resourceGroup.Value.GetServiceBusNamespaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, NamespaceName, namespaceData);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaces().GetAsync(NamespaceName);
+        
+        _ = await @namespace.Value.GetServiceBusQueues()
+            .CreateOrUpdateAsync(WaitUntil.Completed, QueueName, new ServiceBusQueueData());
+        
+        var queue = await @namespace.Value.GetServiceBusQueues().GetAsync(QueueName);
+        await queue.Value.DeleteAsync(WaitUntil.Completed);
+        
+        // Assert - verify queue is no longer in the list
+        var queues = @namespace.Value.GetServiceBusQueues().GetAllAsync();
+        var queueList = new List<ServiceBusQueueResource>();
+        await foreach (var q in queues)
+        {
+            queueList.Add(q);
+        }
+        
+        Assert.That(queueList.Any(q => q.Data.Name == QueueName), Is.False);
+    }
 }

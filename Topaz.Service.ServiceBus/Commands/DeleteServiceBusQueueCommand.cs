@@ -11,17 +11,21 @@ using Topaz.Shared;
 namespace Topaz.Service.ServiceBus.Commands;
 
 [UsedImplicitly]
-public sealed class DeleteServiceBusQueueCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<DeleteServiceBusQueueCommand.DeleteServiceBusQueueCommandSettings>
+public sealed class DeleteServiceBusQueueCommand(Pipeline eventPipeline, ITopazLogger logger)
+    : Command<DeleteServiceBusQueueCommand.DeleteServiceBusQueueCommandSettings>
 {
     public override int Execute(CommandContext context, DeleteServiceBusQueueCommandSettings settings)
     {
-        logger.LogDebug(nameof(DeleteServiceBusQueueCommand), nameof(Execute), "Executing {0}.{1}.", nameof(DeleteServiceBusQueueCommand), nameof(Execute));
+        logger.LogDebug(nameof(DeleteServiceBusQueueCommand), nameof(Execute), "Executing {0}.{1}.",
+            nameof(DeleteServiceBusQueueCommand), nameof(Execute));
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
-        var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
+                new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+        var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId),
+            resourceGroupIdentifier);
         if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {
             logger.LogError($"Resource group {resourceGroupIdentifier} not found.");
@@ -30,20 +34,22 @@ public sealed class DeleteServiceBusQueueCommand(Pipeline eventPipeline, ITopazL
 
         var controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
         var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(settings.NamespaceName!);
-        var @namespace = controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
+        var @namespace =
+            controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
         if (@namespace.Result == OperationResult.NotFound || @namespace.Resource == null)
         {
             logger.LogError($"Namespace {namespaceIdentifier} not found.");
             return 1;
         }
-        
-        var result = controlPlane.DeleteQueue(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, settings.Name!);
-        if (result == OperationResult.Failed)
+
+        var deleteOperation = controlPlane.DeleteQueue(subscriptionIdentifier, resourceGroupIdentifier,
+            namespaceIdentifier, settings.Name!);
+        if (deleteOperation.Result == OperationResult.Failed)
         {
             logger.LogError($"There was a problem deleting queue '{settings.Name!}'.");
             return 1;
         }
-        
+
         logger.LogInformation($"Queue '{settings.Name}' deleted.");
 
         return 0;
@@ -51,22 +57,22 @@ public sealed class DeleteServiceBusQueueCommand(Pipeline eventPipeline, ITopazL
 
     public override ValidationResult Validate(CommandContext context, DeleteServiceBusQueueCommandSettings settings)
     {
-        if(string.IsNullOrEmpty(settings.Name))
+        if (string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Service Bus queue name can't be null.");
         }
-        
-        if(string.IsNullOrEmpty(settings.NamespaceName))
+
+        if (string.IsNullOrEmpty(settings.NamespaceName))
         {
             return ValidationResult.Error("Service Bus namespace name can't be null.");
         }
 
-        if(string.IsNullOrEmpty(settings.ResourceGroup))
+        if (string.IsNullOrEmpty(settings.ResourceGroup))
         {
             return ValidationResult.Error("Service Bus namespace resource group can't be null.");
         }
-        
-        if(string.IsNullOrEmpty(settings.SubscriptionId))
+
+        if (string.IsNullOrEmpty(settings.SubscriptionId))
         {
             return ValidationResult.Error("Service Bus subscription ID can't be null.");
         }
@@ -78,20 +84,17 @@ public sealed class DeleteServiceBusQueueCommand(Pipeline eventPipeline, ITopazL
 
         return base.Validate(context, settings);
     }
-    
+
     [UsedImplicitly]
     public sealed class DeleteServiceBusQueueCommandSettings : CommandSettings
     {
         [CommandOption("-s|--subscription-id")]
         public string SubscriptionId { get; set; } = null!;
-        
-        [CommandOption("-n|--queue-name")]
-        public string? Name { get; set; }
-        
-        [CommandOption("--namespace-name")]
-        public string? NamespaceName { get; set; }
 
-        [CommandOption("-g|--resource-group")]
-        public string? ResourceGroup { get; set; }
+        [CommandOption("-n|--queue-name")] public string? Name { get; set; }
+
+        [CommandOption("--namespace-name")] public string? NamespaceName { get; set; }
+
+        [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
     }
 }

@@ -29,7 +29,8 @@ public sealed class ServiceBusService(Pipeline eventPipeline, ITopazLogger logge
         new ListServiceBusNamespacesEndpoint(eventPipeline, logger),
         new DeleteServiceBusNamespaceEndpoint(eventPipeline, logger),
         new ListServiceBusQueuesEndpoint(eventPipeline, logger),
-        new CreateUpdateServiceBusQueueEndpoint(eventPipeline, logger)
+        new CreateUpdateServiceBusQueueEndpoint(eventPipeline, logger),
+        new DeleteServiceBusQueueEndpoint(eventPipeline, logger),
     ];
 
     public void Bootstrap()
