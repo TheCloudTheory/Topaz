@@ -16,3 +16,16 @@ public sealed class AzureLocalCredential(string objectId, bool isForGraph = fals
         return ValueTask.FromResult(new AccessToken(tokenString, DateTimeOffset.MaxValue));
     }
 }
+
+public sealed class AzureFixedTokenLocalCredential(string token) : TokenCredential
+{
+    public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken)
+    {
+        return new AccessToken(token, DateTimeOffset.MaxValue);
+    }
+    
+    public override ValueTask<AccessToken> GetTokenAsync(TokenRequestContext requestContext, CancellationToken cancellationToken)
+    {
+        return ValueTask.FromResult(new AccessToken(token, DateTimeOffset.MaxValue));
+    }
+}
