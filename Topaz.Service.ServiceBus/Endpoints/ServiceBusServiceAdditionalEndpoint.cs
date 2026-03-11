@@ -353,7 +353,7 @@ public sealed class ServiceBusServiceAdditionalEndpoint(Pipeline eventPipeline, 
         }
         
         var operation = _controlPlane.DeleteTopic(identifiersOperation.subscriptionIdentifier!, identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, topicName);
-        if (operation == OperationResult.NotFound)
+        if (operation.Result == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;

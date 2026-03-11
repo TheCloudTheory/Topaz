@@ -1,6 +1,6 @@
 using System.Xml.Serialization;
 
-namespace Topaz.Service.ServiceBus.Models.Responses;
+namespace Topaz.Service.ServiceBus.Models.Responses.Topic;
 
 [XmlRoot("entry", Namespace = "http://www.w3.org/2005/Atom", IsNullable = false)]
 public class CreateOrUpdateServiceBusTopicAtomResponse

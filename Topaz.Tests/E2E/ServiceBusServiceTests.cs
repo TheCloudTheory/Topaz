@@ -309,4 +309,98 @@ public class ServiceBusServiceTests
         
         Assert.That(queueList.Any(q => q.Data.Name == QueueName), Is.False);
     }
+    
+    [Test]
+    public async Task ServiceBusServiceTests_WhenListingTopicsUsingSDK_ItShouldReturnCreatedTopics()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var namespaceData = new ServiceBusNamespaceData(AzureLocation.WestEurope);
+        
+        // Act
+        _ = await resourceGroup.Value.GetServiceBusNamespaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, NamespaceName, namespaceData);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaces().GetAsync(NamespaceName);
+        
+        _ = await @namespace.Value.GetServiceBusTopics()
+            .CreateOrUpdateAsync(WaitUntil.Completed, TopicName, new ServiceBusTopicData());
+        
+        var topics = @namespace.Value.GetServiceBusTopics().GetAllAsync();
+        var topicList = new List<ServiceBusTopicResource>();
+        await foreach (var topic in topics)
+        {
+            topicList.Add(topic);
+        }
+        
+        // Assert
+        Assert.That(topicList, Is.Not.Null);
+        Assert.That(topicList, Is.Not.Empty);
+        Assert.That(topicList.Any(t => t.Data.Name == TopicName), Is.True);
+    }
+    
+    [Test]
+    public async Task ServiceBusServiceTests_WhenUpdatingTopicUsingSDK_ItShouldReflectChanges()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var namespaceData = new ServiceBusNamespaceData(AzureLocation.WestEurope);
+        
+        // Act
+        _ = await resourceGroup.Value.GetServiceBusNamespaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, NamespaceName, namespaceData);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaces().GetAsync(NamespaceName);
+        
+        var initialTopicData = new ServiceBusTopicData { MaxSizeInMegabytes = 1024 };
+        _ = await @namespace.Value.GetServiceBusTopics()
+            .CreateOrUpdateAsync(WaitUntil.Completed, TopicName, initialTopicData);
+        
+        var updatedTopicData = new ServiceBusTopicData { MaxSizeInMegabytes = 2048 };
+        _ = await @namespace.Value.GetServiceBusTopics()
+            .CreateOrUpdateAsync(WaitUntil.Completed, TopicName, updatedTopicData);
+        
+        var topic = await @namespace.Value.GetServiceBusTopics().GetAsync(TopicName);
+        
+        // Assert
+        Assert.That(topic, Is.Not.Null);
+        Assert.That(topic.Value, Is.Not.Null);
+        Assert.That(topic.Value.Data.MaxSizeInMegabytes, Is.EqualTo(2048));
+    }
+    
+    [Test]
+    public async Task ServiceBusServiceTests_WhenDeletingTopicUsingSDK_ItShouldBeRemoved()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var namespaceData = new ServiceBusNamespaceData(AzureLocation.WestEurope);
+        
+        // Act
+        _ = await resourceGroup.Value.GetServiceBusNamespaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, NamespaceName, namespaceData);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaces().GetAsync(NamespaceName);
+        
+        _ = await @namespace.Value.GetServiceBusTopics()
+            .CreateOrUpdateAsync(WaitUntil.Completed, TopicName, new ServiceBusTopicData());
+        
+        var topic = await @namespace.Value.GetServiceBusTopics().GetAsync(TopicName);
+        await topic.Value.DeleteAsync(WaitUntil.Completed);
+        
+        // Assert - verify topic is no longer in the list
+        var topics = @namespace.Value.GetServiceBusTopics().GetAllAsync();
+        var topicList = new List<ServiceBusTopicResource>();
+        await foreach (var t in topics)
+        {
+            topicList.Add(t);
+        }
+        
+        Assert.That(topicList.Any(t => t.Data.Name == TopicName), Is.False);
+    }
 }

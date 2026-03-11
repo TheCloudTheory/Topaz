@@ -375,21 +375,21 @@ internal sealed class ServiceBusServiceControlPlane(
                 null);
     }
 
-    public OperationResult DeleteTopic(SubscriptionIdentifier subscriptionIdentifier,
+    public ControlPlaneOperationResult DeleteTopic(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName)
     {
-        var existingQueue = provider.GetSubresourceAs<ServiceBusQueueResource>(subscriptionIdentifier,
+        var existingTopic = provider.GetSubresourceAs<ServiceBusQueueResource>(subscriptionIdentifier,
             resourceGroupIdentifier, topicName, namespaceIdentifier.Value,
             nameof(Subresource.Topics).ToLowerInvariant());
-        if (existingQueue == null)
+        if (existingTopic == null)
         {
-            return OperationResult.NotFound;
+            return new ControlPlaneOperationResult(OperationResult.NotFound, ServiceBusTopicNotFoundMessageTemplate, ServiceBusTopicNotFoundCode);
         }
 
         provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, topicName,
             namespaceIdentifier.Value, nameof(Subresource.Topics).ToLowerInvariant());
-        return OperationResult.Deleted;
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 
     public OperationResult DeleteSubscription(SubscriptionIdentifier subscriptionIdentifier,
@@ -454,6 +454,31 @@ internal sealed class ServiceBusServiceControlPlane(
         logger.LogDebug(nameof(ServiceBusServiceControlPlane), nameof(ListQueues), "Found {0} queues.", queues.Length);
 
         return new ControlPlaneOperationResult<ServiceBusQueueResource[]>(OperationResult.Success,
+            queues.ToArray(), null, null);
+    }
+
+    public ControlPlaneOperationResult<ServiceBusTopicResource[]> ListTopics(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        ServiceBusNamespaceIdentifier serviceBusNamespaceIdentifier)
+    {
+        logger.LogDebug(nameof(ServiceBusServiceControlPlane), nameof(ListTopics), "Listing topics for namespace {0}",
+            serviceBusNamespaceIdentifier);
+
+        var namespacesOperation =
+            GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, serviceBusNamespaceIdentifier);
+        if (namespacesOperation.Resource == null || namespacesOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<ServiceBusTopicResource[]>(OperationResult.NotFound, null,
+                namespacesOperation.Reason, namespacesOperation.Code);
+        }
+
+        var queues = provider.ListSubresourcesAs<ServiceBusTopicResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, serviceBusNamespaceIdentifier.Value,
+            nameof(Subresource.Topics).ToLowerInvariant());
+
+        logger.LogDebug(nameof(ServiceBusServiceControlPlane), nameof(ListTopics), "Found {0} queues.", queues.Length);
+
+        return new ControlPlaneOperationResult<ServiceBusTopicResource[]>(OperationResult.Success,
             queues.ToArray(), null, null);
     }
 }

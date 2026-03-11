@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Topaz.Shared;
 
-namespace Topaz.Service.ServiceBus.Models.Responses;
+namespace Topaz.Service.ServiceBus.Models.Responses.Queue;
 
 internal sealed class ListServiceBusQueuesResponse
 {

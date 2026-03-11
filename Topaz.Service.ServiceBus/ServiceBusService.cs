@@ -3,6 +3,7 @@ using Topaz.Service.ResourceGroup;
 using Topaz.Service.ServiceBus.Endpoints;
 using Topaz.Service.ServiceBus.Endpoints.Namespace;
 using Topaz.Service.ServiceBus.Endpoints.Queue;
+using Topaz.Service.ServiceBus.Endpoints.Topic;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -31,6 +32,8 @@ public sealed class ServiceBusService(Pipeline eventPipeline, ITopazLogger logge
         new ListServiceBusQueuesEndpoint(eventPipeline, logger),
         new CreateUpdateServiceBusQueueEndpoint(eventPipeline, logger),
         new DeleteServiceBusQueueEndpoint(eventPipeline, logger),
+        new ListServiceBusTopicsEndpoint(eventPipeline, logger),
+        new DeleteServiceBusTopicEndpoint(eventPipeline, logger)
     ];
 
     public void Bootstrap()
