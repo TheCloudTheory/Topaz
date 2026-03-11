@@ -22,4 +22,16 @@
       <PackageReference Include="TheCloudTheory.Topaz.ResourceManager" Version="1.0.409-alpha" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="topaz.crt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="topaz.pfx">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="topaz.key">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
