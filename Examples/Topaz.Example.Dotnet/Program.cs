@@ -23,15 +23,14 @@ internal class Program
         // Create a builder for Topaz container image and all the ports
         // which are exposed by the emulator. Note you don't need to expose
         // every port available.
-        var container = new ContainerBuilder()
-            .WithImage("thecloudtheory/topaz-cli:v1.0.229-alpha")
+        var container = new ContainerBuilder("thecloudtheory/topaz-cli:v1.0.468-alpha")
             .WithPortBinding(8890)
             .WithPortBinding(8899)
             .WithPortBinding(8898)
             .WithPortBinding(8897)
             .WithPortBinding(8891)
             .WithName("topaz.local.dev")
-            .WithCommand("start", "--skip-dns-registration", "--log-level", "Debug")
+            .WithCommand("start", "--log-level", "Debug")
             .Build();
         
         try
@@ -54,7 +53,7 @@ internal class Program
 
             await CreateSubscription(subscriptionId, subscriptionName);
             
-            var credentials = new AzureLocalCredential();
+            var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
             var armClient = new ArmClient(credentials, subscriptionId.ToString(), TopazArmClientOptions.New);
             
             var resourceGroup = await CreateResourceGroup(armClient, resourceGroupName);
@@ -97,7 +96,7 @@ internal class Program
 
     private static async Task CreateKeyVaultSecrets(string keyVaultName)
     {
-        var credentials = new AzureLocalCredential();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(keyVaultName), credential: credentials, new SecretClientOptions
         {
             DisableChallengeResourceVerification = true
@@ -136,7 +135,7 @@ internal class Program
 
     private static async Task CreateSubscription(Guid subscriptionId, string subscriptionName)
     {
-        using var topaz = new TopazArmClient();
+        using var topaz = new TopazArmClient(new AzureLocalCredential(Globals.GlobalAdminId));
         
         await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
         
