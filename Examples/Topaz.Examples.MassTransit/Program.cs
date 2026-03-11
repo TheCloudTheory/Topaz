@@ -5,11 +5,12 @@ using DotNet.Testcontainers.Builders;
 using MassTransit;
 using Topaz.AspNetCore.Extensions;
 using Topaz.Examples.MassTransit;
+using Topaz.Identity;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
 
-var topazContainerImage = Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE") == null ? 
-    "topaz/cli"
+var topazContainerImage = Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE") == null
+    ? "topaz/cli"
     : Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE")!;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,35 +25,37 @@ if (builder.Environment.IsDevelopment())
 
     var container = new ContainerBuilder(topazContainerImage)
         .WithPortBinding(443)
-        .WithPortBinding(5671)  // AMQPS (AMQP with TLS) - for MassTransit
-        .WithPortBinding(8889)  // Plain AMQP - for Azure SDK with UseDevelopmentEmulator=true
+        .WithPortBinding(5671) // AMQPS (AMQP with TLS) - for MassTransit
+        .WithPortBinding(8889) // Plain AMQP - for Azure SDK with UseDevelopmentEmulator=true
         .WithPortBinding(8890)
         .WithPortBinding(8899)
         .WithPortBinding(8898)
         .WithPortBinding(8897)
         .WithPortBinding(8891)
-        .WithHostname("topaz.local.dev")
         .WithName("topaz.local.dev")
         .WithResourceMapping(Encoding.UTF8.GetBytes(certificateFile), "/app/topaz.crt")
         .WithResourceMapping(Encoding.UTF8.GetBytes(certificateKey), "/app/topaz.key")
-        .WithCommand("start", "--certificate-file", "topaz.crt", "--certificate-key", "topaz.key", "--log-level", "Debug")
+        .WithCommand("start", "--certificate-file", "topaz.crt", "--certificate-key", "topaz.key", "--log-level",
+            "Debug")
         .Build();
 
     await container.StartAsync()
         .ConfigureAwait(false);
 
     await Task.Delay(5000);
-    
+
     var subscriptionId = Guid.NewGuid();
     const string resourceGroupName = "rg-topaz-masstransit-example";
-    
-    await builder.Configuration.AddTopaz(subscriptionId)
-        .AddSubscription(subscriptionId, "topaz-masstransit-example")
+
+    await builder.Configuration.AddTopaz(subscriptionId, Globals.GlobalAdminId)
+        .AddSubscription(subscriptionId, "topaz-masstransit-example", new AzureLocalCredential(Globals.GlobalAdminId))
         .AddResourceGroup(subscriptionId, resourceGroupName, AzureLocation.WestEurope)
-        .AddServiceBusNamespace(ResourceGroupIdentifier.From(resourceGroupName), ServiceBusNamespaceIdentifier.From("sbnamespace"),
+        .AddServiceBusNamespace(ResourceGroupIdentifier.From(resourceGroupName),
+            ServiceBusNamespaceIdentifier.From("sbnamespace"),
             new ServiceBusNamespaceData(AzureLocation.WestEurope))
-        .AddServiceBusQueue(ResourceGroupIdentifier.From(resourceGroupName), ServiceBusNamespaceIdentifier.From("sbnamespace"), "sbqueue", new ServiceBusQueueData());
-    
+        .AddServiceBusQueue(ResourceGroupIdentifier.From(resourceGroupName),
+            ServiceBusNamespaceIdentifier.From("sbnamespace"), "sbqueue", new ServiceBusQueueData());
+
     // Test direct connection first
     Console.WriteLine("=== Testing direct Azure Service Bus SDK connection ===");
     await DirectTest.TestDirectConnection();
@@ -62,25 +65,21 @@ if (builder.Environment.IsDevelopment())
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<MessageConsumer>();
-    
     x.UsingAzureServiceBus((context, cfg) =>
     {
         // Use TLS connection string for MassTransit (port 5671 with TLS)
         var connectionString = TopazResourceHelpers.GetServiceBusConnectionStringWithTls("sbnamespace");
-        
+
         // Configure with explicit transport type
         cfg.Host(connectionString);
-        
+
         // Add retry configuration for connection issues
         cfg.UseMessageRetry(r => r.Immediate(5));
-        
+
         // Manually configure the receive endpoint to use the pre-created queue
         cfg.ReceiveEndpoint("sbqueue", e =>
         {
-            // Configure consumer
             e.ConfigureConsumer<MessageConsumer>(context);
-            
-            // Add some buffer for connection establishment  
             e.PrefetchCount = 1;
         });
     });

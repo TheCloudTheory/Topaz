@@ -8,11 +8,11 @@
 
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
-        <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.5.7" />
+        <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.5.8" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.22" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.4" />
         <PackageReference Include="Testcontainers" Version="4.10.0" />
-        <PackageReference Include="TheCloudTheory.Topaz.AspNetCore.Extensions" Version="1.0.337-alpha" />
+        <PackageReference Include="TheCloudTheory.Topaz.AspNetCore.Extensions" Version="1.0.414-alpha" />
         <PackageReference Update="Nerdbank.GitVersioning">
           <Version>3.9.50</Version>
         </PackageReference>
