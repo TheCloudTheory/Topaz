@@ -2,6 +2,7 @@
 @page "/entra/users"
 @using Microsoft.Graph.Models
 @inject TopazClient TopazClient
+@inject NavigationManager Nav
 
 <EntraTenantShell>
     <div class="card">
@@ -11,9 +12,15 @@
                     <h3 class="card-title mb-2">Users</h3>
                 </div>
 
-                <button class="btn btn-outline-primary" @onclick="ReloadAsync" disabled="@_loading">
-                    Refresh
-                </button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" @onclick="NavigateToCreate" disabled="@_loading">
+                        New user
+                    </button>
+
+                    <button class="btn btn-outline-secondary" @onclick="ReloadAsync" disabled="@_loading">
+                        Refresh
+                    </button>
+                </div>
             </div>
 
             <hr />
@@ -57,10 +64,10 @@
                                             <span class="text-muted">-</span>
                                             break;
                                         case true:
-                                            <span class="badge text-bg-success">Yes</span>
+                                            <span class="badge bg-success">Yes</span>
                                             break;
                                         default:
-                                            <span class="badge text-bg-secondary">No</span>
+                                            <span class="badge bg-secondary">No</span>
                                             break;
                                     }
                                 </td>
@@ -84,6 +91,11 @@
     protected override async Task OnInitializedAsync()
     {
         await ReloadAsync();
+    }
+
+    private void NavigateToCreate()
+    {
+        Nav.NavigateTo("/entra/users/create");
     }
 
     private async Task ReloadAsync()

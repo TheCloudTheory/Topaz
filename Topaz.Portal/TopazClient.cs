@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
@@ -7,7 +6,6 @@ using Azure.ResourceManager.Resources;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using Topaz.Identity;
-using Topaz.Portal.Models.Auth;
 using Topaz.Portal.Models.Rbac;
 using Topaz.Portal.Models.ResourceGroups;
 using Topaz.Portal.Models.ResourceManager;
@@ -17,16 +15,23 @@ using Topaz.ResourceManager;
 
 namespace Topaz.Portal;
 
-public class TopazClient
+internal sealed class TopazClient
 {
-    private readonly ArmClient _armClient;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _configuration;
+    private readonly AccountSession _session;
     private readonly HttpClient _httpClient;
-    private readonly GraphServiceClient _graphClient;
+    private readonly SemaphoreSlim _initLock = new(1, 1);
+    
+    private ArmClient? _armClient;
+    private GraphServiceClient? _graphClient;
+    private bool _initialized;
 
-    public TopazClient(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+    public TopazClient(IHttpClientFactory httpClientFactory, IConfiguration configuration, AccountSession session)
     {
-        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
-        _armClient = new ArmClient(credentials, Guid.Empty.ToString(), TopazArmClientOptions.New);
+        _httpClientFactory = httpClientFactory;
+        _configuration = configuration;
+        _session = session;
 
         _httpClient = httpClientFactory.CreateClient();
 
@@ -35,16 +40,50 @@ public class TopazClient
         {
             _httpClient.BaseAddress = new Uri(armBaseUrl);
         }
+    }
 
-        _graphClient = new GraphServiceClient(httpClientFactory.CreateClient(),
-            new LocalGraphAuthenticationProvider(), armBaseUrl);
+    private async Task EnsureInitializedAsync()
+    {
+        if (_initialized)
+            return;
+
+        await _initLock.WaitAsync();
+        try
+        {
+            if (_initialized)
+                return;
+
+            // Load session if not already loaded
+            if (_session.Token is null)
+            {
+                await _session.LoadAsync();
+            }
+
+            if (_session.Token is null)
+                throw new InvalidOperationException("Session not loaded. User must be authenticated.");
+
+            var credentials = new AzureFixedTokenLocalCredential(_session.Token);
+            _armClient = new ArmClient(credentials, Guid.Empty.ToString(), TopazArmClientOptions.New);
+
+            _graphClient = new GraphServiceClient(_httpClientFactory.CreateClient(),
+                new LocalGraphFixedTokenAuthenticationProvider(_session.Token),
+                _configuration["Topaz:ArmBaseUrl"]);
+
+            _initialized = true;
+        }
+        finally
+        {
+            _initLock.Release();
+        }
     }
 
     public async Task<ListSubscriptionsResponse> ListSubscriptions()
     {
+        await EnsureInitializedAsync();
+        
         var subscriptions = new List<SubscriptionResource>();
 
-        await foreach (var subscription in _armClient.GetSubscriptions().GetAllAsync())
+        await foreach (var subscription in _armClient!.GetSubscriptions().GetAllAsync())
         {
             subscriptions.Add(subscription);
         }
@@ -67,10 +106,12 @@ public class TopazClient
         Guid subscriptionId,
         CancellationToken cancellationToken = default)
     {
+        await EnsureInitializedAsync();
+        
         if (subscriptionId == Guid.Empty)
             throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
 
-        var subscription = await _armClient
+        var subscription = await _armClient!
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId:D}"))
             .GetAsync(cancellationToken);
 
@@ -91,6 +132,8 @@ public class TopazClient
         string tagValue,
         CancellationToken cancellationToken = default)
     {
+        await EnsureInitializedAsync();
+        
         if (subscriptionId == Guid.Empty)
             throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
 
@@ -100,7 +143,7 @@ public class TopazClient
         if (string.IsNullOrWhiteSpace(tagValue))
             throw new ArgumentException("Tag value is required.", nameof(tagValue));
         
-        var subscription = await _armClient
+        var subscription = await _armClient!
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId:D}"))
             .GetAsync(cancellationToken);
         
@@ -126,6 +169,8 @@ public class TopazClient
     public async Task CreateSubscription(Guid subscriptionId, string subscriptionName,
         CancellationToken cancellationToken = default)
     {
+        await EnsureInitializedAsync();
+        
         if (string.IsNullOrWhiteSpace(subscriptionName))
             throw new ArgumentException("Subscription name is required.", nameof(subscriptionName));
 
@@ -151,12 +196,14 @@ public class TopazClient
 
     public async Task<ListResourceGroupsResponse> ListResourceGroups()
     {
+        await EnsureInitializedAsync();
+        
         var subscriptions = await ListSubscriptions();
         var resourceGroups = new List<ResourceGroupDto>();
 
         foreach (var subscription in subscriptions.Value)
         {
-            await foreach (var rg in _armClient
+            await foreach (var rg in _armClient!
                                .GetSubscriptionResource(
                                    new ResourceIdentifier($"/subscriptions/{subscription.SubscriptionId}"))
                                .GetResourceGroups().GetAllAsync())
@@ -181,16 +228,18 @@ public class TopazClient
     public async Task<ResourceGroupDto?> GetResourceGroup(Guid subscriptionId, string resourceGroupName,
         CancellationToken cancellationToken = default)
     {
+        await EnsureInitializedAsync();
+        
         if (subscriptionId == Guid.Empty)
             throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
 
         if (string.IsNullOrWhiteSpace(resourceGroupName))
             throw new ArgumentException("Resource group name is required.", nameof(resourceGroupName));
 
-        var subscription = await _armClient
+        var subscription = await _armClient!
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
             .GetAsync(cancellationToken);
-        var rgResponse = await _armClient
+        var rgResponse = await _armClient!
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
             .GetResourceGroupAsync(resourceGroupName, cancellationToken);
 
@@ -209,13 +258,15 @@ public class TopazClient
     public async Task<ListDeploymentsResponse> ListDeployments(Guid subscriptionId, string resourceGroupName,
         CancellationToken cancellationToken = default)
     {
+        await EnsureInitializedAsync();
+        
         if (subscriptionId == Guid.Empty)
             throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
 
         if (string.IsNullOrWhiteSpace(resourceGroupName))
             throw new ArgumentException("Resource group name is required.", nameof(resourceGroupName));
 
-        var rg = await _armClient.GetSubscriptionResource(
+        var rg = await _armClient!.GetSubscriptionResource(
                 new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
             .GetResourceGroupAsync(resourceGroupName, cancellationToken);
         var deployments = new List<DeploymentDto>();
@@ -250,6 +301,8 @@ public class TopazClient
     public async Task CreateResourceGroup(Guid subscriptionId, string resourceGroupName, string location,
         CancellationToken cancellationToken = default)
     {
+        await EnsureInitializedAsync();
+        
         if (subscriptionId == Guid.Empty)
             throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
 
@@ -259,7 +312,7 @@ public class TopazClient
         if (string.IsNullOrWhiteSpace(location))
             throw new ArgumentException("Location is required.", nameof(location));
 
-        var subscription = _armClient.GetSubscriptionResource(
+        var subscription = _armClient!.GetSubscriptionResource(
             new ResourceIdentifier($"/subscriptions/{subscriptionId}"));
 
         var rgCollection = subscription.GetResourceGroups();
@@ -273,50 +326,13 @@ public class TopazClient
             cancellationToken);
     }
     
-    public async Task<(TokenResponse? Token, string? ErrorMessage)> GetAuthTokenWithError(string username, string password)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Post,
-            $"https://topaz.local.dev:8899/organizations/oauth2/v2.0/token?grant_type=password&client_id={Guid.NewGuid()}&username={username}&password={password}");
-
-        using var response = await _httpClient.SendAsync(request);
-        var body = await response.Content.ReadAsStringAsync();
-
-        if (!response.IsSuccessStatusCode)
-        {
-            try
-            {
-                var apiError = JsonSerializer.Deserialize<AuthErrorResponse>(
-                    body,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                var message = apiError?.GetBestDescription();
-                if (!string.IsNullOrWhiteSpace(message))
-                    return (null, message);
-            }
-            catch
-            {
-                // Ignore parse errors; fall back below.
-            }
-
-            // Fallback: don’t leak raw body to UI; keep it simple.
-            return (null, "Sign-in failed. Please check your credentials and try again.");
-        }
-
-        var token = JsonSerializer.Deserialize<TokenResponse>(
-            body,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-        if (string.IsNullOrWhiteSpace(token?.AccessToken))
-            return (null, "Sign-in failed: token was missing.");
-
-        return (token, null);
-    }
-    
     public async Task<IReadOnlyList<User>> ListUsers(
         int top = 50,
         CancellationToken cancellationToken = default)
     {
-        var resp = await _graphClient.Users.GetAsync(cfg =>
+        await EnsureInitializedAsync();
+        
+        var resp = await _graphClient!.Users.GetAsync(cfg =>
         {
             cfg.QueryParameters.Top = top;
 
@@ -337,35 +353,73 @@ public class TopazClient
         return resp?.Value ?? [];
     }
 
+    public async Task CreateUser(
+        string displayName,
+        string userPrincipalName,
+        string? mail,
+        string password,
+        bool accountEnabled = true,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync();
+        
+        if (string.IsNullOrWhiteSpace(displayName))
+            throw new ArgumentException("Display name is required.", nameof(displayName));
+
+        if (string.IsNullOrWhiteSpace(userPrincipalName))
+            throw new ArgumentException("User principal name is required.", nameof(userPrincipalName));
+
+        if (string.IsNullOrWhiteSpace(password))
+            throw new ArgumentException("Password is required.", nameof(password));
+
+        var newUser = new User
+        {
+            DisplayName = displayName,
+            UserPrincipalName = userPrincipalName,
+            Mail = mail,
+            AccountEnabled = accountEnabled,
+            MailNickname = userPrincipalName.Split('@')[0],
+            PasswordProfile = new PasswordProfile
+            {
+                Password = password,
+                ForceChangePasswordNextSignIn = false
+            }
+        };
+
+        await _graphClient!.Users.PostAsync(newUser, cancellationToken: cancellationToken);
+    }
+
     public async Task<TenantInformationResponse> GetDirectoryInfo()
     {
-        var directory = await _graphClient.Directory.GetAsync();
+        await EnsureInitializedAsync();
+        
+        var directory = await _graphClient!.Directory.GetAsync();
         var tenantInformation =
-            await _graphClient.TenantRelationships.FindTenantInformationByTenantIdWithTenantId(directory!.Id)
+            await _graphClient!.TenantRelationships.FindTenantInformationByTenantIdWithTenantId(directory!.Id)
                 .GetAsync();
 
-        var users = await _graphClient.Users.GetAsync(cfg =>
+        var users = await _graphClient!.Users.GetAsync(cfg =>
         {
             cfg.QueryParameters.Top = 1;
             cfg.QueryParameters.Count = true;
             cfg.Headers.Add("ConsistencyLevel", "eventual");
         });
 
-        var groups = await _graphClient.Groups.GetAsync(cfg =>
+        var groups = await _graphClient!.Groups.GetAsync(cfg =>
         {
             cfg.QueryParameters.Top = 1;
             cfg.QueryParameters.Count = true;
             cfg.Headers.Add("ConsistencyLevel", "eventual");
         });
 
-        var servicePrincipals = await _graphClient.ServicePrincipals.GetAsync(cfg =>
+        var servicePrincipals = await _graphClient!.ServicePrincipals.GetAsync(cfg =>
         {
             cfg.QueryParameters.Top = 1;
             cfg.QueryParameters.Count = true;
             cfg.Headers.Add("ConsistencyLevel", "eventual");
         });
 
-        var applications = await _graphClient.Applications.GetAsync(cfg =>
+        var applications = await _graphClient!.Applications.GetAsync(cfg =>
         {
             cfg.QueryParameters.Top = 1;
             cfg.QueryParameters.Count = true;
@@ -387,6 +441,8 @@ public class TopazClient
         string? continuationToken = null,
         CancellationToken cancellationToken = default)
     {
+        await EnsureInitializedAsync();
+        
         if (subscriptionId == Guid.Empty)
             throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
 
@@ -440,6 +496,8 @@ public class TopazClient
         string? continuationToken = null,
         CancellationToken cancellationToken = default)
     {
+        await EnsureInitializedAsync();
+        
         if (subscriptionId == Guid.Empty)
             throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
 

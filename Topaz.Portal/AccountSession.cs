@@ -2,13 +2,15 @@ using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 namespace Topaz.Portal;
 
-public sealed class AccountSession(ProtectedSessionStorage sessionStorage, TopazClient client)
+internal sealed class AccountSession(ProtectedSessionStorage sessionStorage, AuthenticationClient client)
 {
     private const string SelectedAccountKey = "topaz.selected-account";
     private const string UsernameKey = "topaz.username";
+    private const string TokenKey = "topaz.token";
 
     public string? SelectedAccount { get; private set; }
     private string? Username { get; set; }
+    public string? Token { get; private set; }
 
     public async Task LoadAsync()
     {
@@ -17,6 +19,9 @@ public sealed class AccountSession(ProtectedSessionStorage sessionStorage, Topaz
 
         var user = await sessionStorage.GetAsync<string>(UsernameKey);
         Username = user.Success ? user.Value : null;
+        
+        var token = await sessionStorage.GetAsync<string>(TokenKey);
+        Token = token.Success ? token.Value : null;
     }
     
     public async Task<(bool Ok, string? ErrorMessage)> SignInWithErrorAsync(string username, string password)
@@ -30,9 +35,11 @@ public sealed class AccountSession(ProtectedSessionStorage sessionStorage, Topaz
 
         SelectedAccount = username.Trim();
         Username = username.Trim();
+        Token = token.AccessToken;  // Set in-memory property
 
         await sessionStorage.SetAsync(SelectedAccountKey, SelectedAccount);
         await sessionStorage.SetAsync(UsernameKey, Username);
+        await sessionStorage.SetAsync(TokenKey, token.AccessToken);
 
         return (true, null);
     }
@@ -41,8 +48,10 @@ public sealed class AccountSession(ProtectedSessionStorage sessionStorage, Topaz
     {
         SelectedAccount = null;
         Username = null;
+        Token = null;
 
         await sessionStorage.DeleteAsync(SelectedAccountKey);
         await sessionStorage.DeleteAsync(UsernameKey);
+        await sessionStorage.DeleteAsync(TokenKey);
     }
 }

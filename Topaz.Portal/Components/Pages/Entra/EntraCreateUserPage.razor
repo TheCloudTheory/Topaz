@@ -1,0 +1,159 @@
+@* Topaz.Portal/Components/Pages/Entra/EntraCreateUserPage.razor *@
+@page "/entra/users/create"
+@inject TopazClient TopazClient
+@inject NavigationManager Nav
+
+<EntraTenantShell>
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex align-items-start justify-content-between mb-3">
+                <h3 class="card-title mb-0">Create new user</h3>
+
+                <button class="btn btn-sm btn-outline-secondary"
+                        @onclick="Cancel"
+                        disabled="@_creatingBusy">
+                    Cancel
+                </button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <div class="alert alert-danger" role="alert">
+                    @_error
+                </div>
+            }
+
+            <div class="mb-3">
+                <label class="form-label">Display name <span class="text-danger">*</span></label>
+                <input class="form-control"
+                       @bind="_displayName"
+                       placeholder="e.g. John Doe"
+                       disabled="@_creatingBusy" />
+                <div class="form-text">The name to display in the address book for the user.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">User principal name <span class="text-danger">*</span></label>
+                <input class="form-control"
+                       @bind="_userPrincipalName"
+                       placeholder="e.g. john.doe@contoso.com"
+                       disabled="@_creatingBusy" />
+                <div class="form-text">The user principal name (UPN) of the user.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Mail</label>
+                <input class="form-control"
+                       @bind="_mail"
+                       placeholder="e.g. john.doe@contoso.com"
+                       disabled="@_creatingBusy" />
+                <div class="form-text">The SMTP address for the user (optional).</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Password <span class="text-danger">*</span></label>
+                <input type="password"
+                       class="form-control"
+                       @bind="_password"
+                       placeholder="Enter password"
+                       disabled="@_creatingBusy" />
+                <div class="form-text">The password for the user.</div>
+            </div>
+
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="accountEnabled"
+                           @bind="_accountEnabled"
+                           disabled="@_creatingBusy" />
+                    <label class="form-check-label" for="accountEnabled">
+                        Account enabled
+                    </label>
+                </div>
+                <div class="form-text">Whether the account is enabled.</div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button class="btn btn-success"
+                        @onclick="CreateUserAsync"
+                        disabled="@_creatingBusy">
+                    @if (_creatingBusy)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    }
+                    Create
+                </button>
+
+                <button class="btn btn-outline-secondary"
+                        @onclick="Cancel"
+                        disabled="@_creatingBusy">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</EntraTenantShell>
+
+@code
+{
+    private bool _creatingBusy;
+    private string? _error;
+
+    private string _displayName = "";
+    private string _userPrincipalName = "";
+    private string _mail = "";
+    private string _password = "";
+    private bool _accountEnabled = true;
+
+    private void Cancel()
+    {
+        Nav.NavigateTo("/entra/users");
+    }
+
+    private async Task CreateUserAsync()
+    {
+        _error = null;
+
+        // Validation
+        if (string.IsNullOrWhiteSpace(_displayName))
+        {
+            _error = "Please enter a display name.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_userPrincipalName))
+        {
+            _error = "Please enter a user principal name.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_password))
+        {
+            _error = "Please enter a password.";
+            return;
+        }
+
+        _creatingBusy = true;
+        try
+        {
+            await TopazClient.CreateUser(
+                displayName: _displayName,
+                userPrincipalName: _userPrincipalName,
+                mail: string.IsNullOrWhiteSpace(_mail) ? null : _mail,
+                password: _password,
+                accountEnabled: _accountEnabled);
+
+            // Navigate back to users list on success
+            Nav.NavigateTo("/entra/users");
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to create user: {ex.Message}";
+        }
+        finally
+        {
+            _creatingBusy = false;
+        }
+    }
+}

@@ -1,7 +1,6 @@
-@using Topaz.Portal
 @inject AccountSession AccountSession
 
-@if (_loaded is false)
+@if (!_loaded)
 {
     <div class="p-4">Loading…</div>
 }

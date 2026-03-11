@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Topaz.Portal;
 using Topaz.Portal.Components;
@@ -44,9 +45,10 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<TopazClient>();
-builder.Services.AddScoped<ProtectedSessionStorage>();
 builder.Services.AddScoped<AccountSession>();
+builder.Services.AddScoped<TopazClient>();
+builder.Services.AddSingleton<AuthenticationClient>();
+builder.Services.AddScoped<ProtectedSessionStorage>();
 
 var app = builder.Build();
 
