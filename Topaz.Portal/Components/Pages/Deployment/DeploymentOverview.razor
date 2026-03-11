@@ -1,0 +1,203 @@
+@page "/deployments/{SubscriptionId:guid}/{ResourceGroupName}/{DeploymentName}"
+@using System.Net
+@using System.Text.Json
+@using Azure.ResourceManager
+@using Azure.ResourceManager.Resources
+@using Azure.Core
+@inject TopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/subscriptions">Subscriptions</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/subscriptions/{SubscriptionId:D}")">@SubscriptionName</BreadcrumbItem>
+    <BreadcrumbItem Href="/resource-groups">Resource Groups</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/resource-groups/{SubscriptionId:D}/{EncodedResourceGroupName}")">@DecodedResourceGroupName</BreadcrumbItem>
+    <BreadcrumbItem Href="/resource-manager">Deployments</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">@DecodedDeploymentName</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedDeploymentName</h1>
+
+<div class="row g-3">
+    <div class="col-12">
+        @if (_loading)
+        {
+            <p>Loading deployment details…</p>
+        }
+        else if (_error is not null)
+        {
+            <div class="alert alert-danger" role="alert">
+                @_error
+            </div>
+        }
+        else if (_deployment is null)
+        {
+            <p class="mb-0">Deployment not found.</p>
+        }
+        else
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Metadata</h5>
+
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3">Name</dt>
+                        <dd class="col-sm-9">@(_deployment.Data.Name ?? "-")</dd>
+
+                        <dt class="col-sm-3">Provisioning State</dt>
+                        <dd class="col-sm-9">
+                            <code>@(_deployment.Data.Properties.ProvisioningState.HasValue ? _deployment.Data.Properties.ProvisioningState.Value.ToString() : "-")</code>
+                        </dd>
+
+                        <dt class="col-sm-3">Mode</dt>
+                        <dd class="col-sm-9">
+                            <code>@(_deployment.Data.Properties.Mode.HasValue ? _deployment.Data.Properties.Mode.Value.ToString() : "-")</code>
+                        </dd>
+
+                        <dt class="col-sm-3">Timestamp</dt>
+                        <dd class="col-sm-9">@(_deployment.Data.Properties.Timestamp?.ToString("u") ?? "-")</dd>
+
+                        @if (!string.IsNullOrWhiteSpace(_deployment.Data.Properties.CorrelationId))
+                        {
+                            <dt class="col-sm-3">Correlation ID</dt>
+                            <dd class="col-sm-9"><small class="font-monospace">@_deployment.Data.Properties.CorrelationId</small></dd>
+                        }
+
+                        @if (_deployment.Data.Properties.Duration.HasValue)
+                        {
+                            <dt class="col-sm-3">Duration</dt>
+                            <dd class="col-sm-9">@_deployment.Data.Properties.Duration.Value.TotalSeconds.ToString("F2") seconds</dd>
+                        }
+
+                        <dt class="col-sm-3">Location</dt>
+                        <dd class="col-sm-9"><code>@(_deployment.Data.Location ?? "-")</code></dd>
+
+                        <dt class="col-sm-3">Resource ID</dt>
+                        <dd class="col-sm-9"><small class="text-muted">@(_deployment.Id.ToString() ?? "-")</small></dd>
+                    </dl>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_deployment.Data.Properties.TemplateHash))
+            {
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Template</h5>
+                        <pre class="bg-light p-3 rounded" style="max-height: 500px; overflow: auto;"><code>@GetFormattedTemplate()</code></pre>
+                    </div>
+                </div>
+            }
+
+            @if (_deployment.Data.Properties.Parameters is not null)
+            {
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Parameters</h5>
+                        <pre class="bg-light p-3 rounded" style="max-height: 300px; overflow: auto;"><code>@JsonSerializer.Serialize(_deployment.Data.Properties.Parameters.ToObjectFromJson<object>(), new JsonSerializerOptions { WriteIndented = true })</code></pre>
+                    </div>
+                </div>
+            }
+
+            @if (_deployment.Data.Properties.Outputs is not null)
+            {
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Outputs</h5>
+                        <pre class="bg-light p-3 rounded" style="max-height: 300px; overflow: auto;"><code>@JsonSerializer.Serialize(_deployment.Data.Properties.Outputs.ToObjectFromJson<object>(), new JsonSerializerOptions { WriteIndented = true })</code></pre>
+                    </div>
+                </div>
+            }
+
+            @if (_deployment.Data.Properties.OutputResources is not null && _deployment.Data.Properties.OutputResources.Count > 0)
+            {
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Output Resources</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                <tr>
+                                    <th>Resource ID</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var resource in _deployment.Data.Properties.OutputResources)
+                                {
+                                    <tr>
+                                        <td><small class="text-muted">@resource.Id</small></td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (_deployment.Data.Properties.Error is not null)
+            {
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Error</h5>
+                        <div class="alert alert-danger mb-0">
+                            <pre class="mb-0"><code>@JsonSerializer.Serialize(_deployment.Data.Properties.Error, new JsonSerializerOptions { WriteIndented = true })</code></pre>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public Guid SubscriptionName { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string DeploymentName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _error;
+    private ArmDeploymentResource? _deployment;
+
+    private string DecodedResourceGroupName => WebUtility.UrlDecode(ResourceGroupName) ?? ResourceGroupName;
+    private string DecodedDeploymentName => WebUtility.UrlDecode(DeploymentName) ?? DeploymentName;
+    private string EncodedResourceGroupName => WebUtility.UrlEncode(ResourceGroupName);
+
+    private string GetFormattedTemplate()
+    {
+        if (_deployment?.Data.Properties.TemplateHash is null)
+            return string.Empty;
+
+        try
+        {
+            var templateBytes = Convert.FromBase64String(_deployment.Data.Properties.TemplateHash);
+            var templateJson = System.Text.Encoding.UTF8.GetString(templateBytes);
+            var template = JsonSerializer.Deserialize<object>(templateJson);
+            return JsonSerializer.Serialize(template, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch
+        {
+            return "Unable to decode template";
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+        _deployment = null;
+
+        try
+        {
+            _deployment = await TopazClient.GetDeployment(SubscriptionId, DecodedResourceGroupName, DecodedDeploymentName);
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load deployment: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

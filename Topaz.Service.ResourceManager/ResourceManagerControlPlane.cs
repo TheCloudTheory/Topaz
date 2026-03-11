@@ -1,8 +1,5 @@
-using Azure.Deployments.Core.Definitions.Schema;
 using Azure.Deployments.Core.Entities;
-using Azure.Deployments.Templates.Extensions;
 using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Topaz.Service.ResourceGroup.Models;
 using Topaz.Service.ResourceManager.Deployment;
@@ -32,7 +29,7 @@ internal sealed class ResourceManagerControlPlane(
     {
         var template = _templateEngineFacade.Parse(content);
         var deploymentResource = new DeploymentResource(subscriptionIdentifier, resourceGroupIdentifier, deploymentName,
-            location, DeploymentResourceProperties.New(deploymentMode, template, parameters));
+            location, DeploymentResourceProperties.New(deploymentMode, content, parameters));
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, deploymentResource);
 

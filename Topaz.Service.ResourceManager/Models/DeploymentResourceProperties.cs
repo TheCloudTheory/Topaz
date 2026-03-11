@@ -34,14 +34,14 @@ public sealed class DeploymentResourceProperties
     public IReadOnlyList<DeploymentDiagnosticsDefinition>? Diagnostics { get; set; }
     public ValidationLevel? ValidationLevel { get; set; }
 
-    internal static DeploymentResourceProperties New(string deploymentMode, Template template,
+    internal static DeploymentResourceProperties New(string deploymentMode, string template,
         Dictionary<string, CreateDeploymentRequest.ParameterValue>? parameters)
     {
         return new DeploymentResourceProperties
         {
             CorrelationId = Guid.NewGuid().ToString(),
             Mode = deploymentMode,
-            TemplateHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(template))),
+            TemplateHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(template)),
             ProvisioningState = ResourcesProvisioningState.Created.ToString(),
             Parameters = parameters == null ? BinaryData.Empty : BinaryData.FromObjectAsJson(parameters, GlobalSettings.JsonOptions)
         };

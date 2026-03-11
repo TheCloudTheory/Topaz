@@ -334,6 +334,28 @@ internal sealed class TopazClient
         };
     }
 
+    public async Task<ArmDeploymentResource> GetDeployment(Guid subscriptionId, string resourceGroupName,
+        string deploymentName, CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync();
+        
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        if (string.IsNullOrWhiteSpace(resourceGroupName))
+            throw new ArgumentException("Resource group name is required.", nameof(resourceGroupName));
+
+        if (string.IsNullOrWhiteSpace(deploymentName))
+            throw new ArgumentException("Deployment name is required.", nameof(deploymentName));
+
+        var rg = await _armClient!.GetSubscriptionResource(
+                new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
+            .GetResourceGroupAsync(resourceGroupName, cancellationToken);
+
+        var deployment = await rg.Value.GetArmDeploymentAsync(deploymentName, cancellationToken);
+        return deployment.Value;
+    }
+
     public async Task CreateResourceGroup(Guid subscriptionId, string resourceGroupName, string location,
         CancellationToken cancellationToken = default)
     {
