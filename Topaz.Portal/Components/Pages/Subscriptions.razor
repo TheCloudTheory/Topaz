@@ -13,7 +13,7 @@
 </div>
 
 <div class="row g-3">
-    <div class="@(_showCreate ? "col-12 col-lg-8" : "col-12")">
+    <div class="@(_showCreate || _editingSubscription is not null ? "col-12 col-lg-8" : "col-12")">
         <div class="card h-100">
             <div class="card-body">
                 @if (_loading)
@@ -39,6 +39,7 @@
                                 <th>Display name</th>
                                 <th>Subscription ID</th>
                                 <th class="text-muted">Resource ID</th>
+                                <th></th>
                             </tr>
                             </thead>
                             <tbody>
@@ -59,6 +60,13 @@
                                     </td>
                                     <td><code>@(s.SubscriptionId ?? "(unknown)")</code></td>
                                     <td class="text-muted"><small>@(s.Id ?? "")</small></td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-primary"
+                                                @onclick="() => BeginEdit(s)"
+                                                disabled="@(_loading || _creatingBusy || _editingBusy)">
+                                            Edit
+                                        </button>
+                                    </td>
                                 </tr>
                             }
                             </tbody>
@@ -125,6 +133,62 @@
             </div>
         </div>
     }
+
+    @if (_editingSubscription is not null)
+    {
+        <div class="col-12 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <h5 class="card-title mb-0">Edit subscription</h5>
+
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="CloseEdit"
+                                disabled="@_editingBusy">
+                            Close
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(_editError))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @_editError
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label">Subscription ID</label>
+                        <input class="form-control"
+                               value="@_editingSubscription.SubscriptionId"
+                               disabled="true"
+                               readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Display name</label>
+                        <input class="form-control"
+                               @bind="_editDisplayName"
+                               placeholder="Enter display name"
+                               disabled="@_editingBusy" />
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success"
+                                @onclick="SaveSubscriptionAsync"
+                                disabled="@_editingBusy">
+                            Save
+                        </button>
+
+                        <button class="btn btn-outline-secondary"
+                                @onclick="CloseEdit"
+                                disabled="@_editingBusy">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code
@@ -138,6 +202,11 @@
     private string? _createError;
     private string _newSubscriptionName = "";
     private string _newSubscriptionIdText = "";
+
+    private SubscriptionDto? _editingSubscription;
+    private bool _editingBusy;
+    private string? _editError;
+    private string _editDisplayName = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -177,6 +246,60 @@
     {
         _showCreate = false;
         _createError = null;
+    }
+
+    private void BeginEdit(SubscriptionDto subscription)
+    {
+        _editingSubscription = subscription;
+        _editDisplayName = subscription.DisplayName ?? "";
+        _editError = null;
+        _showCreate = false;
+    }
+
+    private void CloseEdit()
+    {
+        _editingSubscription = null;
+        _editDisplayName = "";
+        _editError = null;
+    }
+
+    private async Task SaveSubscriptionAsync()
+    {
+        if (_editingSubscription is null)
+            return;
+
+        _editError = null;
+
+        if (string.IsNullOrWhiteSpace(_editDisplayName))
+        {
+            _editError = "Please enter a display name.";
+            return;
+        }
+
+        if (!Guid.TryParse(_editingSubscription.SubscriptionId, out var subscriptionId))
+        {
+            _editError = "Invalid subscription ID.";
+            return;
+        }
+
+        _editingBusy = true;
+        try
+        {
+            await TopazClient.UpdateSubscriptionDisplayName(subscriptionId, _editDisplayName);
+
+            _editingSubscription = null;
+            _editDisplayName = "";
+
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _editError = ex.Message;
+        }
+        finally
+        {
+            _editingBusy = false;
+        }
     }
 
     private async Task CreateSubscriptionAsync()

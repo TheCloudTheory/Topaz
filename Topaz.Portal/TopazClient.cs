@@ -126,6 +126,42 @@ internal sealed class TopazClient
         };
     }
     
+    public async Task UpdateSubscriptionDisplayName(
+        Guid subscriptionId,
+        string displayName,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync();
+        
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        if (string.IsNullOrWhiteSpace(displayName))
+            throw new ArgumentException("Display name is required.", nameof(displayName));
+        
+        var subscription = await _armClient!
+            .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId:D}"))
+            .GetAsync(cancellationToken);
+        
+        var payload = new
+        {
+            SubscriptionName = displayName,
+            Tags = subscription.Value.Data.Tags is null
+                ? new Dictionary<string, string>()
+                : new Dictionary<string, string>(subscription.Value.Data.Tags, StringComparer.OrdinalIgnoreCase)
+        };
+
+        using var resp =
+            await _httpClient.PatchAsJsonAsync($"/subscriptions/{subscriptionId}", payload, cancellationToken);
+        
+        if (!resp.IsSuccessStatusCode)
+        {
+            var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException(
+                $"Updating subscription display name failed: {(int)resp.StatusCode} {resp.ReasonPhrase}. {body}");
+        }
+    }
+
     public async Task CreateOrUpdateSubscriptionTag(
         Guid subscriptionId,
         string tagName,
