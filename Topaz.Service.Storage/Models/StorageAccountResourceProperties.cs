@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 namespace Topaz.Service.Storage.Models;
 
 [UsedImplicitly]
-internal record StorageAccountProperties
+internal record StorageAccountResourceProperties
 {
     public AllowedCopyScope? AllowedCopyScope { get; set; }
     public StoragePublicNetworkAccess? PublicNetworkAccess { get; set; }

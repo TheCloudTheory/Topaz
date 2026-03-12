@@ -1,0 +1,32 @@
+using Microsoft.AspNetCore.Http;
+using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Service.Storage.Models.Responses.StorageAccount;
+using Topaz.Shared;
+using Topaz.Shared.Extensions;
+
+namespace Topaz.Service.Storage.Endpoints.StorageAccount;
+
+internal sealed class ListStorageAccountsEndpoint(ITopazLogger logger) : IEndpointDefinition
+{
+    private readonly AzureStorageControlPlane _controlPlane = new(new ResourceProvider(logger), logger);
+
+    public string[] Endpoints =>
+    [
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts"
+    ];
+
+    public string[] Permissions => ["*"];
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
+
+    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    {
+        var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
+        
+        var operation = _controlPlane.List(subscriptionIdentifier, resourceGroupIdentifier);
+        response.CreateJsonContentResponse(ListStorageAccountsResponse.From(operation.Resource));
+    }
+}

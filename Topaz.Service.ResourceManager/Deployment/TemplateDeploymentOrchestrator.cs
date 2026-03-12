@@ -11,6 +11,7 @@ using Topaz.Service.ResourceManager.Models;
 using Topaz.Service.ServiceBus;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Storage;
 using Topaz.Service.VirtualNetwork;
 using Topaz.Shared;
 
@@ -91,6 +92,9 @@ public sealed class TemplateDeploymentOrchestrator(Pipeline eventPipeline, Resou
                     break;
                 case "Microsoft.ServiceBus/namespaces":
                     controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
+                    break;
+                case "Microsoft.Storage/storageAccounts":
+                    controlPlane = AzureStorageControlPlane.New(logger);
                     break;
                 default:
                     logger.LogWarning($"Deployment of {resource.Type} is not yet supported.");

@@ -173,7 +173,11 @@
             var templateBytes = Convert.FromBase64String(_deployment.Data.Properties.TemplateHash);
             var templateJson = System.Text.Encoding.UTF8.GetString(templateBytes);
             var template = JsonSerializer.Deserialize<object>(templateJson);
-            return JsonSerializer.Serialize(template, new JsonSerializerOptions { WriteIndented = true });
+            return JsonSerializer.Serialize(template, new JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
         }
         catch
         {

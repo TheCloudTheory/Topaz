@@ -256,7 +256,7 @@ internal sealed class KeyVaultControlPlane(
             return (OperationResult.NotFound, null);
         }
 
-        var resources = provider.ListAs<KeyVaultResource>(subscriptionIdentifier, null, null, 8);
+        var resources = provider.ListAs<KeyVaultResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8);
         var filteredResources = resources.Where(resource =>
             resource.IsInSubscription(subscriptionIdentifier) && resource.IsInResourceGroup(resourceGroupIdentifier));
         

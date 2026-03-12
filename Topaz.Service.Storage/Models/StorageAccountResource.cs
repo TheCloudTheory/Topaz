@@ -7,7 +7,7 @@ using Topaz.Service.Shared.Domain;
 namespace Topaz.Service.Storage.Models;
 
 internal sealed class StorageAccountResource
-    : ArmResource<StorageAccountProperties>
+    : ArmResource<StorageAccountResourceProperties>
 {
     [JsonConstructor]
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
@@ -22,14 +22,14 @@ internal sealed class StorageAccountResource
         AzureLocation location,
         ResourceSku sku,
         string kind,
-        StorageAccountProperties properties)
+        StorageAccountResourceProperties resourceProperties)
     {
         Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{name}";
         Name = name;
         Location = location;
         Sku = sku;
         Kind = kind;
-        Properties = properties;
+        Properties = resourceProperties;
         Keys =
         [
             new TopazStorageAccountKey("key1", Guid.NewGuid().ToString(), nameof(StorageAccountKeyPermission.Full), DateTimeOffset.Now),
@@ -44,6 +44,6 @@ internal sealed class StorageAccountResource
     public override IDictionary<string, string>? Tags { get; set; } = new Dictionary<string, string>();
     public override ResourceSku? Sku { get; init; }
     public override string? Kind { get; init; }
-    public override StorageAccountProperties Properties { get; init; }
+    public override StorageAccountResourceProperties Properties { get; init; }
     public TopazStorageAccountKey[] Keys { get; init; }
 }

@@ -4,7 +4,6 @@ using Azure.Core;
 using Azure.Data.Tables.Models;
 using Azure.ResourceManager.Storage.Models;
 using Topaz.ResourceManager;
-using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
@@ -16,16 +15,22 @@ using TableServiceProperties = Topaz.Service.Storage.Models.TableServiceProperti
 
 namespace Topaz.Service.Storage;
 
-internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopazLogger logger)
+internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopazLogger logger) : IControlPlane
 {
-    public (OperationResult result, StorageAccountResource? resource) Get(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
+    public static AzureStorageControlPlane New(ITopazLogger logger)
+    {
+        return new AzureStorageControlPlane(new ResourceProvider(logger), logger);
+    }
+    
+    public (OperationResult result, StorageAccountResource? resource) Get(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
     {
         var storageAccount = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         if (string.IsNullOrEmpty(storageAccount))
         {
             return (OperationResult.NotFound, null);
         }
-        
+
         var resource = JsonSerializer.Deserialize<StorageAccountResource>(storageAccount, GlobalSettings.JsonOptions);
 
         return resource == null ? (OperationResult.Failed, null) : (OperationResult.Success, resource);
@@ -46,7 +51,7 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         {
             Name = StorageSkuName.StandardLrs.ToString()
         };
-        var properties = new StorageAccountProperties();
+        var properties = new StorageAccountResourceProperties();
         var resource = new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
             location, sku, StorageKind.StorageV2.ToString(), properties);
 
@@ -57,13 +62,18 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         return (OperationResult.Created, resource);
     }
 
-    private void InitializeServicePropertiesFiles(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
+    private void InitializeServicePropertiesFiles(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
     {
         const string propertiesFile = $"properties.xml";
-        var propertiesFilePath = Path.Combine(provider.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName), propertiesFile);
+        var propertiesFilePath =
+            Path.Combine(
+                provider.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName),
+                propertiesFile);
 
-        logger.LogDebug(nameof(AzureStorageControlPlane), nameof(InitializeServicePropertiesFiles), "Attempting to create {0} file.", propertiesFilePath);
-        
+        logger.LogDebug(nameof(AzureStorageControlPlane), nameof(InitializeServicePropertiesFiles),
+            "Attempting to create {0} file.", propertiesFilePath);
+
         if (!File.Exists(propertiesFilePath))
         {
             var logging = new TableAnalyticsLoggingSettings("1.0", true, true, true, new TableRetentionPolicy(true)
@@ -75,40 +85,78 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
             {
                 new("http://localhost", "*", "*", "*", 500)
             });
-            
+
             using var sw = new StreamWriter(propertiesFilePath);
             var serializer = new XmlSerializer(typeof(TableServiceProperties));
             serializer.Serialize(sw, properties);
         }
         else
         {
-            logger.LogDebug(nameof(AzureStorageControlPlane), nameof(InitializeServicePropertiesFiles), "Attempting to create {0} file - skipped.", propertiesFilePath);
+            logger.LogDebug(nameof(AzureStorageControlPlane), nameof(InitializeServicePropertiesFiles),
+                "Attempting to create {0} file - skipped.", propertiesFilePath);
         }
     }
 
-    internal void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
+    internal void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName)
     {
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
     }
 
-    public string GetServiceInstancePath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
+    public string GetServiceInstancePath(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
     {
         return provider.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
     }
 
     public (OperationResult result, StorageAccountResource resource) CreateOrUpdate(
-        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName,
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
         CreateOrUpdateStorageAccountRequest request)
     {
         var existingAccount = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
-        var resource = new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, request.Location!,
+        var resource = new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
+            request.Location!,
             request.Sku!, request.Kind!, request.Properties!);
 
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, resource, existingAccount == null);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, resource,
+            existingAccount == null);
 
         InitializeServicePropertiesFiles(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
         return (string.IsNullOrWhiteSpace(existingAccount) ? OperationResult.Created : OperationResult.Updated,
             resource);
+    }
+
+    public ControlPlaneOperationResult<StorageAccountResource[]> List(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier)
+    {
+        var resources =
+            provider.ListAs<StorageAccountResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8);
+        var filteredResources = resources.Where(resource =>
+            resource.IsInSubscription(subscriptionIdentifier) && resource.IsInResourceGroup(resourceGroupIdentifier));
+
+        return new ControlPlaneOperationResult<StorageAccountResource[]>(OperationResult.Success,
+            filteredResources.ToArray(), null, null);
+    }
+
+    public OperationResult Deploy(GenericResource resource)
+    {
+        var storageAccount = resource.As<StorageAccountResource, StorageAccountResourceProperties>();
+        if (storageAccount == null)
+        {
+            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Managed Identity instance.");
+            return OperationResult.Failed;
+        }
+
+        var result = CreateOrUpdate(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), storageAccount.Name,
+            new CreateOrUpdateStorageAccountRequest
+            {
+                Location = storageAccount.Location,
+                Tags = storageAccount.Tags,
+                Properties = storageAccount.Properties
+            });
+
+        return result.result;
     }
 }

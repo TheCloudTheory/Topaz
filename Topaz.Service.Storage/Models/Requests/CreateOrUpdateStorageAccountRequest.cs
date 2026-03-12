@@ -11,5 +11,5 @@ internal record CreateOrUpdateStorageAccountRequest
     public string? Location { get; set; }
     public IDictionary<string, string>? Tags { get; init; }
     public ManagedServiceIdentity? Identity { get; init; }
-    public StorageAccountProperties? Properties { get; init; }
+    public StorageAccountResourceProperties? Properties { get; init; }
 }

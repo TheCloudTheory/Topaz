@@ -43,7 +43,8 @@ public sealed class DeploymentResourceProperties
             Mode = deploymentMode,
             TemplateHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(template)),
             ProvisioningState = ResourcesProvisioningState.Created.ToString(),
-            Parameters = parameters == null ? BinaryData.Empty : BinaryData.FromObjectAsJson(parameters, GlobalSettings.JsonOptions)
+            Parameters = parameters == null ? BinaryData.Empty : BinaryData.FromObjectAsJson(parameters, GlobalSettings.JsonOptions),
+            Timestamp = DateTimeOffset.UtcNow,
         };
     }
 }
