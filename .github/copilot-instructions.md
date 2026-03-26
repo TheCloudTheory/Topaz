@@ -16,9 +16,9 @@ Big picture (high level)
 - Resource models implement `ArmResource<T>` and concrete `*ResourceProperties` types.
 
 Important conventions & patterns
-- Resource model base: see [Topaz.ResourceManager/ArmResource.cs](Topaz.ResourceManager/ArmResource.cs#L1-L120). Resource IDs follow ARM-like segments; code often parses segments by index (GetSubscription/GetResourceGroup). Do not change the ID format without adjusting these utilities.
-- JSON: use project-wide serializer options from [Topaz.Shared/GlobalSettings.cs](Topaz.Shared/GlobalSettings.cs#L1-L80). Use `GlobalSettings.JsonOptions` for endpoint serialization and `JsonOptionsCli` for CLI output.
-- Naming: resource model classes end with `Resource` / `ResourceProperties` (e.g., [Topaz.Service.KeyVault/Models/KeyVaultResourceProperties.cs](Topaz.Service.KeyVault/Models/KeyVaultResourceProperties.cs#L1-L120)). Use `FromRequest(...)` or `UpdateFromRequest(...)` patterns when converting API requests to internal models.
+- Resource model base: see [Topaz.ResourceManager/ArmResource.cs](Topaz.ResourceManager/ArmResource.cs#L1-L43). Resource IDs follow ARM-like segments; code often parses segments by index (GetSubscription/GetResourceGroup). Do not change the ID format without adjusting these utilities.
+- JSON: use project-wide serializer options from [Topaz.Shared/GlobalSettings.cs](Topaz.Shared/GlobalSettings.cs#L1-L44). Use `GlobalSettings.JsonOptions` for endpoint serialization and `JsonOptionsCli` for CLI output.
+- Naming: resource model classes end with `Resource` / `ResourceProperties` (e.g., [Services/Topaz.Service.KeyVault/Models/KeyVaultResourceProperties.cs](Services/Topaz.Service.KeyVault/Models/KeyVaultResourceProperties.cs#L1-L84)). Use `FromRequest(...)` or `UpdateFromRequest(...)` patterns when converting API requests to internal models.
 - Control vs Data plane: control-plane classes expose CRUD operations and resource listing (`*ServiceControlPlane`). Data-plane classes provide runtime behaviour (e.g., `BlobServiceDataPlane`). Look at `Topaz.Service.Storage` for concrete examples.
 - Endpoints & routing: `Topaz.Host` builds a router that matches incoming requests to `IEndpointDefinition` implementations defined by services; services register endpoints via `IServiceDefinition.Endpoints`.
 - Logging & IDs: logger is injected across services; correlation IDs are generated per request in the host (`CorrelationIdFactory`).
@@ -37,10 +37,10 @@ Code generation & edits: practical guidelines
 
 Where to look first (recommended reading order)
 - [Topaz.Host/Host.cs](Topaz.Host/Host.cs#L1-L260) — host composition, service list, endpoint wiring.
-- [Topaz.CLI/Program.cs](Topaz.CLI/Program.cs#L1-L160) and [Topaz.CLI/Commands/StartCommand.cs](Topaz.CLI/Commands/StartCommand.cs#L1-L160) — how commands bootstrap the host.
-- [Topaz.ResourceManager/ArmResource.cs](Topaz.ResourceManager/ArmResource.cs#L1-L120) — resource model base and ID parsing.
-- [Topaz.Shared/GlobalSettings.cs](Topaz.Shared/GlobalSettings.cs#L1-L80) — JSON and default ports.
-- Example service: [Topaz.Service.KeyVault](Topaz.Service.KeyVault/Models/KeyVaultResourceProperties.cs#L1-L120) and its endpoints/control plane.
+- [Topaz.CLI/Program.cs](Topaz.CLI/Program.cs#L1-L133) and [Topaz.CLI/Commands/StartCommand.cs](Topaz.CLI/Commands/StartCommand.cs#L1-L83) — how commands bootstrap the host.
+- [Topaz.ResourceManager/ArmResource.cs](Topaz.ResourceManager/ArmResource.cs#L1-L43) — resource model base and ID parsing.
+- [Topaz.Shared/GlobalSettings.cs](Topaz.Shared/GlobalSettings.cs#L1-L44) — JSON and default ports.
+- Example service: [Services/Topaz.Service.KeyVault](Services/Topaz.Service.KeyVault/Models/KeyVaultResourceProperties.cs#L1-L84) and its endpoints/control plane.
 
 Tests & CI
 - Unit and integration tests live under `Topaz.Tests`. CI workflows run build and test; the repo uses `Nerdbank.GitVersioning` (see `Directory.Build.props`).
