@@ -48,4 +48,8 @@ Tests & CI
 When to ask the user
 - If a change touches networking ports, resource ID formats, or global serializer options, confirm desired behaviour before applying broad changes.
 
+Mandatory steps
+- Always present a summary of changes before applying them, especially for public API changes or anything affecting resource IDs or serialization.
+- If you add new services or endpoints, ensure they are registered in the host and have corresponding tests.
+
 If anything is missing or unclear, tell me what area you'd like expanded (build, adding services, routing, testing, or an example change), and I'll iterate.

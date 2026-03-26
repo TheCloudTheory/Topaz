@@ -10,13 +10,13 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\Topaz.CLI\Topaz.CLI.csproj" />
-      <ProjectReference Include="..\..\Topaz.Service.EventHub\Topaz.Service.EventHub.csproj" />
-      <ProjectReference Include="..\..\Topaz.Service.KeyVault\Topaz.Service.KeyVault.csproj" />
-      <ProjectReference Include="..\..\Topaz.Service.ResourceGroup\Topaz.Service.ResourceGroup.csproj" />
-      <ProjectReference Include="..\..\Topaz.Service.ResourceManager\Topaz.Service.ResourceManager.csproj" />
-      <ProjectReference Include="..\..\Topaz.Service.ServiceBus\Topaz.Service.ServiceBus.csproj" />
-      <ProjectReference Include="..\..\Topaz.Service.Storage\Topaz.Service.Storage.csproj" />
-      <ProjectReference Include="..\..\Topaz.Service.Subscription\Topaz.Service.Subscription.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.EventHub\Topaz.Service.EventHub.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.KeyVault\Topaz.Service.KeyVault.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.ResourceGroup\Topaz.Service.ResourceGroup.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.ResourceManager\Topaz.Service.ResourceManager.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.ServiceBus\Topaz.Service.ServiceBus.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.Storage\Topaz.Service.Storage.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.Subscription\Topaz.Service.Subscription.csproj" />
     </ItemGroup>
 
     <ItemGroup>

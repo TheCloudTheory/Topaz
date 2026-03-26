@@ -13,12 +13,12 @@
 
   <ItemGroup>
     <ProjectReference Include="../Topaz.Host/Topaz.Host.csproj" />
-    <ProjectReference Include="../Topaz.Service.KeyVault/Topaz.Service.KeyVault.csproj" />
-    <ProjectReference Include="../Topaz.Service.ResourceGroup/Topaz.Service.ResourceGroup.csproj" />
-    <ProjectReference Include="../Topaz.Service.Storage/Topaz.Service.Storage.csproj" />
-    <ProjectReference Include="../Topaz.Service.Subscription/Topaz.Service.Subscription.csproj" />
+    <ProjectReference Include="../Services/Topaz.Service.KeyVault/Topaz.Service.KeyVault.csproj" />
+    <ProjectReference Include="../Services/Topaz.Service.ResourceGroup/Topaz.Service.ResourceGroup.csproj" />
+    <ProjectReference Include="../Services/Topaz.Service.Storage/Topaz.Service.Storage.csproj" />
+    <ProjectReference Include="../Services/Topaz.Service.Subscription/Topaz.Service.Subscription.csproj" />
     <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
-    <ProjectReference Include="../Topaz.Service.EventHub/Topaz.Service.EventHub.csproj" />
+    <ProjectReference Include="../Services/Topaz.Service.EventHub/Topaz.Service.EventHub.csproj" />
     <ProjectReference Include="..\Documentation\Topaz.Documentation\Topaz.Documentation.csproj" />
   </ItemGroup>
 

@@ -7,23 +7,23 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.CLI", "Topaz.CLI\Topa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Host", "Topaz.Host\Topaz.Host.csproj", "{A3BE88FD-26B9-4159-B372-A2B026C8368F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Storage", "Topaz.Service.Storage\Topaz.Service.Storage.csproj", "{510318F8-BDBF-4F90-AE5A-FB71244D45E0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Storage", "Services\Topaz.Service.Storage\Topaz.Service.Storage.csproj", "{510318F8-BDBF-4F90-AE5A-FB71244D45E0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Shared", "Topaz.Service.Shared\Topaz.Service.Shared.csproj", "{D1802524-2378-4706-950E-B9CCE5F2E06C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Shared", "Services\Topaz.Service.Shared\Topaz.Service.Shared.csproj", "{D1802524-2378-4706-950E-B9CCE5F2E06C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Shared", "Topaz.Shared\Topaz.Shared.csproj", "{9D4853A9-0F8D-46F0-A181-854F58430D1F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests", "Topaz.Tests\Topaz.Tests.csproj", "{8B8E3757-E43E-4CC9-A570-C431C45538D8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.KeyVault", "Topaz.Service.KeyVault\Topaz.Service.KeyVault.csproj", "{E28806B1-AF0D-4940-BA51-F8261493D245}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.KeyVault", "Services\Topaz.Service.KeyVault\Topaz.Service.KeyVault.csproj", "{E28806B1-AF0D-4940-BA51-F8261493D245}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ResourceGroup", "Topaz.Service.ResourceGroup\Topaz.Service.ResourceGroup.csproj", "{BD7CA072-E296-4651-979F-19C65AF21FEE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ResourceGroup", "Services\Topaz.Service.ResourceGroup\Topaz.Service.ResourceGroup.csproj", "{BD7CA072-E296-4651-979F-19C65AF21FEE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Identity", "Topaz.Identity\Topaz.Identity.csproj", "{3085E422-1986-407A-A861-C4FF9D7239F4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Subscription", "Topaz.Service.Subscription\Topaz.Service.Subscription.csproj", "{D2D85E3C-E841-411E-AA3A-C8C42A6EB4E7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Subscription", "Services\Topaz.Service.Subscription\Topaz.Service.Subscription.csproj", "{D2D85E3C-E841-411E-AA3A-C8C42A6EB4E7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.EventHub", "Topaz.Service.EventHub\Topaz.Service.EventHub.csproj", "{388A3C0C-2C83-44B1-B51B-B8EA7831C5EA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.EventHub", "Services\Topaz.Service.EventHub\Topaz.Service.EventHub.csproj", "{388A3C0C-2C83-44B1-B51B-B8EA7831C5EA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{421A7F1B-9656-4A7E-B209-B1E8811D3E28}"
 EndProject
@@ -41,11 +41,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.CloudEnvironment", "T
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.AzureCLI", "Topaz.Tests.AzureCLI\Topaz.Tests.AzureCLI.csproj", "{8F85AFEB-935A-4AED-AE10-EC4907D94941}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ServiceBus", "Topaz.Service.ServiceBus\Topaz.Service.ServiceBus.csproj", "{AAF64707-AB3D-42F1-A890-86C9082DE4F0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ServiceBus", "Services\Topaz.Service.ServiceBus\Topaz.Service.ServiceBus.csproj", "{AAF64707-AB3D-42F1-A890-86C9082DE4F0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Examples.MassTransit", "Examples\Topaz.Examples.MassTransit\Topaz.Examples.MassTransit.csproj", "{B5721FE5-FD9B-411E-9A2A-8BEEB842F37B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ResourceManager", "Topaz.Service.ResourceManager\Topaz.Service.ResourceManager.csproj", "{DA9FE2A8-0AC9-4D8E-AAAE-21542CB8F268}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ResourceManager", "Services\Topaz.Service.ResourceManager\Topaz.Service.ResourceManager.csproj", "{DA9FE2A8-0AC9-4D8E-AAAE-21542CB8F268}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Dns", "Topaz.Dns\Topaz.Dns.csproj", "{182652C5-956C-4AA2-984E-0F84E81ADF74}"
 EndProject
@@ -59,17 +59,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{F9
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{5DCFF73A-7D3A-4162-8264-447FA524DBA0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.VirtualNetwork", "Topaz.Service.VirtualNetwork\Topaz.Service.VirtualNetwork.csproj", "{32CF6C52-068C-4A56-938E-A34749F915C7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.VirtualNetwork", "Services\Topaz.Service.VirtualNetwork\Topaz.Service.VirtualNetwork.csproj", "{32CF6C52-068C-4A56-938E-A34749F915C7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.MCP", "Topaz.MCP\Topaz.MCP.csproj", "{78C01901-6F3B-4320-8479-8B090BBE1798}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ManagedIdentity", "Topaz.Service.ManagedIdentity\Topaz.Service.ManagedIdentity.csproj", "{C7123F8D-86CD-458A-BFC1-F4B5423BDF2E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ManagedIdentity", "Services\Topaz.Service.ManagedIdentity\Topaz.Service.ManagedIdentity.csproj", "{C7123F8D-86CD-458A-BFC1-F4B5423BDF2E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Authorization", "Topaz.Service.Authorization\Topaz.Service.Authorization.csproj", "{7723D695-A569-4D0D-BAEA-881B72AFAAC7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Authorization", "Services\Topaz.Service.Authorization\Topaz.Service.Authorization.csproj", "{7723D695-A569-4D0D-BAEA-881B72AFAAC7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Insights", "Topaz.Service.Insights\Topaz.Service.Insights.csproj", "{844B794C-2335-44E3-A397-2AFE73310791}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Insights", "Services\Topaz.Service.Insights\Topaz.Service.Insights.csproj", "{844B794C-2335-44E3-A397-2AFE73310791}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Entra", "Topaz.Service.Entra\Topaz.Service.Entra.csproj", "{B24193D0-443D-4D7C-B9CF-8455435D1826}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Entra", "Services\Topaz.Service.Entra\Topaz.Service.Entra.csproj", "{B24193D0-443D-4D7C-B9CF-8455435D1826}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3293FF25-E908-4D53-A344-6FE40E0CFDF1}"
 	ProjectSection(SolutionItems) = preProject

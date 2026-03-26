@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Topaz.Service.Shared/Topaz.Service.Shared.csproj" />
+    <ProjectReference Include="../../Topaz.Shared/Topaz.Shared.csproj" />
+    <ProjectReference Include="..\..\Documentation\Topaz.Documentation\Topaz.Documentation.csproj" />
+    <ProjectReference Include="..\..\Topaz.EventPipeline\Topaz.EventPipeline.csproj" />
+    <ProjectReference Include="..\..\Topaz.ResourceManager\Topaz.ResourceManager.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
+  </ItemGroup>
+
+</Project>
