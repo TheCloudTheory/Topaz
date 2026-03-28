@@ -17,7 +17,12 @@ public sealed class ContainerRegistryService(Pipeline eventPipeline, ITopazLogge
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new ContainerRegistryEndpoint(eventPipeline, logger)
+        new CreateOrUpdateContainerRegistryEndpoint(eventPipeline, logger),
+        new GetContainerRegistryEndpoint(eventPipeline, logger),
+        new ListContainerRegistriesByResourceGroupEndpoint(eventPipeline, logger),
+        new ListContainerRegistriesBySubscriptionEndpoint(eventPipeline, logger),
+        new DeleteContainerRegistryEndpoint(eventPipeline, logger),
+        new CheckContainerRegistryNameAvailabilityEndpoint(eventPipeline, logger)
     ];
 
     public void Bootstrap()
