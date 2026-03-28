@@ -1,0 +1,123 @@
+namespace Topaz.Tests.AzureCLI;
+
+public class ContainerRegistryTests : TopazFixture
+{
+    [Test]
+    public async Task ContainerRegistry_Create_Show_And_Delete()
+    {
+        const string registryName = "topazacr01";
+        const string resourceGroup = "test-acr-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+
+        // create
+        await RunAzureCliCommand($"az acr create --name {registryName} --resource-group {resourceGroup} --sku Basic --location westeurope", (resp) =>
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(resp["name"]!.GetValue<string>(), Is.EqualTo(registryName));
+                Assert.That(resp["sku"]!["name"]!.GetValue<string>(), Is.EqualTo("Basic"));
+                Assert.That(resp["properties"]!["loginServer"], Is.Not.Null);
+                Assert.That(resp["properties"]!["provisioningState"]!.GetValue<string>(), Is.EqualTo("Succeeded"));
+            });
+        });
+
+        // show
+        await RunAzureCliCommand($"az acr show --name {registryName} --resource-group {resourceGroup}", (resp) =>
+        {
+            Assert.That(resp["name"]!.GetValue<string>(), Is.EqualTo(registryName));
+        });
+
+        // delete
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task ContainerRegistry_List_ByResourceGroup()
+    {
+        const string registryName = "topazacr02";
+        const string resourceGroup = "test-acr-list-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand($"az acr create --name {registryName} --resource-group {resourceGroup} --sku Standard --location westeurope");
+
+        await RunAzureCliCommand($"az acr list --resource-group {resourceGroup}", (resp) =>
+        {
+            var arr = resp.AsArray();
+            Assert.That(arr.Any(r => r!["name"]!.GetValue<string>() == registryName), Is.True);
+        });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task ContainerRegistry_Update_AdminUser_Enabled()
+    {
+        const string registryName = "topazacr03";
+        const string resourceGroup = "test-acr-update-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand($"az acr create --name {registryName} --resource-group {resourceGroup} --sku Premium --location westeurope");
+
+        await RunAzureCliCommand($"az acr update --name {registryName} --resource-group {resourceGroup} --admin-enabled true", (resp) =>
+        {
+            Assert.That(resp["properties"]!["adminUserEnabled"]!.GetValue<bool>(), Is.True);
+        });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task ContainerRegistry_CheckName_Available()
+    {
+        await RunAzureCliCommand("az acr check-name -n uniqueacrname01", (resp) =>
+        {
+            Assert.That(resp["nameAvailable"]!.GetValue<bool>(), Is.True);
+        });
+    }
+
+    [Test]
+    public async Task ContainerRegistry_CheckName_AlreadyExists()
+    {
+        const string registryName = "topazacr04";
+        const string resourceGroup = "test-acr-check-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand($"az acr create --name {registryName} --resource-group {resourceGroup} --sku Basic --location westeurope");
+
+        await RunAzureCliCommand($"az acr check-name -n {registryName}", (resp) =>
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(resp["nameAvailable"]!.GetValue<bool>(), Is.False);
+                Assert.That(resp["reason"]!.GetValue<string>(), Is.EqualTo("AlreadyExists"));
+            });
+        });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task ContainerRegistry_CheckName_Invalid()
+    {
+        await RunAzureCliCommand("az acr check-name -n ab", (resp) =>
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(resp["nameAvailable"]!.GetValue<bool>(), Is.False);
+                Assert.That(resp["reason"]!.GetValue<string>(), Is.EqualTo("Invalid"));
+            });
+        });
+    }
+
+    [Test]
+    public async Task ContainerRegistry_Create_WithNonExistingResourceGroup_ShouldFail()
+    {
+        await RunAzureCliCommand("az acr create --name topazacr05 --resource-group non-existing-rg --sku Basic --location westeurope", null, 1);
+    }
+}

@@ -15,8 +15,7 @@
     <ProjectReference Include="..\Topaz.CloudEnvironment\Topaz.CloudEnvironment.csproj" />
     <ProjectReference Include="..\Topaz.Dns\Topaz.Dns.csproj" />
     <ProjectReference Include="..\Topaz.EventPipeline\Topaz.EventPipeline.csproj" />
-    <ProjectReference Include="..\Services\Topaz.Service.Authorization\Topaz.Service.Authorization.csproj" />
-    <ProjectReference Include="..\Services\Topaz.Service.Entra\Topaz.Service.Entra.csproj" />
+    <ProjectReference Include="..\Services\Topaz.Service.Authorization\Topaz.Service.Authorization.csproj" />    <ProjectReference Include="..\Services\Topaz.Service.ContainerRegistry\Topaz.Service.ContainerRegistry.csproj" />    <ProjectReference Include="..\Services\Topaz.Service.Entra\Topaz.Service.Entra.csproj" />
     <ProjectReference Include="..\Services\Topaz.Service.EventHub\Topaz.Service.EventHub.csproj" />
     <ProjectReference Include="..\Services\Topaz.Service.Insights\Topaz.Service.Insights.csproj" />
     <ProjectReference Include="..\Services\Topaz.Service.ManagedIdentity\Topaz.Service.ManagedIdentity.csproj" />

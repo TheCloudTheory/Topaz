@@ -1,0 +1,161 @@
+using Azure;
+using Azure.Core;
+using Azure.ResourceManager;
+using Azure.ResourceManager.ContainerRegistry;
+using Azure.ResourceManager.ContainerRegistry.Models;
+using Topaz.CLI;
+using Topaz.Identity;
+using Topaz.ResourceManager;
+
+namespace Topaz.Tests.E2E;
+
+public class ContainerRegistryTests
+{
+    private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
+    private static readonly Guid SubscriptionId = Guid.Parse("E1F2A3B4-C5D6-E7F8-A9B0-C1D2E3F4A5B6");
+
+    private const string SubscriptionName = "sub-test";
+    private const string ResourceGroupName = "test-acr";
+    private const string RegistryName = "topazacr01";
+
+    [SetUp]
+    public async Task SetUp()
+    {
+        await Program.Main(["subscription", "delete", "--id", SubscriptionId.ToString()]);
+        await Program.Main(["subscription", "create", "--id", SubscriptionId.ToString(), "--name", SubscriptionName]);
+
+        await Program.Main(["group", "delete", "--name", ResourceGroupName, "--subscription-id", SubscriptionId.ToString()]);
+        await Program.Main(["group", "create", "--name", ResourceGroupName, "--location", "westeurope", "--subscription-id", SubscriptionId.ToString()]);
+    }
+
+    [TearDown]
+    public async Task TearDown()
+    {
+        await Program.Main(["group", "delete", "--name", ResourceGroupName, "--subscription-id", SubscriptionId.ToString()]);
+    }
+
+    [Test]
+    public async Task ContainerRegistry_CreateAndGet_ShouldSucceed()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+
+        var registries = resourceGroup.Value.GetContainerRegistries();
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var registry = await registries.GetAsync(RegistryName);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(registry.Value.Data.Name, Is.EqualTo(RegistryName));
+            Assert.That(registry.Value.Data.LoginServer, Is.Not.Null.And.Not.Empty);
+            Assert.That(registry.Value.Data.Sku.Name, Is.EqualTo(ContainerRegistrySkuName.Basic));
+        });
+    }
+
+    [Test]
+    public async Task ContainerRegistry_Update_ShouldModifyAdminUserEnabled()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Standard))
+        {
+            IsAdminUserEnabled = false
+        };
+
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var created = await registries.GetAsync(RegistryName);
+        Assert.That(created.Value.Data.IsAdminUserEnabled, Is.False);
+
+        var updateData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Standard))
+        {
+            IsAdminUserEnabled = true
+        };
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, updateData);
+
+        var updated = await registries.GetAsync(RegistryName);
+        Assert.That(updated.Value.Data.IsAdminUserEnabled, Is.True);
+    }
+
+    [Test]
+    public async Task ContainerRegistry_Delete_ShouldRemoveRegistry()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var registry = await registries.GetAsync(RegistryName);
+        await registry.Value.DeleteAsync(WaitUntil.Completed);
+
+        Assert.ThrowsAsync<RequestFailedException>(async () => await registries.GetAsync(RegistryName));
+    }
+
+    [Test]
+    public async Task ContainerRegistry_ListByResourceGroup_ShouldContainCreatedRegistry()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        try
+        {
+            var found = false;
+            await foreach (var r in registries.GetAllAsync())
+            {
+                if (!string.Equals(r.Data.Name, RegistryName, StringComparison.OrdinalIgnoreCase)) continue;
+                found = true;
+                break;
+            }
+
+            Assert.That(found, Is.True);
+        }
+        finally
+        {
+            var registry = await registries.GetAsync(RegistryName);
+            await registry.Value.DeleteAsync(WaitUntil.Completed);
+        }
+    }
+
+    [Test]
+    public async Task ContainerRegistry_CreateWithPremiumSku_ShouldHaveCorrectTier()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Premium));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        try
+        {
+            var registry = await registries.GetAsync(RegistryName);
+            Assert.That(registry.Value.Data.Sku.Name, Is.EqualTo(ContainerRegistrySkuName.Premium));
+        }
+        finally
+        {
+            var registry = await registries.GetAsync(RegistryName);
+            await registry.Value.DeleteAsync(WaitUntil.Completed);
+        }
+    }
+}
