@@ -137,11 +137,16 @@ internal sealed class ContainerRegistryControlPlane(
             OperationResult.Deleted, existing.Resource, null, null);
     }
 
+    // LocalDirectoryPath has 5 segments; add 3 for .topaz prefix, registry-name dir, and metadata.json
+    private static readonly uint RegistryFileSegmentCount =
+        (uint)(ContainerRegistryService.LocalDirectoryPath.Split("/").Length + 3);
+
     public ControlPlaneOperationResult<ContainerRegistryResource[]> ListByResourceGroup(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier)
     {
-        var resources = provider.ListAs<ContainerRegistryResource>(subscriptionIdentifier, resourceGroupIdentifier)
+        var resources = provider.ListAs<ContainerRegistryResource>(subscriptionIdentifier, resourceGroupIdentifier,
+                lookForNoOfSegments: RegistryFileSegmentCount)
             .Where(r => r.IsInResourceGroup(resourceGroupIdentifier))
             .ToArray();
 
@@ -152,7 +157,8 @@ internal sealed class ContainerRegistryControlPlane(
     public ControlPlaneOperationResult<ContainerRegistryResource[]> ListBySubscription(
         SubscriptionIdentifier subscriptionIdentifier)
     {
-        var resources = provider.ListAs<ContainerRegistryResource>(subscriptionIdentifier, null)
+        var resources = provider.ListAs<ContainerRegistryResource>(subscriptionIdentifier, null,
+                lookForNoOfSegments: RegistryFileSegmentCount)
             .Where(r => r.IsInSubscription(subscriptionIdentifier))
             .ToArray();
 
