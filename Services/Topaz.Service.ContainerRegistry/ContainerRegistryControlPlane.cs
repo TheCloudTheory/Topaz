@@ -6,6 +6,7 @@ using Topaz.Service.ContainerRegistry.Models.Requests;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry;
@@ -39,8 +40,14 @@ internal sealed class ContainerRegistryControlPlane(
         string registryName,
         CreateOrUpdateContainerRegistryRequest request)
     {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(CreateOrUpdate),
+            "Executing {0}: registry={1}, resourceGroup={2}, subscription={3}",
+            nameof(CreateOrUpdate), registryName, resourceGroupIdentifier.Value, subscriptionIdentifier.Value);
+
         if (!IsNameValid(registryName))
         {
+            logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(CreateOrUpdate),
+                "Executing {0}: Registry name '{1}' is invalid.", nameof(CreateOrUpdate), registryName);
             return new ControlPlaneOperationResult<ContainerRegistryResource>(
                 OperationResult.Failed, null,
                 string.Format(InvalidRegistryNameMessageTemplate, registryName),
@@ -50,6 +57,8 @@ internal sealed class ContainerRegistryControlPlane(
         var resourceGroupOperation = resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound)
         {
+            logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(CreateOrUpdate),
+                "Executing {0}: Resource group '{1}' not found.", nameof(CreateOrUpdate), resourceGroupIdentifier.Value);
             return new ControlPlaneOperationResult<ContainerRegistryResource>(
                 OperationResult.Failed, null,
                 resourceGroupOperation.Reason,
@@ -58,6 +67,8 @@ internal sealed class ContainerRegistryControlPlane(
 
         var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
         var isCreate = existing.Result == OperationResult.NotFound;
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(CreateOrUpdate),
+            "Executing {0}: Operation is {1}.", nameof(CreateOrUpdate), isCreate ? "create" : "update");
 
         ContainerRegistryResource resource;
         if (isCreate)
@@ -102,15 +113,23 @@ internal sealed class ContainerRegistryControlPlane(
         ResourceGroupIdentifier resourceGroupIdentifier,
         string registryName)
     {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(Get),
+            "Executing {0}: registry={1}, resourceGroup={2}, subscription={3}",
+            nameof(Get), registryName, resourceGroupIdentifier.Value, subscriptionIdentifier.Value);
+
         var resource = provider.GetAs<ContainerRegistryResource>(subscriptionIdentifier, resourceGroupIdentifier, registryName);
         if (resource == null)
         {
+            logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(Get),
+                "Executing {0}: Registry '{1}' not found.", nameof(Get), registryName);
             return new ControlPlaneOperationResult<ContainerRegistryResource>(
                 OperationResult.NotFound, null,
                 string.Format(RegistryNotFoundMessageTemplate, registryName),
                 RegistryNotFoundCode);
         }
 
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(Get),
+            "Executing {0}: Registry '{1}' found.", nameof(Get), registryName);
         return new ControlPlaneOperationResult<ContainerRegistryResource>(OperationResult.Success, resource, null, null);
     }
 
@@ -119,9 +138,15 @@ internal sealed class ContainerRegistryControlPlane(
         ResourceGroupIdentifier resourceGroupIdentifier,
         string registryName)
     {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(Delete),
+            "Executing {0}: registry={1}, resourceGroup={2}, subscription={3}",
+            nameof(Delete), registryName, resourceGroupIdentifier.Value, subscriptionIdentifier.Value);
+
         var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
         if (existing.Result == OperationResult.NotFound)
         {
+            logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(Delete),
+                "Executing {0}: Registry '{1}' not found.", nameof(Delete), registryName);
             return new ControlPlaneOperationResult<ContainerRegistryResource>(
                 OperationResult.NotFound, null,
                 string.Format(RegistryNotFoundMessageTemplate, registryName),
@@ -129,6 +154,8 @@ internal sealed class ContainerRegistryControlPlane(
         }
 
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(Delete),
+            "Executing {0}: Registry '{1}' deleted.", nameof(Delete), registryName);
 
         return new ControlPlaneOperationResult<ContainerRegistryResource>(
             OperationResult.Deleted, existing.Resource, null, null);
@@ -142,11 +169,17 @@ internal sealed class ContainerRegistryControlPlane(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier)
     {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ListByResourceGroup),
+            "Executing {0}: resourceGroup={1}, subscription={2}",
+            nameof(ListByResourceGroup), resourceGroupIdentifier.Value, subscriptionIdentifier.Value);
+
         var resources = provider.ListAs<ContainerRegistryResource>(subscriptionIdentifier, resourceGroupIdentifier,
                 lookForNoOfSegments: RegistryFileSegmentCount)
             .Where(r => r.IsInResourceGroup(resourceGroupIdentifier))
             .ToArray();
 
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ListByResourceGroup),
+            "Executing {0}: Found {1} registries.", nameof(ListByResourceGroup), resources.Length);
         return new ControlPlaneOperationResult<ContainerRegistryResource[]>(
             OperationResult.Success, resources, null, null);
     }
@@ -154,11 +187,16 @@ internal sealed class ContainerRegistryControlPlane(
     public ControlPlaneOperationResult<ContainerRegistryResource[]> ListBySubscription(
         SubscriptionIdentifier subscriptionIdentifier)
     {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ListBySubscription),
+            "Executing {0}: subscription={1}", nameof(ListBySubscription), subscriptionIdentifier.Value);
+
         var resources = provider.ListAs<ContainerRegistryResource>(subscriptionIdentifier, null,
                 lookForNoOfSegments: RegistryFileSegmentCount)
             .Where(r => r.IsInSubscription(subscriptionIdentifier))
             .ToArray();
 
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ListBySubscription),
+            "Executing {0}: Found {1} registries.", nameof(ListBySubscription), resources.Length);
         return new ControlPlaneOperationResult<ContainerRegistryResource[]>(
             OperationResult.Success, resources, null, null);
     }
@@ -168,6 +206,10 @@ internal sealed class ContainerRegistryControlPlane(
         ResourceGroupIdentifier? resourceGroupIdentifier,
         string registryName)
     {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(IsNameAvailable),
+            "Executing {0}: registry={1}, subscription={2}",
+            nameof(IsNameAvailable), registryName, subscriptionIdentifier.Value);
+
         if (!IsNameValid(registryName)) return false;
 
         if (resourceGroupIdentifier != null)
@@ -178,7 +220,10 @@ internal sealed class ContainerRegistryControlPlane(
 
         // search across all resource groups in the subscription
         var allRegistries = provider.ListAs<ContainerRegistryResource>(subscriptionIdentifier, null);
-        return allRegistries.All(r => !string.Equals(r.Name, registryName, StringComparison.OrdinalIgnoreCase));
+        var isAvailable = allRegistries.All(r => !string.Equals(r.Name, registryName, StringComparison.OrdinalIgnoreCase));
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(IsNameAvailable),
+            "Executing {0}: Registry '{1}' is {2}.", nameof(IsNameAvailable), registryName, isAvailable ? "available" : "unavailable");
+        return isAvailable;
     }
 
     private static bool IsNameValid(string name)
