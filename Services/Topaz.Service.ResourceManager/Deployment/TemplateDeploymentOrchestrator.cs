@@ -4,6 +4,7 @@ using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
 using Newtonsoft.Json.Linq;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
+using Topaz.Service.ContainerRegistry;
 using Topaz.Service.EventHub;
 using Topaz.Service.KeyVault;
 using Topaz.Service.ManagedIdentity;
@@ -78,6 +79,9 @@ public sealed class TemplateDeploymentOrchestrator(Pipeline eventPipeline, Resou
             
             switch (resource.Type.Value)
             {
+                case "Microsoft.ContainerRegistry/registries":
+                    controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
+                    break;
                 case "Microsoft.KeyVault/vaults":
                     controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
                     break;

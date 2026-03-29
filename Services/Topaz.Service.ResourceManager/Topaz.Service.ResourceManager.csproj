@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Topaz.Service.ContainerRegistry\Topaz.Service.ContainerRegistry.csproj" />
       <ProjectReference Include="..\Topaz.Service.EventHub\Topaz.Service.EventHub.csproj" />
       <ProjectReference Include="..\Topaz.Service.KeyVault\Topaz.Service.KeyVault.csproj" />
       <ProjectReference Include="..\Topaz.Service.ManagedIdentity\Topaz.Service.ManagedIdentity.csproj" />

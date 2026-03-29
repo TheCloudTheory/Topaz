@@ -31,7 +31,41 @@ internal sealed class ContainerRegistryControlPlane(
 
     public OperationResult Deploy(GenericResource resource)
     {
-        throw new NotImplementedException();
+        var registry = resource.As<ContainerRegistryResource, ContainerRegistryResourceProperties>();
+        if (registry == null)
+        {
+            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Container Registry instance.");
+            return OperationResult.Failed;
+        }
+
+        try
+        {
+            var result = CreateOrUpdate(registry.GetSubscription(), registry.GetResourceGroup(), registry.Name,
+                new CreateOrUpdateContainerRegistryRequest
+                {
+                    Location = registry.Location,
+                    Tags = registry.Tags,
+                    Sku = new CreateOrUpdateContainerRegistryRequest.ContainerRegistrySku
+                    {
+                        Name = registry.Sku?.Name ?? "Basic"
+                    },
+                    Properties = new CreateOrUpdateContainerRegistryRequest.ContainerRegistryProperties
+                    {
+                        AdminUserEnabled = registry.Properties.AdminUserEnabled,
+                        DataEndpointEnabled = registry.Properties.DataEndpointEnabled,
+                        PublicNetworkAccess = registry.Properties.PublicNetworkAccess,
+                        ZoneRedundancy = registry.Properties.ZoneRedundancy,
+                        NetworkRuleBypassOptions = registry.Properties.NetworkRuleBypassOptions
+                    }
+                });
+
+            return result.Result;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex);
+            return OperationResult.Failed;
+        }
     }
 
     public ControlPlaneOperationResult<ContainerRegistryResource> CreateOrUpdate(

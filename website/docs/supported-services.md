@@ -25,7 +25,7 @@ Service Bus|⚠️|⚠️
 Virtual Network|⚠️|N/A
 Azure Resource Manager|⚠️|N/A
 Managed Identity|✅|N/A
-Container Registry|:x:|:x:
+Container Registry|✅|:x:
 Azure SQL|:x:|:x:
 Entra ID|:x:|⚠️
 RBAC|⚠️|:x:
@@ -47,10 +47,13 @@ The ports used by Topaz can be divided into two groups:
 You can find which service uses which port below:
 Service Name|Port|Protocol
 ------------|----|--------
-Resource Manager|8899|HTTPS
+Resource Manager|8899, 443|HTTPS
 Table Storage|8890|HTTP
-Azure Key Vault|8898|HTTPS
-Azure Event Hub|8897, 8888|HTTP, AMQP
 Blob Storage|8891|HTTP
+Azure Key Vault|8898|HTTPS
+Azure Event Hub|8897|HTTPS
+Azure Event Hub (AMQP)|8888|AMQP
+Azure Service Bus|8887, 8899|HTTPS
+Azure Service Bus (AMQP)|8889, 5671|AMQP, AMQP/TLS
 
 For HTTPS endpoints, if you're running Topaz as a standalone application, you need to install and trust the certificates provided along with the main package.

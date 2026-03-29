@@ -1,6 +1,8 @@
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
+using Azure.ResourceManager.ContainerRegistry;
+using Azure.ResourceManager.ContainerRegistry.Models;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.ManagedServiceIdentities;
 using Azure.ResourceManager.Resources;
@@ -186,6 +188,50 @@ public class ResourceManagerTests
             // Cleanup
             await kv.Value.DeleteAsync(WaitUntil.Completed);
             await topaz.PurgeKeyVault(subscriptionId, kv.Value.Data.Name, kv.Value.Data.Location);
+        }
+    }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenTemplateContainsContainerRegistry_ItShouldBeDeployed()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub";
+        const string resourceGroupName = "rg-deployment";
+        const string deploymentName = "deployment-acr";
+        const string registryName = "topazacrdeploy01";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        // Act
+        await rg.Value.GetArmDeployments().CreateOrUpdateAsync(WaitUntil.Completed, deploymentName,
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment-acr.json"))
+            }));
+
+        // Assert
+        var registry = await rg.Value.GetContainerRegistryAsync(registryName);
+
+        try
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(registry, Is.Not.Null);
+                Assert.That(registry.Value.Data.Name, Is.EqualTo(registryName));
+                Assert.That(registry.Value.Data.Sku.Name, Is.EqualTo(ContainerRegistrySkuName.Basic));
+                Assert.That(registry.Value.Data.LoginServer, Is.Not.Null.And.Not.Empty);
+            });
+        }
+        finally
+        {
+            await registry.Value.DeleteAsync(WaitUntil.Completed);
         }
     }
 }

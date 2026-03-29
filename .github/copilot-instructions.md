@@ -32,6 +32,7 @@ Build, run and env notes
 Code generation & edits: practical guidelines
 - Prefer adding small, focused changes. Keep public APIs and file names consistent with existing `Topaz.Service.*` naming.
 - When adding resources, implement `*ResourceProperties` for the contract, a `*Resource` class inheriting `ArmResource<T>`, a `*ResourceProvider` and a `*ServiceControlPlane` following existing services (see `Topaz.Service.KeyVault` or `Topaz.Service.ServiceBus`).
+- **`Deploy()` is mandatory**: Every `IControlPlane` implementation must have a working `Deploy()` method (not `throw new NotImplementedException()`). Follow the KeyVault pattern: cast `GenericResource` with `resource.As<TResource, TProperties>()`, map all fields into the create/update request, delegate to `CreateOrUpdate`, and wrap exceptions with `logger.LogError`. After implementing `Deploy()`, also register the new resource type in `TemplateDeploymentOrchestrator.RouteDeployment()` (add a `case "Microsoft.X/y":` entry) and add the service's project as a `<ProjectReference>` in `Topaz.Service.ResourceManager.csproj`.
 - Serialization: always use `GlobalSettings.JsonOptions` when serializing/deserializing HTTP request bodies/responses.
 - Id handling: if you modify `Id` format, update `ArmResource.GetSubscription()` and `GetResourceGroup()` usages.
 - Patterns to copy: `FromRequest(...)` factory methods and `UpdateFromRequest(...)` mutators are common; mirror the null-checks and GetValueOrDefault() idioms used in `KeyVaultResourceProperties.FromRequest`.
