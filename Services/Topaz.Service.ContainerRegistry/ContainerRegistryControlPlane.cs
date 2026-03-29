@@ -6,7 +6,6 @@ using Topaz.Service.ContainerRegistry.Models.Requests;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry;
@@ -14,7 +13,6 @@ namespace Topaz.Service.ContainerRegistry;
 internal sealed class ContainerRegistryControlPlane(
     ContainerRegistryResourceProvider provider,
     ResourceGroupControlPlane resourceGroupControlPlane,
-    SubscriptionControlPlane subscriptionControlPlane,
     ITopazLogger logger) : IControlPlane
 {
     private const string RegistryNotFoundCode = "ContainerRegistryNotFound";
@@ -28,7 +26,6 @@ internal sealed class ContainerRegistryControlPlane(
         new ContainerRegistryResourceProvider(logger),
         new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
             new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger),
-        new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)),
         logger);
 
     public OperationResult Deploy(GenericResource resource)
