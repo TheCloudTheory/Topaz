@@ -62,18 +62,20 @@ const config: Config = {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
     navbar: {
-      title: 'Topaz',
+      title: '',
       logo: {
         alt: 'Topaz - Azure emulator',
-        src: 'img/topaz-logo-no-text.svg',
+        src: 'img/topaz-logo.png',
       },
       items: [
+        {to: '/features', label: 'Features', position: 'left'},
         {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
           label: 'Documentation',
         },
+        {to: '/pricing', label: 'Pricing', position: 'left'},
         {to: '/blog', label: 'Blog', position: 'left'},
         {
           href: 'https://github.com/TheCloudTheory/Topaz',

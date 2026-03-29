@@ -11,20 +11,38 @@ import styles from './index.module.css';
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
   return (
-    <header className={clsx('hero hero--primary', styles.heroBanner)}>
+    <header className={styles.heroBanner}>
       <div className="container">
-        <Heading as="h1" className="hero__title">
+        <div className={styles.heroLogoWrapper}>
+          <img src="/img/topaz-logo.png" alt="Topaz logo" className={styles.heroLogoImage} />
+        </div>
+        <Heading as="h1" className={styles.heroTitle}>
           {siteConfig.title}
         </Heading>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
+        <p className={styles.heroSubtitle}>{siteConfig.tagline}</p>
         <div className={styles.buttons}>
           <Link
-            className="button button--secondary button--lg"
+            className="button button--lg"
+            style={{background: 'white', color: '#1B63EB', fontWeight: 700}}
             to="/docs/intro">
-            Getting started with Topaz
+            Get Started →
+          </Link>
+          <Link
+            className={clsx('button button--lg', styles.githubButton)}
+            href="https://github.com/TheCloudTheory/Topaz">
+            ★ View on GitHub
           </Link>
         </div>
-        <img alt="GitHub Release" className={styles.hero__image} src="https://img.shields.io/github/v/release/TheCloudTheory/Topaz?include_prereleases" />
+        <div className={styles.badgeRow}>
+          <img
+            alt="GitHub Release"
+            src="https://img.shields.io/github/v/release/TheCloudTheory/Topaz?include_prereleases&style=flat-square&label=latest"
+          />
+          <img
+            alt="License"
+            src="https://img.shields.io/github/license/TheCloudTheory/Topaz?style=flat-square"
+          />
+        </div>
       </div>
     </header>
   );

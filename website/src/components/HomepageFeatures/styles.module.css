@@ -1,11 +1,77 @@
 .features {
   display: flex;
-  align-items: center;
-  padding: 2rem 0;
+  align-items: stretch;
+  padding: 4.5rem 0;
   width: 100%;
+  background: var(--ifm-background-color);
+}
+
+.featureCol {
+  padding: 0.75rem;
+  display: flex;
+}
+
+.featureCard {
+  background: var(--ifm-card-background-color, var(--ifm-background-surface-color));
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 16px;
+  padding: 2rem 1.75rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  box-shadow: var(--topaz-card-shadow);
+}
+
+.featureCard:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--topaz-card-shadow-hover);
+  border-color: var(--ifm-color-primary-lighter);
+}
+
+.featureIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  background: linear-gradient(135deg, rgba(27, 99, 235, 0.1) 0%, rgba(77, 133, 240, 0.05) 100%);
+  border-radius: 20px;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
 }
 
 .featureSvg {
-  height: 200px;
-  width: 200px;
+  height: 52px;
+  width: 52px;
+  color: var(--ifm-color-primary);
+}
+
+/* draw.io SVGs bake in `color-scheme: light dark` and `light-dark()` fills.
+   Force light-only so face fills stay white in dark mode, then punch out
+   the SVG canvas so the wrapper gradient shows through. */
+.featureIconWrapper svg {
+  color-scheme: only light !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.featureIconWrapper svg rect:first-child {
+  fill: transparent !important;
+}
+
+.featureTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ifm-heading-color);
+  margin-bottom: 0.6rem;
+}
+
+.featureDescription {
+  font-size: 0.95rem;
+  color: var(--ifm-color-secondary-darkest);
+  line-height: 1.7;
+  margin-bottom: 0;
 }
