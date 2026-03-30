@@ -22,6 +22,7 @@ public sealed class ContainerRegistryService(Pipeline eventPipeline, ITopazLogge
         new ListContainerRegistriesByResourceGroupEndpoint(eventPipeline, logger),
         new ListContainerRegistriesBySubscriptionEndpoint(eventPipeline, logger),
         new DeleteContainerRegistryEndpoint(eventPipeline, logger),
+        new UpdateContainerRegistryEndpoint(eventPipeline, logger),
         new CheckContainerRegistryNameAvailabilityEndpoint(eventPipeline, logger)
     ];
 

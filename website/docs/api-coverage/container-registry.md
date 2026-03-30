@@ -98,7 +98,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 | List Private Link Resources | ❌ | |
 | List Usages | ❌ | |
 | Regenerate Credential | ❌ | |
-| Update | ❌ | PATCH not implemented; use Create (PUT) to overwrite |
+| Update | ✅ | PATCH |
 
 ### Replications
 
