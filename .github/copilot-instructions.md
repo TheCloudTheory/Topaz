@@ -50,6 +50,12 @@ Tests & CI
 When to ask the user
 - If a change touches networking ports, resource ID formats, or global serializer options, confirm desired behaviour before applying broad changes.
 
+API Coverage docs (mandatory)
+- The `website/docs/api-coverage/` directory contains one Markdown file per service. Each file tracks which Azure REST API operations are implemented in Topaz, mapped to the official Microsoft REST API reference.
+- **Always consult** the relevant `api-coverage/<service>.md` file before adding or removing endpoints for a service so you know what is already tracked.
+- **Always update** the relevant `api-coverage/<service>.md` file after adding or removing endpoint implementations: flip ❌ → ✅ (or vice-versa) for the affected operations. If the service page is still a stub, fill in the full operation table (use the Azure REST API reference link in the file header as a guide).
+- The [Container Registry coverage](website/docs/api-coverage/container-registry.md) page is the canonical example of the completed format.
+
 Mandatory steps
 - Always present a summary of changes before applying them, especially for public API changes or anything affecting resource IDs or serialization.
 - If you add new services or endpoints, ensure they are registered in the host and have corresponding tests.
