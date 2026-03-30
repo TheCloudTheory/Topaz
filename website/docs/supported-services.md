@@ -41,7 +41,7 @@ Monitor|⚠️|:x:
 
 :::tip[Looking for a detailed breakdown?]
 
-The [API Coverage](./api-coverage) section lists every REST operation for each service and shows exactly which ones are implemented in Topaz.
+The [API Coverage](./api-coverage/) section lists every REST operation for each service and shows exactly which ones are implemented in Topaz.
 
 :::
 
