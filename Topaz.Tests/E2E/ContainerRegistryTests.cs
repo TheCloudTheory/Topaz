@@ -3,6 +3,8 @@ using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ContainerRegistry;
 using Azure.ResourceManager.ContainerRegistry.Models;
+using Azure.ResourceManager.ManagedServiceIdentities;
+using Azure.ResourceManager.Models;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
@@ -156,6 +158,52 @@ public class ContainerRegistryTests
         {
             var registry = await registries.GetAsync(RegistryName);
             await registry.Value.DeleteAsync(WaitUntil.Completed);
+        }
+    }
+
+    [Test]
+    public async Task ContainerRegistry_CreateWithSystemAssignedIdentity_ShouldProvisionIdentity()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryName = $"topazacr{Guid.NewGuid():N}"[..24];
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Basic))
+        {
+            Identity = new ManagedServiceIdentity(ManagedServiceIdentityType.SystemAssigned)
+        };
+
+        // Act
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, registryName, registryData);
+        var registry = await registries.GetAsync(registryName);
+
+        try
+        {
+            // Assert — registry reports identity
+            Assert.That(registry.Value.Data.Identity, Is.Not.Null);
+            Assert.That(registry.Value.Data.Identity!.PrincipalId, Is.Not.Null);
+            Assert.That(registry.Value.Data.Identity!.TenantId, Is.Not.Null);
+
+            // Assert — system-assigned identity endpoint returns the same identity
+            var identityResourceId = SystemAssignedIdentityResource.CreateResourceIdentifier(
+                registry.Value.Data.Id.ToString());
+            var identity = armClient.GetSystemAssignedIdentityResource(identityResourceId).Get();
+
+            Assert.That(identity.Value.Data.PrincipalId.ToString(),
+                Is.EqualTo(registry.Value.Data.Identity!.PrincipalId.ToString()));
+            Assert.That(identity.Value.Data.TenantId.ToString(),
+                Is.EqualTo(registry.Value.Data.Identity!.TenantId.ToString()));
+        }
+        finally
+        {
+            var registry2 = await registries.GetAsync(registryName);
+            await registry2.Value.DeleteAsync(WaitUntil.Completed);
         }
     }
 }

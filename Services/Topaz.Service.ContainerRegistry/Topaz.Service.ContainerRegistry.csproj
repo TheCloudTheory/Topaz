@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Topaz.EventPipeline\Topaz.EventPipeline.csproj" />
+        <ProjectReference Include="..\Topaz.Service.ManagedIdentity\Topaz.Service.ManagedIdentity.csproj" />
         <ProjectReference Include="..\Topaz.Service.ResourceGroup\Topaz.Service.ResourceGroup.csproj" />
         <ProjectReference Include="..\Topaz.Service.Shared\Topaz.Service.Shared.csproj" />
         <ProjectReference Include="..\Topaz.Service.Subscription\Topaz.Service.Subscription.csproj" />
@@ -16,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
     </ItemGroup>
 
 </Project>

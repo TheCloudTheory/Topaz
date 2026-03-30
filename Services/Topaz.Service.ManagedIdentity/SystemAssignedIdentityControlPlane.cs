@@ -1,3 +1,6 @@
+using Topaz.Service.Entra;
+using Topaz.Service.Entra.Models.Requests;
+using Topaz.Service.Entra.Planes;
 using Topaz.Service.ManagedIdentity.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -7,10 +10,48 @@ namespace Topaz.Service.ManagedIdentity;
 
 internal sealed class SystemAssignedIdentityControlPlane(
     SystemAssignedIdentityResourceProvider provider,
+    ServicePrincipalDataPlane servicePrincipalDataPlane,
     ITopazLogger logger)
 {
     public static SystemAssignedIdentityControlPlane New(ITopazLogger logger) =>
-        new(new SystemAssignedIdentityResourceProvider(logger), logger);
+        new(new SystemAssignedIdentityResourceProvider(logger),
+            ServicePrincipalDataPlane.New(logger),
+            logger);
+
+    public ControlPlaneOperationResult<SystemAssignedIdentityResource> CreateOrUpdate(string parentResourceId)
+    {
+        var (subscriptionIdentifier, resourceGroupIdentifier, encodedId) = ParseResourceId(parentResourceId);
+
+        var existing = provider.GetAs<SystemAssignedIdentityResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, encodedId);
+
+        if (existing != null)
+        {
+            logger.LogDebug(nameof(SystemAssignedIdentityControlPlane), nameof(CreateOrUpdate),
+                "System-assigned identity already exists for resource `{0}`.", parentResourceId);
+            return new ControlPlaneOperationResult<SystemAssignedIdentityResource>(
+                OperationResult.Success, existing, null, null);
+        }
+
+        var createSpOperation = servicePrincipalDataPlane.Create(
+            CreateServicePrincipalRequest.Generate(parentResourceId));
+
+        if (createSpOperation.Result != OperationResult.Created)
+        {
+            return new ControlPlaneOperationResult<SystemAssignedIdentityResource>(
+                OperationResult.Failed, null, createSpOperation.Reason, createSpOperation.Code);
+        }
+
+        var sp = createSpOperation.Resource!;
+        var identity = new SystemAssignedIdentityResource(parentResourceId, sp.Id, EntraService.TenantId);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, encodedId, identity);
+
+        logger.LogDebug(nameof(SystemAssignedIdentityControlPlane), nameof(CreateOrUpdate),
+            "Created system-assigned identity for resource `{0}`.", parentResourceId);
+
+        return new ControlPlaneOperationResult<SystemAssignedIdentityResource>(
+            OperationResult.Created, identity, null, null);
+    }
 
     public ControlPlaneOperationResult<SystemAssignedIdentityResource> Get(string parentResourceId)
     {

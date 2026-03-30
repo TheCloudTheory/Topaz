@@ -9,6 +9,7 @@ internal sealed class CreateOrUpdateContainerRegistryRequest
     public IDictionary<string, string>? Tags { get; init; }
     public ContainerRegistrySku? Sku { get; init; }
     public ContainerRegistryProperties? Properties { get; init; }
+    public ResourceIdentityRequest? Identity { get; init; }
 
     [UsedImplicitly]
     internal sealed class ContainerRegistrySku
@@ -24,5 +25,11 @@ internal sealed class CreateOrUpdateContainerRegistryRequest
         public string? PublicNetworkAccess { get; init; }
         public string? ZoneRedundancy { get; init; }
         public string? NetworkRuleBypassOptions { get; init; }
+    }
+
+    [UsedImplicitly]
+    internal sealed class ResourceIdentityRequest
+    {
+        public string? Type { get; init; }
     }
 }

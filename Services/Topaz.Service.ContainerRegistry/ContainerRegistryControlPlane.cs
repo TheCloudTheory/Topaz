@@ -3,6 +3,7 @@ using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.ContainerRegistry.Models;
 using Topaz.Service.ContainerRegistry.Models.Requests;
+using Topaz.Service.ManagedIdentity;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -14,6 +15,7 @@ namespace Topaz.Service.ContainerRegistry;
 internal sealed class ContainerRegistryControlPlane(
     ContainerRegistryResourceProvider provider,
     ResourceGroupControlPlane resourceGroupControlPlane,
+    SystemAssignedIdentityControlPlane systemAssignedIdentityControlPlane,
     ITopazLogger logger) : IControlPlane
 {
     private const string RegistryNotFoundCode = "ContainerRegistryNotFound";
@@ -27,6 +29,7 @@ internal sealed class ContainerRegistryControlPlane(
         new ContainerRegistryResourceProvider(logger),
         new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
             new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger),
+        SystemAssignedIdentityControlPlane.New(logger),
         logger);
 
     public OperationResult Deploy(GenericResource resource)
@@ -56,7 +59,10 @@ internal sealed class ContainerRegistryControlPlane(
                         PublicNetworkAccess = registry.Properties.PublicNetworkAccess,
                         ZoneRedundancy = registry.Properties.ZoneRedundancy,
                         NetworkRuleBypassOptions = registry.Properties.NetworkRuleBypassOptions
-                    }
+                    },
+                    Identity = registry.Identity != null
+                        ? new CreateOrUpdateContainerRegistryRequest.ResourceIdentityRequest { Type = registry.Identity.Type }
+                        : null
                 });
 
             return result.Result;
@@ -136,6 +142,25 @@ internal sealed class ContainerRegistryControlPlane(
         }
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, registryName, resource, isCreate);
+
+        if (!string.Equals(request.Identity?.Type, "SystemAssigned", StringComparison.OrdinalIgnoreCase))
+            return new ControlPlaneOperationResult<ContainerRegistryResource>(
+                isCreate ? OperationResult.Created : OperationResult.Updated,
+                resource, null, null);
+        
+        var identityOperation = systemAssignedIdentityControlPlane.CreateOrUpdate(resource.Id);
+        if (identityOperation.Resource == null)
+            return new ControlPlaneOperationResult<ContainerRegistryResource>(
+                isCreate ? OperationResult.Created : OperationResult.Updated,
+                resource, null, null);
+            
+        resource.Identity = new ResourceIdentity
+        {
+            Type = "SystemAssigned",
+            PrincipalId = identityOperation.Resource.Properties.PrincipalId,
+            TenantId = identityOperation.Resource.Properties.TenantId
+        };
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, registryName, resource, false);
 
         return new ControlPlaneOperationResult<ContainerRegistryResource>(
             isCreate ? OperationResult.Created : OperationResult.Updated,

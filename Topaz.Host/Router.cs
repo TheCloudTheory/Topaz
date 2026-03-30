@@ -49,10 +49,20 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
 
                 if (IsEndpointWithDynamicRouting(endpointParts))
                 {
-                    foreach (var part in endpointParts)
+                    var ellipsisIndex = Array.IndexOf(endpointParts, "...");
+                    var suffix = endpointParts[(ellipsisIndex + 1)..];
+
+                    if (suffix.Length == 0)
                     {
-                        if (part.StartsWith('{') && part.EndsWith('}')) continue;
-                        if (part.Equals("...")) endpoint = httpEndpoint;
+                        endpoint = httpEndpoint;
+                    }
+                    else if (pathParts.Length >= suffix.Length)
+                    {
+                        var pathSuffix = pathParts[^suffix.Length..];
+                        var suffixMatches = suffix.Zip(pathSuffix).All(pair =>
+                            (pair.First.StartsWith('{') && pair.First.EndsWith('}')) ||
+                            string.Equals(pair.First, pair.Second, StringComparison.OrdinalIgnoreCase));
+                        if (suffixMatches) endpoint = httpEndpoint;
                     }
                 }
                 else

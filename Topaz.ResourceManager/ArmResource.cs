@@ -14,6 +14,7 @@ public abstract class ArmResource<T>
     public abstract ResourceSku? Sku { get; init; }
     public abstract string? Kind { get; init; }
     public abstract T Properties { get; init; }
+    public virtual ResourceIdentity? Identity { get; set; }
 
     public SubscriptionIdentifier GetSubscription()
     {

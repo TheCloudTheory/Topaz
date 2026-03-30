@@ -11,13 +11,13 @@ public sealed class SystemAssignedIdentityResource
     {
     }
 
-    public SystemAssignedIdentityResource(string parentResourceId)
+    public SystemAssignedIdentityResource(string parentResourceId, string principalId, string tenantId)
     {
         Id = $"{parentResourceId}/providers/Microsoft.ManagedIdentity/Identities/default";
         Properties = new SystemAssignedIdentityProperties
         {
-            PrincipalId = Guid.NewGuid().ToString(),
-            TenantId = Guid.NewGuid().ToString(),
+            PrincipalId = principalId,
+            TenantId = tenantId,
             ClientSecretUrl = null
         };
     }
