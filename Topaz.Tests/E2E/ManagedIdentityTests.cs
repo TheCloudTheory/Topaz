@@ -301,35 +301,33 @@ public class ManagedIdentityTests
 
         var identity = await resourceGroup.Value.GetUserAssignedIdentityAsync(testIdentityName);
         var clientId = identity.Value.Data.ClientId;
+        var principalId = identity.Value.Data.PrincipalId;
 
-        // Assert (managed identity has a client id)
+        // Assert (managed identity has expected properties)
         Assert.That(clientId, Is.Not.Null);
         Assert.That(clientId, Is.Not.EqualTo(Guid.Empty));
+        Assert.That(principalId, Is.Not.Null);
+        Assert.That(principalId, Is.Not.EqualTo(Guid.Empty));
 
-        // Assert (service principal exists in Entra for that appId/clientId)
-        var servicePrincipal = await WaitForServicePrincipalByAppIdAsync(GraphClient, clientId.Value.ToString());
+        // Assert (service principal exists in Entra — look up by principalId which is the SP's object ID)
+        var servicePrincipal = await GraphClient.ServicePrincipals[principalId!.Value.ToString()].GetAsync();
         Assert.That(servicePrincipal, Is.Not.Null);
-        Assert.That(servicePrincipal!.AppId, Is.EqualTo(clientId.Value.ToString()));
+        Assert.That(servicePrincipal!.AppId, Is.EqualTo(clientId!.Value.ToString()));
     }
-    
-    private static async Task<Microsoft.Graph.Models.ServicePrincipal?> WaitForServicePrincipalByAppIdAsync(
-        GraphServiceClient client,
-        string appId,
-        int maxAttempts = 20,
-        int delayMs = 250)
+
+    [Test]
+    public void ManagedIdentityTests_WhenGettingSystemAssignedIdentityThatDoesNotExist_ItShouldReturn404()
     {
-        for (var attempt = 0; attempt < maxAttempts; attempt++)
-        {
-            var result = await client.ServicePrincipals[appId].GetAsync();
-            if (result is not null)
-            {
-                return result;
-            }
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
 
-            await Task.Delay(delayMs);
-        }
+        var parentResourceId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.Compute/virtualMachines/test-vm-no-identity");
+        var identityResourceId = SystemAssignedIdentityResource.CreateResourceIdentifier(parentResourceId.ToString());
 
-        Assert.Fail($"Service principal with appId '{appId}' was not found after {maxAttempts} attempts.");
-        return null;
+        // Act & Assert — identity was never enabled, expect 404
+        Assert.Throws<RequestFailedException>(() =>
+            armClient.GetSystemAssignedIdentityResource(identityResourceId).Get());
     }
 }

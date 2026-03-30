@@ -35,6 +35,7 @@ Code generation & edits: practical guidelines
 - **`Deploy()` is mandatory**: Every `IControlPlane` implementation must have a working `Deploy()` method (not `throw new NotImplementedException()`). Follow the KeyVault pattern: cast `GenericResource` with `resource.As<TResource, TProperties>()`, map all fields into the create/update request, delegate to `CreateOrUpdate`, and wrap exceptions with `logger.LogError`. After implementing `Deploy()`, also register the new resource type in `TemplateDeploymentOrchestrator.RouteDeployment()` (add a `case "Microsoft.X/y":` entry) and add the service's project as a `<ProjectReference>` in `Topaz.Service.ResourceManager.csproj`.
 - Serialization: always use `GlobalSettings.JsonOptions` when serializing/deserializing HTTP request bodies/responses.
 - Id handling: if you modify `Id` format, update `ArmResource.GetSubscription()` and `GetResourceGroup()` usages.
+- **Filesystem access via resource providers only**: Never access the filesystem directly from a control plane or endpoint class. All reads and writes must go through a `ResourceProviderBase<TService>` subclass (e.g., `FooResourceProvider`). See `ManagedIdentityResourceProvider` and `SystemAssignedIdentityResourceProvider` as examples. Breaking this rule re-introduces direct file I/O scattered across classes and makes persistence non-uniform.
 - Patterns to copy: `FromRequest(...)` factory methods and `UpdateFromRequest(...)` mutators are common; mirror the null-checks and GetValueOrDefault() idioms used in `KeyVaultResourceProperties.FromRequest`.
 
 Where to look first (recommended reading order)
@@ -59,5 +60,4 @@ API Coverage docs (mandatory)
 Mandatory steps
 - Always present a summary of changes before applying them, especially for public API changes or anything affecting resource IDs or serialization.
 - If you add new services or endpoints, ensure they are registered in the host and have corresponding tests.
-
 If anything is missing or unclear, tell me what area you'd like expanded (build, adding services, routing, testing, or an example change), and I'll iterate.

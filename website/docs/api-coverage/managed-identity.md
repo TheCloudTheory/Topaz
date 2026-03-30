@@ -47,4 +47,4 @@ This page tracks which Azure Managed Identity REST API operations are implemente
 
 | Operation | Status |
 |-----------|--------|
-| Get By Resource | ❌ |
+| Get By Resource | ✅ |

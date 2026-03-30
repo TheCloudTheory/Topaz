@@ -1,4 +1,5 @@
 using Topaz.EventPipeline;
+using Topaz.Service.ManagedIdentity.Endpoints;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -15,7 +16,8 @@ public sealed class ManagedIdentityService(Pipeline eventPipeline, ITopazLogger 
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new ManagedIdentityEndpoint(eventPipeline, logger)
+        new ManagedIdentityEndpoint(eventPipeline, logger),
+        new GetSystemAssignedIdentityByResourceEndpoint(logger)
     ];
 
     public void Bootstrap()
