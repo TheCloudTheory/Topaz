@@ -54,6 +54,12 @@ const config: Config = {
         theme: {
           customCss: './src/css/custom.css',
         },
+        sitemap: {
+          changefreq: 'weekly',
+          priority: 0.5,
+          ignorePatterns: ['/tags/**'],
+          filename: 'sitemap.xml',
+        },
       } satisfies Preset.Options,
     ],
   ],
@@ -61,6 +67,13 @@ const config: Config = {
   themeConfig: {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
+    metadata: [
+      {name: 'keywords', content: 'azure emulator, local azure development, azure storage emulator, key vault emulator, service bus emulator, event hub emulator, azurite alternative, arm template testing, local cloud development'},
+      {name: 'og:type', content: 'website'},
+      {name: 'og:site_name', content: 'Topaz'},
+      {name: 'twitter:card', content: 'summary_large_image'},
+      {name: 'twitter:site', content: '@TheCloudTheory'},
+    ],
     navbar: {
       title: '',
       logo: {
@@ -88,11 +101,40 @@ const config: Config = {
       style: 'dark',
       links: [
         {
+          title: 'Product',
+          items: [
+            {
+              label: 'Features',
+              to: '/features',
+            },
+            {
+              label: 'Pricing',
+              to: '/pricing',
+            },
+          ],
+        },
+        {
           title: 'Docs',
           items: [
             {
               label: 'Getting started',
               to: '/docs/intro',
+            },
+            {
+              label: 'Supported services',
+              to: '/docs/supported-services',
+            },
+            {
+              label: 'Azure CLI integration',
+              to: '/docs/azure-cli-integration',
+            },
+            {
+              label: 'MCP server',
+              to: '/docs/mcp-server',
+            },
+            {
+              label: 'Troubleshooting',
+              to: '/docs/troubleshooting',
             },
           ],
         },

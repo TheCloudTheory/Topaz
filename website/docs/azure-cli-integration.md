@@ -1,5 +1,7 @@
 ---
 sidebar_position: 4
+description: Configure Azure CLI to connect to Topaz and run az commands against your local Azure emulator. Authenticate, set the cloud environment, and manage emulated resources without a real Azure subscription.
+keywords: [azure cli local, az command topaz, azure cli emulator, local azure cli, az login topaz]
 ---
 
 import Tabs from '@theme/Tabs';

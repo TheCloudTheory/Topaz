@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://topaz.thecloudtheory.com/sitemap.xml

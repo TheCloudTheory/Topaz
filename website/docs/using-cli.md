@@ -1,5 +1,7 @@
 ---
 sidebar_position: 3
+description: Learn how to use the Topaz CLI to start the local Azure emulator, create subscriptions, manage resource groups, and interact with emulated Azure services from the command line.
+keywords: [topaz cli, azure emulator cli, local azure commands, topaz start, subscription management]
 ---
 
 import Tabs from '@theme/Tabs';

@@ -1,5 +1,7 @@
 ---
 sidebar_position: 5
+description: Use the Topaz MCP server to let AI assistants like GitHub Copilot manage your local Azure emulator with natural language — start, stop, and provision emulated Azure resources without manual CLI commands.
+keywords: [topaz mcp server, mcp azure emulator, ai azure local, github copilot azure, model context protocol azure]
 ---
 
 # MCP Server

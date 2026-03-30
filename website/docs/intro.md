@@ -1,5 +1,7 @@
 ---
 sidebar_position: 1
+description: Get started with Topaz, the open-source local Azure emulator. Install, configure DNS, trust the certificate, and run Azure Storage, Key Vault, Service Bus, and more — without a real Azure subscription.
+keywords: [azure emulator, local azure, topaz, azure storage local, key vault local, azurite alternative, getting started]
 ---
 
 import Tabs from '@theme/Tabs';
