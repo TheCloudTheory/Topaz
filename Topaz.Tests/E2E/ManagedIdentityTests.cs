@@ -316,6 +316,153 @@ public class ManagedIdentityTests
     }
 
     [Test]
+    public void ManagedIdentityTests_WhenFederatedCredentialIsCreated_ItShouldBeAvailable()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var identityCollection = resourceGroup.Value.GetUserAssignedIdentities();
+        const string identityName = "testidentity-fic-create";
+        identityCollection.CreateOrUpdate(WaitUntil.Completed, identityName,
+            new UserAssignedIdentityData(AzureLocation.WestEurope), CancellationToken.None);
+        var identity = resourceGroup.Value.GetUserAssignedIdentity(identityName).Value;
+
+        var ficData = new FederatedIdentityCredentialData
+        {
+            Issuer = "https://token.actions.githubusercontent.com",
+            Subject = "repo:myorg/myrepo:ref:refs/heads/main",
+            Audiences = { "api://AzureADTokenExchange" }
+        };
+        const string ficName = "my-fic";
+
+        // Act
+        var ficCollection = identity.GetFederatedIdentityCredentials();
+        ficCollection.CreateOrUpdate(WaitUntil.Completed, ficName, ficData, CancellationToken.None);
+        var fic = identity.GetFederatedIdentityCredential(ficName).Value;
+
+        // Assert
+        Assert.That(fic, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(fic.Data.Name, Is.EqualTo(ficName));
+            Assert.That(fic.Data.Issuer, Is.EqualTo(ficData.Issuer));
+            Assert.That(fic.Data.Subject, Is.EqualTo(ficData.Subject));
+            Assert.That(fic.Data.Audiences, Has.Count.EqualTo(1));
+            Assert.That(fic.Data.Audiences[0], Is.EqualTo("api://AzureADTokenExchange"));
+        });
+    }
+
+    [Test]
+    public void ManagedIdentityTests_WhenFederatedCredentialIsDeleted_ItShouldNotBeAvailable()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var identityCollection = resourceGroup.Value.GetUserAssignedIdentities();
+        const string identityName = "testidentity-fic-delete";
+        identityCollection.CreateOrUpdate(WaitUntil.Completed, identityName,
+            new UserAssignedIdentityData(AzureLocation.WestEurope), CancellationToken.None);
+        var identity = resourceGroup.Value.GetUserAssignedIdentity(identityName).Value;
+
+        var ficData = new FederatedIdentityCredentialData
+        {
+            Issuer = "https://token.actions.githubusercontent.com",
+            Subject = "repo:myorg/myrepo:ref:refs/heads/main",
+            Audiences = { "api://AzureADTokenExchange" }
+        };
+        const string ficName = "fic-to-delete";
+        identity.GetFederatedIdentityCredentials()
+            .CreateOrUpdate(WaitUntil.Completed, ficName, ficData, CancellationToken.None);
+
+        // Act
+        identity.GetFederatedIdentityCredential(ficName).Value.Delete(WaitUntil.Completed);
+
+        // Assert
+        Assert.Throws<RequestFailedException>(() => identity.GetFederatedIdentityCredential(ficName).Value.Get());
+    }
+
+    [Test]
+    public void ManagedIdentityTests_WhenFederatedCredentialsAreListed_AllShouldBeReturned()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var identityCollection = resourceGroup.Value.GetUserAssignedIdentities();
+        const string identityName = "testidentity-fic-list";
+        identityCollection.CreateOrUpdate(WaitUntil.Completed, identityName,
+            new UserAssignedIdentityData(AzureLocation.WestEurope), CancellationToken.None);
+        var identity = resourceGroup.Value.GetUserAssignedIdentity(identityName).Value;
+        var ficCollection = identity.GetFederatedIdentityCredentials();
+
+        // Act
+        ficCollection.CreateOrUpdate(WaitUntil.Completed, "fic-list-1", new FederatedIdentityCredentialData
+        {
+            Issuer = "https://token.actions.githubusercontent.com",
+            Subject = "repo:myorg/repo1:ref:refs/heads/main",
+            Audiences = { "api://AzureADTokenExchange" }
+        }, CancellationToken.None);
+        ficCollection.CreateOrUpdate(WaitUntil.Completed, "fic-list-2", new FederatedIdentityCredentialData
+        {
+            Issuer = "https://token.actions.githubusercontent.com",
+            Subject = "repo:myorg/repo2:ref:refs/heads/main",
+            Audiences = { "api://AzureADTokenExchange" }
+        }, CancellationToken.None);
+
+        var fics = ficCollection.GetAll().ToList();
+
+        // Assert
+        Assert.That(fics, Has.Count.EqualTo(2));
+        Assert.Multiple(() =>
+        {
+            Assert.That(fics.Any(f => f.Data.Name == "fic-list-1"), Is.True);
+            Assert.That(fics.Any(f => f.Data.Name == "fic-list-2"), Is.True);
+        });
+    }
+
+    [Test]
+    public void ManagedIdentityTests_WhenFederatedCredentialIsUpdated_ThePropertiesShouldChange()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var identityCollection = resourceGroup.Value.GetUserAssignedIdentities();
+        const string identityName = "testidentity-fic-update";
+        identityCollection.CreateOrUpdate(WaitUntil.Completed, identityName,
+            new UserAssignedIdentityData(AzureLocation.WestEurope), CancellationToken.None);
+        var identity = resourceGroup.Value.GetUserAssignedIdentity(identityName).Value;
+        const string ficName = "fic-to-update";
+        identity.GetFederatedIdentityCredentials().CreateOrUpdate(WaitUntil.Completed, ficName,
+            new FederatedIdentityCredentialData
+            {
+                Issuer = "https://token.actions.githubusercontent.com",
+                Subject = "repo:myorg/myrepo:ref:refs/heads/main",
+                Audiences = { "api://AzureADTokenExchange" }
+            }, CancellationToken.None);
+
+        // Act — update the subject
+        identity.GetFederatedIdentityCredentials().CreateOrUpdate(WaitUntil.Completed, ficName,
+            new FederatedIdentityCredentialData
+            {
+                Issuer = "https://token.actions.githubusercontent.com",
+                Subject = "repo:myorg/myrepo:environment:production",
+                Audiences = { "api://AzureADTokenExchange" }
+            }, CancellationToken.None);
+
+        var updated = identity.GetFederatedIdentityCredential(ficName).Value;
+
+        // Assert
+        Assert.That(updated.Data.Subject, Is.EqualTo("repo:myorg/myrepo:environment:production"));
+    }
+
+    [Test]
     public void ManagedIdentityTests_WhenGettingSystemAssignedIdentityThatDoesNotExist_ItShouldReturn404()
     {
         // Arrange

@@ -38,10 +38,10 @@ This page tracks which Azure Managed Identity REST API operations are implemente
 
 | Operation | Status |
 |-----------|--------|
-| Create Or Update | ❌ |
-| Delete | ❌ |
-| Get | ❌ |
-| List | ❌ |
+| Create Or Update | ✅ |
+| Delete | ✅ |
+| Get | ✅ |
+| List | ✅ |
 
 ### System Assigned Identities
 
