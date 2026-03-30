@@ -5,6 +5,7 @@ using Azure.ResourceManager.ContainerRegistry;
 using Azure.ResourceManager.ContainerRegistry.Models;
 using Azure.ResourceManager.ManagedServiceIdentities;
 using Azure.ResourceManager.Models;
+using Microsoft.Graph;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
@@ -15,6 +16,9 @@ public class ContainerRegistryTests
 {
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
     private static readonly Guid SubscriptionId = Guid.Parse("E1F2A3B4-C5D6-E7F8-A9B0-C1D2E3F4A5B6");
+
+    private static GraphServiceClient GraphClient => new(new HttpClient(), new LocalGraphAuthenticationProvider(),
+        "https://topaz.local.dev:8899");
 
     private const string SubscriptionName = "sub-test";
     private const string ResourceGroupName = "test-acr";
@@ -199,6 +203,44 @@ public class ContainerRegistryTests
                 Is.EqualTo(registry.Value.Data.Identity!.PrincipalId.ToString()));
             Assert.That(identity.Value.Data.TenantId.ToString(),
                 Is.EqualTo(registry.Value.Data.Identity!.TenantId.ToString()));
+        }
+        finally
+        {
+            var registry2 = await registries.GetAsync(registryName);
+            await registry2.Value.DeleteAsync(WaitUntil.Completed);
+        }
+    }
+
+    [Test]
+    public async Task ContainerRegistry_CreateWithSystemAssignedIdentity_ServicePrincipalShouldExistInEntra()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryName = $"topazacr{Guid.NewGuid():N}"[..24];
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Basic))
+        {
+            Identity = new ManagedServiceIdentity(ManagedServiceIdentityType.SystemAssigned)
+        };
+
+        // Act
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, registryName, registryData);
+        var registry = await registries.GetAsync(registryName);
+
+        try
+        {
+            var principalId = registry.Value.Data.Identity!.PrincipalId!.Value;
+
+            // Assert — the service principal exists in the emulated Entra tenant,
+            // accessible by the principalId (which is the SP's object ID)
+            var sp = await GraphClient.ServicePrincipals[principalId.ToString()].GetAsync();
+            Assert.That(sp, Is.Not.Null);
         }
         finally
         {
