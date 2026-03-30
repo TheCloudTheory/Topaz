@@ -4,11 +4,12 @@
     "activeDirectory": "https://topaz.local.dev:8899",
     "activeDirectoryResourceId": "https://topaz.local.dev:8899",
     "activeDirectoryGraphResourceId": "https://topaz.local.dev:8899",
-    "microsoft_graph_resource_id": "https://topaz.local.dev:8899"
+    "microsoft_graph_resource_id": "https://topaz.local.dev:8899",
+    "acr_login_server_endpoint": "https://topaz.local.dev:8899"
   },
   "name": "Topaz",
   "suffixes": {
-    "acrLoginServerEndpoint": null,
+    "acrLoginServerEndpoint": ".topaz.local.dev",
     "attestationEndpoint": null,
     "azureDatalakeAnalyticsCatalogAndJobEndpoint": null,
     "azureDatalakeStoreFileSystemEndpoint": null,

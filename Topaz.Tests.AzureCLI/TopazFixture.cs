@@ -16,10 +16,12 @@ public class TopazFixture
                                                              "activeDirectory": "https://topaz.local.dev:8899",
                                                              "activeDirectoryResourceId": "https://topaz.local.dev:8899",
                                                              "activeDirectoryGraphResourceId": "https://topaz.local.dev:8899",
-                                                             "microsoft_graph_resource_id": "https://topaz.local.dev:8899"
+                                                             "microsoft_graph_resource_id": "https://topaz.local.dev:8899",
+                                                             "acr_login_server_endpoint": "https://topaz.local.dev:8899"
                                                            },
                                                            "suffixes": {
-                                                             "keyvault_dns": "https://topaz.local.dev:8898/"
+                                                             "keyvault_dns": ".keyvault.topaz.local.dev",
+                                                             "acrLoginServerEndpoint": ".cr.topaz.local.dev"
                                                            }
                                                          }
                                                          """;

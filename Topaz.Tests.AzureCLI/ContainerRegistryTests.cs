@@ -17,8 +17,8 @@ public class ContainerRegistryTests : TopazFixture
             {
                 Assert.That(resp["name"]!.GetValue<string>(), Is.EqualTo(registryName));
                 Assert.That(resp["sku"]!["name"]!.GetValue<string>(), Is.EqualTo("Basic"));
-                Assert.That(resp["properties"]!["loginServer"], Is.Not.Null);
-                Assert.That(resp["properties"]!["provisioningState"]!.GetValue<string>(), Is.EqualTo("Succeeded"));
+                Assert.That(resp["loginServer"], Is.Not.Null);
+                Assert.That(resp["provisioningState"]!.GetValue<string>(), Is.EqualTo("Succeeded"));
             });
         });
 
@@ -64,7 +64,7 @@ public class ContainerRegistryTests : TopazFixture
 
         await RunAzureCliCommand($"az acr update --name {registryName} --resource-group {resourceGroup} --admin-enabled true", (resp) =>
         {
-            Assert.That(resp["properties"]!["adminUserEnabled"]!.GetValue<bool>(), Is.True);
+            Assert.That(resp["adminUserEnabled"]!.GetValue<bool>(), Is.True);
         });
 
         await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");

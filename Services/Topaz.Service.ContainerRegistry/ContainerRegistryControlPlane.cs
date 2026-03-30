@@ -253,7 +253,8 @@ internal sealed class ContainerRegistryControlPlane(
         }
 
         // search across all resource groups in the subscription
-        var allRegistries = provider.ListAs<ContainerRegistryResource>(subscriptionIdentifier, null);
+        var allRegistries = provider.ListAs<ContainerRegistryResource>(subscriptionIdentifier, null,
+            lookForNoOfSegments: RegistryFileSegmentCount);
         var isAvailable = allRegistries.All(r => !string.Equals(r.Name, registryName, StringComparison.OrdinalIgnoreCase));
         logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(IsNameAvailable),
             "Executing {0}: Registry '{1}' is {2}.", nameof(IsNameAvailable), registryName, isAvailable ? "available" : "unavailable");
