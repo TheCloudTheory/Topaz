@@ -2,103 +2,198 @@
 sidebar_position: 1
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Getting started
 
-Let's discover what is Topaz and how you may benefit from it.
+Let's discover what Topaz is and how to set it up for local Azure development.
 
 ## What is Topaz?
 
-Topaz is an Azure emulator, which allows you to develop Azure-based applications without a need to connect to cloud services. It mimics popular Azure components such as Azure Storage, Azure Key Vault or Azure Service Bus to provide a robust local environment.
+Topaz is an Azure emulator that lets you develop and test Azure-based applications without connecting to real cloud services. It implements the ARM control plane and the data planes of popular services such as Azure Storage, Key Vault, Service Bus, and more — all running locally on your machine.
 
-:::danger[Important]
+:::danger[Early stage]
 
-Topaz is still in an early stage of development. Feel free to use it in any of your projects, but asses for possible breaking changes which may be introduced in upcoming releases. 
+Topaz is still in active development. Breaking changes may be introduced in upcoming releases. Check the release notes before upgrading.
 
 :::
 
-### What you'll need
+## Prerequisites
 
-Topaz is distributed as a self-container binary meaning the only thing you need is downloading the selected release package from the [releases page](https://github.com/TheCloudTheory/Topaz/releases). However, if you prefer to run as a containerized service, you will need a container runtime such as Docker.
+| | Standalone executable | Docker container |
+|---|---|---|
+| Runtime | None — self-contained binary | Docker (or compatible runtime) |
+| Certificates | Must be installed & trusted | Handled automatically |
+| DNS | One-time setup script required | One-time setup script required |
 
-## How to install Topaz?
+Releases are published on the [GitHub releases page](https://github.com/TheCloudTheory/Topaz/releases). Download the package that matches your platform and architecture.
 
-Topaz doesn't require installation and can be run as either a single executable or a Docker container. If you want to run it as a standalone application, make sure you've installed and trusted certificates (unless you don't need to use HTTPS endpoints). The certificates are attached to each release package. We strongly recommend running Topaz as a Docker container though as it saves you from complexity of local installation:
+:::tip[Windows users]
+
+The recommended way to run Topaz on Windows is inside **WSL 2** (Windows Subsystem for Linux). This gives you a normal Linux environment and avoids certificate and DNS complications. All shell examples below assume a Linux/macOS shell; run them inside WSL if you're on Windows.
+
+:::
+
+## Step 1 — One-time DNS configuration
+
+Topaz emulates Azure service hostnames (e.g. `*.blob.core.windows.net`) locally. A one-time DNS configuration is required so that these hostnames resolve to `127.0.0.1`. This needs admin privileges, but once done Topaz needs none at runtime.
+
+<Tabs groupId="os">
+<TabItem value="macos" label="macOS">
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/install-macos.sh | sudo bash
+```
+
+Or clone the repo and run it directly:
+
+```bash
+sudo bash install/install-macos.sh
+```
+
+</TabItem>
+<TabItem value="linux" label="Linux / WSL">
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/install-linux.sh | sudo bash
+```
+
+Or clone the repo and run it directly:
+
+```bash
+sudo bash install/install-linux.sh
+```
+
+</TabItem>
+</Tabs>
+
+You only need to run this script once per machine (or WSL instance).
+
+## Step 2 — Trust the certificate
+
+Topaz exposes HTTPS endpoints using a self-signed certificate that is bundled in the release package. You need to add it to your system trust store so that tools like the Azure CLI and the Azure SDKs can connect without TLS errors.
+
+<Tabs groupId="os">
+<TabItem value="macos" label="macOS">
+
+Open Keychain Access, import `topaz.crt`, and mark it as **Always Trust**, or use the terminal:
+
+```bash
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain topaz.crt
+```
+
+</TabItem>
+<TabItem value="linux" label="Linux / WSL">
+
+```bash
+sudo cp topaz.crt /usr/local/share/ca-certificates/topaz.crt
+sudo update-ca-certificates
+```
+
+</TabItem>
+</Tabs>
+
+:::tip[Skip certificates with Docker]
+
+When running Topaz as a Docker container you can expose only the HTTP data-plane ports and skip this step entirely. HTTPS is still available inside the container on port 8899 (ARM), but services like Blob and Table Storage use plain HTTP on their own ports.
+
+:::
+
+## Step 3 — Run the emulator
+
+<Tabs groupId="runtime">
+<TabItem value="executable" label="Standalone executable">
+
+<Tabs groupId="os">
+<TabItem value="macos" label="macOS / Linux / WSL">
+
+```bash
+cd <download-directory>
+chmod +x topaz-linux-x64          # use topaz-osx-x64 on macOS; topaz-linux-arm64 on ARM
+./topaz-linux-x64 start --log-level Information
+```
+
+Available binaries by platform:
+
+| Platform | Binary |
+|---|---|
+| macOS (Intel & Apple Silicon via Rosetta 2) | `topaz-osx-x64` |
+| Linux x64 | `topaz-linux-x64` |
+| Linux ARM64 | `topaz-linux-arm64` |
+| Windows | `topaz-win-x64.exe` (or use the Linux binary inside WSL) |
+
+</TabItem>
+</Tabs>
+
+### Setting up an alias (recommended)
+
+Typing the full binary name every time is tedious. Create a shell alias or move the binary to a directory on your `PATH`:
+
+```bash
+# Option A — symlink into /usr/local/bin
+sudo ln -s "$(pwd)/topaz-linux-x64" /usr/local/bin/topaz
+
+# Option B — add alias to your shell profile
+echo 'alias topaz="/path/to/topaz-linux-x64"' >> ~/.zshrc   # macOS (Zsh)
+echo 'alias topaz="/path/to/topaz-linux-x64"' >> ~/.bashrc  # Linux / WSL
+source ~/.zshrc   # or ~/.bashrc
+```
+
+After this you can simply run `topaz start --log-level Information` from any directory.
+
+</TabItem>
+<TabItem value="docker" label="Docker">
 
 ```bash
 docker pull thecloudtheory/topaz-cli:<tag>
+
+# Run with the most commonly used ports exposed
+docker run --rm \
+  -p 8899:8899 \   # ARM / Resource Manager (HTTPS)
+  -p 8898:8898 \   # Key Vault (HTTPS)
+  -p 8891:8891 \   # Blob Storage (HTTP)
+  -p 8890:8890 \   # Table Storage (HTTP)
+  -p 8897:8897 \   # Event Hub (HTTP)
+  -p 8888:8888 \   # Event Hub (AMQP)
+  -p 8889:8889 \   # Service Bus (AMQP)
+  -p 5671:5671 \   # Service Bus (AMQP/TLS)
+  thecloudtheory/topaz-cli:<tag> start --log-level Information
 ```
 
-Image tags are always aligned with the Git tag linked to a specific release.
+Image tags match the Git release tags. Expose only the ports you actually need.
 
-One of the best options to run Topaz is to leverage [Testcontainers](https://testcontainers.com/). Check the rest of the documentation for the detailed instructions.
+:::info[Data persistence]
 
-## DNS resolution for Topaz
-In order to fully support emulation of Azure services, Topaz requires doing a one-time configuration of local DNS resolution. It can be done using a dedicated script available in the repository:
-* [macOS](https://github.com/TheCloudTheory/Topaz/blob/main/install/install-macos.sh)
-* [Linux](https://github.com/TheCloudTheory/Topaz/blob/main/install/install-linux.sh)
+By default, all state is held in memory and lost when the container stops. Mount a volume to persist resources across restarts:
 
-:::tip
-
-For now the recommended way of running Topaz on Windows machines is using WSL.
+```bash
+docker run --rm \
+  -p 8899:8899 \
+  -v topaz-data:/app/.topaz \
+  thecloudtheory/topaz-cli:<tag> start --log-level Information
+```
 
 :::
 
-The installation scripts require admin privileges to make necessary changes, but after initial setup Topaz require no elevated permissions.
+</TabItem>
+</Tabs>
 
-## Start the emulator
+## Step 4 — Verify the emulator is running
 
-Depending on the selected approach (standalone executable vs container), you will need different commands to start the emulator.
-
-### Running the executable
+Once started, Topaz logs the list of bound endpoints. You can also do a quick health check against the ARM endpoint:
 
 ```bash
-# For Unix/Linux systems
-cd <executable-download-directory>
-chmod +x <executable-name>
-./<executable-name> start --log-level Information
-
-# For Windows
-.\topaz-win-x64.exe start --log-level Information
+curl -k https://localhost:8899/subscriptions
+# Expected: HTTP 200 with an empty subscriptions list
 ```
 
-Make sure you downloaded the correct binary depending on the architecture of your processor.
+The `-k` flag skips TLS verification for the quick check. In normal usage the certificate will be trusted after Step 2, so you won't need it.
 
-### Setting up an alias
-Referencing the original executable name may be cumbersome if you're planning to use the CLI extensively. To help you with that, you may consider creating an alias for Topaz.
+## Next steps
 
-#### macOS / Linux
-Using the shell configuration file:
-```bash
-# For Bash users
-echo 'alias topaz="/path/to/your/topaz-executable"' >> ~/.bashrc
-source ~/.bashrc
+- [Supported services](./supported-services.md) — coverage matrix and port reference
+- [Using Topaz CLI](./using-cli.md) — create subscriptions, resource groups, and more
+- [Azure CLI integration](./azure-cli-integration.md) — use `az` commands against Topaz
+- [ASP.NET Core integration](./ecosystem/aspnet-core.md) — wire Topaz into your app with a fluent API
 
-# For Zsh users (macOS default)
-echo 'alias topaz="/path/to/your/topaz-executable"' >> ~/.zshrc
-source ~/.zshrc
-```
-
-Moving to `/usr/local/bin` or by using a symlink:
-```bash
-# Option 1: Move to /usr/local/bin
-sudo mv /path/to/your/topaz-executable /usr/local/bin/topaz
-sudo chmod +x /usr/local/bin/topaz
-
-# Option 2: Create a symlink
-sudo ln -s /path/to/your/topaz-executable /usr/local/bin/topaz
-```
-
-#### Windows
-Using PowerShell:
-```powershell
-echo 'Set-Alias -Name topaz -Value "C:\path\to\your\topaz-win-x64.exe"' >> $PROFILE
-```
-Alternatively, you can just rename the executable to `topaz.exe` and then add it to PATH.
-
-### Running Topaz as a container
-```bash
-docker run --rm -p 8899:8899 thecloudtheory/topaz-cli:<tag> start --log-level Information
-```
-As various emulated services are exposed using different ports, you need to explicitly tell Docker (or similar tool you're using for running containers) which ports should be available on the host machine.
-
-Note that using `start` command isn't the only option available for Topaz. You can learn more about other commands on the next page.

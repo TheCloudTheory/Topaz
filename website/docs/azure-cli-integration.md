@@ -2,112 +2,228 @@
 sidebar_position: 4
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Azure CLI integration
 
-Topaz offers a seamless integration with Azure CLI by exposing a dedicated cloud environment which you can add locally with just a few steps. Follow this guide for more details.
+Topaz exposes a custom Azure cloud environment that Azure CLI can register and authenticate against, letting you use `az` commands locally without touching real Azure resources. This guide walks through the full setup end-to-end.
 
-## Trusting the certificate
-As Topaz exposes HTTPS endpoints using a self-signed certificate, Azure CLI may fail when connecting to it because it's not part of the CA bundle certificate file which it uses. If you face an error such as:
-```bash
-Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate
-```
+## Prerequisites
 
-### Automated configuration (recommended)
-Topaz provides an automated script to configure Azure CLI to trust the Topaz certificate. The script locates Azure CLI's bundled certificate store and adds the Topaz certificate to it:
+- Azure CLI installed (`az --version` to verify)
+- Topaz installed and the certificate trusted at the OS level (see [Getting started](./intro.md))
+- A Microsoft Entra ID tenant you can log into (a free/personal tenant works fine)
 
-```bash
-$ ./install/configure-azure-cli-cert.sh
-```
+:::tip[Use a dedicated test tenant]
 
-The script will:
-1. **Locate the Azure CLI certificate bundle** - automatically detects the correct path based on your OS and architecture:
-   - **macOS Intel**: `/usr/local/Cellar/azure-cli/*/libexec/lib/python*/site-packages/certifi/cacert.pem`
-   - **macOS Apple Silicon**: `/opt/homebrew/Cellar/azure-cli/*/libexec/lib/python*/site-packages/certifi/cacert.pem`
-   - **Ubuntu/Debian**: `/opt/az/lib/python*/site-packages/certifi/cacert.pem`
-   - **RHEL/CentOS/SUSE**: `/usr/lib64/az/lib/python*/site-packages/certifi/cacert.pem`
+Creating a dedicated Entra ID tenant for local development disables stricter security policies like Conditional Access, which can otherwise interrupt the `az login` flow. Head to [portal.azure.com](https://portal.azure.com) → *Manage Microsoft Entra ID* → *Create a tenant* to create a free one.
 
-2. **Create a timestamped backup** of the original certificate bundle before making any changes
-
-3. **Add the Topaz certificate** to the bundle (requires `sudo` permissions)
-
-4. **Test the configuration** by running a simple Azure CLI command
-
-The script is idempotent and can be run multiple times safely. If the certificate is already installed, it will prompt whether you want to reinstall it. To restore the original bundle, the script provides instructions using the backup file created during installation.
-
-### Manual configuration
-Alternatively, you can follow the [official Azure CLI documentation](https://learn.microsoft.com/en-gb/cli/azure/use-azure-cli-successfully-troubleshooting?view=azure-cli-latest#work-behind-a-proxy) to manually configure the certificate trust.
-
-## Starting the emulator
-Azure CLI requires you to authenticate against a real tenant before you can use the selected cloud environment. It will also try to obtain the metadata endpoints from it. To ensure the process goes smoothly, you will need to run the emulator in the background and include `--tenant-id` option:
-```bash
-$ topaz start --tenant-id <tenant-id>
-```
-It's important to remember that `--tenant-id` value must be an identifier of a tenant, where you have an account. 
-
-:::tip[Best practice]
-
-It's a good idea to create a dummy Microsoft Entra ID tenant so no additional security patterns are applied when signing-in (for instance Conditional Access). On the other hand using a real tenant may be helpful if you do want to implement E2E tests. Either option will work.
 :::
 
-Keep the emulator running in the background and continue with setting up the environment using Azure CLI.
+## Step 1 — Trust the certificate in Azure CLI
 
-## Creating a subscription
-Topaz doesn't create a subscription by default yet (check [this](https://github.com/TheCloudTheory/Topaz/issues/16) issue for more information) so you will need to create one before you start integrating it with Azure CLI. The simplest option is using `subscription create` command provided by Topaz CLI:
-```bash
-$ topaz subscription create --id 36a28ebb-9370-46d8-981c-84efe02048ae --name "sub-local"
-```
-The same can be achieved using ASP.NET Core extension or with a raw HTTP request:
-```bash
-curl --location 'https://localhost:8899/subscriptions/36a28ebb-9370-46d8-981c-84efe02048ae' \
-    --header 'Content-Type: application/json' \
-    --data '{"subscriptionId":"36a28ebb-9370-46d8-981c-84efe02048ae",\
-    "subscriptionName":"DEV-Local-Topaz"}'
-```
-You can also simplify this step by supplying the `--default-subscription` option when starting the emulator. Providing a subscription GUID to `topaz start` will cause the emulator to create that subscription automatically at startup, so you don't need to run `topaz subscription create` separately. Example:
+Azure CLI ships with its own Python-based certificate bundle and does **not** automatically pick up certificates trusted at the OS level. Until the Topaz certificate is added to that bundle, `az` commands will fail with:
 
-```bash
-$ topaz start --tenant-id <tenant-id> --default-subscription 36a28ebb-9370-46d8-981c-84efe02048ae
+```
+SSLError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate
 ```
 
-The subscription will be provisioned as the emulator comes up and will be immediately available for Azure CLI to use.
+### Automated (recommended)
 
-With the subscription created you can proceed to the next step.
+Run the configuration script from the Topaz repository. It detects your OS and architecture, backs up the existing bundle, and appends the Topaz certificate:
 
-## Setting up new environment
-Azure CLI can connect with different cloud environments if needed (like Azure Stack) by registering them explictly using a dedicated command. To keep things simple, Topaz follows the exact same pattern. All you need is to download [this](https://raw.githubusercontent.com/TheCloudTheory/Topaz/refs/heads/main/cloud.json) file and run the following command:
+<Tabs groupId="os">
+<TabItem value="macos" label="macOS">
+
 ```bash
-$ az cloud register -n Topaz --cloud-config @"cloud.json"
+# From the Topaz repo root
+sudo bash install/configure-azure-cli-cert.sh
+```
 
+The script looks for the Azure CLI bundle at:
+- **Intel**: `/usr/local/Cellar/azure-cli/*/libexec/lib/python*/site-packages/certifi/cacert.pem`
+- **Apple Silicon**: `/opt/homebrew/Cellar/azure-cli/*/libexec/lib/python*/site-packages/certifi/cacert.pem`
+
+</TabItem>
+<TabItem value="linux" label="Linux / WSL">
+
+```bash
+# From the Topaz repo root
+sudo bash install/configure-azure-cli-cert.sh
+```
+
+The script looks for the Azure CLI bundle at:
+- **Ubuntu/Debian**: `/opt/az/lib/python*/site-packages/certifi/cacert.pem`
+- **RHEL/CentOS/SUSE**: `/usr/lib64/az/lib/python*/site-packages/certifi/cacert.pem`
+
+</TabItem>
+</Tabs>
+
+The script is idempotent — safe to run multiple times. It will prompt you before reinstalling an already-present certificate. A timestamped backup of the original bundle is created, and the script prints instructions for restoring it if needed.
+
+### Manual
+
+If you prefer not to run the script, follow the [official Azure CLI guide](https://learn.microsoft.com/en-gb/cli/azure/use-azure-cli-successfully-troubleshooting?view=azure-cli-latest#work-behind-a-proxy) to set `REQUESTS_CA_BUNDLE` to a bundle file that includes the Topaz certificate.
+
+## Step 2 — Start the emulator with a tenant ID
+
+Azure CLI needs to resolve Entra ID metadata endpoints when you log in. Topaz intercepts these, but only when started with the `--tenant-id` option pointing at your real Entra ID tenant:
+
+```bash
+topaz start \
+  --tenant-id <your-entra-tenant-id> \
+  --default-subscription 00000000-0000-0000-0000-000000000001 \
+  --log-level Information
+```
+
+`--default-subscription` is optional but recommended — it creates the subscription automatically so you don't need a separate CLI command.
+
+Keep the emulator running in the background for the remaining steps.
+
+## Step 3 — Register the Topaz cloud environment
+
+Azure CLI supports custom cloud endpoints (as used by Azure Stack). Topaz registers itself the same way. Download the `cloud.json` configuration file and register it:
+
+```bash
+# Download the cloud configuration
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/refs/heads/main/cloud.json \
+  -o cloud.json
+
+# Register the cloud and switch to it
+az cloud register -n Topaz --cloud-config @"cloud.json"
+az cloud set -n Topaz
+```
+
+Expected output:
+```
 Switched active cloud to 'Topaz'.
 Use 'az login' to log in to this cloud.
 Use 'az account set' to set the active subscription.
 ```
 
-Now you can sign in using `az login` and start using Azure CLI commands as usual.
+## Step 4 — Log in
 
-:::warning
-
-Authentication to a local Entra ID tenant requires you to allow Azure CLI to authenticate to a tenant, which is not whitelisted. This is done by setting `AZURE_CORE_INSTANCE_DISCOVERY` environment variable to `false`. To keep things secure, make sure you restore the value to `true` after emulator is no longer needed.
-
-:::
+Topaz's Entra ID endpoint is not in the standard Azure instance discovery list, so you must disable instance discovery before logging in. **Remember to re-enable it when you switch back to real Azure.**
 
 ```bash
-$ export AZURE_CORE_INSTANCE_DISCOVERY=false
-$ az login
-A web browser has been opened at https://topaz.local.dev:8899/organizations/oauth2/v2.0/authorize. Please continue the login in the web browser. If no web browser is available or if the web browser fails to open, use device code flow with `az login --use-device-code`.
+export AZURE_CORE_INSTANCE_DISCOVERY=false
+az login
+```
 
-Retrieving tenants and subscriptions for the selection...
+A browser window will open for the standard Microsoft login flow. After authentication you should see your local subscription listed:
 
+```
 [Tenant and subscription selection]
 
 No     Subscription name    Subscription ID                       Tenant
 -----  -------------------  ------------------------------------  -----------------------
-[1] *  DEV-Local-Topaz      36a28ebb-9370-46d8-981c-84efe02048ae  Topaz Cloud Environment
+[1] *  dev-local            00000000-0000-0000-0000-000000000001  Topaz Cloud Environment
 ```
 
-## Changing the active environment
-If you want to change the environment in Azure CLI, you can do that with `az cloud set` command:
+:::tip[Headless / WSL environments]
+
+If no browser is available (e.g. in WSL without a desktop), use device code flow:
+
 ```bash
-$ az cloud set -n AzureCloud
+az login --use-device-code
 ```
-You can change the environment anytime if needed. It won't affect the resources you created using Topaz (unless you're running it as a container with no volume attached).
+
+You'll receive a code to enter at `https://microsoft.com/devicelogin` from any browser.
+
+:::
+
+## Step 5 — Verify and use
+
+Confirm Azure CLI is talking to Topaz:
+
+```bash
+az account list
+az account show
+```
+
+Now use `az` commands as normal. For example:
+
+<Tabs groupId="service">
+<TabItem value="rg" label="Resource Groups">
+
+```bash
+az group create --name "rg-local" --location "westeurope"
+az group list
+az group delete --name "rg-local" --yes
+```
+
+</TabItem>
+<TabItem value="keyvault" label="Key Vault">
+
+```bash
+az keyvault create \
+  --name "kv-local" \
+  --resource-group "rg-local" \
+  --location "westeurope"
+
+az keyvault secret set \
+  --vault-name "kv-local" \
+  --name "my-secret" \
+  --value "hello-topaz"
+
+az keyvault secret show \
+  --vault-name "kv-local" \
+  --name "my-secret"
+```
+
+</TabItem>
+<TabItem value="storage" label="Storage">
+
+```bash
+az storage account create \
+  --name "stlocal001" \
+  --resource-group "rg-local" \
+  --location "westeurope" \
+  --sku Standard_LRS
+
+az storage container create \
+  --name "my-container" \
+  --account-name "stlocal001"
+```
+
+</TabItem>
+<TabItem value="servicebus" label="Service Bus">
+
+```bash
+az servicebus namespace create \
+  --name "sb-local" \
+  --resource-group "rg-local" \
+  --location "westeurope"
+
+az servicebus queue create \
+  --name "my-queue" \
+  --namespace-name "sb-local" \
+  --resource-group "rg-local"
+```
+
+</TabItem>
+</Tabs>
+
+## Switching back to real Azure
+
+When you're done with local development, switch Azure CLI back to the public cloud and re-enable instance discovery:
+
+```bash
+az cloud set -n AzureCloud
+export AZURE_CORE_INSTANCE_DISCOVERY=true
+az login
+```
+
+Resources created in Topaz are unaffected — they remain available the next time you switch back and start the emulator.
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `CERTIFICATE_VERIFY_FAILED` | Azure CLI bundle not updated | Re-run `configure-azure-cli-cert.sh` |
+| `az login` hangs / no browser | Running in WSL headless | Use `az login --use-device-code` |
+| `InteractionRequiredAuthError` | Conditional Access policy on tenant | Use a dedicated test tenant (see Prerequisites) |
+| `az` commands return 404 | Wrong cloud active | Run `az cloud show` to confirm `Topaz` is selected |
+| Subscription not found | No subscription created | Add `--default-subscription` to `topaz start` |
+

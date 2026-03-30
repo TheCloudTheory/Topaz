@@ -2,59 +2,184 @@
 sidebar_position: 3
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Using Topaz CLI
 
-Topaz comes in a form of a single tool, which combines the capabilities of an underlying emulator and CLI. Whether you downloaded the Topaz executable or pulled its container image, you have the choice of running it in one of the available modes.
+Topaz is a single binary that acts as both the emulator and a CLI. The same executable can start the local Azure environment **and** issue commands to manage resources within it.
 
-## Running Topaz as emulator
-If you downloaded Topaz as an executable, you need to explicitly provide the `start` command to run it as an emulator:
+## Running the emulator
+
+Use the `start` command to bring up the emulator:
+
 ```bash
-./topaz start --log-level Information
+topaz start --log-level Information
 ```
 
-When running it as a container though, the `start` command is run by default. In other words this command:
+When running as a Docker container the `start` command is the default entrypoint, so it can be omitted:
+
 ```bash
+# These two are equivalent
 docker run --rm -p 8899:8899 thecloudtheory/topaz-cli:<tag> start --log-level Information
-```
-
-can be simplified with the following one:
-```bash
 docker run --rm -p 8899:8899 thecloudtheory/topaz-cli:<tag>
 ```
 
-Check the [`start`](./cli-reference/emulator/start.md) command reference for the full list of supported options.
+See the [`start` command reference](./cli-reference/emulator/start.md) for the full list of options.
 
-### Bring-you-own-certificate (BYOC)
-Topaz supports using a custom-provided certificate if you can't trust the one which is shipped with it. To configure Topaz to use your certificate, simply pass the location of both the certificate and the private key when starting the emulator:
+### Useful startup flags
+
+| Flag | Description |
+|---|---|
+| `--log-level` | Verbosity: `Debug`, `Information`, `Warning`, `Error` |
+| `--default-subscription` | Creates a subscription with the given GUID at startup |
+| `--tenant-id` | Required when integrating with Azure CLI (Entra ID auth) |
+| `--enable-logging-to-file` | Persists log output to a file |
+| `--refresh-log` | Clears the log file on each start |
+| `--emulator-ip-address` | Override the listening IP (default `127.0.0.1`) |
+
+### Starting with a default subscription
+
+By default Topaz starts with no subscriptions. Pass `--default-subscription` to have one created automatically at startup — useful for automated environments and CI pipelines:
+
 ```bash
-$ topaz start \
-    --certificate-file "/path/to/your/certificate.crt" \
-    --certificate-key "/path/to/your/private.key"
+topaz start \
+  --log-level Information \
+  --default-subscription 00000000-0000-0000-0000-000000000001
 ```
-:::warning
 
-Currently BYOC feature won't work on macOS machines because Topaz doesn't support providing a custom PFX certificate yet. A workaround is to run the emulator as a container. See [this](https://github.com/TheCloudTheory/Topaz/issues/20) issue for more information.
+### Logging to file
+
+```bash
+topaz start --log-level Debug --enable-logging-to-file --refresh-log
+```
+
+Logs are written to the `.topaz` directory inside the working folder.
+
+## Bring-your-own-certificate (BYOC)
+
+If you cannot trust the bundled self-signed certificate (e.g. in a corporate environment with its own CA), you can supply your own PEM-encoded certificate and private key:
+
+<Tabs groupId="runtime">
+<TabItem value="executable" label="Standalone executable">
+
+```bash
+topaz start \
+  --certificate-file "/path/to/your/certificate.crt" \
+  --certificate-key "/path/to/your/private.key"
+```
+
+:::warning[macOS limitation]
+
+BYOC currently does not work on macOS when running the standalone executable because Topaz does not yet support custom PFX certificates on that platform. The recommended workaround is to run Topaz as a Docker container instead. See [issue #20](https://github.com/TheCloudTheory/Topaz/issues/20) for tracking.
 
 :::
 
-If you're running Topaz as a container, make sure you mounted the directory containing the certificate and the key when starting it:
+</TabItem>
+<TabItem value="docker" label="Docker">
+
+Mount the certificate and key into the container, then reference them via the flags:
+
 ```bash
-docker run -d \
-  --name thecloudtheory/topaz-cli:<tag> \
+docker run --rm \
+  --name topaz \
   -p 8899:8899 \
   -v /path/to/your/certificate.crt:/app/certificate.crt:ro \
   -v /path/to/your/private.key:/app/private.key:ro \
+  thecloudtheory/topaz-cli:<tag> \
   start --certificate-file "certificate.crt" --certificate-key "private.key"
 ```
 
-## Running Topaz CLI 
-If Topaz is running in the background, you can leverage its CLI to interact with both control and data plane of emulated services. For instance, you could run the following 2 commands to create a new subscription and a resource group:
+</TabItem>
+</Tabs>
+
+## Using the CLI to manage resources
+
+While the emulator is running in the background, use the same binary (or a second terminal) to issue CLI commands against it. The CLI communicates with the locally running emulator over HTTP.
+
+### Quick-start: subscription and resource group
+
+The most common first steps are creating a subscription and a resource group:
+
 ```bash
-./topaz subscription create --id <subscription-id> --name <subscription-name>
-./topaz group create --name <resource-group-name> --location <location> --subscription-id <subscription-id>
+# Create a subscription
+topaz subscription create \
+  --id 00000000-0000-0000-0000-000000000001 \
+  --name "dev-local"
+
+# Create a resource group inside it
+topaz group create \
+  --name "rg-my-app" \
+  --location "westeurope" \
+  --subscription-id 00000000-0000-0000-0000-000000000001
 ```
 
-You can always check the available commands with their parameters and options by running:
+### Listing available commands
+
 ```bash
-./topaz -h
+topaz -h          # top-level help
+topaz <command> -h  # help for a specific command
 ```
+
+### Examples by service
+
+<Tabs groupId="service">
+<TabItem value="keyvault" label="Key Vault">
+
+```bash
+# Create a Key Vault
+topaz keyvault create \
+  --name "kv-local" \
+  --resource-group "rg-my-app" \
+  --subscription-id 00000000-0000-0000-0000-000000000001 \
+  --location "westeurope"
+
+# Delete a Key Vault
+topaz keyvault delete \
+  --name "kv-local" \
+  --resource-group "rg-my-app" \
+  --subscription-id 00000000-0000-0000-0000-000000000001
+```
+
+</TabItem>
+<TabItem value="servicebus" label="Service Bus">
+
+```bash
+# Create a Service Bus namespace
+topaz servicebus namespace create \
+  --name "sb-local" \
+  --resource-group "rg-my-app" \
+  --subscription-id 00000000-0000-0000-0000-000000000001 \
+  --location "westeurope"
+
+# Create a queue inside it
+topaz servicebus queue create \
+  --name "my-queue" \
+  --namespace-name "sb-local" \
+  --resource-group "rg-my-app" \
+  --subscription-id 00000000-0000-0000-0000-000000000001
+```
+
+</TabItem>
+<TabItem value="eventhub" label="Event Hub">
+
+```bash
+# Create an Event Hub namespace
+topaz eventhubs namespace create \
+  --name "eh-local" \
+  --resource-group "rg-my-app" \
+  --subscription-id 00000000-0000-0000-0000-000000000001 \
+  --location "westeurope"
+
+# Create an Event Hub inside it
+topaz eventhubs eventhub create \
+  --name "my-hub" \
+  --namespace-name "eh-local" \
+  --resource-group "rg-my-app" \
+  --subscription-id 00000000-0000-0000-0000-000000000001
+```
+
+</TabItem>
+</Tabs>
+
+For the complete list of commands and their parameters, browse the **CLI Reference** section in the left sidebar.
