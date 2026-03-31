@@ -89,6 +89,7 @@ const config: Config = {
           label: 'Documentation',
         },
         {to: '/pricing', label: 'Pricing', position: 'left'},
+        {to: '/demo', label: 'Demo', position: 'left'},
         {to: '/blog', label: 'Blog', position: 'left'},
         {
           href: 'https://github.com/TheCloudTheory/Topaz',
