@@ -87,6 +87,22 @@ public class ResourceGroupIdentifierTests
     }
     
     [Test]
+    public void ResourceGroupTests_WhenResourceGroupDoesNotExist_CheckExistenceShouldReturnFalse()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroups = subscription.GetResourceGroups();
+
+        // Act — ResourceGroupName was deleted (or never created) in SetUp
+        var exists = resourceGroups.Exists(ResourceGroupName);
+
+        // Assert
+        Assert.That(exists.Value, Is.False);
+    }
+
+    [Test]
     public void ResourceGroupTests_WhenMultipleResourceGroupsAreCreated_TheyShouldBeReturnedWhenListingThem()
     {
         // Arrange

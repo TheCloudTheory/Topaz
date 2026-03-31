@@ -10,6 +10,7 @@ public sealed class GenericResourceGroupCommand : IEmulatorCommand
         configurator.AddBranch("group", group => {
             group.AddCommand<CreateResourceGroupCommand>("create");
             group.AddCommand<DeleteResourceGroupCommand>("delete");
+            group.AddCommand<CheckExistenceResourceGroupCommand>("exists");
             group.AddCommand<ListResourceGroupCommand>("list");
             group.AddCommand<ShowResourceGroupCommand>("show");
         });

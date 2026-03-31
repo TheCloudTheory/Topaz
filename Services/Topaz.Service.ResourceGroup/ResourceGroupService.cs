@@ -18,6 +18,7 @@ public sealed class ResourceGroupService(Pipeline eventPipeline, ITopazLogger lo
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new CreateUpdateResourceGroupEndpoint(eventPipeline, logger),
         new GetResourceGroupEndpoint(eventPipeline, logger),
+        new CheckExistenceResourceGroupEndpoint(eventPipeline, logger),
         new ListResourceGroupEndpoint(eventPipeline, logger),
         new DeleteResourceGroupEndpoint(eventPipeline, logger),
     ];

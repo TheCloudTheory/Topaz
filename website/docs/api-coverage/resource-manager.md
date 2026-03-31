@@ -58,7 +58,7 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 | Delete | ✅ | Returns HTTP 200; Azure spec requires 202 Accepted |
 | Get | ✅ | |
 | List | ✅ | |
-| Check Existence | ❌ | HEAD verb not handled |
+| Check Existence | ✅ | HEAD verb; returns 204 if exists, 404 if not |
 | Export Template | ❌ | |
 | Update | ❌ | PATCH verb not implemented |
 

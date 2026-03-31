@@ -21,4 +21,24 @@ public class ResourceGroupTests : TopazFixture
         });
         await RunAzureCliCommand("az group delete -n test-rg --yes");
     }
+
+    [Test]
+    public async Task ResourceGroupTests_WhenResourceGroupIsCreatedAndChecked_ItShouldExist()
+    {
+        await RunAzureCliCommand("az group create -n test-exists-rg -l westeurope");
+        await RunAzureCliCommand("az group exists -n test-exists-rg", (response) =>
+        {
+            Assert.That(response.GetValue<bool>(), Is.True);
+        });
+        await RunAzureCliCommand("az group delete -n test-exists-rg --yes");
+    }
+
+    [Test]
+    public async Task ResourceGroupTests_WhenResourceGroupDoesNotExist_CheckShouldReturnFalse()
+    {
+        await RunAzureCliCommand("az group exists -n non-existing-rg", (response) =>
+        {
+            Assert.That(response.GetValue<bool>(), Is.False);
+        });
+    }
 }
