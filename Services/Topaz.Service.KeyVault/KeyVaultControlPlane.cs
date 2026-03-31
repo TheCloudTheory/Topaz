@@ -27,8 +27,8 @@ internal sealed class KeyVaultControlPlane(
 
     public static KeyVaultControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(new KeyVaultResourceProvider(logger),
         new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-            new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger),
-        new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+            SubscriptionControlPlane.New(eventPipeline, logger), logger),
+        SubscriptionControlPlane.New(eventPipeline, logger), logger);
     
     public ControlPlaneOperationResult<KeyVaultResource> Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location, string keyVaultName)
     {

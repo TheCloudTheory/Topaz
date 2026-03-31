@@ -24,7 +24,7 @@ public sealed class CreateEventHubNamespaceCommand(Pipeline eventPipeline, ITopa
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+                SubscriptionControlPlane.New(eventPipeline, logger), logger);
         var resourceGroup =
             resourceGroupControlPlane.Get(SubscriptionIdentifier.From(Guid.Parse(settings.SubscriptionId)),
                 resourceGroupIdentifier);

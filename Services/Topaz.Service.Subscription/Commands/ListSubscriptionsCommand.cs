@@ -14,7 +14,7 @@ public sealed class ListSubscriptionsCommand(Pipeline eventPipeline, ITopazLogge
     {
         logger.LogInformation("Listing available subscriptions...");
 
-        var controlPlane = new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger));
+        var controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
         var operation = controlPlane.List();
 
         if (operation.Result == OperationResult.Failed)

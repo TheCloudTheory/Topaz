@@ -15,7 +15,7 @@ public class DeleteSubscriptionCommand(Pipeline eventPipeline, ITopazLogger logg
         logger.LogInformation("Deleting subscription...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
-        var controlPlane = new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger));
+        var controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
         controlPlane.Delete(subscriptionIdentifier);
 
         logger.LogInformation("Subscription deleted.");

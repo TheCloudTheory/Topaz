@@ -16,7 +16,7 @@ public sealed class CreateSubscriptionCommand(Pipeline eventPipeline, ITopazLogg
         logger.LogInformation("Creating subscription...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
-        var controlPlane = new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger));
+        var controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
         var sa = controlPlane.Create(subscriptionIdentifier, settings.Name!, settings.Tags);
 
         logger.LogInformation(sa.ToString());

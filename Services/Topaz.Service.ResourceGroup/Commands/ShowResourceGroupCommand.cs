@@ -16,7 +16,7 @@ public sealed class ShowResourceGroupCommand(Pipeline eventPipeline, ITopazLogge
     {
         logger.LogDebug(nameof(ShowResourceGroupCommand), nameof(Execute), "Executing {0}.{1}.", nameof(ShowResourceGroupCommand), nameof(Execute));
 
-        var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+        var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
         var operation = controlPlane.Get(new SubscriptionIdentifier(Guid.Parse(settings.SubscriptionId)), new ResourceGroupIdentifier(settings.Name!));
 
         logger.LogInformation(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));

@@ -23,7 +23,7 @@ public class CreateGroupDeploymentCommand(Pipeline eventPipeline, ITopazLogger l
 
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
         var resourceGroupOperation = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound || resourceGroupOperation.Resource == null)
         {

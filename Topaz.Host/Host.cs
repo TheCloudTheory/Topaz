@@ -123,7 +123,7 @@ public class Host
             Console.WriteLine("Creating a default subscription...");
 
             var subscriptionControlPlane =
-                new SubscriptionControlPlane(_eventPipeline, new SubscriptionResourceProvider(_logger));
+                SubscriptionControlPlane.New(_eventPipeline, _logger);
             var existingSubscriptionOperation =
                 subscriptionControlPlane.Get(SubscriptionIdentifier.From(_options.DefaultSubscription.Value));
             if (existingSubscriptionOperation.Result == OperationResult.NotFound)

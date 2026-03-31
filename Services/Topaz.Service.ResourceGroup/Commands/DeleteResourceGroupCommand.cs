@@ -19,7 +19,7 @@ public sealed class DeleteResourceGroupCommand(Pipeline eventPipeline, ITopazLog
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.Name!);
-        var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+        var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
         var existingResource = controlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
         if (existingResource.Result == OperationResult.NotFound)
         {

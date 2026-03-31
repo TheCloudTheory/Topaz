@@ -24,8 +24,8 @@ public class CreateKeyVaultCommand(Pipeline eventPipeline, ITopazLogger logger) 
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger),
-            new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+                SubscriptionControlPlane.New(eventPipeline, logger), logger),
+            SubscriptionControlPlane.New(eventPipeline, logger), logger);
         var existingKeyVault = controlPlane.CheckName(subscriptionIdentifier, settings.Name!, null);
 
         if (!existingKeyVault.response.NameAvailable)

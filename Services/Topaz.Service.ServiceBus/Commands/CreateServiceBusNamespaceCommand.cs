@@ -20,7 +20,7 @@ public sealed class CreateServiceBusNamespaceCommand(Pipeline eventPipeline, ITo
 
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
         var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
         if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {

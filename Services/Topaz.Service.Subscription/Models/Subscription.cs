@@ -16,6 +16,7 @@ internal sealed class Subscription
     
     public string SubscriptionId { get; init; }
     public string? DisplayName { get; set; }
+    public string State { get; set; } = "Enabled";
     public IDictionary<string, string> Tags { get; set; }
 
     [JsonConstructor]

@@ -22,8 +22,8 @@ public class CheckKeyVaultNameCommand(Pipeline eventPipeline, ITopazLogger logge
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger),
-            new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+                SubscriptionControlPlane.New(eventPipeline, logger), logger),
+            SubscriptionControlPlane.New(eventPipeline, logger), logger);
         var kv = controlPlane.CheckName(subscriptionIdentifier, settings.Name!, settings.ResourceType);
 
         logger.LogInformation(kv.response.ToString());

@@ -20,8 +20,8 @@ public sealed class DeleteKeyVaultCommand(Pipeline eventPipeline, ITopazLogger l
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger),
-            new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+                SubscriptionControlPlane.New(eventPipeline, logger), logger),
+            SubscriptionControlPlane.New(eventPipeline, logger), logger);
         
         controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 

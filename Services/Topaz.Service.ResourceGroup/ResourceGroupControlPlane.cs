@@ -18,7 +18,7 @@ internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider gr
 
     public static ResourceGroupControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(
         new ResourceGroupResourceProvider(logger),
-        new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+        SubscriptionControlPlane.New(eventPipeline, logger), logger);
     
     public ControlPlaneOperationResult<ResourceGroupResource> Get(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
     {

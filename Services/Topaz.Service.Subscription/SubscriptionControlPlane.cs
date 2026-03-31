@@ -8,13 +8,13 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Subscription;
 
-internal sealed class SubscriptionControlPlane(Pipeline eventPipeline, SubscriptionResourceProvider provider)
+internal sealed class SubscriptionControlPlane(Pipeline eventPipeline, SubscriptionResourceProvider provider, ITopazLogger logger)
 {
     private const string SubscriptionNotFoundMessageTemplate = "Subscription {0} not found";
     private const string SubscriptionNotFoundCode = "SubscriptionNotFound";
 
     public static SubscriptionControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
-        new(eventPipeline, new SubscriptionResourceProvider(logger));
+        new(eventPipeline, new SubscriptionResourceProvider(logger), logger);
     
     public ControlPlaneOperationResult<Models.Subscription> Get(SubscriptionIdentifier subscriptionIdentifier)
     {
@@ -96,6 +96,26 @@ internal sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscript
         
         subscriptionOperation.Resource.UpdateFrom(request);
         
+        provider.CreateOrUpdate(subscriptionIdentifier, null, null, subscriptionOperation.Resource);
+        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Updated, subscriptionOperation.Resource,
+            null, null);
+    }
+
+    public ControlPlaneOperationResult<Models.Subscription> Cancel(SubscriptionIdentifier subscriptionIdentifier)
+    {
+        logger.LogDebug(nameof(SubscriptionControlPlane), nameof(Cancel),
+            "Executing {0}: {1}", nameof(Cancel), subscriptionIdentifier.Value);
+
+        var subscriptionOperation = Get(subscriptionIdentifier);
+        if (subscriptionOperation.Resource == null || subscriptionOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.NotFound, null,
+                string.Format(SubscriptionNotFoundMessageTemplate, subscriptionIdentifier.Value),
+                SubscriptionNotFoundCode);
+        }
+
+        subscriptionOperation.Resource.State = "Disabled";
+
         provider.CreateOrUpdate(subscriptionIdentifier, null, null, subscriptionOperation.Resource);
         return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Updated, subscriptionOperation.Resource,
             null, null);

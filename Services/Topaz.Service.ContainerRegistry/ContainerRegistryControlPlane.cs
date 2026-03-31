@@ -28,7 +28,7 @@ internal sealed class ContainerRegistryControlPlane(
     public static ContainerRegistryControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(
         new ContainerRegistryResourceProvider(logger),
         new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-            new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger),
+            SubscriptionControlPlane.New(eventPipeline, logger), logger),
         SystemAssignedIdentityControlPlane.New(logger),
         logger);
 

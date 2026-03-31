@@ -168,4 +168,39 @@ public class SubscriptionTests
             Assert.That(updatedSubscription.Value.Data.Tags, Does.Not.ContainKey("test-key"));
         });
     }
+
+    [Test]
+    public async Task SubscriptionTests_WhenSubscriptionIsCancelled_StateShouldBeDisabled()
+    {
+        // Arrange 
+        var subscriptionId = Guid.NewGuid().ToString();
+        await Program.Main(
+        [
+            "subscription",
+            "delete",
+            "--id",
+            subscriptionId
+        ]);
+
+        await Program.Main(
+        [
+            "subscription",
+            "create",
+            "--id",
+            subscriptionId,
+            "--name",
+            "sub-cancel-test"
+        ]);
+
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        var armClient = new ArmClient(credentials, subscriptionId, ArmClientOptions);
+
+        // Act
+        await topaz.CancelSubscriptionAsync(Guid.Parse(subscriptionId));
+        var cancelledSubscription = await armClient.GetSubscriptions().GetAsync(subscriptionId);
+
+        // Assert
+        Assert.That(cancelledSubscription.Value.Data.State.ToString(), Is.EqualTo("Disabled"));
+    }
 }

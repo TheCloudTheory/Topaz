@@ -30,7 +30,7 @@ internal sealed class AuthorizationControlPlane(
     private const string RoleAssignmentNotFoundMessageCode = "RoleAssignmentNotFound";
 
     public static AuthorizationControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(
-        new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)),
+        SubscriptionControlPlane.New(eventPipeline, logger),
         new ResourceAuthorizationResourceProvider(logger),
         new ResourceGroupAuthorizationResourceProvider(logger),
         new RoleDefinitionResourceProvider(logger),

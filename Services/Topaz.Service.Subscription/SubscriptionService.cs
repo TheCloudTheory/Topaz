@@ -22,6 +22,7 @@ public sealed class SubscriptionService(Pipeline eventPipeline, ITopazLogger log
         new ListSubscriptionsEndpoint(eventPipeline, logger),
         new CreateUpdatePredefinedTagsEndpoint(eventPipeline, logger),
         new UpdateSubscriptionEndpoint(eventPipeline, logger),
+        new CancelSubscriptionEndpoint(eventPipeline, logger),
     ];
 
     public void Bootstrap()

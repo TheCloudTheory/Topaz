@@ -22,11 +22,11 @@ public sealed class ResourceManagerEndpoint(
     TemplateDeploymentOrchestrator deploymentOrchestrator) : IEndpointDefinition
 {
     private readonly SubscriptionControlPlane _subscriptionControlPlane =
-        new(eventPipeline, new SubscriptionResourceProvider(logger));
+        SubscriptionControlPlane.New(eventPipeline, logger);
 
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger),
-            new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+            SubscriptionControlPlane.New(eventPipeline, logger), logger);
 
     private readonly ResourceManagerControlPlane _controlPlane =
         new(new ResourceManagerResourceProvider(logger), deploymentOrchestrator);

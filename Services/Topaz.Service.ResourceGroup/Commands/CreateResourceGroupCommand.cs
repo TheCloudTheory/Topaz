@@ -18,7 +18,7 @@ public sealed class CreateResourceGroupCommand(Pipeline eventPipeline, ITopazLog
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.Name!);
-        var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+        var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
         var operation = controlPlane.Create(subscriptionIdentifier, resourceGroupIdentifier, settings.Location!);
 
         if (operation.Result != OperationResult.Created)

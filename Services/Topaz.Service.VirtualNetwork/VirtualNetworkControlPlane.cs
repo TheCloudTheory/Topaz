@@ -18,7 +18,7 @@ internal sealed class VirtualNetworkControlPlane(Pipeline eventPipeline, Virtual
 
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger),
-            new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+            SubscriptionControlPlane.New(eventPipeline, logger), logger);
 
     public static VirtualNetworkControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
         new(eventPipeline, new VirtualNetworkResourceProvider(logger), logger);
