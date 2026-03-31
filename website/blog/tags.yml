@@ -7,3 +7,8 @@ storage:
   label: Azure Storage
   permalink: /storage
   description: Azure Storage related posts
+
+entra:
+  label: Microsoft Entra ID
+  permalink: /entra
+  description: Microsoft Entra ID related posts
