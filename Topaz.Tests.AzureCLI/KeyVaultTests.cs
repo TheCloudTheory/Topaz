@@ -483,4 +483,46 @@ public class KeyVaultTests : TopazFixture
     }
     
     #endregion
+
+    #region Access Policy Tests
+
+    [Test]
+    public async Task KeyVaultTests_WhenSetPolicyCommandIsCalledWithObjectId_PolicyShouldBeAdded()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name PolicyVault001 --resource-group test-rg --enable-rbac-authorization false");
+        await RunAzureCliCommand(
+            "az keyvault set-policy --name PolicyVault001 --object-id 00000000-0000-0000-0000-000000000001 --secret-permissions get list",
+            (response) =>
+            {
+                var policies = response["properties"]!["accessPolicies"]!.AsArray();
+                Assert.Multiple(() =>
+                {
+                    Assert.That(policies, Is.Not.Empty);
+                    Assert.That(policies.Any(p => p!["objectId"]!.GetValue<string>() == "00000000-0000-0000-0000-000000000001"), Is.True);
+                });
+            });
+        await RunAzureCliCommand("az keyvault delete --name PolicyVault001 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    [Test]
+    public async Task KeyVaultTests_WhenDeletePolicyCommandIsCalled_PolicyShouldBeRemoved()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name PolicyVault002 --resource-group test-rg --enable-rbac-authorization false");
+        await RunAzureCliCommand(
+            "az keyvault set-policy --name PolicyVault002 --object-id 00000000-0000-0000-0000-000000000002 --secret-permissions get");
+        await RunAzureCliCommand(
+            "az keyvault delete-policy --name PolicyVault002 --object-id 00000000-0000-0000-0000-000000000002",
+            (response) =>
+            {
+                var policies = response["properties"]!["accessPolicies"]!.AsArray();
+                Assert.That(policies.Any(p => p!["objectId"]!.GetValue<string>() == "00000000-0000-0000-0000-000000000002"), Is.False);
+            });
+        await RunAzureCliCommand("az keyvault delete --name PolicyVault002 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    #endregion
 }

@@ -326,9 +326,56 @@ internal sealed class KeyVaultControlPlane(
             resource, null, null);
     }
 
+    public ControlPlaneOperationResult<KeyVaultFullResource> UpdateAccessPolicy(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string keyVaultName,
+        string operationKind,
+        UpdateAccessPolicyRequest request)
+    {
+        logger.LogDebug(nameof(KeyVaultControlPlane), nameof(UpdateAccessPolicy),
+            "Executing {0}: {1} {2} ({3})", nameof(UpdateAccessPolicy), subscriptionIdentifier, keyVaultName, operationKind);
+
+        var keyVaultOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
+        if (keyVaultOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.NotFound, null,
+                string.Format(KeyVaultNotFoundMessageTemplate, keyVaultName), KeyVaultNotFoundCode);
+        }
+
+        var resource = keyVaultOperation.Resource!;
+        var incoming = request.Properties?.AccessPolicies ?? [];
+
+        switch (operationKind.ToLowerInvariant())
+        {
+            case "replace":
+                resource.Properties.AccessPolicies = [..incoming];
+                break;
+            case "remove":
+                var idsToRemove = incoming.Select(p => p.ObjectId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                resource.Properties.AccessPolicies.RemoveAll(p => idsToRemove.Contains(p.ObjectId));
+                break;
+            case "add":
+            default:
+                foreach (var incomingPolicy in incoming)
+                {
+                    var existing = resource.Properties.AccessPolicies
+                        .FirstOrDefault(p => string.Equals(p.ObjectId, incomingPolicy.ObjectId, StringComparison.OrdinalIgnoreCase));
+                    if (existing != null)
+                        resource.Properties.AccessPolicies.Remove(existing);
+                    resource.Properties.AccessPolicies.Add(incomingPolicy);
+                }
+                break;
+        }
+
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource);
+
+        return new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.Updated, resource, null, null);
+    }
+
     /// <summary>
     /// If the provided PATCH request is referring to a recover operation, we need to get
-    /// rid of the properties indicating, that it was removed
+    /// rid of the properties indicating that it was removed
     /// </summary>
     private static void SetRecoverPropertiesForKeyVault(bool isRecoverMode, KeyVaultFullResource resource)
     {

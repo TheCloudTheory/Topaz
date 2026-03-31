@@ -25,12 +25,29 @@ internal sealed class KeyVaultResourceProperties
     public bool EnableRbacAuthorization { get; set; }
     public uint SoftDeleteRetentionInDays  { get; set; } = 90;
     public string? VaultUri { get; set; }
+    public List<AccessPolicyEntry> AccessPolicies { get; set; } = [];
 
     [UsedImplicitly]
     internal class KeyVaultSku
     {
         public string? Family { get; set; }
         public string? Name { get; set; }
+    }
+
+    internal class AccessPolicyEntry
+    {
+        public Guid TenantId { get; set; }
+        public string? ObjectId { get; set; }
+        public Guid? ApplicationId { get; set; }
+        public AccessPolicyPermissions? Permissions { get; set; }
+    }
+
+    internal class AccessPolicyPermissions
+    {
+        public string[]? Keys { get; set; }
+        public string[]? Secrets { get; set; }
+        public string[]? Certificates { get; set; }
+        public string[]? Storage { get; set; }
     }
 
     public static KeyVaultResourceProperties Default(string keyVaultName) => new(keyVaultName)
@@ -63,7 +80,8 @@ internal sealed class KeyVaultResourceProperties
             {
                 Family = request.Properties.Sku?.Family,
                 Name = request.Properties.Sku?.Name
-            }
+            },
+            AccessPolicies = request.Properties.AccessPolicies?.ToList() ?? []
         };
     }
 
@@ -81,5 +99,7 @@ internal sealed class KeyVaultResourceProperties
         resource.Properties.EnablePurgeProtection = request.Properties.EnablePurgeProtection.GetValueOrDefault(false);
         resource.Properties.EnableRbacAuthorization = request.Properties.EnableRbacAuthorization.GetValueOrDefault(false);
         resource.Properties.SoftDeleteRetentionInDays = request.Properties.SoftDeleteRetentionInDays.GetValueOrDefault(90);
+        if (request.Properties.AccessPolicies != null)
+            resource.Properties.AccessPolicies = request.Properties.AccessPolicies.ToList();
     }
 }

@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Topaz.Service.KeyVault.Models;
 
 namespace Topaz.Service.KeyVault.Models.Requests;
 
@@ -21,6 +22,7 @@ internal record CreateOrUpdateKeyVaultRequest
         public bool? EnableRbacAuthorization { get; set; }
         public uint? SoftDeleteRetentionInDays  { get; set; }
         public string? CreateMode { get; set; }
+        public KeyVaultResourceProperties.AccessPolicyEntry[]? AccessPolicies { get; set; }
 
         [UsedImplicitly]
         internal class KeyVaultSku

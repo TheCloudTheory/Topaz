@@ -1,5 +1,6 @@
 ﻿using Topaz.EventPipeline;
 using Topaz.Service.KeyVault.Endpoints;
+using Topaz.Service.KeyVault.Endpoints.AccessPolicies;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -16,7 +17,8 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new KeyVaultEndpoint(logger),
-        new KeyVaultServiceEndpoint(eventPipeline, logger)
+        new KeyVaultServiceEndpoint(eventPipeline, logger),
+        new UpdateAccessPolicyEndpoint(eventPipeline, logger)
     ];
 
     public void Bootstrap()

@@ -43,7 +43,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 | List Deleted | ✅ | |
 | Purge Deleted | ✅ | |
 | Update | ✅ | PATCH |
-| Update Access Policy | ❌ | |
+| Update Access Policy | ✅ | |
 
 ### Private Endpoint Connections
 

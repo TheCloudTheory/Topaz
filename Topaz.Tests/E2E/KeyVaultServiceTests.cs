@@ -198,4 +198,118 @@ public class KeyVaultServiceTests
             Assert.That(kv.Value.Data.Properties.Sku.Name, Is.EqualTo(operation.Properties.Sku.Name));
         });
     }
+
+    [Test]
+    public void KeyVaultTests_WhenAccessPolicyIsAdded_ItShouldAppearInVaultProperties()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+        const string testKeyVaultName = "testkvpolicyadd";
+        resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, testKeyVaultName, operation, CancellationToken.None);
+        var kv = resourceGroup.Value.GetKeyVault(testKeyVaultName);
+        var objectId = Guid.NewGuid();
+
+        var policyParams = new KeyVaultAccessPolicyParameters(
+            new KeyVaultAccessPolicyProperties(
+            [
+                new KeyVaultAccessPolicy(Guid.Empty, objectId.ToString(),
+                    new IdentityAccessPermissions
+                    {
+                        Secrets = { IdentityAccessSecretPermission.Get, IdentityAccessSecretPermission.List }
+                    })
+            ]));
+
+        // Act
+        kv.Value.UpdateAccessPolicy(AccessPolicyUpdateKind.Add, policyParams);
+        var updatedKv = resourceGroup.Value.GetKeyVault(testKeyVaultName);
+
+        // Assert
+        Assert.That(updatedKv.Value.Data.Properties.AccessPolicies, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(updatedKv.Value.Data.Properties.AccessPolicies[0].ObjectId, Is.EqualTo(objectId.ToString()));
+            Assert.That(updatedKv.Value.Data.Properties.AccessPolicies[0].Permissions.Secrets, Does.Contain(IdentityAccessSecretPermission.Get));
+            Assert.That(updatedKv.Value.Data.Properties.AccessPolicies[0].Permissions.Secrets, Does.Contain(IdentityAccessSecretPermission.List));
+        });
+    }
+
+    [Test]
+    public void KeyVaultTests_WhenAccessPoliciesAreReplaced_OnlyNewPoliciesShouldRemain()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+        const string testKeyVaultName = "testkvpolicyrepl";
+        resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, testKeyVaultName, operation, CancellationToken.None);
+        var kv = resourceGroup.Value.GetKeyVault(testKeyVaultName);
+        var firstObjectId = Guid.NewGuid();
+        var secondObjectId = Guid.NewGuid();
+
+        kv.Value.UpdateAccessPolicy(AccessPolicyUpdateKind.Add,
+            new KeyVaultAccessPolicyParameters(new KeyVaultAccessPolicyProperties(
+            [
+                new KeyVaultAccessPolicy(Guid.Empty, firstObjectId.ToString(),
+                    new IdentityAccessPermissions { Secrets = { IdentityAccessSecretPermission.Get } })
+            ])));
+
+        // Act — replace with a single new policy
+        kv.Value.UpdateAccessPolicy(AccessPolicyUpdateKind.Replace,
+            new KeyVaultAccessPolicyParameters(new KeyVaultAccessPolicyProperties(
+            [
+                new KeyVaultAccessPolicy(Guid.Empty, secondObjectId.ToString(),
+                    new IdentityAccessPermissions { Secrets = { IdentityAccessSecretPermission.List } })
+            ])));
+
+        var updatedKv = resourceGroup.Value.GetKeyVault(testKeyVaultName);
+
+        // Assert
+        Assert.That(updatedKv.Value.Data.Properties.AccessPolicies, Has.Count.EqualTo(1));
+        Assert.That(updatedKv.Value.Data.Properties.AccessPolicies[0].ObjectId, Is.EqualTo(secondObjectId.ToString()));
+    }
+
+    [Test]
+    public void KeyVaultTests_WhenAccessPolicyIsRemoved_ItShouldNoLongerAppearInVaultProperties()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+        const string testKeyVaultName = "testkvpolicyrem";
+        resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, testKeyVaultName, operation, CancellationToken.None);
+        var kv = resourceGroup.Value.GetKeyVault(testKeyVaultName);
+        var objectId = Guid.NewGuid();
+        kv.Value.UpdateAccessPolicy(AccessPolicyUpdateKind.Add,
+            new KeyVaultAccessPolicyParameters(new KeyVaultAccessPolicyProperties(
+            [
+                new KeyVaultAccessPolicy(Guid.Empty, objectId.ToString(),
+                    new IdentityAccessPermissions { Secrets = { IdentityAccessSecretPermission.Get } })
+            ])));
+
+        // Act
+        kv.Value.UpdateAccessPolicy(AccessPolicyUpdateKind.Remove,
+            new KeyVaultAccessPolicyParameters(new KeyVaultAccessPolicyProperties(
+            [
+                new KeyVaultAccessPolicy(Guid.Empty, objectId.ToString(), new IdentityAccessPermissions())
+            ])));
+
+        var updatedKv = resourceGroup.Value.GetKeyVault(testKeyVaultName);
+
+        // Assert
+        Assert.That(updatedKv.Value.Data.Properties.AccessPolicies, Is.Empty);
+    }
 }
