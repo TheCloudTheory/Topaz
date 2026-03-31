@@ -269,7 +269,7 @@ public class SubscriptionTests
 
         // Act
         var subscription = await armClient.GetSubscriptions().GetAsync(subscriptionId);
-        var locations = new List<Azure.ResourceManager.Resources.Models.SubscriptionLocationData>();
+        var locations = new List<Azure.ResourceManager.Resources.Models.LocationExpanded>();
         await foreach (var location in subscription.Value.GetLocationsAsync())
             locations.Add(location);
 
