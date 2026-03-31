@@ -60,4 +60,8 @@ API Coverage docs (mandatory)
 Mandatory steps
 - Always present a summary of changes before applying them, especially for public API changes or anything affecting resource IDs or serialization.
 - If you add new services or endpoints, ensure they are registered in the host and have corresponding tests.
+- **Always add or update tests** when implementing or modifying endpoints / control-plane logic. Both test suites must be covered:
+  - `Topaz.Tests/E2E/` — use the Azure SDK (`ArmClient`, service-specific clients) against the in-process Topaz host started by `E2EFixture`.
+  - `Topaz.Tests.AzureCLI/` — use `RunAzureCliCommand(...)` with an `az ...` command string and an optional assertion callback. Tests run against a Dockerised Topaz + Azure CLI container pair via `TopazFixture`.
+  - Prefer a dedicated `[Test]` method per operation rather than expanding an existing test; reuse known stable built-in resources (e.g. the Reader role `acdd72a7-3385-48ef-bd42-f606fba81ae7`) where no setup/teardown is needed.
 If anything is missing or unclear, tell me what area you'd like expanded (build, adding services, routing, testing, or an example change), and I'll iterate.

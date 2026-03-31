@@ -388,4 +388,27 @@ public class AuthorizationTests
             }
         }
     }
+
+    [Test]
+    public async Task RoleDefinition_GetById_ReturnsBuiltInRole()
+    {
+        // Reader is a well-known built-in role present in all environments
+        const string readerRoleDefinitionId = "acdd72a7-3385-48ef-bd42-f606fba81ae7";
+        var roleId = new ResourceIdentifier(
+            $"/providers/Microsoft.Authorization/roleDefinitions/{readerRoleDefinitionId}");
+
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+
+        var roleDefResource = armClient.GetAuthorizationRoleDefinitionResource(roleId);
+        var result = await roleDefResource.GetAsync();
+
+        Assert.That(result.Value, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value.Data.RoleName, Is.EqualTo("Reader"));
+            Assert.That(result.Value.Data.Id.ToString(),
+                Does.Contain(readerRoleDefinitionId));
+        });
+    }
 }

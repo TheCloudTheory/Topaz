@@ -131,4 +131,21 @@ public class AuthorizationTests : TopazFixture
 			Assert.That(arr.All(a => a!["roleName"]!.GetValue<string>() != roleName), Is.True);
 		});
 	}
+
+	[Test]
+	public async Task RoleDefinition_ShowById_ReturnsBuiltInRole()
+	{
+		// Reader is a well-known built-in role; its canonical tenant-level id is stable
+		const string readerId = "acdd72a7-3385-48ef-bd42-f606fba81ae7";
+		const string readerRoleId = $"/providers/Microsoft.Authorization/roleDefinitions/{readerId}";
+
+		await RunAzureCliCommand($"az role definition show --id {readerRoleId}", (resp) =>
+		{
+			Assert.Multiple(() =>
+			{
+				Assert.That(resp["roleName"]!.GetValue<string>(), Is.EqualTo("Reader"));
+				Assert.That(resp["id"]!.GetValue<string>(), Does.Contain(readerId));
+			});
+		});
+	}
 }
