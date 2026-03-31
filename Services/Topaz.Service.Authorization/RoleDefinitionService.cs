@@ -21,6 +21,7 @@ public sealed class RoleDefinitionService(Pipeline eventPipeline, ITopazLogger l
         new CreateUpdateRoleDefinitionEndpoint(eventPipeline, logger),
         new ListRoleDefinitionsEndpoint(eventPipeline, logger),
         new GetRoleDefinitionEndpoint(eventPipeline, logger),
+        new GetByIdRoleDefinitionEndpoint(eventPipeline, logger),
         new DeleteRoleDefinitionEndpoint(eventPipeline, logger)
     ];
 

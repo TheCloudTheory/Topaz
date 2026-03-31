@@ -22,6 +22,13 @@ internal sealed class RoleDefinitionResource : ArmResource<RoleDefinitionResourc
         Name = name;
         Properties = properties;
     }
+
+    public RoleDefinitionResource(string id, string name, RoleDefinitionResourceProperties properties)
+    {
+        Id = id;
+        Name = name;
+        Properties = properties;
+    }
     
     public override string Id { get; init; }
     public override string Name { get; init; }

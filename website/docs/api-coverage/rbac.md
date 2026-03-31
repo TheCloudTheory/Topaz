@@ -48,7 +48,7 @@ This page tracks which Azure RBAC / Authorization REST API operations are implem
 | Delete | ✅ | |
 | Get | ✅ | |
 | List | ✅ | |
-| Get By Id | ❌ | |
+| Get By Id | ✅ | Tenant-level `/providers/Microsoft.Authorization/roleDefinitions/{id}` |
 
 ### Permissions
 

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Topaz.Service.Authorization.Domain;
 using Topaz.Service.Authorization.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -44,5 +45,42 @@ internal sealed class RoleDefinitionResourceProvider(ITopazLogger logger) : Reso
         }
         
         return definitions.ToArray();
+    }
+
+    public RoleDefinitionResource? GetBuiltInRoleById(RoleDefinitionIdentifier roleDefinitionIdentifier)
+    {
+        _logger.LogDebug(nameof(RoleDefinitionResourceProvider), nameof(GetBuiltInRoleById),
+            "Looking for built-in role by id `{0}`.", roleDefinitionIdentifier);
+
+        var rawFiles = Directory.EnumerateFiles("Data", "*.json", SearchOption.AllDirectories);
+        foreach (var file in rawFiles)
+        {
+            var content = File.ReadAllText(file);
+            var fileModel = JsonSerializer.Deserialize<RoleDefinition>(content, GlobalSettings.JsonOptions);
+            if (fileModel == null) continue;
+
+            if (fileModel.Name != roleDefinitionIdentifier.Value &&
+                fileModel.Id?.Contains(roleDefinitionIdentifier.Value) != true) continue;
+
+            var properties = new RoleDefinitionResourceProperties
+            {
+                RoleName = fileModel.RoleName,
+                Description = fileModel.Description,
+                Type = fileModel.RoleType,
+                AssignableScopes = fileModel.AssignableScopes,
+                Permissions = fileModel.Permissions?.Select(p => new RoleDefinition.Permission
+                {
+                    Actions = p.Actions,
+                    NotActions = p.NotActions,
+                    DataActions = p.DataActions,
+                    NotDataActions = p.NotDataActions
+                }).ToArray()
+            };
+
+            var roleId = fileModel.Id ?? $"/providers/Microsoft.Authorization/roleDefinitions/{fileModel.Name}";
+            return new RoleDefinitionResource(roleId, fileModel.Name!, properties);
+        }
+
+        return null;
     }
 }

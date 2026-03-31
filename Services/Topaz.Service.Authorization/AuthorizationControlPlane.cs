@@ -85,7 +85,6 @@ internal sealed class AuthorizationControlPlane(
     {
         logger.LogDebug(nameof(AuthorizationControlPlane), nameof(Get),
             "Looking for role `{0}` in subscription `{1}`.", roleDefinitionIdentifier, subscriptionIdentifier);
-
         var resource =
             roleDefinitionProvider.GetAs<RoleDefinitionResource>(subscriptionIdentifier, null,
                 roleDefinitionIdentifier.Value);
@@ -109,6 +108,20 @@ internal sealed class AuthorizationControlPlane(
             definition.Properties.RoleName == roleDefinitionIdentifier.Value ||
             definition.Id.Contains(roleDefinitionIdentifier.Value));
 
+        return resource == null
+            ? new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.NotFound, null,
+                string.Format(RoleDefinitionNotFoundMessageTemplate, roleDefinitionIdentifier),
+                RoleDefinitionNotFoundMessageCode)
+            : new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.Success, resource, null, null);
+    }
+
+    internal ControlPlaneOperationResult<RoleDefinitionResource> GetBuiltInRoleById(
+        RoleDefinitionIdentifier roleDefinitionIdentifier)
+    {
+        logger.LogDebug(nameof(AuthorizationControlPlane), nameof(GetBuiltInRoleById),
+            "Looking for built-in role definition by id `{0}`.", roleDefinitionIdentifier);
+
+        var resource = roleDefinitionProvider.GetBuiltInRoleById(roleDefinitionIdentifier);
         return resource == null
             ? new ControlPlaneOperationResult<RoleDefinitionResource>(OperationResult.NotFound, null,
                 string.Format(RoleDefinitionNotFoundMessageTemplate, roleDefinitionIdentifier),
