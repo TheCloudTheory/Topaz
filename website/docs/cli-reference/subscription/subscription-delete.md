@@ -1,20 +1,17 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 ---
 
 # subscription delete
-
 Deletes a subscription.
 
 ## Options
-* `-i|--id` - (Required) subscription ID
+* `-i, --id` - (Required) (Required) Subscription ID.
 
 ## Examples
 
 ### Delete a subscription
 ```bash
-$ topaz subscription delete --id 36a28ebb-9370-46d8-981c-84efe02048ae
+$ topaz subscription delete \
+    --id "6B1F305F-7C41-4E5C-AA94-AB937F2F530A"
 ```
-
-## Remarks
-Deleting a subscription doesn't affect existing resources. This behaviour will change in the future.
