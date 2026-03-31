@@ -74,7 +74,7 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 | Update | ✅ | Rename / update display name |
 | List Locations | ✅ | Returns a static list of Azure regions |
 | Cancel | ✅ | POST providers/Microsoft.Subscription/cancel; sets subscription state to Disabled |
-| Enable | ❌ | |
+| Enable | ✅ | POST providers/Microsoft.Subscription/enable; sets subscription state to Enabled |
 | Create Or Update Predefined Tags | ✅ | PUT tagNames/&#123;tagName&#125;/tagValues/&#123;tagValue&#125; |
 
 ### Tags

@@ -136,4 +136,24 @@ internal sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscript
         return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Updated, subscriptionOperation.Resource,
             null, null);
     }
+
+    public ControlPlaneOperationResult<Models.Subscription> Enable(SubscriptionIdentifier subscriptionIdentifier)
+    {
+        logger.LogDebug(nameof(SubscriptionControlPlane), nameof(Enable),
+            "Executing {0}: {1}", nameof(Enable), subscriptionIdentifier.Value);
+
+        var subscriptionOperation = Get(subscriptionIdentifier);
+        if (subscriptionOperation.Resource == null || subscriptionOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.NotFound, null,
+                string.Format(SubscriptionNotFoundMessageTemplate, subscriptionIdentifier.Value),
+                SubscriptionNotFoundCode);
+        }
+
+        subscriptionOperation.Resource.State = "Enabled";
+
+        provider.CreateOrUpdate(subscriptionIdentifier, null, null, subscriptionOperation.Resource);
+        return new ControlPlaneOperationResult<Models.Subscription>(OperationResult.Updated, subscriptionOperation.Resource,
+            null, null);
+    }
 }

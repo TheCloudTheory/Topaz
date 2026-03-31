@@ -205,6 +205,43 @@ public class SubscriptionTests
     }
 
     [Test]
+    public async Task SubscriptionTests_WhenSubscriptionIsEnabled_StateShouldBeEnabled()
+    {
+        // Arrange
+        var subscriptionId = Guid.NewGuid().ToString();
+        await Program.Main(
+        [
+            "subscription",
+            "delete",
+            "--id",
+            subscriptionId
+        ]);
+
+        await Program.Main(
+        [
+            "subscription",
+            "create",
+            "--id",
+            subscriptionId,
+            "--name",
+            "sub-enable-test"
+        ]);
+
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        var armClient = new ArmClient(credentials, subscriptionId, ArmClientOptions);
+
+        await topaz.CancelSubscriptionAsync(Guid.Parse(subscriptionId));
+
+        // Act
+        await topaz.EnableSubscriptionAsync(Guid.Parse(subscriptionId));
+        var enabledSubscription = await armClient.GetSubscriptions().GetAsync(subscriptionId);
+
+        // Assert
+        Assert.That(enabledSubscription.Value.Data.State.ToString(), Is.EqualTo("Enabled"));
+    }
+
+    [Test]
     public async Task SubscriptionTests_WhenLocationsAreRequested_TheyAreReturned()
     {
         // Arrange

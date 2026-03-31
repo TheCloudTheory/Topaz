@@ -101,6 +101,23 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task EnableSubscriptionAsync(Guid subscriptionId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post,
+            $"subscriptions/{subscriptionId}/providers/Microsoft.Subscription/enable");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+        var response = await _httpClient.SendAsync(request);
+
+        if (response.StatusCode == HttpStatusCode.BadRequest || response.StatusCode == HttpStatusCode.NotFound)
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(message);
+        }
+
+        response.EnsureSuccessStatusCode();
+    }
+
     public void Dispose()
     {
         _httpClient.Dispose();
