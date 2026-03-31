@@ -75,7 +75,7 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 | List Locations | ❌ | Used by most Azure SDKs to resolve available regions |
 | Cancel | ❌ | |
 | Enable | ❌ | |
-| Create Or Update Predefined Tags | ✅ | PUT tagNames/{tagName}/tagValues/{tagValue} |
+| Create Or Update Predefined Tags | ✅ | PUT tagNames/&#123;tagName&#125;/tagValues/&#123;tagValue&#125; |
 
 ### Tags
 
