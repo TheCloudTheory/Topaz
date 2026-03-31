@@ -39,7 +39,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Get Deleted | ✅ | |
 | List | ✅ | Via `GET /subscriptions/{id}/resources?$filter=...` |
 | List By Resource Group | ✅ | |
-| List By Subscription | ❌ | |
+| List By Subscription | ✅ | |
 | List Deleted | ✅ | |
 | Purge Deleted | ✅ | |
 | Update | ✅ | PATCH |

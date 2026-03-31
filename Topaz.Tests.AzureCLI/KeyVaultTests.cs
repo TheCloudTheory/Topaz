@@ -525,4 +525,25 @@ public class KeyVaultTests : TopazFixture
     }
 
     #endregion
+
+    #region List By Subscription Tests
+
+    [Test]
+    public async Task KeyVaultTests_WhenKeyVaultsExist_ListBySubscriptionShouldReturnThem()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name listsubkv001 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name listsubkv002 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault list", (response) =>
+        {
+            var names = response.AsArray().Select(v => v!["name"]!.GetValue<string>()).ToList();
+            Assert.That(names, Does.Contain("listsubkv001"));
+            Assert.That(names, Does.Contain("listsubkv002"));
+        });
+        await RunAzureCliCommand("az keyvault delete --name listsubkv001 --only-show-errors");
+        await RunAzureCliCommand("az keyvault delete --name listsubkv002 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    #endregion
 }

@@ -5,10 +5,8 @@ using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.KeyVault.Models.Requests;
 using Topaz.Service.KeyVault.Models.Responses;
-using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
 using Topaz.Service.Subscription.Models.Responses;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
@@ -17,11 +15,7 @@ namespace Topaz.Service.KeyVault.Endpoints;
 
 internal sealed class KeyVaultServiceEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly KeyVaultControlPlane _controlPlane = new(
-        new KeyVaultResourceProvider(logger),
-        new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-            new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger),
-        new SubscriptionControlPlane(eventPipeline, new SubscriptionResourceProvider(logger)), logger);
+    private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
 
     public string[] Endpoints =>
     [
@@ -383,7 +377,7 @@ internal sealed class KeyVaultServiceEndpoint(Pipeline eventPipeline, ITopazLogg
             nameof(HandleListSubscriptionResourcesRequest), subscriptionIdentifier, filter);
 
         var keyVaults = _controlPlane.ListBySubscription(subscriptionIdentifier);
-        if (keyVaults.result != OperationResult.Success || keyVaults.resource == null)
+        if (keyVaults.Result != OperationResult.Success || keyVaults.Resource == null)
         {
             response.StatusCode = HttpStatusCode.InternalServerError;
             return;
@@ -391,7 +385,7 @@ internal sealed class KeyVaultServiceEndpoint(Pipeline eventPipeline, ITopazLogg
 
         var result = new ListSubscriptionResourcesResponse
         {
-            Value = keyVaults.resource.Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From!).ToArray()
+            Value = keyVaults.Resource.Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From!).ToArray()
         };
 
         response.Content = new StringContent(result.ToString());

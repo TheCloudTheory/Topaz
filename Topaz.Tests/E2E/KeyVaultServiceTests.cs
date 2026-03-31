@@ -312,4 +312,31 @@ public class KeyVaultServiceTests
         // Assert
         Assert.That(updatedKv.Value.Data.Properties.AccessPolicies, Is.Empty);
     }
+
+    [Test]
+    public void KeyVaultTests_WhenKeyVaultsExistInSubscription_ListBySubscriptionShouldReturnThem()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+        const string testKeyVaultName1 = "testkvlistsub1";
+        const string testKeyVaultName2 = "testkvlistsub2";
+        resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, testKeyVaultName1, operation, CancellationToken.None);
+        resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, testKeyVaultName2, operation, CancellationToken.None);
+
+        // Act
+        var vaults = subscription.GetKeyVaults().ToList();
+
+        // Assert
+        Assert.That(vaults, Is.Not.Empty);
+        var names = vaults.Select(v => v.Data.Name).ToList();
+        Assert.That(names, Does.Contain(testKeyVaultName1));
+        Assert.That(names, Does.Contain(testKeyVaultName2));
+    }
 }
