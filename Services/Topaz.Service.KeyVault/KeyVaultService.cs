@@ -17,9 +17,20 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new KeyVaultEndpoint(logger),
-        new KeyVaultServiceEndpoint(eventPipeline, logger),
-        new UpdateAccessPolicyEndpoint(eventPipeline, logger),
-        new ListKeyVaultsBySubscriptionEndpoint(eventPipeline, logger)
+        new CreateOrUpdateKeyVaultEndpoint(eventPipeline, logger),
+        new GetKeyVaultEndpoint(eventPipeline, logger),
+        new UpdateKeyVaultEndpoint(eventPipeline, logger),
+        new DeleteKeyVaultEndpoint(eventPipeline, logger),
+        new ListKeyVaultsByResourceGroupEndpoint(eventPipeline, logger),
+        new ListKeyVaultsBySubscriptionEndpoint(eventPipeline, logger),
+        new ListKeyVaultSubscriptionResourcesEndpoint(eventPipeline, logger),
+        new ListDeletedVaultsEndpoint(eventPipeline, logger),
+        new ListDeletedManagedHsmsEndpoint(eventPipeline, logger),
+        new GetDeletedVaultEndpoint(eventPipeline, logger),
+        new CheckKeyVaultNameAvailabilityEndpoint(eventPipeline, logger),
+        new CheckMhsmNameAvailabilityEndpoint(eventPipeline, logger),
+        new PurgeDeletedVaultEndpoint(eventPipeline, logger),
+        new UpdateAccessPolicyEndpoint(eventPipeline, logger)
     ];
 
     public void Bootstrap()

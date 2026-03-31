@@ -40,7 +40,7 @@ internal sealed class ListKeyVaultsBySubscriptionEndpoint(Pipeline eventPipeline
 
         var result = new ListSubscriptionResourcesResponse
         {
-            Value = keyVaults.Resource.Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From).ToArray()
+            Value = keyVaults.Resource.Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From!).ToArray()
         };
 
         response.CreateJsonContentResponse(result);
