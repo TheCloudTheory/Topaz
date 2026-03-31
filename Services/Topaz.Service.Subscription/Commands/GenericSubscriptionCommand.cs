@@ -12,6 +12,7 @@ public sealed class GenericSubscriptionCommand : IEmulatorCommand
             subscription.AddCommand<DeleteSubscriptionCommand>("delete");
             subscription.AddCommand<ListSubscriptionsCommand>("list");
             subscription.AddCommand<CancelSubscriptionCommand>("cancel");
+            subscription.AddCommand<ListLocationsCommand>("list-locations");
         });
     }
 }

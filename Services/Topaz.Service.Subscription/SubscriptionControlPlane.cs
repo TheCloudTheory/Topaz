@@ -101,6 +101,22 @@ internal sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscript
             null, null);
     }
 
+    public ControlPlaneOperationResult<Models.Subscription[]> ListLocations(SubscriptionIdentifier subscriptionIdentifier)
+    {
+        logger.LogDebug(nameof(SubscriptionControlPlane), nameof(ListLocations),
+            "Executing {0}: {1}", nameof(ListLocations), subscriptionIdentifier.Value);
+
+        var subscriptionOperation = Get(subscriptionIdentifier);
+        if (subscriptionOperation.Resource == null || subscriptionOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<Models.Subscription[]>(OperationResult.NotFound, null,
+                string.Format(SubscriptionNotFoundMessageTemplate, subscriptionIdentifier.Value),
+                SubscriptionNotFoundCode);
+        }
+
+        return new ControlPlaneOperationResult<Models.Subscription[]>(OperationResult.Success, null, null, null);
+    }
+
     public ControlPlaneOperationResult<Models.Subscription> Cancel(SubscriptionIdentifier subscriptionIdentifier)
     {
         logger.LogDebug(nameof(SubscriptionControlPlane), nameof(Cancel),

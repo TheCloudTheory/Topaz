@@ -203,4 +203,46 @@ public class SubscriptionTests
         // Assert
         Assert.That(cancelledSubscription.Value.Data.State.ToString(), Is.EqualTo("Disabled"));
     }
+
+    [Test]
+    public async Task SubscriptionTests_WhenLocationsAreRequested_TheyAreReturned()
+    {
+        // Arrange
+        var subscriptionId = Guid.NewGuid().ToString();
+        await Program.Main(
+        [
+            "subscription",
+            "delete",
+            "--id",
+            subscriptionId
+        ]);
+
+        await Program.Main(
+        [
+            "subscription",
+            "create",
+            "--id",
+            subscriptionId,
+            "--name",
+            "sub-locations-test"
+        ]);
+
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId, ArmClientOptions);
+
+        // Act
+        var subscription = await armClient.GetSubscriptions().GetAsync(subscriptionId);
+        var locations = new List<Azure.ResourceManager.Resources.Models.SubscriptionLocationData>();
+        await foreach (var location in subscription.Value.GetLocationsAsync())
+            locations.Add(location);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(locations, Is.Not.Empty);
+            Assert.That(locations.Any(l => l.Name == "eastus"), Is.True);
+            Assert.That(locations.Any(l => l.Name == "westeurope"), Is.True);
+            Assert.That(locations.All(l => l.Id != null), Is.True);
+        });
+    }
 }
