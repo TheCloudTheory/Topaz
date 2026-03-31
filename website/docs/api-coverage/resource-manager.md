@@ -52,15 +52,15 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 
 > [REST reference](https://learn.microsoft.com/en-us/rest/api/resources/resource-groups?view=rest-resources-2021-04-01)
 
-| Operation | Status |
-|-----------|--------|
-| Create Or Update | ✅ |
-| Delete | ✅ |
-| Get | ✅ |
-| List | ✅ |
-| Check Existence | ❌ |
-| Export Template | ❌ |
-| Update | ❌ |
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| Create Or Update | ✅ | The update path (PUT on existing group) is a no-op — tag and location changes are silently ignored |
+| Delete | ✅ | Returns HTTP 200; Azure spec requires 202 Accepted |
+| Get | ✅ | |
+| List | ✅ | |
+| Check Existence | ❌ | HEAD verb not handled |
+| Export Template | ❌ | |
+| Update | ❌ | PATCH verb not implemented |
 
 ### Subscriptions
 
@@ -68,11 +68,14 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create | ✅ | |
+| Create | ✅ | Topaz-specific; not a standard ARM operation in Azure |
 | Get | ✅ | |
 | List | ✅ | |
-| Update | ✅ | |
-| Create Or Update Predefined Tags | ✅ | |
+| Update | ✅ | Rename / update display name |
+| List Locations | ❌ | Used by most Azure SDKs to resolve available regions |
+| Cancel | ❌ | |
+| Enable | ❌ | |
+| Create Or Update Predefined Tags | ✅ | PUT tagNames/{tagName}/tagValues/{tagValue} |
 
 ### Tags
 

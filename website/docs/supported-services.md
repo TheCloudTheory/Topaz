@@ -43,7 +43,7 @@ Monitor|⚠️|:x:
 
 :::tip[Looking for a detailed breakdown?]
 
-The [API Coverage](./api-coverage/container-registry) section lists every REST operation for each service and shows exactly which ones are implemented in Topaz.
+The [API Coverage](./api-coverage/container-registry) section lists every REST operation for each service and shows exactly which ones are implemented in Topaz. Coverage for Subscriptions and Resource Groups is tracked under the [Azure Resource Manager](./api-coverage/resource-manager) page.
 
 :::
 
