@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Topaz.Documentation.Command;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -10,6 +11,8 @@ using Topaz.Service.Subscription;
 namespace Topaz.Service.ResourceGroup.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("group create", "group", "Creates a new resource group.")]
+[CommandExample("Create a resource group", "topaz group create \\\n    --name \"my-rg\" \\\n    --location \"eastus\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
 public sealed class CreateResourceGroupCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateResourceGroupCommand.CreateResourceGroupCommandSettings>
 {
     public override int Execute(CommandContext context, CreateResourceGroupCommandSettings settings)
@@ -55,12 +58,15 @@ public sealed class CreateResourceGroupCommand(Pipeline eventPipeline, ITopazLog
     [UsedImplicitly]
     public sealed class CreateResourceGroupCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-n|--name")]
         public string? Name { get; set; }
 
+        [CommandOptionDefinition("(Required) Azure region for the resource group.", required: true)]
         [CommandOption("-l|--location")]
         public string? Location { get; set; }
 
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
         public string? SubscriptionId { get; set; }
     }

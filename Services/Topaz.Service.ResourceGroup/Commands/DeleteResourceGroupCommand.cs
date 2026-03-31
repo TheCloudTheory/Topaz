@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Topaz.Documentation.Command;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -10,6 +11,8 @@ using Topaz.Service.Subscription;
 namespace Topaz.Service.ResourceGroup.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("group delete", "group", "Deletes a resource group.")]
+[CommandExample("Delete a resource group", "topaz group delete \\\n    --name \"my-rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
 public sealed class DeleteResourceGroupCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<DeleteResourceGroupCommand.DeleteResourceGroupCommandSettings>
 {
     public override int Execute(CommandContext context, DeleteResourceGroupCommandSettings settings)
@@ -57,9 +60,11 @@ public sealed class DeleteResourceGroupCommand(Pipeline eventPipeline, ITopazLog
     [UsedImplicitly]
     public sealed class DeleteResourceGroupCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
         public string SubscriptionId { get; set; } = null!;
-        
+
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-n|--name")]
         public string? Name { get; set; }
     }

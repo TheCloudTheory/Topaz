@@ -2,6 +2,7 @@ using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
@@ -10,6 +11,8 @@ using Topaz.Shared;
 namespace Topaz.Service.ResourceGroup.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("group list", "group", "Lists all resource groups in a subscription.")]
+[CommandExample("List resource groups", "topaz group list \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
 public sealed class ListResourceGroupCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<ListResourceGroupCommand.ListResourceGroupCommandSettings>
 {
     public override int Execute(CommandContext context, ListResourceGroupCommandSettings settings)
@@ -37,6 +40,7 @@ public sealed class ListResourceGroupCommand(Pipeline eventPipeline, ITopazLogge
     [UsedImplicitly]
     public sealed class ListResourceGroupCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
         public string SubscriptionId { get; set; } = null!;
     }
