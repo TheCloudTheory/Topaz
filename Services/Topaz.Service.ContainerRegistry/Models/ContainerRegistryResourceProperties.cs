@@ -11,6 +11,8 @@ internal sealed class ContainerRegistryResourceProperties
     public DateTimeOffset? CreationDate { get; set; }
     public string ProvisioningState { get; set; } = "Succeeded";
     public bool AdminUserEnabled { get; set; }
+    public string? AdminUsername { get; set; }
+    public string? AdminPassword { get; set; }
     public bool DataEndpointEnabled { get; set; }
     public string PublicNetworkAccess { get; set; } = "Enabled";
     public string ZoneRedundancy { get; set; } = "Disabled";
@@ -24,6 +26,8 @@ internal sealed class ContainerRegistryResourceProperties
             CreationDate = DateTimeOffset.UtcNow,
             ProvisioningState = "Succeeded",
             AdminUserEnabled = request.Properties?.AdminUserEnabled.GetValueOrDefault(false) ?? false,
+            AdminUsername = (request.Properties?.AdminUserEnabled.GetValueOrDefault(false) ?? false) ? registryName : null,
+            AdminPassword = (request.Properties?.AdminUserEnabled.GetValueOrDefault(false) ?? false) ? GenerateAdminPassword() : null,
             DataEndpointEnabled = request.Properties?.DataEndpointEnabled.GetValueOrDefault(false) ?? false,
             PublicNetworkAccess = request.Properties?.PublicNetworkAccess ?? "Enabled",
             ZoneRedundancy = request.Properties?.ZoneRedundancy ?? "Disabled",
@@ -38,7 +42,19 @@ internal sealed class ContainerRegistryResourceProperties
         if (request.Properties == null) return;
 
         if (request.Properties.AdminUserEnabled.HasValue)
+        {
             resource.Properties.AdminUserEnabled = request.Properties.AdminUserEnabled.Value;
+            if (request.Properties.AdminUserEnabled.Value && resource.Properties.AdminUsername == null)
+            {
+                resource.Properties.AdminUsername = resource.Name ?? string.Empty;
+                resource.Properties.AdminPassword = GenerateAdminPassword();
+            }
+            else if (!request.Properties.AdminUserEnabled.Value)
+            {
+                resource.Properties.AdminUsername = null;
+                resource.Properties.AdminPassword = null;
+            }
+        }
 
         if (request.Properties.DataEndpointEnabled.HasValue)
             resource.Properties.DataEndpointEnabled = request.Properties.DataEndpointEnabled.Value;
@@ -52,4 +68,6 @@ internal sealed class ContainerRegistryResourceProperties
         if (request.Properties.NetworkRuleBypassOptions != null)
             resource.Properties.NetworkRuleBypassOptions = request.Properties.NetworkRuleBypassOptions;
     }
+
+    private static string GenerateAdminPassword() => Guid.NewGuid().ToString("N");
 }

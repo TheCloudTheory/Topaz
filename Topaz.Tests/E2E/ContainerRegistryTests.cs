@@ -212,6 +212,93 @@ public class ContainerRegistryTests
     }
 
     [Test]
+    public async Task ContainerRegistry_ListCredentials_WhenAdminEnabled_ShouldReturnCredentials()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Basic))
+        {
+            IsAdminUserEnabled = true
+        };
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+        var registry = await registries.GetAsync(RegistryName);
+
+        // Act
+        var credentials = await registry.Value.GetCredentialsAsync();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(credentials.Value.Username, Is.EqualTo(RegistryName));
+            Assert.That(credentials.Value.Passwords, Is.Not.Null.And.Not.Empty);
+            Assert.That(credentials.Value.Passwords[0].Value, Is.Not.Null.And.Not.Empty);
+        });
+    }
+
+    [Test]
+    public async Task ContainerRegistry_ListCredentials_WhenAdminDisabled_ShouldFail()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Basic))
+        {
+            IsAdminUserEnabled = false
+        };
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+        var registry = await registries.GetAsync(RegistryName);
+
+        // Act & Assert
+        Assert.ThrowsAsync<RequestFailedException>(async () => await registry.Value.GetCredentialsAsync());
+    }
+
+    [Test]
+    public async Task ContainerRegistry_ListCredentials_AfterEnablingAdmin_ShouldReturnCredentials()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        // Create with admin disabled
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Basic))
+        {
+            IsAdminUserEnabled = false
+        };
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        // Enable admin
+        var updateData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Basic))
+        {
+            IsAdminUserEnabled = true
+        };
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, updateData);
+        var registry = await registries.GetAsync(RegistryName);
+
+        // Act
+        var credentials = await registry.Value.GetCredentialsAsync();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(credentials.Value.Username, Is.EqualTo(RegistryName));
+            Assert.That(credentials.Value.Passwords, Is.Not.Null.And.Not.Empty);
+            Assert.That(credentials.Value.Passwords[0].Value, Is.Not.Null.And.Not.Empty);
+        });
+    }
+
+    [Test]
     public async Task ContainerRegistry_CreateWithSystemAssignedIdentity_ServicePrincipalShouldExistInEntra()
     {
         // Arrange

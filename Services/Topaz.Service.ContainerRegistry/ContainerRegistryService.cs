@@ -24,8 +24,9 @@ public sealed class ContainerRegistryService(Pipeline eventPipeline, ITopazLogge
         new DeleteContainerRegistryEndpoint(eventPipeline, logger),
         new UpdateContainerRegistryEndpoint(eventPipeline, logger),
         new CheckContainerRegistryNameAvailabilityEndpoint(eventPipeline, logger),
-        new AcrV2ChallengeEndpoint(),
-        new AcrOAuth2ExchangeEndpoint(logger)
+        new AcrV2ChallengeEndpoint(ContainerRegistryControlPlane.New(eventPipeline, logger), logger),
+        new AcrOAuth2ExchangeEndpoint(logger),
+        new ListContainerRegistryCredentialsEndpoint(eventPipeline, logger)
     ];
 
     public void Bootstrap()

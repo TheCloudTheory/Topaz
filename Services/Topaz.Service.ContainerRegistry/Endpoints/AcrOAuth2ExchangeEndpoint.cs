@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
@@ -37,11 +36,9 @@ internal sealed class AcrOAuth2ExchangeEndpoint(ITopazLogger logger) : IEndpoint
 
         if (!form.TryGetValue("access_token", out var aadToken) || string.IsNullOrWhiteSpace(aadToken))
         {
-            response.StatusCode = HttpStatusCode.BadRequest;
-            response.Content = new StringContent(
-                JsonSerializer.Serialize(new { error = "invalid_request", error_description = "access_token is required" },
-                    GlobalSettings.JsonOptions));
-            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            response.CreateJsonContentResponse(
+                JsonSerializer.Serialize(new { error = "invalid_request", error_description = "access_token is required" }, GlobalSettings.JsonOptions),
+                HttpStatusCode.BadRequest);
             return;
         }
 
@@ -55,9 +52,7 @@ internal sealed class AcrOAuth2ExchangeEndpoint(ITopazLogger logger) : IEndpoint
             new { refresh_token = refreshToken },
             GlobalSettings.JsonOptions);
 
-        response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(payload);
-        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        response.CreateJsonContentResponse(payload);
     }
 
     private static Dictionary<string, string> ParseForm(string body)

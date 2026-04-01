@@ -128,7 +128,14 @@ public class ContainerRegistryTests : TopazFixture
         const string resourceGroup = "test-acr-login-rg";
 
         await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
-        await RunAzureCliCommand($"az acr create --name {registryName} --resource-group {resourceGroup} --sku Basic --location westeurope");
+        await RunAzureCliCommand($"az acr create --name {registryName} --resource-group {resourceGroup} --sku Basic --location westeurope --admin-enabled true");
+
+        // Retrieve admin credentials so we can use them for docker login.
+        string adminPassword = string.Empty;
+        await RunAzureCliCommand($"az acr credential show --name {registryName} --resource-group {resourceGroup}", (resp) =>
+        {
+            adminPassword = resp["passwords"]!.AsArray()[0]!["value"]!.GetValue<string>();
+        });
 
         // az acr login: --expose-token returns an exchange token without requiring a local Docker daemon.
         await RunAzureCliCommand($"az acr login --name {registryName} --expose-token", (resp) =>
@@ -142,8 +149,9 @@ public class ContainerRegistryTests : TopazFixture
 
         // docker login: authenticate against the Docker Registry V2 API using Basic Auth,
         // replicating what `docker login <loginServer>` does internally.
+        // Uses ACR admin credentials (username = registry name, password from credential show).
         await RunAzureCliCommand(
-            $"curl -skf -u \"topazadmin@topaz.local.dev:admin\" " +
+            $"curl -skf -u \"{registryName}:{adminPassword}\" " +
             $"https://{registryName}.cr.topaz.local.dev:8892/v2/");
 
         await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
