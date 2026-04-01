@@ -32,7 +32,7 @@ public class CreateGroupDeploymentCommand(Pipeline eventPipeline, ITopazLogger l
         }
 
         var provider = new ResourceManagerResourceProvider(logger);
-        var controlPlane = new ResourceManagerControlPlane(provider, new TemplateDeploymentOrchestrator(eventPipeline, provider, logger));
+        var controlPlane = new ResourceManagerControlPlane(provider, new TemplateDeploymentOrchestrator(eventPipeline, provider, logger), logger);
         var fakeRequest = GetTemplate(settings.TemplateFile);
 
         var deploymentName = DetermineDeploymentName(settings);

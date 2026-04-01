@@ -59,7 +59,7 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 | Get | ✅ | |
 | List | ✅ | |
 | Check Existence | ✅ | HEAD verb; returns 204 if exists, 404 if not |
-| Export Template | ❌ | |
+| Export Template | ✅ | POST exportTemplate; supports IncludeParameterDefaultValue, IncludeComments, SkipResourceNameParameterization, SkipAllParameterization options |
 | Update | ✅ | PATCH verb; updates tags |
 
 ### Subscriptions

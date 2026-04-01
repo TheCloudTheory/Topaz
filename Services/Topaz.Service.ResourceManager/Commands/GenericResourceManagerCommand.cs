@@ -13,6 +13,7 @@ public sealed class GenericResourceManagerCommand : IEmulatorCommand
             {
                 groupDeployment.AddCommand<CreateGroupDeploymentCommand>("create");
                 groupDeployment.AddCommand<ListGroupDeploymentCommand>("list");
+                groupDeployment.AddCommand<ExportGroupTemplateCommand>("export-template");
             });
         });
     }

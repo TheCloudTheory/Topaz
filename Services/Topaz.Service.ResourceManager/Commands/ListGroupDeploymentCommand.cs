@@ -33,7 +33,7 @@ public class ListGroupDeploymentCommand(Pipeline eventPipeline, ITopazLogger log
         }
 
         var provider = new ResourceManagerResourceProvider(logger);
-        var controlPlane = new ResourceManagerControlPlane(provider, new TemplateDeploymentOrchestrator(eventPipeline, provider, logger));
+        var controlPlane = new ResourceManagerControlPlane(provider, new TemplateDeploymentOrchestrator(eventPipeline, provider, logger), logger);
         var deployments = controlPlane.GetDeployments(subscriptionIdentifier, resourceGroupIdentifier);
         
         logger.LogInformation(JsonSerializer.Serialize(deployments.resource));

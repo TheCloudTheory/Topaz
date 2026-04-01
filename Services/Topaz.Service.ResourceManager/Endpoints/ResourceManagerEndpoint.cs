@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
@@ -14,7 +13,7 @@ using Topaz.Service.Subscription;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.ResourceManager;
+namespace Topaz.Service.ResourceManager.Endpoints;
 
 public sealed class ResourceManagerEndpoint(
     Pipeline eventPipeline,
@@ -29,7 +28,7 @@ public sealed class ResourceManagerEndpoint(
             SubscriptionControlPlane.New(eventPipeline, logger), logger);
 
     private readonly ResourceManagerControlPlane _controlPlane =
-        new(new ResourceManagerResourceProvider(logger), deploymentOrchestrator);
+        new(new ResourceManagerResourceProvider(logger), deploymentOrchestrator, logger);
 
     public string[] Endpoints =>
     [

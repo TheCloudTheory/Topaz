@@ -1,7 +1,9 @@
 using System.ClientModel.Primitives;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Azure.Core;
 using Topaz.Identity;
 using Topaz.Shared;
@@ -116,6 +118,33 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         }
 
         response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<JsonNode> ExportTemplateAsync(Guid subscriptionId, string resourceGroupName, string? options = null, string[]? resources = null)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post,
+            $"subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/exportTemplate");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var payload = new { options, resources };
+        request.Content = new StringContent(
+            JsonSerializer.Serialize(payload, GlobalSettings.JsonOptions),
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException($"Resource group not found: {message}", null, HttpStatusCode.NotFound);
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonNode.Parse(content)!;
     }
 
     public void Dispose()

@@ -1,6 +1,7 @@
 using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ResourceManager.Deployment;
+using Topaz.Service.ResourceManager.Endpoints;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -31,6 +32,7 @@ public sealed class ResourceManagerService : IServiceDefinition
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         new ResourceManagerEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new ExportTemplateEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
     ];
 
     public void Bootstrap()
