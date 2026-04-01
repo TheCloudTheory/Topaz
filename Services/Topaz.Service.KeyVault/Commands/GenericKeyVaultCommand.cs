@@ -15,6 +15,8 @@ public sealed class GenericKeyVaultCommand : IEmulatorCommand
             keyVault.AddBranch("secret", secret =>
             {
                 secret.AddCommand<SetSecretCommand>("set");
+                secret.AddCommand<BackupSecretCommand>("backup");
+                secret.AddCommand<RestoreSecretCommand>("restore");
                 secret.AddCommand<GetSecretCommand>("get");
                 secret.AddCommand<ListSecretsCommand>("list");
                 secret.AddCommand<UpdateSecretCommand>("update");

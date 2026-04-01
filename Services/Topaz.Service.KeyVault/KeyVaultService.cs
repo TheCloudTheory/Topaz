@@ -18,6 +18,8 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new SetSecretEndpoint(logger),
+        new BackupSecretEndpoint(eventPipeline, logger),
+        new RestoreSecretEndpoint(eventPipeline, logger),
         new GetSecretsEndpoint(logger),
         new GetSecretVersionsEndpoint(eventPipeline, logger),
         new GetSecretEndpoint(logger),

@@ -1,4 +1,6 @@
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Topaz.Service.KeyVault.Models;
 using Topaz.Service.KeyVault.Models.Requests;
@@ -10,6 +12,67 @@ namespace Topaz.Service.KeyVault;
 
 internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourceProvider provider)
 {
+    // AES-256-CBC key used to encrypt backup blobs. This is the emulator's vault-specific master key.
+    // Structure of an encrypted blob: [9 magic][1 version][16 IV][n ciphertext], then base64url-encoded.
+    private static readonly byte[] BackupKey = Encoding.UTF8.GetBytes("Topaz Key Vault Backup Key 2024!");
+    private static readonly byte[] BackupMagic = Encoding.UTF8.GetBytes("TOPAZKVBK");
+    private const byte BackupVersion = 0x01;
+
+    private static string EncryptBackup(byte[] plaintext)
+    {
+        using var aes = Aes.Create();
+        aes.Key = BackupKey;
+        aes.Mode = CipherMode.CBC;
+        aes.Padding = PaddingMode.PKCS7;
+        aes.GenerateIV();
+
+        using var encryptor = aes.CreateEncryptor();
+        var ciphertext = encryptor.TransformFinalBlock(plaintext, 0, plaintext.Length);
+
+        var blob = new byte[BackupMagic.Length + 1 + aes.IV.Length + ciphertext.Length];
+        BackupMagic.CopyTo(blob, 0);
+        blob[BackupMagic.Length] = BackupVersion;
+        aes.IV.CopyTo(blob, BackupMagic.Length + 1);
+        ciphertext.CopyTo(blob, BackupMagic.Length + 1 + aes.IV.Length);
+
+        return Convert.ToBase64String(blob).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    }
+
+    private static byte[] DecryptBackup(string encoded)
+    {
+        var padded = encoded.Replace('-', '+').Replace('_', '/');
+        var remainder = padded.Length % 4;
+        if (remainder == 2) padded += "==";
+        else if (remainder == 3) padded += "=";
+
+        var blob = Convert.FromBase64String(padded);
+        var headerLength = BackupMagic.Length + 1 + 16;
+
+        if (blob.Length < headerLength)
+            throw new InvalidOperationException("Invalid backup blob: too short.");
+
+        for (var i = 0; i < BackupMagic.Length; i++)
+            if (blob[i] != BackupMagic[i])
+                throw new InvalidOperationException("Invalid backup blob: magic header mismatch.");
+
+        if (blob[BackupMagic.Length] != BackupVersion)
+            throw new InvalidOperationException($"Unsupported backup version: {blob[BackupMagic.Length]}.");
+
+        var iv = new byte[16];
+        Array.Copy(blob, BackupMagic.Length + 1, iv, 0, 16);
+        var ciphertext = new byte[blob.Length - headerLength];
+        Array.Copy(blob, headerLength, ciphertext, 0, ciphertext.Length);
+
+        using var aes = Aes.Create();
+        aes.Key = BackupKey;
+        aes.IV = iv;
+        aes.Mode = CipherMode.CBC;
+        aes.Padding = PaddingMode.PKCS7;
+
+        using var decryptor = aes.CreateDecryptor();
+        return decryptor.TransformFinalBlock(ciphertext, 0, ciphertext.Length);
+    }
+
     internal DataPlaneOperationResult<Secret> SetSecret(Stream input, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
     {
@@ -180,6 +243,67 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         File.WriteAllText(entityPath, JsonSerializer.Serialize(secrets.ToArray(), GlobalSettings.JsonOptions));
 
         return new DataPlaneOperationResult<Secret>(OperationResult.Updated, secret, null, null);
+    }
+
+    public DataPlaneOperationResult<string> BackupSecret(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
+    {
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(BackupSecret), "Executing {0}: {1} {2}", nameof(BackupSecret), secretName, vaultName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var fileName = $"{secretName}.json";
+        var entityPath = Path.Combine(path, fileName);
+
+        if (!File.Exists(entityPath))
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(BackupSecret), "Executing {0}: Secret {1} not found.", nameof(BackupSecret), secretName);
+            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
+        }
+
+        // Read all versions and serialize them as the backup payload.
+        var data = File.ReadAllText(entityPath);
+        var versions = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions)!;
+        var plaintext = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(versions, GlobalSettings.JsonOptions));
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(BackupSecret), "Executing {0}: Backing up {1} version(s) of secret {2}.", nameof(BackupSecret), versions.Length, secretName);
+
+        var encoded = EncryptBackup(plaintext);
+        return new DataPlaneOperationResult<string>(OperationResult.Success, encoded, null, null);
+    }
+
+    public DataPlaneOperationResult<Secret> RestoreSecretBackup(Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RestoreSecretBackup), "Executing {0}: {1}", nameof(RestoreSecretBackup), vaultName);
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+
+        if (string.IsNullOrEmpty(rawContent))
+            return new DataPlaneOperationResult<Secret>(OperationResult.Failed, null, "Empty request body.", "BadRequest");
+
+        var request = JsonSerializer.Deserialize<RestoreSecretRequest>(rawContent, GlobalSettings.JsonOptions)
+                      ?? throw new InvalidOperationException("Invalid request body.");
+
+        if (string.IsNullOrEmpty(request.Value))
+            return new DataPlaneOperationResult<Secret>(OperationResult.Failed, null, "Backup value is missing.", "BadRequest");
+
+        var plaintext = DecryptBackup(request.Value);
+        var versions = JsonSerializer.Deserialize<Secret[]>(Encoding.UTF8.GetString(plaintext), GlobalSettings.JsonOptions);
+
+        if (versions == null || versions.Length == 0)
+            return new DataPlaneOperationResult<Secret>(OperationResult.Failed, null, "Backup contains no secret versions.", "BadRequest");
+
+        var secretName = versions[0].Name;
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(path, $"{secretName}.json");
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RestoreSecretBackup), "Executing {0}: Restoring {1} version(s) of secret {2}.", nameof(RestoreSecretBackup), versions.Length, secretName);
+
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(versions, GlobalSettings.JsonOptions));
+
+        return new DataPlaneOperationResult<Secret>(OperationResult.Created, versions.Last(), null, null);
     }
 
     public DataPlaneOperationResult<Secret> DeleteSecret(SubscriptionIdentifier subscriptionIdentifier,

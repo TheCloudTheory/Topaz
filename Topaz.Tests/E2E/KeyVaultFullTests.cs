@@ -157,4 +157,57 @@ public class KeyVaultFullTests
         // Assert
         Assert.That(versions, Has.Count.EqualTo(3));
     }
+
+    [Test]
+    public void KeyVaultTests_WhenSecretIsBackedUp_BackupBlobShouldBeReturned()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(TestKeyVaultName),
+            credential: credential, new SecretClientOptions { DisableChallengeResourceVerification = true });
+        _ = resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, TestKeyVaultName, operation, CancellationToken.None);
+
+        // Act
+        _ = client.SetSecret("backup-secret", "backup-value");
+        var backup = client.BackupSecret("backup-secret");
+
+        // Assert
+        Assert.That(backup.Value, Is.Not.Null.And.Not.Empty);
+    }
+
+    [Test]
+    public void KeyVaultTests_WhenSecretIsBackedUpAndRestored_AllVersionsShouldBeAvailable()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(TestKeyVaultName),
+            credential: credential, new SecretClientOptions { DisableChallengeResourceVerification = true });
+        _ = resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, TestKeyVaultName, operation, CancellationToken.None);
+
+        // Act — create two versions, back up, delete, then restore
+        _ = client.SetSecret("restore-secret", "value-v1");
+        _ = client.SetSecret("restore-secret", "value-v2");
+        var backup = client.BackupSecret("restore-secret");
+        client.StartDeleteSecret("restore-secret");
+        var restored = client.RestoreSecretBackup(backup.Value);
+
+        // Assert — latest version survives restore
+        Assert.That(restored.Value, Is.Not.Null);
+        Assert.That(restored.Value.Name, Is.EqualTo("restore-secret"));
+
+        var allVersions = client.GetPropertiesOfSecretVersions("restore-secret").ToList();
+        Assert.That(allVersions, Has.Count.EqualTo(2));
+    }
 }
