@@ -37,6 +37,7 @@ public static class GlobalSettings
     public const ushort DefaultKeyVaultPort = 8898;
     public const ushort DefaultResourceManagerPort = 8899;
     public const ushort AdditionalResourceManagerPort = 443;
+    public const ushort ContainerRegistryPort = 8892;
     public const ushort AmqpTlsConnectionPort = 5671;
     public const string MainEmulatorDirectory = ".topaz";
 

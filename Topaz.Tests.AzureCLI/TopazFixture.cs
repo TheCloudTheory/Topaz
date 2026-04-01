@@ -89,6 +89,7 @@ public class TopazFixture
             .WithExtraHost("deletedvault123.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("deletedvault456.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("recovervault123.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("topazacr06.cr.topaz.local.dev", _containerTopaz.IpAddress)
             .Build();
         
         // Act

@@ -19,7 +19,7 @@ internal sealed class ContainerRegistryResourceProperties
     {
         return new ContainerRegistryResourceProperties
         {
-            LoginServer = $"{registryName}.azurecr.io",
+            LoginServer = $"{registryName}.cr.topaz.local.dev:8899",
             CreationDate = DateTimeOffset.UtcNow,
             ProvisioningState = "Succeeded",
             AdminUserEnabled = request.Properties?.AdminUserEnabled.GetValueOrDefault(false) ?? false,

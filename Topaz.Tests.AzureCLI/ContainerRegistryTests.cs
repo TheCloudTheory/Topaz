@@ -120,4 +120,33 @@ public class ContainerRegistryTests : TopazFixture
     {
         await RunAzureCliCommand("az acr create --name topazacr05 --resource-group non-existing-rg --sku Basic --location westeurope", null, 1);
     }
+
+    [Test]
+    public async Task ContainerRegistry_Login_ShouldAuthenticateViaAcrAndDocker()
+    {
+        const string registryName = "topazacr06";
+        const string resourceGroup = "test-acr-login-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand($"az acr create --name {registryName} --resource-group {resourceGroup} --sku Basic --location westeurope");
+
+        // az acr login: --expose-token returns an exchange token without requiring a local Docker daemon.
+        await RunAzureCliCommand($"az acr login --name {registryName} --expose-token", (resp) =>
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(resp["accessToken"], Is.Not.Null);
+                Assert.That(resp["loginServer"], Is.Not.Null);
+            });
+        });
+
+        // docker login: authenticate against the Docker Registry V2 API using Basic Auth,
+        // replicating what `docker login <loginServer>` does internally.
+        await RunAzureCliCommand(
+            $"curl -skf -u \"topazadmin@topaz.local.dev:admin\" " +
+            $"https://{registryName}.cr.topaz.local.dev:8899/v2/");
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }
