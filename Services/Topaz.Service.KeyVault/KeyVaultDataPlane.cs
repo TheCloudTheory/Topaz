@@ -329,9 +329,43 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         var secret = secrets!.Last();
         
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteSecret), "Executing {0}: Deleting {1}.", nameof(DeleteSecret), secretName);
-        
+
+        var deletedDir = Path.Combine(path, "deleted");
+        Directory.CreateDirectory(deletedDir);
+
+        var record = new DeletedSecretRecord
+        {
+            Secret = secret,
+            DeletedDate = DateTimeOffset.Now.ToUnixTimeSeconds(),
+            ScheduledPurgeDate = DateTimeOffset.Now.AddDays(90).ToUnixTimeSeconds()
+        };
+
+        File.WriteAllText(Path.Combine(deletedDir, fileName),
+            JsonSerializer.Serialize(record, GlobalSettings.JsonOptions));
         File.Delete(entityPath);
-        
+
         return new DataPlaneOperationResult<Secret>(OperationResult.Deleted, secret, null, null);
+    }
+
+    public DataPlaneOperationResult<DeletedSecretRecord> GetDeletedSecret(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string secretName)
+    {
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetDeletedSecret), "Executing {0}: {1} {2}", nameof(GetDeletedSecret), secretName, vaultName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var deletedPath = Path.Combine(path, "deleted", $"{secretName}.json");
+
+        if (!File.Exists(deletedPath))
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetDeletedSecret), "Executing {0}: Deleted secret {1} not found.", nameof(GetDeletedSecret), secretName);
+            return new DataPlaneOperationResult<DeletedSecretRecord>(OperationResult.NotFound, null, $"Deleted secret {secretName} not found.", "SecretNotFound");
+        }
+
+        var data = File.ReadAllText(deletedPath);
+        var record = JsonSerializer.Deserialize<DeletedSecretRecord>(data, GlobalSettings.JsonOptions);
+
+        return new DataPlaneOperationResult<DeletedSecretRecord>(OperationResult.Success, record!, null, null);
     }
 }

@@ -173,6 +173,33 @@ public class KeyVaultTests
     }
     
     [Test]
+    public void KeyVaultTests_WhenSecretIsDeleted_ItShouldBeRetrievableAsDeletedSecret()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions
+        {
+            DisableChallengeResourceVerification = true
+        });
+
+        // Act
+        client.SetSecret("secret-deleted", "secret-value");
+        var deleteOp = client.StartDeleteSecret("secret-deleted");
+        deleteOp.WaitForCompletion();
+
+        var deletedSecret = client.GetDeletedSecret("secret-deleted");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(deletedSecret.Value.Name, Is.EqualTo("secret-deleted"));
+            Assert.That(deletedSecret.Value.Value, Is.EqualTo("secret-value"));
+            Assert.That(deletedSecret.Value.DeletedOn, Is.Not.Null);
+            Assert.That(deletedSecret.Value.ScheduledPurgeDate, Is.Not.Null);
+        });
+    }
+    
+    [Test]
     public void KeyVaultTests_SecretIsRemoved_ThenItShouldNoLongerBeAvailable()
     {
         // Arrange

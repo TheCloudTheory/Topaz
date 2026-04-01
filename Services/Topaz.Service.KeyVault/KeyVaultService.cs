@@ -17,14 +17,15 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
     public string Name => "Azure Key Vault";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new SetSecretEndpoint(logger),
+        new SetSecretEndpoint(eventPipeline, logger),
         new BackupSecretEndpoint(eventPipeline, logger),
         new RestoreSecretEndpoint(eventPipeline, logger),
-        new GetSecretsEndpoint(logger),
+        new GetSecretsEndpoint(eventPipeline, logger),
         new GetSecretVersionsEndpoint(eventPipeline, logger),
-        new GetSecretEndpoint(logger),
-        new DeleteSecretEndpoint(logger),
-        new UpdateSecretEndpoint(logger),
+        new GetSecretEndpoint(eventPipeline, logger),
+        new DeleteSecretEndpoint(eventPipeline, logger),
+        new GetDeletedSecretEndpoint(eventPipeline, logger),
+        new UpdateSecretEndpoint(eventPipeline, logger),
         new CreateOrUpdateKeyVaultEndpoint(eventPipeline, logger),
         new GetKeyVaultEndpoint(eventPipeline, logger),
         new UpdateKeyVaultEndpoint(eventPipeline, logger),

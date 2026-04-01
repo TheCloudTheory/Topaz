@@ -1,15 +1,15 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
-using Topaz.Dns;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.KeyVault.Endpoints.Secrets;
 
-public sealed class UpdateSecretEndpoint(ITopazLogger logger) : IEndpointDefinition
+public sealed class UpdateSecretEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
+    private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
 
     public string[] Endpoints => ["PATCH /secrets/{secretName}/{secretVersion}"];
@@ -26,11 +26,12 @@ public sealed class UpdateSecretEndpoint(ITopazLogger logger) : IEndpointDefinit
             var vaultName = context.Request.Headers["Host"].ToString().Split(".")[0];
             var secretName = context.Request.Path.Value.ExtractValueFromPath(2);
             var version = context.Request.Path.Value.ExtractValueFromPath(3);
-            var identifiers = GlobalDnsEntries.GetEntry(KeyVaultService.UniqueName, vaultName!);
 
-            if (identifiers == null)
+            var vaultOperation = _controlPlane.FindByName(vaultName!);
+            if (vaultOperation.Result == OperationResult.NotFound)
             {
-                throw new Exception("Identifiers for Azure Key Vault not found.");
+                response.StatusCode = HttpStatusCode.NotFound;
+                return;
             }
 
             if (string.IsNullOrEmpty(version))
@@ -39,8 +40,8 @@ public sealed class UpdateSecretEndpoint(ITopazLogger logger) : IEndpointDefinit
                 return;
             }
 
-            var subscriptionIdentifier = SubscriptionIdentifier.From(identifiers.Value.subscription);
-            var resourceGroupIdentifier = ResourceGroupIdentifier.From(identifiers.Value.resourceGroup);
+            var subscriptionIdentifier = vaultOperation.Resource!.GetSubscription();
+            var resourceGroupIdentifier = vaultOperation.Resource!.GetResourceGroup();
 
             var operation = _dataPlane.UpdateSecret(context.Request.Body, subscriptionIdentifier,
                 resourceGroupIdentifier, vaultName!, secretName!, version);
