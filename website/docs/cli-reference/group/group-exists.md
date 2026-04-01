@@ -1,9 +1,9 @@
 ---
-sidebar_position: 3
+sidebar_position: 1
 ---
 
-# group delete
-Deletes a resource group.
+# group exists
+Checks whether a resource group exists.
 
 ## Options
 * `-s, --subscription-id` - (Required) (Required) Subscription ID.
@@ -11,9 +11,9 @@ Deletes a resource group.
 
 ## Examples
 
-### Delete a resource group
+### Check if a resource group exists
 ```bash
-$ topaz group delete \
+$ topaz group exists \
     --name "my-rg" \
     --subscription-id "6B1F305F-7C41-4E5C-AA94-AB937F2F530A"
 ```
