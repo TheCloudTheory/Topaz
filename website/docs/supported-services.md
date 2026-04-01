@@ -16,7 +16,7 @@ Make sure you're using the most recent version of Topaz to benefit from the bugf
 Service Name|Control Plane|Data Plane
 ------------|-------------|----------
 Subscriptions|⚠️|N/A
-Resource Groups|⚠️|N/A
+Resource Groups|✅|N/A
 Azure Storage|⚠️|⚠️
 Table Storage|⚠️|✅
 Blob Storage|⚠️|⚠️
