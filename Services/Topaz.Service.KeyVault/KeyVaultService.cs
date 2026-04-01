@@ -1,6 +1,7 @@
 ﻿using Topaz.EventPipeline;
 using Topaz.Service.KeyVault.Endpoints;
 using Topaz.Service.KeyVault.Endpoints.AccessPolicies;
+using Topaz.Service.KeyVault.Endpoints.Secrets;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -16,7 +17,11 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
     public string Name => "Azure Key Vault";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new KeyVaultEndpoint(logger),
+        new SetSecretEndpoint(logger),
+        new GetSecretEndpoint(logger),
+        new GetSecretsEndpoint(logger),
+        new DeleteSecretEndpoint(logger),
+        new UpdateSecretEndpoint(logger),
         new CreateOrUpdateKeyVaultEndpoint(eventPipeline, logger),
         new GetKeyVaultEndpoint(eventPipeline, logger),
         new UpdateKeyVaultEndpoint(eventPipeline, logger),
