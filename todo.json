@@ -17,5 +17,24 @@
         }
       }
     ]
+  },
+  {
+    "language": "Markdown",
+    "extensions": [
+      ".md"
+    ],
+    "markers": [
+      {
+        "type": "block",
+        "pattern": {
+          "start": "<!--",
+          "end": "-->"
+        }
+      },
+      {
+        "type": "line",
+        "pattern": "- \\[ \\]"
+      }
+    ]
   }
 ]
