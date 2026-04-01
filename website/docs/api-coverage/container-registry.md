@@ -94,7 +94,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Import Image | ❌ | |
 | List | ✅ | Lists all registries under a subscription |
 | List By Resource Group | ✅ | |
-| List Credentials | ❌ | |
+| List Credentials | ✅ | |
 | List Private Link Resources | ❌ | |
 | List Usages | ❌ | |
 | Regenerate Credential | ❌ | |
@@ -155,7 +155,17 @@ The control plane covers ARM operations available under `management.azure.com` �
 
 ## Data Plane
 
-The data plane covers the [OCI Distribution Spec](https://github.com/opencontainers/distribution-spec/blob/main/spec.md) / Docker Registry HTTP API v2, served from the registry's own hostname (e.g. `<registry>.azurecr.io`). This plane is **not emulated** in Topaz.
+The data plane covers the [OCI Distribution Spec](https://github.com/opencontainers/distribution-spec/blob/main/spec.md) / Docker Registry HTTP API v2, served from the registry's own hostname (e.g. `<registry>.cr.topaz.local.dev:8892`).
+
+### Authentication
+
+> [ACR OAuth2 token exchange docs](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-authentication?tabs=azure-cli)
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| `GET /v2/` (challenge) | ✅ | Returns 401 Bearer challenge; accepts Basic (admin creds) or Bearer (JWT) |
+| `POST /oauth2/exchange` | ✅ | Exchanges AAD access token for ACR refresh token |
+| `POST /oauth2/token` | ❌ | Exchange refresh token for scoped repository access token |
 
 ### Manifests
 

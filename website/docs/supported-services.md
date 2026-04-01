@@ -27,7 +27,7 @@ Service Bus|⚠️|⚠️
 Virtual Network|⚠️|N/A
 Azure Resource Manager|⚠️|N/A
 Managed Identity|✅|N/A
-Container Registry|✅|:x:
+Container Registry|✅|⚠️
 Azure SQL|:x:|:x:
 Entra ID|:x:|⚠️
 RBAC|⚠️|:x:
@@ -63,5 +63,6 @@ Azure Event Hub|8897|HTTPS
 Azure Event Hub (AMQP)|8888|AMQP
 Azure Service Bus|8887, 8899|HTTPS
 Azure Service Bus (AMQP)|8889, 5671|AMQP, AMQP/TLS
+Container Registry (data plane)|8892|HTTPS
 
 For HTTPS endpoints, if you're running Topaz as a standalone application, you need to install and trust the certificates provided along with the main package.
