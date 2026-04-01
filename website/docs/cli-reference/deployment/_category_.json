@@ -1,6 +1,6 @@
 {
-  "label": "Resource group",
-  "position": 3,
+  "label": "Resource manager",
+  "position": 10,
   "link": {
     "type": "generated-index"
   }
