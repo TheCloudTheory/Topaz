@@ -3,7 +3,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Models.Responses;
 
-public class GetDeletedSecretResponse
+internal class GetDeletedSecretResponse
 {
     public string? RecoveryId { get; init; }
     public long DeletedDate { get; init; }
