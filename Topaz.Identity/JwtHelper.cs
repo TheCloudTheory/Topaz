@@ -11,12 +11,25 @@ public static class JwtHelper
 
     internal static string GenerateJwt(string objectId, bool isForGraph = false)
     {
+        return CreateJwt(objectId, isForGraph ? "https://topaz.local.dev:8899/.graph" : "https://topaz.local.dev:8899");
+    }
+
+    /// <summary>
+    /// Issues a short-lived ACR token (refresh or access) signed with the same key as all other Topaz JWTs.
+    /// </summary>
+    public static string IssueAcrToken(string objectId)
+    {
+        return CreateJwt(objectId, "https://topaz.local.dev:8899");
+    }
+
+    private static string CreateJwt(string objectId, string audience)
+    {
         var tokenHandler = new JwtSecurityTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity([new Claim("sub", objectId)]),
             Issuer = "https://topaz.local.dev:8899",
-            Audience = isForGraph ? "https://topaz.local.dev:8899/.graph" : "https://topaz.local.dev:8899",
+            Audience = audience,
             NotBefore = DateTime.UtcNow,
             IssuedAt = DateTime.UtcNow,
             Expires = DateTime.UtcNow.AddHours(1),
