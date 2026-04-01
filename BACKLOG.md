@@ -11,9 +11,9 @@ converted to a GitHub Issue by CI when new lines are committed.
 
 ## Format reference
 
-```markdown
-<!--
-TODO: Short issue title (required)
+```
+<!-- 
+T0DO: Short issue title (required)
   Longer description that becomes the issue body. (optional)
   milestone: v1.0          ← must match a GitHub milestone name (created if missing)
   labels: enhancement      ← comma-separated; created if missing
