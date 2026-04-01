@@ -57,6 +57,13 @@ API Coverage docs (mandatory)
 - **Always update** the relevant `api-coverage/<service>.md` file after adding or removing endpoint implementations: flip ❌ → ✅ (or vice-versa) for the affected operations. If the service page is still a stub, fill in the full operation table (use the Azure REST API reference link in the file header as a guide).
 - The [Container Registry coverage](website/docs/api-coverage/container-registry.md) page is the canonical example of the completed format.
 
+Backlog & Roadmap (mandatory)
+- `BACKLOG.md` (repo root) is the single source of truth for planned work. It contains `<!-- TODO: ... -->` blocks that the CI action converts to GitHub Issues automatically.
+- `website/docs/roadmap.md` is the public-facing view of the same plan, rendered as tables with `<span class="badge--stable">Stable</span>` or `<span class="badge--preview">Preview</span>` badges in a **Status** column.
+- **When adding items to `BACKLOG.md`**: always mirror them in `website/docs/roadmap.md` — add a new row to the matching milestone table (or create the milestone section if it doesn't exist yet). Choose the badge based on the expected quality at release: use `Stable` for well-defined, fully-specified features; use `Preview` for exploratory or incomplete implementations.
+- **When removing or completing items**: remove or strike through the corresponding row in `website/docs/roadmap.md` as well.
+- Badge CSS lives in `website/src/css/custom.css` (`.badge--stable` and `.badge--preview`). Do not add inline styles; always use these classes.
+
 Mandatory steps
 - Always present a summary of changes before applying them, especially for public API changes or anything affecting resource IDs or serialization.
 - If you add new services or endpoints, ensure they are registered in the host and have corresponding tests.

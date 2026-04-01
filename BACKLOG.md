@@ -193,6 +193,44 @@ TODO: Key Vault Keys: Key rotation and policy operations
   labels: enhancement, key-vault
 -->
 
+### Azure PowerShell integration
+
+<!--
+TODO: Azure PowerShell: Certificate trust configuration script
+  Add `install/configure-azure-powershell-cert.ps1` that appends the Topaz certificate
+  to the PowerShell Az module's certificate store, mirroring what
+  `install/configure-azure-cli-cert.sh` does for Azure CLI.
+  milestone: v1.2-beta
+  labels: enhancement, azure-powershell
+-->
+
+<!--
+TODO: Azure PowerShell: Connect-AzAccount cloud environment registration
+  Implement an Az-compatible cloud environment JSON (same structure as the Azure CLI
+  cloud environment registered in TopazFixture) so that users can run:
+    Add-AzEnvironment -Name "Topaz" -ResourceManagerUrl "https://topaz.local.dev:8899" ...
+    Connect-AzAccount -Environment "Topaz" -ServicePrincipal ...
+  Provide a ready-made `install/configure-azure-powershell-env.ps1` script that
+  registers the environment and authenticates against Topaz.
+  milestone: v1.2-beta
+  labels: enhancement, azure-powershell
+-->
+
+<!--
+TODO: Azure PowerShell: Testcontainers-based test fixture and initial test suite
+  Add a new test project `Topaz.Tests.AzurePowerShell` following the same
+  Testcontainers pattern as `Topaz.Tests.AzureCLI`:
+  - `TopazPowerShellFixture` spins up the Topaz container and an mcr.microsoft.com/powershell
+    container on a shared Docker network.
+  - `RunAzurePowerShellCommand(string script)` helper executes a PowerShell script inside
+    the container and returns stdout.
+  - Include an initial smoke-test suite covering resource-group and Key Vault operations
+    (matching the CLI tests already present) to verify the Az module can authenticate
+    and call Topaz successfully.
+  milestone: v1.2-beta
+  labels: enhancement, azure-powershell, tests
+-->
+
 ### ARM Deployments — full support
 
 <!--

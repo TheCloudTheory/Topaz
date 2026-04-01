@@ -83,11 +83,12 @@ const config: Config = {
       items: [
         {to: '/features', label: 'Features', position: 'left'},
         {
-          type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
-          position: 'left',
+          to: '/docs/intro',
           label: 'Documentation',
+          position: 'left',
+          activeBaseRegex: '/docs/(?!roadmap)',
         },
+        {to: '/docs/roadmap', label: 'Roadmap', position: 'left'},
         {to: '/pricing', label: 'Pricing', position: 'left'},
         {to: '/demo', label: 'Demo', position: 'left'},
         {to: '/blog', label: 'Blog', position: 'left'},
@@ -109,6 +110,10 @@ const config: Config = {
               to: '/features',
             },
             {
+              label: 'Roadmap',
+              to: '/docs/roadmap',
+            },
+            {
               label: 'Pricing',
               to: '/pricing',
             },
@@ -128,6 +133,10 @@ const config: Config = {
             {
               label: 'Azure CLI integration',
               to: '/docs/azure-cli-integration',
+            },
+            {
+              label: 'Roadmap',
+              to: '/docs/roadmap',
             },
             {
               label: 'MCP server',

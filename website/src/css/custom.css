@@ -97,3 +97,37 @@ body {
   color: rgba(255, 255, 255, 0.35) !important;
   font-size: 0.82rem;
 }
+
+/* ── Roadmap status badges ────────────────────────────────────── */
+.badge--stable,
+.badge--preview {
+  display: inline-block;
+  padding: 0.18em 0.65em;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.badge--stable {
+  background-color: #1a7f3c;
+  color: #ffffff;
+}
+
+.badge--preview {
+  background-color: #996b00;
+  color: #ffffff;
+}
+
+[data-theme='dark'] .badge--stable {
+  background-color: #1e9447;
+  color: #ffffff;
+}
+
+[data-theme='dark'] .badge--preview {
+  background-color: #b37f00;
+  color: #ffffff;
+}
