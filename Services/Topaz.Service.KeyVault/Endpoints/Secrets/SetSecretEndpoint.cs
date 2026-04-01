@@ -14,7 +14,7 @@ public sealed class SetSecretEndpoint(ITopazLogger logger) : IEndpointDefinition
 
     public string[] Endpoints => ["PUT /secrets/{secretName}"];
 
-    public string[] Permissions => ["*"];
+    public string[] Permissions => ["Microsoft.KeyVault/vaults/secrets/setSecret/action"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultKeyVaultPort], Protocol.Https);

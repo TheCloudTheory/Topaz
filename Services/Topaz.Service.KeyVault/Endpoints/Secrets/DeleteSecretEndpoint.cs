@@ -15,7 +15,7 @@ public sealed class DeleteSecretEndpoint(ITopazLogger logger) : IEndpointDefinit
 
     public string[] Endpoints => ["DELETE /secrets/{secretName}"];
 
-    public string[] Permissions => ["*"];
+    public string[] Permissions => ["Microsoft.KeyVault/vaults/secrets/delete"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultKeyVaultPort], Protocol.Https);
