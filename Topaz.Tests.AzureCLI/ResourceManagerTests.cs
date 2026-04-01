@@ -53,12 +53,12 @@ public class ResourceManagerTests : TopazFixture
     {
         await RunAzureCliCommand("az group create -n rg-export-cli-skipall -l westeurope");
         await RunAzureCliCommand("az identity create -n mi-cli-skipall -g rg-export-cli-skipall -l westeurope");
-        await RunAzureCliCommand("az group export -n rg-export-cli-skipall --skip-all-parametrization", response =>
+        await RunAzureCliCommand("az group export -n rg-export-cli-skipall --skip-all-params", response =>
         {
             Assert.That(response["$schema"]?.GetValue<string>(), Does.Contain("deploymentTemplate.json"));
             var parameters = response["parameters"]?.AsObject();
             Assert.That(parameters, Is.Null.Or.Empty,
-                "Parameters should be empty when --skip-all-parametrization is set");
+                "Parameters should be empty when --skip-all-params is set");
         });
         await RunAzureCliCommand("az group delete -n rg-export-cli-skipall --yes");
     }
@@ -89,14 +89,14 @@ public class ResourceManagerTests : TopazFixture
     {
         await RunAzureCliCommand("az group create -n rg-export-cli-skipname -l westeurope");
         await RunAzureCliCommand("az identity create -n mi-cli-skipname -g rg-export-cli-skipname -l westeurope");
-        await RunAzureCliCommand("az group export -n rg-export-cli-skipname --skip-resource-name-parametrization", response =>
+        await RunAzureCliCommand("az group export -n rg-export-cli-skipname --skip-all-params", response =>
         {
             Assert.That(response["$schema"]?.GetValue<string>(), Does.Contain("deploymentTemplate.json"));
             var resources = response["resources"]?.AsArray();
             if (resources != null && resources.Count > 0)
             {
                 Assert.That(resources[0]!["name"]?.GetValue<string>(), Is.EqualTo("mi-cli-skipname"),
-                    "Resource name should be a literal string when --skip-resource-name-parametrization is set");
+                    "Resource name should be a literal string when --skip-all-params is set");
             }
         });
         await RunAzureCliCommand("az group delete -n rg-export-cli-skipname --yes");

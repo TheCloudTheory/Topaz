@@ -70,6 +70,8 @@ internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider gr
         if (resource != null)
         {
             logger.LogDebug(nameof(ResourceGroupControlPlane), nameof(CreateOrUpdate), "Resource group {0} already exists.", resourceGroupIdentifier);
+            ResourceGroupProperties.UpdateFromRequest(resource, request);
+            groupResourceProvider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, null, resource);
             return new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.Updated, resource, null, null);
         }
         
