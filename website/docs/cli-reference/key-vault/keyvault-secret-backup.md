@@ -1,9 +1,9 @@
 ---
-sidebar_position: 4
+sidebar_position: 3
 ---
 
-# keyvault secret delete
-Deletes a secret from an Azure Key Vault.
+# keyvault secret backup
+Backs up a secret from an Azure Key Vault.
 
 ## Options
 * `--vault-name` - (Required) (Required) Key Vault name.
@@ -13,7 +13,7 @@ Deletes a secret from an Azure Key Vault.
 
 ## Examples
 
-### Delete a secret
+### Backup a secret
 ```bash
-$ topaz keyvault secret delete --vault-name "kvlocal" --name "my-secret" --resource-group "rg-local" --subscription-id "36a28ebb-9370-46d8-981c-84efe02048ae"
+$ topaz keyvault secret backup --vault-name "kvlocal" --name "my-secret" --resource-group "rg-local" --subscription-id "36a28ebb-9370-46d8-981c-84efe02048ae"
 ```
