@@ -129,6 +129,23 @@ internal sealed class KeyVaultControlPlane(
             : new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.Success, resource, null, null);
     }
 
+    public ControlPlaneOperationResult<KeyVaultFullResource> FindByName(string keyVaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultControlPlane), nameof(FindByName), "Executing {0}: {1}", nameof(FindByName), keyVaultName);
+
+        var identifiers = GlobalDnsEntries.GetEntry(KeyVaultService.UniqueName, keyVaultName);
+        if (identifiers == null)
+        {
+            return new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.NotFound, null,
+                string.Format(KeyVaultNotFoundMessageTemplate, keyVaultName), KeyVaultNotFoundCode);
+        }
+
+        var subscriptionIdentifier = SubscriptionIdentifier.From(identifiers.Value.subscription);
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(identifiers.Value.resourceGroup);
+
+        return Get(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
+    }
+
     public (OperationResult result, CheckNameResponse response) CheckName(SubscriptionIdentifier subscriptionIdentifier, string keyVaultName, string? resourceType)
     {
         var isNameValid = CheckIfKeyVaultNameIsValid(keyVaultName);

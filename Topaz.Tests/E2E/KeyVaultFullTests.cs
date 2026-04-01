@@ -7,6 +7,7 @@ using Azure.Security.KeyVault.Secrets;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Service.Entra;
 
 namespace Topaz.Tests.E2E;
 
@@ -128,5 +129,32 @@ public class KeyVaultFullTests
         // Assert
         Assert.That(updated.Value, Is.Not.Null);
         Assert.That(updated.Value.Enabled, Is.False);
+    }
+
+    [Test]
+    public void KeyVaultTests_WhenSecretHasMultipleVersions_GetSecretVersionsShouldReturnAll()
+    {
+        // Arrange
+        var tenantId = Guid.Parse(EntraService.TenantId);
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+            new KeyVaultProperties(tenantId, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(TestKeyVaultName),
+            credential: credential, new SecretClientOptions { DisableChallengeResourceVerification = true });
+        _ = resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, TestKeyVaultName, operation, CancellationToken.None);
+
+        // Act — set the same secret three times to create three versions
+        _ = client.SetSecret("versioned-secret", "value-v1");
+        _ = client.SetSecret("versioned-secret", "value-v2");
+        _ = client.SetSecret("versioned-secret", "value-v3");
+
+        var versions = client.GetPropertiesOfSecretVersions("versioned-secret").ToList();
+
+        // Assert
+        Assert.That(versions, Has.Count.EqualTo(3));
     }
 }

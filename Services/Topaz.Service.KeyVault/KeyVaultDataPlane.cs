@@ -120,6 +120,27 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         return new DataPlaneOperationResult<Secret[]>(OperationResult.Success, secrets.ToArray(), null, null);
     }
 
+    public DataPlaneOperationResult<Secret[]> GetSecretVersions(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
+    {
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecretVersions), "Executing {0}: {1} {2}", nameof(GetSecretVersions), secretName, vaultName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var fileName = $"{secretName}.json";
+        var entityPath = Path.Combine(path, fileName);
+
+        if (!File.Exists(entityPath))
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecretVersions), "Executing {0}: Secret {1} not found.", nameof(GetSecretVersions), secretName);
+            return new DataPlaneOperationResult<Secret[]>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
+        }
+
+        var data = File.ReadAllText(entityPath);
+        var versions = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
+
+        return new DataPlaneOperationResult<Secret[]>(OperationResult.Success, versions!, null, null);
+    }
+
     public DataPlaneOperationResult<Secret> UpdateSecret(Stream input,
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
