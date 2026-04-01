@@ -23,7 +23,8 @@ public sealed class ContainerRegistryService(Pipeline eventPipeline, ITopazLogge
         new ListContainerRegistriesBySubscriptionEndpoint(eventPipeline, logger),
         new DeleteContainerRegistryEndpoint(eventPipeline, logger),
         new UpdateContainerRegistryEndpoint(eventPipeline, logger),
-        new CheckContainerRegistryNameAvailabilityEndpoint(eventPipeline, logger)
+        new CheckContainerRegistryNameAvailabilityEndpoint(eventPipeline, logger),
+        new AcrV2ChallengeEndpoint()
     ];
 
     public void Bootstrap()

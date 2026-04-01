@@ -144,7 +144,7 @@ public class ContainerRegistryTests : TopazFixture
         // replicating what `docker login <loginServer>` does internally.
         await RunAzureCliCommand(
             $"curl -skf -u \"topazadmin@topaz.local.dev:admin\" " +
-            $"https://{registryName}.cr.topaz.local.dev:8899/v2/");
+            $"https://{registryName}.cr.topaz.local.dev:8892/v2/");
 
         await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
