@@ -79,4 +79,4 @@ Beyond the raw Azure SDK compatibility, Topaz integrates with the tools you alre
 
 The beta period will focus on filling in the gaps visible in the API coverage pages: subscription-level list operations, Event Hub consumer groups, Service Bus authorization rules, and broader Blob Storage feature coverage are the near-term priorities. Feedback and pull requests are welcome.
 
-Check the [API coverage docs](/docs/api-coverage/) for a live view of what each service supports.
+Check the API coverage docs (Key Vault, Storage, Service Bus, Event Hubs, and more) for a live view of what each service supports.
