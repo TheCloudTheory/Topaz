@@ -1,3 +1,6 @@
+using System.Text.Json;
+using Topaz.Shared;
+
 namespace Topaz.Service.KeyVault.Models.Responses;
 
 public class DeleteSecretResponse
@@ -16,7 +19,12 @@ public class DeleteSecretResponse
             Attributes = attributes,
             DeletedDate = DateTimeOffset.Now.ToUnixTimeSeconds(),
             ScheduledPurgeDate = DateTimeOffset.Now.ToUnixTimeSeconds(),
-            RecoveryId = $"https://myvault.localhost/deletedsecrets/{secretName}"
+            RecoveryId = $"https://{vaultName}.keyvault.topaz.local.dev/deletedsecrets/{secretName}"
         };
+    }
+
+    public override string ToString()
+    {
+        return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
     }
 }
