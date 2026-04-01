@@ -1,0 +1,33 @@
+name: TODO to Issue
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'BACKLOG.md'
+  workflow_dispatch:
+    inputs:
+      MANUAL_COMMIT_REF:
+        description: "SHA of the commit to scan (leave empty to use the latest commit)"
+        required: false
+      MANUAL_BASE_REF:
+        description: "Base SHA to compare against (leave empty to compare against the commit directly before MANUAL_COMMIT_REF)"
+        required: false
+
+jobs:
+  todo:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: TODO to Issue
+        uses: alstr/todo-to-issue-action@v5.1.12
+        env:
+          MANUAL_COMMIT_REF: ${{ inputs.MANUAL_COMMIT_REF }}
+          MANUAL_BASE_REF: ${{ inputs.MANUAL_BASE_REF }}
+        with:
+          LANGUAGES: "${{ github.workspace }}/todo.json"
+          IGNORE: "website/"

@@ -86,11 +86,6 @@ jobs:
     - name: Publish coverage in build summary
       run: cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
       shell: bash
-    - name: TODO to Issue
-      uses: alstr/todo-to-issue-action@v5.1.12
-      with:
-        LANGUAGES: "${{ github.workspace }}/todo.json"
-        IGNORE: "website/"
     - name: Update Topaz documentation
       if: github.ref == 'refs/heads/main'
       env:
