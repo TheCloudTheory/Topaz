@@ -15,19 +15,34 @@ type Service = {
   name: string;
   description: string;
   preview?: boolean;
+  comingSoon?: boolean;
 };
 
 const SERVICES: Service[] = [
-  { abbr: 'ST',   bg: '#0078D4', name: 'Azure Storage',       description: 'Blobs, queues, tables & file shares' },
-  { abbr: 'KV',   bg: '#1B63EB', name: 'Azure Key Vault',     description: 'Secrets, keys and certificates' },
+  { abbr: 'ST',   bg: '#0078D4', name: 'Azure Storage',       description: 'Blob and Table storage' },
+  { abbr: 'KV',   bg: '#1B63EB', name: 'Azure Key Vault',     description: 'Secrets management' },
+  { abbr: 'KV',   bg: '#1B63EB', name: 'Key Vault Keys',      description: 'Cryptographic key operations', comingSoon: true },
+  { abbr: 'KV',   bg: '#1B63EB', name: 'Key Vault Certificates', description: 'Certificate lifecycle management', comingSoon: true },
   { abbr: 'SB',   bg: '#8661C5', name: 'Azure Service Bus',   description: 'Queues and topics via AMQP' },
   { abbr: 'EH',   bg: '#C0392B', name: 'Azure Event Hub',     description: 'Real-time event streaming' },
-  { abbr: 'CR',   bg: '#0078D4', name: 'Container Registry',  description: 'Image push & pull operations' },
+  { abbr: 'CR',   bg: '#0078D4', name: 'Container Registry',  description: 'Image push & pull operations', preview: true },
   { abbr: 'ARM',  bg: '#E8751A', name: 'Resource Manager',    description: 'ARM templates & Bicep deployments' },
   { abbr: 'AAD',  bg: '#0078D4', name: 'Microsoft Entra ID',  description: 'Identity & token issuance' },
   { abbr: 'RBAC', bg: '#07A560', name: 'Azure RBAC',          description: 'Role-based access control' },
   { abbr: 'MI',   bg: '#8661C5', name: 'Managed Identity',    description: 'System & user-assigned identities' },
-  { abbr: 'VNet', bg: '#1B63EB', name: 'Virtual Network',     description: 'VNet and subnet emulation', preview: true },
+  { abbr: 'VNet', bg: '#1B63EB', name: 'Virtual Network',     description: 'VNet and subnet emulation' },
+  { abbr: 'QS',   bg: '#0078D4', name: 'Queue Storage',       description: 'Message queues via Azure Queue Service', comingSoon: true },
+  { abbr: 'VM',   bg: '#1B63EB', name: 'Virtual Machines',    description: 'VM lifecycle management (no-op emulation)', comingSoon: true },
+  { abbr: 'NSG',  bg: '#07A560', name: 'Network Security Groups', description: 'NSG rules and associations', comingSoon: true },
+];
+
+const TOOLING: Service[] = [
+  { abbr: 'CLI',  bg: '#0078D4', name: 'Azure CLI',              description: 'Full az command support via cloud environment' },
+  { abbr: 'PS',   bg: '#2671BE', name: 'Azure PowerShell',       description: 'Az module support via cloud environment', comingSoon: true },
+  { abbr: '.NET', bg: '#512BD4', name: '.NET SDK',               description: 'Azure SDK for .NET — first-class support' },
+  { abbr: 'PY',   bg: '#3776AB', name: 'Python SDK',             description: 'Azure SDK for Python', comingSoon: true },
+  { abbr: 'JS',   bg: '#F7DF1E', name: 'JavaScript / TS SDK',    description: 'Azure SDK for JavaScript and TypeScript', comingSoon: true },
+  { abbr: 'JV',   bg: '#E76F00', name: 'Java SDK',               description: 'Azure SDK for Java', comingSoon: true },
 ];
 
 type Capability = {
@@ -187,14 +202,15 @@ const PORTAL_FEATURES: Capability[] = [
 
 // ── Sub-components ────────────────────────────────────────────────
 
-function ServiceCard({abbr, bg, name, description, preview}: Service) {
+function ServiceCard({abbr, bg, name, description, preview, comingSoon}: Service) {
   return (
-    <div className={styles.serviceCard}>
-      <div className={styles.serviceAbbr} style={{background: bg}}>{abbr}</div>
+    <div className={clsx(styles.serviceCard, comingSoon && styles.serviceCardMuted)}>
+      <div className={styles.serviceAbbr} style={{background: comingSoon ? '#9ca3af' : bg}}>{abbr}</div>
       <div>
         <div className={styles.serviceName}>{name}</div>
         <div className={styles.serviceDesc}>{description}</div>
         {preview && <span className={styles.previewBadge}>preview</span>}
+        {comingSoon && <span className={styles.comingSoonBadge}>coming soon</span>}
       </div>
     </div>
   );
@@ -250,8 +266,21 @@ export default function FeaturesPage(): ReactNode {
         </div>
       </section>
 
-      {/* Core capabilities */}
+      {/* Ecosystem / tooling */}
       <section className={clsx(styles.section, styles.sectionAlt)}>
+        <div className="container">
+          <Heading as="h2" className={styles.sectionTitle}>Tooling &amp; ecosystem</Heading>
+          <p className={styles.sectionSubtitle}>
+            Topaz integrates with the tools you already use — no custom SDKs or wrappers needed.
+          </p>
+          <div className={styles.serviceGrid}>
+            {TOOLING.map((s) => <ServiceCard key={s.name} {...s} />)}
+          </div>
+        </div>
+      </section>
+
+      {/* Core capabilities */}
+      <section className={styles.section}>
         <div className="container">
           <Heading as="h2" className={styles.sectionTitle}>Core capabilities</Heading>
           <p className={styles.sectionSubtitle}>
