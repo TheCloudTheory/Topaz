@@ -96,3 +96,14 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 |---------|--------|-------------|
 | New service scaffold | <span class="badge--stable">Stable</span> | `Topaz.Service.VirtualMachine` project with models, resource provider, and service registration |
 | Core control plane | <span class="badge--preview">Preview</span> | Create/update, get, delete, list VMs — emulated only (no actual boot) |
+
+---
+
+## v1.4-beta
+
+### Key Vault — automated soft-delete purging
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| Auto-purge soft-deleted vaults | <span class="badge--preview">Preview</span> | Background scheduler permanently removes soft-deleted vaults once their `scheduledPurgeDate` has elapsed |
+| Auto-purge soft-deleted secrets | <span class="badge--preview">Preview</span> | Background scheduler permanently removes soft-deleted secrets once their `scheduledPurgeDate` has elapsed |

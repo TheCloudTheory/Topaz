@@ -360,6 +360,41 @@ TODO: Azure Virtual Machines: Core control plane endpoints
 
 ---
 
+## v1.4-beta
+
+### Key Vault — automated soft-delete purging
+
+<!--
+TODO: Key Vault: Automated purging of soft-deleted vaults
+  Implement a background scheduler that runs periodically and permanently removes
+  soft-deleted Key Vault instances whose `scheduledPurgeDate` has passed.
+  The scheduler should:
+  - Scan all soft-deleted vaults across all subscriptions
+  - Compare `scheduledPurgeDate` against the current time
+  - Invoke the existing purge logic (remove from disk and DNS entries) for expired vaults
+  - Log each purge action at the Debug level
+  The scheduler interval should be configurable via GlobalSettings (default: 1 hour).
+  milestone: v1.4-beta
+  labels: enhancement, key-vault
+-->
+
+<!--
+TODO: Key Vault: Automated purging of soft-deleted secrets
+  Implement a background scheduler that runs periodically and permanently removes
+  soft-deleted Key Vault secrets whose `scheduledPurgeDate` has passed.
+  The scheduler should:
+  - Scan all vaults across all subscriptions
+  - For each vault, inspect the `deleted/` subfolder for secret records
+  - Compare each record's `scheduledPurgeDate` against the current time
+  - Delete expired records from disk
+  - Log each purge action at the Debug level
+  The scheduler interval should be configurable via GlobalSettings (default: 1 hour).
+  milestone: v1.4-beta
+  labels: enhancement, key-vault
+-->
+
+---
+
 ## Unplanned / Ideas
 
 _Rough ideas not yet tied to a specific version._
