@@ -8,7 +8,7 @@ Updates the tags of a resource group.
 ## Options
 * `-s, --subscription-id` - (Required) (Required) Subscription ID.
 * `-n, --name` - (Required) (Required) Resource group name.
-* `--tags` - Tags as a JSON object, e.g. `'{"env":"prod"}'`. Replaces existing tags.
+* `--tags` - Tags as a JSON object, e.g. '{"env":"prod"}'. Replaces existing tags.
 
 ## Examples
 
