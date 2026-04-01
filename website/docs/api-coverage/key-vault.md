@@ -80,7 +80,7 @@ The data plane covers operations served directly from the vault's own hostname (
 | Get Secret | ✅ | By name and by name + version |
 | Get Secrets | ✅ | Lists all secrets in the vault |
 | Delete Secret | ✅ | |
-| Update Secret | ❌ | |
+| Update Secret | ✅ | `PATCH /secrets/{secretName}/{secretVersion}` |
 | Get Secret Versions | ❌ | |
 | Backup Secret | ❌ | |
 | Restore Secret | ❌ | |

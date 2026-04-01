@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Topaz.Service.KeyVault.Models;
 using Topaz.Service.KeyVault.Models.Requests;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -9,7 +10,7 @@ namespace Topaz.Service.KeyVault;
 
 internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourceProvider provider)
 {
-    internal (Secret? data, HttpStatusCode code) SetSecret(Stream input, SubscriptionIdentifier subscriptionIdentifier,
+    internal DataPlaneOperationResult<Secret> SetSecret(Stream input, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
     {
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(SetSecret), "Executing {0}: {1} {2}", nameof(SetSecret), secretName, vaultName);
@@ -20,7 +21,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         if (string.IsNullOrEmpty(rawContent))
         {
-            return (null, HttpStatusCode.Unauthorized);
+            return new DataPlaneOperationResult<Secret>(OperationResult.Failed, null, "Empty request body.", "Unauthorized");
         }
 
         var data = JsonSerializer.Deserialize<SetSecretRequest>(rawContent, GlobalSettings.JsonOptions) ??
@@ -38,14 +39,14 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
             // If it does, it adds a new version instead of throwing an error or replacing it.
             var newVersion = CreateNewSecretVersion(secretName, data.Value, entityPath);
 
-            return (newVersion, HttpStatusCode.OK);
+            return new DataPlaneOperationResult<Secret>(OperationResult.Success, newVersion, null, null);
         }
 
         // Secret does not exist so we simply create it.
         var secret = new Secret(secretName, data.Value, Guid.NewGuid());
         File.WriteAllText(entityPath, JsonSerializer.Serialize(new[] { secret }, GlobalSettings.JsonOptions));
 
-        return (secret, HttpStatusCode.OK);
+        return new DataPlaneOperationResult<Secret>(OperationResult.Created, secret, null, null);
     }
 
     private Secret CreateNewSecretVersion(string secretName, string value, string entityPath)
@@ -63,7 +64,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         return secret;
     }
 
-    public (Secret? data, HttpStatusCode code) GetSecret(SubscriptionIdentifier subscriptionIdentifier,
+    public DataPlaneOperationResult<Secret> GetSecret(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName, string? version)
     {
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecret), "Executing {0}: {1} {2}", nameof(GetSecret), secretName, vaultName);
@@ -76,7 +77,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         {
             logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecret), "Executing {0}: Secret {1} not found.", nameof(GetSecret), secretName);
             
-            return (null, HttpStatusCode.NotFound);
+            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
         }
         
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecret), "Executing {0}: Processing {1}.", nameof(GetSecret), secretName);
@@ -86,15 +87,17 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         if (string.IsNullOrEmpty(version))
         {
-            return (secrets!.Last(), HttpStatusCode.OK);
+            return new DataPlaneOperationResult<Secret>(OperationResult.Success, secrets!.Last(), null, null);
         }
         
         var secret = secrets!.LastOrDefault(s => s.Name == secretName && s.Id.EndsWith(version!));
-        
-        return (secret, secret == null ? HttpStatusCode.NotFound : HttpStatusCode.OK);
+
+        return secret == null
+            ? new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} version {version} not found.", "SecretNotFound")
+            : new DataPlaneOperationResult<Secret>(OperationResult.Success, secret, null, null);
     }
 
-    public (Secret[] data, HttpStatusCode code) GetSecrets(SubscriptionIdentifier subscriptionIdentifier,
+    public DataPlaneOperationResult<Secret[]> GetSecrets(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string vaultName)
     {
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecrets), "Executing {0}: {1}", nameof(GetSecrets), vaultName);
@@ -114,10 +117,51 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
             secrets.Add(lastVersion);
         }
         
-        return (secrets.ToArray(), HttpStatusCode.OK);
+        return new DataPlaneOperationResult<Secret[]>(OperationResult.Success, secrets.ToArray(), null, null);
     }
 
-    public (Secret? data, HttpStatusCode code) DeleteSecret(SubscriptionIdentifier subscriptionIdentifier,
+    public DataPlaneOperationResult<Secret> UpdateSecret(Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string secretName, string version)
+    {
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateSecret), "Executing {0}: {1} {2}", nameof(UpdateSecret), secretName, vaultName);
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+
+        var request = string.IsNullOrEmpty(rawContent)
+            ? null
+            : JsonSerializer.Deserialize<UpdateSecretRequest>(rawContent, GlobalSettings.JsonOptions);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var fileName = $"{secretName}.json";
+        var entityPath = Path.Combine(path, fileName);
+
+        if (!File.Exists(entityPath))
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateSecret), "Executing {0}: Secret {1} not found.", nameof(UpdateSecret), secretName);
+            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
+        }
+
+        var data = File.ReadAllText(entityPath);
+        var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions)!.ToList();
+        var secret = secrets.LastOrDefault(s => s.Id.EndsWith(version));
+
+        if (secret == null)
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateSecret), "Executing {0}: Secret version {1} not found.", nameof(UpdateSecret), version);
+            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} version {version} not found.", "SecretNotFound");
+        }
+
+        secret.UpdateFromRequest(request ?? new UpdateSecretRequest());
+
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(secrets.ToArray(), GlobalSettings.JsonOptions));
+
+        return new DataPlaneOperationResult<Secret>(OperationResult.Updated, secret, null, null);
+    }
+
+    public DataPlaneOperationResult<Secret> DeleteSecret(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
     {
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteSecret), "Executing {0}: {1} {2}", nameof(DeleteSecret), secretName, vaultName);
@@ -130,7 +174,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         {
             logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteSecret), "Executing {0}: Secret {1} not found.", nameof(DeleteSecret), secretName);
             
-            return (null, HttpStatusCode.NotFound);
+            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
         }
         
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteSecret), "Executing {0}: Processing {1}.", nameof(DeleteSecret), secretName);
@@ -143,6 +187,6 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         
         File.Delete(entityPath);
         
-        return (secret, HttpStatusCode.OK);
+        return new DataPlaneOperationResult<Secret>(OperationResult.Deleted, secret, null, null);
     }
 }

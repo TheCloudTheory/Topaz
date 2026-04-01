@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Topaz.Service.KeyVault.Models.Requests;
 
 namespace Topaz.Service.KeyVault.Models;
 
@@ -18,6 +19,21 @@ public record class Secret
     public string Name { get; set; }
     public Guid Version { get; set; }
     public SecretAttributes Attributes { get; set; }
+    public string? ContentType { get; set; }
+
+    public void UpdateFromRequest(UpdateSecretRequest request)
+    {
+        Attributes = Attributes with
+        {
+            Enabled = request.Attributes?.Enabled ?? Attributes.Enabled,
+            Updated = DateTimeOffset.Now.ToUnixTimeSeconds()
+        };
+
+        if (request.ContentType != null)
+        {
+            ContentType = request.ContentType;
+        }
+    }
 }
 
 public record SecretAttributes(bool Enabled, long Created, long Updated)

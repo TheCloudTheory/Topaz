@@ -101,4 +101,32 @@ public class KeyVaultFullTests
         Assert.That(secret.Value, Is.Not.Null);
         Assert.That(secret.Value.Value, Is.EqualTo("test"));
     }
+
+    [Test]
+    public void KeyVaultTests_WhenSecretPropertiesAreUpdated_UpdatedAttributesShouldBeReflected()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(TestKeyVaultName),
+            credential: credential, new SecretClientOptions { DisableChallengeResourceVerification = true });
+        _ = resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, TestKeyVaultName, operation, CancellationToken.None);
+
+        _ = client.SetSecret("update-me", "original-value");
+        var created = client.GetSecret("update-me");
+
+        // Act
+        var props = created.Value.Properties;
+        props.Enabled = false;
+        var updated = client.UpdateSecretProperties(props);
+
+        // Assert
+        Assert.That(updated.Value, Is.Not.Null);
+        Assert.That(updated.Value.Enabled, Is.False);
+    }
 }

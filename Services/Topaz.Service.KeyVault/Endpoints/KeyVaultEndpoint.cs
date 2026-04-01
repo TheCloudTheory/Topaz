@@ -23,6 +23,7 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
         "GET /secrets/{secretName}/{secretVersion}",
         "DELETE /secrets/{secretName}",
         "GET /secrets/",
+        "PATCH /secrets/{secretName}/{secretVersion}",
     ];
 
     public string[] Permissions => ["*"];
@@ -50,18 +51,18 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
             {
                 case "PUT":
                 {
-                    var (data, code) = _dataPlane.SetSecret(context.Request.Body,
+                    var operation = _dataPlane.SetSecret(context.Request.Body,
                         subscriptionIdentifier,
                         resourceGroupIdentifier, vaultName!, secretName!);
 
-                    if (code == HttpStatusCode.Unauthorized)
+                    if (operation.Result == OperationResult.Failed)
                     {
-                        EnforceAuthenticationChallenge(response, code);
+                        EnforceAuthenticationChallenge(response, HttpStatusCode.Unauthorized);
                         return;
                     }
 
-                    response.StatusCode = code;
-                    response.Content = JsonContent.Create(data, new MediaTypeHeaderValue("application/json"),
+                    response.StatusCode = HttpStatusCode.OK;
+                    response.Content = JsonContent.Create(operation.Resource, new MediaTypeHeaderValue("application/json"),
                         GlobalSettings.JsonOptions);
                     break;
                 }
@@ -78,6 +79,19 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
                             secretName, response);
                     }
 
+                    break;
+                }
+                case "PATCH":
+                {
+                    var version = context.Request.Path.Value.ExtractValueFromPath(3);
+                    if (string.IsNullOrEmpty(version))
+                    {
+                        response.StatusCode = HttpStatusCode.BadRequest;
+                        return;
+                    }
+
+                    HandleUpdateSecretRequest(context.Request.Body, subscriptionIdentifier, resourceGroupIdentifier,
+                        vaultName!, secretName!, version, response);
                     break;
                 }
                 case "DELETE":
@@ -104,21 +118,40 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
         }
     }
 
+    private void HandleUpdateSecretRequest(Stream body, SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName, string version,
+        HttpResponseMessage response)
+    {
+        var operation = _dataPlane.UpdateSecret(body, subscriptionIdentifier, resourceGroupIdentifier, vaultName,
+            secretName, version);
+
+        if (operation.Result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            response.Content = CreateErrorResponse($"Secret {secretName} not found.");
+            return;
+        }
+
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content =
+            JsonContent.Create(operation.Resource, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+    }
+
     private void HandleDeleteSecretRequest(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName,
         HttpResponseMessage response)
     {
-        var (data, code) =
-            _dataPlane.DeleteSecret(subscriptionIdentifier, resourceGroupIdentifier, vaultName, secretName);
-        if (data == null)
+        var operation = _dataPlane.DeleteSecret(subscriptionIdentifier, resourceGroupIdentifier, vaultName, secretName);
+
+        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
         {
-            response.StatusCode = code;
+            response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
 
-        var content = DeleteSecretResponse.New(data.Id, vaultName, secretName, data.Attributes);
+        var content = DeleteSecretResponse.New(operation.Resource.Id, vaultName, secretName, operation.Resource.Attributes);
 
-        response.StatusCode = code;
+        response.StatusCode = HttpStatusCode.OK;
         response.Content = JsonContent.Create(content, new MediaTypeHeaderValue("application/json"),
             GlobalSettings.JsonOptions);
     }
@@ -126,10 +159,10 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
     private void HandleGetSecretsRequest(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, HttpResponseMessage response)
     {
-        var (data, code) = _dataPlane.GetSecrets(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var operation = _dataPlane.GetSecrets(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var content = new GetSecretsResponse()
         {
-            Value = data.Select(s => new GetSecretsResponse.Secret()
+            Value = operation.Resource!.Select(s => new GetSecretsResponse.Secret()
             {
                 Id = s.Id,
                 Attributes = new GetSecretsResponse.Secret.SecretAttributes()
@@ -142,7 +175,7 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
             }).ToArray(),
         };
 
-        response.StatusCode = code;
+        response.StatusCode = HttpStatusCode.OK;
         response.Content = JsonContent.Create(content, new MediaTypeHeaderValue("application/json"),
             GlobalSettings.JsonOptions);
     }
@@ -152,19 +185,19 @@ public sealed class KeyVaultEndpoint(ITopazLogger logger) : IEndpointDefinition
         HttpResponseMessage response)
     {
         var version = path.ExtractValueFromPath(3);
-        var (data, code) = _dataPlane.GetSecret(subscriptionIdentifier, resourceGroupIdentifier, vaultName, secretName!,
+        var operation = _dataPlane.GetSecret(subscriptionIdentifier, resourceGroupIdentifier, vaultName, secretName!,
             version);
 
-        if (code == HttpStatusCode.NotFound)
+        if (operation.Result == OperationResult.NotFound)
         {
-            response.StatusCode = code;
+            response.StatusCode = HttpStatusCode.NotFound;
             response.Content = CreateErrorResponse($"Secret {secretName} not found.");
             return;
         }
 
-        response.StatusCode = code;
+        response.StatusCode = HttpStatusCode.OK;
         response.Content =
-            JsonContent.Create(data, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
+            JsonContent.Create(operation.Resource, new MediaTypeHeaderValue("application/json"), GlobalSettings.JsonOptions);
     }
 
     private static JsonContent CreateErrorResponse(string errorMessage)
