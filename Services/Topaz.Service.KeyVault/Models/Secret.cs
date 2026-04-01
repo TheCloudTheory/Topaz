@@ -1,5 +1,6 @@
-using System.Text.Json.Serialization;
+using System.Text.Json;
 using Topaz.Service.KeyVault.Models.Requests;
+using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Models;
 
@@ -7,7 +8,7 @@ public record class Secret
 {
     public Secret(string name, string value, Guid version)
     {
-        Id = $"https://myvault.localhost/secrets/{name}/{version}";
+        Id = $"https://topaz.local.dev/secrets/{name}/{version}";
         Name = name;
         Value = value;
         Version = version;
@@ -33,6 +34,11 @@ public record class Secret
         {
             ContentType = request.ContentType;
         }
+    }
+    
+    public override string ToString()
+    {
+        return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
     }
 }
 

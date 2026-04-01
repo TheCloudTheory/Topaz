@@ -1,3 +1,6 @@
+using System.Text.Json;
+using Topaz.Shared;
+
 namespace Topaz.Service.KeyVault.Models.Responses;
 
 public class GetSecretsResponse
@@ -17,5 +20,10 @@ public class GetSecretsResponse
             public long Created { get; init; }
             public long Updated { get; init; }
         }
+    }
+
+    public override string ToString()
+    {
+        return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
     }
 }

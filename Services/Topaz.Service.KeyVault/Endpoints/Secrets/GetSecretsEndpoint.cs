@@ -12,7 +12,7 @@ public sealed class GetSecretsEndpoint(ITopazLogger logger) : IEndpointDefinitio
 {
     private readonly KeyVaultDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
 
-    public string[] Endpoints => ["GET /secrets/"];
+    public string[] Endpoints => ["GET /secrets", "GET /secrets/"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/secrets/getSecret/action"];
 
