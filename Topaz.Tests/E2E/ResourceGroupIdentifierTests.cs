@@ -2,6 +2,7 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Resources.Models;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
@@ -86,6 +87,31 @@ public class ResourceGroupIdentifierTests
         Assert.That(exist);
     }
     
+    [Test]
+    public void ResourceGroupTests_WhenResourceGroupTagsAreUpdated_TheTagsShouldBeReflected()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroups = subscription.GetResourceGroups();
+        resourceGroups.CreateOrUpdate(WaitUntil.Completed, ResourceGroupName, new ResourceGroupData(AzureLocation.PolandCentral));
+
+        // Act
+        var rg = resourceGroups.Get(ResourceGroupName).Value;
+        rg.Update(new ResourceGroupPatch { Tags = { ["env"] = "prod", ["team"] = "platform" } });
+        var updated = resourceGroups.Get(ResourceGroupName).Value;
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(updated.Data.Tags.ContainsKey("env"));
+            Assert.That(updated.Data.Tags["env"], Is.EqualTo("prod"));
+            Assert.That(updated.Data.Tags.ContainsKey("team"));
+            Assert.That(updated.Data.Tags["team"], Is.EqualTo("platform"));
+        });
+    }
+
     [Test]
     public void ResourceGroupTests_WhenResourceGroupDoesNotExist_CheckExistenceShouldReturnFalse()
     {

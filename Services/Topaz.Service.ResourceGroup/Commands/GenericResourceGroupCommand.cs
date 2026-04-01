@@ -13,6 +13,7 @@ public sealed class GenericResourceGroupCommand : IEmulatorCommand
             group.AddCommand<CheckExistenceResourceGroupCommand>("exists");
             group.AddCommand<ListResourceGroupCommand>("list");
             group.AddCommand<ShowResourceGroupCommand>("show");
+            group.AddCommand<UpdateResourceGroupCommand>("update");
         });
     }
 }

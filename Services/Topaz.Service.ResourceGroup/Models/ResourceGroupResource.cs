@@ -34,4 +34,5 @@ public sealed class ResourceGroupResource
     public override ResourceSku? Sku { get; init; }
     public override string? Kind { get; init; }
     public override ResourceGroupProperties Properties { get; init; }
+    public string? ManagedBy { get; set; }
 }

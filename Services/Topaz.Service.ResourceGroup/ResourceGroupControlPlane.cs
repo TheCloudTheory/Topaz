@@ -95,4 +95,35 @@ internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider gr
         groupResourceProvider.Delete(subscriptionIdentifier, resourceGroupIdentifier, null);
         return OperationResult.Deleted;
     }
+
+    public ControlPlaneOperationResult<ResourceGroupResource> Update(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        UpdateResourceGroupRequest request)
+    {
+        logger.LogDebug(nameof(ResourceGroupControlPlane), nameof(Update),
+            "Executing {0}: {1} {2}", nameof(Update), subscriptionIdentifier, resourceGroupIdentifier);
+
+        var existing = groupResourceProvider.GetAs<ResourceGroupResource>(subscriptionIdentifier, resourceGroupIdentifier);
+        if (existing == null || !existing.IsInSubscription(subscriptionIdentifier))
+        {
+            return new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.NotFound, null,
+                string.Format(ResourceGroupNotFoundMessageTemplate, resourceGroupIdentifier.Value),
+                ResourceGroupNotFoundMessageCode);
+        }
+
+        if (request.Tags != null)
+        {
+            existing.Tags = request.Tags;
+        }
+
+        if (request.ManagedBy != null)
+        {
+            existing.ManagedBy = request.ManagedBy;
+        }
+
+        groupResourceProvider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, null, existing);
+
+        return new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.Updated, existing, null, null);
+    }
 }

@@ -60,7 +60,7 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 | List | ✅ | |
 | Check Existence | ✅ | HEAD verb; returns 204 if exists, 404 if not |
 | Export Template | ❌ | |
-| Update | ❌ | PATCH verb not implemented |
+| Update | ✅ | PATCH verb; updates tags |
 
 ### Subscriptions
 

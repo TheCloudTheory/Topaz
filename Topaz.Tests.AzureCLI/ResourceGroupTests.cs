@@ -23,6 +23,18 @@ public class ResourceGroupTests : TopazFixture
     }
 
     [Test]
+    public async Task ResourceGroupTests_WhenResourceGroupTagsAreUpdated_TheTagsShouldBeReflected()
+    {
+        await RunAzureCliCommand("az group create -n test-update-rg -l westeurope");
+        await RunAzureCliCommand("az group update -n test-update-rg --tags env=prod team=platform", (response) =>
+        {
+            Assert.That(response["tags"]!["env"]!.GetValue<string>(), Is.EqualTo("prod"));
+            Assert.That(response["tags"]!["team"]!.GetValue<string>(), Is.EqualTo("platform"));
+        });
+        await RunAzureCliCommand("az group delete -n test-update-rg --yes");
+    }
+
+    [Test]
     public async Task ResourceGroupTests_WhenResourceGroupIsCreatedAndChecked_ItShouldExist()
     {
         await RunAzureCliCommand("az group create -n test-exists-rg -l westeurope");
