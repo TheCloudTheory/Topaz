@@ -14,6 +14,11 @@ using Topaz.Service.Subscription.Commands;
 
 Console.WriteLine($"Topaz.Documentation.Generator {ThisAssembly.AssemblyInformationalVersion}");
 
+// Escape characters that MDX (used by Docusaurus) would otherwise interpret
+// as JSX expression delimiters, causing "Could not parse expression with acorn" errors.
+static string EscapeMdx(string? text) =>
+    string.IsNullOrEmpty(text) ? string.Empty : text.Replace("{", "\\{").Replace("}", "\\}");
+
 _ = new[]
 {
     typeof(GenericStartCommand),
@@ -90,7 +95,7 @@ foreach (var group in groups)
 
         // Definition
         sb.AppendLine($"# {definition.CommandName}");
-        sb.AppendLine(definition.Description);
+        sb.AppendLine(EscapeMdx(definition.Description));
         sb.AppendLine("");
 
         // Find nested settings class within the command class
@@ -134,7 +139,7 @@ foreach (var group in groups)
 
                 var required = optionDefinition.Required ? "(Required) " : string.Empty;
                 
-                sb.AppendLine($"* `{optionNames}` - {required}{optionDefinition.Description}");
+                sb.AppendLine($"* `{optionNames}` - {EscapeMdx(required)}{EscapeMdx(optionDefinition.Description)}");
             }
         }
 
@@ -152,7 +157,7 @@ foreach (var group in groups)
             foreach (var example in examples)
             {
                 sb.AppendLine("");
-                sb.AppendLine($"### {example.Title}");
+                sb.AppendLine($"### {EscapeMdx(example.Title)}");
                 sb.AppendLine("```bash");
                 sb.AppendLine($"$ {example.Command}");
                 sb.AppendLine("```");
