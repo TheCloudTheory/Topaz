@@ -230,6 +230,58 @@ public class KeyVaultTests
     }
     
     [Test]
+    public void KeyVaultTests_WhenSecretIsDeleted_ItShouldBeRecoverable()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions
+        {
+            DisableChallengeResourceVerification = true
+        });
+
+        // Act
+        client.SetSecret("secret-to-recover", "original-value");
+        var deleteOp = client.StartDeleteSecret("secret-to-recover");
+        deleteOp.WaitForCompletion();
+
+        var recoverOp = client.StartRecoverDeletedSecret("secret-to-recover");
+        recoverOp.WaitForCompletion();
+
+        var recovered = client.GetSecret("secret-to-recover");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(recovered.Value.Name, Is.EqualTo("secret-to-recover"));
+            Assert.That(recovered.Value.Value, Is.EqualTo("original-value"));
+        });
+    }
+
+    [Test]
+    public void KeyVaultTests_WhenSecretIsRecovered_ItShouldNoLongerAppearInDeletedSecrets()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions
+        {
+            DisableChallengeResourceVerification = true
+        });
+
+        // Act
+        client.SetSecret("secret-recover-cleanup", "some-value");
+        var deleteOp = client.StartDeleteSecret("secret-recover-cleanup");
+        deleteOp.WaitForCompletion();
+
+        var recoverOp = client.StartRecoverDeletedSecret("secret-recover-cleanup");
+        recoverOp.WaitForCompletion();
+
+        var deletedSecrets = client.GetDeletedSecrets().ToArray();
+
+        // Assert
+        Assert.That(deletedSecrets.Any(s => s.Name == "secret-recover-cleanup"), Is.False);
+    }
+
+    [Test]
     public void KeyVaultTests_SecretIsRemoved_ThenItShouldNoLongerBeAvailable()
     {
         // Arrange

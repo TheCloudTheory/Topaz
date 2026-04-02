@@ -18,9 +18,13 @@ public sealed class GenericKeyVaultCommand : IEmulatorCommand
                 secret.AddCommand<BackupSecretCommand>("backup");
                 secret.AddCommand<RestoreSecretCommand>("restore");
                 secret.AddCommand<GetSecretCommand>("get");
+                secret.AddCommand<GetDeletedSecretCommand>("get-deleted");
                 secret.AddCommand<ListSecretsCommand>("list");
+                secret.AddCommand<ListDeletedSecretsCommand>("list-deleted");
+                secret.AddCommand<ListSecretVersionsCommand>("list-versions");
                 secret.AddCommand<UpdateSecretCommand>("update");
                 secret.AddCommand<DeleteSecretCommand>("delete");
+                secret.AddCommand<RecoverDeletedSecretCommand>("recover");
             });
         });
     }

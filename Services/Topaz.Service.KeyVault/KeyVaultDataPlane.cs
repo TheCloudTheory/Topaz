@@ -388,4 +388,32 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         return new DataPlaneOperationResult<IReadOnlyList<DeletedSecretRecord>>(OperationResult.Success, records, null, null);
     }
+
+    public DataPlaneOperationResult<Secret> RecoverDeletedSecret(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string secretName)
+    {
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RecoverDeletedSecret), "Executing {0}: {1} {2}", nameof(RecoverDeletedSecret), secretName, vaultName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var deletedPath = Path.Combine(path, "deleted", $"{secretName}.json");
+
+        if (!File.Exists(deletedPath))
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RecoverDeletedSecret), "Executing {0}: Deleted secret {1} not found.", nameof(RecoverDeletedSecret), secretName);
+            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Deleted secret {secretName} not found.", "SecretNotFound");
+        }
+
+        var data = File.ReadAllText(deletedPath);
+        var record = JsonSerializer.Deserialize<DeletedSecretRecord>(data, GlobalSettings.JsonOptions)!;
+        var secret = record.Secret!;
+
+        var entityPath = Path.Combine(path, $"{secretName}.json");
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(new[] { secret }, GlobalSettings.JsonOptions));
+        File.Delete(deletedPath);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RecoverDeletedSecret), "Executing {0}: Recovered secret {1}.", nameof(RecoverDeletedSecret), secretName);
+        return new DataPlaneOperationResult<Secret>(OperationResult.Success, secret, null, null);
+    }
 }

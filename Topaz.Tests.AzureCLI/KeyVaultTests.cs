@@ -586,5 +586,45 @@ public class KeyVaultTests : TopazFixture
         await RunAzureCliCommand("az group delete -n test-rg --yes");
     }
 
+    [Test]
+    public async Task KeyVaultTests_WhenDeletedSecretIsRecovered_ItShouldBeAccessibleAgain()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name RecoverVault01 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault secret set --vault-name RecoverVault01 --name recover-me --value original");
+        await RunAzureCliCommand("az keyvault secret delete --vault-name RecoverVault01 --name recover-me");
+        await RunAzureCliCommand("az keyvault secret recover --vault-name RecoverVault01 --name recover-me", (response) =>
+        {
+            Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo("recover-me"));
+        });
+        await RunAzureCliCommand("az keyvault secret show --vault-name RecoverVault01 --name recover-me", (response) =>
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo("recover-me"));
+                Assert.That(response["value"]!.GetValue<string>(), Is.EqualTo("original"));
+            });
+        });
+        await RunAzureCliCommand("az keyvault delete --name RecoverVault01 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    [Test]
+    public async Task KeyVaultTests_WhenDeletedSecretIsRecovered_ItShouldNoLongerAppearInDeletedList()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name RecoverVault02 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault secret set --vault-name RecoverVault02 --name cleanup-secret --value value");
+        await RunAzureCliCommand("az keyvault secret delete --vault-name RecoverVault02 --name cleanup-secret");
+        await RunAzureCliCommand("az keyvault secret recover --vault-name RecoverVault02 --name cleanup-secret");
+        await RunAzureCliCommand("az keyvault secret list-deleted --vault-name RecoverVault02", (response) =>
+        {
+            var secrets = response.AsArray();
+            Assert.That(secrets.Any(s => s!["name"]!.GetValue<string>() == "cleanup-secret"), Is.False);
+        });
+        await RunAzureCliCommand("az keyvault delete --name RecoverVault02 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
     #endregion
 }

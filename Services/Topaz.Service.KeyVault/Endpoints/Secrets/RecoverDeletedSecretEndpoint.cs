@@ -1,0 +1,65 @@
+using System.Net;
+using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
+using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
+using Topaz.Shared.Extensions;
+
+namespace Topaz.Service.KeyVault.Endpoints.Secrets;
+
+public sealed class RecoverDeletedSecretEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+{
+    private readonly KeyVaultDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
+    private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
+
+    public string[] Endpoints => ["POST /deletedsecrets/{secretName}/recover"];
+
+    public string[] Permissions => ["Microsoft.KeyVault/vaults/secrets/recover/action"];
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultKeyVaultPort], Protocol.Https);
+
+    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    {
+        try
+        {
+            var vaultName = context.Request.Headers["Host"].ToString().Split(".")[0];
+            var secretName = context.Request.Path.Value.ExtractValueFromPath(2);
+
+            if (string.IsNullOrEmpty(secretName))
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                return;
+            }
+
+            var kvResult = _controlPlane.FindByName(vaultName!);
+            if (kvResult.Result == OperationResult.NotFound || kvResult.Resource == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                return;
+            }
+
+            var subscriptionIdentifier = kvResult.Resource.GetSubscription();
+            var resourceGroupIdentifier = kvResult.Resource.GetResourceGroup();
+
+            var operation = _dataPlane.RecoverDeletedSecret(subscriptionIdentifier, resourceGroupIdentifier,
+                vaultName!, secretName);
+
+            if (operation.Result == OperationResult.NotFound || operation.Resource == null)
+            {
+                response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode,
+                    $"Deleted secret {secretName} not found.", HttpStatusCode.NotFound);
+                return;
+            }
+
+            response.CreateJsonContentResponse(operation.Resource!);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex);
+            response.Content = new StringContent(ex.Message);
+            response.StatusCode = HttpStatusCode.InternalServerError;
+        }
+    }
+}
