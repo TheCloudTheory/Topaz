@@ -18,7 +18,7 @@ public sealed class RecoverDeletedSecretEndpoint(Pipeline eventPipeline, ITopazL
     public string[] Permissions => ["Microsoft.KeyVault/vaults/secrets/recover/action"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultKeyVaultPort], Protocol.Https);
+        ([GlobalSettings.DefaultKeyVaultPort, GlobalSettings.AdditionalResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

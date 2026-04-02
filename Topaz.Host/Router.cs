@@ -30,7 +30,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
             return;
         }
 
-        logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}]");
+        logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}][port:{port ?? context.Connection.LocalPort}]");
 
         IEndpointDefinition? endpoint = null;
         var pathParts = path.Split('/');
@@ -101,7 +101,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         var response = CallEndpoint(endpoint, context);
         var textResponse = await response.Content.ReadAsStringAsync();
 
-        logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}][{response.StatusCode}] {textResponse}");
+        logger.LogInformation($"[{method}][{context.Request.Host}:{path}{query}][{response.StatusCode}] {textResponse}");
         
         context.Response.StatusCode = (int)response.StatusCode;
         

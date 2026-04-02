@@ -18,7 +18,7 @@ public sealed class GetDeletedSecretsEndpoint(Pipeline eventPipeline, ITopazLogg
     public string[] Permissions => ["Microsoft.KeyVault/vaults/secrets/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultKeyVaultPort], Protocol.Https);
+        ([GlobalSettings.DefaultKeyVaultPort, GlobalSettings.AdditionalResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
