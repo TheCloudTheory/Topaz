@@ -85,7 +85,7 @@ The data plane covers operations served directly from the vault's own hostname (
 | Backup Secret | ✅ | |
 | Restore Secret | ✅ | |
 | Get Deleted Secret | ✅ | |
-| Get Deleted Secrets | ❌ | |
+| Get Deleted Secrets | ✅ | |
 | Recover Deleted Secret | ❌ | |
 | Purge Deleted Secret | ❌ | |
 

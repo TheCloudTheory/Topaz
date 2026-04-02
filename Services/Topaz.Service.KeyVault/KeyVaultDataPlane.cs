@@ -368,4 +368,24 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         return new DataPlaneOperationResult<DeletedSecretRecord>(OperationResult.Success, record!, null, null);
     }
+
+    public DataPlaneOperationResult<IReadOnlyList<DeletedSecretRecord>> GetDeletedSecrets(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetDeletedSecrets), "Executing {0}: {1}", nameof(GetDeletedSecrets), vaultName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var deletedDir = Path.Combine(path, "deleted");
+
+        if (!Directory.Exists(deletedDir))
+            return new DataPlaneOperationResult<IReadOnlyList<DeletedSecretRecord>>(OperationResult.Success, [], null, null);
+
+        var records = Directory.GetFiles(deletedDir, "*.json")
+            .Select(file => JsonSerializer.Deserialize<DeletedSecretRecord>(File.ReadAllText(file), GlobalSettings.JsonOptions)!)
+            .ToList();
+
+        return new DataPlaneOperationResult<IReadOnlyList<DeletedSecretRecord>>(OperationResult.Success, records, null, null);
+    }
 }

@@ -24,6 +24,7 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
         new GetSecretVersionsEndpoint(eventPipeline, logger),
         new GetSecretEndpoint(eventPipeline, logger),
         new DeleteSecretEndpoint(eventPipeline, logger),
+        new GetDeletedSecretsEndpoint(eventPipeline, logger),
         new GetDeletedSecretEndpoint(eventPipeline, logger),
         new UpdateSecretEndpoint(eventPipeline, logger),
         new CreateOrUpdateKeyVaultEndpoint(eventPipeline, logger),

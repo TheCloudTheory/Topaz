@@ -546,4 +546,45 @@ public class KeyVaultTests : TopazFixture
     }
 
     #endregion
+
+    #region Deleted Secrets Tests
+
+    [Test]
+    public async Task KeyVaultTests_WhenMultipleSecretsAreDeleted_ListDeletedSecretsShouldReturnAll()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name SecretListVault01 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault secret set --vault-name SecretListVault01 --name secret-alpha --value alpha");
+        await RunAzureCliCommand("az keyvault secret set --vault-name SecretListVault01 --name secret-beta --value beta");
+        await RunAzureCliCommand("az keyvault secret delete --vault-name SecretListVault01 --name secret-alpha");
+        await RunAzureCliCommand("az keyvault secret delete --vault-name SecretListVault01 --name secret-beta");
+        await RunAzureCliCommand("az keyvault secret list-deleted --vault-name SecretListVault01", (response) =>
+        {
+            var secrets = response.AsArray();
+            Assert.Multiple(() =>
+            {
+                Assert.That(secrets.Any(s => s!["name"]!.GetValue<string>() == "secret-alpha"), Is.True);
+                Assert.That(secrets.Any(s => s!["name"]!.GetValue<string>() == "secret-beta"), Is.True);
+                Assert.That(secrets.All(s => s!["recoveryId"] != null), Is.True);
+            });
+        });
+        await RunAzureCliCommand("az keyvault delete --name SecretListVault01 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    [Test]
+    public async Task KeyVaultTests_WhenNoSecretsAreDeleted_ListDeletedSecretsShouldReturnEmptyList()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name SecretListVault02 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault secret list-deleted --vault-name SecretListVault02", (response) =>
+        {
+            var secrets = response.AsArray();
+            Assert.That(secrets, Is.Empty);
+        });
+        await RunAzureCliCommand("az keyvault delete --name SecretListVault02 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    #endregion
 }

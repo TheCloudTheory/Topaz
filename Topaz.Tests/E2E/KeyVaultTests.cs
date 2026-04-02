@@ -173,6 +173,36 @@ public class KeyVaultTests
     }
     
     [Test]
+    public void KeyVaultTests_WhenMultipleSecretsAreDeleted_TheyShouldAllBeListableAsDeleted()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint("test"), credential: credentials, new SecretClientOptions
+        {
+            DisableChallengeResourceVerification = true
+        });
+
+        // Act
+        client.SetSecret("deleted-secret-a", "value-a");
+        client.SetSecret("deleted-secret-b", "value-b");
+        var deleteOpA = client.StartDeleteSecret("deleted-secret-a");
+        var deleteOpB = client.StartDeleteSecret("deleted-secret-b");
+        deleteOpA.WaitForCompletion();
+        deleteOpB.WaitForCompletion();
+
+        var deletedSecrets = client.GetDeletedSecrets().ToArray();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(deletedSecrets.Any(s => s.Name == "deleted-secret-a"), Is.True);
+            Assert.That(deletedSecrets.Any(s => s.Name == "deleted-secret-b"), Is.True);
+            Assert.That(deletedSecrets.All(s => s.DeletedOn != null), Is.True);
+            Assert.That(deletedSecrets.All(s => s.ScheduledPurgeDate != null), Is.True);
+        });
+    }
+
+    [Test]
     public void KeyVaultTests_WhenSecretIsDeleted_ItShouldBeRetrievableAsDeletedSecret()
     {
         // Arrange
