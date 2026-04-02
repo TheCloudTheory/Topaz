@@ -82,6 +82,7 @@ const config: Config = {
       },
       items: [
         {to: '/features', label: 'Features', position: 'left'},
+        {to: '/use-cases', label: 'Use Cases', position: 'left'},
         {
           to: '/docs/intro',
           label: 'Documentation',

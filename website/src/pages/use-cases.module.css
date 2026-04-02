@@ -1,0 +1,521 @@
+/* ── Hero ──────────────────────────────────────────────────────── */
+.hero {
+  background: linear-gradient(150deg,
+    var(--topaz-hero-bg-start) 0%,
+    var(--topaz-hero-bg-mid) 55%,
+    var(--topaz-hero-bg-end) 100%);
+  padding: 5.5rem 0 4.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 75% 50% at 50% 110%,
+    rgba(77, 133, 240, 0.3) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.heroTitle {
+  font-size: 2.75rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.025em;
+  color: #fff !important;
+  margin-bottom: 1rem;
+  line-height: 1.18;
+  position: relative;
+  z-index: 1;
+}
+
+.heroSubtitle {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.78);
+  max-width: 580px;
+  margin: 0 auto 2rem;
+  line-height: 1.65;
+  position: relative;
+  z-index: 1;
+}
+
+.heroCta {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ── Section scaffolding ───────────────────────────────────────── */
+.section {
+  padding: 4.5rem 0;
+}
+
+.sectionAlt {
+  background: var(--ifm-color-emphasis-100);
+}
+
+.sectionLabel {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ifm-color-primary);
+  background: rgba(27, 99, 235, 0.08);
+  border-radius: 20px;
+  padding: 3px 10px;
+  margin-bottom: 0.6rem;
+}
+
+.sectionTitle {
+  font-size: 1.9rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.015em;
+  margin-bottom: 0.4rem;
+}
+
+.sectionSubtitle {
+  font-size: 1rem;
+  color: var(--ifm-color-secondary-darkest);
+  margin-bottom: 3rem;
+  max-width: 600px;
+}
+
+/* ── Scenario cards (featured use cases) ───────────────────────── */
+.scenarioList {
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+}
+
+.scenario {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.scenarioReverse {
+  direction: rtl;
+}
+
+.scenarioReverse > * {
+  direction: ltr;
+}
+
+@media (max-width: 996px) {
+  .scenario {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .scenarioReverse {
+    direction: ltr;
+  }
+}
+
+.scenarioMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.scenarioIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg,
+    rgba(27, 99, 235, 0.12) 0%,
+    rgba(77, 133, 240, 0.06) 100%);
+  border: 1px solid rgba(27, 99, 235, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.scenarioTag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ifm-color-primary);
+}
+
+.scenarioTitle {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.015em;
+  margin-bottom: 0.75rem;
+}
+
+.scenarioDesc {
+  font-size: 0.95rem;
+  color: var(--ifm-color-secondary-darkest);
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+}
+
+.scenarioBenefits {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.scenarioBenefits li {
+  font-size: 0.88rem;
+  color: var(--ifm-color-secondary-darkest);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.scenarioBenefits li::before {
+  content: '✓';
+  color: #07A560;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.scenarioVisual {
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--topaz-card-shadow);
+}
+
+.scenarioVisualHeader {
+  background: linear-gradient(90deg, #0d1b3e 0%, #102463 100%);
+  padding: 0.65rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dotRed   { background: #ff5f57; }
+.dotYellow { background: #febc2e; }
+.dotGreen { background: #28c840; }
+
+.scenarioVisualTitle {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-left: 0.25rem;
+}
+
+.scenarioCode {
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  font-size: 0.78rem !important;
+  line-height: 1.55 !important;
+}
+
+/* ── Diagram / pipeline visuals ────────────────────────────────── */
+.pipeline {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pipelineStep {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--ifm-color-emphasis-100);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 10px;
+  padding: 0.65rem 0.9rem;
+  transition: border-color 0.2s;
+}
+
+.pipelineStep:hover {
+  border-color: var(--ifm-color-primary-lighter);
+}
+
+.pipelineStepIcon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  width: 28px;
+  text-align: center;
+}
+
+.pipelineStepText {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ifm-heading-color);
+  line-height: 1.3;
+}
+
+.pipelineStepSub {
+  font-size: 0.72rem;
+  color: var(--ifm-color-secondary-darkest);
+  font-weight: 400;
+}
+
+.pipelineArrow {
+  text-align: center;
+  color: var(--ifm-color-emphasis-500);
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0 0 0 14px;
+}
+
+.pipelineStatus {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+}
+
+.statusPass {
+  background: rgba(7, 165, 96, 0.12);
+  color: #07A560;
+}
+
+.statusRun {
+  background: rgba(27, 99, 235, 0.1);
+  color: var(--ifm-color-primary);
+}
+
+.statusSkip {
+  background: rgba(0,0,0,0.06);
+  color: var(--ifm-color-secondary-darkest);
+}
+
+/* ── Architecture / topology diagram ──────────────────────────── */
+.topology {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.topologyRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.topoBox {
+  flex: 1;
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid transparent;
+}
+
+.topoBoxBlue {
+  background: rgba(27, 99, 235, 0.08);
+  border-color: rgba(27, 99, 235, 0.2);
+  color: var(--ifm-color-primary-darker);
+}
+
+.topoBoxGreen {
+  background: rgba(7, 165, 96, 0.08);
+  border-color: rgba(7, 165, 96, 0.2);
+  color: #065f46;
+}
+
+.topoBoxPurple {
+  background: rgba(134, 97, 197, 0.08);
+  border-color: rgba(134, 97, 197, 0.2);
+  color: #5b21b6;
+}
+
+.topoBoxOrange {
+  background: rgba(232, 117, 26, 0.08);
+  border-color: rgba(232, 117, 26, 0.2);
+  color: #92400e;
+}
+
+.topoBoxGray {
+  background: var(--ifm-color-emphasis-100);
+  border-color: var(--ifm-color-emphasis-300);
+  color: var(--ifm-color-secondary-darkest);
+}
+
+[data-theme='dark'] .topoBoxGreen {
+  color: #34d399;
+}
+
+[data-theme='dark'] .topoBoxPurple {
+  color: #c084fc;
+}
+
+[data-theme='dark'] .topoBoxOrange {
+  color: #fb923c;
+}
+
+.topoConnector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ifm-color-emphasis-400);
+  font-size: 1rem;
+}
+
+.topoLabel {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ifm-color-secondary-darkest);
+  padding: 0.2rem 0.4rem;
+}
+
+/* ── Quick use-case grid ───────────────────────────────────────── */
+.useCaseGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 996px) {
+  .useCaseGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .useCaseGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.useCaseCard {
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 14px;
+  padding: 1.35rem 1.25rem;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.useCaseCard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--topaz-card-shadow-hover);
+  border-color: var(--ifm-color-primary-lighter);
+}
+
+.useCaseCardIcon {
+  font-size: 1.6rem;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.useCaseCardTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  color: var(--ifm-heading-color);
+}
+
+.useCaseCardDesc {
+  font-size: 0.84rem;
+  color: var(--ifm-color-secondary-darkest);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Testimonial / quote banner ────────────────────────────────── */
+.quoteBanner {
+  background: linear-gradient(135deg,
+    rgba(27, 99, 235, 0.06) 0%,
+    rgba(77, 133, 240, 0.03) 100%);
+  border: 1px solid rgba(27, 99, 235, 0.15);
+  border-radius: 18px;
+  padding: 2.5rem 2.5rem;
+  text-align: center;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.quoteText {
+  font-size: 1.2rem;
+  font-style: italic;
+  color: var(--ifm-color-secondary-darkest);
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+.quoteText strong {
+  color: var(--ifm-heading-color);
+  font-style: normal;
+}
+
+/* ── CTA banner ────────────────────────────────────────────────── */
+.ctaBanner {
+  background: linear-gradient(150deg,
+    var(--topaz-hero-bg-start) 0%,
+    var(--topaz-hero-bg-mid) 60%,
+    var(--topaz-hero-bg-end) 100%);
+  padding: 4rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.ctaBanner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 60% 70% at 50% 120%,
+    rgba(77, 133, 240, 0.3) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.ctaTitle {
+  font-size: 2rem !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  margin-bottom: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.ctaSubtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 1.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.ctaButtons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
