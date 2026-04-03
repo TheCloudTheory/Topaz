@@ -2,11 +2,13 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Authorization;
+using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.Resources;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using Topaz.Identity;
 using Topaz.Portal.Models.Rbac;
+using Topaz.Portal.Models.KeyVaults;
 using Topaz.Portal.Models.ResourceGroups;
 using Topaz.Portal.Models.ResourceManager;
 using Topaz.Portal.Models.Subscriptions;
@@ -600,6 +602,40 @@ internal sealed class TopazClient
         {
             Value = items,
             ContinuationToken = page.ContinuationToken
+        };
+    }
+
+    public async Task<ListKeyVaultsResponse> ListKeyVaults()
+    {
+        await EnsureInitializedAsync();
+
+        var subscriptions = await ListSubscriptions();
+        var keyVaults = new List<KeyVaultDto>();
+
+        foreach (var subscription in subscriptions.Value)
+        {
+            var subscriptionResource = _armClient!
+                .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscription.SubscriptionId}"));
+
+            await foreach (var kv in subscriptionResource.GetKeyVaultsAsync())
+            {
+                keyVaults.Add(new KeyVaultDto
+                {
+                    Id = kv.Id.ToString(),
+                    Name = kv.Data.Name,
+                    Location = kv.Data.Location,
+                    ResourceGroupName = kv.Id.ResourceGroupName,
+                    SubscriptionId = subscription.SubscriptionId,
+                    SubscriptionName = subscription.DisplayName,
+                    VaultUri = kv.Data.Properties?.VaultUri?.ToString(),
+                    SkuName = kv.Data.Properties?.Sku?.Name.ToString()
+                });
+            }
+        }
+
+        return new ListKeyVaultsResponse
+        {
+            Value = keyVaults.ToArray()
         };
     }
 }

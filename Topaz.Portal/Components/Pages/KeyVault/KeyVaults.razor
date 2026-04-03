@@ -1,0 +1,168 @@
+@page "/key-vault"
+@using Topaz.Portal.Models.KeyVaults
+@using Topaz.Portal.Models.Subscriptions
+@inject TopazClient TopazClient
+@inject NavigationManager Nav
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="mb-0">Key vaults</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <strong>Filter</strong>
+                <span class="text-muted small">
+                    @(_selectedSubscriptionIds.Count == 0 ? "All subscriptions" : $"{_selectedSubscriptionIds.Count} selected")
+                </span>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-secondary"
+                        @onclick="ToggleFilter"
+                        disabled="@_loading">
+                    @(_showFilter ? "Hide" : "Show")
+                </button>
+
+                <button class="btn btn-sm btn-outline-secondary"
+                        @onclick="ClearFilter"
+                        disabled="@(_loading || _selectedSubscriptionIds.Count == 0)">
+                    Clear
+                </button>
+            </div>
+        </div>
+
+        @if (_showFilter)
+        {
+            <div class="border rounded p-2 mb-3" style="max-height: 180px; overflow:auto;">
+                @if (_subscriptions.Length == 0)
+                {
+                    <div class="text-muted small">No subscriptions loaded.</div>
+                }
+                else
+                {
+                    @foreach (var s in _subscriptions)
+                    {
+                        var id = s.SubscriptionId ?? "";
+                        var isChecked = !string.IsNullOrWhiteSpace(id) && _selectedSubscriptionIds.Contains(id);
+
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="@($"sub-filter-{id}")"
+                                   checked="@isChecked"
+                                   @onchange="(e) => OnSubscriptionFilterChanged(id, e)" />
+                            <label class="form-check-label" for="@($"sub-filter-{id}")">
+                                @(s.DisplayName ?? "(no name)")
+                                <span class="text-muted small">(@id)</span>
+                            </label>
+                        </div>
+                    }
+                }
+            </div>
+        }
+
+        @if (_loading)
+        {
+            <p>Loading…</p>
+        }
+        else if (_error is not null)
+        {
+            <div class="alert alert-danger" role="alert">
+                @_error
+            </div>
+        }
+        else if (FilteredKeyVaults.Length == 0)
+        {
+            <p class="mb-0">No key vaults found.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Resource group</th>
+                        <th>Subscription</th>
+                        <th>Location</th>
+                        <th>SKU</th>
+                        <th class="text-muted">Vault URI</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var kv in FilteredKeyVaults)
+                    {
+                        <tr>
+                            <td>@(kv.Name ?? "(unknown)")</td>
+                            <td>@(kv.ResourceGroupName ?? "-")</td>
+                            <td>@(kv.SubscriptionName ?? "(unknown)")</td>
+                            <td><code>@(kv.Location ?? "-")</code></td>
+                            <td>@(kv.SkuName ?? "-")</td>
+                            <td class="text-muted"><small>@(kv.VaultUri ?? "-")</small></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code
+{
+    private bool _loading = true;
+    private string? _error;
+    private KeyVaultDto[] _keyVaults = [];
+
+    private SubscriptionDto[] _subscriptions = [];
+    private bool _showFilter = true;
+    private readonly HashSet<string> _selectedSubscriptionIds = new(StringComparer.OrdinalIgnoreCase);
+
+    private KeyVaultDto[] FilteredKeyVaults =>
+        _selectedSubscriptionIds.Count == 0
+            ? _keyVaults
+            : _keyVaults.Where(kv =>
+                !string.IsNullOrWhiteSpace(kv.SubscriptionId) &&
+                _selectedSubscriptionIds.Contains(kv.SubscriptionId))
+            .ToArray();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var subsTask = TopazClient.ListSubscriptions();
+            var kvsTask = TopazClient.ListKeyVaults();
+
+            await Task.WhenAll(subsTask, kvsTask);
+
+            _subscriptions = subsTask.Result.Value;
+            _keyVaults = kvsTask.Result.Value;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleFilter() => _showFilter = !_showFilter;
+
+    private void ClearFilter()
+    {
+        _selectedSubscriptionIds.Clear();
+    }
+
+    private void OnSubscriptionFilterChanged(string subscriptionId, ChangeEventArgs e)
+    {
+        var isChecked = e.Value is true;
+        if (isChecked)
+            _selectedSubscriptionIds.Add(subscriptionId);
+        else
+            _selectedSubscriptionIds.Remove(subscriptionId);
+    }
+}
