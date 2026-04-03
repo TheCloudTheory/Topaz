@@ -443,4 +443,35 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RecoverDeletedSecret), "Executing {0}: Recovered secret {1}.", nameof(RecoverDeletedSecret), secretName);
         return new DataPlaneOperationResult<Secret>(OperationResult.Success, secret, null, null);
     }
+
+    /// <summary>Permanently deletes a soft-deleted secret, making it unrecoverable.</summary>
+    /// <param name="subscriptionIdentifier">The subscription that owns the vault.</param>
+    /// <param name="resourceGroupIdentifier">The resource group that owns the vault.</param>
+    /// <param name="vaultName">The name of the vault.</param>
+    /// <param name="secretName">The name of the deleted secret to purge.</param>
+    /// <returns>A <see cref="DataPlaneOperationResult"/> indicating success or not-found.</returns>
+    public DataPlaneOperationResult PurgeDeletedSecret(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string secretName)
+    {
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedSecret), "Executing {0}: {1} {2}", nameof(PurgeDeletedSecret), secretName, vaultName);
+
+        PathGuard.ValidateName(secretName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var deletedPath = Path.Combine(path, "deleted", $"{secretName}.json");
+        PathGuard.EnsureWithinDirectory(deletedPath, path);
+
+        if (!File.Exists(deletedPath))
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedSecret), "Executing {0}: Deleted secret {1} not found.", nameof(PurgeDeletedSecret), secretName);
+            return new DataPlaneOperationResult(OperationResult.NotFound, $"Deleted secret {secretName} not found.", "SecretNotFound");
+        }
+
+        File.Delete(deletedPath);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedSecret), "Executing {0}: Purged secret {1}.", nameof(PurgeDeletedSecret), secretName);
+        return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
+    }
 }

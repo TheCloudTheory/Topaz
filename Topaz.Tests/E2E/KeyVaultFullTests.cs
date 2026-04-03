@@ -210,4 +210,30 @@ public class KeyVaultFullTests
         var allVersions = client.GetPropertiesOfSecretVersions("restore-secret").ToList();
         Assert.That(allVersions, Has.Count.EqualTo(2));
     }
+
+    [Test]
+    public void KeyVaultTests_WhenDeletedSecretIsPurged_ItShouldNoLongerAppearInDeletedList()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(TestKeyVaultName),
+            credential: credential, new SecretClientOptions { DisableChallengeResourceVerification = true });
+        _ = resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, TestKeyVaultName, operation, CancellationToken.None);
+
+        _ = client.SetSecret("purge-me", "value");
+        client.StartDeleteSecret("purge-me");
+
+        // Act
+        client.PurgeDeletedSecret("purge-me");
+
+        // Assert — the secret must not appear in the deleted list after purge
+        var deletedSecrets = client.GetDeletedSecrets().ToList();
+        Assert.That(deletedSecrets.Any(s => s.Name == "purge-me"), Is.False);
+    }
 }

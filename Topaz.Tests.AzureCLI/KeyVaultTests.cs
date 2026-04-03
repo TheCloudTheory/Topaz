@@ -626,5 +626,22 @@ public class KeyVaultTests : TopazFixture
         await RunAzureCliCommand("az group delete -n test-rg --yes");
     }
 
+    [Test]
+    public async Task KeyVaultTests_WhenDeletedSecretIsPurged_ItShouldNoLongerAppearInDeletedList()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name PurgeVault01 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault secret set --vault-name PurgeVault01 --name purge-me --value secret-value");
+        await RunAzureCliCommand("az keyvault secret delete --vault-name PurgeVault01 --name purge-me");
+        await RunAzureCliCommand("az keyvault secret purge --vault-name PurgeVault01 --name purge-me");
+        await RunAzureCliCommand("az keyvault secret list-deleted --vault-name PurgeVault01", (response) =>
+        {
+            var secrets = response.AsArray();
+            Assert.That(secrets.Any(s => s!["name"]!.GetValue<string>() == "purge-me"), Is.False);
+        });
+        await RunAzureCliCommand("az keyvault delete --name PurgeVault01 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
     #endregion
 }
