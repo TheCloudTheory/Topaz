@@ -6,9 +6,12 @@ namespace Topaz.Service.KeyVault.Models;
 
 public record class Secret
 {
-    public Secret(string name, string value, Guid version)
+    [System.Text.Json.Serialization.JsonConstructor]
+    public Secret() { }
+
+    public Secret(string name, string value, Guid version, string vaultName = "")
     {
-        Id = $"https://topaz.local.dev/secrets/{name}/{version}";
+        Id = $"https://{vaultName}.keyvault.topaz.local.dev/secrets/{name}/{version}";
         Name = name;
         Value = value;
         Version = version;

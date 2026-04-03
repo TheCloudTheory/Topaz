@@ -82,7 +82,7 @@ public record GlobalDnsEntries
             : $"{subscriptionIdentifier}:{resourceGroupIdentifier}";
     }
 
-    public static (Guid subscription, string? resourceGroup)? GetEntry(string serviceName, string instanceName)
+    public static (Guid subscription, string? resourceGroup, string canonicalName)? GetEntry(string serviceName, string instanceName)
     {
         _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(GetEntry), "Loading service `{0}` with key `{1}`...",
             serviceName, instanceName);
@@ -95,18 +95,21 @@ public record GlobalDnsEntries
             return null;
         }
 
-        var existingEntry = globalServiceEntries
+        var matchingGroup = globalServiceEntries
             .SingleOrDefault(serviceEntries =>
-                serviceEntries.Value.SingleOrDefault(entry => entry.Name == instanceName) != null).Key;
-        if (string.IsNullOrWhiteSpace(existingEntry))
+                serviceEntries.Value.SingleOrDefault(entry => entry.Name.Equals(instanceName, StringComparison.OrdinalIgnoreCase)) != null);
+        if (string.IsNullOrWhiteSpace(matchingGroup.Key))
         {
             _logger?.LogDebug(nameof(GlobalDnsEntries), nameof(GetEntry),
                 $"Service `{serviceName}` entry with key {instanceName} not found.");
             return null;
         }
 
-        var segments = existingEntry.Split(":");
-        return (Guid.Parse(segments[0]), segments.Length > 1 ? segments[1] : null);
+        var canonicalName = matchingGroup.Value
+            .Single(entry => entry.Name.Equals(instanceName, StringComparison.OrdinalIgnoreCase)).Name;
+
+        var segments = matchingGroup.Key.Split(":");
+        return (Guid.Parse(segments[0]), segments.Length > 1 ? segments[1] : null, canonicalName);
     }
 
     public static void DeleteEntry(string serviceName, Guid subscriptionIdentifier, string? resourceGroupIdentifier,
@@ -124,7 +127,7 @@ public record GlobalDnsEntries
         else
         {
             var serviceEntries = globalServiceEntries.Single(entry => entry.Key == entryKey);
-            var entry = serviceEntries.Value.SingleOrDefault(entry => entry.Name == instanceName);
+            var entry = serviceEntries.Value.SingleOrDefault(entry => entry.Name.Equals(instanceName, StringComparison.OrdinalIgnoreCase));
 
             if (entry == null)
             {
@@ -182,8 +185,8 @@ public record GlobalDnsEntries
 
         var existingEntry = globalServiceEntries
             .SingleOrDefault(serviceEntries =>
-                serviceEntries.Value.SingleOrDefault(entry => entry.Name == instanceName) != null).Value
-            .SingleOrDefault(entry => entry.Name == instanceName);
+                serviceEntries.Value.SingleOrDefault(entry => entry.Name.Equals(instanceName, StringComparison.OrdinalIgnoreCase)) != null).Value
+            .SingleOrDefault(entry => entry.Name.Equals(instanceName, StringComparison.OrdinalIgnoreCase));
 
         return existingEntry is { SoftDeleted: true };
     }
@@ -197,8 +200,8 @@ public record GlobalDnsEntries
 
         var existingEntry = globalServiceEntries
             .SingleOrDefault(serviceEntries =>
-                serviceEntries.Value.SingleOrDefault(entry => entry.Name == instanceName) != null).Value
-            .SingleOrDefault(entry => entry.Name == instanceName);
+                serviceEntries.Value.SingleOrDefault(entry => entry.Name.Equals(instanceName, StringComparison.OrdinalIgnoreCase)) != null).Value
+            .SingleOrDefault(entry => entry.Name.Equals(instanceName, StringComparison.OrdinalIgnoreCase));
 
         if (existingEntry == null) return;
 

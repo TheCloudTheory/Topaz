@@ -20,7 +20,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         var path = context.Request.Path.ToString();
         var method = context.Request.Method;
         var query = context.Request.QueryString;
-        var port = context.Request.Host.Port;
+        var port = context.Request.Host.Port ?? context.Connection.LocalPort;
 
         if (method == null)
         {
@@ -30,7 +30,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
             return;
         }
 
-        logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}][port:{port ?? context.Connection.LocalPort}]");
+        logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}][port:{port}]");
 
         IEndpointDefinition? endpoint = null;
         var pathParts = path.Split('/');

@@ -19,12 +19,11 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     public void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier,
         string? id, bool softDelete = false)
     {
+        var basePath = Path.Combine(BaseEmulatorPath,
+            GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier));
         var servicePath = string.IsNullOrWhiteSpace(id)
-            ? Path.Combine(BaseEmulatorPath,
-                GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier))
-            : Path.Combine(BaseEmulatorPath,
-                GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id);
-
+            ? basePath
+            : Path.Combine(basePath, ResolveIdCasing(basePath, id));
         if (!Directory.Exists(servicePath))
         {
             _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(Delete),
@@ -58,11 +57,12 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         string? id)
     {
         const string fileName = $"metadata.json";
-        var metadataFile = string.IsNullOrWhiteSpace(id)
-            ? Path.Combine(BaseEmulatorPath,
-                GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), fileName)
-            : Path.Combine(BaseEmulatorPath,
-                GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id, fileName);
+        var basePath = Path.Combine(BaseEmulatorPath,
+            GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier));
+        var resolvedId = string.IsNullOrWhiteSpace(id) ? null : ResolveIdCasing(basePath, id);
+        var metadataFile = resolvedId == null
+            ? Path.Combine(basePath, fileName)
+            : Path.Combine(basePath, resolvedId, fileName);
 
         if (!File.Exists(metadataFile)) return null;
 
@@ -70,6 +70,29 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         return string.IsNullOrEmpty(content)
             ? throw new InvalidOperationException("Metadata file is null or empty.")
             : content;
+    }
+
+    /// <summary>
+    /// Resolves the on-disk casing of a resource directory name under <paramref name="parentPath"/>.
+    /// On case-sensitive filesystems (Linux), a caller may supply a name that differs in casing from
+    /// the directory that was originally created (e.g. the Azure CLI lowercases hostnames). This method
+    /// performs a case-insensitive directory search so that reads and writes always target the correct path
+    /// regardless of the casing supplied by the caller.
+    /// </summary>
+    /// <param name="parentPath">The parent directory under which the resource directory lives.</param>
+    /// <param name="id">The resource identifier / directory name to resolve.</param>
+    /// <returns>
+    /// The directory name with its original on-disk casing if a match is found; otherwise <paramref name="id"/>
+    /// unchanged (allowing callers to handle the not-found case normally).
+    /// </returns>
+    private static string ResolveIdCasing(string parentPath, string id)
+    {
+        if (Directory.Exists(Path.Combine(parentPath, id))) return id;
+        if (!Directory.Exists(parentPath)) return id;
+
+        var match = Directory.EnumerateDirectories(parentPath)
+            .FirstOrDefault(d => string.Equals(Path.GetFileName(d), id, StringComparison.OrdinalIgnoreCase));
+        return match != null ? Path.GetFileName(match)! : id;
     }
 
     private static string GetLocalDirectoryPathWithReplacedValues(SubscriptionIdentifier? subscriptionIdentifier,
@@ -108,12 +131,11 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         ResourceGroupIdentifier? resourceGroupIdentifier, string? id = null, uint? lookForNoOfSegments = null,
         string? filter = null)
     {
+        var listBasePath = Path.Combine(BaseEmulatorPath,
+            GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier));
         var servicePath = string.IsNullOrWhiteSpace(id)
-            ? Path.Combine(BaseEmulatorPath,
-                GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier))
-            : Path.Combine(BaseEmulatorPath,
-                GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id);
-
+            ? listBasePath
+            : Path.Combine(listBasePath, ResolveIdCasing(listBasePath, id));
         if (!Directory.Exists(servicePath))
         {
             _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(List),
@@ -271,11 +293,11 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     public string GetServiceInstancePath(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string? id)
     {
+        var basePath = Path.Combine(BaseEmulatorPath,
+            GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier));
         return string.IsNullOrWhiteSpace(id)
-            ? Path.Combine(BaseEmulatorPath,
-                GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier))
-            : Path.Combine(BaseEmulatorPath,
-                GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id);
+            ? basePath
+            : Path.Combine(basePath, ResolveIdCasing(basePath, id));
     }
 
     public string GetServiceInstanceDataPath(SubscriptionIdentifier subscriptionIdentifier,
@@ -285,8 +307,11 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         ThrowIfIdentifierContainsForbiddenExpressions(resourceGroupIdentifier.Value);
         ThrowIfIdentifierContainsForbiddenExpressions(id);
 
-        return Path.Combine(BaseEmulatorPath,
-            GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), id, "data");
+        var basePath = Path.Combine(BaseEmulatorPath,
+            GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier));
+        var resolvedId = ResolveIdCasing(basePath, id);
+
+        return Path.Combine(basePath, resolvedId, "data");
     }
 
     private static void ThrowIfIdentifierContainsForbiddenExpressions(string identifier)

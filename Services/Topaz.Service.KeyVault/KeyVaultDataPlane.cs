@@ -100,23 +100,23 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         {
             // When SetSecret is called for Key Vault, data plane checks if a secret already exists.
             // If it does, it adds a new version instead of throwing an error or replacing it.
-            var newVersion = CreateNewSecretVersion(secretName, data.Value, entityPath);
+            var newVersion = CreateNewSecretVersion(secretName, data.Value, entityPath, vaultName);
 
             return new DataPlaneOperationResult<Secret>(OperationResult.Success, newVersion, null, null);
         }
 
         // Secret does not exist so we simply create it.
-        var secret = new Secret(secretName, data.Value, Guid.NewGuid());
+        var secret = new Secret(secretName, data.Value, Guid.NewGuid(), vaultName);
         File.WriteAllText(entityPath, JsonSerializer.Serialize(new[] { secret }, GlobalSettings.JsonOptions));
 
         return new DataPlaneOperationResult<Secret>(OperationResult.Created, secret, null, null);
     }
 
-    private Secret CreateNewSecretVersion(string secretName, string value, string entityPath)
+    private Secret CreateNewSecretVersion(string secretName, string value, string entityPath, string vaultName)
     {
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(CreateNewSecretVersion), "Executing {0}: {1} {2}", nameof(CreateNewSecretVersion), secretName, value);
         
-        var secret = new Secret(secretName, value, Guid.NewGuid());
+        var secret = new Secret(secretName, value, Guid.NewGuid(), vaultName);
         var data = File.ReadAllText(entityPath);
         var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions)!.ToList();
         
