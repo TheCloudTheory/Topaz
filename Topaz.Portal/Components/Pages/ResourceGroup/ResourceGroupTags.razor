@@ -13,17 +13,25 @@
     <BreadcrumbItem IsActive="true">Tags</BreadcrumbItem>
 </Breadcrumb>
 
-<h1 class="mb-3">@ResourceGroupName</h1>
+<h1 class="mb-3">@DecodedName</h1>
 
 <ResourceGroupDetailsShell SubscriptionId="SubscriptionId" ResourceGroupName="@DecodedName">
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title mb-3">Tags</h5>
-            <p class="mb-0 text-muted">
-                Tags view goes here (list/edit tags).
-            </p>
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_loadError is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @_loadError
         </div>
-    </div>
+    }
+    else
+    {
+        <TagsPanel Tags="_tags"
+                   OnAdd="AddTagAsync"
+                   OnRemove="RemoveTagAsync" />
+    }
 </ResourceGroupDetailsShell>
 
 @code {
@@ -31,17 +39,73 @@
     [Parameter] public string ResourceGroupName { get; set; } = "";
 
     private string DecodedName => WebUtility.UrlDecode(ResourceGroupName) ?? ResourceGroupName;
+
+    private bool _loading = true;
+    private string? _loadError;
+    private Dictionary<string, string> _tags = [];
     private ResourceGroupDto? _rg;
 
     protected override async Task OnParametersSetAsync()
     {
+        await LoadResourceGroupAsync();
+    }
+
+    private async Task LoadResourceGroupAsync()
+    {
+        _loading = true;
+        _loadError = null;
+
         try
         {
             _rg = await TopazClient.GetResourceGroup(SubscriptionId, DecodedName);
+
+            if (_rg is null)
+            {
+                _tags = [];
+                _loadError = "Resource group not found.";
+                return;
+            }
+
+            _tags = new Dictionary<string, string>(_rg.Tags, StringComparer.OrdinalIgnoreCase);
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore errors loading resource group
+            _tags = [];
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<string?> AddTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateResourceGroupTag(SubscriptionId, DecodedName, tag, value);
+            await LoadResourceGroupAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> RemoveTagAsync(string key)
+    {
+        try
+        {
+            await TopazClient.DeleteResourceGroupTag(SubscriptionId, DecodedName, key);
+            await LoadResourceGroupAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
         }
     }
 }

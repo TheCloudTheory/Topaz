@@ -334,6 +334,8 @@ internal sealed class KeyVaultControlPlane(
         
         var resource = keyVaultOperation.Resource!;
 
+        KeyVaultResourceProperties.UpdateFromRequest(resource, request);
+
         SetRecoverPropertiesForKeyVault(isRecoverMode, resource);
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource, false, isRecoverMode);

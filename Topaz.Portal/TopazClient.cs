@@ -68,6 +68,9 @@ internal sealed class TopazClient
             var credentials = new AzureFixedTokenLocalCredential(_session.Token);
             _armClient = new ArmClient(credentials, Guid.Empty.ToString(), TopazArmClientOptions.New);
 
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _session.Token);
+
             _graphClient = new GraphServiceClient(_httpClientFactory.CreateClient(),
                 new LocalGraphFixedTokenAuthenticationProvider(_session.Token),
                 _configuration["Topaz:ArmBaseUrl"]);
@@ -205,6 +208,45 @@ internal sealed class TopazClient
         }
     }
 
+    public async Task DeleteSubscriptionTag(
+        Guid subscriptionId,
+        string tagName,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync();
+
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        if (string.IsNullOrWhiteSpace(tagName))
+            throw new ArgumentException("Tag name is required.", nameof(tagName));
+
+        var subscription = await _armClient!
+            .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId:D}"))
+            .GetAsync(cancellationToken);
+
+        var tags = subscription.Value.Data.Tags is null
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string>(subscription.Value.Data.Tags, StringComparer.OrdinalIgnoreCase);
+        tags.Remove(tagName);
+
+        var payload = new
+        {
+            SubscriptionName = subscription.Value.Data.DisplayName,
+            Tags = tags
+        };
+
+        using var resp =
+            await _httpClient.PatchAsJsonAsync($"/subscriptions/{subscriptionId}", payload, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException(
+                $"Deleting subscription tag failed: {(int)resp.StatusCode} {resp.ReasonPhrase}. {body}");
+        }
+    }
+
     public async Task CreateSubscription(Guid subscriptionId, string subscriptionName,
         CancellationToken cancellationToken = default)
     {
@@ -319,8 +361,87 @@ internal sealed class TopazClient
             Name = rg.Data.Name,
             Location = rg.Data.Location,
             SubscriptionId = subscriptionId.ToString(),
-            SubscriptionName = subscription.Value.Data.DisplayName
+            SubscriptionName = subscription.Value.Data.DisplayName,
+            Tags = rg.Data.Tags is null
+                ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                : new Dictionary<string, string>(rg.Data.Tags, StringComparer.OrdinalIgnoreCase)
         };
+    }
+
+    public async Task CreateOrUpdateResourceGroupTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string tagName,
+        string tagValue,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync();
+
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        if (string.IsNullOrWhiteSpace(resourceGroupName))
+            throw new ArgumentException("Resource group name is required.", nameof(resourceGroupName));
+
+        if (string.IsNullOrWhiteSpace(tagName))
+            throw new ArgumentException("Tag name is required.", nameof(tagName));
+
+        if (string.IsNullOrWhiteSpace(tagValue))
+            throw new ArgumentException("Tag value is required.", nameof(tagValue));
+
+        var existing = await GetResourceGroup(subscriptionId, resourceGroupName, cancellationToken);
+
+        var tags = existing?.Tags is null
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string>(existing.Tags, StringComparer.OrdinalIgnoreCase);
+        tags[tagName] = tagValue;
+
+        var payload = new { Tags = tags };
+        using var resp = await _httpClient.PatchAsJsonAsync(
+            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}", payload, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException(
+                $"Updating resource group tags failed: {(int)resp.StatusCode} {resp.ReasonPhrase}. {body}");
+        }
+    }
+
+    public async Task DeleteResourceGroupTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string tagName,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync();
+
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        if (string.IsNullOrWhiteSpace(resourceGroupName))
+            throw new ArgumentException("Resource group name is required.", nameof(resourceGroupName));
+
+        if (string.IsNullOrWhiteSpace(tagName))
+            throw new ArgumentException("Tag name is required.", nameof(tagName));
+
+        var existing = await GetResourceGroup(subscriptionId, resourceGroupName, cancellationToken);
+
+        var tags = existing?.Tags is null
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string>(existing.Tags, StringComparer.OrdinalIgnoreCase);
+        tags.Remove(tagName);
+
+        var payload = new { Tags = tags };
+        using var resp = await _httpClient.PatchAsJsonAsync(
+            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}", payload, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException(
+                $"Deleting resource group tag failed: {(int)resp.StatusCode} {resp.ReasonPhrase}. {body}");
+        }
     }
 
     public async Task<ListDeploymentsResponse> ListDeployments(Guid subscriptionId, string resourceGroupName,
@@ -745,8 +866,97 @@ internal sealed class TopazClient
             SubscriptionId = subscriptionId.ToString(),
             SubscriptionName = subscription.Value.Data.DisplayName,
             VaultUri = vault.Value.Data.Properties?.VaultUri?.ToString(),
-            SkuName = vault.Value.Data.Properties?.Sku?.Name.ToString()
+            SkuName = vault.Value.Data.Properties?.Sku?.Name.ToString(),
+            Tags = vault.Value.Data.Tags is null
+                ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                : new Dictionary<string, string>(vault.Value.Data.Tags, StringComparer.OrdinalIgnoreCase)
         };
+    }
+
+    public async Task CreateOrUpdateKeyVaultTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string keyVaultName,
+        string tagName,
+        string tagValue,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync();
+
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        if (string.IsNullOrWhiteSpace(resourceGroupName))
+            throw new ArgumentException("Resource group name is required.", nameof(resourceGroupName));
+
+        if (string.IsNullOrWhiteSpace(keyVaultName))
+            throw new ArgumentException("Key vault name is required.", nameof(keyVaultName));
+
+        if (string.IsNullOrWhiteSpace(tagName))
+            throw new ArgumentException("Tag name is required.", nameof(tagName));
+
+        if (string.IsNullOrWhiteSpace(tagValue))
+            throw new ArgumentException("Tag value is required.", nameof(tagValue));
+
+        var existing = await GetKeyVault(subscriptionId, resourceGroupName, keyVaultName, cancellationToken);
+
+        var tags = existing?.Tags is null
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string>(existing.Tags, StringComparer.OrdinalIgnoreCase);
+        tags[tagName] = tagValue;
+
+        var payload = new { Tags = tags };
+        using var resp = await _httpClient.PatchAsJsonAsync(
+            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
+            payload, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException(
+                $"Updating key vault tags failed: {(int)resp.StatusCode} {resp.ReasonPhrase}. {body}");
+        }
+    }
+
+    public async Task DeleteKeyVaultTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string keyVaultName,
+        string tagName,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync();
+
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        if (string.IsNullOrWhiteSpace(resourceGroupName))
+            throw new ArgumentException("Resource group name is required.", nameof(resourceGroupName));
+
+        if (string.IsNullOrWhiteSpace(keyVaultName))
+            throw new ArgumentException("Key vault name is required.", nameof(keyVaultName));
+
+        if (string.IsNullOrWhiteSpace(tagName))
+            throw new ArgumentException("Tag name is required.", nameof(tagName));
+
+        var existing = await GetKeyVault(subscriptionId, resourceGroupName, keyVaultName, cancellationToken);
+
+        var tags = existing?.Tags is null
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string>(existing.Tags, StringComparer.OrdinalIgnoreCase);
+        tags.Remove(tagName);
+
+        var payload = new { Tags = tags };
+        using var resp = await _httpClient.PatchAsJsonAsync(
+            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}",
+            payload, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException(
+                $"Deleting key vault tag failed: {(int)resp.StatusCode} {resp.ReasonPhrase}. {body}");
+        }
     }
 
     public async Task<IReadOnlyList<KeyVaultSecretDto>> ListKeyVaultSecrets(

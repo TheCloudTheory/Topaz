@@ -14,4 +14,5 @@ public sealed class ResourceGroupDto
     
     public string? SubscriptionId { get; init; }
     public string? SubscriptionName { get; init; }
+    public Dictionary<string, string> Tags { get; init; } = new(StringComparer.OrdinalIgnoreCase);
 }

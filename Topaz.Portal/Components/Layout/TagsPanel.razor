@@ -1,0 +1,150 @@
+@* Topaz.Portal/Components/Layout/TagsPanel.razor *@
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title mb-3">Tags</h5>
+
+        <div class="row g-3 align-items-end mb-4">
+            <div class="col-12 col-md-5">
+                <label class="form-label" for="tagsPanelName">Tag</label>
+                <input id="tagsPanelName"
+                       class="form-control"
+                       @bind="_newTag"
+                       @bind:event="oninput"
+                       placeholder="e.g. environment"
+                       disabled="@(_saving || IsBusy)" />
+            </div>
+
+            <div class="col-12 col-md-5">
+                <label class="form-label" for="tagsPanelValue">Value</label>
+                <input id="tagsPanelValue"
+                       class="form-control"
+                       @bind="_newValue"
+                       @bind:event="oninput"
+                       placeholder="e.g. production"
+                       disabled="@(_saving || IsBusy)" />
+            </div>
+
+            <div class="col-12 col-md-2">
+                <button class="btn btn-primary w-100"
+                        @onclick="AddAsync"
+                        disabled="@(!CanAdd || _saving || IsBusy)">
+                    @(_saving ? "Saving…" : "Add tag")
+                </button>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <div class="alert alert-danger" role="alert">
+                @_error
+            </div>
+        }
+
+        @if (Tags.Count == 0)
+        {
+            <p class="mb-0 text-muted">No tags assigned.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Tag</th>
+                            <th>Value</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var tag in Tags.OrderBy(t => t.Key, StringComparer.OrdinalIgnoreCase))
+                        {
+                            <tr>
+                                <td><code>@tag.Key</code></td>
+                                <td>@tag.Value</td>
+                                <td class="text-end">
+                                    <button class="btn btn-outline-danger btn-sm"
+                                            @onclick="() => RemoveAsync(tag.Key)"
+                                            disabled="@(_saving || IsBusy)">
+                                        Remove
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>Current set of tags to display.</summary>
+    [Parameter, EditorRequired] public Dictionary<string, string> Tags { get; set; } = [];
+
+    /// <summary>Called when the user adds a tag. Return an error message on failure, or null on success.</summary>
+    [Parameter, EditorRequired] public Func<string, string, Task<string?>> OnAdd { get; set; } = default!;
+
+    /// <summary>Called when the user removes a tag. Return an error message on failure, or null on success.</summary>
+    [Parameter, EditorRequired] public Func<string, Task<string?>> OnRemove { get; set; } = default!;
+
+    /// <summary>Disables all inputs while the parent page is loading.</summary>
+    [Parameter] public bool IsBusy { get; set; }
+
+    private string _newTag = string.Empty;
+    private string _newValue = string.Empty;
+    private bool _saving;
+    private string? _error;
+
+    private bool CanAdd =>
+        !string.IsNullOrWhiteSpace(_newTag) &&
+        !string.IsNullOrWhiteSpace(_newValue);
+
+    private async Task AddAsync()
+    {
+        _error = null;
+
+        var tag = _newTag.Trim();
+        var value = _newValue.Trim();
+
+        if (string.IsNullOrWhiteSpace(tag) || string.IsNullOrWhiteSpace(value))
+        {
+            _error = "Both tag and value are required.";
+            return;
+        }
+
+        if (Tags.ContainsKey(tag))
+        {
+            _error = $"The tag '{tag}' already exists.";
+            return;
+        }
+
+        _saving = true;
+        try
+        {
+            _error = await OnAdd(tag, value);
+            if (_error is null)
+            {
+                _newTag = string.Empty;
+                _newValue = string.Empty;
+            }
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task RemoveAsync(string key)
+    {
+        _error = null;
+        _saving = true;
+        try
+        {
+            _error = await OnRemove(key);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

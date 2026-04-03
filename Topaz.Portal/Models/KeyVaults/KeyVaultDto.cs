@@ -10,6 +10,7 @@ public sealed class KeyVaultDto
     public string? SubscriptionName { get; init; }
     public string? VaultUri { get; init; }
     public string? SkuName { get; init; }
+    public Dictionary<string, string> Tags { get; init; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
 public sealed class ListKeyVaultsResponse

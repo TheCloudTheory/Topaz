@@ -102,4 +102,10 @@ internal sealed class KeyVaultResourceProperties
         if (request.Properties.AccessPolicies != null)
             resource.Properties.AccessPolicies = request.Properties.AccessPolicies.ToList();
     }
+
+    public static void UpdateFromRequest(KeyVaultResource resource, UpdateKeyVaultRequest request)
+    {
+        if (request.Tags != null)
+            resource.Tags = request.Tags;
+    }
 }

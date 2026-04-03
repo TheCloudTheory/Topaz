@@ -24,82 +24,9 @@
     }
     else
     {
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title mb-3">Tags</h5>
-
-                <div class="row g-3 align-items-end mb-4">
-                    <div class="col-12 col-md-5">
-                        <label class="form-label" for="tagName">Tag</label>
-                        <input id="tagName"
-                               class="form-control"
-                               @bind="_newTag"
-                               @bind:event="oninput"
-                               placeholder="e.g. environment"
-                               disabled="@_saving" />
-                    </div>
-
-                    <div class="col-12 col-md-5">
-                        <label class="form-label" for="tagValue">Value</label>
-                        <input id="tagValue"
-                               class="form-control"
-                               @bind="_newValue"
-                               @bind:event="oninput"
-                               placeholder="e.g. production"
-                               disabled="@_saving" />
-                    </div>
-
-                    <div class="col-12 col-md-2">
-                        <button class="btn btn-primary w-100"
-                                @onclick="AddTagAsync"
-                                disabled="@(!CanAddTag || _saving)">
-                            @(_saving ? "Saving…" : "Add tag")
-                        </button>
-                    </div>
-                </div>
-
-                @if (!string.IsNullOrWhiteSpace(_editError))
-                {
-                    <div class="alert alert-danger" role="alert">
-                        @_editError
-                    </div>
-                }
-
-                @if (_tags.Count == 0)
-                {
-                    <p class="mb-0 text-muted">No tags assigned to this subscription.</p>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Tag</th>
-                                    <th>Value</th>
-                                    <th class="text-end">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var tag in _tags)
-                                {
-                                    <tr>
-                                        <td><code>@tag.Key</code></td>
-                                        <td>@tag.Value</td>
-                                        <td class="text-end">
-                                            <button class="btn btn-outline-danger btn-sm"
-                                                    @onclick="() => RemoveTag(tag.Key)">
-                                                Remove
-                                            </button>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
-        </div>
+        <TagsPanel Tags="_tags"
+                   OnAdd="AddTagAsync"
+                   OnRemove="RemoveTagAsync" />
     }
 </SubscriptionDetailsShell>
 
@@ -107,17 +34,9 @@
     [Parameter] public Guid SubscriptionId { get; set; }
 
     private bool _loading = true;
-    private bool _saving;
     private string? _loadError;
-    private string? _editError;
     private string? _subscriptionName;
-    private string _newTag = string.Empty;
-    private string _newValue = string.Empty;
-    private List<TagItem> _tags = [];
-
-    private bool CanAddTag =>
-        !string.IsNullOrWhiteSpace(_newTag) &&
-        !string.IsNullOrWhiteSpace(_newValue);
+    private Dictionary<string, string> _tags = [];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -128,7 +47,6 @@
     {
         _loading = true;
         _loadError = null;
-        _editError = null;
 
         try
         {
@@ -143,10 +61,7 @@
             }
 
             _subscriptionName = subscription.DisplayName ?? "Subscription";
-            _tags = subscription.Tags
-                .OrderBy(t => t.Key, StringComparer.OrdinalIgnoreCase)
-                .Select(t => new TagItem(t.Key, t.Value))
-                .ToList();
+            _tags = new Dictionary<string, string>(subscription.Tags, StringComparer.OrdinalIgnoreCase);
         }
         catch (Exception ex)
         {
@@ -160,50 +75,33 @@
         }
     }
 
-    private async Task AddTagAsync()
+    private async Task<string?> AddTagAsync(string tag, string value)
     {
-        _editError = null;
-
-        var tag = _newTag.Trim();
-        var value = _newValue.Trim();
-
-        if (string.IsNullOrWhiteSpace(tag) || string.IsNullOrWhiteSpace(value))
-        {
-            _editError = "Both tag and value are required.";
-            return;
-        }
-
-        if (_tags.Any(t => string.Equals(t.Key, tag, StringComparison.OrdinalIgnoreCase)))
-        {
-            _editError = $"The tag '{tag}' already exists.";
-            return;
-        }
-
         try
         {
-            _saving = true;
-
             await TopazClient.CreateOrUpdateSubscriptionTag(SubscriptionId, tag, value);
-
-            _newTag = string.Empty;
-            _newValue = string.Empty;
-
             await LoadSubscriptionAsync();
+            StateHasChanged();
+            return null;
         }
         catch (Exception ex)
         {
-            _editError = ex.Message;
-        }
-        finally
-        {
-            _saving = false;
+            return ex.Message;
         }
     }
 
-    private void RemoveTag(string key)
+    private async Task<string?> RemoveTagAsync(string key)
     {
-        _editError = "Tag removal is not persisted yet.";
+        try
+        {
+            await TopazClient.DeleteSubscriptionTag(SubscriptionId, key);
+            await LoadSubscriptionAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
     }
-
-    private sealed record TagItem(string Key, string Value);
 }

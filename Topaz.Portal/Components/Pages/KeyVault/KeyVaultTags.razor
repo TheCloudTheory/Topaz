@@ -15,14 +15,22 @@
 <KeyVaultDetailsShell SubscriptionId="SubscriptionId"
                       ResourceGroupName="@DecodedRg"
                       KeyVaultName="@DecodedKv">
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title mb-3">Tags</h5>
-            <p class="mb-0 text-muted">
-                Tags view goes here (list/edit tags).
-            </p>
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_loadError is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @_loadError
         </div>
-    </div>
+    }
+    else
+    {
+        <TagsPanel Tags="_tags"
+                   OnAdd="AddTagAsync"
+                   OnRemove="RemoveTagAsync" />
+    }
 </KeyVaultDetailsShell>
 
 @code {
@@ -32,4 +40,72 @@
 
     private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
     private string DecodedKv => WebUtility.UrlDecode(KeyVaultName);
+
+    private bool _loading = true;
+    private string? _loadError;
+    private Dictionary<string, string> _tags = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadKeyVaultAsync();
+    }
+
+    private async Task LoadKeyVaultAsync()
+    {
+        _loading = true;
+        _loadError = null;
+
+        try
+        {
+            var kv = await TopazClient.GetKeyVault(SubscriptionId, DecodedRg, DecodedKv);
+
+            if (kv is null)
+            {
+                _tags = [];
+                _loadError = "Key vault not found.";
+                return;
+            }
+
+            _tags = new Dictionary<string, string>(kv.Tags, StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            _tags = [];
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<string?> AddTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateKeyVaultTag(SubscriptionId, DecodedRg, DecodedKv, tag, value);
+            await LoadKeyVaultAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> RemoveTagAsync(string key)
+    {
+        try
+        {
+            await TopazClient.DeleteKeyVaultTag(SubscriptionId, DecodedRg, DecodedKv, key);
+            await LoadKeyVaultAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
 }
