@@ -113,8 +113,10 @@ public class Host
 
         foreach (var service in services)
         {
-            Console.WriteLine(
-                $"- {service.Name}: {string.Join(", ", service.Endpoints.Select(e => $"{e.PortsAndProtocol.Protocol} -> {string.Join(", ", e.PortsAndProtocol.Ports)}"))}");
+            var uniqueEndpoints = service.Endpoints
+                .Select(e => $"{e.PortsAndProtocol.Protocol} -> {string.Join(", ", e.PortsAndProtocol.Ports)}")
+                .Distinct();
+            Console.WriteLine($"- {service.Name}: {string.Join(", ", uniqueEndpoints)}");
         }
 
         if (_options.DefaultSubscription.HasValue)
