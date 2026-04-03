@@ -1,4 +1,5 @@
 @page "/key-vault"
+@using System.Net
 @using Topaz.Portal.Models.KeyVaults
 @using Topaz.Portal.Models.ResourceGroups
 @using Topaz.Portal.Models.Subscriptions
@@ -104,7 +105,18 @@
                     @foreach (var kv in FilteredKeyVaults)
                     {
                         <tr>
-                            <td>@(kv.Name ?? "(unknown)")</td>
+                            <td>
+                                @if (Guid.TryParse(kv.SubscriptionId, out var subId) &&
+                                     !string.IsNullOrWhiteSpace(kv.ResourceGroupName) &&
+                                     !string.IsNullOrWhiteSpace(kv.Name))
+                                {
+                                    <a href="@GetKeyVaultHref(subId, kv.ResourceGroupName, kv.Name)">@kv.Name</a>
+                                }
+                                else
+                                {
+                                    @(kv.Name ?? "(unknown)")
+                                }
+                            </td>
                             <td>@(kv.ResourceGroupName ?? "-")</td>
                             <td>@(kv.SubscriptionName ?? "(unknown)")</td>
                             <td><code>@(kv.Location ?? "-")</code></td>
@@ -273,6 +285,9 @@
             _loading = false;
         }
     }
+
+    private static string GetKeyVaultHref(Guid subscriptionId, string resourceGroupName, string keyVaultName)
+        => $"/key-vault/{subscriptionId:D}/{WebUtility.UrlEncode(resourceGroupName)}/{WebUtility.UrlEncode(keyVaultName)}";
 
     private void ToggleFilter() => _showFilter = !_showFilter;
 

@@ -1,0 +1,95 @@
+@page "/key-vault/{SubscriptionId:guid}/{ResourceGroupName}/{KeyVaultName}"
+@using System.Net
+@using Topaz.Portal.Models.KeyVaults
+@inject TopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/key-vault">Key vaults</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">@DecodedKv</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedKv</h1>
+
+<KeyVaultDetailsShell SubscriptionId="SubscriptionId"
+                      ResourceGroupName="@DecodedRg"
+                      KeyVaultName="@DecodedKv">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_error</div>
+    }
+    else if (_kv is null)
+    {
+        <p class="mb-0">Key vault not found.</p>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Overview</h5>
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Name</dt>
+                    <dd class="col-sm-9">@(_kv.Name ?? "-")</dd>
+
+                    <dt class="col-sm-3">Location</dt>
+                    <dd class="col-sm-9"><code>@(_kv.Location ?? "-")</code></dd>
+
+                    <dt class="col-sm-3">Resource group</dt>
+                    <dd class="col-sm-9">@(_kv.ResourceGroupName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Subscription</dt>
+                    <dd class="col-sm-9">@(_kv.SubscriptionName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Subscription ID</dt>
+                    <dd class="col-sm-9">@(_kv.SubscriptionId ?? "-")</dd>
+
+                    <dt class="col-sm-3">SKU</dt>
+                    <dd class="col-sm-9">@(_kv.SkuName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Vault URI</dt>
+                    <dd class="col-sm-9"><small class="text-muted">@(_kv.VaultUri ?? "-")</small></dd>
+
+                    <dt class="col-sm-3">Resource ID</dt>
+                    <dd class="col-sm-9"><small class="text-muted">@(_kv.Id ?? "-")</small></dd>
+                </dl>
+            </div>
+        </div>
+    }
+</KeyVaultDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string KeyVaultName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _error;
+    private KeyVaultDto? _kv;
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedKv => WebUtility.UrlDecode(KeyVaultName);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            _kv = await TopazClient.GetKeyVault(SubscriptionId, DecodedRg, DecodedKv);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

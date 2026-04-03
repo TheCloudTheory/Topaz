@@ -16,3 +16,12 @@ public sealed class ListKeyVaultsResponse
 {
     public KeyVaultDto[] Value { get; init; } = [];
 }
+
+public sealed class KeyVaultSecretDto
+{
+    public string? Id { get; init; }
+    public string? Name { get; init; }
+    public bool Enabled { get; init; }
+    public DateTimeOffset? Created { get; init; }
+    public DateTimeOffset? Updated { get; init; }
+}

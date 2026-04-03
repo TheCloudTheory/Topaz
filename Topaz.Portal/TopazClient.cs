@@ -709,4 +709,92 @@ internal sealed class TopazClient
             content,
             cancellationToken);
     }
+
+    public async Task<KeyVaultDto?> GetKeyVault(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string keyVaultName,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync();
+
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        if (string.IsNullOrWhiteSpace(resourceGroupName))
+            throw new ArgumentException("Resource group name is required.", nameof(resourceGroupName));
+
+        if (string.IsNullOrWhiteSpace(keyVaultName))
+            throw new ArgumentException("Key vault name is required.", nameof(keyVaultName));
+
+        var vaultId = new ResourceIdentifier(
+            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}");
+
+        var vault = await _armClient!.GetKeyVaultResource(vaultId).GetAsync(cancellationToken);
+
+        var subscription = await _armClient!
+            .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
+            .GetAsync(cancellationToken);
+
+        return new KeyVaultDto
+        {
+            Id = vault.Value.Id.ToString(),
+            Name = vault.Value.Data.Name,
+            Location = vault.Value.Data.Location,
+            ResourceGroupName = resourceGroupName,
+            SubscriptionId = subscriptionId.ToString(),
+            SubscriptionName = subscription.Value.Data.DisplayName,
+            VaultUri = vault.Value.Data.Properties?.VaultUri?.ToString(),
+            SkuName = vault.Value.Data.Properties?.Sku?.Name.ToString()
+        };
+    }
+
+    public async Task<IReadOnlyList<KeyVaultSecretDto>> ListKeyVaultSecrets(
+        string vaultUri,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync();
+
+        if (string.IsNullOrWhiteSpace(vaultUri))
+            throw new ArgumentException("Vault URI is required.", nameof(vaultUri));
+
+        using var client = _httpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _session.Token);
+
+        var url = $"{vaultUri.TrimEnd('/')}/secrets?api-version=7.4";
+        using var resp = await client.GetAsync(url, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+            return [];
+
+        var body = await resp.Content.ReadFromJsonAsync<SecretsListResponse>(cancellationToken: cancellationToken);
+
+        return body?.Value?.Select(s => new KeyVaultSecretDto
+        {
+            Id = s.Id,
+            Name = s.Id?.Split('/').LastOrDefault(),
+            Enabled = s.Attributes?.Enabled ?? false,
+            Created = s.Attributes?.Created is long c ? DateTimeOffset.FromUnixTimeSeconds(c) : null,
+            Updated = s.Attributes?.Updated is long u ? DateTimeOffset.FromUnixTimeSeconds(u) : null,
+        }).ToList() ?? [];
+    }
+
+    private sealed class SecretsListResponse
+    {
+        public SecretsListItem[]? Value { get; init; }
+    }
+
+    private sealed class SecretsListItem
+    {
+        public string? Id { get; init; }
+        public SecretsListAttributes? Attributes { get; init; }
+    }
+
+    private sealed class SecretsListAttributes
+    {
+        public bool Enabled { get; init; }
+        public long Created { get; init; }
+        public long Updated { get; init; }
+    }
 }

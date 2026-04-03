@@ -1,0 +1,57 @@
+@using System.Net
+
+<div class="row g-3">
+    <div class="col-12 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@OverviewHref"
+                             Match="NavLinkMatch.All">
+                        Overview
+                    </NavLink>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@IamHref">
+                        IAM
+                    </NavLink>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@TagsHref">
+                        Tags
+                    </NavLink>
+
+                    <div class="list-group-item text-muted small fw-semibold text-uppercase py-1 px-3 mt-2" style="font-size:0.7rem;">
+                        Objects
+                    </div>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@SecretsHref">
+                        Secrets
+                    </NavLink>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-9">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string KeyVaultName { get; set; } = "";
+    [Parameter] public RenderFragment ChildContent { get; set; } = default!;
+
+    private string EncodedRg => WebUtility.UrlEncode(ResourceGroupName);
+    private string EncodedKv => WebUtility.UrlEncode(KeyVaultName);
+
+    private string Base => $"/key-vault/{SubscriptionId:D}/{EncodedRg}/{EncodedKv}";
+
+    private string OverviewHref => Base;
+    private string SecretsHref => $"{Base}/secrets";
+    private string IamHref => $"{Base}/iam";
+    private string TagsHref => $"{Base}/tags";
+}
