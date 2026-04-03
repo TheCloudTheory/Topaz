@@ -33,8 +33,10 @@ internal sealed class ServicePrincipalDataPlane(EntraResourceProvider provider, 
     private string BuildLocalServicePrincipalEntityPath(ServicePrincipalIdentifier servicePrincipalIdentifier)
     {
         var path = provider.GetServiceInstanceServicePrincipalsDataPath();
+        PathGuard.ValidateName(servicePrincipalIdentifier.Value);
         var fileName = $"{servicePrincipalIdentifier}.json";
         var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
         return entityPath;
     }
 

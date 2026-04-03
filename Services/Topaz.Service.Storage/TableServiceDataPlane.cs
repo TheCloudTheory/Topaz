@@ -26,10 +26,14 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
 
         logger.LogDebug(nameof(TableServiceDataPlane), nameof(InsertEntity), "Executing {0}: Inserting {1}.", nameof(InsertEntity), rawContent);
 
+        PathGuard.ValidateName(metadata.PartitionKey);
+        PathGuard.ValidateName(metadata.RowKey);
+
         var etag = new ETag(DateTimeOffset.Now.Ticks.ToString());
         var timestamp = DateTimeOffset.Now.ToUniversalTime();
         var fileName = $"{metadata.PartitionKey}_{metadata.RowKey}.json";
         var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
 
         if(File.Exists(entityPath))
         {
@@ -78,6 +82,9 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
     {
         logger.LogDebug(nameof(TableServiceDataPlane), nameof(UpdateEntity), "Executing {0}: {1} {2}", nameof(UpdateEntity), tableName, storageAccountName);
 
+        PathGuard.ValidateName(partitionKey);
+        PathGuard.ValidateName(rowKey);
+
         var etag = headers["If-Match"];
         var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
 
@@ -87,6 +94,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
 
         var fileName = $"{partitionKey}_{rowKey}.json";
         var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
 
         if(File.Exists(entityPath) == false)
         {

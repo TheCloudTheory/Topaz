@@ -78,6 +78,8 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
     {
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(SetSecret), "Executing {0}: {1} {2}", nameof(SetSecret), secretName, vaultName);
 
+        PathGuard.ValidateName(secretName);
+
         using var sr = new StreamReader(input);
 
         var rawContent = sr.ReadToEnd();
@@ -95,6 +97,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var fileName = $"{secretName}.json";
         var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
 
         if (File.Exists(entityPath))
         {
@@ -131,10 +134,13 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName, string? version)
     {
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecret), "Executing {0}: {1} {2}", nameof(GetSecret), secretName, vaultName);
-        
+
+        PathGuard.ValidateName(secretName);
+
         var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var fileName = $"{secretName}.json";
         var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
         
         if (!File.Exists(entityPath))
         {
@@ -188,9 +194,12 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
     {
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecretVersions), "Executing {0}: {1} {2}", nameof(GetSecretVersions), secretName, vaultName);
 
+        PathGuard.ValidateName(secretName);
+
         var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var fileName = $"{secretName}.json";
         var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
 
         if (!File.Exists(entityPath))
         {
@@ -211,6 +220,8 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
     {
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateSecret), "Executing {0}: {1} {2}", nameof(UpdateSecret), secretName, vaultName);
 
+        PathGuard.ValidateName(secretName);
+
         using var sr = new StreamReader(input);
         var rawContent = sr.ReadToEnd();
 
@@ -221,6 +232,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var fileName = $"{secretName}.json";
         var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
 
         if (!File.Exists(entityPath))
         {
@@ -250,9 +262,12 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
     {
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(BackupSecret), "Executing {0}: {1} {2}", nameof(BackupSecret), secretName, vaultName);
 
+        PathGuard.ValidateName(secretName);
+
         var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var fileName = $"{secretName}.json";
         var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
 
         if (!File.Exists(entityPath))
         {
@@ -296,8 +311,11 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
             return new DataPlaneOperationResult<Secret>(OperationResult.Failed, null, "Backup contains no secret versions.", "BadRequest");
 
         var secretName = versions[0].Name;
+        PathGuard.ValidateName(secretName);
+
         var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var entityPath = Path.Combine(path, $"{secretName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, path);
 
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RestoreSecretBackup), "Executing {0}: Restoring {1} version(s) of secret {2}.", nameof(RestoreSecretBackup), versions.Length, secretName);
 
@@ -310,10 +328,13 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
     {
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteSecret), "Executing {0}: {1} {2}", nameof(DeleteSecret), secretName, vaultName);
-        
+
+        PathGuard.ValidateName(secretName);
+
         var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var fileName = $"{secretName}.json";
         var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
         
         if (!File.Exists(entityPath))
         {
@@ -354,8 +375,11 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
     {
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetDeletedSecret), "Executing {0}: {1} {2}", nameof(GetDeletedSecret), secretName, vaultName);
 
+        PathGuard.ValidateName(secretName);
+
         var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var deletedPath = Path.Combine(path, "deleted", $"{secretName}.json");
+        PathGuard.EnsureWithinDirectory(deletedPath, path);
 
         if (!File.Exists(deletedPath))
         {
@@ -396,8 +420,11 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
     {
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RecoverDeletedSecret), "Executing {0}: {1} {2}", nameof(RecoverDeletedSecret), secretName, vaultName);
 
+        PathGuard.ValidateName(secretName);
+
         var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var deletedPath = Path.Combine(path, "deleted", $"{secretName}.json");
+        PathGuard.EnsureWithinDirectory(deletedPath, path);
 
         if (!File.Exists(deletedPath))
         {

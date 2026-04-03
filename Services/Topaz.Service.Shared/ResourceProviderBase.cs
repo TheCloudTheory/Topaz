@@ -316,10 +316,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
     private static void ThrowIfIdentifierContainsForbiddenExpressions(string identifier)
     {
-        if (identifier.Contains("..") || identifier.Contains('/') || identifier.Contains('\\'))
-        {
-            throw new InvalidOperationException("Identifier contains forbidden characters.");
-        }
+        PathGuard.ValidateName(identifier);
     }
 
     public void CreateOrUpdateSubresource<TModel>(SubscriptionIdentifier subscriptionIdentifier,
