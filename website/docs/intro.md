@@ -153,13 +153,15 @@ docker pull thecloudtheory/topaz-cli:<tag>
 # Run with the most commonly used ports exposed
 docker run --rm \
   -p 8899:8899 \   # ARM / Resource Manager (HTTPS)
-  -p 8898:8898 \   # Key Vault (HTTPS)
+  -p 443:443 \     # Key Vault — Azure CLI data plane (HTTPS)
+  -p 8898:8898 \   # Key Vault — Azure SDK data plane (HTTPS)
   -p 8891:8891 \   # Blob Storage (HTTP)
   -p 8890:8890 \   # Table Storage (HTTP)
   -p 8897:8897 \   # Event Hub (HTTP)
   -p 8888:8888 \   # Event Hub (AMQP)
   -p 8889:8889 \   # Service Bus (AMQP)
   -p 5671:5671 \   # Service Bus (AMQP/TLS)
+  -p 8892:8892 \   # Container Registry data plane (HTTPS)
   thecloudtheory/topaz-cli:<tag> start --log-level Information
 ```
 

@@ -58,11 +58,22 @@ Service Name|Port|Protocol
 Resource Manager|8899, 443|HTTPS
 Table Storage|8890|HTTP
 Blob Storage|8891|HTTP
-Azure Key Vault|8898|HTTPS
+Azure Key Vault|8898, 443|HTTPS
 Azure Event Hub|8897|HTTPS
 Azure Event Hub (AMQP)|8888|AMQP
 Azure Service Bus|8887, 8899|HTTPS
 Azure Service Bus (AMQP)|8889, 5671|AMQP, AMQP/TLS
+Container Registry (control plane)|8899|HTTPS
 Container Registry (data plane)|8892|HTTPS
 
 For HTTPS endpoints, if you're running Topaz as a standalone application, you need to install and trust the certificates provided along with the main package.
+
+:::warning[Admin privileges required for port 443]
+
+Port 443 is a privileged port on Linux and macOS. If you are running Topaz as a **standalone executable** (not inside a container) and you need Azure CLI integration with Key Vault, you must start Topaz with `sudo` (or equivalent elevated privileges) so it can bind to port 443.
+
+This requirement does **not** apply when running Topaz as a Docker container — Docker handles the privileged port mapping automatically.
+
+If you are only using the Azure SDK (not the Azure CLI), you can point your SDK client directly at port 8898 and skip port 443 entirely.
+
+:::
