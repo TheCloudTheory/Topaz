@@ -17,7 +17,7 @@ public sealed class UpdateSecretEndpoint(Pipeline eventPipeline, ITopazLogger lo
     public string[] Permissions => ["Microsoft.KeyVault/vaults/secrets/setSecret/action"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultKeyVaultPort, GlobalSettings.AdditionalResourceManagerPort], Protocol.Https);
+        ([GlobalSettings.DefaultKeyVaultPort, GlobalSettings.HttpsPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

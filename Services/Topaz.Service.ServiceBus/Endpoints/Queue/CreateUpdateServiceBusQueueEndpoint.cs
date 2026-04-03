@@ -25,7 +25,7 @@ internal sealed class CreateUpdateServiceBusQueueEndpoint(Pipeline eventPipeline
     public string[] Permissions => ["Microsoft.ServiceBus/namespaces/queues/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([
-        GlobalSettings.DefaultResourceManagerPort, GlobalSettings.AdditionalResourceManagerPort
+        GlobalSettings.DefaultResourceManagerPort, GlobalSettings.HttpsPort
     ], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)

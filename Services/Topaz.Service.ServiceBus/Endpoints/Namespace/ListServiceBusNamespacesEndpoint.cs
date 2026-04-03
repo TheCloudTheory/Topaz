@@ -22,7 +22,7 @@ internal sealed class ListServiceBusNamespacesEndpoint(Pipeline eventPipeline, I
     public string[] Permissions => ["Microsoft.ServiceBus/namespaces/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([
-        GlobalSettings.DefaultResourceManagerPort, GlobalSettings.AdditionalResourceManagerPort
+        GlobalSettings.DefaultResourceManagerPort, GlobalSettings.HttpsPort
     ], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)

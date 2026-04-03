@@ -283,7 +283,7 @@ public class Host
                                     continue;
                                 }
 
-                                if (!IsRunningInsideContainer() && port == GlobalSettings.AdditionalResourceManagerPort)
+                                if (!IsRunningInsideContainer() && port == GlobalSettings.HttpsPort)
                                 {
                                     _logger.LogWarning(
                                         "Port 443 used by HTTPS endpoint will be skipped as Topaz isn't running inside a container.");

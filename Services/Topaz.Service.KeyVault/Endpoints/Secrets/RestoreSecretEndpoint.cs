@@ -16,7 +16,7 @@ public sealed class RestoreSecretEndpoint(Pipeline eventPipeline, ITopazLogger l
     public string[] Permissions => ["Microsoft.KeyVault/vaults/secrets/restore/action"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultKeyVaultPort, GlobalSettings.AdditionalResourceManagerPort], Protocol.Https);
+        ([GlobalSettings.DefaultKeyVaultPort, GlobalSettings.HttpsPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

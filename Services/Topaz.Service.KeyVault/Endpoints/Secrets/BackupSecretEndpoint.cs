@@ -18,7 +18,7 @@ public sealed class BackupSecretEndpoint(Pipeline eventPipeline, ITopazLogger lo
     public string[] Permissions => ["Microsoft.KeyVault/vaults/secrets/backup/action"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultKeyVaultPort, GlobalSettings.AdditionalResourceManagerPort], Protocol.Https);
+        ([GlobalSettings.DefaultKeyVaultPort, GlobalSettings.HttpsPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

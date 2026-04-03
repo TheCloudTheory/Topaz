@@ -27,7 +27,7 @@ public sealed class ServiceBusServiceEndpoint(Pipeline eventPipeline, ITopazLogg
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => (
     [
-        GlobalSettings.DefaultResourceManagerPort, GlobalSettings.AdditionalResourceManagerPort
+        GlobalSettings.DefaultResourceManagerPort, GlobalSettings.HttpsPort
     ], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
