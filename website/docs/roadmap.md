@@ -101,6 +101,12 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 ## v1.4-beta
 
+### Topaz Portal — tag editing
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| Inline tag value editing in portal | <span class="badge--preview">Preview</span> | Edit button per tag row in the Tags panel turns the value cell into an input field; supports all tag-capable resources |
+
 ### Key Vault — automated soft-delete purging
 
 | Feature | Status | Description |

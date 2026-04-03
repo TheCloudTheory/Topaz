@@ -362,6 +362,19 @@ TODO: Azure Virtual Machines: Core control plane endpoints
 
 ## v1.4-beta
 
+### Topaz Portal — tag editing
+
+<!--
+TODO: Topaz Portal: Edit existing tag values inline
+  Add inline editing to the Tags tab for all resources that support tags
+  (Subscriptions, Resource Groups, Key Vaults, and any future tag-capable resources).
+  The TagsPanel component should gain an edit mode per row — clicking an Edit button
+  makes the Value cell an input, with Save / Cancel buttons. Saving calls the existing
+  CreateOrUpdateXxxTag method (upsert semantics) and reloads the tag list.
+  milestone: v1.4-beta
+  labels: enhancement, portal
+-->
+
 ### Key Vault — automated soft-delete purging
 
 <!--

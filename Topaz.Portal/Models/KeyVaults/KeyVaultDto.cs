@@ -22,7 +22,18 @@ public sealed class KeyVaultSecretDto
 {
     public string? Id { get; init; }
     public string? Name { get; init; }
+    public string? ContentType { get; init; }
     public bool Enabled { get; init; }
     public DateTimeOffset? Created { get; init; }
     public DateTimeOffset? Updated { get; init; }
 }
+
+public sealed class KeyVaultDeletedSecretDto
+{
+    public string? Name { get; init; }
+    public string? ContentType { get; init; }
+    public bool Enabled { get; init; }
+    public DateTimeOffset? DeletedDate { get; init; }
+    public DateTimeOffset? ScheduledPurgeDate { get; init; }
+}
+
