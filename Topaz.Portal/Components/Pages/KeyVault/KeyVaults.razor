@@ -1,14 +1,23 @@
 @page "/key-vault"
 @using Topaz.Portal.Models.KeyVaults
+@using Topaz.Portal.Models.ResourceGroups
 @using Topaz.Portal.Models.Subscriptions
 @inject TopazClient TopazClient
 @inject NavigationManager Nav
 
 <div class="d-flex align-items-center justify-content-between mb-3">
     <h1 class="mb-0">Key vaults</h1>
+
+    <button class="btn btn-primary btn-sm"
+            @onclick="ToggleCreate"
+            disabled="@(_loading || _creatingBusy)">
+        New key vault
+    </button>
 </div>
 
-<div class="card">
+<div class="row g-3">
+    <div class="@(_showCreate ? "col-12 col-lg-8" : "col-12")">
+    <div class="card">
     <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-3">
             <div class="d-flex align-items-center gap-2">
@@ -108,6 +117,102 @@
             </div>
         }
     </div>
+        </div>
+    </div>
+
+    @if (_showCreate)
+    {
+        <div class="col-12 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between mb-3">
+                    <h5 class="card-title mb-0">Create key vault</h5>
+
+                    <button class="btn btn-sm btn-outline-secondary"
+                            @onclick="CloseCreate"
+                            disabled="@_creatingBusy">
+                        Close
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_createError))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @_createError
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label class="form-label">Subscription</label>
+                    <select class="form-select"
+                            @bind="_createSubscriptionId"
+                            @bind:after="OnCreateSubscriptionChangedAsync"
+                            disabled="@_creatingBusy">
+                        <option value="">Select a subscription…</option>
+                        @foreach (var s in _subscriptions)
+                        {
+                            <option value="@(s.SubscriptionId ?? "")">
+                                @(s.DisplayName ?? "(no name)") (@(s.SubscriptionId ?? ""))
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Resource group</label>
+                    <select class="form-select"
+                            @bind="_createResourceGroupName"
+                            disabled="@(_creatingBusy || _rgLoading || string.IsNullOrWhiteSpace(_createSubscriptionId))">
+                        <option value="">@(_rgLoading ? "Loading…" : (string.IsNullOrWhiteSpace(_createSubscriptionId) ? "Select a subscription first" : "Select a resource group…"))</option>
+                        @foreach (var rg in _resourceGroupOptions)
+                        {
+                            <option value="@(rg.Name ?? "")">@(rg.Name ?? "")</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Key vault name</label>
+                    <input class="form-control"
+                           @bind="_createKeyVaultName"
+                           placeholder="e.g. my-keyvault"
+                           disabled="@_creatingBusy" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Location</label>
+                    <input class="form-control"
+                           @bind="_createLocation"
+                           placeholder="e.g. westeurope"
+                           disabled="@_creatingBusy" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">SKU</label>
+                    <select class="form-select" @bind="_createSkuName" disabled="@_creatingBusy">
+                        <option value="Standard">Standard</option>
+                        <option value="Premium">Premium</option>
+                    </select>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success"
+                            @onclick="CreateKeyVaultAsync"
+                            disabled="@_creatingBusy">
+                        Create
+                    </button>
+
+                    <button class="btn btn-outline-secondary"
+                            @onclick="CloseCreate"
+                            disabled="@_creatingBusy">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 </div>
 
 @code
@@ -120,6 +225,17 @@
     private bool _showFilter = true;
     private readonly HashSet<string> _selectedSubscriptionIds = new(StringComparer.OrdinalIgnoreCase);
 
+    private bool _showCreate;
+    private bool _creatingBusy;
+    private string? _createError;
+    private string _createSubscriptionId = "";
+    private string _createResourceGroupName = "";
+    private string _createKeyVaultName = "";
+    private string _createLocation = "westeurope";
+    private string _createSkuName = "Standard";
+    private bool _rgLoading;
+    private ResourceGroupDto[] _resourceGroupOptions = [];
+
     private KeyVaultDto[] FilteredKeyVaults =>
         _selectedSubscriptionIds.Count == 0
             ? _keyVaults
@@ -130,6 +246,14 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
         try
         {
             var subsTask = TopazClient.ListSubscriptions();
@@ -164,5 +288,107 @@
             _selectedSubscriptionIds.Add(subscriptionId);
         else
             _selectedSubscriptionIds.Remove(subscriptionId);
+    }
+
+    private void ToggleCreate()
+    {
+        _showCreate = !_showCreate;
+        _createError = null;
+    }
+
+    private void CloseCreate()
+    {
+        _showCreate = false;
+        _createError = null;
+        _createSubscriptionId = "";
+        _createResourceGroupName = "";
+        _createKeyVaultName = "";
+        _createLocation = "westeurope";
+        _createSkuName = "Standard";
+        _resourceGroupOptions = [];
+    }
+
+    private async Task OnCreateSubscriptionChangedAsync()
+    {
+        _createResourceGroupName = "";
+        _resourceGroupOptions = [];
+
+        if (!Guid.TryParse(_createSubscriptionId, out var subId))
+            return;
+
+        _rgLoading = true;
+        try
+        {
+            var rgs = await TopazClient.ListResourceGroups(subId);
+            _resourceGroupOptions = rgs.Value;
+        }
+        catch
+        {
+            _resourceGroupOptions = [];
+        }
+        finally
+        {
+            _rgLoading = false;
+        }
+    }
+
+    private async Task CreateKeyVaultAsync()
+    {
+        _createError = null;
+
+        if (string.IsNullOrWhiteSpace(_createSubscriptionId))
+        {
+            _createError = "Please select a subscription.";
+            return;
+        }
+
+        if (!Guid.TryParse(_createSubscriptionId, out var subscriptionId))
+        {
+            _createError = "Subscription ID is invalid.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_createResourceGroupName))
+        {
+            _createError = "Please enter a resource group name.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_createKeyVaultName))
+        {
+            _createError = "Please enter a key vault name.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_createLocation))
+        {
+            _createError = "Please enter a location (e.g. westeurope).";
+            return;
+        }
+
+        _creatingBusy = true;
+        try
+        {
+            await TopazClient.CreateKeyVault(
+                subscriptionId,
+                _createResourceGroupName,
+                _createKeyVaultName,
+                _createLocation,
+                _createSkuName);
+
+            _createKeyVaultName = "";
+            _createResourceGroupName = "";
+            _showCreate = false;
+
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _createError = ex.Message;
+        }
+        finally
+        {
+            _creatingBusy = false;
+        }
     }
 }

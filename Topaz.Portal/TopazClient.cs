@@ -3,6 +3,7 @@ using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Authorization;
 using Azure.ResourceManager.KeyVault;
+using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.Resources;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
@@ -261,6 +262,35 @@ internal sealed class TopazClient
         {
             Value = resourceGroups.ToArray()
         };
+    }
+
+    public async Task<ListResourceGroupsResponse> ListResourceGroups(
+        Guid subscriptionId,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync();
+
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        var subscription = await _armClient!
+            .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
+            .GetAsync(cancellationToken);
+
+        var resourceGroups = new List<ResourceGroupDto>();
+        await foreach (var rg in subscription.Value.GetResourceGroups().GetAllAsync(cancellationToken: cancellationToken))
+        {
+            resourceGroups.Add(new ResourceGroupDto
+            {
+                Id = rg.Id.ToString(),
+                Name = rg.Data.Name,
+                Location = rg.Data.Location,
+                SubscriptionId = subscriptionId.ToString(),
+                SubscriptionName = subscription.Value.Data.DisplayName
+            });
+        }
+
+        return new ListResourceGroupsResponse { Value = resourceGroups.ToArray() };
     }
 
     public async Task<ResourceGroupDto?> GetResourceGroup(Guid subscriptionId, string resourceGroupName,
@@ -637,5 +667,46 @@ internal sealed class TopazClient
         {
             Value = keyVaults.ToArray()
         };
+    }
+
+    public async Task CreateKeyVault(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string keyVaultName,
+        string location,
+        string skuName = "Standard",
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync();
+
+        if (subscriptionId == Guid.Empty)
+            throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        if (string.IsNullOrWhiteSpace(resourceGroupName))
+            throw new ArgumentException("Resource group name is required.", nameof(resourceGroupName));
+
+        if (string.IsNullOrWhiteSpace(keyVaultName))
+            throw new ArgumentException("Key vault name is required.", nameof(keyVaultName));
+
+        if (string.IsNullOrWhiteSpace(location))
+            throw new ArgumentException("Location is required.", nameof(location));
+
+        var rg = await _armClient!
+            .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId}"))
+            .GetResourceGroupAsync(resourceGroupName, cancellationToken);
+
+        var skuNameValue = skuName.Equals("Premium", StringComparison.OrdinalIgnoreCase)
+            ? KeyVaultSkuName.Premium
+            : KeyVaultSkuName.Standard;
+
+        var content = new KeyVaultCreateOrUpdateContent(
+            new AzureLocation(location),
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, skuNameValue)));
+
+        _ = await rg.Value.GetKeyVaults().CreateOrUpdateAsync(
+            WaitUntil.Completed,
+            keyVaultName,
+            content,
+            cancellationToken);
     }
 }
