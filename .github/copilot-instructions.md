@@ -71,4 +71,10 @@ Mandatory steps
   - `Topaz.Tests/E2E/` — use the Azure SDK (`ArmClient`, service-specific clients) against the in-process Topaz host started by `E2EFixture`.
   - `Topaz.Tests.AzureCLI/` — use `RunAzureCliCommand(...)` with an `az ...` command string and an optional assertion callback. Tests run against a Dockerised Topaz + Azure CLI container pair via `TopazFixture`.
   - Prefer a dedicated `[Test]` method per operation rather than expanding an existing test; reuse known stable built-in resources (e.g. the Reader role `acdd72a7-3385-48ef-bd42-f606fba81ae7`) where no setup/teardown is needed.
+- **Portal work (definition of done)**: Any task that adds or modifies `Topaz.Portal` UI behaviour **must** include a bUnit component test in `Topaz.Tests.Portal/`. Key conventions:
+  - Inherit from `BunitTestContext` (not `Bunit.TestContext` or NUnit's `TestContext` directly).
+  - Register a fake `ITopazClient` via NSubstitute: `Services.AddSingleton(Substitute.For<ITopazClient>())`.
+  - When a click causes a re-render, always re-query elements with a fresh `cut.Find(...)` before calling `.Change()` — stored references hold stale event-handler IDs and will throw.
+  - Use `cut.WaitForAssertion(...)` for async state changes.
+  - One `[Test]` method per user-visible behaviour; name it `<Component>_<Behaviour>_<ExpectedOutcome>`.
 If anything is missing or unclear, tell me what area you'd like expanded (build, adding services, routing, testing, or an example change), and I'll iterate.
