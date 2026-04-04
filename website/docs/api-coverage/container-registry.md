@@ -88,7 +88,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Check Name Availability | ✅ | |
 | Create | ✅ | Implemented via PUT (CreateOrUpdate) |
 | Delete | ✅ | |
-| Generate Credentials | ❌ | |
+| Generate Credentials | ✅ | |
 | Get | ✅ | |
 | Get Private Link Resource | ❌ | |
 | Import Image | ❌ | |

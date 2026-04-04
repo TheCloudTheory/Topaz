@@ -9,6 +9,7 @@ using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
 using Topaz.Service.Authorization;
 using Topaz.Service.Authorization.Commands;
+using Topaz.Service.ContainerRegistry.Commands;
 using Topaz.Service.Entra;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
@@ -84,7 +85,8 @@ internal class Program
             typeof(GenericStorageCommand),
             typeof(GenericSubscriptionCommand),
             typeof(GenericManagedIdentityCommand),
-            typeof(GenericRoleCommand)
+            typeof(GenericRoleCommand),
+            typeof(GenericContainerRegistryCommand)
         };
         
         var commands = Assembly.GetExecutingAssembly()

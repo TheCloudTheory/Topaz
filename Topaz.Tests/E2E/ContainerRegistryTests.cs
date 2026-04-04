@@ -299,6 +299,95 @@ public class ContainerRegistryTests
     }
 
     [Test]
+    public async Task ContainerRegistry_GenerateCredentials_ShouldReturnUsernameAndPasswords()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+        var registry = await registries.GetAsync(RegistryName);
+
+        var tokenId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{RegistryName}/tokens/myToken");
+        var content = new ContainerRegistryGenerateCredentialsContent
+        {
+            TokenId = tokenId,
+            ExpireOn = DateTimeOffset.UtcNow.AddDays(30)
+        };
+
+        // Act
+        var result = await registry.Value.GenerateCredentialsAsync(WaitUntil.Completed, content);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value.Username, Is.EqualTo("myToken"));
+            Assert.That(result.Value.Passwords, Is.Not.Null.And.Not.Empty);
+            Assert.That(result.Value.Passwords[0].Value, Is.Not.Null.And.Not.Empty);
+            Assert.That(result.Value.Passwords[0].ExpireOn, Is.Not.Null);
+        });
+    }
+
+    [Test]
+    public async Task ContainerRegistry_GenerateCredentials_WithSpecificPasswordName_ShouldReturnSinglePassword()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+        var registry = await registries.GetAsync(RegistryName);
+
+        var tokenId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{RegistryName}/tokens/myToken");
+        var content = new ContainerRegistryGenerateCredentialsContent
+        {
+            TokenId = tokenId,
+            Name = ContainerRegistryTokenPasswordName.Password1
+        };
+
+        // Act
+        var result = await registry.Value.GenerateCredentialsAsync(WaitUntil.Completed, content);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value.Username, Is.EqualTo("myToken"));
+            Assert.That(result.Value.Passwords, Has.Count.EqualTo(1));
+            Assert.That(result.Value.Passwords[0].Name, Is.EqualTo(ContainerRegistryTokenPasswordName.Password1));
+        });
+    }
+
+    [Test]
+    public async Task ContainerRegistry_GenerateCredentials_ForNonExistentRegistry_ShouldFail()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+
+        var registryResourceId = ContainerRegistryResource.CreateResourceIdentifier(
+            SubscriptionId.ToString(), ResourceGroupName, "nonexistentregistry99");
+        var registry = armClient.GetContainerRegistryResource(registryResourceId);
+
+        var content = new ContainerRegistryGenerateCredentialsContent();
+
+        // Act & Assert
+        Assert.ThrowsAsync<RequestFailedException>(async () =>
+            await registry.GenerateCredentialsAsync(WaitUntil.Completed, content));
+    }
+
+    [Test]
     public async Task ContainerRegistry_CreateWithSystemAssignedIdentity_ServicePrincipalShouldExistInEntra()
     {
         // Arrange
