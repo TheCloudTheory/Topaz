@@ -5,7 +5,7 @@ using Topaz.ResourceManager;
 
 namespace Topaz.Portal;
 
-internal sealed partial class TopazClient
+internal sealed partial class TopazClient : ITopazClient
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;

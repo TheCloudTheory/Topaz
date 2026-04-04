@@ -2,7 +2,7 @@
 @page "/resource-groups/{SubscriptionId:guid}/{ResourceGroupName}/tags"
 @using System.Net
 @using Topaz.Portal.Models.ResourceGroups
-@inject TopazClient TopazClient
+@inject ITopazClient TopazClient
 
 <Breadcrumb>
     <BreadcrumbItem Href="/">Home</BreadcrumbItem>

@@ -1,7 +1,7 @@
 @page "/key-vault/{SubscriptionId:guid}/{ResourceGroupName}/{KeyVaultName}/tags"
 @using System.Net
 @using Topaz.Portal.Models.KeyVaults
-@inject TopazClient TopazClient
+@inject ITopazClient TopazClient
 
 <Breadcrumb>
     <BreadcrumbItem Href="/">Home</BreadcrumbItem>

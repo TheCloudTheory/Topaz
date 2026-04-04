@@ -46,7 +46,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<AccountSession>();
-builder.Services.AddScoped<TopazClient>();
+builder.Services.AddScoped<ITopazClient, TopazClient>();
 builder.Services.AddSingleton<AuthenticationClient>();
 builder.Services.AddScoped<ProtectedSessionStorage>();
 

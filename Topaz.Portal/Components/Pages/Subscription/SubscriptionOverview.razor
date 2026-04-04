@@ -1,7 +1,7 @@
 @* Topaz.Portal/Components/Pages/Subscription/SubscriptionOverview.razor *@
 @page "/subscriptions/{SubscriptionId:guid}"
 @using Topaz.Portal.Models.Subscriptions
-@inject TopazClient TopazClient
+@inject ITopazClient TopazClient
 
 <Breadcrumb>
     <BreadcrumbItem Href="/">Home</BreadcrumbItem>

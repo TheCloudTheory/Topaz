@@ -11,17 +11,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Azure.ResourceManager" Version="1.14.0" />
       <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
       <PackageReference Include="ModelContextProtocol" Version="0.4.0-preview.3" />
       <PackageReference Include="Testcontainers" Version="4.8.1" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Topaz.AspNetCore.Extensions\Topaz.AspNetCore.Extensions.csproj" />
-      <ProjectReference Include="..\Topaz.Identity\Topaz.Identity.csproj" />
-      <ProjectReference Include="..\Topaz.ResourceManager\Topaz.ResourceManager.csproj" />
-      <ProjectReference Include="..\Topaz.Shared\Topaz.Shared.csproj" />
+      <PackageReference Include="TheCloudTheory.Topaz.AspNetCore.Extensions" Version="1.0.414-alpha" />
+      <PackageReference Include="TheCloudTheory.Topaz.ResourceManager" Version="1.0.520-alpha" />
     </ItemGroup>
 
 </Project>

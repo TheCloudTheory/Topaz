@@ -108,7 +108,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
             return new DataPlaneOperationResult<Secret>(OperationResult.Success, newVersion, null, null);
         }
 
-        // Secret does not exist so we simply create it.
+        // Secret does not exists so we simply create it.
         var secret = new Secret(secretName, data.Value, Guid.NewGuid(), vaultName);
         File.WriteAllText(entityPath, JsonSerializer.Serialize(new[] { secret }, GlobalSettings.JsonOptions));
 

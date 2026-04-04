@@ -82,6 +82,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Portal", "Topaz.Porta
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ContainerRegistry", "Services\Topaz.Service.ContainerRegistry\Topaz.Service.ContainerRegistry.csproj", "{F9867CDF-C507-433C-8CBC-3266A4C1A96D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Portal", "Topaz.Tests.Portal\Topaz.Tests.Portal.csproj", "{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -488,6 +490,18 @@ Global
 		{F9867CDF-C507-433C-8CBC-3266A4C1A96D}.Release|x64.Build.0 = Release|Any CPU
 		{F9867CDF-C507-433C-8CBC-3266A4C1A96D}.Release|x86.ActiveCfg = Release|Any CPU
 		{F9867CDF-C507-433C-8CBC-3266A4C1A96D}.Release|x86.Build.0 = Release|Any CPU
+		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Debug|x64.Build.0 = Debug|Any CPU
+		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Debug|x86.Build.0 = Debug|Any CPU
+		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Release|x64.ActiveCfg = Release|Any CPU
+		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Release|x64.Build.0 = Release|Any CPU
+		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Release|x86.ActiveCfg = Release|Any CPU
+		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
