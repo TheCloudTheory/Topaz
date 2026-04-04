@@ -54,36 +54,148 @@ jobs:
         push: false
         tags: topaz/cli
         platforms: linux/amd64
+    - name: Detect changed paths
+      id: changes
+      uses: dorny/paths-filter@v3
+      with:
+        filters: |
+          code:
+            - 'Topaz.Host/**'
+            - 'Topaz.ResourceManager/**'
+            - 'Topaz.Shared/**'
+            - 'Topaz.Identity/**'
+            - 'Topaz.Portal/**'
+            - 'Topaz.CLI/**'
+            - 'Topaz.CloudEnvironment/**'
+            - 'Topaz.Dns/**'
+            - 'Topaz.EventPipeline/**'
+            - 'Services/**'
+          core:
+            - 'Topaz.Host/**'
+            - 'Topaz.ResourceManager/**'
+            - 'Topaz.Shared/**'
+            - 'Topaz.Identity/**'
+            - 'Services/Topaz.Service.Shared/**'
+          keyvault:
+            - 'Services/Topaz.Service.KeyVault/**'
+          acr:
+            - 'Services/Topaz.Service.ContainerRegistry/**'
+          storage:
+            - 'Services/Topaz.Service.Storage/**'
+          servicebus:
+            - 'Services/Topaz.Service.ServiceBus/**'
+          eventhub:
+            - 'Services/Topaz.Service.EventHub/**'
+          authorization:
+            - 'Services/Topaz.Service.Authorization/**'
+          entra:
+            - 'Services/Topaz.Service.Entra/**'
+          managedidentity:
+            - 'Services/Topaz.Service.ManagedIdentity/**'
+          resourcegroup:
+            - 'Services/Topaz.Service.ResourceGroup/**'
+          resourcemanager:
+            - 'Services/Topaz.Service.ResourceManager/**'
+          subscription:
+            - 'Services/Topaz.Service.Subscription/**'
+          virtualnetwork:
+            - 'Services/Topaz.Service.VirtualNetwork/**'
+          portal:
+            - 'Topaz.Portal/**'
+    - name: Build test filter
+      id: test_filter
+      shell: bash
+      run: |
+        # Manual trigger: always run everything
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          echo "filter=" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        # No code changed (docs/config only): skip tests entirely
+        if [[ "${{ steps.changes.outputs.code }}" != "true" ]]; then
+          echo "skip=true" >> "$GITHUB_OUTPUT"
+          echo "filter=" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        echo "skip=false" >> "$GITHUB_OUTPUT"
+
+        # Core/shared infrastructure changed: run all tests, no filter
+        if [[ "${{ steps.changes.outputs.core }}" == "true" ]]; then
+          echo "filter=" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        # Build a per-service vstest filter expression
+        PARTS=()
+        [[ "${{ steps.changes.outputs.keyvault }}"        == "true" ]] && PARTS+=("FullyQualifiedName~KeyVault")
+        [[ "${{ steps.changes.outputs.acr }}"             == "true" ]] && PARTS+=("FullyQualifiedName~ContainerRegistry")
+        [[ "${{ steps.changes.outputs.storage }}"         == "true" ]] && PARTS+=("FullyQualifiedName~Storage")
+        [[ "${{ steps.changes.outputs.servicebus }}"      == "true" ]] && PARTS+=("FullyQualifiedName~ServiceBus")
+        [[ "${{ steps.changes.outputs.eventhub }}"        == "true" ]] && PARTS+=("FullyQualifiedName~EventHub")
+        [[ "${{ steps.changes.outputs.authorization }}"   == "true" ]] && PARTS+=("FullyQualifiedName~Authorization")
+        [[ "${{ steps.changes.outputs.entra }}"           == "true" ]] && PARTS+=("FullyQualifiedName~Entra")
+        [[ "${{ steps.changes.outputs.managedidentity }}" == "true" ]] && PARTS+=("FullyQualifiedName~ManagedIdentity")
+        [[ "${{ steps.changes.outputs.resourcegroup }}"   == "true" ]] && PARTS+=("FullyQualifiedName~ResourceGroup")
+        [[ "${{ steps.changes.outputs.resourcemanager }}" == "true" ]] && PARTS+=("FullyQualifiedName~ResourceManager")
+        [[ "${{ steps.changes.outputs.subscription }}"    == "true" ]] && PARTS+=("FullyQualifiedName~Subscription")
+        [[ "${{ steps.changes.outputs.virtualnetwork }}"  == "true" ]] && PARTS+=("FullyQualifiedName~VirtualNetwork")
+        [[ "${{ steps.changes.outputs.portal }}"          == "true" ]] && PARTS+=("FullyQualifiedName~Tests.Portal")
+
+        if [[ ${#PARTS[@]} -eq 0 ]]; then
+          # Untracked code path changed (e.g. Topaz.CLI): run all tests as safety fallback
+          echo "filter=" >> "$GITHUB_OUTPUT"
+        else
+          JOINED=$(IFS='|'; echo "${PARTS[*]}")
+          echo "filter=$JOINED" >> "$GITHUB_OUTPUT"
+        fi
     - name: Test
+      if: steps.test_filter.outputs.skip != 'true'
       env:
         TOPAZ_TENANT_ID: ${{ secrets.TOPAZ_TENANT_ID }}
         TOPAZ_CLIENT_ID: ${{ secrets.TOPAZ_CLIENT_ID }}
         TOPAZ_CLIENT_SECRET: ${{ secrets.TOPAZ_CLIENT_SECRET }}
-      run: dotnet test -m:1 --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults
+      run: |
+        FILTER="${{ steps.test_filter.outputs.filter }}"
+        if [[ -n "$FILTER" ]]; then
+          dotnet test -m:1 --no-build --verbosity normal --logger trx \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ${{ github.workspace }}/TestResults \
+            --filter "$FILTER"
+        else
+          dotnet test -m:1 --no-build --verbosity normal --logger trx \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ${{ github.workspace }}/TestResults
+        fi
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always()
+      if: always() && steps.test_filter.outputs.skip != 'true'
       with:
         files: |
           ${{ github.workspace }}/**/*.trx
     - name: ReportGenerator
+      if: steps.test_filter.outputs.skip != 'true'
       uses: danielpalme/ReportGenerator-GitHub-Action@5.4.8
       with:
         reports: ./TestResults/**/coverage.cobertura.xml
         targetdir: coveragereport
         reporttypes: Html;MarkdownSummaryGithub;Badges
     - name: Upload coverage report artifact
+      if: steps.test_filter.outputs.skip != 'true'
       uses: actions/upload-artifact@v4
       with:
         name: CoverageReport        
         path: coveragereport
     - name: Add comment to PR
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request' && steps.test_filter.outputs.skip != 'true'
       run: gh pr comment $PR_NUMBER --body-file coveragereport/SummaryGithub.md
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PR_NUMBER: ${{ github.event.number }}
     - name: Publish coverage in build summary
+      if: steps.test_filter.outputs.skip != 'true'
       run: cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
       shell: bash
     - name: Update Topaz documentation
