@@ -26,7 +26,7 @@ internal sealed partial class TopazClient
         return body?.Value?.Select(s => new KeyVaultSecretDto
         {
             Id = s.Id,
-            Name = s.Id?.Split('/').LastOrDefault(),
+            Name = s.Name ?? (s.Id?.Split('/') is { Length: >= 2 } p ? p[^2] : null),
             ContentType = s.ContentType,
             Enabled = s.Attributes?.Enabled ?? false,
             Created = s.Attributes?.Created is long c ? DateTimeOffset.FromUnixTimeSeconds(c) : null,
@@ -228,6 +228,7 @@ internal sealed partial class TopazClient
     private sealed class SecretsListItem
     {
         public string? Id { get; init; }
+        public string? Name { get; init; }
         public string? ContentType { get; init; }
         public SecretsListAttributes? Attributes { get; init; }
     }

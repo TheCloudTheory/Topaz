@@ -10,6 +10,7 @@ public class GetSecretsResponse
 
     public class Secret
     {
+        public string? Name { get; init; }
         public string? ContentType { get; init; }
         public string? Id { get; init; }
         public SecretAttributes? Attributes { get; init; }

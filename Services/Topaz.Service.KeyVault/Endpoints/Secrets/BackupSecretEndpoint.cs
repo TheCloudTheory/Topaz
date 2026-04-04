@@ -28,13 +28,7 @@ public sealed class BackupSecretEndpoint(Pipeline eventPipeline, ITopazLogger lo
             var secretName = context.Request.Path.Value.ExtractValueFromPath(2);
 
             var vaultOperation = _controlPlane.FindByName(vaultName!);
-            if (vaultOperation.Result == OperationResult.NotFound)
-            {
-                response.StatusCode = HttpStatusCode.NotFound;
-                return;
-            }
-
-            if (string.IsNullOrEmpty(secretName))
+            if (vaultOperation.Result == OperationResult.NotFound || string.IsNullOrEmpty(secretName))
             {
                 response.StatusCode = HttpStatusCode.NotFound;
                 return;

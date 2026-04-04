@@ -40,6 +40,7 @@ public sealed class GetSecretsEndpoint(Pipeline eventPipeline, ITopazLogger logg
             {
                 Value = operation.Resource!.Select(s => new GetSecretsResponse.Secret
                 {
+                    Name = s.Name,
                     Id = s.Id,
                     Attributes = new GetSecretsResponse.Secret.SecretAttributes
                     {
@@ -47,7 +48,7 @@ public sealed class GetSecretsEndpoint(Pipeline eventPipeline, ITopazLogger logg
                         Enabled = s.Attributes.Enabled,
                         Updated = s.Attributes.Updated
                     },
-                    ContentType = "plainText" // TODO: Add support for setting this value
+                    ContentType = s.ContentType
                 }).ToArray(),
             };
 
