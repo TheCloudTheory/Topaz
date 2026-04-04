@@ -286,6 +286,59 @@ internal sealed class ContainerRegistryControlPlane(
         return isAvailable;
     }
 
+    /// <summary>
+    /// Regenerates one of the admin passwords for the specified container registry.
+    /// </summary>
+    /// <param name="subscriptionIdentifier">The subscription that owns the registry.</param>
+    /// <param name="resourceGroupIdentifier">The resource group that owns the registry.</param>
+    /// <param name="registryName">The registry name.</param>
+    /// <param name="passwordName">The password to regenerate: "password" or "password2".</param>
+    /// <returns>
+    /// The updated registry resource on success, or a failure result if the registry is not found
+    /// or admin user is disabled.
+    /// </returns>
+    public ControlPlaneOperationResult<ContainerRegistryResource> RegenerateCredential(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string registryName,
+        string passwordName)
+    {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(RegenerateCredential),
+            "Executing {0}: registry={1}, password={2}",
+            nameof(RegenerateCredential), registryName, passwordName);
+
+        var existing = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        if (existing.Result == OperationResult.NotFound)
+            return existing;
+
+        var resource = existing.Resource!;
+
+        if (!resource.Properties.AdminUserEnabled)
+        {
+            logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(RegenerateCredential),
+                "Executing {0}: Admin user is disabled for registry '{1}'.", nameof(RegenerateCredential), registryName);
+            return new ControlPlaneOperationResult<ContainerRegistryResource>(
+                OperationResult.Failed, null,
+                $"Admin user is disabled for registry '{registryName}'.",
+                "ADMIN_USER_DISABLED");
+        }
+
+        var newPassword = ContainerRegistryResourceProperties.GenerateAdminPassword();
+
+        if (string.Equals(passwordName, "password2", StringComparison.OrdinalIgnoreCase))
+            resource.Properties.AdminPassword2 = newPassword;
+        else
+            resource.Properties.AdminPassword = newPassword;
+
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, registryName, resource, false);
+
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(RegenerateCredential),
+            "Executing {0}: Password '{1}' regenerated for registry '{2}'.",
+            nameof(RegenerateCredential), passwordName, registryName);
+
+        return new ControlPlaneOperationResult<ContainerRegistryResource>(OperationResult.Updated, resource, null, null);
+    }
+
     private static bool IsNameValid(string name)
     {
         return name.Length is >= 5 and <= 50 && name.All(char.IsLetterOrDigit);

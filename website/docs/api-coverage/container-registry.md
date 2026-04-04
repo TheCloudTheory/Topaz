@@ -97,7 +97,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 | List Credentials | ✅ | |
 | List Private Link Resources | ❌ | |
 | List Usages | ❌ | |
-| Regenerate Credential | ❌ | |
+| Regenerate Credential | ✅ | |
 | Update | ✅ | PATCH |
 
 ### Replications

@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
+using Topaz.Service.ContainerRegistry.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -9,16 +10,16 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ContainerRegistry.Endpoints;
 
-internal sealed class ListContainerRegistryCredentialsEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class RegenerateContainerRegistryCredentialEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly ContainerRegistryControlPlane _controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
 
     public string[] Endpoints =>
     [
-        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}/listCredentials"
+        "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}/regenerateCredential"
     ];
 
-    public string[] Permissions => ["Microsoft.ContainerRegistry/registries/listCredentials/action"];
+    public string[] Permissions => ["Microsoft.ContainerRegistry/registries/regenerateCredential/action"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
@@ -30,10 +31,20 @@ internal sealed class ListContainerRegistryCredentialsEndpoint(Pipeline eventPip
         var resourceGroupName = path.ExtractValueFromPath(4);
         var registryName = path.ExtractValueFromPath(8);
 
-        var operation = _controlPlane.Get(
+        var request = JsonSerializer.Deserialize<RegenerateCredentialRequest>(
+            context.Request.Body, GlobalSettings.JsonOptions);
+
+        if (request?.Name == null)
+        {
+            response.CreateErrorResponse("INVALID_REQUEST", "Request body must include a 'name' field (password or password2).", HttpStatusCode.BadRequest);
+            return;
+        }
+
+        var operation = _controlPlane.RegenerateCredential(
             subscriptionIdentifier,
             ResourceGroupIdentifier.From(resourceGroupName),
-            registryName!);
+            registryName!,
+            request.Name);
 
         if (operation.Result == OperationResult.NotFound)
         {
@@ -41,14 +52,13 @@ internal sealed class ListContainerRegistryCredentialsEndpoint(Pipeline eventPip
             return;
         }
 
-        var props = operation.Resource!.Properties;
-
-        if (!props.AdminUserEnabled)
+        if (operation.Result == OperationResult.Failed)
         {
-            response.CreateErrorResponse("ADMIN_USER_DISABLED", $"Admin user is disabled for registry '{registryName}'.", HttpStatusCode.BadRequest);
+            response.CreateErrorResponse(operation.Code ?? "OPERATION_FAILED", operation.Reason ?? string.Empty, HttpStatusCode.BadRequest);
             return;
         }
 
+        var props = operation.Resource!.Properties;
         var payload = JsonSerializer.Serialize(new
         {
             username = props.AdminUsername,

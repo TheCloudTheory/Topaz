@@ -424,4 +424,97 @@ public class ContainerRegistryTests
             await registry2.Value.DeleteAsync(WaitUntil.Completed);
         }
     }
+
+    [Test]
+    public async Task ContainerRegistry_RegenerateCredential_ShouldReturnNewPassword()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Basic))
+        {
+            IsAdminUserEnabled = true
+        };
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+        var registry = await registries.GetAsync(RegistryName);
+
+        // capture the original password
+        var originalCredentials = await registry.Value.GetCredentialsAsync();
+        var originalPassword = originalCredentials.Value.Passwords
+            .First(p => p.Name == ContainerRegistryPasswordName.Password).Value;
+
+        // Act — regenerate password
+        var content = new ContainerRegistryCredentialRegenerateContent(ContainerRegistryPasswordName.Password);
+        var result = await registry.Value.RegenerateCredentialAsync(content);
+
+        // Assert — username preserved, password rotated
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value.Username, Is.EqualTo(RegistryName));
+            Assert.That(result.Value.Passwords, Is.Not.Null.And.Not.Empty);
+
+            var newPassword = result.Value.Passwords
+                .First(p => p.Name == ContainerRegistryPasswordName.Password).Value;
+            Assert.That(newPassword, Is.Not.EqualTo(originalPassword), "Password should have changed after regeneration.");
+        });
+    }
+
+    [Test]
+    public async Task ContainerRegistry_RegenerateCredential_Password2_ShouldReturnNewPassword2()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Basic))
+        {
+            IsAdminUserEnabled = true
+        };
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+        var registry = await registries.GetAsync(RegistryName);
+
+        var originalCredentials = await registry.Value.GetCredentialsAsync();
+        var originalPassword2 = originalCredentials.Value.Passwords
+            .First(p => p.Name == ContainerRegistryPasswordName.Password2).Value;
+
+        // Act
+        var content = new ContainerRegistryCredentialRegenerateContent(ContainerRegistryPasswordName.Password2);
+        var result = await registry.Value.RegenerateCredentialAsync(content);
+
+        // Assert
+        var newPassword2 = result.Value.Passwords
+            .First(p => p.Name == ContainerRegistryPasswordName.Password2).Value;
+        Assert.That(newPassword2, Is.Not.EqualTo(originalPassword2), "Password2 should have changed after regeneration.");
+    }
+
+    [Test]
+    public async Task ContainerRegistry_RegenerateCredential_WhenAdminDisabled_ShouldFail()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Basic))
+        {
+            IsAdminUserEnabled = false
+        };
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+        var registry = await registries.GetAsync(RegistryName);
+
+        var content = new ContainerRegistryCredentialRegenerateContent(ContainerRegistryPasswordName.Password);
+
+        // Act & Assert
+        Assert.ThrowsAsync<RequestFailedException>(async () =>
+            await registry.Value.RegenerateCredentialAsync(content));
+    }
 }
