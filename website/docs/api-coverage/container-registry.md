@@ -165,7 +165,8 @@ The data plane covers the [OCI Distribution Spec](https://github.com/opencontain
 |-----------|--------|-------|
 | `GET /v2/` (challenge) | ✅ | Returns 401 Bearer challenge; accepts Basic (admin creds) or Bearer (JWT) |
 | `POST /oauth2/exchange` | ✅ | Exchanges AAD access token for ACR refresh token |
-| `POST /oauth2/token` | ❌ | Exchange refresh token for scoped repository access token |
+| `GET /oauth2/token` | ✅ | Fetch repository-scoped Bearer access token (Docker daemon flow) |
+| `POST /oauth2/token` | ✅ | Exchange refresh token for scoped repository access token |
 
 ### Manifests
 
