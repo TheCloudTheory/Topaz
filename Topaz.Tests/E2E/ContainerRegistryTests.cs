@@ -517,4 +517,69 @@ public class ContainerRegistryTests
         Assert.ThrowsAsync<RequestFailedException>(async () =>
             await registry.Value.RegenerateCredentialAsync(content));
     }
+
+    [Test]
+    public async Task ContainerRegistry_ListUsages_BasicSku_ShouldReturnExpectedLimits()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+        var registry = await registries.GetAsync(RegistryName);
+
+        // Act
+        var usages = new List<Azure.ResourceManager.ContainerRegistry.Models.ContainerRegistryUsage>();
+        await foreach (var u in registry.Value.GetUsagesAsync())
+            usages.Add(u);
+
+        // Assert
+        var size = usages.FirstOrDefault(u => u.Name == "Size");
+        var webhooks = usages.FirstOrDefault(u => u.Name == "Webhooks");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(size, Is.Not.Null);
+            Assert.That(size!.Limit, Is.EqualTo(10737418240L));
+            Assert.That(size.CurrentValue, Is.EqualTo(0));
+            Assert.That(webhooks, Is.Not.Null);
+            Assert.That(webhooks!.Limit, Is.EqualTo(2L));
+        });
+    }
+
+    [Test]
+    public async Task ContainerRegistry_ListUsages_PremiumSku_ShouldReturnHigherLimits()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Premium));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+        var registry = await registries.GetAsync(RegistryName);
+
+        // Act
+        var usages = new List<Azure.ResourceManager.ContainerRegistry.Models.ContainerRegistryUsage>();
+        await foreach (var u in registry.Value.GetUsagesAsync())
+            usages.Add(u);
+
+        // Assert
+        var size = usages.FirstOrDefault(u => u.Name == "Size");
+        var webhooks = usages.FirstOrDefault(u => u.Name == "Webhooks");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(size, Is.Not.Null);
+            Assert.That(size!.Limit, Is.EqualTo(536870912000L));
+            Assert.That(webhooks, Is.Not.Null);
+            Assert.That(webhooks!.Limit, Is.EqualTo(500L));
+        });
+    }
 }

@@ -18,6 +18,7 @@ public sealed class GenericContainerRegistryCommand : IEmulatorCommand
             acr.AddCommand<ListContainerRegistryCredentialsCommand>("list-credentials");
             acr.AddCommand<GenerateContainerRegistryCredentialsCommand>("generate-credentials");
             acr.AddCommand<RegenerateContainerRegistryCredentialCommand>("regenerate-credential");
+            acr.AddCommand<ListContainerRegistryUsagesCommand>("list-usages");
         });
     }
 }

@@ -343,4 +343,30 @@ internal sealed class ContainerRegistryControlPlane(
     {
         return name.Length is >= 5 and <= 50 && name.All(char.IsLetterOrDigit);
     }
+
+    /// <summary>
+    /// Returns quota usages for the specified container registry derived from its SKU tier.
+    /// </summary>
+    /// <param name="subscriptionIdentifier">The subscription that owns the registry.</param>
+    /// <param name="resourceGroupIdentifier">The resource group that owns the registry.</param>
+    /// <param name="registryName">The registry name.</param>
+    /// <returns>
+    /// The usage entries on success, or a not-found result if the registry does not exist.
+    /// </returns>
+    public ControlPlaneOperationResult<RegistryUsage[]> ListUsages(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string registryName)
+    {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ListUsages),
+            "Executing {0}: registry={1}, resourceGroup={2}, subscription={3}",
+            nameof(ListUsages), registryName, resourceGroupIdentifier.Value, subscriptionIdentifier.Value);
+
+        var result = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        if (result.Result == OperationResult.NotFound)
+            return new ControlPlaneOperationResult<RegistryUsage[]>(OperationResult.NotFound, null, result.Reason, result.Code);
+
+        var usages = ContainerRegistryResourceProperties.GetUsagesForSku(result.Resource!.Sku?.Name);
+        return new ControlPlaneOperationResult<RegistryUsage[]>(OperationResult.Success, usages, null, null);
+    }
 }

@@ -157,4 +157,33 @@ public class ContainerRegistryTests : TopazFixture
         await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task ContainerRegistry_ShowUsage_ShouldReturnSizeAndWebhookQuotas()
+    {
+        const string registryName = "topazacr07";
+        const string resourceGroup = "test-acr-usage-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand($"az acr create --name {registryName} --resource-group {resourceGroup} --sku Standard --location westeurope");
+
+        await RunAzureCliCommand($"az acr show-usage --name {registryName} --resource-group {resourceGroup}", (resp) =>
+        {
+            var values = resp["value"]!.AsArray();
+            var size = values.FirstOrDefault(v => v!["name"]!.GetValue<string>() == "Size");
+            var webhooks = values.FirstOrDefault(v => v!["name"]!.GetValue<string>() == "Webhooks");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(size, Is.Not.Null);
+                Assert.That(size!["limit"]!.GetValue<long>(), Is.EqualTo(107374182400L));
+                Assert.That(size["currentValue"]!.GetValue<long>(), Is.EqualTo(0));
+                Assert.That(webhooks, Is.Not.Null);
+                Assert.That(webhooks!["limit"]!.GetValue<long>(), Is.EqualTo(10L));
+            });
+        });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

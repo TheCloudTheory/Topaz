@@ -74,4 +74,20 @@ internal sealed class ContainerRegistryResourceProperties
     }
 
     internal static string GenerateAdminPassword() => Guid.NewGuid().ToString("N");
+
+    public static RegistryUsage[] GetUsagesForSku(string? skuName)
+    {
+        var (storageLimit, webhookLimit) = skuName switch
+        {
+            "Premium" => (536870912000L, 500L),
+            "Standard" => (107374182400L, 10L),
+            _ => (10737418240L, 2L)
+        };
+
+        return
+        [
+            new RegistryUsage("Size", storageLimit, 0, "Bytes"),
+            new RegistryUsage("Webhooks", webhookLimit, 0, "Count")
+        ];
+    }
 }
