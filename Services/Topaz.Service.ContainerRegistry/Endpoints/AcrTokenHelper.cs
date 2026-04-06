@@ -17,6 +17,12 @@ namespace Topaz.Service.ContainerRegistry.Endpoints;
 internal static class AcrTokenHelper
 {
     /// <summary>
+    /// The well-known ACR username sentinel used by Docker and Azure CLI when
+    /// authenticating with a token (refresh or access) instead of real credentials.
+    /// Defined by the ACR OAuth2 token exchange protocol; independent of Topaz internals.
+    /// </summary>
+    private const string AcrTokenSentinelUsername = "00000000-0000-0000-0000-000000000000";
+    /// <summary>
     /// Resolves the caller's object ID.
     /// <list type="bullet">
     ///   <item><term>refresh_token present</term><description>Validated as a Topaz JWT; subject returned on success, <c>null</c> on failure.</description></item>
@@ -79,6 +85,24 @@ internal static class AcrTokenHelper
         var colon = decoded.IndexOf(':');
         var username = colon > 0 ? decoded[..colon] : decoded;
         var password = colon > 0 ? decoded[(colon + 1)..] : string.Empty;
+
+        // The ACR sentinel username signals that the password is an ACR refresh token
+        // (a JWT issued by /oauth2/exchange or by a previous /oauth2/token call).
+        // This is how Docker passes token-based credentials to the token endpoint.
+        if (string.Equals(username, AcrTokenSentinelUsername, StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var validated = JwtHelper.ValidateJwt(password);
+                return validated?.Subject ?? Globals.GlobalAdminId;
+            }
+            catch
+            {
+                logger.LogDebug(nameof(AcrTokenHelper), nameof(ValidateBasicAuth),
+                    "Basic auth — refresh token in password field failed validation, issuing 401.");
+                return null;
+            }
+        }
 
         var registry = ResolveRegistry(context, controlPlane);
         if (registry == null || !registry.Properties.AdminUserEnabled)
