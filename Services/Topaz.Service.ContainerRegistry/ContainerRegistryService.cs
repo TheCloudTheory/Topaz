@@ -31,10 +31,19 @@ public sealed class ContainerRegistryService(Pipeline eventPipeline, ITopazLogge
         new ListContainerRegistryCredentialsEndpoint(eventPipeline, logger),
         new GenerateContainerRegistryCredentialsEndpoint(eventPipeline, logger),
         new RegenerateContainerRegistryCredentialEndpoint(eventPipeline, logger),
-        new ListContainerRegistryUsagesEndpoint(eventPipeline, logger)
+        new ListContainerRegistryUsagesEndpoint(eventPipeline, logger),
+        // Data plane — blob uploads (OCI Distribution Spec)
+        new InitiateBlobUploadEndpoint(AcrDataPlane(), logger),
+        new PatchBlobUploadEndpoint(AcrDataPlane(), logger),
+        new CompleteBlobUploadEndpoint(AcrDataPlane(), logger),
+        new HeadBlobEndpoint(AcrDataPlane(), logger),
+        new PutManifestEndpoint(AcrDataPlane(), logger),
     ];
 
     public void Bootstrap()
     {
     }
+
+    private AcrDataPlane AcrDataPlane() =>
+        new(new ContainerRegistryResourceProvider(logger), logger);
 }

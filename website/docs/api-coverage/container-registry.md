@@ -170,23 +170,23 @@ The data plane covers the [OCI Distribution Spec](https://github.com/opencontain
 
 ### Manifests
 
-| Operation | Status |
-|-----------|--------|
-| Get | ❌ |
-| Put | ❌ |
-| Delete | ❌ |
-| Check existence | ❌ |
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| Get | ❌ | |
+| Put | ✅ | `PUT /v2/{name}/manifests/{reference}` — stores by tag and by digest |
+| Delete | ❌ | |
+| Check existence | ❌ | |
 
 ### Blobs
 
-| Operation | Status |
-|-----------|--------|
-| Get | ❌ |
-| Check existence | ❌ |
-| Delete | ❌ |
-| Initiate upload | ❌ |
-| Upload (monolithic) | ❌ |
-| Upload (chunked) | ❌ |
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| Get | ❌ | |
+| Check existence | ✅ | `HEAD /v2/{name}/blobs/{digest}` — returns 200 + Content-Length when blob exists |
+| Delete | ❌ | |
+| Initiate upload | ✅ | `POST /v2/{name}/blobs/uploads/` — returns session UUID |
+| Upload (monolithic) | ✅ | `PUT /v2/{name}/blobs/uploads/{uuid}?digest=...` with body |
+| Upload (chunked) | ✅ | `PATCH /v2/{name}/blobs/uploads/{uuid}` then `PUT` to finalize |
 
 ### Tags
 

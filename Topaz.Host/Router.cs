@@ -109,6 +109,15 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         {
             context.Response.Headers.Add(header.Key, new StringValues(header.Value.ToArray()));
         }
+
+        // Also forward content headers (e.g. Content-Length) so endpoints can
+        // set them properly via response.Content.Headers. Skip Content-Type because
+        // SetResponseContentType handles that separately.
+        foreach (var header in response.Content.Headers)
+        {
+            if (string.Equals(header.Key, "Content-Type", StringComparison.OrdinalIgnoreCase)) continue;
+            context.Response.Headers[header.Key] = new StringValues(header.Value.ToArray());
+        }
         
         switch (response.StatusCode)
         {
