@@ -1,4 +1,5 @@
 using Azure;
+using Azure.Containers.ContainerRegistry;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ContainerRegistry;
@@ -6,9 +7,12 @@ using Azure.ResourceManager.ContainerRegistry.Models;
 using Azure.ResourceManager.ManagedServiceIdentities;
 using Azure.ResourceManager.Models;
 using Microsoft.Graph;
+using System.Text;
+using System.Text.Json;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -581,5 +585,118 @@ public class ContainerRegistryTests
             Assert.That(webhooks, Is.Not.Null);
             Assert.That(webhooks!.Limit, Is.EqualTo(500L));
         });
+    }
+
+    [Test]
+    public async Task ContainerRegistry_ListRepositories_ShouldReflectPushedRepository()
+    {
+        // Arrange — create registry via ARM
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var host = $"{RegistryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
+
+        using var http = new HttpClient();
+
+        var catalogUri = $"https://{host}/v2/_catalog";
+
+        // Act 1 — catalog should be empty for a fresh registry
+        var req1 = new HttpRequestMessage(HttpMethod.Get, catalogUri);
+        var resp1 = await http.SendAsync(req1);
+        var body1 = JsonDocument.Parse(await resp1.Content.ReadAsStringAsync());
+
+        Assert.That(body1.RootElement.GetProperty("repositories").GetArrayLength(), Is.EqualTo(0));
+
+        // Act 2 — push a minimal manifest to create a repository on the data plane
+        const string repoName = "my-app";
+        const string minimalManifest =
+            """{"schemaVersion":2,"mediaType":"application/vnd.docker.distribution.manifest.v2+json","""
+            + "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0,"
+            + "\"digest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"},"
+            + "\"layers\":[]}";
+
+        var putUri = $"https://{host}/v2/{repoName}/manifests/v1";
+        var req2 = new HttpRequestMessage(HttpMethod.Put, putUri);
+        req2.Content = new StringContent(
+            minimalManifest, Encoding.UTF8,
+            "application/vnd.docker.distribution.manifest.v2+json");
+        var resp2 = await http.SendAsync(req2);
+
+        Assert.That((int)resp2.StatusCode, Is.EqualTo(201),
+            $"PUT manifest failed: {await resp2.Content.ReadAsStringAsync()}");
+
+        // Act 3 — catalog should now list the pushed repository
+        var req3 = new HttpRequestMessage(HttpMethod.Get, catalogUri);
+        var resp3 = await http.SendAsync(req3);
+        var body3 = JsonDocument.Parse(await resp3.Content.ReadAsStringAsync());
+
+        var repos = body3.RootElement.GetProperty("repositories")
+            .EnumerateArray()
+            .Select(e => e.GetString())
+            .ToList();
+
+        Assert.That(repos, Contains.Item(repoName));
+    }
+
+    [Test]
+    public async Task ContainerRegistry_ListRepositories_SdkClient_ShouldReturnPushedRepository()
+    {
+        // Arrange — create registry via ARM
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var host = $"{RegistryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
+
+        // Push a minimal manifest via HttpClient to seed a repository.
+        using var http = new HttpClient();
+
+        const string repoName = "sdk-app";
+        const string minimalManifest =
+            "{\"schemaVersion\":2,\"mediaType\":\"application/vnd.docker.distribution.manifest.v2+json\"," +
+            "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0," +
+            "\"digest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}," +
+            "\"layers\":[]}";
+
+        var putReq = new HttpRequestMessage(
+            HttpMethod.Put,
+            $"https://{host}/v2/{repoName}/manifests/v1");
+        putReq.Content = new StringContent(
+            minimalManifest, Encoding.UTF8,
+            "application/vnd.docker.distribution.manifest.v2+json");
+        var putResp = await http.SendAsync(putReq);
+        Assert.That((int)putResp.StatusCode, Is.EqualTo(201),
+            $"PUT manifest failed: {await putResp.Content.ReadAsStringAsync()}");
+
+        // Act — use the Azure SDK ContainerRegistryClient with proper auth wiring.
+        //
+        // ContainerRegistryClient follows a 3-leg OAuth2 exchange:
+        //   1. GET /v2/ → 401 Bearer challenge with realm URL
+        //   2. POST /oauth2/exchange (AAD token → ACR refresh token)
+        //   3. POST /oauth2/token (refresh token → ACR access token)
+        var loginServer = new Uri($"https://{host}");
+        var registryClient = new ContainerRegistryClient(loginServer, credential);
+
+        var repos = new List<string>();
+        await foreach (var repo in registryClient.GetRepositoryNamesAsync())
+            repos.Add(repo);
+
+        // Assert
+        Assert.That(repos, Contains.Item(repoName));
     }
 }

@@ -186,4 +186,47 @@ public class ContainerRegistryTests : TopazFixture
         await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task ContainerRegistry_ListRepositories_ShouldReturnPushedRepository()
+    {
+        const string registryName = "topazacrrepolist01";
+        const string resourceGroup = "test-acr-repolist-rg";
+        const string repoName = "my-app";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az acr create --name {registryName} --resource-group {resourceGroup} --sku Basic --location westeurope --admin-enabled true");
+
+        // Retrieve admin credentials so we can push directly via curl.
+        string adminPassword = string.Empty;
+        await RunAzureCliCommand($"az acr credential show --name {registryName} --resource-group {resourceGroup}", (resp) =>
+        {
+            adminPassword = resp["passwords"]!.AsArray()[0]!["value"]!.GetValue<string>();
+        });
+
+        // Push a minimal manifest to create a repository on the data plane.
+        var loginServer = $"{registryName}.cr.topaz.local.dev:8892";
+        const string manifestJson =
+            "{\"schemaVersion\":2,\"mediaType\":\"application/vnd.docker.distribution.manifest.v2+json\"," +
+            "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0," +
+            "\"digest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}," +
+            "\"layers\":[]}";
+
+        await RunAzureCliCommand(
+            $"curl -skf -u \"{registryName}:{adminPassword}\" " +
+            $"-X PUT https://{loginServer}/v2/{repoName}/manifests/v1 " +
+            $"-H \"Content-Type: application/vnd.docker.distribution.manifest.v2+json\" " +
+            $"-d '{manifestJson}'");
+
+        // az acr repository list calls GET /v2/_catalog on the data plane.
+        await RunAzureCliCommand($"az acr repository list --name {registryName}", (resp) =>
+        {
+            var repos = resp.AsArray().Select(r => r!.GetValue<string>()).ToList();
+            Assert.That(repos, Contains.Item(repoName));
+        });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

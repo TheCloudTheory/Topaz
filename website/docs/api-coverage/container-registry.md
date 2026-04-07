@@ -196,6 +196,6 @@ The data plane covers the [OCI Distribution Spec](https://github.com/opencontain
 
 ### Repositories
 
-| Operation | Status |
-|-----------|--------|
-| List | ❌ |
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| List | ✅ | `GET /v2/_catalog` and `GET /acr/v1/_catalog` — returns `{"repositories":[...]}` sorted; supports `n` and `last` pagination params |

@@ -95,6 +95,7 @@ public class TopazFixture
             .WithExtraHost("recovervault02.keyvault.topaz.local.dev", _containerTopaz.IpAddress)            
             .WithExtraHost("SecretListVault02.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazacr06.cr.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("topazacrrepolist01.cr.topaz.local.dev", _containerTopaz.IpAddress)
             .Build();
         
         // Act

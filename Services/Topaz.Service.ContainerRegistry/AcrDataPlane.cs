@@ -47,6 +47,13 @@ internal sealed class AcrDataPlane(ContainerRegistryResourceProvider provider, I
         return path;
     }
 
+    private string ManifestsRootPath(SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string registryName)
+    {
+        var path = Path.Combine(DataPath(sub, rg, registryName), "manifests");
+        Directory.CreateDirectory(path);
+        return path;
+    }
+
     // ── Blob upload ───────────────────────────────────────────────────────────
 
     /// <summary>
@@ -298,6 +305,29 @@ internal sealed class AcrDataPlane(ContainerRegistryResourceProvider provider, I
         if (!File.Exists(refPath)) return null;
 
         return JsonSerializer.Deserialize<ManifestEnvelope>(File.ReadAllText(refPath), GlobalSettings.JsonOptions);
+    }
+
+    /// <summary>
+    /// Returns the sorted list of repository names stored in this registry.
+    /// Corresponds to <c>GET /v2/_catalog</c>.
+    /// </summary>
+    public IReadOnlyList<string> ListRepositories(
+        SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string registryName)
+    {
+        logger.LogDebug(nameof(AcrDataPlane), nameof(ListRepositories),
+            "Executing {0}: registry={1}", nameof(ListRepositories), registryName);
+
+        PathGuard.ValidateName(registryName);
+
+        var root = ManifestsRootPath(sub, rg, registryName);
+
+        return Directory.Exists(root)
+            ? Directory.GetDirectories(root)
+                       .Select(Path.GetFileName)
+                       .Where(n => n != null)
+                       .Order()
+                       .ToList()!
+            : [];
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
