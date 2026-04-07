@@ -18,20 +18,20 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 ### Key Vault — full secrets support
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Get Secret Versions | <span class="badge--stable">Stable</span> | `GET {vaultBaseUrl}/secrets/{name}/versions` — paged list of all versions for a secret |
-| Backup & Restore | <span class="badge--stable">Stable</span> | `POST .../backup` and `POST .../restore` for opaque secret backup blobs |
-| Deleted secrets operations | <span class="badge--stable">Stable</span> | Soft-delete surface: list, get, recover, and purge deleted secrets |
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Get Secret Versions | `GET {vaultBaseUrl}/secrets/{name}/versions` — paged list of all versions for a secret |
+| <span class="badge--stable">Stable</span> | Backup & Restore | `POST .../backup` and `POST .../restore` for opaque secret backup blobs |
+| <span class="badge--stable">Stable</span> | Deleted secrets operations | Soft-delete surface: list, get, recover, and purge deleted secrets |
 
 ### Container Registry — data plane preview
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| ACR OAuth2 token endpoint | <span class="badge--stable">Stable</span> | `POST /oauth2/token` — completes the three-step ACR authentication flow |
-| Repositories & Tags | <span class="badge--preview">Preview</span> | List repositories (`/v2/_catalog`), list tags, delete tag via manifest reference |
-| Manifest operations | <span class="badge--preview">Preview</span> | GET, PUT, DELETE, HEAD for OCI manifests per registry |
-| Blob operations | <span class="badge--preview">Preview</span> | Full OCI blob upload/download: start session, stream chunks, complete, download, delete |
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | ACR OAuth2 token endpoint | `POST /oauth2/token` — completes the three-step ACR authentication flow |
+| <span class="badge--preview">Preview</span> | Repositories & Tags | List repositories (`/v2/_catalog`), list tags, delete tag via manifest reference |
+| <span class="badge--preview">Preview</span> | Manifest operations | GET, PUT, DELETE, HEAD for OCI manifests per registry |
+| <span class="badge--preview">Preview</span> | Blob operations | Full OCI blob upload/download: start session, stream chunks, complete, download, delete |
 
 ---
 
@@ -39,37 +39,37 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 ### Queue Storage — preview
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Service-level operations | <span class="badge--preview">Preview</span> | List queues, get/set service properties, get stats |
-| Queue CRUD | <span class="badge--preview">Preview</span> | Create, delete, get/set metadata and ACL per queue |
-| Message operations | <span class="badge--preview">Preview</span> | Enqueue, dequeue, peek, update, delete, and clear messages |
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Service-level operations | List queues, get/set service properties, get stats |
+| <span class="badge--preview">Preview</span> | Queue CRUD | Create, delete, get/set metadata and ACL per queue |
+| <span class="badge--preview">Preview</span> | Message operations | Enqueue, dequeue, peek, update, delete, and clear messages |
 
 ### Key Vault — keys support
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Core CRUD | <span class="badge--stable">Stable</span> | Create, import, get, update, delete keys; list keys and versions |
-| Backup & Restore | <span class="badge--stable">Stable</span> | Export and restore opaque key backup blobs |
-| Cryptographic operations | <span class="badge--stable">Stable</span> | Encrypt, decrypt, sign, verify, wrap key, unwrap key |
-| Key rotation | <span class="badge--preview">Preview</span> | Rotate key, get/update rotation policy |
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Core CRUD | Create, import, get, update, delete keys; list keys and versions |
+| <span class="badge--stable">Stable</span> | Backup & Restore | Export and restore opaque key backup blobs |
+| <span class="badge--stable">Stable</span> | Cryptographic operations | Encrypt, decrypt, sign, verify, wrap key, unwrap key |
+| <span class="badge--preview">Preview</span> | Key rotation | Rotate key, get/update rotation policy |
 
 ### Azure PowerShell integration
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Certificate trust script | <span class="badge--stable">Stable</span> | `configure-azure-powershell-cert.ps1` — trust the Topaz certificate in the Az module |
-| Cloud environment registration | <span class="badge--stable">Stable</span> | `Add-AzEnvironment` + `Connect-AzAccount` setup script and example |
-| Test suite | <span class="badge--preview">Preview</span> | `Topaz.Tests.AzurePowerShell` project with a Testcontainers fixture and smoke tests |
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Certificate trust script | `configure-azure-powershell-cert.ps1` — trust the Topaz certificate in the Az module |
+| <span class="badge--stable">Stable</span> | Cloud environment registration | `Add-AzEnvironment` + `Connect-AzAccount` setup script and example |
+| <span class="badge--preview">Preview</span> | Test suite | `Topaz.Tests.AzurePowerShell` project with a Testcontainers fixture and smoke tests |
 
 ### ARM Deployments — full support
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Cancel | <span class="badge--stable">Stable</span> | Mark an in-progress deployment as cancelled |
-| Export Template | <span class="badge--stable">Stable</span> | Return the ARM template used for a deployment |
-| What-If | <span class="badge--preview">Preview</span> | Preview resource changes without applying them |
-| List at all scopes | <span class="badge--stable">Stable</span> | List deployments at subscription, management-group, and tenant scope |
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Cancel | Mark an in-progress deployment as cancelled |
+| <span class="badge--stable">Stable</span> | Export Template | Return the ARM template used for a deployment |
+| <span class="badge--preview">Preview</span> | What-If | Preview resource changes without applying them |
+| <span class="badge--stable">Stable</span> | List at all scopes | List deployments at subscription, management-group, and tenant scope |
 
 ---
 
@@ -77,25 +77,25 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 ### Resource Providers — operations support
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| List, Register, Unregister | <span class="badge--stable">Stable</span> | Full provider lifecycle alongside the existing get-by-namespace operation |
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | List, Register, Unregister | Full provider lifecycle alongside the existing get-by-namespace operation |
 
 ### Virtual Networks — full control plane
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Delete, List, Update Tags | <span class="badge--stable">Stable</span> | Complete the VNet control plane beyond create and get |
-| Check IP Address Availability | <span class="badge--stable">Stable</span> | Validate whether an IP is available within a VNet's address space |
-| Subnets — full CRUD | <span class="badge--stable">Stable</span> | Create, get, delete, and list subnets within a VNet |
-| Network Security Groups | <span class="badge--preview">Preview</span> | Full NSG control plane: create, get, delete, list, update tags |
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Delete, List, Update Tags | Complete the VNet control plane beyond create and get |
+| <span class="badge--stable">Stable</span> | Check IP Address Availability | Validate whether an IP is available within a VNet's address space |
+| <span class="badge--stable">Stable</span> | Subnets — full CRUD | Create, get, delete, and list subnets within a VNet |
+| <span class="badge--preview">Preview</span> | Network Security Groups | Full NSG control plane: create, get, delete, list, update tags |
 
 ### Azure Virtual Machines — initial control plane
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| New service scaffold | <span class="badge--stable">Stable</span> | `Topaz.Service.VirtualMachine` project with models, resource provider, and service registration |
-| Core control plane | <span class="badge--preview">Preview</span> | Create/update, get, delete, list VMs — emulated only (no actual boot) |
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.VirtualMachine` project with models, resource provider, and service registration |
+| <span class="badge--preview">Preview</span> | Core control plane | Create/update, get, delete, list VMs — emulated only (no actual boot) |
 
 ---
 
@@ -103,16 +103,16 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 ### Topaz Portal — tag editing
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Inline tag value editing in portal | <span class="badge--preview">Preview</span> | Edit button per tag row in the Tags panel turns the value cell into an input field; supports all tag-capable resources |
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Inline tag value editing in portal | Edit button per tag row in the Tags panel turns the value cell into an input field; supports all tag-capable resources |
 
 ### Key Vault — automated soft-delete purging
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Auto-purge soft-deleted vaults | <span class="badge--preview">Preview</span> | Background scheduler permanently removes soft-deleted vaults once their `scheduledPurgeDate` has elapsed |
-| Auto-purge soft-deleted secrets | <span class="badge--preview">Preview</span> | Background scheduler permanently removes soft-deleted secrets once their `scheduledPurgeDate` has elapsed |
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Auto-purge soft-deleted vaults | Background scheduler permanently removes soft-deleted vaults once their `scheduledPurgeDate` has elapsed |
+| <span class="badge--preview">Preview</span> | Auto-purge soft-deleted secrets | Background scheduler permanently removes soft-deleted secrets once their `scheduledPurgeDate` has elapsed |
 
 ---
 
@@ -120,15 +120,15 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 ### Container Registry — ACR Tasks
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Task CRUD control plane | <span class="badge--preview">Preview</span> | Create, get, update, delete, and list ACR tasks via the ARM surface (`Microsoft.ContainerRegistry/registries/tasks`) |
-| Task runs and triggers | <span class="badge--preview">Preview</span> | Manually trigger runs, list and get run details, cancel runs, retrieve log URL — runs complete immediately without executing real workloads |
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Task CRUD control plane | Create, get, update, delete, and list ACR tasks via the ARM surface (`Microsoft.ContainerRegistry/registries/tasks`) |
+| <span class="badge--preview">Preview</span> | Task runs and triggers | Manually trigger runs, list and get run details, cancel runs, retrieve log URL — runs complete immediately without executing real workloads |
 
 ### Azure SQL — initial control plane
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| New service scaffold | <span class="badge--stable">Stable</span> | `Topaz.Service.Sql` project with models, resource provider, control plane, and host registration |
-| SQL Server control plane | <span class="badge--preview">Preview</span> | Create, get, update, delete, and list SQL Server resources; emulated server with `{name}.database.topaz.local.dev` as FQDN |
-| SQL Database control plane | <span class="badge--preview">Preview</span> | Create, get, update, delete, and list databases under a server — persisted as child resources on disk |
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.Sql` project with models, resource provider, control plane, and host registration |
+| <span class="badge--preview">Preview</span> | SQL Server control plane | Create, get, update, delete, and list SQL Server resources; emulated server with `{name}.database.topaz.local.dev` as FQDN |
+| <span class="badge--preview">Preview</span> | SQL Database control plane | Create, get, update, delete, and list databases under a server — persisted as child resources on disk |

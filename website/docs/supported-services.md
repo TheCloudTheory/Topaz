@@ -15,27 +15,30 @@ Make sure you're using the most recent version of Topaz to benefit from the bugf
 
 Service Name|Control Plane|Data Plane
 ------------|-------------|----------
-Subscriptions|⚠️|N/A
+Subscriptions|🚧|N/A
 Resource Groups|✅|N/A
-Azure Storage|⚠️|⚠️
-Table Storage|⚠️|✅
-Blob Storage|⚠️|⚠️
-Queue Storage|:x:|:x:
-Key Vault|✅|⚠️
-Event Hub|⚠️|⚠️
-Service Bus|⚠️|⚠️
-Virtual Network|⚠️|N/A
-Azure Resource Manager|⚠️|N/A
+Azure Storage|🚧|🚧
+Table Storage|🚧|✅
+Blob Storage|🚧|🚧
+Queue Storage|🔜|🔜
+Key Vault|✅|🚧
+Event Hub|🚧|🚧
+Service Bus|🚧|🚧
+Virtual Network|🚧|N/A
+Azure Resource Manager|🚧|N/A
 Managed Identity|✅|N/A
-Container Registry|✅|⚠️
-Azure SQL|:x:|:x:
-Entra ID|:x:|⚠️
-RBAC|⚠️|:x:
-Monitor|⚠️|:x:
+Container Registry|✅|🚧
+Azure SQL|🔜|🔜
+Azure Virtual Machines|🔜|N/A
+Entra ID|N/A|🚧
+RBAC|🚧|N/A
+Monitor|🚧|:x:
 
 ✅ - fully supported (stable)
 
-⚠️ - partially supported (unstable)
+🚧 - partially supported (unstable)
+
+🔜 - coming soon
 
 :x: - not supported
 
