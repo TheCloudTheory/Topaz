@@ -699,4 +699,113 @@ public class ContainerRegistryTests
         // Assert
         Assert.That(repos, Contains.Item(repoName));
     }
+
+    [Test]
+    public async Task ContainerRegistry_ListTags_ShouldReturnPushedTags()
+    {
+        // Arrange — create registry via ARM
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var host = $"{RegistryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
+        using var http = new HttpClient();
+
+        const string repoName = "tag-test-app";
+        const string minimalManifest =
+            """{"schemaVersion":2,"mediaType":"application/vnd.docker.distribution.manifest.v2+json","""
+            + "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0,"
+            + "\"digest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"},"
+            + "\"layers\":[]}";
+
+        // Push three tags
+        foreach (var tag in new[] { "v1", "v2", "latest" })
+        {
+            var req = new HttpRequestMessage(HttpMethod.Put, $"https://{host}/v2/{repoName}/manifests/{tag}");
+            req.Content = new StringContent(minimalManifest, Encoding.UTF8,
+                "application/vnd.docker.distribution.manifest.v2+json");
+            var resp = await http.SendAsync(req);
+            Assert.That((int)resp.StatusCode, Is.EqualTo(201),
+                $"PUT manifest/{tag} failed: {await resp.Content.ReadAsStringAsync()}");
+        }
+
+        // Act — GET /v2/{repo}/tags/list
+        var tagsResp = await http.SendAsync(
+            new HttpRequestMessage(HttpMethod.Get, $"https://{host}/v2/{repoName}/tags/list"));
+        Assert.That((int)tagsResp.StatusCode, Is.EqualTo(200));
+
+        var body = JsonDocument.Parse(await tagsResp.Content.ReadAsStringAsync());
+        var tags = body.RootElement.GetProperty("tags")
+            .EnumerateArray()
+            .Select(e => e.GetString())
+            .ToList();
+
+        // Assert — all three tags returned; digest-indexed copies excluded
+        Assert.Multiple(() =>
+        {
+            Assert.That(tags, Contains.Item("v1"));
+            Assert.That(tags, Contains.Item("v2"));
+            Assert.That(tags, Contains.Item("latest"));
+            Assert.That(tags, Has.Count.EqualTo(3));
+        });
+    }
+
+    [Test]
+    public async Task ContainerRegistry_ListTags_WithPagination_ShouldRespectNAndLast()
+    {
+        // Arrange — create registry and push several tags
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var host = $"{RegistryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
+        using var http = new HttpClient();
+
+        const string repoName = "pagination-app";
+        const string minimalManifest =
+            """{"schemaVersion":2,"mediaType":"application/vnd.docker.distribution.manifest.v2+json","""
+            + "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0,"
+            + "\"digest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"},"
+            + "\"layers\":[]}";
+
+        foreach (var tag in new[] { "v1", "v2", "v3", "v4", "v5" })
+        {
+            var req = new HttpRequestMessage(HttpMethod.Put, $"https://{host}/v2/{repoName}/manifests/{tag}");
+            req.Content = new StringContent(minimalManifest, Encoding.UTF8,
+                "application/vnd.docker.distribution.manifest.v2+json");
+            await http.SendAsync(req);
+        }
+
+        // Act — first page: n=2 → ["v1","v2"]
+        var page1Resp = await http.SendAsync(
+            new HttpRequestMessage(HttpMethod.Get, $"https://{host}/v2/{repoName}/tags/list?n=2"));
+        var page1 = JsonDocument.Parse(await page1Resp.Content.ReadAsStringAsync())
+            .RootElement.GetProperty("tags").EnumerateArray().Select(e => e.GetString()).ToList();
+
+        // Act — second page: n=2&last=v2 → ["v3","v4"]
+        var page2Resp = await http.SendAsync(
+            new HttpRequestMessage(HttpMethod.Get, $"https://{host}/v2/{repoName}/tags/list?n=2&last=v2"));
+        var page2 = JsonDocument.Parse(await page2Resp.Content.ReadAsStringAsync())
+            .RootElement.GetProperty("tags").EnumerateArray().Select(e => e.GetString()).ToList();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(page1, Is.EqualTo(new[] { "v1", "v2" }));
+            Assert.That(page2, Is.EqualTo(new[] { "v3", "v4" }));
+        });
+    }
 }

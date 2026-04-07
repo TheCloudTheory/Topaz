@@ -229,4 +229,55 @@ public class ContainerRegistryTests : TopazFixture
         await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task ContainerRegistry_ShowTags_ShouldReturnPushedTags()
+    {
+        const string registryName = "topazacrtaglist01";
+        const string resourceGroup = "test-acr-taglist-rg";
+        const string repoName = "tag-list-app";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az acr create --name {registryName} --resource-group {resourceGroup} --sku Basic --location westeurope --admin-enabled true");
+
+        // Retrieve admin credentials so we can push directly via curl.
+        string adminPassword = string.Empty;
+        await RunAzureCliCommand($"az acr credential show --name {registryName} --resource-group {resourceGroup}", (resp) =>
+        {
+            adminPassword = resp["passwords"]!.AsArray()[0]!["value"]!.GetValue<string>();
+        });
+
+        var loginServer = $"{registryName}.cr.topaz.local.dev:8892";
+        const string manifestJson =
+            "{\"schemaVersion\":2,\"mediaType\":\"application/vnd.docker.distribution.manifest.v2+json\"," +
+            "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0," +
+            "\"digest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}," +
+            "\"layers\":[]}";
+
+        // Push three tags to the repository.
+        foreach (var tag in new[] { "v1", "v2", "latest" })
+        {
+            await RunAzureCliCommand(
+                $"curl -skf -u \"{registryName}:{adminPassword}\" " +
+                $"-X PUT https://{loginServer}/v2/{repoName}/manifests/{tag} " +
+                $"-H \"Content-Type: application/vnd.docker.distribution.manifest.v2+json\" " +
+                $"-d '{manifestJson}'");
+        }
+
+        // az acr repository show-tags calls GET /v2/{name}/tags/list on the data plane.
+        await RunAzureCliCommand($"az acr repository show-tags --name {registryName} --repository {repoName}", (resp) =>
+        {
+            var tags = resp.AsArray().Select(t => t!.GetValue<string>()).ToList();
+            Assert.Multiple(() =>
+            {
+                Assert.That(tags, Contains.Item("v1"));
+                Assert.That(tags, Contains.Item("v2"));
+                Assert.That(tags, Contains.Item("latest"));
+            });
+        });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

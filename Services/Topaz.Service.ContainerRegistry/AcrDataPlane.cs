@@ -330,6 +330,32 @@ internal sealed class AcrDataPlane(ContainerRegistryResourceProvider provider, I
             : [];
     }
 
+    /// <summary>
+    /// Returns the sorted list of tag names for <paramref name="repository"/> in this registry.
+    /// Digest-only references (64-char lowercase hex filenames) are excluded.
+    /// Corresponds to <c>GET /v2/{name}/tags/list</c>.
+    /// </summary>
+    public IReadOnlyList<string> ListTags(
+        SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
+        string registryName, string repository)
+    {
+        logger.LogDebug(nameof(AcrDataPlane), nameof(ListTags),
+            "Executing {0}: registry={1} repository={2}", nameof(ListTags), registryName, repository);
+
+        PathGuard.ValidateName(registryName);
+        PathGuard.ValidateName(repository);
+
+        var dir = ManifestsPath(sub, rg, registryName, repository);
+
+        return Directory.Exists(dir)
+            ? Directory.GetFiles(dir, "*.json")
+                       .Select(Path.GetFileNameWithoutExtension)
+                       .Where(n => n != null && !IsDigestHex(n))
+                       .Order()
+                       .ToList()!
+            : [];
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static string ComputeDigest(byte[] data)
@@ -337,6 +363,11 @@ internal sealed class AcrDataPlane(ContainerRegistryResourceProvider provider, I
         var hash = SHA256.HashData(data);
         return "sha256:" + Convert.ToHexString(hash).ToLowerInvariant();
     }
+
+    /// <summary>Returns <c>true</c> when <paramref name="name"/> is a bare 64-character lowercase hex digest,
+    /// i.e. a digest-indexed manifest file rather than a human-assigned tag.</summary>
+    private static bool IsDigestHex(string name)
+        => name.Length == 64 && name.All(c => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'));
 
     /// <summary>
     /// Extracts the hex portion from a digest string like <c>sha256:abc...</c>.

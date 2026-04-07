@@ -192,7 +192,7 @@ The data plane covers the [OCI Distribution Spec](https://github.com/opencontain
 
 | Operation | Status |
 |-----------|--------|
-| List | ❌ |
+| List | ✅ |
 
 ### Repositories
 
