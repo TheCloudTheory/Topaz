@@ -199,3 +199,47 @@ The data plane covers the [OCI Distribution Spec](https://github.com/opencontain
 | Operation | Status | Notes |
 |-----------|--------|-------|
 | List | ✅ | `GET /v2/_catalog` and `GET /acr/v1/_catalog` — returns `{"repositories":[...]}` sorted; supports `n` and `last` pagination params |
+
+---
+
+## Tasks API (planned for 1.5-beta)
+
+:::info[Azure REST API reference]
+[Azure Container Registry Tasks REST API · 2019-04-01](https://learn.microsoft.com/en-us/rest/api/container-registry-tasks/operation-groups?view=rest-container-registry-tasks-2019-04-01)
+:::
+
+This section tracks task-oriented ARM operations for building and running container images via triggers and pipelines.
+
+### Registries (Tasks)
+
+> [REST reference](https://learn.microsoft.com/en-us/rest/api/container-registry-tasks/registries?view=rest-container-registry-tasks-2019-04-01)
+
+| Operation | Status |
+|-----------|--------|
+| Get Build Source Upload Url | ❌ |
+| Schedule Run | ❌ |
+
+### Runs
+
+> [REST reference](https://learn.microsoft.com/en-us/rest/api/container-registry-tasks/runs?view=rest-container-registry-tasks-2019-04-01)
+
+| Operation | Status |
+|-----------|--------|
+| Cancel | ❌ |
+| Get | ❌ |
+| Get Log Sas Url | ❌ |
+| List | ❌ |
+| Update | ❌ |
+
+### Tasks
+
+> [REST reference](https://learn.microsoft.com/en-us/rest/api/container-registry-tasks/tasks?view=rest-container-registry-tasks-2019-04-01)
+
+| Operation | Status |
+|-----------|--------|
+| Create | ❌ |
+| Delete | ❌ |
+| Get | ❌ |
+| Get Details | ❌ |
+| List | ❌ |
+| Update | ❌ |
