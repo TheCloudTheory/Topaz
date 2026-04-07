@@ -408,6 +408,86 @@ TODO: Key Vault: Automated purging of soft-deleted secrets
 
 ---
 
+## v1.5-beta
+
+### Container Registry — ACR Tasks
+
+<!--
+TODO: ACR Tasks: Task CRUD control plane
+  Implement the ARM-level task management surface under the ACR Tasks API (2019-04-01):
+  - PUT    .../registries/{registry}/tasks/{task}  – create or update task
+  - GET    .../registries/{registry}/tasks/{task}  – get task
+  - DELETE .../registries/{registry}/tasks/{task}  – delete task
+  - GET    .../registries/{registry}/tasks          – list tasks
+  - PATCH  .../registries/{registry}/tasks/{task}  – update task
+  Follow the existing ContainerRegistry service conventions. Add TaskResourceProperties
+  and TaskResource (ArmResource<T>) with fields matching the Azure REST API schema:
+  https://learn.microsoft.com/en-us/rest/api/container-registry-tasks/tasks?view=rest-container-registry-tasks-2019-04-01
+  milestone: v1.5-beta
+  labels: enhancement, container-registry
+-->
+
+<!--
+TODO: ACR Tasks: Task Run CRUD and trigger operations
+  Implement the run lifecycle endpoints:
+  - POST   .../registries/{registry}/tasks/{task}/run        – manually trigger a task run
+  - GET    .../registries/{registry}/runs/{run}              – get run details
+  - PATCH  .../registries/{registry}/runs/{run}              – update run (cancel)
+  - GET    .../registries/{registry}/runs                    – list runs
+  - POST   .../registries/{registry}/runs/{run}/listLogSasUrl – get log SAS URL
+  - POST   .../registries/{registry}/scheduleRun             – schedule an ad-hoc run
+  Runs do not execute real container workloads; report provisioningState as Succeeded
+  immediately and return a static log body from the log SAS URL endpoint.
+  milestone: v1.5-beta
+  labels: enhancement, container-registry
+-->
+
+### Azure SQL — initial control plane
+
+<!--
+TODO: Azure SQL: New service project scaffold
+  Create Topaz.Service.Sql following the existing service conventions:
+  - Project file with references to Topaz.ResourceManager and Topaz.Service.Shared
+  - SqlServerResourceProperties + SqlServerResource (ArmResource<T>)
+  - SqlServerResourceProvider (ResourceProviderBase<T>) for filesystem persistence
+  - SqlServiceControlPlane implementing IControlPlane with Deploy()
+  - IServiceDefinition registration and wiring in Topaz.Host
+  - ProjectReference in Topaz.Service.ResourceManager for template deployment routing
+  milestone: v1.5-beta
+  labels: enhancement, azure-sql
+-->
+
+<!--
+TODO: Azure SQL: Server control plane endpoints
+  Implement the ARM-level SQL Server resource surface:
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}  – create or update
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}  – get
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}  – delete
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers          – list by resource group
+  - GET    /subscriptions/{sub}/providers/Microsoft.Sql/servers                              – list all
+  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}  – update
+  The emulated server does not run a real SQL engine. provisioningState is reported
+  as Succeeded immediately. fullyQualifiedDomainName follows the pattern
+  {name}.database.topaz.local.dev.
+  milestone: v1.5-beta
+  labels: enhancement, azure-sql
+-->
+
+<!--
+TODO: Azure SQL: Database control plane endpoints
+  Implement the ARM-level SQL Database resource surface under a server:
+  - PUT    .../servers/{server}/databases/{database}  – create or update
+  - GET    .../servers/{server}/databases/{database}  – get
+  - DELETE .../servers/{server}/databases/{database}  – delete
+  - GET    .../servers/{server}/databases              – list
+  - PATCH  .../servers/{server}/databases/{database}  – update
+  Databases are persisted as child resources of their server via the resource provider.
+  milestone: v1.5-beta
+  labels: enhancement, azure-sql
+-->
+
+---
+
 ## Unplanned / Ideas
 
 _Rough ideas not yet tied to a specific version._

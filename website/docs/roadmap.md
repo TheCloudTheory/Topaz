@@ -113,3 +113,22 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 |---------|--------|-------------|
 | Auto-purge soft-deleted vaults | <span class="badge--preview">Preview</span> | Background scheduler permanently removes soft-deleted vaults once their `scheduledPurgeDate` has elapsed |
 | Auto-purge soft-deleted secrets | <span class="badge--preview">Preview</span> | Background scheduler permanently removes soft-deleted secrets once their `scheduledPurgeDate` has elapsed |
+
+---
+
+## v1.5-beta
+
+### Container Registry — ACR Tasks
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| Task CRUD control plane | <span class="badge--preview">Preview</span> | Create, get, update, delete, and list ACR tasks via the ARM surface (`Microsoft.ContainerRegistry/registries/tasks`) |
+| Task runs and triggers | <span class="badge--preview">Preview</span> | Manually trigger runs, list and get run details, cancel runs, retrieve log URL — runs complete immediately without executing real workloads |
+
+### Azure SQL — initial control plane
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| New service scaffold | <span class="badge--stable">Stable</span> | `Topaz.Service.Sql` project with models, resource provider, control plane, and host registration |
+| SQL Server control plane | <span class="badge--preview">Preview</span> | Create, get, update, delete, and list SQL Server resources; emulated server with `{name}.database.topaz.local.dev` as FQDN |
+| SQL Database control plane | <span class="badge--preview">Preview</span> | Create, get, update, delete, and list databases under a server — persisted as child resources on disk |
