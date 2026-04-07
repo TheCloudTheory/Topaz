@@ -117,8 +117,6 @@ Updating a registry to disable admin access clears the stored credentials. Re-en
 
 ## What is not yet implemented
 
-The authentication layer described here is the foundation, not the ceiling. The OCI Distribution Spec defines a broader set of endpoints for manifests, blobs, and tags — the actual content of the registry — which are not yet implemented. `docker push` and `docker pull` will fail after authentication succeeds because there is nowhere to store or retrieve image layers.
+The authentication layer described here is the foundation, not the ceiling. The OCI Distribution Spec defines a broader set of endpoints for manifests, blobs, and tags — the actual content of the registry. Full OCI data plane support (blob uploads, manifest push, blob existence checks) has since landed in Topaz. See the follow-up post [Pushing images to Topaz: how the OCI data plane works](/blog/acr-oci-data-plane) for the full picture.
 
-Full OCI data plane support (manifests, blob uploads and downloads, tag listing) is on the roadmap and will build directly on top of the auth layer described here. Once it lands, any tool that can authenticate against Topaz's registry endpoint — Docker, containerd, Helm, the Azure Container Registry client library — will work against a fully local registry without touching the real ACR service.
-
-For now, the control plane (creating, updating, and deleting registries via ARM) and the authentication layer are stable and ready to use.
+`docker pull` and tag listing remain on the roadmap. For now, the control plane (creating, updating, and deleting registries via ARM), the authentication layer, and the write path (`docker push`) are stable and ready to use.
