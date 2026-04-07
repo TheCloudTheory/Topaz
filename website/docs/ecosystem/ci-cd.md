@@ -59,7 +59,7 @@ jobs:
             -p 8890:8890 \
             -p 8897:8897 \
             thecloudtheory/topaz-cli:${{ env.TOPAZ_VERSION }} \
-            start --skip-dns-registration --log-level Information
+            start --log-level Information
         env:
           TOPAZ_VERSION: v1.0.299-alpha   # pin to a specific release tag
 
@@ -202,7 +202,7 @@ steps:
         -p 8890:8890 \
         -p 8897:8897 \
         thecloudtheory/topaz-cli:$(TOPAZ_VERSION) \
-        start --skip-dns-registration --log-level Information
+        start --log-level Information
     displayName: Start Topaz
 
   - script: |

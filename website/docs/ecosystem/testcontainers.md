@@ -41,7 +41,7 @@ public class TopazFixture
             .WithPortBinding(8890)   // Table Storage
             .WithPortBinding(8897)   // Event Hub (HTTP)
             .WithName("topaz.local.dev")
-            .WithCommand("start", "--skip-dns-registration", "--log-level", "Information")
+            .WithCommand("start", "--log-level", "Information")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8899))
             .Build();
 
@@ -81,7 +81,7 @@ public class TopazFixture : IAsyncLifetime
             .WithPortBinding(8890)
             .WithPortBinding(8897)
             .WithName("topaz.local.dev")
-            .WithCommand("start", "--skip-dns-registration", "--log-level", "Information")
+            .WithCommand("start", "--log-level", "Information")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8899))
             .Build();
 
@@ -132,7 +132,7 @@ public class TopazFixture
             .WithPortBinding(8890)
             .WithPortBinding(8897)
             .WithName("topaz.local.dev")
-            .WithCommand("start", "--skip-dns-registration", "--log-level", "Information")
+            .WithCommand("start", "--log-level", "Information")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8899))
             .Build();
 

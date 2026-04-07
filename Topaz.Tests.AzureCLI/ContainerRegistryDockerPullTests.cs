@@ -7,32 +7,36 @@ using DotNet.Testcontainers.Networks;
 namespace Topaz.Tests.AzureCLI;
 
 /// <summary>
-/// End-to-end test that validates the full "create ACR → az acr login → docker push" workflow
-/// against a local Topaz instance.
+/// End-to-end test that validates the full "push then pull" workflow against a local Topaz instance.
 ///
 /// The test uses three containers connected to a shared Docker network:
 ///   1. topaz.local.dev  — the Topaz emulator (control + registry planes)
-///   2. azure-cli        — runs `az` commands against Topaz
-///   3. docker-dind      — a privileged Docker-in-Docker daemon; runs `docker build` and
-///                         `docker push` from inside the same network so the registry
-///                         hostname resolves correctly without touching the host.
+///   2. azure-cli        — runs <c>az</c> commands against Topaz
+///   3. docker-dind      — a privileged Docker-in-Docker daemon; runs <c>docker build</c>,
+///                         <c>docker push</c>, and <c>docker pull</c> from inside the same
+///                         network so the registry hostname resolves correctly without
+///                         touching the host.
 ///
-/// NOTE: This test is expected to fail until Topaz implements the Docker Registry V2
-///       push endpoints (blob upload and manifest push).
+/// Sequence:
+///   1. Create ACR registry in Topaz
+///   2. <c>az acr login --expose-token</c> → authenticate docker
+///   3. Build a minimal Alpine image, tag it as <c>{registry}/topaz-pull-test:v1</c>
+///   4. <c>docker push</c> to store the image in Topaz
+///   5. <c>docker rmi</c> to remove the local copy
+///   6. <c>docker pull</c> to retrieve it from Topaz
+///   7. Assert the image is present in the local daemon after the pull
 /// </summary>
 [TestFixture]
-public class ContainerRegistryDockerPushTests
+public class ContainerRegistryDockerPullTests
 {
-    private const string RegistryName = "topazacrpush01";
-    private const string ResourceGroup = "test-acr-dockerpush-rg";
-    private const string LoginServerHost = $"{RegistryName}.cr.topaz.local.dev";
-    private const string LoginServer = $"{LoginServerHost}:8892";
-    private const string RemoteImage = $"{LoginServer}/topaz-test-image:v1";
+    private const string RegistryName     = "topazacrpull01";
+    private const string ResourceGroup    = "test-acr-dockerpull-rg";
+    private const string LoginServerHost  = $"{RegistryName}.cr.topaz.local.dev";
+    private const string LoginServer      = $"{LoginServerHost}:8892";
+    private const string RemoteImage      = $"{LoginServer}/topaz-pull-test:v1";
 
-    // Docker-in-Docker: lightweight daemon running inside the network so it can reach the registry.
-    private const string DindImage = "docker:27.5-dind";
-
-    private const string AzureCliImage = "mcr.microsoft.com/azure-cli:2.84.0";
+    private const string DindImage      = "docker:27.5-dind";
+    private const string AzureCliImage  = "mcr.microsoft.com/azure-cli:2.84.0";
 
     private static readonly string TopazImage =
         Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE") ?? "topaz/cli";
@@ -60,10 +64,10 @@ public class ContainerRegistryDockerPushTests
                                        }
                                        """;
 
-    private INetwork?    _network;
-    private IContainer?  _containerTopaz;
-    private IContainer?  _containerAzureCli;
-    private IContainer?  _containerDind;
+    private INetwork?   _network;
+    private IContainer? _containerTopaz;
+    private IContainer? _containerAzureCli;
+    private IContainer? _containerDind;
 
     // ── Fixture setup ──────────────────────────────────────────────────────────
 
@@ -83,10 +87,10 @@ public class ContainerRegistryDockerPushTests
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertKey),  "/app/topaz.key")
             .WithCommand(
                 "start",
-                "--tenant-id",        TenantId,
-                "--certificate-file", "topaz.crt",
-                "--certificate-key",  "topaz.key",
-                "--log-level",        "Debug",
+                "--tenant-id",           TenantId,
+                "--certificate-file",    "topaz.crt",
+                "--certificate-key",     "topaz.key",
+                "--log-level",           "Debug",
                 "--default-subscription", Guid.NewGuid().ToString())
             .Build();
 
@@ -94,16 +98,8 @@ public class ContainerRegistryDockerPushTests
         await Task.Delay(TimeSpan.FromSeconds(3));
 
         // ── Docker-in-Docker ──────────────────────────────────────────────────
-        // Privileged mode is required for dockerd to run inside a container.
-        // TLS is disabled (DOCKER_TLS_CERTDIR="") for the daemon's own API socket
-        // so that ExecAsync can connect without TLS.
-        //
-        // The Topaz self-signed cert is placed in certs.d BEFORE dockerd starts by
-        // overriding the entrypoint with a shell script that runs first, then execs
-        // the standard dockerd-entrypoint.sh. This avoids any race between the
-        // post-start exec and the daemon's first TLS handshake with the registry.
-        var certB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(CertFile));
-        var certDir = $"/etc/docker/certs.d/{LoginServer}";
+        var certB64  = Convert.ToBase64String(Encoding.UTF8.GetBytes(CertFile));
+        var certDir  = $"/etc/docker/certs.d/{LoginServer}";
         var dindStartupScript =
             $"mkdir -p '{certDir}' && " +
             $"printf '%s' '{certB64}' | base64 -d > '{certDir}/ca.crt' && " +
@@ -133,7 +129,6 @@ public class ContainerRegistryDockerPushTests
         if (!dockerReady)
             Assert.Fail("Docker daemon inside the DinD container did not become responsive within 30 seconds.");
 
-
         // ── Azure CLI ─────────────────────────────────────────────────────────
         _containerAzureCli = new ContainerBuilder()
             .WithImage(AzureCliImage)
@@ -150,14 +145,12 @@ public class ContainerRegistryDockerPushTests
 
         await _containerAzureCli.StartAsync();
 
-        // Append Topaz cert to the Azure CLI CA bundle.
         var appendResult = await _containerAzureCli.ExecAsync(["sh", "-c",
             "cat /tmp/topaz.crt >> /usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem"]);
 
         Assert.That(appendResult.ExitCode, Is.EqualTo(0),
             $"Failed to append Topaz cert. STDERR: {appendResult.Stderr}");
 
-        // Register the Topaz cloud and log in.
         await RunAzureCliCommand("az cloud register -n Topaz --cloud-config @\"cloud.json\"");
         await RunAzureCliCommand("az cloud set -n Topaz");
         await RunAzureCliCommand("az login --username topazadmin@topaz.local.dev --password admin");
@@ -175,15 +168,11 @@ public class ContainerRegistryDockerPushTests
     // ── Test ──────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Full workflow: create an ACR registry in Topaz, authenticate with
-    /// <c>az acr login</c>, build a local image inside the DinD daemon, and
-    /// push it to the Topaz registry with <c>docker push</c>.
-    ///
-    /// Expected to FAIL until Topaz implements the Docker Registry V2
-    /// blob-upload and manifest-push endpoints.
+    /// Full push→pull round-trip: build a minimal image, push it to the Topaz ACR,
+    /// delete the local copy, pull it back, and confirm the image is present.
     /// </summary>
     [Test]
-    public async Task ContainerRegistry_AcrLogin_And_DockerPush_ShouldUploadImage()
+    public async Task ContainerRegistry_AcrLogin_And_DockerPull_ShouldDownloadImage()
     {
         // ── Step 1: create the ACR registry ───────────────────────────────────
         await RunAzureCliCommand($"az group create -n {ResourceGroup} -l westeurope");
@@ -193,8 +182,6 @@ public class ContainerRegistryDockerPushTests
             resp => Assert.That(resp["name"]!.GetValue<string>(), Is.EqualTo(RegistryName)));
 
         // ── Step 2: obtain an ACR exchange token via az acr login ─────────────
-        // `--expose-token` returns the OAuth2 exchange token without requiring a
-        // local Docker daemon in the Azure CLI container.
         var accessToken = string.Empty;
         await RunAzureCliCommand(
             $"az acr login --name {RegistryName} --expose-token",
@@ -205,33 +192,43 @@ public class ContainerRegistryDockerPushTests
                     "az acr login did not return an access token");
             });
 
-        // ── Step 3: build the test image inside the DinD daemon ───────────────
-        // The Dockerfile in Topaz.Tests.AzureCLI/docker/Dockerfile is the
-        // canonical definition; its content is inlined here so the DinD container
-        // does not need a volume mount or file copy.
+        // ── Step 3: build a minimal test image inside DinD ────────────────────
         const string inlineDockerfile =
             "FROM alpine:3.20\n" +
-            "LABEL description=\"Topaz ACR push test image\"\n" +
-            "CMD [\"echo\", \"hello from topaz test image\"]";
+            "LABEL description=\"Topaz ACR pull test image\"\n" +
+            "CMD [\"echo\", \"hello from topaz pull test\"]";
 
         await RunDockerCommand(
             $"printf '{inlineDockerfile}' | docker build -t {RemoteImage} -");
 
-        // ── Step 4: authenticate docker against the Topaz ACR ─────────────────
-        // The ACR exchange token is used as the password; the username is the
-        // sentinel value "00000000-0000-0000-0000-000000000000" as per the ACR
-        // OAuth2 spec (token-based authentication).
+        // ── Step 4: authenticate Docker against the Topaz ACR ─────────────────
         await RunDockerCommand(
             $"printf '%s' '{accessToken}' | " +
             $"docker login {LoginServer} -u 00000000-0000-0000-0000-000000000000 --password-stdin");
 
-        // ── Step 5: push the image to the Topaz ACR ───────────────────────────
-        // This step is expected to fail until Topaz implements:
-        //   POST   /v2/{name}/blobs/uploads/
-        //   PATCH  /v2/{name}/blobs/uploads/{uuid}
-        //   PUT    /v2/{name}/blobs/uploads/{uuid}?digest=sha256:...
-        //   PUT    /v2/{name}/manifests/{tag}
+        // ── Step 5: push the image ─────────────────────────────────────────────
         await RunDockerCommand($"docker push {RemoteImage}");
+
+        // ── Step 6: remove the local copy ────────────────────────────────────
+        // Force-remove so the subsequent pull must actually fetch from the registry.
+        await RunDockerCommand($"docker rmi -f {RemoteImage}");
+
+        // Confirm the image is gone locally before pulling.
+        await RunDockerCommand(
+            $"docker image inspect {RemoteImage}",
+            expectedExitCode: 1);
+
+        // ── Step 7: pull the image from Topaz ─────────────────────────────────
+        await RunDockerCommand($"docker pull {RemoteImage}");
+
+        // ── Step 8: verify the pulled image is locally available ──────────────
+        await RunDockerCommand(
+            $"docker image inspect {RemoteImage} --format '{{{{.Id}}}}'",
+            (result) =>
+            {
+                Assert.That(result.Stdout.Trim(), Is.Not.Null.And.Not.Empty,
+                    "docker image inspect returned an empty image ID after pull");
+            });
 
         // ── Cleanup ───────────────────────────────────────────────────────────
         await RunAzureCliCommand(
@@ -263,8 +260,6 @@ public class ContainerRegistryDockerPushTests
 
     private async Task RunDockerCommand(string command, int expectedExitCode = 0)
     {
-        // Commands run inside the DinD container where DOCKER_HOST defaults to
-        // the in-container Unix socket (/var/run/docker.sock).
         var result = await _containerDind!.ExecAsync(["/bin/sh", "-c", command]);
 
         Console.WriteLine($"[docker] {command}");
@@ -275,5 +270,21 @@ public class ContainerRegistryDockerPushTests
 
         Assert.That(result.ExitCode, Is.EqualTo(expectedExitCode),
             $"`{command}` exited with {result.ExitCode}. STDOUT: {result.Stdout}, STDERR: {result.Stderr}");
+    }
+
+    private async Task RunDockerCommand(string command, Action<ExecResult> assertion)
+    {
+        var result = await _containerDind!.ExecAsync(["/bin/sh", "-c", command]);
+
+        Console.WriteLine($"[docker] {command}");
+        if (result.ExitCode == 0)
+            Console.WriteLine($"STDOUT: {result.Stdout}");
+        else
+            await Console.Error.WriteLineAsync($"STDERR: {result.Stderr}");
+
+        Assert.That(result.ExitCode, Is.EqualTo(0),
+            $"`{command}` exited with {result.ExitCode}. STDOUT: {result.Stdout}, STDERR: {result.Stderr}");
+
+        assertion(result);
     }
 }

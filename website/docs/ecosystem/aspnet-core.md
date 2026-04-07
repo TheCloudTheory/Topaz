@@ -117,7 +117,7 @@ var topazContainer = await new ContainerBuilder()
     .WithPortBinding(8891)   // Blob Storage
     .WithPortBinding(8890)   // Table Storage
     .WithPortBinding(8897)   // Event Hub (HTTP)
-    .WithCommand("start", "--skip-dns-registration", "--log-level", "Information")
+    .WithCommand("start", "--log-level", "Information")
     .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8899))
     .Build();
 
@@ -128,8 +128,6 @@ await builder.Configuration
     .AddTopaz(subscriptionId, objectId)
     .AddSubscription(/* ... */);
 ```
-
-Add `--skip-dns-registration` when running inside a container — it bypasses the DNS setup that only makes sense on a host machine.
 
 :::tip[Testcontainers NuGet package]
 

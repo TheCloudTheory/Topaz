@@ -31,7 +31,7 @@ public class SetupTopazTool
             .WithPortBinding(8897)
             .WithPortBinding(8891)
             .WithName("topaz.local.dev")
-            .WithCommand("start", "--skip-dns-registration", "--log-level", logLevel.ToString())
+            .WithCommand("start", "--log-level", logLevel.ToString())
             .Build();
 
         await _container.StartAsync()

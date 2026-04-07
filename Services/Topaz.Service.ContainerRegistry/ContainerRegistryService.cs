@@ -37,7 +37,9 @@ public sealed class ContainerRegistryService(Pipeline eventPipeline, ITopazLogge
         new PatchBlobUploadEndpoint(AcrDataPlane(), logger),
         new CompleteBlobUploadEndpoint(AcrDataPlane(), logger),
         new HeadBlobEndpoint(AcrDataPlane(), logger),
+        new GetBlobEndpoint(AcrDataPlane(), logger),
         new PutManifestEndpoint(AcrDataPlane(), logger),
+        new GetManifestEndpoint(AcrDataPlane(), logger),
     ];
 
     public void Bootstrap()

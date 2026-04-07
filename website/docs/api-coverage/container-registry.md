@@ -172,7 +172,7 @@ The data plane covers the [OCI Distribution Spec](https://github.com/opencontain
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Get | ❌ | |
+| Get | ✅ | `GET /v2/{name}/manifests/{reference}` — returns stored manifest JSON with original Content-Type |
 | Put | ✅ | `PUT /v2/{name}/manifests/{reference}` — stores by tag and by digest |
 | Delete | ❌ | |
 | Check existence | ❌ | |
@@ -181,7 +181,7 @@ The data plane covers the [OCI Distribution Spec](https://github.com/opencontain
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Get | ❌ | |
+| Get | ✅ | `GET /v2/{name}/blobs/{digest}` — returns raw blob bytes with Content-Length |
 | Check existence | ✅ | `HEAD /v2/{name}/blobs/{digest}` — returns 200 + Content-Length when blob exists |
 | Delete | ❌ | |
 | Initiate upload | ✅ | `POST /v2/{name}/blobs/uploads/` — returns session UUID |

@@ -66,7 +66,7 @@ public class TopazFixture
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateKey), "/app/topaz.key")
             .WithCommand("start", "--tenant-id", TenantId, "--certificate-file", "topaz.crt", "--certificate-key",
-                "topaz.key", "--skip-dns-registration", "--log-level", "Debug", "--default-subscription",
+                "topaz.key", "--log-level", "Debug", "--default-subscription",
                 Guid.NewGuid().ToString())
             .Build();
 
