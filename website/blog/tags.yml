@@ -12,3 +12,8 @@ entra:
   label: Microsoft Entra ID
   permalink: /entra
   description: Microsoft Entra ID related posts
+
+cicd:
+  label: CI/CD
+  permalink: /cicd
+  description: CI/CD related posts
