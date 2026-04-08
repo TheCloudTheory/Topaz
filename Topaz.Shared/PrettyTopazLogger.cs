@@ -33,7 +33,9 @@ public sealed class PrettyTopazLogger : ITopazLogger
     public void LogDebug(string className, string methodName, string template,
         params object?[] parameters)
     {
-        var message = $"[{className}.{methodName}]: {string.Format(template, parameters)}";
+        var message = parameters.Length > 0
+            ? $"[{className}.{methodName}]: {string.Format(template, parameters)}"
+            : $"[{className}.{methodName}]: {template}";
         LogDebug(message);
     }
 
@@ -49,7 +51,9 @@ public sealed class PrettyTopazLogger : ITopazLogger
 
     public void LogError(string className, string methodName, string template, params object?[] parameters)
     {
-        var message = $"[{className}.{methodName}]: {string.Format(template, parameters)}";
+        var message = parameters.Length > 0
+            ? $"[{className}.{methodName}]: {string.Format(template, parameters)}"
+            : $"[{className}.{methodName}]: {template}";
         Log(message, LogLevel.Error, GetCorrelationId());
     }
 
