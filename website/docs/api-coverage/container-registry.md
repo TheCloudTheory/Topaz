@@ -190,9 +190,9 @@ The data plane covers the [OCI Distribution Spec](https://github.com/opencontain
 
 ### Tags
 
-| Operation | Status |
-|-----------|--------|
-| List | ✅ |
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| List | ✅ | `GET /v2/{name}/tags/list` (OCI) and `GET /acr/v1/{name}/_tags` (ACR data-plane) — supports `n` and `last` pagination params |
 
 ### Repositories
 
