@@ -232,13 +232,10 @@ public class Host
 
             foreach (var endpoint in service.Endpoints)
             {
-                _logger.LogDebug(nameof(Host), nameof(ExtractEndpointsForProtocols),
-                    $"Processing {service.Name} endpoints...");
-
                 if (!protocols.Contains(endpoint.PortsAndProtocol.Protocol)) continue;
 
                 _logger.LogDebug(nameof(Host), nameof(ExtractEndpointsForProtocols),
-                    $"Processing endpoint of {service.Name} service.");
+                    $"Processing endpoint [{endpoint.GetType().Name}] of {service.Name} service: {endpoint.PortsAndProtocol.Protocol}:{string.Join(", ", endpoint.PortsAndProtocol.Ports)} -> [{string.Join(" | ", endpoint.Endpoints)}]");
                 httpEndpoints.Add(endpoint);
             }
         }
