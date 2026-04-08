@@ -58,6 +58,19 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
                 null, null);
     }
 
+    public ControlPlaneOperationResult<EventHubResource> GetEventHub(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        EventHubNamespaceIdentifier namespaceIdentifier, string hubName)
+    {
+        var existingHub = provider.GetSubresourceAs<EventHubResource>(subscriptionIdentifier, resourceGroupIdentifier,
+            hubName, namespaceIdentifier.Value, nameof(Subresource.Hubs).ToLowerInvariant());
+
+        return existingHub == null
+            ? new ControlPlaneOperationResult<EventHubResource>(OperationResult.NotFound, null,
+                string.Format(EventHubNotFoundMessageTemplate, hubName), EventHubNotFoundCode)
+            : new ControlPlaneOperationResult<EventHubResource>(OperationResult.Success, existingHub, null, null);
+    }
+
     public ControlPlaneOperationResult<EventHubResource> CreateOrUpdateEventHub(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         EventHubNamespaceIdentifier @namespace, string hubName, CreateOrUpdateEventHubRequest request)
     {

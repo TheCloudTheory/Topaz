@@ -52,7 +52,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 |-----------|--------|-------|
 | Create Or Update | ✅ | |
 | Delete | ❌ | |
-| Get | ❌ | |
+| Get | ✅ | |
 | List By Namespace | ❌ | |
 | List Keys | ❌ | |
 | Regenerate Keys | ❌ | |
