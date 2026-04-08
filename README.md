@@ -1,51 +1,74 @@
 # Topaz ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/TheCloudTheory/Topaz/ci-build-and-test.yml) ![GitHub Release](https://img.shields.io/github/v/release/TheCloudTheory/Topaz?include_prereleases)
 
-
 <div align="center">
   <img src="./static/topaz-logo.png" />
-  
-  <b>Local Azure environment emulation for development</b>
+
+  <b>One binary. Multiple Azure services. No cloud required.</b>
 </div>
 
 ## What is Topaz?
-Topaz is an Azure emulator, which allows you to develop Azure-based applications without a need to connect to cloud services. It mimics popular Azure components such as Azure Storage, Azure Key Vault or Azure Service Bus to provide a robust local environment. 
 
-Note that Topaz is in early stage of its development and each new version may introduce breaking changes to the provided interface.
+Topaz is a single-binary Azure emulator. Instead of running Azurite for Storage, a separate emulator for Service Bus, and another for Key Vault — you run one tool.
 
-Check [documentation](http://topaz.thecloudtheory.com/) for the guides, recipes and knowledge base about the project.
+It supports both the control and data planes of Azure services, emulates ARM deployments with Bicep and ARM Templates, and implements Azure RBAC, all locally with no Azure subscription required. Teams use it to cut cloud costs, speed up CI pipelines, and develop entirely offline.
 
-## Is Topaz free?
-Yes, currently Topaz is free of any charges and doesn't require registration. This will change in the future, though you'll be notified about that fact several releases prior to it coming into life.
+Check the [documentation](https://topaz.thecloudtheory.com/) for guides, recipes, and a full list of supported services.
 
 ## Why Topaz?
-Topaz offers a simplified DevEx by tightly integrating with moderns and popular tools used in development. You no longer need multiple emulators to start integrating with Azure services locally - all you need is a single executable (or Docker container). The set of capabilities offered by Topaz can be compiled into this short list:
-* Support for both control & data plane of services
-* Full portability
-* Seamless integration with Azure SDK
-* One-tool-to-rule-them-all
-* Dedicated helpers for simplified connection and authentication
-* Emulation of Azure resources' hierarchy including subscriptions and resource groups
-* Emulation of ARM deployments using ARM Templates / Bicep
-* Emulation of Microsoft Entra ID tenant
-* Emulation of Azure RBAC
 
-There's also a backlog of features planned for future releases:
-* UI for easier management of resources (in progress)
-* Chaos testing
+Most Azure emulators cover a single service. Topaz covers the full stack:
+
+* **One tool** — no more juggling multiple emulators per service
+* **Control & data plane** — not just data operations, but full resource management
+* **ARM / Bicep deployments** — deploy templates locally the same way you would in Azure
+* **Azure RBAC emulation** — role assignments and permission checks work locally
+* **Microsoft Entra ID tenant emulation** — identity flows without a real tenant
+* **Azure resource hierarchy** — subscriptions, resource groups, and resource IDs behave as expected
+* **Seamless Azure SDK integration** — no code changes; point your SDK at Topaz
+* **Full portability** — single executable or Docker container, runs anywhere
+
+Coming up: a UI for resource management and chaos testing support.
+
+## Supported services
+
+| Service | Control Plane | Data Plane |
+|---|---|---|
+| Azure Storage (Blob) | ✅ | ✅ |
+| Azure Key Vault | ✅ | ✅ |
+| Azure Service Bus | ✅ | ✅ |
+| Azure Container Registry | ✅ | ✅ |
+| Azure Event Hub | ✅ | ✅ |
+| Azure Resource Manager | ✅ | — |
+| Microsoft Entra ID | ✅ | — |
+
+See the [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/) for the full operation-level breakdown.
+
+## Getting started
+
+```bash
+# Run with Docker
+docker run -p 8891:8891 -p 8892:8892 -p 8898:8898 thecloudtheory/topaz-cli start
+
+# Or download the binary and run directly
+topaz start
+```
+
+Point your Azure SDK at the relevant local port — no code changes required. See the [documentation](https://topaz.thecloudtheory.com/) for connection strings and SDK setup.
+
+## Licensing
+
+Topaz is open-source. A commercial license with enterprise support is planned for teams that need SLAs, priority fixes, or long-term stability guarantees. Existing users will receive advance notice well before any licensing changes take effect.
 
 ## Alternatives
-If you want to work with emulators for Azure services, you have a couple of options:
-* Azurite - https://github.com/Azure/Azurite
-* Azure Cosmos DB Emulator - https://github.com/Azure/azure-cosmos-db-emulator-docker
-* Azure Service Bus Emulator - https://github.com/Azure/azure-service-bus-emulator-installer
+
+If you need emulation for a single Azure service, these official Microsoft tools may be sufficient:
+
+* [Azurite](https://github.com/Azure/Azurite) — Azure Storage only
+* [Azure Cosmos DB Emulator](https://github.com/Azure/azure-cosmos-db-emulator-docker) — Cosmos DB only
+* [Azure Service Bus Emulator](https://github.com/Azure/azure-service-bus-emulator-installer) — Service Bus only
+
+If you need multiple services, RBAC, or ARM deployments locally, that's where Topaz fits.
 
 ## Responsible AI
-Topaz is being developed with a help of various AI agents and assistants (mainly GitHub Copilot and JetBrains AI Chat). Use of those AI tools is limited though to the following activities:
-* generating models, DTOs and POCO objects
-* generating or extracting content such as built-in role definitions in Azure
-* providing explanation to methods inside codebase
-* debugging
-* generating boilerplate code
-* small and generic refactors
 
-Conceptual work, implementation of the core logic and emulator's architecture is stil done manually.
+Topaz is developed with assistance from AI tools (GitHub Copilot, JetBrains AI). Their use is limited to: generating models and DTOs, extracting built-in role definitions, explaining methods, debugging, and writing boilerplate. Conceptual design, core logic, and architecture are done manually.
