@@ -117,11 +117,15 @@ public class TopazFixture
             "/bin/sh",
             "-c",
             "mkdir -p /tf-plugin-cache /workspace && " +
+            // registry.terraform.io has AAAA records; Docker's custom bridge is IPv4-only so Go's
+            // HTTP client hangs on the IPv6 attempt until the whole request times out.
+            // Pre-resolve to IPv4 and pin it in /etc/hosts so terraform never tries IPv6.
+            "(python3 -c \"import socket; ip=socket.getaddrinfo('registry.terraform.io',443,socket.AF_INET)[0][4][0]; open('/etc/hosts','a').write(ip+' registry.terraform.io\\n')\" || true) && " +
             // Append Topaz cert to az CLI's CA bundle (Python/requests)
             "cat /tmp/topaz.crt >> /usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem && " +
-            // Build combined CA bundle for Go-based Terraform provider binaries (SSL_CERT_FILE)
-            "cp /tmp/topaz.crt /tmp/combined.pem && " +
-            "(cat /etc/ssl/certs/ca-certificates.crt >> /tmp/combined.pem 2>/dev/null || true) && " +
+            // Build combined CA bundle for Go-based Terraform provider binaries (SSL_CERT_FILE).
+            // certifi/cacert.pem already contains all public CAs + Topaz's cert (appended above).
+            "cp /usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem /tmp/combined.pem && " +
             // Install Terraform binary
             $"curl -sSfL https://releases.hashicorp.com/terraform/{TerraformVersion}/terraform_{TerraformVersion}_linux_amd64.zip -o /tmp/terraform.zip && " +
             "python3 -c \"import zipfile; zipfile.ZipFile('/tmp/terraform.zip').extract('terraform', '/usr/local/bin')\" && " +
