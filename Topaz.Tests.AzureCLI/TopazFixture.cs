@@ -97,6 +97,8 @@ public class TopazFixture
             .WithExtraHost("topazacr06.cr.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazacrrepolist01.cr.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazacrtaglist01.cr.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("topazacrheadmanifest01.cr.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("topazacrheadmanifest02.cr.topaz.local.dev", _containerTopaz.IpAddress)
             .Build();
         
         // Act
