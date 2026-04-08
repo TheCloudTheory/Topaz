@@ -26,12 +26,12 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
 
         logger.LogDebug(nameof(TableServiceDataPlane), nameof(InsertEntity), "Executing {0}: Inserting {1}.", nameof(InsertEntity), rawContent);
 
-        PathGuard.ValidateName(metadata.PartitionKey);
-        PathGuard.ValidateName(metadata.RowKey);
+        var safePartitionKey = PathGuard.SanitizeName(metadata.PartitionKey);
+        var safeRowKey = PathGuard.SanitizeName(metadata.RowKey);
 
         var etag = new ETag(DateTimeOffset.Now.Ticks.ToString());
         var timestamp = DateTimeOffset.Now.ToUniversalTime();
-        var fileName = $"{metadata.PartitionKey}_{metadata.RowKey}.json";
+        var fileName = $"{safePartitionKey}_{safeRowKey}.json";
         var entityPath = Path.Combine(path, fileName);
         PathGuard.EnsureWithinDirectory(entityPath, path);
 
@@ -92,7 +92,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
 
         var rawContent = sr.ReadToEnd();
 
-        var fileName = $"{partitionKey}_{rowKey}.json";
+        var fileName = $"{PathGuard.SanitizeName(partitionKey)}_{PathGuard.SanitizeName(rowKey)}.json";
         var entityPath = Path.Combine(path, fileName);
         PathGuard.EnsureWithinDirectory(entityPath, path);
 

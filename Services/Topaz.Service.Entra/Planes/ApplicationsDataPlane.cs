@@ -49,8 +49,8 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
     private string BuildLocalApplicationEntityPath(ApplicationIdentifier applicationIdentifier)
     {
         var path = provider.GetServiceInstanceApplicationsDataPath();
-        PathGuard.ValidateName(applicationIdentifier.Value);
-        var fileName = $"{applicationIdentifier}.json";
+        var safeName = PathGuard.SanitizeName(applicationIdentifier.Value);
+        var fileName = $"{safeName}.json";
         var entityPath = Path.Combine(path, fileName);
         PathGuard.EnsureWithinDirectory(entityPath, path);
         return entityPath;

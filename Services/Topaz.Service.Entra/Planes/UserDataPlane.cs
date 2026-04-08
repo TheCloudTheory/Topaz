@@ -50,8 +50,8 @@ internal sealed class UserDataPlane(EntraResourceProvider provider, ITopazLogger
     private string BuildLocalUserEntityPath(UserIdentifier userIdentifier)
     {
         var path = provider.GetServiceInstanceUsersDataPath();
-        PathGuard.ValidateName(userIdentifier.Value);
-        var fileName = $"{userIdentifier}.json";
+        var safeName = PathGuard.SanitizeName(userIdentifier.Value);
+        var fileName = $"{safeName}.json";
         var entityPath = Path.Combine(path, fileName);
         PathGuard.EnsureWithinDirectory(entityPath, path);
         return entityPath;

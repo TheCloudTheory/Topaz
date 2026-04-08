@@ -24,6 +24,28 @@ public static class PathGuard
     }
 
     /// <summary>
+    /// Sanitizes a user-supplied resource name by stripping directory components via
+    /// <see cref="Path.GetFileName"/>, then validates that no traversal characters remain.
+    /// Returns the sanitized name, which should replace the raw user value in all
+    /// subsequent path construction. Use this instead of <see cref="ValidateName"/> so
+    /// that static analysis tools (e.g. CodeQL) can recognise the taint as cleared.
+    /// </summary>
+    /// <param name="name">The user-supplied resource name to sanitize.</param>
+    /// <returns>The sanitized name, safe to embed in a file path.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the value is null/empty after stripping, or still contains forbidden characters.
+    /// </exception>
+    public static string SanitizeName(string name)
+    {
+        // Path.GetFileName is recognised by CodeQL as a path-traversal sanitizer.
+        var sanitized = Path.GetFileName(name);
+        if (string.IsNullOrEmpty(sanitized))
+            throw new InvalidOperationException("Identifier is empty after sanitization.");
+        ValidateName(sanitized);
+        return sanitized;
+    }
+
+    /// <summary>
     /// Ensures that <paramref name="candidatePath"/> resolves to a location inside
     /// <paramref name="baseDirectory"/> after path canonicalization.
     /// Provides a second layer of defence after <see cref="ValidateName"/>.
