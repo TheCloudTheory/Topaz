@@ -1,3 +1,5 @@
+using Topaz.Shared;
+
 namespace Topaz.Tests.AzureCLI;
 
 public class ContainerRegistryTests : TopazFixture
@@ -152,7 +154,7 @@ public class ContainerRegistryTests : TopazFixture
         // Uses ACR admin credentials (username = registry name, password from credential show).
         await RunAzureCliCommand(
             $"curl -skf -u \"{registryName}:{adminPassword}\" " +
-            $"https://{registryName}.cr.topaz.local.dev:8892/v2/");
+            $"https://{registryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}/v2/");
 
         await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
@@ -206,7 +208,7 @@ public class ContainerRegistryTests : TopazFixture
         });
 
         // Push a minimal manifest to create a repository on the data plane.
-        var loginServer = $"{registryName}.cr.topaz.local.dev:8892";
+        var loginServer = $"{registryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
         const string manifestJson =
             "{\"schemaVersion\":2,\"mediaType\":\"application/vnd.docker.distribution.manifest.v2+json\"," +
             "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0," +
@@ -248,7 +250,7 @@ public class ContainerRegistryTests : TopazFixture
             adminPassword = resp["passwords"]!.AsArray()[0]!["value"]!.GetValue<string>();
         });
 
-        var loginServer = $"{registryName}.cr.topaz.local.dev:8892";
+        var loginServer = $"{registryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
         const string manifestJson =
             "{\"schemaVersion\":2,\"mediaType\":\"application/vnd.docker.distribution.manifest.v2+json\"," +
             "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0," +
@@ -276,6 +278,74 @@ public class ContainerRegistryTests : TopazFixture
                 Assert.That(tags, Contains.Item("latest"));
             });
         });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task ContainerRegistry_HeadManifest_ExistingTag_ShouldReturn200()
+    {
+        const string registryName = "topazacrheadmanifest01";
+        const string resourceGroup = "test-acr-headmanifest-rg";
+        const string repoName = "head-manifest-app";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az acr create --name {registryName} --resource-group {resourceGroup} --sku Basic --location westeurope --admin-enabled true");
+
+        string adminPassword = string.Empty;
+        await RunAzureCliCommand($"az acr credential show --name {registryName} --resource-group {resourceGroup}", (resp) =>
+        {
+            adminPassword = resp["passwords"]!.AsArray()[0]!["value"]!.GetValue<string>();
+        });
+
+        var loginServer = $"{registryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
+        const string manifestJson =
+            "{\"schemaVersion\":2,\"mediaType\":\"application/vnd.docker.distribution.manifest.v2+json\"," +
+            "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0," +
+            "\"digest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}," +
+            "\"layers\":[]}";
+
+        // Push a manifest under tag "v1"
+        await RunAzureCliCommand(
+            $"curl -skf -u \"{registryName}:{adminPassword}\" " +
+            $"-X PUT https://{loginServer}/v2/{repoName}/manifests/v1 " +
+            $"-H \"Content-Type: application/vnd.docker.distribution.manifest.v2+json\" " +
+            $"-d '{manifestJson}'");
+
+        // HEAD should succeed (exit 0) and return 200 - curl -f fails on 4xx/5xx
+        await RunAzureCliCommand(
+            $"curl -skf -u \"{registryName}:{adminPassword}\" " +
+            $"-X HEAD https://{loginServer}/v2/{repoName}/manifests/v1");
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task ContainerRegistry_HeadManifest_NotFound_ShouldReturn404()
+    {
+        const string registryName = "topazacrheadmanifest02";
+        const string resourceGroup = "test-acr-headmanifest404-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az acr create --name {registryName} --resource-group {resourceGroup} --sku Basic --location westeurope --admin-enabled true");
+
+        string adminPassword = string.Empty;
+        await RunAzureCliCommand($"az acr credential show --name {registryName} --resource-group {resourceGroup}", (resp) =>
+        {
+            adminPassword = resp["passwords"]!.AsArray()[0]!["value"]!.GetValue<string>();
+        });
+
+        var loginServer = $"{registryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
+
+        // HEAD on a non-existent manifest - curl -f returns non-zero exit on 404
+        await RunAzureCliCommand(
+            $"curl -skf -u \"{registryName}:{adminPassword}\" " +
+            $"-X HEAD https://{loginServer}/v2/nonexistent-repo/manifests/v1",
+            null, 1);
 
         await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");

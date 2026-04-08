@@ -877,4 +877,125 @@ public class ContainerRegistryTests
             new HttpRequestMessage(HttpMethod.Delete, $"https://{host}/v2/nonexistent-repo/manifests/v1"));
         Assert.That((int)deleteResp.StatusCode, Is.EqualTo(404));
     }
+
+    [Test]
+    public async Task ContainerRegistry_HeadManifest_ExistingManifest_ShouldReturn200WithHeaders()
+    {
+        // Arrange — create registry via ARM
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var host = TopazResourceHelpers.GetContainerRegistryLoginServer(RegistryName);
+        using var http = new HttpClient();
+
+        const string repoName = "head-manifest-app";
+        const string minimalManifest =
+            """{"schemaVersion":2,"mediaType":"application/vnd.docker.distribution.manifest.v2+json","""
+            + "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0,"
+            + "\"digest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"},"
+            + "\"layers\":[]}";
+
+        // Push a manifest under tag "v1"
+        var putReq = new HttpRequestMessage(HttpMethod.Put, $"https://{host}/v2/{repoName}/manifests/v1");
+        putReq.Content = new StringContent(minimalManifest, Encoding.UTF8,
+            "application/vnd.docker.distribution.manifest.v2+json");
+        var putResp = await http.SendAsync(putReq);
+        Assert.That((int)putResp.StatusCode, Is.EqualTo(201),
+            $"PUT manifest failed: {await putResp.Content.ReadAsStringAsync()}");
+
+        // Act — HEAD the manifest by tag
+        var headResp = await http.SendAsync(
+            new HttpRequestMessage(HttpMethod.Head, $"https://{host}/v2/{repoName}/manifests/v1"));
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That((int)headResp.StatusCode, Is.EqualTo(200));
+            Assert.That(headResp.Headers.Contains("Docker-Content-Digest"), Is.True);
+            Assert.That(headResp.Content.Headers.ContentLength, Is.GreaterThan(0));
+            Assert.That(headResp.Content.Headers.ContentType?.MediaType,
+                Is.EqualTo("application/vnd.docker.distribution.manifest.v2+json"));
+        });
+
+        // Assert — body must be empty for HEAD
+        var body = await headResp.Content.ReadAsByteArrayAsync();
+        Assert.That(body, Is.Empty);
+    }
+
+    [Test]
+    public async Task ContainerRegistry_HeadManifest_ByDigest_ShouldReturn200()
+    {
+        // Arrange — create registry via ARM
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var host = TopazResourceHelpers.GetContainerRegistryLoginServer(RegistryName);
+        using var http = new HttpClient();
+
+        const string repoName = "head-manifest-digest-app";
+        const string minimalManifest =
+            """{"schemaVersion":2,"mediaType":"application/vnd.docker.distribution.manifest.v2+json","""
+            + "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0,"
+            + "\"digest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"},"
+            + "\"layers\":[]}";
+
+        // Push a manifest and capture the returned digest
+        var putReq = new HttpRequestMessage(HttpMethod.Put, $"https://{host}/v2/{repoName}/manifests/v1");
+        putReq.Content = new StringContent(minimalManifest, Encoding.UTF8,
+            "application/vnd.docker.distribution.manifest.v2+json");
+        var putResp = await http.SendAsync(putReq);
+        Assert.That((int)putResp.StatusCode, Is.EqualTo(201));
+        var digest = putResp.Headers.GetValues("Docker-Content-Digest").Single();
+
+        // Act — HEAD by digest
+        var headResp = await http.SendAsync(
+            new HttpRequestMessage(HttpMethod.Head, $"https://{host}/v2/{repoName}/manifests/{digest}"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That((int)headResp.StatusCode, Is.EqualTo(200));
+            Assert.That(headResp.Headers.GetValues("Docker-Content-Digest").Single(), Is.EqualTo(digest));
+        });
+    }
+
+    [Test]
+    public async Task ContainerRegistry_HeadManifest_NotFound_ShouldReturn404()
+    {
+        // Arrange — create registry via ARM
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var host = TopazResourceHelpers.GetContainerRegistryLoginServer(RegistryName);
+        using var http = new HttpClient();
+
+        // Act — HEAD a manifest that was never pushed
+        var headResp = await http.SendAsync(
+            new HttpRequestMessage(HttpMethod.Head, $"https://{host}/v2/nonexistent-repo/manifests/v1"));
+
+        Assert.That((int)headResp.StatusCode, Is.EqualTo(404));
+    }
 }

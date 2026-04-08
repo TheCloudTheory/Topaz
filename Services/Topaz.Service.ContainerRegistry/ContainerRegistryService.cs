@@ -40,6 +40,7 @@ public sealed class ContainerRegistryService(Pipeline eventPipeline, ITopazLogge
         new GetBlobEndpoint(AcrDataPlane(), logger),
         new PutManifestEndpoint(AcrDataPlane(), logger),
         new GetManifestEndpoint(AcrDataPlane(), logger),
+        new HeadManifestEndpoint(AcrDataPlane(), logger),
         new DeleteManifestEndpoint(AcrDataPlane(), logger),
         new ListRepositoriesEndpoint(AcrDataPlane(), logger),
         new ListTagsEndpoint(AcrDataPlane(), logger),

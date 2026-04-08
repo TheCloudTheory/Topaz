@@ -26,6 +26,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
       <None Update="topaz.crt">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>

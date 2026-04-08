@@ -175,7 +175,7 @@ The data plane covers the [OCI Distribution Spec](https://github.com/opencontain
 | Get | ✅ | `GET /v2/{name}/manifests/{reference}` — returns stored manifest JSON with original Content-Type |
 | Put | ✅ | `PUT /v2/{name}/manifests/{reference}` — stores by tag and by digest |
 | Delete | ✅ | `DELETE /v2/{name}/manifests/{reference}` — deletes by tag or digest; also removes digest-indexed copy |
-| Check existence | ❌ | |
+| Check existence | ✅ | `HEAD /v2/{name}/manifests/{reference}` — returns 200 + Docker-Content-Digest + Content-Type + Content-Length when manifest exists |
 
 ### Blobs
 
