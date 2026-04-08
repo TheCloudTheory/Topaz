@@ -10,5 +10,5 @@ terraform {
 provider "azuread" {
   use_msi  = false
   use_oidc = false
-  use_cli  = false
+  use_cli  = true
 }

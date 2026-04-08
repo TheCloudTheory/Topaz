@@ -4,7 +4,7 @@ namespace Topaz.Service.ResourceGroup.Models;
 
 public sealed class ResourceGroupProperties
 {
-    public string ProvisioningState => "Created";
+    public string ProvisioningState => "Succeeded";
 
     public static void UpdateFromRequest(ResourceGroupResource resource, CreateOrUpdateResourceGroupRequest request)
     {

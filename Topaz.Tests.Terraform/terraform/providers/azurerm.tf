@@ -12,5 +12,5 @@ provider "azurerm" {
   skip_provider_registration = true
   use_msi  = false
   use_oidc = false
-  use_cli  = false
+  use_cli  = true
 }

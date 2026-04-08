@@ -3,18 +3,31 @@ using System.Text.Json.Nodes;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
-using Microsoft.Graph;
-using Microsoft.Graph.Applications.Item.AddPassword;
-using Microsoft.Graph.Models;
-using Topaz.Identity;
 using Topaz.Service.Entra;
 
 namespace Topaz.Tests.Terraform;
 
 public class TopazFixture
 {
-    // https://hub.docker.com/r/hashicorp/terraform/tags
-    private const string TerraformContainerImage = "hashicorp/terraform:1.10";
+    // https://mcr.microsoft.com/v2/azure-cli/tags/list
+    private const string AzureCliContainerImage = "mcr.microsoft.com/azure-cli:2.84.0";
+    private const string TerraformVersion = "1.10.5";
+    private const string CloudConfig = """
+                                       {
+                                         "endpoints":{
+                                           "resourceManager": "https://topaz.local.dev:8899",
+                                           "activeDirectory": "https://topaz.local.dev:8899",
+                                           "activeDirectoryResourceId": "https://topaz.local.dev:8899",
+                                           "activeDirectoryGraphResourceId": "https://topaz.local.dev:8899",
+                                           "microsoft_graph_resource_id": "https://topaz.local.dev:8899",
+                                           "acr_login_server_endpoint": "https://topaz.local.dev:8899"
+                                         },
+                                         "suffixes": {
+                                           "keyvault_dns": ".keyvault.topaz.local.dev",
+                                           "acrLoginServerEndpoint": ".cr.topaz.local.dev"
+                                         }
+                                       }
+                                       """;
 
     private static readonly string TopazContainerImage =
         Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE") ?? "topaz/cli";
@@ -23,8 +36,6 @@ public class TopazFixture
     private static readonly string CertificateKey  = File.ReadAllText("topaz.key");
 
     private static readonly string TenantId = EntraService.TenantId;
-    private string _clientId     = string.Empty;
-    private string _clientSecret = string.Empty;
 
     private string _subscriptionId = string.Empty;
 
@@ -64,34 +75,33 @@ public class TopazFixture
         await _containerTopaz.StartAsync().ConfigureAwait(false);
         await Task.Delay(TimeSpan.FromSeconds(3));
 
-        await CreateServicePrincipalCredentials();
-
         _containerTerraform = new ContainerBuilder()
-            .WithImage(TerraformContainerImage)
+            .WithImage(AzureCliContainerImage)
             .WithNetwork(_network)
             .WithEntrypoint("/bin/sh")
             .WithCommand("-c", "tail -f /dev/null")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
-            // ARM provider credentials — used by azurerm and azapi
+            .WithResourceMapping(Encoding.UTF8.GetBytes(CloudConfig), "cloud.json")
+            // ARM provider environment
             .WithEnvironment("ARM_ENVIRONMENT", "custom")
             .WithEnvironment("ARM_METADATA_HOST", "topaz.local.dev:8899")
             .WithEnvironment("ARM_SUBSCRIPTION_ID", _subscriptionId)
             .WithEnvironment("ARM_TENANT_ID", TenantId)
-            .WithEnvironment("ARM_CLIENT_ID", _clientId)
-            .WithEnvironment("ARM_CLIENT_SECRET", _clientSecret)
             .WithEnvironment("ARM_SKIP_PROVIDER_REGISTRATION", "true")
             // azapi custom environment endpoints (required when ARM_ENVIRONMENT=custom)
             .WithEnvironment("ARM_ACTIVE_DIRECTORY_AUTHORITY_HOST", "https://topaz.local.dev:8899/")
             .WithEnvironment("ARM_RESOURCE_MANAGER_ENDPOINT", "https://topaz.local.dev:8899/")
             .WithEnvironment("ARM_RESOURCE_MANAGER_AUDIENCE", "https://management.azure.com/")
-            // azuread provider credentials
+            // azuread provider environment
             .WithEnvironment("AZURE_ENVIRONMENT", "custom")
             .WithEnvironment("AZURE_METADATA_HOST", "topaz.local.dev:8899")
             .WithEnvironment("AZURE_TENANT_ID", TenantId)
-            .WithEnvironment("AZURE_CLIENT_ID", _clientId)
-            .WithEnvironment("AZURE_CLIENT_SECRET", _clientSecret)
-            // Point azuread's Graph API calls at Topaz (port 8899 serves both ARM and Graph endpoints)
+            // Point azuread's Graph API calls at Topaz
             .WithEnvironment("ARM_MICROSOFT_GRAPH_ENDPOINT", "https://topaz.local.dev:8899")
+            // Azure CLI — trust Topaz's self-signed cert (Python/requests)
+            .WithEnvironment("REQUESTS_CA_BUNDLE", "/usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem")
+            // Disable MSAL instance discovery so az CLI doesn't call login.microsoftonline.com
+            .WithEnvironment("AZURE_CORE_INSTANCE_DISCOVERY", "false")
             // Share provider binaries across test runs to avoid repeated downloads
             .WithEnvironment("TF_PLUGIN_CACHE_DIR", "/tf-plugin-cache")
             // Suppress upgrade checks and ANSI colour codes
@@ -102,59 +112,29 @@ public class TopazFixture
 
         await _containerTerraform.StartAsync().ConfigureAwait(false);
 
-        // Build a combined CA bundle (system CAs + Topaz self-signed cert) used
-        // via SSL_CERT_FILE on every terraform invocation so Go's TLS stack trusts
-        // topaz.local.dev without touching the system CA store permanently.
         var setupResult = await _containerTerraform.ExecAsync(new List<string>
         {
             "/bin/sh",
             "-c",
             "mkdir -p /tf-plugin-cache /workspace && " +
+            // Append Topaz cert to az CLI's CA bundle (Python/requests)
+            "cat /tmp/topaz.crt >> /usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem && " +
+            // Build combined CA bundle for Go-based Terraform provider binaries (SSL_CERT_FILE)
             "cp /tmp/topaz.crt /tmp/combined.pem && " +
-            "(cat /etc/ssl/certs/ca-certificates.crt >> /tmp/combined.pem 2>/dev/null || true)"
+            "(cat /etc/ssl/certs/ca-certificates.crt >> /tmp/combined.pem 2>/dev/null || true) && " +
+            // Install Terraform binary
+            $"curl -sSfL https://releases.hashicorp.com/terraform/{TerraformVersion}/terraform_{TerraformVersion}_linux_amd64.zip -o /tmp/terraform.zip && " +
+            "python3 -c \"import zipfile; zipfile.ZipFile('/tmp/terraform.zip').extract('terraform', '/usr/local/bin')\" && " +
+            "chmod +x /usr/local/bin/terraform && " +
+            "rm /tmp/terraform.zip"
         });
 
         Assert.That(setupResult.ExitCode, Is.EqualTo(0),
-            $"Terraform container setup failed. STDOUT: {setupResult.Stdout}, STDERR: {setupResult.Stderr}");
-    }
+            $"Container setup failed. STDOUT: {setupResult.Stdout}, STDERR: {setupResult.Stderr}");
 
-    private async Task CreateServicePrincipalCredentials()
-    {
-        var port = _containerTopaz!.GetMappedPublicPort(8899);
-
-        using var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        var graphClient = new GraphServiceClient(
-            new HttpClient(handler),
-            new LocalGraphAuthenticationProvider(),
-            $"https://localhost:{port}");
-
-        // Create an application
-        var app = await graphClient.Applications.PostAsync(new Application
-        {
-            DisplayName = "topaz-terraform-sp"
-        });
-
-        _clientId = app!.AppId!;
-
-        // Create the service principal linked to the application
-        await graphClient.ServicePrincipals.PostAsync(new ServicePrincipal
-        {
-            AppId = _clientId
-        });
-
-        // Add a client secret to the application
-        var pwd = await graphClient.Applications[app.Id].AddPassword.PostAsync(new AddPasswordPostRequestBody
-        {
-            PasswordCredential = new PasswordCredential
-            {
-                DisplayName = "topaz-terraform-sp"
-            }
-        });
-
-        _clientSecret = pwd!.SecretText!;
+        await RunTerraformContainerCommand("az cloud register -n Topaz --cloud-config @\"cloud.json\"");
+        await RunTerraformContainerCommand("az cloud set -n Topaz");
+        await RunTerraformContainerCommand("az login --username topazadmin@topaz.local.dev --password admin");
     }
 
     [OneTimeTearDown]
@@ -223,7 +203,7 @@ public class TopazFixture
 
     private async Task<(string Stdout, string Stderr)> ExecTerraformWithOutput(string command)
     {
-        // SSL_CERT_FILE causes Go's TLS stack to trust our combined CA bundle
+        // SSL_CERT_FILE causes Go's TLS stack (Terraform provider binaries) to trust the combined CA bundle
         var wrappedCommand = $"SSL_CERT_FILE=/tmp/combined.pem {command}";
 
         var result = await _containerTerraform!.ExecAsync(new List<string>
@@ -243,5 +223,21 @@ public class TopazFixture
             $"`{command}` failed.\nSTDOUT: {result.Stdout}\nSTDERR: {result.Stderr}");
 
         return (result.Stdout, result.Stderr);
+    }
+
+    private async Task RunTerraformContainerCommand(string command)
+    {
+        var result = await _containerTerraform!.ExecAsync(new List<string>
+        {
+            "/bin/sh", "-c", command
+        });
+
+        Console.WriteLine($"[az] {command}");
+
+        if (result.ExitCode != 0)
+            await Console.Error.WriteLineAsync(result.Stderr);
+
+        Assert.That(result.ExitCode, Is.EqualTo(0),
+            $"`{command}` failed.\nSTDOUT: {result.Stdout}\nSTDERR: {result.Stderr}");
     }
 }

@@ -8,4 +8,7 @@ terraform {
 }
 
 provider "azapi" {
+  use_msi  = false
+  use_oidc = false
+  use_cli  = true
 }
