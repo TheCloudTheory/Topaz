@@ -153,10 +153,6 @@ jobs:
         fi
     - name: Test
       if: steps.test_filter.outputs.skip != 'true'
-      env:
-        TOPAZ_TENANT_ID: ${{ secrets.TOPAZ_TENANT_ID }}
-        TOPAZ_CLIENT_ID: ${{ secrets.TOPAZ_CLIENT_ID }}
-        TOPAZ_CLIENT_SECRET: ${{ secrets.TOPAZ_CLIENT_SECRET }}
       run: |
         FILTER="${{ steps.test_filter.outputs.filter }}"
         if [[ -n "$FILTER" ]]; then

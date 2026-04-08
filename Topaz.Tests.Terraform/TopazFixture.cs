@@ -3,6 +3,11 @@ using System.Text.Json.Nodes;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
+using Microsoft.Graph;
+using Microsoft.Graph.Applications.Item.AddPassword;
+using Microsoft.Graph.Models;
+using Topaz.Identity;
+using Topaz.Service.Entra;
 
 namespace Topaz.Tests.Terraform;
 
@@ -17,9 +22,9 @@ public class TopazFixture
     private static readonly string CertificateFile = File.ReadAllText("topaz.crt");
     private static readonly string CertificateKey  = File.ReadAllText("topaz.key");
 
-    private static readonly string TenantId     = Environment.GetEnvironmentVariable("TOPAZ_TENANT_ID")!;
-    private static readonly string ClientId     = Environment.GetEnvironmentVariable("TOPAZ_CLIENT_ID")!;
-    private static readonly string ClientSecret = Environment.GetEnvironmentVariable("TOPAZ_CLIENT_SECRET")!;
+    private static readonly string TenantId = EntraService.TenantId;
+    private string _clientId     = string.Empty;
+    private string _clientSecret = string.Empty;
 
     private string _subscriptionId = string.Empty;
 
@@ -59,6 +64,8 @@ public class TopazFixture
         await _containerTopaz.StartAsync().ConfigureAwait(false);
         await Task.Delay(TimeSpan.FromSeconds(3));
 
+        await CreateServicePrincipalCredentials();
+
         _containerTerraform = new ContainerBuilder()
             .WithImage(TerraformContainerImage)
             .WithNetwork(_network)
@@ -70,8 +77,8 @@ public class TopazFixture
             .WithEnvironment("ARM_METADATA_HOST", "topaz.local.dev:8899")
             .WithEnvironment("ARM_SUBSCRIPTION_ID", _subscriptionId)
             .WithEnvironment("ARM_TENANT_ID", TenantId)
-            .WithEnvironment("ARM_CLIENT_ID", ClientId)
-            .WithEnvironment("ARM_CLIENT_SECRET", ClientSecret)
+            .WithEnvironment("ARM_CLIENT_ID", _clientId)
+            .WithEnvironment("ARM_CLIENT_SECRET", _clientSecret)
             .WithEnvironment("ARM_SKIP_PROVIDER_REGISTRATION", "true")
             // azapi custom environment endpoints (required when ARM_ENVIRONMENT=custom)
             .WithEnvironment("ARM_ACTIVE_DIRECTORY_AUTHORITY_HOST", "https://topaz.local.dev:8899/")
@@ -81,8 +88,8 @@ public class TopazFixture
             .WithEnvironment("AZURE_ENVIRONMENT", "custom")
             .WithEnvironment("AZURE_METADATA_HOST", "topaz.local.dev:8899")
             .WithEnvironment("AZURE_TENANT_ID", TenantId)
-            .WithEnvironment("AZURE_CLIENT_ID", ClientId)
-            .WithEnvironment("AZURE_CLIENT_SECRET", ClientSecret)
+            .WithEnvironment("AZURE_CLIENT_ID", _clientId)
+            .WithEnvironment("AZURE_CLIENT_SECRET", _clientSecret)
             // Point azuread's Graph API calls at Topaz (port 8899 serves both ARM and Graph endpoints)
             .WithEnvironment("ARM_MICROSOFT_GRAPH_ENDPOINT", "https://topaz.local.dev:8899")
             // Share provider binaries across test runs to avoid repeated downloads
@@ -109,6 +116,45 @@ public class TopazFixture
 
         Assert.That(setupResult.ExitCode, Is.EqualTo(0),
             $"Terraform container setup failed. STDOUT: {setupResult.Stdout}, STDERR: {setupResult.Stderr}");
+    }
+
+    private async Task CreateServicePrincipalCredentials()
+    {
+        var port = _containerTopaz!.GetMappedPublicPort(8899);
+
+        using var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        var graphClient = new GraphServiceClient(
+            new HttpClient(handler),
+            new LocalGraphAuthenticationProvider(),
+            $"https://localhost:{port}");
+
+        // Create an application
+        var app = await graphClient.Applications.PostAsync(new Application
+        {
+            DisplayName = "topaz-terraform-sp"
+        });
+
+        _clientId = app!.AppId!;
+
+        // Create the service principal linked to the application
+        await graphClient.ServicePrincipals.PostAsync(new ServicePrincipal
+        {
+            AppId = _clientId
+        });
+
+        // Add a client secret to the application
+        var pwd = await graphClient.Applications[app.Id].AddPassword.PostAsync(new AddPasswordPostRequestBody
+        {
+            PasswordCredential = new PasswordCredential
+            {
+                DisplayName = "topaz-terraform-sp"
+            }
+        });
+
+        _clientSecret = pwd!.SecretText!;
     }
 
     [OneTimeTearDown]

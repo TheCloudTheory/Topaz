@@ -14,6 +14,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Microsoft.Graph" Version="5.103.0"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
         <PackageReference Include="NUnit" Version="3.14.0"/>
         <PackageReference Include="NUnit.Analyzers" Version="3.9.0"/>
@@ -26,6 +27,8 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="../Services/Topaz.Service.Entra/Topaz.Service.Entra.csproj"/>
+        <ProjectReference Include="../Topaz.Identity/Topaz.Identity.csproj"/>
         <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj"/>
     </ItemGroup>
 

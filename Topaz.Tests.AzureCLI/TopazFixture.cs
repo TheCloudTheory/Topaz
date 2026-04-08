@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
+using Topaz.Service.Entra;
 
 namespace Topaz.Tests.AzureCLI;
 
@@ -32,9 +33,7 @@ public class TopazFixture
     
     private static readonly string CertificateFile = File.ReadAllText("topaz.crt");
     private static readonly string CertificateKey = File.ReadAllText("topaz.key");
-    private static readonly string TenantId = Environment.GetEnvironmentVariable("TOPAZ_TENANT_ID")!;
-    private static readonly string ClientId = Environment.GetEnvironmentVariable("TOPAZ_CLIENT_ID")!;
-    private static readonly string ClientSecret = Environment.GetEnvironmentVariable("TOPAZ_CLIENT_SECRET")!;
+    private static readonly string TenantId = EntraService.TenantId;
     
     private IContainer? _containerTopaz;
     private INetwork? _network;
