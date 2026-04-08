@@ -308,6 +308,62 @@ internal sealed class AcrDataPlane(ContainerRegistryResourceProvider provider, I
     }
 
     /// <summary>
+    /// Deletes the manifest identified by <paramref name="reference"/> (tag or digest) for
+    /// <paramref name="repository"/>. When the reference is a tag, the digest-indexed copy is also removed.
+    /// Corresponds to <c>DELETE /v2/{name}/manifests/{reference}</c>.
+    /// Returns <c>true</c> when the manifest existed and was deleted; <c>false</c> when not found.
+    /// </summary>
+    public bool DeleteManifest(
+        SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
+        string registryName, string repository, string reference)
+    {
+        logger.LogDebug(nameof(AcrDataPlane), nameof(DeleteManifest),
+            "Executing {0}: registry={1} repository={2} reference={3}", nameof(DeleteManifest), registryName, repository, reference);
+
+        PathGuard.ValidateName(registryName);
+        PathGuard.ValidateName(repository);
+        PathGuard.ValidateName(reference);
+
+        var manifestsDir = ManifestsPath(sub, rg, registryName, repository);
+
+        // Accept "sha256:hex" as a reference.
+        var lookupRef = reference.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase)
+            ? reference["sha256:".Length..]
+            : reference;
+
+        var refPath = Path.Combine(manifestsDir, lookupRef + ".json");
+        PathGuard.EnsureWithinDirectory(refPath, manifestsDir);
+
+        if (!File.Exists(refPath)) return false;
+
+        // When deleting by tag, also remove the digest-indexed copy.
+        if (!reference.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var envelope = JsonSerializer.Deserialize<ManifestEnvelope>(
+                    File.ReadAllText(refPath), GlobalSettings.JsonOptions);
+
+                if (envelope?.Digest != null)
+                {
+                    var digestHex = envelope.Digest["sha256:".Length..];
+                    var digestPath = Path.Combine(manifestsDir, digestHex + ".json");
+                    PathGuard.EnsureWithinDirectory(digestPath, manifestsDir);
+                    if (File.Exists(digestPath)) File.Delete(digestPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogDebug(nameof(AcrDataPlane), nameof(DeleteManifest),
+                    "Could not remove digest-indexed copy: {0}", ex.Message);
+            }
+        }
+
+        File.Delete(refPath);
+        return true;
+    }
+
+    /// <summary>
     /// Returns the sorted list of repository names stored in this registry.
     /// Corresponds to <c>GET /v2/_catalog</c>.
     /// </summary>

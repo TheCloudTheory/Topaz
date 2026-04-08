@@ -602,7 +602,7 @@ public class ContainerRegistryTests
             new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
         await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
 
-        var host = $"{RegistryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
+        var host = TopazResourceHelpers.GetContainerRegistryLoginServer(RegistryName);
 
         using var http = new HttpClient();
 
@@ -661,7 +661,7 @@ public class ContainerRegistryTests
             new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
         await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
 
-        var host = $"{RegistryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
+        var host = TopazResourceHelpers.GetContainerRegistryLoginServer(RegistryName);
 
         // Push a minimal manifest via HttpClient to seed a repository.
         using var http = new HttpClient();
@@ -715,7 +715,7 @@ public class ContainerRegistryTests
             new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
         await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
 
-        var host = $"{RegistryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
+        var host = TopazResourceHelpers.GetContainerRegistryLoginServer(RegistryName);
         using var http = new HttpClient();
 
         const string repoName = "tag-test-app";
@@ -772,7 +772,7 @@ public class ContainerRegistryTests
             new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
         await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
 
-        var host = $"{RegistryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
+        var host = TopazResourceHelpers.GetContainerRegistryLoginServer(RegistryName);
         using var http = new HttpClient();
 
         const string repoName = "pagination-app";
@@ -807,5 +807,74 @@ public class ContainerRegistryTests
             Assert.That(page1, Is.EqualTo(new[] { "v1", "v2" }));
             Assert.That(page2, Is.EqualTo(new[] { "v3", "v4" }));
         });
+    }
+
+    [Test]
+    public async Task ContainerRegistry_DeleteManifest_ShouldReturn202AndManifestShouldBeGone()
+    {
+        // Arrange — create registry via ARM
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var host = TopazResourceHelpers.GetContainerRegistryLoginServer(RegistryName);
+        using var http = new HttpClient();
+
+        const string repoName = "delete-manifest-app";
+        const string minimalManifest =
+            """{"schemaVersion":2,"mediaType":"application/vnd.docker.distribution.manifest.v2+json","""
+            + "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0,"
+            + "\"digest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"},"
+            + "\"layers\":[]}";
+
+        // Push a manifest under tag "v1"
+        var putReq = new HttpRequestMessage(HttpMethod.Put, $"https://{host}/v2/{repoName}/manifests/v1");
+        putReq.Content = new StringContent(minimalManifest, Encoding.UTF8,
+            "application/vnd.docker.distribution.manifest.v2+json");
+        var putResp = await http.SendAsync(putReq);
+        Assert.That((int)putResp.StatusCode, Is.EqualTo(201),
+            $"PUT manifest failed: {await putResp.Content.ReadAsStringAsync()}");
+
+        // Act — delete by tag
+        var deleteResp = await http.SendAsync(
+            new HttpRequestMessage(HttpMethod.Delete, $"https://{host}/v2/{repoName}/manifests/v1"));
+        Assert.That((int)deleteResp.StatusCode, Is.EqualTo(202),
+            $"DELETE manifest failed: {await deleteResp.Content.ReadAsStringAsync()}");
+
+        // Assert — GET should now return 404
+        var getResp = await http.SendAsync(
+            new HttpRequestMessage(HttpMethod.Get, $"https://{host}/v2/{repoName}/manifests/v1"));
+        Assert.That((int)getResp.StatusCode, Is.EqualTo(404));
+    }
+
+    [Test]
+    public async Task ContainerRegistry_DeleteManifest_NotFound_ShouldReturn404()
+    {
+        // Arrange — create registry via ARM
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var host = TopazResourceHelpers.GetContainerRegistryLoginServer(RegistryName);
+        using var http = new HttpClient();
+
+        // Act — delete a manifest that was never pushed
+        var deleteResp = await http.SendAsync(
+            new HttpRequestMessage(HttpMethod.Delete, $"https://{host}/v2/nonexistent-repo/manifests/v1"));
+        Assert.That((int)deleteResp.StatusCode, Is.EqualTo(404));
     }
 }
