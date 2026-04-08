@@ -8,7 +8,7 @@ internal sealed class GetMetadataEndpointResponse
     public IReadOnlyDictionary<string, string> Endpoints => new Dictionary<string, string>
     {
         { "resourceManager", "https://topaz.local.dev:8899" },
-        { "microsoftGraphResourceId", "https://graph.microsoft.com/" }
+        { "microsoftGraphResourceId", "https://topaz.local.dev:8899/" }
     };
     
     public IReadOnlyDictionary<string, string> Suffixes => new Dictionary<string, string>

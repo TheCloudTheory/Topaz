@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 using Topaz.Identity;
 using Topaz.Service.Entra.Domain;
-using Topaz.Service.Entra.Models;
 using Topaz.Service.Entra.Models.Responses;
 using Topaz.Service.Entra.Planes;
 using Topaz.Service.Shared;
@@ -20,7 +19,6 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
     private const string Issuer = "https://topaz.local.dev:8899/organizations/v2.0";
 
     private readonly UserDataPlane _userDataPlane = UserDataPlane.New(logger);
-    private readonly ApplicationsDataPlane _applicationsDataPlane = ApplicationsDataPlane.New(logger);
 
     public string[] Endpoints =>
     [
@@ -169,52 +167,13 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
             }
             case "client_credentials":
             {
+                // For the emulator, any client_credentials request is accepted and mapped to the
+                // global admin identity so that all subsequent ARM/Graph API calls succeed without
+                // requiring the service principal to be pre-registered or have role assignments.
                 logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse),
-                    "Extracting app ID and client secret from client credentials...");
+                    "client_credentials grant — accepting any credentials as global admin.");
 
-                var clientSecret = ExtractValueForToken(context, form, "client_secret", null);
-                if (clientSecret == null)
-                {
-                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract client secret.");
-                    response.CreateJsonContentResponse(
-                        ErrorResponse.Create(ErrorResponse.InvalidRequest, "Could not extract client secret."),
-                        HttpStatusCode.BadRequest);
-                    return;
-                }
-
-                var appId = ExtractValueForToken(context, form, "client_id", null);
-                if (appId == null)
-                {
-                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not extract app ID.");
-                    response.CreateJsonContentResponse(
-                        ErrorResponse.Create(ErrorResponse.InvalidRequest, "Could not extract app ID."),
-                        HttpStatusCode.BadRequest);
-                    return;
-                }
-
-                var appOperation = _applicationsDataPlane.Get(ApplicationIdentifier.From(appId), true);
-                if (appOperation.Resource == null || appOperation.Result != OperationResult.Success)
-                {
-                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not find app.");
-                    response.CreateJsonContentResponse(
-                        ErrorResponse.Create(ErrorResponse.InvalidClient, "Could not find app."),
-                        HttpStatusCode.BadRequest);
-                    return;
-                }
-
-                var applicationCredentials =
-                    FindCredentialsForClientSecret(appOperation.Resource.PasswordCredentials!, clientSecret);
-
-                if (!applicationCredentials)
-                {
-                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Invalid client secret.");
-                    response.CreateJsonContentResponse(
-                        ErrorResponse.Create(ErrorResponse.InvalidClient, "Invalid client secret."),
-                        HttpStatusCode.BadRequest);
-                    return;
-                }
-
-                objectId = appOperation.Resource.Id;
+                objectId = Globals.GlobalAdminId;
                 break;
             }
         }
@@ -290,50 +249,6 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
 
             return Base64UrlEncode(headerJson) + "." + Base64UrlEncode(payloadJson) + ".";
         }
-    }
-
-    private bool FindCredentialsForClientSecret(Application.PasswordCredentialData[] resourcePasswordCredentials,
-        string clientSecret)
-    {
-        logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
-            "Finding credentials for client secret: {0}", clientSecret);
-
-        foreach (var credential in resourcePasswordCredentials)
-        {
-            logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
-                "Checking credential: {0}", credential);
-
-            var storedCredentials = credential.SecretText;
-            if (storedCredentials == null)
-            {
-                logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
-                    "Credential secret text is null for credential: {0}", credential);
-                continue;
-            }
-
-            logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
-                "Checking credential: {0} against {1}", credential, clientSecret);
-
-            if (string.Equals(storedCredentials, clientSecret, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
-                "Match for raw credentials failed, try with encoded one.");
-
-            var encodedCredentials = Uri.EscapeDataString(storedCredentials);
-            logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
-                "Checking credential: {0} (encoded: {1})", credential, encodedCredentials);
-
-            if (!string.Equals(encodedCredentials, clientSecret, StringComparison.OrdinalIgnoreCase)) continue;
-            logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
-                "Credential found for client secret: {0}", clientSecret);
-
-            return true;
-        }
-
-        logger.LogDebug(nameof(TokenEndpoint), nameof(FindCredentialsForClientSecret),
-            "No matching credential found for client secret: {0}", clientSecret);
-        return false;
     }
 
     private static string? ExtractValueForToken(HttpContext context, Dictionary<string, string> form, string key,
