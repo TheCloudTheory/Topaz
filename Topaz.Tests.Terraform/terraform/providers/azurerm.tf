@@ -9,6 +9,7 @@ terraform {
 
 provider "azurerm" {
   features {}
+  skip_credentials_validation = false
   skip_provider_registration = true
   use_msi  = false
   use_oidc = false

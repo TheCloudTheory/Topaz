@@ -7,6 +7,10 @@ using Topaz.Service.Entra;
 
 namespace Topaz.Tests.Terraform;
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Structure",
+    "NUnit1032:The field should be Disposed in a method annotated with [OneTimeTearDownAttribute]",
+    Justification = "Shared process-wide fixture resources are cleaned up via ProcessExit hook to avoid per-class reinitialization.")]
 public class TopazFixture
 {
     // https://hub.docker.com/r/hashicorp/terraform/tags
@@ -43,125 +47,157 @@ public class TopazFixture
 
     private static readonly string TenantId = EntraService.TenantId;
 
-    private string _subscriptionId = string.Empty;
+    private static readonly SemaphoreSlim SetupLock = new(1, 1);
+    private static bool _isInitialized;
+    private static bool _cleanupHookRegistered;
+    private static string _subscriptionId = string.Empty;
 
-    private IContainer? _containerTopaz;
-    private INetwork?   _network;
-    private IContainer? _containerTerraform;
+    private static IContainer? _containerTopaz;
+    private static INetwork?   _network;
+    private static IContainer? _containerTerraform;
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
-        _subscriptionId = Guid.NewGuid().ToString();
-
-        Directory.CreateDirectory(TerraformCacheDir);
-
-        _network = new NetworkBuilder()
-            .WithName(Guid.NewGuid().ToString("D"))
-            .Build();
-
-        _containerTopaz = new ContainerBuilder()
-            .WithImage(TopazContainerImage)
-            .WithPortBinding(8890)
-            .WithPortBinding(8899)
-            .WithPortBinding(8898)
-            .WithPortBinding(8897)
-            .WithPortBinding(8891)
-            .WithNetwork(_network)
-            .WithName("topaz.local.dev")
-            .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
-            .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateKey), "/app/topaz.key")
-            .WithCommand(
-                "start",
-                "--tenant-id", TenantId,
-                "--certificate-file", "topaz.crt",
-                "--certificate-key", "topaz.key",
-                "--log-level", "Debug",
-                "--default-subscription", _subscriptionId)
-            .Build();
-
-        await _containerTopaz.StartAsync().ConfigureAwait(false);
-        await Task.Delay(TimeSpan.FromSeconds(3));
-
-        _containerTerraform = new ContainerBuilder()
-            .WithImage(AzureCliContainerImage)
-            .WithNetwork(_network)
-            .WithEntrypoint("/bin/sh")
-            .WithCommand("-c", "tail -f /dev/null")
-            .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
-            .WithResourceMapping(Encoding.UTF8.GetBytes(CloudConfig), "cloud.json")
-            // ARM provider environment
-            .WithEnvironment("ARM_ENVIRONMENT", "custom")
-            .WithEnvironment("ARM_METADATA_HOST", "topaz.local.dev:8899")
-            .WithEnvironment("ARM_SUBSCRIPTION_ID", _subscriptionId)
-            .WithEnvironment("ARM_TENANT_ID", TenantId)
-            .WithEnvironment("ARM_SKIP_PROVIDER_REGISTRATION", "true")
-            // azapi custom environment endpoints (required when ARM_ENVIRONMENT=custom)
-            .WithEnvironment("ARM_ACTIVE_DIRECTORY_AUTHORITY_HOST", "https://topaz.local.dev:8899/")
-            .WithEnvironment("ARM_RESOURCE_MANAGER_ENDPOINT", "https://topaz.local.dev:8899/")
-            .WithEnvironment("ARM_RESOURCE_MANAGER_AUDIENCE", "https://management.azure.com/")
-            // azuread provider environment
-            .WithEnvironment("AZURE_ENVIRONMENT", "custom")
-            .WithEnvironment("AZURE_METADATA_HOST", "topaz.local.dev:8899")
-            .WithEnvironment("AZURE_TENANT_ID", TenantId)
-            // Point azuread's Graph API calls at Topaz
-            .WithEnvironment("ARM_MICROSOFT_GRAPH_ENDPOINT", "https://topaz.local.dev:8899")
-            // Azure CLI — trust Topaz's self-signed cert (Python/requests)
-            .WithEnvironment("REQUESTS_CA_BUNDLE", "/usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem")
-            // Disable MSAL instance discovery so az CLI doesn't call login.microsoftonline.com
-            .WithEnvironment("AZURE_CORE_INSTANCE_DISCOVERY", "false")
-            // Share provider binaries across test runs to avoid repeated downloads
-            .WithEnvironment("TF_PLUGIN_CACHE_DIR", "/tf-cache/plugin-cache")
-            // Suppress upgrade checks and ANSI colour codes
-            .WithEnvironment("CHECKPOINT_DISABLE", "1")
-            .WithEnvironment("TF_CLI_ARGS", "-no-color")
-            .WithExtraHost("topaz.local.dev", _containerTopaz.IpAddress)
-            // Bind-mount host cache: providers + terraform binary are downloaded once and reused
-            // across all 17 fixture setups rather than re-downloaded for every test class.
-            .WithBindMount(TerraformCacheDir, "/tf-cache")
-            .Build();
-
-        await _containerTerraform.StartAsync().ConfigureAwait(false);
-
-        var setupResult = await _containerTerraform.ExecAsync(new List<string>
+        await SetupLock.WaitAsync().ConfigureAwait(false);
+        try
         {
-            "/bin/sh",
-            "-c",
-            "mkdir -p /tf-cache/plugin-cache /tf-cache/binaries /workspace && " +
-            // registry.terraform.io has AAAA records; Docker's custom bridge is IPv4-only so Go's
-            // HTTP client hangs on the IPv6 attempt until the whole request times out.
-            // Pre-resolve to IPv4 and pin it in /etc/hosts so terraform never tries IPv6.
-            "(python3 -c \"import socket; ip=socket.getaddrinfo('registry.terraform.io',443,socket.AF_INET)[0][4][0]; open('/etc/hosts','a').write(ip+' registry.terraform.io\\n')\" || true) && " +
-            // Append Topaz cert to az CLI's CA bundle (Python/requests)
-            "cat /tmp/topaz.crt >> /usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem && " +
-            // Build combined CA bundle for Go-based Terraform provider binaries (SSL_CERT_FILE).
-            // certifi/cacert.pem already contains all public CAs + Topaz's cert (appended above).
-            "cp /usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem /tmp/combined.pem && " +
-            // Install Terraform binary — download only when the versioned binary is not yet cached.
-            // The cache directory is bind-mounted from the host so it persists across fixture setups.
-            $"([ -f /tf-cache/binaries/terraform_{TerraformVersion} ] || (" +
-            $"curl -sSfL https://releases.hashicorp.com/terraform/{TerraformVersion}/terraform_{TerraformVersion}_linux_amd64.zip -o /tmp/terraform.zip && " +
-            "python3 -c \"import zipfile; zipfile.ZipFile('/tmp/terraform.zip').extract('terraform', '/tf-cache/binaries')\" && " +
-            $"mv /tf-cache/binaries/terraform /tf-cache/binaries/terraform_{TerraformVersion} && " +
-            "chmod +x /tf-cache/binaries/terraform_" + TerraformVersion + " && " +
-            "rm /tmp/terraform.zip)) && " +
-            $"cp /tf-cache/binaries/terraform_{TerraformVersion} /usr/local/bin/terraform"
-        });
+            if (_isInitialized)
+                return;
 
-        Assert.That(setupResult.ExitCode, Is.EqualTo(0),
-            $"Container setup failed. STDOUT: {setupResult.Stdout}, STDERR: {setupResult.Stderr}");
+            _subscriptionId = Guid.NewGuid().ToString();
 
-        await RunTerraformContainerCommand("az cloud register -n Topaz --cloud-config @\"cloud.json\"");
-        await RunTerraformContainerCommand("az cloud set -n Topaz");
-        await RunTerraformContainerCommand("az login --username topazadmin@topaz.local.dev --password admin");
+            Directory.CreateDirectory(TerraformCacheDir);
+
+            _network = new NetworkBuilder()
+                .WithName(Guid.NewGuid().ToString("D"))
+                .Build();
+
+            _containerTopaz = new ContainerBuilder()
+                .WithImage(TopazContainerImage)
+                .WithPortBinding(8890)
+                .WithPortBinding(8899)
+                .WithPortBinding(8898)
+                .WithPortBinding(8897)
+                .WithPortBinding(8891)
+                .WithNetwork(_network)
+                .WithName("topaz.local.dev")
+                .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
+                .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateKey), "/app/topaz.key")
+                .WithCommand(
+                    "start",
+                    "--tenant-id", TenantId,
+                    "--certificate-file", "topaz.crt",
+                    "--certificate-key", "topaz.key",
+                    "--log-level", "Debug",
+                    "--default-subscription", _subscriptionId)
+                .Build();
+
+            await _containerTopaz.StartAsync().ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromSeconds(3));
+
+            _containerTerraform = new ContainerBuilder()
+                .WithImage(AzureCliContainerImage)
+                .WithNetwork(_network)
+                .WithEntrypoint("/bin/sh")
+                .WithCommand("-c", "tail -f /dev/null")
+                .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
+                .WithResourceMapping(Encoding.UTF8.GetBytes(CloudConfig), "cloud.json")
+                // ARM provider identity context
+                .WithEnvironment("ARM_SUBSCRIPTION_ID", _subscriptionId)
+                .WithEnvironment("ARM_TENANT_ID", TenantId)
+                .WithEnvironment("ARM_SKIP_PROVIDER_REGISTRATION", "true")
+                // azuread provider identity context
+                .WithEnvironment("AZURE_TENANT_ID", TenantId)
+                // Point azuread's Graph API calls at Topaz
+                .WithEnvironment("ARM_MICROSOFT_GRAPH_ENDPOINT", "https://topaz.local.dev:8899")
+                // Azure CLI — trust Topaz's self-signed cert (Python/requests)
+                .WithEnvironment("REQUESTS_CA_BUNDLE", "/usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem")
+                // Disable MSAL instance discovery so az CLI doesn't call login.microsoftonline.com
+                .WithEnvironment("AZURE_CORE_INSTANCE_DISCOVERY", "false")
+                // Share provider binaries across test runs to avoid repeated downloads
+                .WithEnvironment("TF_PLUGIN_CACHE_DIR", "/tf-cache/plugin-cache")
+                // Suppress upgrade checks and ANSI colour codes
+                .WithEnvironment("CHECKPOINT_DISABLE", "1")
+                .WithEnvironment("TF_CLI_ARGS", "-no-color")
+                .WithExtraHost("topaz.local.dev", _containerTopaz.IpAddress)
+                // Bind-mount host cache: providers + terraform binary are downloaded once and reused
+                // across all 17 fixture setups rather than re-downloaded for every test class.
+                .WithBindMount(TerraformCacheDir, "/tf-cache")
+                .Build();
+
+            await _containerTerraform.StartAsync().ConfigureAwait(false);
+
+            var setupResult = await _containerTerraform.ExecAsync(new List<string>
+            {
+                "/bin/sh",
+                "-c",
+                "mkdir -p /tf-cache/plugin-cache /tf-cache/binaries /workspace && " +
+                // registry.terraform.io has AAAA records; Docker's custom bridge is IPv4-only so Go's
+                // HTTP client hangs on the IPv6 attempt until the whole request times out.
+                // Pre-resolve to IPv4 and pin it in /etc/hosts so terraform never tries IPv6.
+                "(python3 -c \"import socket; ip=socket.getaddrinfo('registry.terraform.io',443,socket.AF_INET)[0][4][0]; open('/etc/hosts','a').write(ip+' registry.terraform.io\\n')\" || true) && " +
+                // Append Topaz cert to az CLI's CA bundle (Python/requests)
+                "cat /tmp/topaz.crt >> /usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem && " +
+                // Build combined CA bundle for Go-based Terraform provider binaries (SSL_CERT_FILE).
+                // certifi/cacert.pem already contains all public CAs + Topaz's cert (appended above).
+                "cp /usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem /tmp/combined.pem && " +
+                // Install Terraform binary — download only when the versioned binary is not yet cached.
+                // The cache directory is bind-mounted from the host so it persists across fixture setups.
+                $"([ -f /tf-cache/binaries/terraform_{TerraformVersion} ] || (" +
+                $"curl -sSfL https://releases.hashicorp.com/terraform/{TerraformVersion}/terraform_{TerraformVersion}_linux_amd64.zip -o /tmp/terraform.zip && " +
+                "python3 -c \"import zipfile; zipfile.ZipFile('/tmp/terraform.zip').extract('terraform', '/tf-cache/binaries')\" && " +
+                $"mv /tf-cache/binaries/terraform /tf-cache/binaries/terraform_{TerraformVersion} && " +
+                "chmod +x /tf-cache/binaries/terraform_" + TerraformVersion + " && " +
+                "rm /tmp/terraform.zip)) && " +
+                $"cp /tf-cache/binaries/terraform_{TerraformVersion} /usr/local/bin/terraform"
+            });
+
+            Assert.That(setupResult.ExitCode, Is.EqualTo(0),
+                $"Container setup failed. STDOUT: {setupResult.Stdout}, STDERR: {setupResult.Stderr}");
+
+            await RunTerraformContainerCommand("az cloud register -n Topaz --cloud-config @\"cloud.json\"");
+            await RunTerraformContainerCommand("az cloud set -n Topaz");
+            await RunTerraformContainerCommand("az login --username topazadmin@topaz.local.dev --password admin");
+
+            RegisterCleanupHook();
+            _isInitialized = true;
+        }
+        finally
+        {
+            SetupLock.Release();
+        }
     }
 
     [OneTimeTearDown]
     public async Task OneTimeTearDown()
     {
-        await _containerTopaz!.DisposeAsync();
-        await _containerTerraform!.DisposeAsync();
-        await _network!.DisposeAsync();
+        // Shared containers are intentionally reused across all fixture classes.
+        // Cleanup is registered once and performed at process exit.
+        await Task.CompletedTask;
+    }
+
+    private static void RegisterCleanupHook()
+    {
+        if (_cleanupHookRegistered)
+            return;
+
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => CleanupSharedResources();
+        _cleanupHookRegistered = true;
+    }
+
+    private static void CleanupSharedResources()
+    {
+        try
+        {
+            _containerTopaz?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _containerTerraform?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _network?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        }
+        catch
+        {
+            // Best-effort cleanup during process shutdown.
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -199,6 +235,14 @@ public class TopazFixture
                 await File.ReadAllTextAsync(tfFile));
 
         await ExecTerraform($"terraform -chdir={workDir} init");
+
+        if (providerRelPath.Contains("azurerm", StringComparison.OrdinalIgnoreCase))
+        {
+            // Validate Azure CLI auth context before azurerm provider startup.
+            await ExecTerraform("az account show > /dev/null");
+            await ExecTerraform("az account get-access-token --resource https://management.azure.com/ --query accessToken -o tsv > /dev/null");
+        }
+
         await ExecTerraform($"terraform -chdir={workDir} apply -auto-approve");
 
         if (assertOutputs != null)
