@@ -1,8 +1,4 @@
-using Azure;
-using Azure.Core;
-using Azure.ResourceManager.Network;
-using Azure.ResourceManager.Network.Models;
-using Azure.ResourceManager.Resources.Models;
+using System.Text.Json;
 using JetBrains.Annotations;
 
 namespace Topaz.Service.VirtualNetwork.Models.Requests;
@@ -10,23 +6,22 @@ namespace Topaz.Service.VirtualNetwork.Models.Requests;
 public sealed class CreateOrUpdateVirtualNetworkRequest
 {
     public CreateOrUpdateVirtualNetworkRequestProperties? Properties { get; init; }
-    
+
+    [UsedImplicitly]
     public class CreateOrUpdateVirtualNetworkRequestProperties
     {
-        public ExtendedLocation? ExtendedLocation { get; set; }
-        public ETag? ETag { get; set; }
         public Models.VirtualNetworkResourceProperties.VirtualNetworkAddressSpace? AddressSpace { get; set; }
         public int? FlowTimeoutInMinutes { get; set; }
-        public IList< Models.VirtualNetworkResourceProperties.SubnetData>? Subnets { get; set; }
-        public IList<VirtualNetworkPeeringData>? VirtualNetworkPeerings { get; set; }
+        public JsonElement? Subnets { get; set; }
+        public JsonElement? VirtualNetworkPeerings { get; set; }
         public Guid? ResourceGuid { get; set; }
-        public NetworkProvisioningState? ProvisioningState { get; set; }
         public bool? EnableDdosProtection { get; set; }
         public bool? EnableVmProtection { get; set; }
-        public VirtualNetworkBgpCommunities? BgpCommunities { get; set; }
-        public VirtualNetworkEncryption? Encryption { get; set; }
-        public IList<WritableSubResource>? IPAllocations { get; }
-        public IReadOnlyList<FlowLogData>? FlowLogs { get; set; }
-        public PrivateEndpointVnetPolicy? PrivateEndpointVnetPolicy { get; set; }
+        public JsonElement? BgpCommunities { get; set; }
+        public JsonElement? Encryption { get; set; }
+        public JsonElement? IPAllocations { get; set; }
+        public JsonElement? FlowLogs { get; set; }
+        public string? PrivateEndpointVnetPolicy { get; set; }
+        public JsonElement? DhcpOptions { get; set; }
     }
 }
