@@ -6,6 +6,8 @@ namespace Topaz.Identity;
 
 public static class JwtHelper
 {
+    private const string TenantId = "50717675-3E5E-4A1E-8CB5-C62D8BE8CA48";
+
     private static readonly byte[] SecretKey =
         "yD1sMV1WcwVjSfNUxxLNfVHn5sbqD056LwOnkXCkIDnWkXcrg95plLQ3T1tvinLAnuNNiRRZrKyUvs6YzZnJ/A=="u8.ToArray();
 
@@ -27,7 +29,13 @@ public static class JwtHelper
         var tokenHandler = new JwtSecurityTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity([new Claim("sub", objectId)]),
+            Subject = new ClaimsIdentity([
+                new Claim("sub", objectId),
+                new Claim("oid", objectId),
+                new Claim("appid", objectId),
+                new Claim("azp", objectId),
+                new Claim("tid", TenantId)
+            ]),
             Issuer = "https://topaz.local.dev:8899",
             Audience = audience,
             NotBefore = DateTime.UtcNow,

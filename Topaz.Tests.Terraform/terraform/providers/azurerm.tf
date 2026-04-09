@@ -2,14 +2,16 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "= 4.0.0"
+      version = "= 4.67.0"
     }
   }
 }
 
 provider "azurerm" {
   features {}
-  skip_provider_registration = true
+  environment = "Topaz"
+  metadata_host = "topaz.local.dev:8899"
+  resource_provider_registrations = "none"
   use_msi  = false
   use_oidc = false
   use_cli  = true

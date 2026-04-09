@@ -14,3 +14,4 @@ Topaz.sln.DotSettings.user
 **/.topaz/**
 **/._* 
 website/build/*
+Topaz.Tests.Terraform/TestResults/terraform-eventhub.trx

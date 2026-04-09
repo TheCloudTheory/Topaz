@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Topaz.CloudEnvironment.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.CloudEnvironment.Endpoints;
 
@@ -17,6 +18,6 @@ public sealed class MetadataEndpoint : IEndpointDefinition
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         var metadata = new GetMetadataEndpointResponse();
-        response.Content = new StringContent(metadata.ToString());
+        response.CreateJsonContentResponse(metadata.ToString());
     }
 }

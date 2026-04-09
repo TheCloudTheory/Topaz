@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Diagnostics;
+using System.Linq;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
@@ -141,6 +142,8 @@ public class TopazFixture
                 // Best-effort entropy feeder for Go-based providers (azurerm v4 can stall on crypto/rand in CI).
                 "((command -v rngd >/dev/null 2>&1 && rngd -f -r /dev/urandom -o /dev/random >/dev/null 2>&1 &) || " +
                 " (command -v haveged >/dev/null 2>&1 && haveged -F -w 1024 >/dev/null 2>&1 &) || true) && " +
+                // Ensure /dev/random reads do not block provider startup in constrained container environments.
+                "(ln -sf /dev/urandom /dev/random || true) && " +
                 // registry.terraform.io has AAAA records; Docker's custom bridge is IPv4-only so Go's
                 // HTTP client hangs on the IPv6 attempt until the whole request times out.
                 // Pre-resolve to IPv4 and pin it in /etc/hosts so terraform never tries IPv6.
@@ -164,9 +167,11 @@ public class TopazFixture
             Assert.That(setupResult.ExitCode, Is.EqualTo(0),
                 $"Container setup failed. STDOUT: {setupResult.Stdout}, STDERR: {setupResult.Stderr}");
 
-            await RunTerraformContainerCommand("az cloud register -n Topaz --cloud-config @\"cloud.json\"");
-            await RunTerraformContainerCommand("az cloud set -n Topaz");
-            await RunTerraformContainerCommand("az login --username topazadmin@topaz.local.dev --password admin");
+            await WaitForTopazReadiness();
+
+            await RunTerraformContainerCommand("az cloud register -n Topaz --cloud-config @\"cloud.json\"", maxAttempts: 5);
+            await RunTerraformContainerCommand("az cloud set -n Topaz", maxAttempts: 3);
+            await RunTerraformContainerCommand("az login --username topazadmin@topaz.local.dev --password admin", maxAttempts: 3);
 
             RegisterCleanupHook();
             _isInitialized = true;
@@ -232,6 +237,48 @@ public class TopazFixture
         }
     }
 
+    private static string ReadDockerLogs(string containerName, int tailLines)
+    {
+        try
+        {
+            using var process = new Process();
+            process.StartInfo = new ProcessStartInfo
+            {
+                FileName = "docker",
+                Arguments = $"logs --tail {tailLines} {containerName}",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            process.Start();
+            var stdout = process.StandardOutput.ReadToEnd();
+            _ = process.StandardError.ReadToEnd();
+            process.WaitForExit(15_000);
+
+            if (process.ExitCode != 0)
+                return string.Empty;
+
+            var interesting = stdout
+                .Split('\n')
+                .Where(line =>
+                    line.Contains("Error", StringComparison.OrdinalIgnoreCase) ||
+                    line.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase) ||
+                    line.Contains("Request", StringComparison.OrdinalIgnoreCase) ||
+                    line.Contains("endpoint", StringComparison.OrdinalIgnoreCase) ||
+                    line.Contains("Invalid", StringComparison.OrdinalIgnoreCase) ||
+                    line.Contains("timeout", StringComparison.OrdinalIgnoreCase))
+                .TakeLast(80);
+
+            return string.Join('\n', interesting);
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Provider-specific run helpers
     // Each scenario name maps to terraform/{provider}/{scenario}/ on disk.
@@ -266,9 +313,35 @@ public class TopazFixture
             await WriteFileToContainer(workDir, Path.GetFileName(tfFile),
                 await File.ReadAllTextAsync(tfFile));
 
-        await ExecTerraform($"terraform -chdir={workDir} init");
+        await ExecTerraformWithRetry(
+            $"terraform -chdir={workDir} init",
+            maxAttempts: 3,
+            shouldRetry: (_, stderr) =>
+                stderr.Contains("Failed to query available provider packages", StringComparison.OrdinalIgnoreCase) ||
+                stderr.Contains("could not connect to registry.terraform.io", StringComparison.OrdinalIgnoreCase) ||
+                stderr.Contains("context deadline exceeded", StringComparison.OrdinalIgnoreCase));
 
-        await ExecTerraform($"terraform -chdir={workDir} apply -auto-approve");
+        try
+        {
+            await ExecTerraform($"terraform -chdir={workDir} apply -auto-approve");
+        }
+        catch (AssertionException ex) when (IsRecoverableProviderStartupError(ex.Message))
+        {
+            // The provider cache can occasionally contain a corrupted azurerm artifact.
+            // Purge azurerm cache entries, then re-init and retry apply once.
+            await ExecTerraform($"rm -rf {workDir}/.terraform");
+            await ExecTerraform("find /tf-cache/plugin-cache -path '*registry.terraform.io/hashicorp/azurerm*' -exec rm -rf {} + || true");
+
+            await ExecTerraformWithRetry(
+                $"terraform -chdir={workDir} init",
+                maxAttempts: 3,
+                shouldRetry: (_, stderr) =>
+                    stderr.Contains("Failed to query available provider packages", StringComparison.OrdinalIgnoreCase) ||
+                    stderr.Contains("could not connect to registry.terraform.io", StringComparison.OrdinalIgnoreCase) ||
+                    stderr.Contains("context deadline exceeded", StringComparison.OrdinalIgnoreCase));
+
+            await ExecTerraform($"terraform -chdir={workDir} apply -auto-approve");
+        }
 
         if (assertOutputs != null)
         {
@@ -289,6 +362,42 @@ public class TopazFixture
     private Task ExecTerraform(string command) =>
         ExecTerraformWithOutput(command).ContinueWith(t => { _ = t.Result; });
 
+    private async Task ExecTerraformWithRetry(string command, int maxAttempts, Func<string, string, bool> shouldRetry)
+    {
+        Exception? lastError = null;
+
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                await ExecTerraformWithOutput(command);
+                return;
+            }
+            catch (AssertionException ex)
+            {
+                lastError = ex;
+
+                var message = ex.Message;
+                if (attempt >= maxAttempts || !shouldRetry(message, message))
+                    throw;
+
+                await Task.Delay(TimeSpan.FromSeconds(attempt * 3));
+            }
+        }
+
+        if (lastError is not null)
+            throw lastError;
+    }
+
+    private static bool IsRecoverableProviderStartupError(string message)
+    {
+        return message.Contains("Failed to load plugin schemas", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("timeout while waiting for plugin to start", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("Unrecognized remote plugin message", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("Failed to read any lines from plugin's stdout", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("failed to instantiate provider", StringComparison.OrdinalIgnoreCase);
+    }
+
     private async Task<(string Stdout, string Stderr)> ExecTerraformWithOutput(string command)
     {
         // SSL_CERT_FILE causes Go's TLS stack (Terraform provider binaries) to trust the combined CA bundle
@@ -305,7 +414,13 @@ public class TopazFixture
             Console.WriteLine(result.Stdout);
 
         if (result.ExitCode != 0)
+        {
             await Console.Error.WriteLineAsync(result.Stderr);
+
+            var topazLogs = ReadDockerLogs("topaz.local.dev", 400);
+            if (!string.IsNullOrWhiteSpace(topazLogs))
+                await Console.Error.WriteLineAsync($"[docker logs topaz.local.dev]\n{topazLogs}");
+        }
 
         Assert.That(result.ExitCode, Is.EqualTo(0),
             $"`{command}` failed.\nSTDOUT: {result.Stdout}\nSTDERR: {result.Stderr}");
@@ -313,12 +428,44 @@ public class TopazFixture
         return (result.Stdout, result.Stderr);
     }
 
-    private async Task RunTerraformContainerCommand(string command)
+    private async Task WaitForTopazReadiness()
     {
-        var result = await _containerTerraform!.ExecAsync(new List<string>
+        for (var attempt = 1; attempt <= 30; attempt++)
         {
-            "/bin/sh", "-c", command
-        });
+            var probe = await _containerTerraform!.ExecAsync(new List<string>
+            {
+                "/bin/sh",
+                "-c",
+                "curl -fsS --cacert /tmp/topaz.crt \"https://topaz.local.dev:8899/metadata/endpoints?api-version=2022-09-01\" >/dev/null"
+            });
+
+            if (probe.ExitCode == 0)
+                return;
+
+            await Task.Delay(TimeSpan.FromSeconds(1));
+        }
+
+        var topazLogs = ReadDockerLogs("topaz.local.dev", 400);
+        Assert.Fail($"Topaz endpoint did not become ready in time. Recent logs:\n{topazLogs}");
+    }
+
+    private async Task RunTerraformContainerCommand(string command, int maxAttempts = 1)
+    {
+        ExecResult result = default;
+
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            result = await _containerTerraform!.ExecAsync(new List<string>
+            {
+                "/bin/sh", "-c", command
+            });
+
+            if (result.ExitCode == 0)
+                break;
+
+            if (attempt < maxAttempts)
+                await Task.Delay(TimeSpan.FromSeconds(2));
+        }
 
         Console.WriteLine($"[az] {command}");
 
