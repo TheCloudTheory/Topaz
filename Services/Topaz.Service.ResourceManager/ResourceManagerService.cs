@@ -31,6 +31,7 @@ public sealed class ResourceManagerService : IServiceDefinition
     
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
+        new GetMetadataEndpointsEndpoint(),
         new ResourceManagerEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new ExportTemplateEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
     ];
