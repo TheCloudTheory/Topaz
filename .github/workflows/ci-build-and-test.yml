@@ -102,6 +102,8 @@ jobs:
             - 'Services/Topaz.Service.VirtualNetwork/**'
           portal:
             - 'Topaz.Portal/**'
+          terraform:
+            - 'Topaz.Tests.Terraform/**'
     - name: Build test filter
       id: test_filter
       shell: bash
@@ -155,16 +157,23 @@ jobs:
       if: steps.test_filter.outputs.skip != 'true'
       run: |
         FILTER="${{ steps.test_filter.outputs.filter }}"
+        EXCLUDE="FullyQualifiedName!~Topaz.Tests.Terraform"
         if [[ -n "$FILTER" ]]; then
-          dotnet test -m:1 --no-build --verbosity normal --logger trx \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ${{ github.workspace }}/TestResults \
-            --filter "$FILTER"
+          FILTER="${FILTER}&${EXCLUDE}"
         else
-          dotnet test -m:1 --no-build --verbosity normal --logger trx \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ${{ github.workspace }}/TestResults
+          FILTER="${EXCLUDE}"
         fi
+        dotnet test -m:1 --no-build --verbosity normal --logger trx \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ${{ github.workspace }}/TestResults \
+          --filter "$FILTER"
+    - name: Terraform Tests
+      if: steps.test_filter.outputs.skip != 'true' && (github.event_name == 'workflow_dispatch' || steps.changes.outputs.terraform == 'true')
+      run: |
+        dotnet test -m:1 --no-build --verbosity normal --logger trx \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ${{ github.workspace }}/TestResults \
+          --filter "FullyQualifiedName~Topaz.Tests.Terraform"
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always() && steps.test_filter.outputs.skip != 'true'
