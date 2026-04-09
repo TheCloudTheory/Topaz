@@ -1,5 +1,5 @@
-import {themes as prismThemes} from 'prism-react-renderer';
-import type {Config} from '@docusaurus/types';
+import { themes as prismThemes } from 'prism-react-renderer';
+import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
@@ -33,6 +33,21 @@ const config: Config = {
     defaultLocale: 'en',
     locales: ['en'],
   },
+
+  headTags: [
+    {
+      tagName: 'script',
+      attributes: {
+        async: 'true',
+        src: 'https://plausible.io/js/pa-gOmc2wHl2yWIcmMztj97B.js',
+      },
+    },
+    {
+      tagName: 'script',
+      attributes: {},
+      innerHTML: `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()`,
+    },
+  ],
 
   presets: [
     [
@@ -68,11 +83,11 @@ const config: Config = {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
     metadata: [
-      {name: 'keywords', content: 'azure emulator, local azure development, azure storage emulator, key vault emulator, service bus emulator, event hub emulator, azurite alternative, arm template testing, local cloud development'},
-      {name: 'og:type', content: 'website'},
-      {name: 'og:site_name', content: 'Topaz'},
-      {name: 'twitter:card', content: 'summary_large_image'},
-      {name: 'twitter:site', content: '@TheCloudTheory'},
+      { name: 'keywords', content: 'azure emulator, local azure development, azure storage emulator, key vault emulator, service bus emulator, event hub emulator, azurite alternative, arm template testing, local cloud development' },
+      { name: 'og:type', content: 'website' },
+      { name: 'og:site_name', content: 'Topaz' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:site', content: '@TheCloudTheory' },
     ],
     navbar: {
       title: '',
@@ -81,18 +96,18 @@ const config: Config = {
         src: 'img/topaz-logo.png',
       },
       items: [
-        {to: '/features', label: 'Features', position: 'left'},
-        {to: '/use-cases', label: 'Use Cases', position: 'left'},
+        { to: '/features', label: 'Features', position: 'left' },
+        { to: '/use-cases', label: 'Use Cases', position: 'left' },
         {
           to: '/docs/intro',
           label: 'Documentation',
           position: 'left',
           activeBaseRegex: '/docs/(?!roadmap)',
         },
-        {to: '/docs/roadmap', label: 'Roadmap', position: 'left'},
-        {to: '/pricing', label: 'Pricing', position: 'left'},
-        {to: '/demo', label: 'Demo', position: 'left'},
-        {to: '/blog', label: 'Blog', position: 'left'},
+        { to: '/docs/roadmap', label: 'Roadmap', position: 'left' },
+        { to: '/pricing', label: 'Pricing', position: 'left' },
+        { to: '/demo', label: 'Demo', position: 'left' },
+        { to: '/blog', label: 'Blog', position: 'left' },
         {
           href: 'https://github.com/TheCloudTheory/Topaz',
           label: 'GitHub',
