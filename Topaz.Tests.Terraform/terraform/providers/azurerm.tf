@@ -2,14 +2,13 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.0"
+      version = "= 4.0.0"
     }
   }
 }
 
 provider "azurerm" {
   features {}
-  skip_credentials_validation = false
   skip_provider_registration = true
   use_msi  = false
   use_oidc = false

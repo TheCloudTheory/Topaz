@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Nodes;
+using System.Diagnostics;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
@@ -69,6 +70,8 @@ public class TopazFixture
 
             Directory.CreateDirectory(TerraformCacheDir);
 
+            RemoveBlockingTopazContainerIfPresent();
+
             _network = new NetworkBuilder()
                 .WithName(Guid.NewGuid().ToString("D"))
                 .Build();
@@ -120,6 +123,8 @@ public class TopazFixture
                 // Suppress upgrade checks and ANSI colour codes
                 .WithEnvironment("CHECKPOINT_DISABLE", "1")
                 .WithEnvironment("TF_CLI_ARGS", "-no-color")
+                // Some CI/container environments start large providers slowly (azurerm schema load).
+                .WithEnvironment("TF_PLUGIN_TIMEOUT", "5m")
                 .WithExtraHost("topaz.local.dev", _containerTopaz.IpAddress)
                 // Bind-mount host cache: providers + terraform binary are downloaded once and reused
                 // across all 17 fixture setups rather than re-downloaded for every test class.
@@ -133,6 +138,9 @@ public class TopazFixture
                 "/bin/sh",
                 "-c",
                 "mkdir -p /tf-cache/plugin-cache /tf-cache/binaries /workspace && " +
+                // Best-effort entropy feeder for Go-based providers (azurerm v4 can stall on crypto/rand in CI).
+                "((command -v rngd >/dev/null 2>&1 && rngd -f -r /dev/urandom -o /dev/random >/dev/null 2>&1 &) || " +
+                " (command -v haveged >/dev/null 2>&1 && haveged -F -w 1024 >/dev/null 2>&1 &) || true) && " +
                 // registry.terraform.io has AAAA records; Docker's custom bridge is IPv4-only so Go's
                 // HTTP client hangs on the IPv6 attempt until the whole request times out.
                 // Pre-resolve to IPv4 and pin it in /etc/hosts so terraform never tries IPv6.
@@ -200,6 +208,30 @@ public class TopazFixture
         }
     }
 
+    private static void RemoveBlockingTopazContainerIfPresent()
+    {
+        try
+        {
+            using var process = new Process();
+            process.StartInfo = new ProcessStartInfo
+            {
+                FileName = "docker",
+                Arguments = "rm -f topaz.local.dev",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            process.Start();
+            process.WaitForExit(10_000);
+        }
+        catch
+        {
+            // Best-effort cleanup: if docker is unavailable, setup will fail with a clear error later.
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Provider-specific run helpers
     // Each scenario name maps to terraform/{provider}/{scenario}/ on disk.
@@ -235,13 +267,6 @@ public class TopazFixture
                 await File.ReadAllTextAsync(tfFile));
 
         await ExecTerraform($"terraform -chdir={workDir} init");
-
-        if (providerRelPath.Contains("azurerm", StringComparison.OrdinalIgnoreCase))
-        {
-            // Validate Azure CLI auth context before azurerm provider startup.
-            await ExecTerraform("az account show > /dev/null");
-            await ExecTerraform("az account get-access-token --resource https://management.azure.com/ --query accessToken -o tsv > /dev/null");
-        }
 
         await ExecTerraform($"terraform -chdir={workDir} apply -auto-approve");
 
