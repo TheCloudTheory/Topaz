@@ -35,13 +35,17 @@ internal sealed class GetMetadataEndpointResponse
         { "keyvaultDns", ".vault.topaz.local.dev" }
     };
 
-    public string Name => "Topaz";
+    public string Name => "public";
 
     public AuthenticationMetadata Authentication => new AuthenticationMetadata();
 
     internal class AuthenticationMetadata
     {
         public string LoginEndpoint => "https://topaz.local.dev:8899/";
+
+        public string IdentityProvider => "AAD";
+
+        public string Tenant => "common";
         
         public string[] Audiences => [
             "https://management.core.windows.net/",

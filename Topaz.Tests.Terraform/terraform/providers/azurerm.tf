@@ -9,10 +9,10 @@ terraform {
 
 provider "azurerm" {
   features {}
-  environment = "Topaz"
+
+  # Force AzureRM v4 endpoint discovery against Topaz metadata.
   metadata_host = "topaz.local.dev:8899"
+
+  # Topaz does not emulate full RP registration semantics yet.
   resource_provider_registrations = "none"
-  use_msi  = false
-  use_oidc = false
-  use_cli  = true
 }

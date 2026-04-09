@@ -109,8 +109,8 @@ public class TopazFixture
                 .WithResourceMapping(Encoding.UTF8.GetBytes(CloudConfig), "cloud.json")
                 // ARM provider identity context
                 .WithEnvironment("ARM_SUBSCRIPTION_ID", _subscriptionId)
+                .WithEnvironment("AZURE_SUBSCRIPTION_ID", _subscriptionId)
                 .WithEnvironment("ARM_TENANT_ID", TenantId)
-                .WithEnvironment("ARM_SKIP_PROVIDER_REGISTRATION", "true")
                 // azuread provider identity context
                 .WithEnvironment("AZURE_TENANT_ID", TenantId)
                 // Point azuread's Graph API calls at Topaz
@@ -144,24 +144,21 @@ public class TopazFixture
                 " (command -v haveged >/dev/null 2>&1 && haveged -F -w 1024 >/dev/null 2>&1 &) || true) && " +
                 // Ensure /dev/random reads do not block provider startup in constrained container environments.
                 "(ln -sf /dev/urandom /dev/random || true) && " +
-                // registry.terraform.io has AAAA records; Docker's custom bridge is IPv4-only so Go's
-                // HTTP client hangs on the IPv6 attempt until the whole request times out.
-                // Pre-resolve to IPv4 and pin it in /etc/hosts so terraform never tries IPv6.
-                "(python3 -c \"import socket; ip=socket.getaddrinfo('registry.terraform.io',443,socket.AF_INET)[0][4][0]; open('/etc/hosts','a').write(ip+' registry.terraform.io\\n')\" || true) && " +
                 // Append Topaz cert to az CLI's CA bundle (Python/requests)
                 "cat /tmp/topaz.crt >> /usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem && " +
                 // Build combined CA bundle for Go-based Terraform provider binaries (SSL_CERT_FILE).
                 // certifi/cacert.pem already contains all public CAs + Topaz's cert (appended above).
                 "cp /usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem /tmp/combined.pem && " +
-                // Install Terraform binary — download only when the versioned binary is not yet cached.
+                // Install Terraform binary matching container CPU architecture.
                 // The cache directory is bind-mounted from the host so it persists across fixture setups.
-                $"([ -f /tf-cache/binaries/terraform_{TerraformVersion} ] || (" +
-                $"curl -sSfL https://releases.hashicorp.com/terraform/{TerraformVersion}/terraform_{TerraformVersion}_linux_amd64.zip -o /tmp/terraform.zip && " +
+                "TF_ARCH=$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/; s/arm64/arm64/') && " +
+                $"([ -f /tf-cache/binaries/terraform_{TerraformVersion}_${{TF_ARCH}} ] || (" +
+                $"curl -sSfL https://releases.hashicorp.com/terraform/{TerraformVersion}/terraform_{TerraformVersion}_linux_${{TF_ARCH}}.zip -o /tmp/terraform.zip && " +
                 "python3 -c \"import zipfile; zipfile.ZipFile('/tmp/terraform.zip').extract('terraform', '/tf-cache/binaries')\" && " +
-                $"mv /tf-cache/binaries/terraform /tf-cache/binaries/terraform_{TerraformVersion} && " +
-                "chmod +x /tf-cache/binaries/terraform_" + TerraformVersion + " && " +
+                $"mv /tf-cache/binaries/terraform /tf-cache/binaries/terraform_{TerraformVersion}_${{TF_ARCH}} && " +
+                "chmod +x /tf-cache/binaries/terraform_" + TerraformVersion + "_${TF_ARCH} && " +
                 "rm /tmp/terraform.zip)) && " +
-                $"cp /tf-cache/binaries/terraform_{TerraformVersion} /usr/local/bin/terraform"
+                $"cp /tf-cache/binaries/terraform_{TerraformVersion}_${{TF_ARCH}} /usr/local/bin/terraform"
             });
 
             Assert.That(setupResult.ExitCode, Is.EqualTo(0),
@@ -172,6 +169,8 @@ public class TopazFixture
             await RunTerraformContainerCommand("az cloud register -n Topaz --cloud-config @\"cloud.json\"", maxAttempts: 5);
             await RunTerraformContainerCommand("az cloud set -n Topaz", maxAttempts: 3);
             await RunTerraformContainerCommand("az login --username topazadmin@topaz.local.dev --password admin", maxAttempts: 3);
+            await EnsureSubscriptionExistsInTopaz();
+            await RunTerraformContainerCommand($"az account set --subscription {_subscriptionId}", maxAttempts: 3);
 
             RegisterCleanupHook();
             _isInitialized = true;
@@ -319,7 +318,14 @@ public class TopazFixture
             shouldRetry: (_, stderr) =>
                 stderr.Contains("Failed to query available provider packages", StringComparison.OrdinalIgnoreCase) ||
                 stderr.Contains("could not connect to registry.terraform.io", StringComparison.OrdinalIgnoreCase) ||
-                stderr.Contains("context deadline exceeded", StringComparison.OrdinalIgnoreCase));
+                stderr.Contains("context deadline exceeded", StringComparison.OrdinalIgnoreCase) ||
+                stderr.Contains("Failed to install provider", StringComparison.OrdinalIgnoreCase) ||
+                stderr.Contains("unexpected EOF", StringComparison.OrdinalIgnoreCase),
+            onRetry: async () =>
+            {
+                await ExecTerraform($"rm -rf {workDir}/.terraform");
+                await ExecTerraform("find /tf-cache/plugin-cache -path '*registry.terraform.io/hashicorp/azurerm*' -exec rm -rf {} + || true");
+            });
 
         try
         {
@@ -338,7 +344,14 @@ public class TopazFixture
                 shouldRetry: (_, stderr) =>
                     stderr.Contains("Failed to query available provider packages", StringComparison.OrdinalIgnoreCase) ||
                     stderr.Contains("could not connect to registry.terraform.io", StringComparison.OrdinalIgnoreCase) ||
-                    stderr.Contains("context deadline exceeded", StringComparison.OrdinalIgnoreCase));
+                    stderr.Contains("context deadline exceeded", StringComparison.OrdinalIgnoreCase) ||
+                    stderr.Contains("Failed to install provider", StringComparison.OrdinalIgnoreCase) ||
+                    stderr.Contains("unexpected EOF", StringComparison.OrdinalIgnoreCase),
+                onRetry: async () =>
+                {
+                    await ExecTerraform($"rm -rf {workDir}/.terraform");
+                    await ExecTerraform("find /tf-cache/plugin-cache -path '*registry.terraform.io/hashicorp/azurerm*' -exec rm -rf {} + || true");
+                });
 
             await ExecTerraform($"terraform -chdir={workDir} apply -auto-approve");
         }
@@ -362,7 +375,11 @@ public class TopazFixture
     private Task ExecTerraform(string command) =>
         ExecTerraformWithOutput(command).ContinueWith(t => { _ = t.Result; });
 
-    private async Task ExecTerraformWithRetry(string command, int maxAttempts, Func<string, string, bool> shouldRetry)
+    private async Task ExecTerraformWithRetry(
+        string command,
+        int maxAttempts,
+        Func<string, string, bool> shouldRetry,
+        Func<Task>? onRetry = null)
     {
         Exception? lastError = null;
 
@@ -380,6 +397,9 @@ public class TopazFixture
                 var message = ex.Message;
                 if (attempt >= maxAttempts || !shouldRetry(message, message))
                     throw;
+
+                if (onRetry is not null)
+                    await onRetry();
 
                 await Task.Delay(TimeSpan.FromSeconds(attempt * 3));
             }
@@ -474,5 +494,18 @@ public class TopazFixture
 
         Assert.That(result.ExitCode, Is.EqualTo(0),
             $"`{command}` failed.\nSTDOUT: {result.Stdout}\nSTDERR: {result.Stderr}");
+    }
+
+    private async Task EnsureSubscriptionExistsInTopaz()
+    {
+        // Make subscription bootstrap deterministic even if host startup args are ignored.
+        var createCommand =
+            "status=$(curl -sS -o /tmp/sub-create.out -w '%{http_code}' --cacert /tmp/topaz.crt " +
+            $"-X POST \"https://topaz.local.dev:8899/subscriptions/{_subscriptionId}?api-version=2022-12-01\" " +
+            "-H \"Content-Type: application/json\" " +
+            $"-d '{{\"subscriptionId\":\"{_subscriptionId}\",\"subscriptionName\":\"Topaz - Default\"}}'); " +
+            "[ \"$status\" = \"201\" ] || [ \"$status\" = \"400\" ]";
+
+        await RunTerraformContainerCommand(createCommand);
     }
 }
