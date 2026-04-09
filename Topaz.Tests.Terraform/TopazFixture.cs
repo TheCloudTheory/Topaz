@@ -9,9 +9,15 @@ namespace Topaz.Tests.Terraform;
 
 public class TopazFixture
 {
-    // https://mcr.microsoft.com/v2/azure-cli/tags/list
+    // https://hub.docker.com/r/hashicorp/terraform/tags
     private const string AzureCliContainerImage = "mcr.microsoft.com/azure-cli:2.84.0";
     private const string TerraformVersion = "1.10.5";
+
+    // Persisted on the host so providers and the Terraform binary are downloaded only once
+    // across all test-class fixture setups, regardless of how many containers are created.
+    private static readonly string TerraformCacheDir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+        ".terraform.d", "topaz-test-cache");
     private const string CloudConfig = """
                                        {
                                          "endpoints":{
@@ -47,6 +53,8 @@ public class TopazFixture
     public async Task OneTimeSetUp()
     {
         _subscriptionId = Guid.NewGuid().ToString();
+
+        Directory.CreateDirectory(TerraformCacheDir);
 
         _network = new NetworkBuilder()
             .WithName(Guid.NewGuid().ToString("D"))
@@ -103,11 +111,14 @@ public class TopazFixture
             // Disable MSAL instance discovery so az CLI doesn't call login.microsoftonline.com
             .WithEnvironment("AZURE_CORE_INSTANCE_DISCOVERY", "false")
             // Share provider binaries across test runs to avoid repeated downloads
-            .WithEnvironment("TF_PLUGIN_CACHE_DIR", "/tf-plugin-cache")
+            .WithEnvironment("TF_PLUGIN_CACHE_DIR", "/tf-cache/plugin-cache")
             // Suppress upgrade checks and ANSI colour codes
             .WithEnvironment("CHECKPOINT_DISABLE", "1")
             .WithEnvironment("TF_CLI_ARGS", "-no-color")
             .WithExtraHost("topaz.local.dev", _containerTopaz.IpAddress)
+            // Bind-mount host cache: providers + terraform binary are downloaded once and reused
+            // across all 17 fixture setups rather than re-downloaded for every test class.
+            .WithBindMount(TerraformCacheDir, "/tf-cache")
             .Build();
 
         await _containerTerraform.StartAsync().ConfigureAwait(false);
@@ -116,7 +127,7 @@ public class TopazFixture
         {
             "/bin/sh",
             "-c",
-            "mkdir -p /tf-plugin-cache /workspace && " +
+            "mkdir -p /tf-cache/plugin-cache /tf-cache/binaries /workspace && " +
             // registry.terraform.io has AAAA records; Docker's custom bridge is IPv4-only so Go's
             // HTTP client hangs on the IPv6 attempt until the whole request times out.
             // Pre-resolve to IPv4 and pin it in /etc/hosts so terraform never tries IPv6.
@@ -126,11 +137,15 @@ public class TopazFixture
             // Build combined CA bundle for Go-based Terraform provider binaries (SSL_CERT_FILE).
             // certifi/cacert.pem already contains all public CAs + Topaz's cert (appended above).
             "cp /usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem /tmp/combined.pem && " +
-            // Install Terraform binary
+            // Install Terraform binary — download only when the versioned binary is not yet cached.
+            // The cache directory is bind-mounted from the host so it persists across fixture setups.
+            $"([ -f /tf-cache/binaries/terraform_{TerraformVersion} ] || (" +
             $"curl -sSfL https://releases.hashicorp.com/terraform/{TerraformVersion}/terraform_{TerraformVersion}_linux_amd64.zip -o /tmp/terraform.zip && " +
-            "python3 -c \"import zipfile; zipfile.ZipFile('/tmp/terraform.zip').extract('terraform', '/usr/local/bin')\" && " +
-            "chmod +x /usr/local/bin/terraform && " +
-            "rm /tmp/terraform.zip"
+            "python3 -c \"import zipfile; zipfile.ZipFile('/tmp/terraform.zip').extract('terraform', '/tf-cache/binaries')\" && " +
+            $"mv /tf-cache/binaries/terraform /tf-cache/binaries/terraform_{TerraformVersion} && " +
+            "chmod +x /tf-cache/binaries/terraform_" + TerraformVersion + " && " +
+            "rm /tmp/terraform.zip)) && " +
+            $"cp /tf-cache/binaries/terraform_{TerraformVersion} /usr/local/bin/terraform"
         });
 
         Assert.That(setupResult.ExitCode, Is.EqualTo(0),
