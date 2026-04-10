@@ -22,7 +22,14 @@ public sealed class RestoreSecretEndpoint(Pipeline eventPipeline, ITopazLogger l
     {
         try
         {
-            var vaultName = context.Request.Headers["Host"].ToString().Split(".")[0];
+            var hostSegments = context.Request.Host.Host.Split('.', StringSplitOptions.RemoveEmptyEntries);
+            if (hostSegments.Length == 0)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                return;
+            }
+
+            var vaultName = PathGuard.SanitizeName(hostSegments[0]);
 
             var vaultOperation = _controlPlane.FindByName(vaultName!);
             if (vaultOperation.Result == OperationResult.NotFound)

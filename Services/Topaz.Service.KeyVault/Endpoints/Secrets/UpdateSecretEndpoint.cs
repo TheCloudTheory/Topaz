@@ -23,7 +23,14 @@ public sealed class UpdateSecretEndpoint(Pipeline eventPipeline, ITopazLogger lo
     {
         try
         {
-            var vaultName = context.Request.Headers["Host"].ToString().Split(".")[0];
+            var hostSegments = context.Request.Host.Host.Split('.', StringSplitOptions.RemoveEmptyEntries);
+            if (hostSegments.Length == 0)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                return;
+            }
+
+            var vaultName = PathGuard.SanitizeName(hostSegments[0]);
             var secretName = context.Request.Path.Value.ExtractValueFromPath(2);
             var version = context.Request.Path.Value.ExtractValueFromPath(3);
 

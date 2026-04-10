@@ -24,7 +24,14 @@ public sealed class PurgeDeletedSecretEndpoint(Pipeline eventPipeline, ITopazLog
     {
         try
         {
-            var vaultName = context.Request.Headers["Host"].ToString().Split(".")[0];
+            var hostSegments = context.Request.Host.Host.Split('.', StringSplitOptions.RemoveEmptyEntries);
+            if (hostSegments.Length == 0)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                return;
+            }
+
+            var vaultName = PathGuard.SanitizeName(hostSegments[0]);
             var secretName = context.Request.Path.Value.ExtractValueFromPath(2);
 
             if (string.IsNullOrEmpty(secretName))
@@ -33,7 +40,7 @@ public sealed class PurgeDeletedSecretEndpoint(Pipeline eventPipeline, ITopazLog
                 return;
             }
 
-            var kvResult = _controlPlane.FindByName(vaultName!);
+            var kvResult = _controlPlane.FindByName(vaultName);
             if (kvResult.Result == OperationResult.NotFound || kvResult.Resource == null)
             {
                 response.StatusCode = HttpStatusCode.NotFound;
@@ -44,7 +51,7 @@ public sealed class PurgeDeletedSecretEndpoint(Pipeline eventPipeline, ITopazLog
             var resourceGroupIdentifier = kvResult.Resource.GetResourceGroup();
 
             var operation = _dataPlane.PurgeDeletedSecret(subscriptionIdentifier, resourceGroupIdentifier,
-                vaultName!, secretName);
+                vaultName, secretName);
 
             if (operation.Result == OperationResult.NotFound)
             {
