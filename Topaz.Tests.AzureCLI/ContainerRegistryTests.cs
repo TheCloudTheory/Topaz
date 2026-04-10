@@ -341,11 +341,12 @@ public class ContainerRegistryTests : TopazFixture
 
         var loginServer = $"{registryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
 
-        // HEAD on a non-existent manifest - curl -f returns non-zero exit on 404
+        // HEAD on a non-existent manifest.
+        // With curl -f, HTTP 404 maps to exit code 22 (HTTP page not retrieved).
         await RunAzureCliCommand(
             $"curl -skf -u \"{registryName}:{adminPassword}\" " +
             $"-X HEAD https://{loginServer}/v2/nonexistent-repo/manifests/v1",
-            null, 1);
+            null, 22);
 
         await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
