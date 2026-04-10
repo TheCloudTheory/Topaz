@@ -88,6 +88,7 @@ jobs:
         images: thecloudtheory/topaz-cli
         tags: |
           type=raw,value=${{ steps.read-tag.outputs.tag }}
+          type=raw,value=latest
     - name: Build and push Docker image
       id: push
       uses: docker/build-push-action@v6.18.0
