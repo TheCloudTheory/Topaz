@@ -55,6 +55,20 @@ topaz start
 
 Point your Azure SDK at the relevant local port — no code changes required. See the [documentation](https://topaz.thecloudtheory.com/) for connection strings and SDK setup.
 
+## Terraform integration
+
+Topaz supports local Terraform workflows using the standard AzureRM provider. Configure `metadata_host` to point at Topaz and disable provider auto-registration:
+
+```hcl
+provider "azurerm" {
+  features {}
+  metadata_host = "topaz.local.dev:8899"
+  resource_provider_registrations = "none"
+}
+```
+
+Full setup and troubleshooting guide: [Terraform integration](https://topaz.thecloudtheory.com/docs/terraform-integration).
+
 ## Licensing
 
 Topaz is open-source. A commercial license with enterprise support is planned for teams that need SLAs, priority fixes, or long-term stability guarantees. Existing users will receive advance notice well before any licensing changes take effect.

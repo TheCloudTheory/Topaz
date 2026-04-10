@@ -42,6 +42,7 @@ Services live under `Services/Topaz.Service.*`. Each service has:
 2. Register in `*Service.cs` → `Endpoints` property.
 3. Update `website/docs/api-coverage/<service>.md` — flip ❌ → ✅ for implemented operations.
 4. Add tests in **both** suites (see Tests section).
+5. For ARM-manageable nested objects (for example network rule sets), model them as `ArmSubresource<T>` and persist them via `CreateOrUpdateSubresource` / `GetSubresourceAs` instead of building ad-hoc response DTOs in endpoints.
 
 ### Every new service (control plane)
 
@@ -91,6 +92,12 @@ Never access the filesystem directly from a control plane or endpoint. All reads
 
 Always use `GlobalSettings.JsonOptions` for HTTP request/response serialization. Use `JsonOptionsCli` for CLI output.
 
+### Response shaping for AzureRM/Terraform
+
+- Use `response.CreateJsonContentResponse(...)` for JSON endpoints; do not build JSON responses via `StringContent` directly.
+- Any response DTO returned through `CreateJsonContentResponse` must implement `ToString()` with `JsonSerializer.Serialize(this, GlobalSettings.JsonOptions)`.
+- Keep status codes aligned with AzureRM expectations for the specific operation. For Event Hub compatibility in current tests: namespace create can be `201`, while Event Hub and Event Hub networkRuleSets PUT handlers should return `200`.
+
 ### Ports — never hardcode
 
 Always use `GlobalSettings.*Port` constants:
@@ -118,6 +125,11 @@ Both suites are required for every endpoint or control-plane change.
 ### `Topaz.Tests.AzureCLI/`
 - Use `RunAzureCliCommand("az ...")` via `TopazFixture`.
 - Use `GlobalSettings.ContainerRegistryPort` directly for port references.
+
+### Terraform/debugging workflow
+- Terraform tests in `Topaz.Tests.Terraform` run against the Docker image (`topaz/cli`), not local binaries.
+- After every code change that should affect Terraform tests, rebuild first: `./scripts/build-docker.sh arm64` (or `amd64`), then run the filtered test.
+- If a build fails, do not trust subsequent Terraform test output as validation of code changes.
 
 ### `Topaz.Tests.Portal/` (Portal work definition of done)
 - Inherit from `BunitTestContext`.

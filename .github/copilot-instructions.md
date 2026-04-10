@@ -16,12 +16,13 @@ Big picture (high level)
 - Resource models implement `ArmResource<T>` and concrete `*ResourceProperties` types.
 
 Important conventions & patterns
-- Resource model base: see [Topaz.ResourceManager/ArmResource.cs](Topaz.ResourceManager/ArmResource.cs#L1-L43). Resource IDs follow ARM-like segments; code often parses segments by index (GetSubscription/GetResourceGroup). Do not change the ID format without adjusting these utilities.
-- JSON: use project-wide serializer options from [Topaz.Shared/GlobalSettings.cs](Topaz.Shared/GlobalSettings.cs#L1-L44). Use `GlobalSettings.JsonOptions` for endpoint serialization and `JsonOptionsCli` for CLI output.
-- Naming: resource model classes end with `Resource` / `ResourceProperties` (e.g., [Services/Topaz.Service.KeyVault/Models/KeyVaultResourceProperties.cs](Services/Topaz.Service.KeyVault/Models/KeyVaultResourceProperties.cs#L1-L84)). Use `FromRequest(...)` or `UpdateFromRequest(...)` patterns when converting API requests to internal models.
+- Resource model base: see [Topaz.ResourceManager/ArmResource.cs](../Topaz.ResourceManager/ArmResource.cs). Resource IDs follow ARM-like segments; code often parses segments by index (GetSubscription/GetResourceGroup). Do not change the ID format without adjusting these utilities.
+- JSON: use project-wide serializer options from [Topaz.Shared/GlobalSettings.cs](../Topaz.Shared/GlobalSettings.cs). Use `GlobalSettings.JsonOptions` for endpoint serialization and `JsonOptionsCli` for CLI output.
+- Naming: resource model classes end with `Resource` / `ResourceProperties` (e.g., [Services/Topaz.Service.KeyVault/Models/KeyVaultResourceProperties.cs](../Services/Topaz.Service.KeyVault/Models/KeyVaultResourceProperties.cs)). Use `FromRequest(...)` or `UpdateFromRequest(...)` patterns when converting API requests to internal models.
 - Control vs Data plane: control-plane classes expose CRUD operations and resource listing (`*ServiceControlPlane`). Data-plane classes provide runtime behaviour (e.g., `BlobServiceDataPlane`). Look at `Topaz.Service.Storage` for concrete examples.
 - Endpoints & routing: `Topaz.Host` builds a router that matches incoming requests to `IEndpointDefinition` implementations defined by services; services register endpoints via `IServiceDefinition.Endpoints`.
 - **One endpoint file per HTTP operation**: Each distinct HTTP operation must live in its own file (e.g., `CreateOrUpdateContainerRegistryEndpoint.cs`, `GetContainerRegistryEndpoint.cs`, `DeleteContainerRegistryEndpoint.cs`). Do **not** combine multiple operations into a single `IEndpointDefinition` class. See `Topaz.Service.Authorization/Endpoints/` and `Topaz.Service.ContainerRegistry/Endpoints/` for canonical examples. Each endpoint class has a single-entry `string[] Endpoints` array, its own `string[] Permissions`, and sets `response.Content.Headers.ContentType` at the end of `GetResponse`.
+- **Model ARM-managed nested objects as subresources**: If an operation represents an ARM-manageable nested object (e.g., `.../networkRuleSets/{name}`), introduce a persisted `ArmSubresource<T>` model and store/read it via `ResourceProviderBase.CreateOrUpdateSubresource` and `GetSubresourceAs`. Do not return ephemeral hard-coded DTOs from endpoints for such resources.
 - Logging & IDs: logger is injected across services; correlation IDs are generated per request in the host (`CorrelationIdFactory`).
 
 Build, run and env notes
@@ -34,19 +35,20 @@ Code generation & edits: practical guidelines
 - When adding resources, implement `*ResourceProperties` for the contract, a `*Resource` class inheriting `ArmResource<T>`, a `*ResourceProvider` and a `*ServiceControlPlane` following existing services (see `Topaz.Service.KeyVault` or `Topaz.Service.ServiceBus`).
 - **`Deploy()` is mandatory**: Every `IControlPlane` implementation must have a working `Deploy()` method (not `throw new NotImplementedException()`). Follow the KeyVault pattern: cast `GenericResource` with `resource.As<TResource, TProperties>()`, map all fields into the create/update request, delegate to `CreateOrUpdate`, and wrap exceptions with `logger.LogError`. After implementing `Deploy()`, also register the new resource type in `TemplateDeploymentOrchestrator.RouteDeployment()` (add a `case "Microsoft.X/y":` entry) and add the service's project as a `<ProjectReference>` in `Topaz.Service.ResourceManager.csproj`.
 - Serialization: always use `GlobalSettings.JsonOptions` when serializing/deserializing HTTP request bodies/responses.
+- Endpoint JSON responses: prefer `response.CreateJsonContentResponse(...)`. If using a response DTO with `CreateJsonContentResponse`, ensure the DTO overrides `ToString()` to serialize with `GlobalSettings.JsonOptions`.
 - Id handling: if you modify `Id` format, update `ArmResource.GetSubscription()` and `GetResourceGroup()` usages.
 - **Filesystem access via resource providers only**: Never access the filesystem directly from a control plane or endpoint class. All reads and writes must go through a `ResourceProviderBase<TService>` subclass (e.g., `FooResourceProvider`). See `ManagedIdentityResourceProvider` and `SystemAssignedIdentityResourceProvider` as examples. Breaking this rule re-introduces direct file I/O scattered across classes and makes persistence non-uniform.
 - Patterns to copy: `FromRequest(...)` factory methods and `UpdateFromRequest(...)` mutators are common; mirror the null-checks and GetValueOrDefault() idioms used in `KeyVaultResourceProperties.FromRequest`.
 
 Where to look first (recommended reading order)
-- [Topaz.Host/Host.cs](Topaz.Host/Host.cs#L1-L260) — host composition, service list, endpoint wiring.
-- [Topaz.CLI/Program.cs](Topaz.CLI/Program.cs#L1-L133) and [Topaz.CLI/Commands/StartCommand.cs](Topaz.CLI/Commands/StartCommand.cs#L1-L83) — how commands bootstrap the host.
-- [Topaz.ResourceManager/ArmResource.cs](Topaz.ResourceManager/ArmResource.cs#L1-L43) — resource model base and ID parsing.
-- [Topaz.Shared/GlobalSettings.cs](Topaz.Shared/GlobalSettings.cs#L1-L44) — JSON and default ports.
-- Example service: [Services/Topaz.Service.KeyVault](Services/Topaz.Service.KeyVault/Models/KeyVaultResourceProperties.cs#L1-L84) and its endpoints/control plane.
+- [Topaz.Host/Host.cs](../Topaz.Host/Host.cs) — host composition, service list, endpoint wiring.
+- [Topaz.CLI/Program.cs](../Topaz.CLI/Program.cs) and [Topaz.CLI/Commands/StartCommand.cs](../Topaz.CLI/Commands/StartCommand.cs) — how commands bootstrap the host.
+- [Topaz.ResourceManager/ArmResource.cs](../Topaz.ResourceManager/ArmResource.cs) — resource model base and ID parsing.
+- [Topaz.Shared/GlobalSettings.cs](../Topaz.Shared/GlobalSettings.cs) — JSON and default ports.
+- Example service: [Services/Topaz.Service.KeyVault](../Services/Topaz.Service.KeyVault/Models/KeyVaultResourceProperties.cs) and its endpoints/control plane.
 
 Tests & CI
-- Unit and integration tests live under `Topaz.Tests`. CI workflows run build and test; the repo uses `Nerdbank.GitVersioning` (see `Directory.Build.props`).
+- Unit and integration tests live under `Topaz.Tests`. CI workflows run build and test; the repo uses `Nerdbank.GitVersioning` (see [Directory.Build.props](../Directory.Build.props)).
 
 When to ask the user
 - If a change touches networking ports, resource ID formats, or global serializer options, confirm desired behaviour before applying broad changes.
@@ -55,7 +57,7 @@ API Coverage docs (mandatory)
 - The `website/docs/api-coverage/` directory contains one Markdown file per service. Each file tracks which Azure REST API operations are implemented in Topaz, mapped to the official Microsoft REST API reference.
 - **Always consult** the relevant `api-coverage/<service>.md` file before adding or removing endpoints for a service so you know what is already tracked.
 - **Always update** the relevant `api-coverage/<service>.md` file after adding or removing endpoint implementations: flip ❌ → ✅ (or vice-versa) for the affected operations. If the service page is still a stub, fill in the full operation table (use the Azure REST API reference link in the file header as a guide).
-- The [Container Registry coverage](website/docs/api-coverage/container-registry.md) page is the canonical example of the completed format.
+- The [Container Registry coverage](../website/docs/api-coverage/container-registry.md) page is the canonical example of the completed format.
 
 Backlog & Roadmap (mandatory)
 - `BACKLOG.md` (repo root) is the single source of truth for planned work. It contains `<!-- TODO: ... -->` blocks that the CI action converts to GitHub Issues automatically.
@@ -71,6 +73,7 @@ Mandatory steps
   - `Topaz.Tests/E2E/` — use the Azure SDK (`ArmClient`, service-specific clients) against the in-process Topaz host started by `E2EFixture`.
   - `Topaz.Tests.AzureCLI/` — use `RunAzureCliCommand(...)` with an `az ...` command string and an optional assertion callback. Tests run against a Dockerised Topaz + Azure CLI container pair via `TopazFixture`.
   - Prefer a dedicated `[Test]` method per operation rather than expanding an existing test; reuse known stable built-in resources (e.g. the Reader role `acdd72a7-3385-48ef-bd42-f606fba81ae7`) where no setup/teardown is needed.
+- **Terraform test rule**: `Topaz.Tests.Terraform` uses Dockerized Topaz. After any code change expected to affect Terraform behavior, rebuild the image (`./scripts/build-docker.sh <arch>`) before running Terraform tests. Treat test runs without a rebuild as non-authoritative.
 - **Portal work (definition of done)**: Any task that adds or modifies `Topaz.Portal` UI behaviour **must** include a bUnit component test in `Topaz.Tests.Portal/`. Key conventions:
   - Inherit from `BunitTestContext` (not `Bunit.TestContext` or NUnit's `TestContext` directly).
   - Register a fake `ITopazClient` via NSubstitute: `Services.AddSingleton(Substitute.For<ITopazClient>())`.
