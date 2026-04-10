@@ -317,7 +317,7 @@ public class ContainerRegistryTests : TopazFixture
         // HEAD should succeed (exit 0) and return 200 - curl -f fails on 4xx/5xx
         await RunAzureCliCommand(
             $"curl -skf -u \"{registryName}:{adminPassword}\" " +
-            $"-X HEAD https://{loginServer}/v2/{repoName}/manifests/v1");
+            $"-I https://{loginServer}/v2/{repoName}/manifests/v1");
 
         await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
@@ -345,7 +345,7 @@ public class ContainerRegistryTests : TopazFixture
         // With curl -f, HTTP 404 maps to exit code 22 (HTTP page not retrieved).
         await RunAzureCliCommand(
             $"curl -skf -u \"{registryName}:{adminPassword}\" " +
-            $"-X HEAD https://{loginServer}/v2/nonexistent-repo/manifests/v1",
+            $"-I https://{loginServer}/v2/nonexistent-repo/manifests/v1",
             null, 22);
 
         await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");

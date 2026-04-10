@@ -54,11 +54,11 @@ internal sealed class HeadManifestEndpoint(AcrDataPlane dataPlane, ITopazLogger 
         }
 
         response.Headers.Add("Docker-Content-Digest", envelope.Digest);
-        // Router suppresses HEAD bodies. Keep payload empty to avoid transport
-        // errors when clients receive bodyless responses with non-empty content.
+        // Router suppresses HEAD bodies. Keep payload empty, but expose the
+        // manifest size in Content-Length so clients see GET-equivalent metadata.
         response.Content = new ByteArrayContent([]);
         response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(envelope.ContentType);
-        response.Content.Headers.ContentLength = 0;
+        response.Content.Headers.ContentLength = envelope.Content.Length;
         response.StatusCode = HttpStatusCode.OK;
     }
 
