@@ -1,0 +1,62 @@
+.widget {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1rem 0.5rem 0.8rem;
+  background: #24292f;
+  color: #ffffff !important;
+  border-radius: 2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none !important;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.28);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.widget:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+.icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.label {
+  line-height: 1;
+}
+
+.count {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 1rem;
+  padding: 0.2em 0.5em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin-left: 0.1rem;
+}
+
+/* Keep it out of the way on small screens */
+@media (max-width: 480px) {
+  .widget {
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.45rem 0.8rem 0.45rem 0.7rem;
+    font-size: 0.8rem;
+  }
+
+  .label {
+    display: none;
+  }
+}
