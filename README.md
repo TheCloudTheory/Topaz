@@ -27,21 +27,21 @@ Most Azure emulators cover a single service. Topaz covers the full stack:
 * **Seamless Azure SDK integration** — no code changes; point your SDK at Topaz
 * **Full portability** — single executable or Docker container, runs anywhere
 
-Coming up: a UI for resource management and chaos testing support.
+See the [roadmap](https://topaz.thecloudtheory.com/docs/roadmap) for what's coming next.
 
 ## Supported services
 
-| Service | Control Plane | Data Plane |
-|---|---|---|
-| Azure Storage (Blob) | ✅ | ✅ |
-| Azure Key Vault | ✅ | ✅ |
-| Azure Service Bus | ✅ | ✅ |
-| Azure Container Registry | ✅ | ✅ |
-| Azure Event Hub | ✅ | ✅ |
-| Azure Resource Manager | ✅ | — |
-| Microsoft Entra ID | ✅ | — |
+| Service | Control Plane | Data Plane | Status |
+|---|---|---|---|
+| Azure Storage (Blob) | ✅ | ✅ | Stable |
+| Azure Key Vault | ✅ | ✅ | Preview |
+| Azure Service Bus | ✅ | ✅ | Preview |
+| Azure Container Registry | ✅ | ✅ | Preview |
+| Azure Event Hub | ✅ | ✅ | Preview |
+| Azure Resource Manager | ✅ | — | Stable |
+| Microsoft Entra ID | ✅ | — | Preview |
 
-See the [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/) for the full operation-level breakdown.
+See the [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/) for the full operation-level breakdown per service.
 
 ## Getting started
 
@@ -53,25 +53,29 @@ docker run -p 8891:8891 -p 8892:8892 -p 8898:8898 thecloudtheory/topaz-cli start
 topaz start
 ```
 
-Point your Azure SDK at the relevant local port — no code changes required. See the [documentation](https://topaz.thecloudtheory.com/) for connection strings and SDK setup.
+Point your Azure SDK at the relevant local port — no code changes required. To verify Topaz is running, try listing resource groups with the Azure CLI:
+
+```bash
+az group list --output table
+```
+
+See the [documentation](https://topaz.thecloudtheory.com/) for connection strings, SDK setup, and service-specific quickstarts.
+
+## CI/CD integration
+
+Topaz runs as a service step in any pipeline — no Azure subscription, service principal, or network access required. See the [CI/CD integration guide](https://topaz.thecloudtheory.com/docs/ecosystem/ci-cd) for GitHub Actions and Azure DevOps examples.
 
 ## Terraform integration
 
-Topaz supports local Terraform workflows using the standard AzureRM provider. Configure `metadata_host` to point at Topaz and disable provider auto-registration:
-
-```hcl
-provider "azurerm" {
-  features {}
-  metadata_host = "topaz.local.dev:8899"
-  resource_provider_registrations = "none"
-}
-```
-
-Full setup and troubleshooting guide: [Terraform integration](https://topaz.thecloudtheory.com/docs/terraform-integration).
+Topaz supports local Terraform workflows with both the AzureRM and AzAPI providers — no real Azure subscription required. See the [Terraform integration guide](https://topaz.thecloudtheory.com/docs/terraform-integration) for setup instructions, including DNS configuration and provider examples.
 
 ## Licensing
 
 Topaz is open-source. A commercial license with enterprise support is planned for teams that need SLAs, priority fixes, or long-term stability guarantees. Existing users will receive advance notice well before any licensing changes take effect.
+
+## Community
+
+Questions, ideas, and feedback are welcome in [GitHub Discussions](https://github.com/TheCloudTheory/Topaz/discussions). For bugs, open an [issue](https://github.com/TheCloudTheory/Topaz/issues). Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Alternatives
 
@@ -83,6 +87,8 @@ If you need emulation for a single Azure service, these official Microsoft tools
 
 If you need multiple services, RBAC, or ARM deployments locally, that's where Topaz fits.
 
-## Responsible AI
+## Privacy
 
-Topaz is developed with assistance from AI tools (GitHub Copilot, JetBrains AI). Their use is limited to: generating models and DTOs, extracting built-in role definitions, explaining methods, debugging, and writing boilerplate. Conceptual design, core logic, and architecture are done manually.
+All state is local. Topaz never makes outbound calls and never transmits credentials or resource data to external services.
+
+Topaz is developed with assistance from AI tools (GitHub Copilot, JetBrains AI), limited to generating boilerplate, models, and DTOs. Conceptual design, core logic, and architecture are done manually.
