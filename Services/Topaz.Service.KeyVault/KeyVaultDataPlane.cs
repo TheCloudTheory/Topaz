@@ -430,14 +430,20 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RecoverDeletedSecret), "Executing {0}: {1} {2}", nameof(RecoverDeletedSecret), secretName, vaultName);
 
         var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
-        var deletedPath = Path.Combine(path, "deleted", $"{secretName}.json");
-        PathGuard.EnsureWithinDirectory(deletedPath, path);
+        var deletedDir = Path.Combine(path, "deleted");
+        var deletedPath = Directory.EnumerateFiles(deletedDir, "*.json")
+            .FirstOrDefault(file => string.Equals(
+                Path.GetFileNameWithoutExtension(file),
+                secretName,
+                StringComparison.Ordinal));
 
-        if (!File.Exists(deletedPath))
+        if (deletedPath == null)
         {
             logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RecoverDeletedSecret), "Executing {0}: Deleted secret {1} not found.", nameof(RecoverDeletedSecret), secretName);
             return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Deleted secret {secretName} not found.", "SecretNotFound");
         }
+
+        PathGuard.EnsureWithinDirectory(deletedPath, path);
 
         var data = File.ReadAllText(deletedPath);
         var record = JsonSerializer.Deserialize<DeletedSecretRecord>(data, GlobalSettings.JsonOptions)!;
@@ -468,14 +474,20 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedSecret), "Executing {0}: {1} {2}", nameof(PurgeDeletedSecret), secretName, vaultName);
 
         var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
-        var deletedPath = Path.Combine(path, "deleted", $"{secretName}.json");
-        PathGuard.EnsureWithinDirectory(deletedPath, path);
+        var deletedDir = Path.Combine(path, "deleted");
+        var deletedPath = Directory.EnumerateFiles(deletedDir, "*.json")
+            .FirstOrDefault(file => string.Equals(
+                Path.GetFileNameWithoutExtension(file),
+                secretName,
+                StringComparison.Ordinal));
 
-        if (!File.Exists(deletedPath))
+        if (deletedPath == null)
         {
             logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedSecret), "Executing {0}: Deleted secret {1} not found.", nameof(PurgeDeletedSecret), secretName);
             return new DataPlaneOperationResult(OperationResult.NotFound, $"Deleted secret {secretName} not found.", "SecretNotFound");
         }
+
+        PathGuard.EnsureWithinDirectory(deletedPath, path);
 
         File.Delete(deletedPath);
 
