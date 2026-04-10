@@ -49,12 +49,21 @@ public sealed class ResourceManagerEndpoint(
     {
         try
         {
+            var segments = context.Request.Path.Value.Split('/');
             var subscriptionIdentifier =
                 SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+
+            if (context.Request.Method == "GET" && segments.Length == 5 &&
+                string.Equals(segments[3], "providers", StringComparison.OrdinalIgnoreCase))
+            {
+                var providerName = context.Request.Path.Value.ExtractValueFromPath(4);
+                HandleGetResourceProviderData(response, subscriptionIdentifier, providerName!);
+                return;
+            }
+
             var resourceGroupIdentifier =
                 ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
             var deploymentName = context.Request.Path.Value.ExtractValueFromPath(8);
-            var segments = context.Request.Path.Value.Split('/');
 
             var subscriptionOperation = _subscriptionControlPlane.Get(subscriptionIdentifier);
             if (subscriptionOperation.Result == OperationResult.NotFound)
@@ -86,13 +95,6 @@ public sealed class ResourceManagerEndpoint(
 
                     break;
                 case "GET":
-                    if (segments.Length == 5)
-                    {
-                        var providerName = context.Request.Path.Value.ExtractValueFromPath(4);
-                        HandleGetResourceProviderData(response, subscriptionIdentifier, providerName!);
-                        break;
-                    }
-
                     if (!string.IsNullOrWhiteSpace(deploymentName))
                     {
                         HandleGetDeployment(response, subscriptionIdentifier, resourceGroupIdentifier, deploymentName);

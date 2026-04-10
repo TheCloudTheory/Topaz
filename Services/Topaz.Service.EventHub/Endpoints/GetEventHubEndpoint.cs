@@ -37,7 +37,6 @@ public class GetEventHubEndpoint(ITopazLogger logger) : IEndpointDefinition
             return;
         }
 
-        response.Content = new StringContent(operation.Resource.ToString());
-        response.StatusCode = HttpStatusCode.OK;
+        response.CreateJsonContentResponse(operation.Resource);
     }
 }

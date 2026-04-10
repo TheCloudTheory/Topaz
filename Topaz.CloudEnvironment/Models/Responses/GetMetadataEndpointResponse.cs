@@ -32,7 +32,20 @@ internal sealed class GetMetadataEndpointResponse
     
     public IReadOnlyDictionary<string, string> Suffixes => new Dictionary<string, string>
     {
-        { "keyvaultDns", ".vault.topaz.local.dev" }
+        { "azureDataLakeStoreFileSystem", "datalake.topaz.local.dev" },
+        { "acrLoginServer", "cr.topaz.local.dev" },
+        { "sqlServerHostname", "sql.topaz.local.dev" },
+        { "azureDataLakeAnalyticsCatalogAndJob", "analytics.topaz.local.dev" },
+        { "keyVaultDns", "vault.topaz.local.dev" },
+        { "storage", "storage.topaz.local.dev" },
+        { "azureFrontDoorEndpointSuffix", "frontdoor.topaz.local.dev" },
+        { "storageSyncEndpointSuffix", "storagesync.topaz.local.dev" },
+        { "mhsmDns", "managedhsm.topaz.local.dev" },
+        { "mysqlServerEndpoint", "mysql.topaz.local.dev" },
+        { "postgresqlServerEndpoint", "postgres.topaz.local.dev" },
+        { "mariadbServerEndpoint", "mariadb.topaz.local.dev" },
+        { "synapseAnalytics", "synapse.topaz.local.dev" },
+        { "attestationEndpoint", "attest.topaz.local.dev" }
     };
 
     public string Name => "public";

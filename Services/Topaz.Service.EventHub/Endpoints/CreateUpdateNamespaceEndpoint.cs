@@ -50,7 +50,9 @@ public class CreateUpdateNamespaceEndpoint(ITopazLogger logger) : IEndpointDefin
             return;
         }
 
-        response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(operation.Resource.ToString());
+        var responseCode = operation.Result == OperationResult.Created
+            ? HttpStatusCode.Created
+            : HttpStatusCode.OK;
+        response.CreateJsonContentResponse(operation.Resource, responseCode);
     }
 }

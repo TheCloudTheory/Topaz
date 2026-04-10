@@ -30,7 +30,8 @@ internal sealed class EventHubNamespaceResourceProperties
             DisableLocalAuth = request.Properties?.DisableLocalAuth,
             IsAutoInflateEnabled = request.Properties?.IsAutoInflateEnabled,
             KafkaEnabled = request.Properties?.KafkaEnabled,
-            MaximumThroughputUnits = request.Properties?.MaximumThroughputUnits,
+            // AzureRM v4 read path dereferences this field without a nil check.
+            MaximumThroughputUnits = request.Properties?.MaximumThroughputUnits ?? 0,
             MinimumTlsVersion = request.Properties?.MinimumTlsVersion,
             PublicNetworkAccess = request.Properties?.PublicNetworkAccess,
             ZoneRedundant = request.Properties?.ZoneRedundant
