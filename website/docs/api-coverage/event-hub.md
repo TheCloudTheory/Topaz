@@ -44,6 +44,16 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Create Or Update Authorization Rule | ❌ | |
 | Delete Authorization Rule | ❌ | |
 
+### Network Rule Sets
+
+> [REST reference](https://learn.microsoft.com/en-us/rest/api/eventhub/network-rule-sets?view=rest-eventhub-2021-11-01)
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| Create Or Update | ✅ | `PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/networkRuleSets/{networkRuleSetName}` |
+| Get | ✅ | `GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/networkRuleSets/{networkRuleSetName}` |
+| List By Namespace | ❌ | |
+
 ### Event Hubs
 
 > [REST reference](https://learn.microsoft.com/en-us/rest/api/eventhub/event-hubs?view=rest-eventhub-2021-11-01)

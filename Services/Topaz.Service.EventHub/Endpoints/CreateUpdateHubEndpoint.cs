@@ -50,9 +50,6 @@ public class CreateUpdateHubEndpoint(ITopazLogger logger) : IEndpointDefinition
             return;
         }
 
-        var responseCode = operation.Result == OperationResult.Created
-            ? HttpStatusCode.Created
-            : HttpStatusCode.OK;
-        response.CreateJsonContentResponse(operation.Resource, responseCode);
+        response.CreateJsonContentResponse(operation.Resource, HttpStatusCode.OK);
     }
 }

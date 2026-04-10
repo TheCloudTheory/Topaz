@@ -34,6 +34,8 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
 
             var resource = new EventHubNamespaceResource(subscriptionIdentifier, resourceGroupIdentifier, location, @namespace, properties);
             provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, resource, true);
+            CreateOrUpdateNetworkRuleSet(subscriptionIdentifier, resourceGroupIdentifier, @namespace, "default",
+                EventHubNetworkRuleSetSubresourceProperties.Default());
 
             return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Created, resource, null, null);
         }
@@ -41,6 +43,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         properties.UpdatedAt = DateTime.UtcNow;
         existingNamespace.UpdateProperties(properties);
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, existingNamespace);
+        EnsureDefaultNetworkRuleSet(subscriptionIdentifier, resourceGroupIdentifier, @namespace);
 
         return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Updated, existingNamespace, null, null);
     }
@@ -69,6 +72,63 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
             ? new ControlPlaneOperationResult<EventHubResource>(OperationResult.NotFound, null,
                 string.Format(EventHubNotFoundMessageTemplate, hubName), EventHubNotFoundCode)
             : new ControlPlaneOperationResult<EventHubResource>(OperationResult.Success, existingHub, null, null);
+    }
+
+    public ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource> GetNetworkRuleSet(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        EventHubNamespaceIdentifier namespaceIdentifier, string networkRuleSetName)
+    {
+        var existingNamespace = GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
+        if (existingNamespace.Result == OperationResult.NotFound || existingNamespace.Resource == null)
+        {
+            return new ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource>(OperationResult.NotFound, null,
+                string.Format(EventHubNamespaceNotFoundMessageTemplate, namespaceIdentifier),
+                EventHubNamespaceNotFoundCode);
+        }
+
+        var networkRuleSet = provider.GetSubresourceAs<EventHubNetworkRuleSetSubresource>(subscriptionIdentifier,
+            resourceGroupIdentifier, networkRuleSetName, namespaceIdentifier.Value,
+            nameof(Subresource.NetworkRuleSets).ToLowerInvariant());
+
+        if (networkRuleSet != null)
+        {
+            return new ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource>(OperationResult.Success,
+                networkRuleSet, null, null);
+        }
+
+        var created = CreateOrUpdateNetworkRuleSet(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier,
+            networkRuleSetName, EventHubNetworkRuleSetSubresourceProperties.Default());
+        return new ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource>(created.Result, created.Resource,
+            null, null);
+    }
+
+    public ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource> CreateOrUpdateNetworkRuleSet(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        EventHubNamespaceIdentifier namespaceIdentifier, string networkRuleSetName,
+        EventHubNetworkRuleSetSubresourceProperties properties)
+    {
+        var existingNetworkRuleSet = provider.GetSubresourceAs<EventHubNetworkRuleSetSubresource>(
+            subscriptionIdentifier, resourceGroupIdentifier, networkRuleSetName, namespaceIdentifier.Value,
+            nameof(Subresource.NetworkRuleSets).ToLowerInvariant());
+
+        if (existingNetworkRuleSet == null)
+        {
+            var resource = new EventHubNetworkRuleSetSubresource(subscriptionIdentifier, resourceGroupIdentifier,
+                namespaceIdentifier, networkRuleSetName, properties);
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, networkRuleSetName,
+                namespaceIdentifier.Value, nameof(Subresource.NetworkRuleSets).ToLowerInvariant(), resource);
+
+            return new ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource>(OperationResult.Created,
+                resource, null, null);
+        }
+
+        var updated = new EventHubNetworkRuleSetSubresource(subscriptionIdentifier, resourceGroupIdentifier,
+            namespaceIdentifier, networkRuleSetName, properties);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, networkRuleSetName,
+            namespaceIdentifier.Value, nameof(Subresource.NetworkRuleSets).ToLowerInvariant(), updated);
+
+        return new ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource>(OperationResult.Updated, updated,
+            null, null);
     }
 
     public ControlPlaneOperationResult<EventHubResource> CreateOrUpdateEventHub(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
@@ -128,7 +188,12 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
 
     public OperationResult Deploy(GenericResource resource)
     {
-        return resource.Type == "Microsoft.EventHub/namespaces" ? DeployEventHubNamespace(resource) : DeployEventHub(resource);
+        return resource.Type switch
+        {
+            "Microsoft.EventHub/namespaces" => DeployEventHubNamespace(resource),
+            "Microsoft.EventHub/namespaces/networkRuleSets" => DeployEventHubNetworkRuleSet(resource),
+            _ => DeployEventHub(resource)
+        };
     }
 
     private OperationResult DeployEventHub(GenericResource resource)
@@ -160,6 +225,38 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         var result = CreateOrUpdateNamespace(@namespace.GetSubscription(), @namespace.GetResourceGroup(), @namespace.Location,
             EventHubNamespaceIdentifier.From(@namespace.Name),
             new CreateOrUpdateEventHubNamespaceRequest());
+
+        return result.Result;
+    }
+
+    private void EnsureDefaultNetworkRuleSet(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, EventHubNamespaceIdentifier namespaceIdentifier)
+    {
+        var existing = provider.GetSubresourceAs<EventHubNetworkRuleSetSubresource>(subscriptionIdentifier,
+            resourceGroupIdentifier, "default", namespaceIdentifier.Value,
+            nameof(Subresource.NetworkRuleSets).ToLowerInvariant());
+
+        if (existing != null)
+        {
+            return;
+        }
+
+        CreateOrUpdateNetworkRuleSet(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, "default",
+            EventHubNetworkRuleSetSubresourceProperties.Default());
+    }
+
+    private OperationResult DeployEventHubNetworkRuleSet(GenericResource resource)
+    {
+        var networkRuleSet =
+            resource.AsSubresource<EventHubNetworkRuleSetSubresource, EventHubNetworkRuleSetSubresourceProperties>();
+        if (networkRuleSet == null)
+        {
+            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as an Event Hub network ruleset.");
+            return OperationResult.Failed;
+        }
+
+        var result = CreateOrUpdateNetworkRuleSet(networkRuleSet.GetSubscription(), networkRuleSet.GetResourceGroup(),
+            networkRuleSet.GetNamespace(), networkRuleSet.Name, networkRuleSet.Properties);
 
         return result.Result;
     }

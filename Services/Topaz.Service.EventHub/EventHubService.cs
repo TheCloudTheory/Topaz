@@ -11,14 +11,16 @@ public class EventHubService(ITopazLogger logger) : IServiceDefinition
     public string Name => "Azure Event Hub";
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".azure-event-hub");
-    public static IReadOnlyCollection<string>? Subresources => ["hubs"];
+    public static IReadOnlyCollection<string>? Subresources => ["hubs", "networkrulesets"];
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         new EventHubEndpoint(logger),
         new EventHubAmqpEndpoint(),
         new GetNamespaceEndpoint(logger),
+        new GetNamespaceNetworkRuleSetEndpoint(logger),
         new GetEventHubEndpoint(logger),
+        new CreateUpdateNamespaceNetworkRuleSetEndpoint(logger),
         new CreateUpdateHubEndpoint(logger),
         new CreateUpdateNamespaceEndpoint(logger),
         new DeleteNamespaceEndpoint(logger)
