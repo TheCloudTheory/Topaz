@@ -2,6 +2,8 @@ name: CI Topaz
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
   pull_request:
     branches: [ "main" ]
   push:
@@ -108,8 +110,8 @@ jobs:
       id: test_filter
       shell: bash
       run: |
-        # Manual trigger: always run everything
-        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+        # Manual or nightly trigger: always run everything
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event_name }}" == "schedule" ]]; then
           echo "filter=" >> "$GITHUB_OUTPUT"
           echo "skip=false" >> "$GITHUB_OUTPUT"
           exit 0
@@ -168,7 +170,7 @@ jobs:
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
     - name: Terraform Tests
-      if: steps.test_filter.outputs.skip != 'true' && (github.event_name == 'workflow_dispatch' || steps.changes.outputs.terraform == 'true')
+      if: steps.test_filter.outputs.skip != 'true' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || steps.changes.outputs.terraform == 'true')
       run: |
         dotnet test -m:1 --no-build --verbosity normal --logger trx \
           --collect:"XPlat Code Coverage" \
