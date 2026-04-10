@@ -1,10 +1,8 @@
-data "azapi_client_config" "current" {}
-
 resource "azapi_resource" "resource_group" {
   type      = "Microsoft.Resources/resourceGroups@2022-09-01"
   name      = "tf-api-ehub-rg"
   location  = "westeurope"
-  parent_id = "/subscriptions/${data.azapi_client_config.current.subscription_id}"
+  parent_id = "/subscriptions/${var.subscription_id}"
   body      = {}
 }
 

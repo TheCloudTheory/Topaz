@@ -110,6 +110,7 @@ public class TopazFixture
                 // ARM provider identity context
                 .WithEnvironment("ARM_SUBSCRIPTION_ID", _subscriptionId)
                 .WithEnvironment("AZURE_SUBSCRIPTION_ID", _subscriptionId)
+                .WithEnvironment("TF_VAR_subscription_id", _subscriptionId)
                 .WithEnvironment("ARM_TENANT_ID", TenantId)
                 // azuread provider identity context
                 .WithEnvironment("AZURE_TENANT_ID", TenantId)
@@ -507,5 +508,12 @@ public class TopazFixture
             "[ \"$status\" = \"201\" ] || [ \"$status\" = \"400\" ]";
 
         await RunTerraformContainerCommand(createCommand);
+
+        var verifyCommand =
+            "status=$(curl -sS -o /tmp/sub-get.out -w '%{http_code}' --cacert /tmp/topaz.crt " +
+            $"\"https://topaz.local.dev:8899/subscriptions/{_subscriptionId}?api-version=2022-12-01\"); " +
+            "[ \"$status\" = \"200\" ]";
+
+        await RunTerraformContainerCommand(verifyCommand);
     }
 }

@@ -7,7 +7,12 @@ terraform {
   }
 }
 
+variable "subscription_id" {
+  type = string
+}
+
 provider "azapi" {
+  subscription_id = var.subscription_id
   use_msi  = false
   use_oidc = false
   use_cli  = true
