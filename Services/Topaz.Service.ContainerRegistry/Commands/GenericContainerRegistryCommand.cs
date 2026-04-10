@@ -19,6 +19,12 @@ public sealed class GenericContainerRegistryCommand : IEmulatorCommand
             acr.AddCommand<GenerateContainerRegistryCredentialsCommand>("generate-credentials");
             acr.AddCommand<RegenerateContainerRegistryCredentialCommand>("regenerate-credential");
             acr.AddCommand<ListContainerRegistryUsagesCommand>("list-usages");
+
+            acr.AddBranch("repository", repository =>
+            {
+                repository.AddCommand<ListRepositoriesCommand>("list");
+                repository.AddCommand<DeleteRepositoryCommand>("delete");
+            });
         });
     }
 }
