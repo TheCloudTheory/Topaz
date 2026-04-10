@@ -22,6 +22,8 @@ Both approaches are shown below. The container approach is recommended for most 
 
 ## GitHub Actions
 
+If you want a workflow that is intentionally reference-only and runs only when triggered manually, copy this file from the repository: [.github/workflows/topaz-ci.yml](https://github.com/TheCloudTheory/Topaz/blob/main/.github/workflows/topaz-ci.yml).
+
 ### Using the Docker container (recommended)
 
 ```yaml

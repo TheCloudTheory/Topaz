@@ -65,6 +65,8 @@ See the [documentation](https://topaz.thecloudtheory.com/) for connection string
 
 Topaz runs as a service step in any pipeline — no Azure subscription, service principal, or network access required. See the [CI/CD integration guide](https://topaz.thecloudtheory.com/docs/ecosystem/ci-cd) for GitHub Actions and Azure DevOps examples.
 
+For a ready-to-copy, manual-only GitHub Actions workflow, use [.github/workflows/topaz-ci.yml](.github/workflows/topaz-ci.yml).
+
 ## Terraform integration
 
 Topaz supports local Terraform workflows with both the AzureRM and AzAPI providers — no real Azure subscription required. See the [Terraform integration guide](https://topaz.thecloudtheory.com/docs/terraform-integration) for setup instructions, including DNS configuration and provider examples.

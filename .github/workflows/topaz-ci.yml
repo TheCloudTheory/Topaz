@@ -1,0 +1,104 @@
+name: Topaz CI Reference
+
+on:
+  # Manual-only workflow by design (reference template for easy copying).
+  workflow_dispatch:
+    inputs:
+      topaz_version:
+        description: "Topaz image tag (for example: latest, v1.0.350-alpha)"
+        required: false
+        default: "latest"
+        type: string
+      expose_https_443:
+        description: "Expose 443:443 for clients expecting default HTTPS port"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  topaz-ci:
+    name: Boot Topaz and run tests
+    runs-on: ubuntu-latest
+    env:
+      # For reproducible builds, pin to a concrete release tag.
+      TOPAZ_VERSION: ${{ github.event.inputs.topaz_version || 'latest' }}
+      EXPOSE_HTTPS_443: ${{ github.event.inputs.expose_https_443 || 'false' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          # Optional extension: replace with a matrix strategy to test multiple SDK versions.
+          dotnet-version: 8.0.x
+
+      # 1) Map Azure SDK hostnames to localhost in CI.
+      - name: Configure DNS
+        run: sudo bash install/install-linux.sh
+
+      # 2) Trust the Topaz development certificate.
+      - name: Install certificate
+        run: sudo bash certificate/ubuntu-install.sh
+
+      # 3) Start Topaz in the background.
+      - name: Start Topaz
+        # Optional extension: add --pull always after `docker run -d` to force fresh image fetches.
+        # Port mapping reference:
+        # - 8899: Resource Manager (ARM control plane)
+        # - 8898: Key Vault data/control plane
+        # - 8892: Container Registry
+        # - 8891: Blob Storage
+        # - 8890: Table Storage
+        # - 8897: Event Hub HTTPS
+        # - 8888: Event Hub AMQP
+        # - 8889: Service Bus AMQP
+        # - 8887: Additional Service Bus endpoint
+        # - 443: Optional default HTTPS endpoint (enable via workflow input)
+        # Optional extension: expose 5671:5671 for AMQP-over-TLS scenarios.
+        run: |
+          PORT_443_ARG=""
+          if [[ "${{ env.EXPOSE_HTTPS_443 }}" == "true" ]]; then
+            PORT_443_ARG="-p 443:443"
+          fi
+
+          docker run -d \
+            --name topaz.local.dev \
+            $PORT_443_ARG \
+            -p 8899:8899 \
+            -p 8898:8898 \
+            -p 8892:8892 \
+            -p 8891:8891 \
+            -p 8890:8890 \
+            -p 8897:8897 \
+            -p 8888:8888 \
+            -p 8889:8889 \
+            -p 8887:8887 \
+            thecloudtheory/topaz-cli:${{ env.TOPAZ_VERSION }} \
+            start --log-level Information
+
+      - name: Wait for Topaz
+        run: |
+          for i in $(seq 1 30); do
+            # Use Topaz domain, not localhost, to mirror real SDK/CLI resolution.
+            if curl -sk https://topaz.local.dev:8899/subscriptions >/dev/null 2>&1; then
+              echo "Topaz is ready"
+              exit 0
+            fi
+            echo "Waiting for Topaz... ($i/30)"
+            sleep 2
+          done
+          echo "Topaz did not start in time" >&2
+          exit 1
+
+      - name: Restore and build
+        # Optional extension: cache NuGet with actions/cache for faster repeated runs.
+        run: dotnet restore Topaz.sln && dotnet build Topaz.sln --no-restore
+
+      - name: Run tests
+        run: dotnet test Topaz.sln --no-build --verbosity normal
+
+      - name: Stop Topaz
+        if: always()
+        run: docker rm -f topaz.local.dev
