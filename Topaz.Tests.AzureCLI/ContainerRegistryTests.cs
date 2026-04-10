@@ -369,13 +369,21 @@ public class ContainerRegistryTests : TopazFixture
         });
 
         var loginServer = $"{registryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
-        const string manifestJson =
-            "{\"schemaVersion\":2,\"mediaType\":\"application/vnd.docker.distribution.manifest.v2+json\"," +
-            "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0," +
-            "\"digest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}," +
-            "\"layers\":[]}";
+        var manifestsByTag = new Dictionary<string, string>
+        {
+            ["v1"] =
+                "{\"schemaVersion\":2,\"mediaType\":\"application/vnd.docker.distribution.manifest.v2+json\"," +
+                "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0," +
+                "\"digest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}," +
+                "\"layers\":[]}",
+            ["v2"] =
+                "{\"schemaVersion\":2,\"mediaType\":\"application/vnd.docker.distribution.manifest.v2+json\"," +
+                "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0," +
+                "\"digest\":\"sha256:f3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}," +
+                "\"layers\":[]}"
+        };
 
-        foreach (var tag in new[] { "v1", "v2" })
+        foreach (var (tag, manifestJson) in manifestsByTag)
         {
             await RunAzureCliCommand(
                 $"curl -skf -u \"{registryName}:{adminPassword}\" " +

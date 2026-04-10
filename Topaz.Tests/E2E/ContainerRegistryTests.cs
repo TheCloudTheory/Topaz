@@ -856,6 +856,78 @@ public class ContainerRegistryTests
     }
 
     [Test]
+    public async Task ContainerRegistry_DeleteManifest_ByDigest_ShouldDeleteOnlyMatchingTag()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var host = TopazResourceHelpers.GetContainerRegistryLoginServer(RegistryName);
+        using var http = new HttpClient();
+
+        const string repoName = "delete-by-digest-app";
+        const string manifestV1 =
+            "{\"schemaVersion\":2,\"mediaType\":\"application/vnd.docker.distribution.manifest.v2+json\"," +
+            "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0," +
+            "\"digest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}," +
+            "\"layers\":[]}";
+        const string manifestV2 =
+            "{\"schemaVersion\":2,\"mediaType\":\"application/vnd.docker.distribution.manifest.v2+json\"," +
+            "\"config\":{\"mediaType\":\"application/vnd.docker.container.image.v1+json\",\"size\":0," +
+            "\"digest\":\"sha256:f3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}," +
+            "\"layers\":[]}";
+
+        var putV1Req = new HttpRequestMessage(HttpMethod.Put, $"https://{host}/v2/{repoName}/manifests/v1")
+        {
+            Content = new StringContent(manifestV1, Encoding.UTF8,
+                "application/vnd.docker.distribution.manifest.v2+json")
+        };
+        var putV1Resp = await http.SendAsync(putV1Req);
+        Assert.That((int)putV1Resp.StatusCode, Is.EqualTo(201));
+
+        var digestV1 = putV1Resp.Headers.TryGetValues("Docker-Content-Digest", out var digestValues)
+            ? digestValues.FirstOrDefault()
+            : null;
+        Assert.That(digestV1, Is.Not.Null.And.Not.Empty);
+
+        var putV2Req = new HttpRequestMessage(HttpMethod.Put, $"https://{host}/v2/{repoName}/manifests/v2")
+        {
+            Content = new StringContent(manifestV2, Encoding.UTF8,
+                "application/vnd.docker.distribution.manifest.v2+json")
+        };
+        var putV2Resp = await http.SendAsync(putV2Req);
+        Assert.That((int)putV2Resp.StatusCode, Is.EqualTo(201));
+
+        var deleteResp = await http.SendAsync(
+            new HttpRequestMessage(HttpMethod.Delete, $"https://{host}/v2/{repoName}/manifests/{digestV1}"));
+        Assert.That((int)deleteResp.StatusCode, Is.EqualTo(202));
+
+        var tagsResp = await http.SendAsync(
+            new HttpRequestMessage(HttpMethod.Get, $"https://{host}/v2/{repoName}/tags/list"));
+        Assert.That((int)tagsResp.StatusCode, Is.EqualTo(200));
+
+        var tags = JsonDocument.Parse(await tagsResp.Content.ReadAsStringAsync())
+            .RootElement
+            .GetProperty("tags")
+            .EnumerateArray()
+            .Select(e => e.GetString())
+            .ToList();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(tags, Does.Not.Contain("v1"));
+            Assert.That(tags, Contains.Item("v2"));
+        });
+    }
+
+    [Test]
     public async Task ContainerRegistry_DeleteManifest_NotFound_ShouldReturn404()
     {
         // Arrange — create registry via ARM

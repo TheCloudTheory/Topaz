@@ -361,32 +361,71 @@ internal sealed class AcrDataPlane(ContainerRegistryResourceProvider provider, I
         var refPath = Path.Combine(manifestsDir, lookupRef + ".json");
         PathGuard.EnsureWithinDirectory(refPath, manifestsDir);
 
-        if (!File.Exists(refPath)) return false;
+        var deleteByDigest = reference.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase);
 
-        // When deleting by tag, also remove the digest-indexed copy.
-        if (!reference.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase))
+        if (deleteByDigest)
         {
-            try
-            {
-                var envelope = JsonSerializer.Deserialize<ManifestEnvelope>(
-                    File.ReadAllText(refPath), GlobalSettings.JsonOptions);
+            var targetDigest = "sha256:" + lookupRef.ToLowerInvariant();
+            var deletedTagCount = 0;
 
-                if (envelope?.Digest != null)
+            foreach (var tagPath in GetTagManifestPaths(manifestsDir))
+            {
+                try
                 {
-                    var digestHex = envelope.Digest["sha256:".Length..];
-                    var digestPath = Path.Combine(manifestsDir, digestHex + ".json");
-                    PathGuard.EnsureWithinDirectory(digestPath, manifestsDir);
-                    if (File.Exists(digestPath)) File.Delete(digestPath);
+                    var envelope = JsonSerializer.Deserialize<ManifestEnvelope>(
+                        File.ReadAllText(tagPath), GlobalSettings.JsonOptions);
+
+                    if (!string.Equals(envelope?.Digest, targetDigest, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    File.Delete(tagPath);
+                    deletedTagCount++;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogDebug(nameof(AcrDataPlane), nameof(DeleteManifest),
+                        "Could not process tag manifest '{0}': {1}", Path.GetFileName(tagPath), ex.Message);
                 }
             }
-            catch (Exception ex)
+
+            var digestDeleted = false;
+            if (File.Exists(refPath))
             {
-                logger.LogDebug(nameof(AcrDataPlane), nameof(DeleteManifest),
-                    "Could not remove digest-indexed copy: {0}", ex.Message);
+                File.Delete(refPath);
+                digestDeleted = true;
             }
+
+            return deletedTagCount > 0 || digestDeleted;
         }
 
-        File.Delete(refPath);
+        if (!File.Exists(refPath)) return false;
+
+        try
+        {
+            var envelope = JsonSerializer.Deserialize<ManifestEnvelope>(
+                File.ReadAllText(refPath), GlobalSettings.JsonOptions);
+
+            File.Delete(refPath);
+
+            if (envelope?.Digest != null)
+            {
+                var digestHex = envelope.Digest["sha256:".Length..];
+                var digestPath = Path.Combine(manifestsDir, digestHex + ".json");
+                PathGuard.EnsureWithinDirectory(digestPath, manifestsDir);
+
+                // Keep the digest-indexed copy while at least one tag still points to this digest.
+                if (!HasTagReferenceForDigest(manifestsDir, envelope.Digest) && File.Exists(digestPath))
+                {
+                    File.Delete(digestPath);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(nameof(AcrDataPlane), nameof(DeleteManifest),
+                "Could not remove digest-indexed copy: {0}", ex.Message);
+        }
+
         return true;
     }
 
@@ -467,6 +506,35 @@ internal sealed class AcrDataPlane(ContainerRegistryResourceProvider provider, I
     {
         var hash = SHA256.HashData(data);
         return "sha256:" + Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    private static IEnumerable<string> GetTagManifestPaths(string manifestsDir)
+        => Directory.GetFiles(manifestsDir, "*.json")
+                    .Where(path =>
+                    {
+                        var name = Path.GetFileNameWithoutExtension(path);
+                        return !string.IsNullOrEmpty(name) && !IsDigestHex(name);
+                    });
+
+    private bool HasTagReferenceForDigest(string manifestsDir, string digest)
+    {
+        foreach (var tagPath in GetTagManifestPaths(manifestsDir))
+        {
+            try
+            {
+                var envelope = JsonSerializer.Deserialize<ManifestEnvelope>(
+                    File.ReadAllText(tagPath), GlobalSettings.JsonOptions);
+
+                if (string.Equals(envelope?.Digest, digest, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            catch
+            {
+                // Skip malformed files; they should not block normal delete behaviour.
+            }
+        }
+
+        return false;
     }
 
     /// <summary>Returns <c>true</c> when <paramref name="name"/> is a bare 64-character lowercase hex digest,
