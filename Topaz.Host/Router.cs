@@ -125,7 +125,10 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
                 // Just returns and let an endpoint prepare a correct response. The reason why there's no
                 // generic handler for that kind of situation is because in some scenarios (like when
                 // Evert Hub SDK validates a checkpoint), a specific error code is checked.
-                await context.Response.WriteAsync(textResponse);
+                if (!HttpMethods.IsHead(context.Request.Method))
+                {
+                    await context.Response.WriteAsync(textResponse);
+                }
                 return;
             case HttpStatusCode.InternalServerError:
                 logger.LogError(textResponse);
@@ -136,7 +139,11 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         {
             SetResponseContentType(context, response);
 
-            await context.Response.WriteAsync(textResponse);
+            // HEAD responses must not include a body; only status and headers are returned.
+            if (!HttpMethods.IsHead(context.Request.Method))
+            {
+                await context.Response.WriteAsync(textResponse);
+            }
         }
     }
 

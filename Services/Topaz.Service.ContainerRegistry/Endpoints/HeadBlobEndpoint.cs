@@ -54,8 +54,8 @@ internal sealed class HeadBlobEndpoint(AcrDataPlane dataPlane, ITopazLogger logg
         }
 
         response.Headers.Add("Docker-Content-Digest", digest);
-        response.Content = new ByteArrayContent(blob);
-        response.Content.Headers.ContentLength = blob.Length;
+        response.Content = new ByteArrayContent([]);
+        response.Content.Headers.ContentLength = 0;
         response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         response.StatusCode = HttpStatusCode.OK;
     }
