@@ -1,5 +1,11 @@
 using Topaz.EventPipeline;
-using Topaz.Service.ContainerRegistry.Endpoints;
+using Topaz.Service.ContainerRegistry.Endpoints.Auth;
+using Topaz.Service.ContainerRegistry.Endpoints.Blobs;
+using Topaz.Service.ContainerRegistry.Endpoints.Credentials;
+using Topaz.Service.ContainerRegistry.Endpoints.Manifests;
+using Topaz.Service.ContainerRegistry.Endpoints.Repositories;
+using Topaz.Service.ContainerRegistry.Endpoints.Registry;
+using Topaz.Service.ContainerRegistry.Endpoints.Tags;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
