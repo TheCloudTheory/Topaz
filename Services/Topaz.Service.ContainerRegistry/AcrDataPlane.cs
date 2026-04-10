@@ -210,6 +210,33 @@ internal sealed class AcrDataPlane(ContainerRegistryResourceProvider provider, I
     }
 
     /// <summary>
+    /// Deletes a blob identified by <paramref name="digest"/>.
+    /// Corresponds to <c>DELETE /v2/{name}/blobs/{digest}</c>.
+    /// Returns <c>true</c> when the blob existed and was deleted; <c>false</c> when not found.
+    /// </summary>
+    public bool DeleteBlob(
+        SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
+        string registryName, string digest)
+    {
+        logger.LogDebug(nameof(AcrDataPlane), nameof(DeleteBlob),
+            "Executing {0}: registry={1} digest={2}", nameof(DeleteBlob), registryName, digest);
+
+        PathGuard.ValidateName(registryName);
+
+        var digestHex = SanitizeDigestHex(digest);
+        if (digestHex == null) return false;
+
+        var blobsDir = BlobsPath(sub, rg, registryName);
+        var blobPath = Path.Combine(blobsDir, digestHex);
+        PathGuard.EnsureWithinDirectory(blobPath, blobsDir);
+
+        if (!File.Exists(blobPath)) return false;
+
+        File.Delete(blobPath);
+        return true;
+    }
+
+    /// <summary>
     /// Returns true when a blob with the given <paramref name="digest"/> exists.
     /// Corresponds to <c>HEAD /v2/{name}/blobs/{digest}</c>.
     /// </summary>
@@ -360,6 +387,28 @@ internal sealed class AcrDataPlane(ContainerRegistryResourceProvider provider, I
         }
 
         File.Delete(refPath);
+        return true;
+    }
+
+    /// <summary>
+    /// Deletes an entire repository, including all tag and digest indexed manifests.
+    /// Corresponds to ACR data-plane <c>DELETE /acr/v1/{name}</c>.
+    /// Returns <c>true</c> when the repository existed and was deleted; <c>false</c> when not found.
+    /// </summary>
+    public bool DeleteRepository(
+        SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
+        string registryName, string repository)
+    {
+        logger.LogDebug(nameof(AcrDataPlane), nameof(DeleteRepository),
+            "Executing {0}: registry={1} repository={2}", nameof(DeleteRepository), registryName, repository);
+
+        PathGuard.ValidateName(registryName);
+        PathGuard.ValidateName(repository);
+
+        var manifestsDir = ManifestsPath(sub, rg, registryName, repository);
+        if (!Directory.Exists(manifestsDir)) return false;
+
+        Directory.Delete(manifestsDir, recursive: true);
         return true;
     }
 

@@ -71,8 +71,12 @@ internal sealed class ListTagsEndpoint(AcrDataPlane dataPlane, ITopazLogger logg
         string body;
         if (isAcrV1)
         {
-            // ACR v1 format — each tag is an object with at minimum a "name" property.
-            var acrTags = tagList.Select(t => new { name = t }).ToArray();
+            // ACR v1 format — include digest for Azure CLI delete/manifest resolution flows.
+            var acrTags = tagList.Select(t =>
+            {
+                var manifest = dataPlane.GetManifest(sub, rg, registryName, repository, t);
+                return new { name = t, digest = manifest?.Digest };
+            }).ToArray();
             body = JsonSerializer.Serialize(
                 new { registry = $"{registryName}.azurecr.io", imageName = repository, tags = acrTags },
                 GlobalSettings.JsonOptions);

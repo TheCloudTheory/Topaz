@@ -183,7 +183,7 @@ The data plane covers the [OCI Distribution Spec](https://github.com/opencontain
 |-----------|--------|-------|
 | Get | ✅ | `GET /v2/{name}/blobs/{digest}` — returns raw blob bytes with Content-Length |
 | Check existence | ✅ | `HEAD /v2/{name}/blobs/{digest}` — returns 200 + Content-Length when blob exists |
-| Delete | ❌ | |
+| Delete | ✅ | `DELETE /v2/{name}/blobs/{digest}` — deletes existing blob by digest |
 | Initiate upload | ✅ | `POST /v2/{name}/blobs/uploads/` — returns session UUID |
 | Upload (monolithic) | ✅ | `PUT /v2/{name}/blobs/uploads/{uuid}?digest=...` with body |
 | Upload (chunked) | ✅ | `PATCH /v2/{name}/blobs/uploads/{uuid}` then `PUT` to finalize |
@@ -193,12 +193,14 @@ The data plane covers the [OCI Distribution Spec](https://github.com/opencontain
 | Operation | Status | Notes |
 |-----------|--------|-------|
 | List | ✅ | `GET /v2/{name}/tags/list` (OCI) and `GET /acr/v1/{name}/_tags` (ACR data-plane) — supports `n` and `last` pagination params |
+| Delete | ✅ | `DELETE /acr/v1/{name}/_tags/{tag}` — used by `az acr repository delete --image <name:tag>` |
 
 ### Repositories
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
 | List | ✅ | `GET /v2/_catalog` and `GET /acr/v1/_catalog` — returns `{"repositories":[...]}` sorted; supports `n` and `last` pagination params |
+| Delete | ✅ | `DELETE /acr/v1/{name}` — used by `az acr repository delete --repository <name>` |
 
 ---
 

@@ -7,6 +7,7 @@ using Azure.ResourceManager.ContainerRegistry.Models;
 using Azure.ResourceManager.ManagedServiceIdentities;
 using Azure.ResourceManager.Models;
 using Microsoft.Graph;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Topaz.CLI;
@@ -996,6 +997,60 @@ public class ContainerRegistryTests
         var headResp = await http.SendAsync(
             new HttpRequestMessage(HttpMethod.Head, $"https://{host}/v2/nonexistent-repo/manifests/v1"));
 
+        Assert.That((int)headResp.StatusCode, Is.EqualTo(404));
+    }
+
+    [Test]
+    public async Task ContainerRegistry_DeleteBlob_ExistingDigest_ShouldReturn202AndBlobShouldBeGone()
+    {
+        // Arrange — create registry via ARM
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(
+            new AzureLocation("westeurope"),
+            new ContainerRegistrySku(ContainerRegistrySkuName.Basic));
+        await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var host = TopazResourceHelpers.GetContainerRegistryLoginServer(RegistryName);
+        using var http = new HttpClient();
+
+        const string repoName = "delete-blob-app";
+        var payload = Encoding.UTF8.GetBytes("delete-blob-payload");
+        var digest = "sha256:" + Convert.ToHexString(SHA256.HashData(payload)).ToLowerInvariant();
+
+        // Start upload session.
+        var initiateResp = await http.SendAsync(
+            new HttpRequestMessage(HttpMethod.Post, $"https://{host}/v2/{repoName}/blobs/uploads/"));
+        Assert.That((int)initiateResp.StatusCode, Is.EqualTo(202));
+
+        var uploadLocation = initiateResp.Headers.Location;
+        Assert.That(uploadLocation, Is.Not.Null);
+
+        // Complete upload with a monolithic payload.
+        var completeReq = new HttpRequestMessage(HttpMethod.Put, $"{uploadLocation}?digest={digest}")
+        {
+            Content = new ByteArrayContent(payload)
+        };
+        completeReq.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+        var completeResp = await http.SendAsync(completeReq);
+        Assert.That((int)completeResp.StatusCode, Is.EqualTo(201),
+            $"PUT blob failed: {await completeResp.Content.ReadAsStringAsync()}");
+
+        // Act — delete the blob by digest.
+        var deleteResp = await http.SendAsync(
+            new HttpRequestMessage(HttpMethod.Delete, $"https://{host}/v2/{repoName}/blobs/{digest}"));
+
+        // Assert — deletion accepted and blob no longer addressable.
+        Assert.That((int)deleteResp.StatusCode, Is.EqualTo(202),
+            $"DELETE blob failed: {await deleteResp.Content.ReadAsStringAsync()}");
+
+        var headResp = await http.SendAsync(
+            new HttpRequestMessage(HttpMethod.Head, $"https://{host}/v2/{repoName}/blobs/{digest}"));
         Assert.That((int)headResp.StatusCode, Is.EqualTo(404));
     }
 }
