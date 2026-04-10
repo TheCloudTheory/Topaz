@@ -54,7 +54,7 @@ internal sealed class HeadManifestEndpoint(AcrDataPlane dataPlane, ITopazLogger 
         }
 
         response.Headers.Add("Docker-Content-Digest", envelope.Digest);
-        response.Content = new ByteArrayContent([]);
+        response.Content = new ByteArrayContent(envelope.Content);
         response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(envelope.ContentType);
         response.Content.Headers.ContentLength = envelope.Content.Length;
         response.StatusCode = HttpStatusCode.OK;
