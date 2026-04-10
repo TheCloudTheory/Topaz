@@ -17,3 +17,8 @@ cicd:
   label: CI/CD
   permalink: /cicd
   description: CI/CD related posts
+
+terraform:
+  label: Terraform
+  permalink: /terraform
+  description: Terraform integration posts
