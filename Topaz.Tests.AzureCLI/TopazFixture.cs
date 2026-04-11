@@ -10,6 +10,7 @@ namespace Topaz.Tests.AzureCLI;
 public class TopazFixture
 {
     private const string AzureCliContainerImage = "mcr.microsoft.com/azure-cli:2.84.0";
+
     private const string CloudEnvironmentConfiguration = """
                                                          {
                                                            "endpoints":{
@@ -84,15 +85,6 @@ public class TopazFixture
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
             .WithEnvironment("REQUESTS_CA_BUNDLE", "/usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem")
             .WithEnvironment("AZURE_CORE_INSTANCE_DISCOVERY", "false")
-            .WithExtraHost("purgevault123.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
-            .WithExtraHost("deletedvault123.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
-            .WithExtraHost("deletedvault456.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
-            .WithExtraHost("recovervault123.keyvault.topaz.local.dev", _containerTopaz.IpAddress)            
-            .WithExtraHost("secretlistvault01.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
-            .WithExtraHost("secretlistvault02.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
-            .WithExtraHost("recovervault01.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
-            .WithExtraHost("recovervault02.keyvault.topaz.local.dev", _containerTopaz.IpAddress)            
-            .WithExtraHost("SecretListVault02.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazacr06.cr.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazacrrepolist01.cr.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazacrtaglist01.cr.topaz.local.dev", _containerTopaz.IpAddress)
@@ -130,6 +122,11 @@ public class TopazFixture
 
     protected async Task RunAzureCliCommand(string command, Action<JsonNode>? assertion = null, int exitCode = 0)
     {
+        if (_containerAzureCli != null && _containerTopaz != null)
+        {
+            await KeyVaultHostMapper.EnsureVaultHostsMapped(_containerAzureCli, _containerTopaz, command);
+        }
+
         var result = await _containerAzureCli!.ExecAsync(new List<string>()
         {
             "/bin/sh",
