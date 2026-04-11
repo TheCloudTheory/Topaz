@@ -170,7 +170,7 @@ jobs:
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
     - name: Terraform Tests
-      if: steps.test_filter.outputs.skip != 'true' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || steps.changes.outputs.terraform == 'true')
+      if: always() && steps.test_filter.outputs.skip != 'true' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || steps.changes.outputs.terraform == 'true')
       run: |
         dotnet test -m:1 --no-build --verbosity normal --logger trx \
           --collect:"XPlat Code Coverage" \
@@ -183,14 +183,14 @@ jobs:
         files: |
           ${{ github.workspace }}/**/*.trx
     - name: ReportGenerator
-      if: steps.test_filter.outputs.skip != 'true'
+      if: always() && steps.test_filter.outputs.skip != 'true'
       uses: danielpalme/ReportGenerator-GitHub-Action@5.4.8
       with:
         reports: ./TestResults/**/coverage.cobertura.xml
         targetdir: coveragereport
         reporttypes: Html;MarkdownSummaryGithub;Badges
     - name: Upload coverage report artifact
-      if: steps.test_filter.outputs.skip != 'true'
+      if: always() && steps.test_filter.outputs.skip != 'true'
       uses: actions/upload-artifact@v4
       with:
         name: CoverageReport        
@@ -202,8 +202,13 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PR_NUMBER: ${{ github.event.number }}
     - name: Publish coverage in build summary
-      if: steps.test_filter.outputs.skip != 'true'
-      run: cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+      if: always() && steps.test_filter.outputs.skip != 'true'
+      run: |
+        if [[ -f coveragereport/SummaryGithub.md ]]; then
+          cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+        else
+          echo "Coverage summary was not generated." >> $GITHUB_STEP_SUMMARY
+        fi
       shell: bash
     - name: Update Topaz documentation
       if: github.ref == 'refs/heads/main'
