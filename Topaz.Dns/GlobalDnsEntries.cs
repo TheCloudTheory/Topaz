@@ -183,9 +183,12 @@ public record GlobalDnsEntries
         _logger?.LogDebug(nameof(IsSoftDeleted),
             $"Loading entries: {JsonSerializer.Serialize(globalServiceEntries, GlobalSettings.JsonOptionsCli)}");
 
-        var existingEntry = globalServiceEntries
+        var matchingGroup = globalServiceEntries
             .SingleOrDefault(serviceEntries =>
-                serviceEntries.Value.SingleOrDefault(entry => entry.Name.Equals(instanceName, StringComparison.OrdinalIgnoreCase)) != null).Value
+                serviceEntries.Value.SingleOrDefault(entry => entry.Name.Equals(instanceName, StringComparison.OrdinalIgnoreCase)) != null);
+        if (string.IsNullOrWhiteSpace(matchingGroup.Key)) return false;
+
+        var existingEntry = matchingGroup.Value
             .SingleOrDefault(entry => entry.Name.Equals(instanceName, StringComparison.OrdinalIgnoreCase));
 
         return existingEntry is { SoftDeleted: true };

@@ -4,5 +4,6 @@ internal enum Subresource
 {
     Queues,
     Topics,
-    Subscriptions
+    Subscriptions,
+    NetworkRuleSets
 }

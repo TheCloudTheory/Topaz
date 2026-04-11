@@ -109,6 +109,38 @@ internal sealed class ServiceBusServiceControlPlane(
                 null, null);
     }
 
+    public ControlPlaneOperationResult<ServiceBusNetworkRuleSetSubresource> GetNetworkRuleSet(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        ServiceBusNamespaceIdentifier namespaceIdentifier, string networkRuleSetName)
+    {
+        var existingNamespace = GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
+        if (existingNamespace.Result == OperationResult.NotFound || existingNamespace.Resource == null)
+        {
+            return new ControlPlaneOperationResult<ServiceBusNetworkRuleSetSubresource>(OperationResult.NotFound, null,
+                string.Format(ServiceBusNamespaceNotFoundMessageTemplate, namespaceIdentifier),
+                ServiceBusNamespaceNotFoundCode);
+        }
+
+        var networkRuleSet = provider.GetSubresourceAs<ServiceBusNetworkRuleSetSubresource>(subscriptionIdentifier,
+            resourceGroupIdentifier, networkRuleSetName, namespaceIdentifier.Value,
+            nameof(Subresource.NetworkRuleSets).ToLowerInvariant());
+
+        if (networkRuleSet != null)
+        {
+            return new ControlPlaneOperationResult<ServiceBusNetworkRuleSetSubresource>(OperationResult.Success,
+                networkRuleSet, null, null);
+        }
+
+        var defaultProperties = ServiceBusNetworkRuleSetSubresourceProperties.Default();
+        var created = new ServiceBusNetworkRuleSetSubresource(subscriptionIdentifier, resourceGroupIdentifier,
+            namespaceIdentifier, networkRuleSetName, defaultProperties);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, networkRuleSetName,
+            namespaceIdentifier.Value, nameof(Subresource.NetworkRuleSets).ToLowerInvariant(), created);
+
+        return new ControlPlaneOperationResult<ServiceBusNetworkRuleSetSubresource>(OperationResult.Success, created,
+            null, null);
+    }
+
     public ControlPlaneOperationResult<ServiceBusQueueResource> CreateOrUpdateQueue(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         ServiceBusNamespaceIdentifier @namespace, string queueName, CreateOrUpdateServiceBusQueueRequest request)

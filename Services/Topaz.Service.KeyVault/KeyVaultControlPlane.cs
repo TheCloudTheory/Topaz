@@ -289,8 +289,9 @@ internal sealed class KeyVaultControlPlane(
         }
         
         var keyVaults = ListBySubscription(subscriptionIdentifier);
-        var keyVault = keyVaults.Resource!.SingleOrDefault(keyVault => keyVault!.Name == keyVaultName);
-            GlobalDnsEntries.IsSoftDeleted(KeyVaultService.UniqueName, keyVaultName);
+        var keyVault = (keyVaults.Resource ?? [])
+            .SingleOrDefault(kv => kv!.Name == keyVaultName &&
+                                   GlobalDnsEntries.IsSoftDeleted(KeyVaultService.UniqueName, kv.Name));
 
         return keyVault == null ? (OperationResult.NotFound, null) : (OperationResult.Success, keyVault);
     }

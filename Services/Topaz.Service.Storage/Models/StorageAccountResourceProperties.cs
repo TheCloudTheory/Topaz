@@ -29,4 +29,5 @@ internal record StorageAccountResourceProperties
     public bool? IsDefaultToOAuthAuthentication { get; set; }
     public JsonElement? ImmutableStorageWithVersioning { get; set; }
     public string? DnsEndpointType { get; set; }
+    public string ProvisioningState { get; set; } = "Succeeded";
 }
