@@ -1,26 +1,20 @@
 namespace Topaz.Tests.Terraform.AzureRm;
 
-public class EventHubTests : TopazFixture
+public class EventHubTests : AzureRmBatchFixture
 {
     [Test]
-    public async Task EventHubNamespace_CreateAndDestroy_Succeeds()
+    public void EventHubNamespace_CreateAndDestroy_Succeeds()
     {
-        await RunTerraformWithAzureRm("event_hub_namespace", outputs =>
-        {
-            Assert.That(outputs["namespace_name"]!["value"]!.GetValue<string>(), Is.EqualTo("tf-rm-eh-ns"));
-        });
+        Assert.That(GetOutput<string>("eh_ns_namespace_name"), Is.EqualTo("tf-rm-eh-ns"));
     }
 
     [Test]
-    public async Task EventHub_CreateAndDestroy_Succeeds()
+    public void EventHub_CreateAndDestroy_Succeeds()
     {
-        await RunTerraformWithAzureRm("event_hub", outputs =>
+        Assert.Multiple(() =>
         {
-            Assert.Multiple(() =>
-            {
-                Assert.That(outputs["eventhub_name"]!["value"]!.GetValue<string>(), Is.EqualTo("tf-rm-eventhub"));
-                Assert.That(outputs["partition_count"]!["value"]!.GetValue<int>(), Is.EqualTo(2));
-            });
+            Assert.That(GetOutput<string>("ehub_name"), Is.EqualTo("tf-rm-eventhub"));
+            Assert.That(GetOutput<int>("ehub_partition_count"), Is.EqualTo(2));
         });
     }
 }

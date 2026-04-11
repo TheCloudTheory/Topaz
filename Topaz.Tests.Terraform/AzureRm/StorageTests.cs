@@ -1,26 +1,20 @@
 namespace Topaz.Tests.Terraform.AzureRm;
 
-public class StorageTests : TopazFixture
+public class StorageTests : AzureRmBatchFixture
 {
     [Test]
-    public async Task StorageAccount_CreateAndDestroy_Succeeds()
+    public void StorageAccount_CreateAndDestroy_Succeeds()
     {
-        await RunTerraformWithAzureRm("storage_account_basic", outputs =>
+        Assert.Multiple(() =>
         {
-            Assert.Multiple(() =>
-            {
-                Assert.That(outputs["account_name"]!["value"]!.GetValue<string>(), Is.EqualTo("tfrmstorageacct"));
-                Assert.That(outputs["primary_blob_endpoint"]!["value"]!.GetValue<string>(), Does.Contain("tfrmstorageacct"));
-            });
+            Assert.That(GetOutput<string>("stor_account_name"), Is.EqualTo("tfrmstorageacct"));
+            Assert.That(GetOutput<string>("stor_primary_blob_endpoint"), Does.Contain("tfrmstorageacct"));
         });
     }
 
     [Test]
-    public async Task StorageAccount_WithMinimumTlsVersion_IsApplied()
+    public void StorageAccount_WithMinimumTlsVersion_IsApplied()
     {
-        await RunTerraformWithAzureRm("storage_account_tls", outputs =>
-        {
-            Assert.That(outputs["account_name"]!["value"]!.GetValue<string>(), Is.EqualTo("tfrmstoretls"));
-        });
+        Assert.That(GetOutput<string>("stor_tls_account_name"), Is.EqualTo("tfrmstoretls"));
     }
 }

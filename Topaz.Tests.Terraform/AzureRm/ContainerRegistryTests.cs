@@ -1,26 +1,20 @@
 namespace Topaz.Tests.Terraform.AzureRm;
 
-public class ContainerRegistryTests : TopazFixture
+public class ContainerRegistryTests : AzureRmBatchFixture
 {
     [Test]
-    public async Task ContainerRegistry_CreateAndDestroy_Succeeds()
+    public void ContainerRegistry_CreateAndDestroy_Succeeds()
     {
-        await RunTerraformWithAzureRm("container_registry_basic", outputs =>
+        Assert.Multiple(() =>
         {
-            Assert.Multiple(() =>
-            {
-                Assert.That(outputs["login_server"]!["value"]!.GetValue<string>(), Does.Contain("tfrmacr01"));
-                Assert.That(outputs["admin_enabled"]!["value"]!.GetValue<bool>(), Is.False);
-            });
+            Assert.That(GetOutput<string>("acr_login_server"), Does.Contain("tfrmacr01"));
+            Assert.That(GetOutput<bool>("acr_admin_enabled"), Is.False);
         });
     }
 
     [Test]
-    public async Task ContainerRegistry_WithAdminEnabled_AdminCredentialsAreAvailable()
+    public void ContainerRegistry_WithAdminEnabled_AdminCredentialsAreAvailable()
     {
-        await RunTerraformWithAzureRm("container_registry_admin_enabled", outputs =>
-        {
-            Assert.That(outputs["registry_name"]!["value"]!.GetValue<string>(), Is.EqualTo("tfrmacradmin"));
-        });
+        Assert.That(GetOutput<string>("acr_admin_registry_name"), Is.EqualTo("tfrmacradmin"));
     }
 }

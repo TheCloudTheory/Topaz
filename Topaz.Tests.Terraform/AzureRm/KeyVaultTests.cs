@@ -1,26 +1,20 @@
 namespace Topaz.Tests.Terraform.AzureRm;
 
-public class KeyVaultTests : TopazFixture
+public class KeyVaultTests : AzureRmBatchFixture
 {
     [Test]
-    public async Task KeyVault_CreateAndDestroy_Succeeds()
+    public void KeyVault_CreateAndDestroy_Succeeds()
     {
-        await RunTerraformWithAzureRm("key_vault_basic", outputs =>
+        Assert.Multiple(() =>
         {
-            Assert.Multiple(() =>
-            {
-                Assert.That(outputs["vault_name"]!["value"]!.GetValue<string>(), Is.EqualTo("tfrm-kv-test"));
-                Assert.That(outputs["vault_uri"]!["value"]!.GetValue<string>(), Does.Contain("tfrm-kv-test"));
-            });
+            Assert.That(GetOutput<string>("kv_basic_vault_name"), Is.EqualTo("tfrm-kv-test"));
+            Assert.That(GetOutput<string>("kv_basic_vault_uri"), Does.Contain("tfrm-kv-test"));
         });
     }
 
     [Test]
-    public async Task KeyVault_SoftDeleteEnabled_IsReflectedInProperties()
+    public void KeyVault_SoftDeleteEnabled_IsReflectedInProperties()
     {
-        await RunTerraformWithAzureRm("key_vault_soft_delete", outputs =>
-        {
-            Assert.That(outputs["vault_name"]!["value"]!.GetValue<string>(), Is.EqualTo("tfrm-kv-sd"));
-        });
+        Assert.That(GetOutput<string>("kv_sd_vault_name"), Is.EqualTo("tfrm-kv-sd"));
     }
 }

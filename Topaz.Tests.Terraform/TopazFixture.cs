@@ -211,8 +211,12 @@ public class TopazFixture
         _cleanupHookRegistered = true;
     }
 
+    // Subclasses can hook here to run teardown (e.g., terraform destroy) before containers are stopped.
+    protected static event Action? BeforeContainerCleanup;
+
     private static void CleanupSharedResources()
     {
+        try { BeforeContainerCleanup?.Invoke(); } catch { /* best-effort */ }
         try
         {
             _containerTopaz?.DisposeAsync().AsTask().GetAwaiter().GetResult();
@@ -222,6 +226,23 @@ public class TopazFixture
         catch
         {
             // Best-effort cleanup during process shutdown.
+        }
+    }
+
+    // Synchronously destroys a Terraform workspace — safe to call from ProcessExit / event handlers.
+    protected static void DestroyTerraformWorkspaceSync(string workDir)
+    {
+        try
+        {
+            _containerTerraform!.ExecAsync(new List<string>
+            {
+                "/bin/sh", "-c",
+                $"SSL_CERT_FILE=/tmp/combined.pem terraform -chdir={workDir} destroy -auto-approve"
+            }).GetAwaiter().GetResult();
+        }
+        catch
+        {
+            // Best-effort: container may already be stopping.
         }
     }
 
@@ -311,12 +332,22 @@ public class TopazFixture
 
     private async Task RunTerraform(string providerRelPath, string scenarioRelPath, Action<JsonNode>? assertOutputs)
     {
+        var (outputs, workDir) = await ApplyTerraformRetaining(providerRelPath, scenarioRelPath);
+        assertOutputs?.Invoke(outputs);
+        await ExecTerraform($"terraform -chdir={workDir} destroy -auto-approve");
+    }
+
+    // Applies a scenario and returns (all outputs, workDir) WITHOUT destroying.
+    // Used by AzureRmBatchFixture to apply once for all tests.
+    protected async Task<(JsonNode Outputs, string WorkDir)> ApplyTerraformRetaining(
+        string providerRelPath, string scenarioRelPath)
+    {
         var workDir = $"/workspace/{Guid.NewGuid():N}";
         var terraformDir = Path.Combine(AppContext.BaseDirectory, "terraform");
 
         await ExecTerraform($"mkdir -p {workDir}");
 
-        // Copy provider config (.tf files are combined in the workspace directory by Terraform)
+        // Copy provider config
         await WriteFileToContainer(workDir, "provider.tf",
             await File.ReadAllTextAsync(Path.Combine(terraformDir, providerRelPath)));
 
@@ -325,8 +356,7 @@ public class TopazFixture
             await WriteFileToContainer(workDir, Path.GetFileName(tfFile),
                 await File.ReadAllTextAsync(tfFile));
 
-        // Copy the pre-initialized provider template into this workspace.
-        // This replaces `terraform init` (30–90 s for azurerm v4) with a fast directory copy.
+        // Copy the pre-initialized provider template — fast alternative to `terraform init`.
         var templateDir = GetTemplateDir(providerRelPath);
         await ExecTerraform(
             $"cp -a {templateDir}/.terraform {workDir}/.terraform && " +
@@ -338,8 +368,7 @@ public class TopazFixture
         }
         catch (AssertionException ex) when (IsRecoverableProviderStartupError(ex.Message))
         {
-            // The provider binary in the cache is corrupted. Purge cache, rebuild the shared template,
-            // copy a fresh copy to this workspace, and retry apply once.
+            // Corrupted provider binary. Purge cache, rebuild template, retry.
             await ExecTerraform($"rm -rf {workDir}/.terraform");
             await ExecTerraform($"rm -rf {templateDir}/.terraform");
             await ExecTerraform("find /tf-cache/plugin-cache -path '*registry.terraform.io/hashicorp/azurerm*' -exec rm -rf {} + || true");
@@ -361,13 +390,8 @@ public class TopazFixture
             await ExecTerraform($"terraform -chdir={workDir} apply -auto-approve");
         }
 
-        if (assertOutputs != null)
-        {
-            var (stdout, _) = await ExecTerraformWithOutput($"terraform -chdir={workDir} output -json");
-            assertOutputs(JsonNode.Parse(stdout)!);
-        }
-
-        await ExecTerraform($"terraform -chdir={workDir} destroy -auto-approve");
+        var (stdout, _) = await ExecTerraformWithOutput($"terraform -chdir={workDir} output -json");
+        return (JsonNode.Parse(stdout)!, workDir);
     }
 
     private async Task WriteFileToContainer(string workDir, string fileName, string content)

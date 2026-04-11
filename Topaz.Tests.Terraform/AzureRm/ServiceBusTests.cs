@@ -1,31 +1,22 @@
 namespace Topaz.Tests.Terraform.AzureRm;
 
-public class ServiceBusTests : TopazFixture
+public class ServiceBusTests : AzureRmBatchFixture
 {
     [Test]
-    public async Task ServiceBusNamespace_CreateAndDestroy_Succeeds()
+    public void ServiceBusNamespace_CreateAndDestroy_Succeeds()
     {
-        await RunTerraformWithAzureRm("service_bus_namespace", outputs =>
-        {
-            Assert.That(outputs["namespace_name"]!["value"]!.GetValue<string>(), Is.EqualTo("tf-rm-sb-ns"));
-        });
+        Assert.That(GetOutput<string>("sb_ns_namespace_name"), Is.EqualTo("tf-rm-sb-ns"));
     }
 
     [Test]
-    public async Task ServiceBusQueue_CreateAndDestroy_Succeeds()
+    public void ServiceBusQueue_CreateAndDestroy_Succeeds()
     {
-        await RunTerraformWithAzureRm("service_bus_queue", outputs =>
-        {
-            Assert.That(outputs["queue_name"]!["value"]!.GetValue<string>(), Is.EqualTo("tf-rm-queue"));
-        });
+        Assert.That(GetOutput<string>("sb_q_queue_name"), Is.EqualTo("tf-rm-queue"));
     }
 
     [Test]
-    public async Task ServiceBusTopic_CreateAndDestroy_Succeeds()
+    public void ServiceBusTopic_CreateAndDestroy_Succeeds()
     {
-        await RunTerraformWithAzureRm("service_bus_topic", outputs =>
-        {
-            Assert.That(outputs["topic_name"]!["value"]!.GetValue<string>(), Is.EqualTo("tf-rm-topic"));
-        });
+        Assert.That(GetOutput<string>("sb_t_topic_name"), Is.EqualTo("tf-rm-topic"));
     }
 }

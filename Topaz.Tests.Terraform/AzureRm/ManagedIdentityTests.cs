@@ -1,27 +1,21 @@
 namespace Topaz.Tests.Terraform.AzureRm;
 
-public class ManagedIdentityTests : TopazFixture
+public class ManagedIdentityTests : AzureRmBatchFixture
 {
     [Test]
-    public async Task UserAssignedIdentity_CreateAndDestroy_Succeeds()
+    public void UserAssignedIdentity_CreateAndDestroy_Succeeds()
     {
-        await RunTerraformWithAzureRm("managed_identity_basic", outputs =>
+        Assert.Multiple(() =>
         {
-            Assert.Multiple(() =>
-            {
-                Assert.That(outputs["identity_name"]!["value"]!.GetValue<string>(), Is.EqualTo("tf-rm-identity"));
-                Assert.That(outputs["client_id"]!["value"]!.GetValue<string>(), Is.Not.Empty);
-                Assert.That(outputs["principal_id"]!["value"]!.GetValue<string>(), Is.Not.Empty);
-            });
+            Assert.That(GetOutput<string>("id_name"), Is.EqualTo("tf-rm-identity"));
+            Assert.That(GetOutput<string>("id_client_id"), Is.Not.Empty);
+            Assert.That(GetOutput<string>("id_principal_id"), Is.Not.Empty);
         });
     }
 
     [Test]
-    public async Task UserAssignedIdentity_WithTags_TagsArePreserved()
+    public void UserAssignedIdentity_WithTags_TagsArePreserved()
     {
-        await RunTerraformWithAzureRm("managed_identity_with_tags", outputs =>
-        {
-            Assert.That(outputs["identity_name"]!["value"]!.GetValue<string>(), Is.EqualTo("tf-rm-identity-tagged"));
-        });
+        Assert.That(GetOutput<string>("id_tags_name"), Is.EqualTo("tf-rm-identity-tagged"));
     }
 }
