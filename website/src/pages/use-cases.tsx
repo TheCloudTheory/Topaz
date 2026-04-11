@@ -110,6 +110,7 @@ function IaCVisual() {
       boxes: [
         { text: '📄 main.bicep', cls: styles.topoBoxGray },
         { text: '📄 modules/storage.bicep', cls: styles.topoBoxGray },
+        { text: '📄 main.tf', cls: styles.topoBoxGray },
       ],
     },
     {
@@ -137,7 +138,7 @@ function IaCVisual() {
 
   return (
     <div className={styles.scenarioVisual}>
-      <WindowChrome title="Bicep → Topaz ARM deployment" />
+      <WindowChrome title="ARM / Bicep / Terraform → Topaz deployment" />
       <div className={styles.topology}>
         {rows.map((row, ri) => (
           <React.Fragment key={ri}>
@@ -230,16 +231,16 @@ const SCENARIOS: Scenario[] = [
     reverse: true,
   },
   {
-    tag: 'Infrastructure as Code',
+    tag: 'Infrastructure as Code · ARM · Bicep · Terraform',
     icon: '🏗',
-    title: 'Validate ARM & Bicep templates before you touch the cloud',
+    title: 'Validate ARM, Bicep & Terraform configurations locally before deploying to Azure',
     description:
-      'Deploy your Infrastructure-as-Code files to Topaz exactly as you would to Azure — az deployment group create, the Azure SDK, or a CI step. Topaz evaluates the template, provisions all described resources, applies RBAC assignments, and lets you verify the resulting state without risking a misconfigured production environment.',
+      'Deploy your Infrastructure-as-Code files to Topaz exactly as you would to Azure — az deployment group create, the Terraform azurerm provider, the Azure SDK, or a CI step. Topaz evaluates the template or plan, provisions all described resources, applies RBAC assignments, and lets you verify the resulting state without risking a misconfigured production environment.',
     benefits: [
-      'Catch template errors locally in seconds, not after a 10-minute cloud deploy',
+      'Catch ARM, Bicep and Terraform errors locally in seconds, not after a 10-minute cloud deploy',
       'Test RBAC and managed-identity wiring before committing',
       'Iterate on module structure without accumulating cloud resources',
-      'Works with both ARM JSON and compiled Bicep output',
+      'Works with ARM JSON, compiled Bicep output, and Terraform via the azurerm provider',
     ],
     visual: <IaCVisual />,
   },
