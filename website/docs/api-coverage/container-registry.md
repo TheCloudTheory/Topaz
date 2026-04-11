@@ -109,7 +109,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Create | ❌ |
 | Delete | ❌ |
 | Get | ❌ |
-| List | ❌ |
+| List | ✅ |
 | Update | ❌ |
 
 ### Scope Maps
