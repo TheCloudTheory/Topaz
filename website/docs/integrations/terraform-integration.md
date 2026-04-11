@@ -1,5 +1,6 @@
 ---
-sidebar_position: 5
+sidebar_position: 2
+slug: /terraform-integration
 description: Use Terraform with Topaz by configuring AzureRM to discover Topaz metadata endpoints, authenticate locally, and run apply/destroy against emulated Azure services.
 keywords: [terraform topaz, azurerm local emulator, azure terraform local, topaz metadata_host, terraform azure emulator]
 ---
@@ -24,7 +25,7 @@ In practice, this means your Terraform workflow (`init`, `plan`, `apply`, `destr
 ## Prerequisites
 
 - Topaz installed and running
-- DNS setup completed (see [Getting started](./intro.md))
+- DNS setup completed (see [Getting started](../intro.md))
 - Certificate trusted by your runtime/tooling (or run in a containerized setup that already handles this)
 - Terraform installed
 
@@ -145,4 +146,4 @@ terraform destroy -auto-approve
 |---|---|---|
 | `https://https://...` endpoint errors | `metadata_host` set with scheme | Use host:port only |
 | `SubscriptionNotFound` | Subscription missing in emulator | Start Topaz with `--default-subscription` or create one first |
-| `CERTIFICATE_VERIFY_FAILED` / TLS errors | Certificate trust not configured in tool runtime | Follow cert setup in [Getting started](./intro.md) and [Azure CLI integration](./azure-cli-integration.md) |
+| `CERTIFICATE_VERIFY_FAILED` / TLS errors | Certificate trust not configured in tool runtime | Follow cert setup in [Getting started](../intro.md) and [Azure CLI integration](./azure-cli-integration.md) |

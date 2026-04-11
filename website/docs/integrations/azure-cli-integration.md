@@ -1,5 +1,6 @@
 ---
-sidebar_position: 4
+sidebar_position: 1
+slug: /azure-cli-integration
 description: Configure Azure CLI to connect to Topaz and run az commands against your local Azure emulator. Authenticate, set the cloud environment, and manage emulated resources without a real Azure subscription.
 keywords: [azure cli local, az command topaz, azure cli emulator, local azure cli, az login topaz]
 ---
@@ -14,7 +15,7 @@ Topaz exposes a custom Azure cloud environment that Azure CLI can register and a
 ## Prerequisites
 
 - Azure CLI installed (`az --version` to verify)
-- Topaz installed and the certificate trusted at the OS level (see [Getting started](./intro.md))
+- Topaz installed and the certificate trusted at the OS level (see [Getting started](../intro.md))
 - A Microsoft Entra ID tenant you can log into (a free/personal tenant works fine)
 
 :::tip[Use a dedicated test tenant]

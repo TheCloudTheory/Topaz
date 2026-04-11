@@ -1,5 +1,6 @@
 ---
 sidebar_position: 6
+slug: /ecosystem/ci-cd
 ---
 
 import Tabs from '@theme/Tabs';

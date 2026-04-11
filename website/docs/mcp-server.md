@@ -103,4 +103,4 @@ Copilot will:
 1. Call `RunTopazAsContainer` to pull and start the emulator
 2. Call `CreateSubscription` to provision the subscription inside it
 
-You can then continue using `az` commands or the Azure SDK against `localhost` as described in the [Azure CLI integration](./azure-cli-integration.md) guide.
+You can then continue using `az` commands or the Azure SDK against `localhost` as described in the [Azure CLI integration](./integrations/azure-cli-integration.md) guide.

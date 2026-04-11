@@ -231,7 +231,7 @@ builder.Services.AddTopaz(
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `Connection refused` on any port | Container not ready | Add a readiness wait loop — see [CI/CD](ecosystem/ci-cd.md#using-the-docker-container-recommended) |
+| `Connection refused` on any port | Container not ready | Add a readiness wait loop — see [CI/CD](integrations/ecosystem/ci-cd.md#using-the-docker-container-recommended) |
 | `Connection refused` from another container | Wrong hostname | Use `host.docker.internal` (Docker Desktop) or `--network host` (Linux) |
 | DNS not resolving inside container | `install-linux.sh` not run on host | Run installer on the host before starting containers |
 | Port not reachable from tests | Port not exposed | Add `-p 8899:8899` (and other ports) to `docker run` |
@@ -265,7 +265,7 @@ The resource type may not be supported. Topaz logs a warning and skips unknown t
 WARN  Deployment of Microsoft.X/y is not yet supported.
 ```
 
-Check the [supported resource types table](ecosystem/arm-deployments.md#supported-resource-types) and remove unsupported types from the template, or file an issue to request support.
+Check the [supported resource types table](integrations/ecosystem/arm-deployments.md#supported-resource-types) and remove unsupported types from the template, or file an issue to request support.
 
 ### Template expression evaluation errors
 

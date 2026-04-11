@@ -198,7 +198,5 @@ The `-k` flag skips TLS verification for the quick check. In normal usage the ce
 
 - [Supported services](./supported-services.md) — coverage matrix and port reference
 - [Using Topaz CLI](./using-cli.md) — create subscriptions, resource groups, and more
-- [Azure CLI integration](./azure-cli-integration.md) — use `az` commands against Topaz
-- [Terraform integration](./terraform-integration.md) — configure AzureRM provider to run Terraform locally against Topaz
-- [ASP.NET Core integration](./ecosystem/aspnet-core.md) — wire Topaz into your app with a fluent API
+- [Integrations](./integrations/) — Azure CLI, Terraform, ASP.NET Core, CI/CD, and more
 

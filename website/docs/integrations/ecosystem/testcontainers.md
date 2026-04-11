@@ -1,5 +1,6 @@
 ---
 sidebar_position: 2
+slug: /ecosystem/testcontainers
 ---
 
 # Testcontainers

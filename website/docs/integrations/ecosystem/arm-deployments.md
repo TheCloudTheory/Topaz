@@ -1,5 +1,6 @@
 ---
 sidebar_position: 3
+slug: /ecosystem/arm-deployments
 ---
 
 # ARM Template Deployments
