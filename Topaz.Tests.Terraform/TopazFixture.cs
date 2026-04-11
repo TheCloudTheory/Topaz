@@ -24,6 +24,15 @@ public class TopazFixture
     private static readonly string TerraformCacheDir = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
         ".terraform.d", "topaz-test-cache");
+
+    // Pre-initialized provider workspaces — each provider is initialized once in OneTimeSetUp
+    // and then copied (cp -a) into every test workspace, eliminating the 30–90 s per-test
+    // `terraform init` cost caused by azurerm v4 schema loading.
+    private const string TemplateRoot = "/tf-templates";
+    private static readonly string TemplateAzureRm  = $"{TemplateRoot}/azurerm";
+    private static readonly string TemplateAzureApi = $"{TemplateRoot}/azapi";
+    private static readonly string TemplateAzureAd  = $"{TemplateRoot}/azuread";
+
     private const string CloudConfig = """
                                        {
                                          "endpoints":{
@@ -173,6 +182,9 @@ public class TopazFixture
             await EnsureSubscriptionExistsInTopaz();
             await RunTerraformContainerCommand($"az account set --subscription {_subscriptionId}", maxAttempts: 3);
 
+            // Pre-initialize one workspace per provider so tests can skip `terraform init`.
+            await PreInitializeProviderTemplates();
+
             RegisterCleanupHook();
             _isInitialized = true;
         }
@@ -313,20 +325,12 @@ public class TopazFixture
             await WriteFileToContainer(workDir, Path.GetFileName(tfFile),
                 await File.ReadAllTextAsync(tfFile));
 
-        await ExecTerraformWithRetry(
-            $"terraform -chdir={workDir} init",
-            maxAttempts: 3,
-            shouldRetry: (_, stderr) =>
-                stderr.Contains("Failed to query available provider packages", StringComparison.OrdinalIgnoreCase) ||
-                stderr.Contains("could not connect to registry.terraform.io", StringComparison.OrdinalIgnoreCase) ||
-                stderr.Contains("context deadline exceeded", StringComparison.OrdinalIgnoreCase) ||
-                stderr.Contains("Failed to install provider", StringComparison.OrdinalIgnoreCase) ||
-                stderr.Contains("unexpected EOF", StringComparison.OrdinalIgnoreCase),
-            onRetry: async () =>
-            {
-                await ExecTerraform($"rm -rf {workDir}/.terraform");
-                await ExecTerraform("find /tf-cache/plugin-cache -path '*registry.terraform.io/hashicorp/azurerm*' -exec rm -rf {} + || true");
-            });
+        // Copy the pre-initialized provider template into this workspace.
+        // This replaces `terraform init` (30–90 s for azurerm v4) with a fast directory copy.
+        var templateDir = GetTemplateDir(providerRelPath);
+        await ExecTerraform(
+            $"cp -a {templateDir}/.terraform {workDir}/.terraform && " +
+            $"(cp {templateDir}/.terraform.lock.hcl {workDir}/.terraform.lock.hcl 2>/dev/null || true)");
 
         try
         {
@@ -334,25 +338,25 @@ public class TopazFixture
         }
         catch (AssertionException ex) when (IsRecoverableProviderStartupError(ex.Message))
         {
-            // The provider cache can occasionally contain a corrupted azurerm artifact.
-            // Purge azurerm cache entries, then re-init and retry apply once.
+            // The provider binary in the cache is corrupted. Purge cache, rebuild the shared template,
+            // copy a fresh copy to this workspace, and retry apply once.
             await ExecTerraform($"rm -rf {workDir}/.terraform");
+            await ExecTerraform($"rm -rf {templateDir}/.terraform");
             await ExecTerraform("find /tf-cache/plugin-cache -path '*registry.terraform.io/hashicorp/azurerm*' -exec rm -rf {} + || true");
 
             await ExecTerraformWithRetry(
-                $"terraform -chdir={workDir} init",
+                $"terraform -chdir={templateDir} init",
                 maxAttempts: 3,
-                shouldRetry: (_, stderr) =>
-                    stderr.Contains("Failed to query available provider packages", StringComparison.OrdinalIgnoreCase) ||
-                    stderr.Contains("could not connect to registry.terraform.io", StringComparison.OrdinalIgnoreCase) ||
-                    stderr.Contains("context deadline exceeded", StringComparison.OrdinalIgnoreCase) ||
-                    stderr.Contains("Failed to install provider", StringComparison.OrdinalIgnoreCase) ||
-                    stderr.Contains("unexpected EOF", StringComparison.OrdinalIgnoreCase),
+                shouldRetry: (_, stderr) => IsInitRetryableError(stderr),
                 onRetry: async () =>
                 {
-                    await ExecTerraform($"rm -rf {workDir}/.terraform");
+                    await ExecTerraform($"rm -rf {templateDir}/.terraform");
                     await ExecTerraform("find /tf-cache/plugin-cache -path '*registry.terraform.io/hashicorp/azurerm*' -exec rm -rf {} + || true");
                 });
+
+            await ExecTerraform(
+                $"cp -a {templateDir}/.terraform {workDir}/.terraform && " +
+                $"(cp {templateDir}/.terraform.lock.hcl {workDir}/.terraform.lock.hcl 2>/dev/null || true)");
 
             await ExecTerraform($"terraform -chdir={workDir} apply -auto-approve");
         }
@@ -513,5 +517,52 @@ public class TopazFixture
             $"az rest --method get --url \"https://topaz.local.dev:8899/subscriptions/{_subscriptionId}?api-version=2022-12-01\"";
 
         await RunTerraformContainerCommand(verifyCommand);
+    }
+
+    // -------------------------------------------------------------------------
+    // Provider template helpers — pre-init once, copy per test
+    // -------------------------------------------------------------------------
+
+    private static string GetTemplateDir(string providerRelPath) =>
+        providerRelPath switch
+        {
+            _ when providerRelPath.Contains("azurerm") => TemplateAzureRm,
+            _ when providerRelPath.Contains("azapi")   => TemplateAzureApi,
+            _                                          => TemplateAzureAd,
+        };
+
+    private static bool IsInitRetryableError(string stderr) =>
+        stderr.Contains("Failed to query available provider packages", StringComparison.OrdinalIgnoreCase) ||
+        stderr.Contains("could not connect to registry.terraform.io", StringComparison.OrdinalIgnoreCase) ||
+        stderr.Contains("context deadline exceeded", StringComparison.OrdinalIgnoreCase) ||
+        stderr.Contains("Failed to install provider", StringComparison.OrdinalIgnoreCase) ||
+        stderr.Contains("unexpected EOF", StringComparison.OrdinalIgnoreCase);
+
+    private async Task PreInitializeProviderTemplates()
+    {
+        var terraformDir = Path.Combine(AppContext.BaseDirectory, "terraform");
+        var templates = new[]
+        {
+            (TemplateAzureRm,  "providers/azurerm.tf"),
+            (TemplateAzureApi, "providers/azapi.tf"),
+            (TemplateAzureAd,  "providers/azuread.tf"),
+        };
+
+        foreach (var (templateDir, providerFile) in templates)
+        {
+            await ExecTerraform($"mkdir -p {templateDir}");
+            await WriteFileToContainer(templateDir, "provider.tf",
+                await File.ReadAllTextAsync(Path.Combine(terraformDir, providerFile)));
+
+            await ExecTerraformWithRetry(
+                $"terraform -chdir={templateDir} init",
+                maxAttempts: 3,
+                shouldRetry: (_, stderr) => IsInitRetryableError(stderr),
+                onRetry: async () =>
+                {
+                    await ExecTerraform($"rm -rf {templateDir}/.terraform");
+                    await ExecTerraform("find /tf-cache/plugin-cache -path '*registry.terraform.io/hashicorp/azurerm*' -exec rm -rf {} + || true");
+                });
+        }
     }
 }
