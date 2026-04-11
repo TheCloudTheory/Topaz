@@ -89,7 +89,7 @@ mkdir -p topaz-terraform-tutorial
 cd topaz-terraform-tutorial
 ```
 
-Create `providers.tf`:
+Create `providers.tf` for the **azurerm** provider:
 
 ```hcl
 terraform {
@@ -112,6 +112,45 @@ provider "azurerm" {
   # Topaz does not emulate full RP registration flow.
   resource_provider_registrations = "none"
 }
+```
+
+If you want to use the **azapi** provider instead (or alongside azurerm), the configuration is different — `azapi` does not use `metadata_host`. Instead, use the `endpoint` list attribute and set `disable_instance_discovery = true`:
+
+```hcl
+terraform {
+  required_version = ">= 1.6.0"
+
+  required_providers {
+    azapi = {
+      source  = "azure/azapi"
+      version = "~> 2.0"
+    }
+  }
+}
+
+variable "subscription_id" {
+  type = string
+}
+
+provider "azapi" {
+  subscription_id            = var.subscription_id
+  use_msi                    = false
+  use_oidc                   = false
+  use_cli                    = true
+  disable_instance_discovery = true
+
+  endpoint = [{
+    resource_manager_endpoint       = "https://topaz.local.dev:8899/"
+    active_directory_authority_host = "https://topaz.local.dev:8899/"
+    resource_manager_audience       = "https://topaz.local.dev:8899/"
+  }]
+}
+```
+
+Pass the subscription ID via an environment variable:
+
+```bash
+export TF_VAR_subscription_id=00000000-0000-0000-0000-000000000001
 ```
 
 Create `main.tf`:
@@ -231,6 +270,27 @@ Symptom:
 Fix:
 
 - Keep `resource_provider_registrations = "none"`
+
+### 6) azapi `endpoint` block syntax error
+
+Symptom:
+
+- Terraform errors with `Blocks of type "endpoint" are not expected here`
+
+Fix:
+
+- `endpoint` in the `azapi` provider is an attribute (list), not a block — use `endpoint = [{ ... }]` syntax, not `endpoint { ... }`
+
+### 7) azapi TLS or instance discovery failure
+
+Symptom:
+
+- azapi provider fails during `init` or `apply` trying to reach `login.microsoftonline.com`
+
+Fix:
+
+- Add `disable_instance_discovery = true` to your `azapi` provider block
+- Ensure `SSL_CERT_FILE` (or your OS trust store) includes the Topaz certificate so the Go-based provider trusts TLS connections to `topaz.local.dev`
 
 ## Next steps
 

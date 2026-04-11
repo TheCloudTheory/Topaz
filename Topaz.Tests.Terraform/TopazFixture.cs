@@ -510,9 +510,7 @@ public class TopazFixture
         await RunTerraformContainerCommand(createCommand);
 
         var verifyCommand =
-            "status=$(curl -sS -o /tmp/sub-get.out -w '%{http_code}' --cacert /tmp/topaz.crt " +
-            $"\"https://topaz.local.dev:8899/subscriptions/{_subscriptionId}?api-version=2022-12-01\"); " +
-            "[ \"$status\" = \"200\" ]";
+            $"az rest --method get --url \"https://topaz.local.dev:8899/subscriptions/{_subscriptionId}?api-version=2022-12-01\"";
 
         await RunTerraformContainerCommand(verifyCommand);
     }
