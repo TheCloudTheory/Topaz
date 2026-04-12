@@ -17,6 +17,8 @@ internal sealed class UpdateServicePrincipalEndpoint(ITopazLogger logger) : IEnd
     public string[] Endpoints =>
     [
         "PATCH /servicePrincipals/{servicePrincipalId}",
+        "PATCH /v1.0/servicePrincipals/{servicePrincipalId}",
+        "PATCH /beta/servicePrincipals/{servicePrincipalId}",
     ];
 
     public string[] Permissions => ["*"];
@@ -24,7 +26,9 @@ internal sealed class UpdateServicePrincipalEndpoint(ITopazLogger logger) : IEnd
     
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var servicePrincipalIdentifier = ServicePrincipalIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+        var servicePrincipalIdentifier = context.Request.Path.Value.StartsWith("/servicePrincipals")
+            ? ServicePrincipalIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2))
+            : ServicePrincipalIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(3));
         
         logger.LogDebug(nameof(UpdateServicePrincipalEndpoint), nameof(GetResponse),
             "Updating a service principal `{0}`.", servicePrincipalIdentifier);

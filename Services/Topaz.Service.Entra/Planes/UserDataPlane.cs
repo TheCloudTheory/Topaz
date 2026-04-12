@@ -113,4 +113,22 @@ internal sealed class UserDataPlane(EntraResourceProvider provider, ITopazLogger
                 JsonSerializer.Deserialize<User>(File.ReadAllText(file), GlobalSettings.JsonOptions)!).ToArray(),
             null, null);
     }
+
+    public DataPlaneOperationResult Update(UserIdentifier userIdentifier, UpdateUserRequest request)
+    {
+        logger.LogDebug(nameof(UserDataPlane), nameof(Update), "Updating a user `{0}`.", userIdentifier);
+
+        var existingUserOperation = Get(userIdentifier);
+        if (existingUserOperation.Result == OperationResult.NotFound || existingUserOperation.Resource == null)
+        {
+            return BadRequestOperationResult.ForNotFound(userIdentifier);
+        }
+
+        existingUserOperation.Resource.UpdateFromRequest(request);
+
+        var entityPath = BuildLocalUserEntityPath(UserIdentifier.From(existingUserOperation.Resource.UserPrincipalName!));
+        File.WriteAllText(entityPath, existingUserOperation.Resource.ToString());
+
+        return new DataPlaneOperationResult(OperationResult.Updated, null, null);
+    }
 }

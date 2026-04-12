@@ -16,6 +16,8 @@ public class GetServicePrincipalEndpoint(ITopazLogger logger) : IEndpointDefinit
     public string[] Endpoints =>
     [
         "GET /servicePrincipals/{servicePrincipalId}",
+        "GET /v1.0/servicePrincipals/{servicePrincipalId}",
+        "GET /beta/servicePrincipals/{servicePrincipalId}",
     ];
 
     public string[] Permissions => ["*"];
@@ -23,8 +25,9 @@ public class GetServicePrincipalEndpoint(ITopazLogger logger) : IEndpointDefinit
     
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var servicePrincipalIdentifier =
-            ServicePrincipalIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+        var servicePrincipalIdentifier = context.Request.Path.Value.StartsWith("/servicePrincipals")
+            ? ServicePrincipalIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2))
+            : ServicePrincipalIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(3));
         
         logger.LogDebug(nameof(GetServicePrincipalEndpoint), nameof(GetResponse),
             "Fetching a service principal `{0}`.", servicePrincipalIdentifier);

@@ -17,6 +17,8 @@ internal sealed class GetApplicationEndpoint(ITopazLogger logger) : IEndpointDef
     public string[] Endpoints =>
     [
         "GET /applications/{applicationId}",
+        "GET /v1.0/applications/{applicationId}",
+        "GET /beta/applications/{applicationId}",
     ];
 
     public string[] Permissions => ["*"];
@@ -24,8 +26,9 @@ internal sealed class GetApplicationEndpoint(ITopazLogger logger) : IEndpointDef
     
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var applicationIdentifier =
-            ApplicationIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+        var applicationIdentifier = context.Request.Path.Value.StartsWith("/applications")
+            ? ApplicationIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2))
+            : ApplicationIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(3));
         
         logger.LogDebug(nameof(GetApplicationEndpoint), nameof(GetResponse),
             "Fetching an application `{0}`.", applicationIdentifier);

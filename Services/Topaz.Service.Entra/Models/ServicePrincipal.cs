@@ -78,14 +78,14 @@ internal sealed class ServicePrincipal : DirectoryObject
         public DateTimeOffset? StartDateTime { get; init; }
     }
 
-    public static ServicePrincipal FromRequest(CreateServicePrincipalRequest request)
+    public static ServicePrincipal FromRequest(CreateServicePrincipalRequest request, string? effectiveDisplayName = null)
     {
         return new ServicePrincipal
         {
             Id = Guid.NewGuid().ToString(),
             AppId = request.AppId,
             AccountEnabled = request.AccountEnabled,
-            DisplayName = request.DisplayName,
+            DisplayName = effectiveDisplayName ?? request.DisplayName,
             ServicePrincipalType = request.ServicePrincipalType,
             AlternativeNames = request.AlternativeNames,
             AppDisplayName = request.AppDisplayName,

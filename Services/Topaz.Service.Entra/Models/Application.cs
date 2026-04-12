@@ -69,9 +69,9 @@ internal class Application : DirectoryObject
     {
         public PreAuthorizedApplicationData[]? PreAuthorizedApplications { get; init; }
         public PermissionScopeData[]? Oauth2PermissionScopes { get; init; }
-        public string? KnownClientApplications { get; init; }
-        public bool? RequestedAccessTokenVersion { get; init; }
-        public string? AcceptMappedClaims { get; init; }
+        public string[]? KnownClientApplications { get; init; }
+        public int? RequestedAccessTokenVersion { get; init; }
+        public bool? AcceptMappedClaims { get; init; }
     }
 
     internal sealed class AppRoleData

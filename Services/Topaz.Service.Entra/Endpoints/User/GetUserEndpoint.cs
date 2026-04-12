@@ -15,7 +15,9 @@ internal sealed class GetUserEndpoint(ITopazLogger logger) : IEndpointDefinition
 
     public string[] Endpoints =>
     [
-        "GET /users/{userId}"
+        "GET /users/{userId}",
+        "GET /v1.0/users/{userId}",
+        "GET /beta/users/{userId}",
     ];
 
     public string[] Permissions => [];
@@ -25,7 +27,9 @@ internal sealed class GetUserEndpoint(ITopazLogger logger) : IEndpointDefinition
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var userIdentifier = UserIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+        var userIdentifier = context.Request.Path.Value.StartsWith("/users")
+            ? UserIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2))
+            : UserIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(3));
 
         logger.LogDebug(nameof(GetUserEndpoint), nameof(GetResponse), "Fetching a user `{0}`.", userIdentifier);
 

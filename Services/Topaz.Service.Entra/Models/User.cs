@@ -17,7 +17,7 @@ internal sealed class User : DirectoryObject
     // --- Mail/phones ---
     public string? Mail { get; set; }
     public string? MailNickname { get; set; }
-    public string[] BusinessPhones { get; init; } = [];
+    public string[] BusinessPhones { get; set; } = [];
     public string? MobilePhone { get; set; }
     public string? FaxNumber { get; set; }
     public string[] ImAddresses { get; set; } = [];
@@ -99,6 +99,36 @@ internal sealed class User : DirectoryObject
     // --- Resource accounts ---
     public bool? IsResourceAccount { get; set; }
     
+    public void UpdateFromRequest(UpdateUserRequest request)
+    {
+        if (request.AccountEnabled.HasValue) AccountEnabled = request.AccountEnabled;
+        if (request.GivenName != null) GivenName = request.GivenName;
+        if (request.Surname != null) Surname = request.Surname;
+        if (request.JobTitle != null) JobTitle = request.JobTitle;
+        if (request.Department != null) Department = request.Department;
+        if (request.CompanyName != null) CompanyName = request.CompanyName;
+        if (request.EmployeeId != null) EmployeeId = request.EmployeeId;
+        if (request.EmployeeType != null) EmployeeType = request.EmployeeType;
+        if (request.Mail != null) Mail = request.Mail;
+        if (request.MailNickname != null) MailNickname = request.MailNickname;
+        if (request.MobilePhone != null) MobilePhone = request.MobilePhone;
+        if (request.OfficeLocation != null) OfficeLocation = request.OfficeLocation;
+        if (request.City != null) City = request.City;
+        if (request.State != null) State = request.State;
+        if (request.Country != null) Country = request.Country;
+        if (request.PostalCode != null) PostalCode = request.PostalCode;
+        if (request.StreetAddress != null) StreetAddress = request.StreetAddress;
+        if (request.UsageLocation != null) UsageLocation = request.UsageLocation;
+        if (request.PreferredLanguage != null) PreferredLanguage = request.PreferredLanguage;
+        if (request.UserPrincipalName != null) UserPrincipalName = request.UserPrincipalName;
+        if (request.UserType != null) UserType = request.UserType;
+        if (request.OnPremisesSamAccountName != null) OnPremisesSamAccountName = request.OnPremisesSamAccountName;
+        if (request.OnPremisesImmutableId != null) OnPremisesImmutableId = request.OnPremisesImmutableId;
+        if (request.PasswordPolicies != null) PasswordPolicies = request.PasswordPolicies;
+        if (request.BusinessPhones != null) BusinessPhones = request.BusinessPhones;
+        if (request.OtherMails != null) OtherMails = request.OtherMails;
+    }
+
     public static User FromRequest(CreateUserRequest request, Guid? id = null)
     {
         return new User

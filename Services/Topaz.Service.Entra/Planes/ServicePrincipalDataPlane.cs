@@ -24,7 +24,19 @@ internal sealed class ServicePrincipalDataPlane(EntraResourceProvider provider, 
             return BadRequestOperationResult<ServicePrincipal>.ForDuplicate("appId");
         }
 
-        var servicePrincipal = ServicePrincipal.FromRequest(request);
+        // If DisplayName is not provided, inherit it from the corresponding Application
+        var effectiveDisplayName = request.DisplayName;
+        if (string.IsNullOrEmpty(effectiveDisplayName))
+        {
+            var appPlane = new ApplicationsDataPlane(provider, logger);
+            var appResult = appPlane.Get(ApplicationIdentifier.From(request.AppId));
+            if (appResult.Result == OperationResult.Success && appResult.Resource != null)
+            {
+                effectiveDisplayName = appResult.Resource.DisplayName;
+            }
+        }
+
+        var servicePrincipal = ServicePrincipal.FromRequest(request, effectiveDisplayName);
         File.WriteAllText(entityPath, servicePrincipal.ToString());
 
         return new DataPlaneOperationResult<ServicePrincipal>(OperationResult.Created, servicePrincipal, null, null);
@@ -83,7 +95,9 @@ internal sealed class ServicePrincipalDataPlane(EntraResourceProvider provider, 
             return BadRequestOperationResult<ServicePrincipal>.ForNotFound(servicePrincipalIdentifier);
         }
 
-        var entityPath = BuildLocalServicePrincipalEntityPath(servicePrincipalIdentifier);
+        // Files are stored by AppId, not object Id — use the AppId from the retrieved resource
+        var storedIdentifier = ServicePrincipalIdentifier.From(existingServicePrincipal.Resource.AppId);
+        var entityPath = BuildLocalServicePrincipalEntityPath(storedIdentifier);
         File.Delete(entityPath);
 
         return new DataPlaneOperationResult<ServicePrincipal>(OperationResult.Deleted, null, null, null);
@@ -103,7 +117,9 @@ internal sealed class ServicePrincipalDataPlane(EntraResourceProvider provider, 
 
         existingServicePrincipal.Resource.UpdateFrom(request);
 
-        var entityPath = BuildLocalServicePrincipalEntityPath(servicePrincipalIdentifier);
+        // Files are stored by AppId, not object Id — use the AppId from the retrieved resource
+        var storedIdentifier = ServicePrincipalIdentifier.From(existingServicePrincipal.Resource.AppId);
+        var entityPath = BuildLocalServicePrincipalEntityPath(storedIdentifier);
         File.WriteAllText(entityPath, existingServicePrincipal.Resource.ToString());
 
         return new DataPlaneOperationResult(OperationResult.Updated, null, null);

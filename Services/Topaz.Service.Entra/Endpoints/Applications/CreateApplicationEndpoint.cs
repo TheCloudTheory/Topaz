@@ -16,6 +16,7 @@ internal sealed class CreateApplicationEndpoint(ITopazLogger logger) : IEndpoint
     public string[] Endpoints =>
     [
         "POST /v1.0/applications",
+        "POST /beta/applications",
         "POST /applications",
     ];
 

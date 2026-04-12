@@ -70,7 +70,9 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
 
         existingApplication.Resource.UpdateFrom(request);
 
-        var entityPath = BuildLocalApplicationEntityPath(applicationIdentifier);
+        // Files are stored by AppId, not object Id — use the AppId from the retrieved resource
+        var storedIdentifier = ApplicationIdentifier.From(existingApplication.Resource.AppId);
+        var entityPath = BuildLocalApplicationEntityPath(storedIdentifier);
         File.WriteAllText(entityPath, existingApplication.Resource.ToString());
 
         return new DataPlaneOperationResult(OperationResult.Updated, null, null);
@@ -134,7 +136,9 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
             return BadRequestOperationResult.ForNotFound(applicationIdentifier);
         }
 
-        var entityPath = BuildLocalApplicationEntityPath(applicationIdentifier);
+        // Files are stored by AppId, not object Id — use the AppId from the retrieved resource
+        var storedIdentifier = ApplicationIdentifier.From(existingApplication.Resource.AppId);
+        var entityPath = BuildLocalApplicationEntityPath(storedIdentifier);
         File.Delete(entityPath);
 
         return new DataPlaneOperationResult(OperationResult.Deleted, null, null);

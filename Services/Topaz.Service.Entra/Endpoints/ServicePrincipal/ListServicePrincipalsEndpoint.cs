@@ -15,6 +15,7 @@ public class ListServicePrincipalsEndpoint(ITopazLogger logger) : IEndpointDefin
     public string[] Endpoints =>
     [
         "GET /v1.0/servicePrincipals",
+        "GET /beta/servicePrincipals",
         "GET /servicePrincipals",
     ];
 

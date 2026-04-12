@@ -17,6 +17,7 @@ internal sealed class CreateServicePrincipalEndpoint(ITopazLogger logger) : IEnd
     [
         "POST /servicePrincipals",
         "POST /v1.0/servicePrincipals",
+        "POST /beta/servicePrincipals",
     ];
 
     public string[] Permissions => ["*"];

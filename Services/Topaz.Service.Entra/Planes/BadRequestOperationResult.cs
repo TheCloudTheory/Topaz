@@ -64,4 +64,9 @@ internal sealed class BadRequestOperationResult(string reason)
     {
         return new BadRequestOperationResult(string.Format(NotFoundErrorMessage, applicationIdentifier.Value));
     }
+
+    public static DataPlaneOperationResult ForNotFound(GroupIdentifier groupIdentifier)
+    {
+        return new BadRequestOperationResult(string.Format(NotFoundErrorMessage, groupIdentifier.Value));
+    }
 }

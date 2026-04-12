@@ -15,6 +15,8 @@ public class DeleteServicePrincipalEndpoint(ITopazLogger logger) : IEndpointDefi
     public string[] Endpoints =>
     [
         "DELETE /servicePrincipals/{servicePrincipalId}",
+        "DELETE /v1.0/servicePrincipals/{servicePrincipalId}",
+        "DELETE /beta/servicePrincipals/{servicePrincipalId}",
     ];
 
     public string[] Permissions => ["*"];
@@ -22,7 +24,9 @@ public class DeleteServicePrincipalEndpoint(ITopazLogger logger) : IEndpointDefi
     
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var servicePrincipalIdentifier = ServicePrincipalIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+        var servicePrincipalIdentifier = context.Request.Path.Value.StartsWith("/servicePrincipals")
+            ? ServicePrincipalIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2))
+            : ServicePrincipalIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(3));
         
         logger.LogDebug(nameof(DeleteServicePrincipalEndpoint), nameof(GetResponse),
             "Deleting a service principal `{0}`.", servicePrincipalIdentifier);

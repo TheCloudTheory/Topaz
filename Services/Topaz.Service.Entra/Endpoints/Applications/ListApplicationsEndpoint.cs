@@ -13,6 +13,7 @@ internal sealed class ListApplicationsEndpoint(ITopazLogger logger) : IEndpointD
     public string[] Endpoints =>
     [
         "GET /v1.0/applications",
+        "GET /beta/applications",
         "GET /applications"
     ];
 

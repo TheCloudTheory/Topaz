@@ -17,6 +17,8 @@ internal sealed class UpdateApplicationEndpoint(ITopazLogger logger) : IEndpoint
     public string[] Endpoints =>
     [
         "PATCH /applications/{applicationId}",
+        "PATCH /v1.0/applications/{applicationId}",
+        "PATCH /beta/applications/{applicationId}",
     ];
 
     public string[] Permissions => ["*"];
@@ -24,7 +26,9 @@ internal sealed class UpdateApplicationEndpoint(ITopazLogger logger) : IEndpoint
     
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        var applicationIdentifier = ApplicationIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+        var applicationIdentifier = context.Request.Path.Value.StartsWith("/applications")
+            ? ApplicationIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2))
+            : ApplicationIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(3));
         
         logger.LogDebug(nameof(UpdateApplicationEndpoint), nameof(GetResponse),
             "Updating an application `{0}`.", applicationIdentifier);
