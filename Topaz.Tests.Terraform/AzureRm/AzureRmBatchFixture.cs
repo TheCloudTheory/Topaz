@@ -12,6 +12,7 @@ public class AzureRmBatchFixture : TopazFixture
 {
     private static readonly SemaphoreSlim BatchLock = new(1, 1);
     private static bool _applied;
+    private static Exception? _applyFailure;
     private static JsonNode? _outputs;
     private static string? _workDir;
 
@@ -35,12 +36,32 @@ public class AzureRmBatchFixture : TopazFixture
             if (_applied)
                 return;
 
-            (var outputs, var workDir) = await ApplyTerraformRetaining(
-                "providers/azurerm.tf", "azurerm-combined");
+            // A previous fixture class already attempted the apply and it failed.
+            // Re-applying with a fresh workspace would encounter Topaz resources already
+            // created during the first attempt, producing misleading "resource already exists"
+            // errors for every resource group instead of the original error.
+            if (_applyFailure is not null)
+            {
+                Assert.Ignore(
+                    "AzureRM batch workspace apply failed in an earlier fixture class — " +
+                    $"skipping to avoid cascading re-apply errors.\n{_applyFailure.Message}");
+                return;
+            }
 
-            Volatile.Write(ref _workDir, workDir);
-            _outputs = outputs;
-            _applied = true;
+            try
+            {
+                (var outputs, var workDir) = await ApplyTerraformRetaining(
+                    "providers/azurerm.tf", "azurerm-combined");
+
+                Volatile.Write(ref _workDir, workDir);
+                _outputs = outputs;
+                _applied = true;
+            }
+            catch (Exception ex)
+            {
+                _applyFailure = ex;
+                throw;
+            }
         }
         finally
         {
