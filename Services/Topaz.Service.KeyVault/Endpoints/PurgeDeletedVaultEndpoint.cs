@@ -39,8 +39,7 @@ internal sealed class PurgeDeletedVaultEndpoint(Pipeline eventPipeline, ITopazLo
                 return;
             }
 
-            response.Headers.Location = new Uri(vaultUri);
-            response.StatusCode = HttpStatusCode.OK;
+            response.StatusCode = HttpStatusCode.NoContent;
         }
         catch (Exception ex)
         {
