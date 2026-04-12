@@ -23,6 +23,9 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
     public string[] Endpoints =>
     [
         "POST /organizations/oauth2/v2.0/token",
+        // MSAL refreshes tokens via tenant-specific and /common paths, not just /organizations.
+        "POST /{tenantId}/oauth2/v2.0/token",
+        "POST /common/oauth2/v2.0/token",
     ];
 
     public string[] Permissions => [];

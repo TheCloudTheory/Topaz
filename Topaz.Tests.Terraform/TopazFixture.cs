@@ -469,6 +469,10 @@ public class TopazFixture
             var topazLogs = ReadDockerLogs("topaz.local.dev", 400);
             if (!string.IsNullOrWhiteSpace(topazLogs))
                 await Console.Error.WriteLineAsync($"[docker logs topaz.local.dev]\n{topazLogs}");
+
+            Assert.That(result.ExitCode, Is.EqualTo(0),
+                $"`{command}` failed.\nSTDOUT: {result.Stdout}\nSTDERR: {result.Stderr}" +
+                (string.IsNullOrWhiteSpace(topazLogs) ? "" : $"\n[Topaz Docker logs]\n{topazLogs}"));
         }
 
         Assert.That(result.ExitCode, Is.EqualTo(0),

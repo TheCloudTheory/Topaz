@@ -8,7 +8,6 @@ terraform {
 }
 
 provider "azuread" {
-  use_msi  = false
-  use_oidc = false
-  use_cli  = true
+  # Force endpoint discovery against Topaz metadata (mirrors metadata_host in azurerm.tf).
+  metadata_host = "topaz.local.dev:8899"
 }
