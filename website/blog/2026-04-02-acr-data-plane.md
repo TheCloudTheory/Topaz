@@ -9,7 +9,7 @@ Container Registry is different from every other Azure service Topaz emulates. Y
 
 This post walks through how Topaz emulates the ACR data plane authentication layer and what design decisions made it possible without writing a custom token server.
 
-<!-- truncate -->
+{/* truncate */}
 
 ## The Docker Registry V2 authentication protocol
 

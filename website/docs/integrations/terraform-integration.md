@@ -103,6 +103,52 @@ provider "azapi" {
 
 If you use both providers together, combine them in one `terraform {}` block and configure each provider as shown above.
 
+### AzureAD provider
+
+The `azuread` provider manages Entra (Azure AD) resources such as applications, service principals, users, and groups. Like `azurerm`, it only needs `metadata_host` to redirect endpoint discovery to Topaz:
+
+```hcl
+terraform {
+  required_providers {
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 3.0"
+    }
+  }
+}
+
+provider "azuread" {
+  # Host and port only — no scheme
+  metadata_host = "topaz.local.dev:8899"
+}
+```
+
+The provider sends Microsoft Graph API calls to Topaz automatically once `metadata_host` is set. No additional endpoint overrides are required.
+
+Example resources:
+
+```hcl
+resource "azuread_application" "example" {
+  display_name = "my-app"
+}
+
+resource "azuread_service_principal" "example" {
+  client_id = azuread_application.example.client_id
+}
+
+resource "azuread_group" "example" {
+  display_name     = "my-group"
+  security_enabled = true
+}
+
+resource "azuread_user" "example" {
+  user_principal_name   = "user@mytenant.onmicrosoft.com"
+  display_name          = "Example User"
+  password              = "P@ssw0rd!"
+  force_password_change = false
+}
+```
+
 :::tip
 Pass the subscription ID via an environment variable so it matches whatever Topaz was started with:
 
@@ -113,7 +159,7 @@ export TF_VAR_subscription_id=00000000-0000-0000-0000-000000000001
 
 ### Why these fields matter
 
-- `metadata_host`: tells AzureRM where to fetch cloud metadata.
+- `metadata_host`: tells AzureRM and AzureAD where to fetch cloud metadata.
 - `resource_provider_registrations = "none"`: avoids AzureRM trying provider registration APIs that are not fully emulated.
 - `endpoint` (azapi): overrides all three ARM endpoints (resource manager, authority host, and audience) so the provider never contacts Azure public cloud.
 - `disable_instance_discovery` (azapi): prevents the Go-based provider from validating the authority URL against Microsoft's login discovery service, which is unreachable when pointing at a local emulator.
@@ -155,11 +201,11 @@ terraform destroy -auto-approve
 
 | Option | Provider | Required | Notes |
 |---|---|---|---|
-| `metadata_host` | azurerm | Yes | Host and port only — no scheme (e.g. `topaz.local.dev:8899`) |
+| `metadata_host` | azurerm, azuread | Yes | Host and port only — no scheme (e.g. `topaz.local.dev:8899`) |
 | `resource_provider_registrations` | azurerm | Strongly recommended | Use `none` with Topaz |
 | `endpoint` | azapi | Yes | List with `resource_manager_endpoint`, `active_directory_authority_host`, `resource_manager_audience` all pointing at `https://topaz.local.dev:8899/` |
 | `disable_instance_discovery` | azapi | Yes | Set `true` to prevent the provider contacting Microsoft login discovery |
-| `ARM_SUBSCRIPTION_ID` / `TF_VAR_subscription_id` | both | Recommended | Keep stable across runs |
+| `ARM_SUBSCRIPTION_ID` / `TF_VAR_subscription_id` | azurerm, azapi | Recommended | Keep stable across runs |
 
 ## Common issues
 

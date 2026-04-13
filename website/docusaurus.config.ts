@@ -24,7 +24,11 @@ const config: Config = {
   projectName: 'Topaz', // Usually your repo name.
 
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
+  },
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -149,6 +153,10 @@ const config: Config = {
             {
               label: 'Azure CLI integration',
               to: '/docs/azure-cli-integration',
+            },
+            {
+              label: 'Tutorials',
+              to: '/docs/category/tutorials',
             },
             {
               label: 'Roadmap',

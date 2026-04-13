@@ -107,3 +107,12 @@ jobs:
         subject-name: index.docker.io/thecloudtheory/topaz-cli
         subject-digest: ${{ steps.push.outputs.digest }}
         push-to-registry: true
+    - name: Trigger Homebrew formula update
+      env:
+        HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+      run: |
+        curl -s -X POST \
+          -H "Authorization: token $HOMEBREW_TAP_TOKEN" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/TheCloudTheory/homebrew-topaz/dispatches \
+          -d "{\"event_type\": \"new-release\", \"client_payload\": {\"tag\": \"${{ steps.read-tag.outputs.tag }}\"}}"

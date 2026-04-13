@@ -7,7 +7,7 @@ tags: [general, cicd]
 
 Running the full test suite on every commit is simple to set up and expensive to live with. Topaz spans twelve services, each with its own E2E tests and Azure CLI tests. On a change to a single endpoint in the Container Registry service, waiting for Key Vault, Service Bus, and Event Hubs tests to finish is pure overhead. The Topaz CI pipeline solves this with a three-stage decision that maps changed files to a focused test filter — running everything only when it has to.
 
-<!-- truncate -->
+{/* truncate */}
 
 ## Stage one: skip CI entirely for non-code changes
 

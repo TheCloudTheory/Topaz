@@ -7,7 +7,7 @@ tags: [general]
 
 The [previous post on ACR authentication](/blog/acr-data-plane) covered everything up to the point where `docker login` succeeds and Docker has a valid Bearer token. That is the precondition. The question this post answers is what happens next: how `docker push` transfers a real image into Topaz and why the protocol is more structured than a simple file upload.
 
-<!-- truncate -->
+{/* truncate */}
 
 ## What Docker actually sends
 

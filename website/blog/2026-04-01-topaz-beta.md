@@ -7,7 +7,7 @@ tags: [general]
 
 After months of alpha development, Topaz is moving to beta. The core emulation layer is stable, the service catalogue has grown considerably, and the rough edges that made early adopters cautious are largely gone. This post walks through what changed and what is currently available.
 
-<!-- truncate -->
+{/* truncate */}
 
 ## What "beta" means for Topaz
 

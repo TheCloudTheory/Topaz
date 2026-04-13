@@ -9,7 +9,7 @@ Every Terraform workflow that targets Azure needs the same things before it can 
 
 Topaz removes all of that. The same `terraform apply` that would create resources in Azure can instead create them in a local emulator, with no subscription, no credentials to rotate, and no cloud charges. This post explains how the integration works and how to set it up.
 
-<!-- truncate -->
+{/* truncate */}
 
 ## Why the standard AzureRM provider works at all
 

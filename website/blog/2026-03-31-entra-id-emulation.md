@@ -9,7 +9,7 @@ Authentication is the first thing every Azure SDK touches. Before your applicati
 
 Topaz solves this by shipping a full Entra ID emulation layer out of the box.
 
-<!-- truncate -->
+{/* truncate */}
 
 ## A pre-configured local tenant
 

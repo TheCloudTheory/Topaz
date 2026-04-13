@@ -7,7 +7,7 @@ tags: [storage]
 
 Emulation of a service isn't complete if the authorization layer isn't emulated as well. This is why Topaz will introduce authorization mechanism for various services, starting with Table Storage.
 
-<!-- truncate -->
+{/* truncate */}
 
 Table Storage is secured using one of the configured authorization mechanism:
 * access key

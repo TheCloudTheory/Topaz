@@ -28,11 +28,17 @@ echo "port 53" >> /etc/resolver/servicebus.topaz.local.dev
 echo "nameserver 127.0.0.1" > /etc/resolver/eventhub.topaz.local.dev
 echo "port 53" >> /etc/resolver/eventhub.topaz.local.dev
 
+echo "nameserver 127.0.0.1" > /etc/resolver/cr.topaz.local.dev
+echo "port 53" >> /etc/resolver/cr.topaz.local.dev
+
 # Step 3 - Configure dnsmasq to resolve .topaz.local.dev domains and subdomains
+# Note: storage covers {account}.blob/table/queue/file.storage.topaz.local.dev
+#       cr covers {registry}.cr.topaz.local.dev
 mkdir -p /opt/homebrew/etc/dnsmasq.d
 echo "address=/.topaz.local.dev/127.0.0.1" > /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
 echo "address=/.keyvault.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
 echo "address=/.storage.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
+echo "address=/.cr.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
 echo "address=/.servicebus.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
 echo "address=/.eventhub.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
 
