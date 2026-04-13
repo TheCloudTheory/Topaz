@@ -1,5 +1,5 @@
-using Azure.ResourceManager;
 using Topaz.CLI;
+using Azure.ResourceManager;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 

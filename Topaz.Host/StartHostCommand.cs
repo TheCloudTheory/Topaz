@@ -1,10 +1,5 @@
 using System.ComponentModel;
-using System.Text.Json;
 using Spectre.Console.Cli;
-using Topaz.Dns;
-using Topaz.EventPipeline;
-using Topaz.Service.Authorization;
-using Topaz.Service.Entra;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -26,8 +21,6 @@ internal sealed class StartHostCommand : AsyncCommand<StartHostCommand.Settings>
             logger.EnableLoggingToFile(settings.RefreshLog);
             logger.LogInformation("Enabled logging to file.");
         }
-
-        Bootstrap(logger);
 
         var host = new Host(new GlobalOptions
         {
@@ -59,32 +52,6 @@ internal sealed class StartHostCommand : AsyncCommand<StartHostCommand.Settings>
             logger.LogError(ex);
             return 1;
         }
-    }
-
-    private static void Bootstrap(ITopazLogger logger)
-    {
-        if (Directory.Exists(GlobalSettings.MainEmulatorDirectory))
-        {
-            Console.WriteLine("Emulator directory already exists.");
-        }
-        else
-        {
-            Directory.CreateDirectory(GlobalSettings.MainEmulatorDirectory);
-            Console.WriteLine("Emulator directory created.");
-        }
-
-        new EntraService(logger).Bootstrap();
-        new RoleAssignmentService(new Pipeline(logger), logger).Bootstrap();
-
-        if (File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))
-        {
-            Console.WriteLine("Global DNS entries file already exists.");
-            return;
-        }
-
-        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath,
-            JsonSerializer.Serialize(new GlobalDnsEntries()));
-        Console.WriteLine("Global DNS entries file created.");
     }
 
     internal sealed class Settings : CommandSettings

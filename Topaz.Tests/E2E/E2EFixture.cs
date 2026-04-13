@@ -1,4 +1,6 @@
-using Topaz.CLI;
+using TopazHost = Topaz.Host.Host;
+using Topaz.Service.Shared;
+using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -7,20 +9,21 @@ public class E2EFixture
 {
     private static Task? _topaz;
     private static readonly CancellationTokenSource CancellationTokenSource = new();
-    
+
     [OneTimeSetUp]
     public async Task SetUp()
     {
-        Program.CancellationToken = CancellationTokenSource.Token;
-        
-        _topaz = Program.Main([
-            "start",
-            "--log-level=Debug",
-            "--enable-logging-to-file",
-            "--refresh-log",
-            "--emulator-ip-address",
-            "127.0.0.1"
-        ]);
+        var logger = new PrettyTopazLogger();
+        logger.SetLoggingLevel(LogLevel.Debug);
+        logger.EnableLoggingToFile(true);
+
+        var host = new TopazHost(new GlobalOptions
+        {
+            EnableLoggingToFile = true,
+            EmulatorIpAddress = "127.0.0.1"
+        }, logger);
+
+        _topaz = host.StartAsync(CancellationTokenSource.Token);
 
         await Task.Delay(1000);
     }
@@ -29,7 +32,7 @@ public class E2EFixture
     public async Task TearDown()
     {
         await CancellationTokenSource.CancelAsync();
-        
+
         if (_topaz != null)
         {
             try
@@ -45,7 +48,7 @@ public class E2EFixture
                 // Task didn't complete in time
             }
         }
-        
+
         CancellationTokenSource.Dispose();
     }
 }

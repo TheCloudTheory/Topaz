@@ -1,5 +1,5 @@
-using Azure.Messaging.ServiceBus;
 using Topaz.CLI;
+using Azure.Messaging.ServiceBus;
 using Topaz.ResourceManager;
 
 namespace Topaz.Tests.E2E;

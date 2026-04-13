@@ -1,6 +1,6 @@
+using Topaz.CLI;
 using Azure;
 using Azure.Security.KeyVault.Secrets;
-using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 

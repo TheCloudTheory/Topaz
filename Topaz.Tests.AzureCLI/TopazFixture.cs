@@ -3,7 +3,6 @@ using System.Text.Json.Nodes;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
-using Topaz.Service.Entra;
 
 namespace Topaz.Tests.AzureCLI;
 
@@ -28,13 +27,10 @@ public class TopazFixture
                                                          }
                                                          """;
     
-    private static readonly string TopazContainerImage = Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE") == null ? 
-        "topaz/cli"
-        : Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE")!;
+    private static readonly string TopazContainerImage = Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "topaz/host";
     
     private static readonly string CertificateFile = File.ReadAllText("topaz.crt");
     private static readonly string CertificateKey = File.ReadAllText("topaz.key");
-    private static readonly string TenantId = EntraService.TenantId;
     
     private IContainer? _containerTopaz;
     private INetwork? _network;
@@ -65,7 +61,7 @@ public class TopazFixture
             .WithName("topaz.local.dev")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateKey), "/app/topaz.key")
-            .WithCommand("start", "--tenant-id", TenantId, "--certificate-file", "topaz.crt", "--certificate-key",
+            .WithCommand("--certificate-file", "topaz.crt", "--certificate-key",
                 "topaz.key", "--log-level", "Debug", "--default-subscription",
                 Guid.NewGuid().ToString())
             .Build();

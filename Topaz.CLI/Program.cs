@@ -1,16 +1,12 @@
-﻿using System.Reflection;
-using System.Text.Json;
+using System.Reflection;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
 using Topaz.CLI.Commands;
-using Topaz.Dns;
 using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
-using Topaz.Service.Authorization;
 using Topaz.Service.Authorization.Commands;
 using Topaz.Service.ContainerRegistry.Commands;
-using Topaz.Service.Entra;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
 using Topaz.Service.ManagedIdentity.Commands;
@@ -27,7 +23,7 @@ namespace Topaz.CLI;
 internal class Program
 {
     internal static CancellationToken CancellationToken { get; set; } = CancellationToken.None;
-    
+
     internal static async Task<int> Main(string[] args)
     {
         try
@@ -37,8 +33,10 @@ internal class Program
 
             var registrar = new TypeRegistrar(registrations);
 
-            var result = await BootstrapCli(args, registrar);
-            return result;
+            var app = new CommandApp(registrar);
+            app.Configure(FindAndRegisterCommands);
+
+            return await app.RunAsync(args);
         }
         catch (Exception ex)
         {
@@ -55,22 +53,11 @@ internal class Program
         registrations.AddSingleton<Pipeline, Pipeline>();
     }
 
-    private static Task<int> BootstrapCli(string[] args, TypeRegistrar registrar)
-    {
-        CreateEmulatorDirectoryIfNeeded();
-
-        var app = new CommandApp(registrar);
-        
-        app.Configure(FindAndRegisterCommands);
-
-        return app.RunAsync(args);
-    }
-
     private static void FindAndRegisterCommands(IConfigurator config)
     {
         Console.WriteLine("Searching and configuring commands...");
 
-        // Even though the types will be loaded via reflection, they must be explicitly 
+        // Even though the types will be loaded via reflection, they must be explicitly
         // used so they can be loaded. The issue here is related to GetReferencedAssemblies(),
         // which gets the assemblies referenced in the assembly, not in the project
         // (those are completely different references conceptually).
@@ -88,7 +75,7 @@ internal class Program
             typeof(GenericRoleCommand),
             typeof(GenericContainerRegistryCommand)
         };
-        
+
         var commands = Assembly.GetExecutingAssembly()
             .GetReferencedAssemblies()
             .Select(Assembly.Load)
@@ -103,34 +90,5 @@ internal class Program
         {
             command!.Configure(config);
         }
-    }
-
-    private static void CreateEmulatorDirectoryIfNeeded()
-    {
-        if (Directory.Exists(GlobalSettings.MainEmulatorDirectory))
-        {
-            Console.WriteLine("Emulator directory already exists.");
-        }
-        else
-        {
-            Directory.CreateDirectory(GlobalSettings.MainEmulatorDirectory);
-            Console.WriteLine("Emulator directory created.");
-        }
-
-        var logger = new PrettyTopazLogger();
-        var entra = new EntraService(logger);
-        entra.Bootstrap();
-        
-        var subscriptionAuthorizationService = new RoleAssignmentService(new Pipeline(logger), logger);
-        subscriptionAuthorizationService.Bootstrap();
-        
-        if (File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))
-        {
-            Console.WriteLine("Global DNS entries file already exists.");
-            return;
-        }
-        
-        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath, JsonSerializer.Serialize(new GlobalDnsEntries()));
-        Console.WriteLine("Global DNS entries file created.");
     }
 }

@@ -1,5 +1,5 @@
-using System.Text.Json;
 using Topaz.CLI;
+using System.Text.Json;
 using Topaz.Service.ResourceGroup.Models;
 using Topaz.Shared;
 

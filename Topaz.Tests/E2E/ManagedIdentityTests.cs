@@ -1,9 +1,9 @@
+using Topaz.CLI;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ManagedServiceIdentities;
 using Microsoft.Graph;
-using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 

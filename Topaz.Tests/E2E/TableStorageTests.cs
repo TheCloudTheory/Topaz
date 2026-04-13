@@ -1,9 +1,9 @@
+using Topaz.CLI;
 using Azure;
 using Azure.Data.Tables;
 using Azure.Data.Tables.Models;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
-using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 

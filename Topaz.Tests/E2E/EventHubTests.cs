@@ -1,10 +1,10 @@
+using Topaz.CLI;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Consumer;
 using Azure.Messaging.EventHubs.Producer;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Storage.Blobs;
-using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 

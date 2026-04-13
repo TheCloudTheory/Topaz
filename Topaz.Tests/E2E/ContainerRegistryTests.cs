@@ -1,3 +1,4 @@
+using Topaz.CLI;
 using Azure;
 using Azure.Containers.ContainerRegistry;
 using Azure.Core;
@@ -10,7 +11,6 @@ using Microsoft.Graph;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 using Topaz.Shared;

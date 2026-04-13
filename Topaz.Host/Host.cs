@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Security.Cryptography.X509Certificates;
 using Amqp;
 using Amqp.Listener;
@@ -65,6 +66,7 @@ public class Host
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
+        Bootstrap();
         Console.Title = "--- Topaz.Host ---";
 
         Console.WriteLine("");
@@ -151,6 +153,32 @@ public class Host
 
         // Wait for cancellation
         await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
+    }
+
+    private void Bootstrap()
+    {
+        if (Directory.Exists(GlobalSettings.MainEmulatorDirectory))
+        {
+            Console.WriteLine("Emulator directory already exists.");
+        }
+        else
+        {
+            Directory.CreateDirectory(GlobalSettings.MainEmulatorDirectory);
+            Console.WriteLine("Emulator directory created.");
+        }
+
+        new EntraService(_logger).Bootstrap();
+        new RoleAssignmentService(_eventPipeline, _logger).Bootstrap();
+
+        if (File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))
+        {
+            Console.WriteLine("Global DNS entries file already exists.");
+            return;
+        }
+
+        File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath,
+            JsonSerializer.Serialize(new GlobalDnsEntries()));
+        Console.WriteLine("Global DNS entries file created.");
     }
 
     private void CreateAmqpListenersForAmpqEndpoints(IEndpointDefinition[] endpoints)
