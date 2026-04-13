@@ -14,27 +14,6 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 ---
 
-## v1.1-beta
-
-### Key Vault — full secrets support
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--stable">Stable</span> | Get Secret Versions | `GET {vaultBaseUrl}/secrets/{name}/versions` — paged list of all versions for a secret |
-| <span class="badge--stable">Stable</span> | Backup & Restore | `POST .../backup` and `POST .../restore` for opaque secret backup blobs |
-| <span class="badge--stable">Stable</span> | Deleted secrets operations | Soft-delete surface: list, get, recover, and purge deleted secrets |
-
-### Container Registry — data plane preview
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--stable">Stable</span> | ACR OAuth2 token endpoint | `POST /oauth2/token` — completes the three-step ACR authentication flow |
-| <span class="badge--preview">Preview</span> | Repositories & Tags | List repositories (`/v2/_catalog`), list tags, delete tag via manifest reference |
-| <span class="badge--preview">Preview</span> | Manifest operations | GET, PUT, DELETE, HEAD for OCI manifests per registry |
-| <span class="badge--preview">Preview</span> | Blob operations | Full OCI blob upload/download: start session, stream chunks, complete, download, delete |
-
----
-
 ## v1.2-beta
 
 ### Queue Storage — preview
@@ -132,3 +111,26 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 | <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.Sql` project with models, resource provider, control plane, and host registration |
 | <span class="badge--preview">Preview</span> | SQL Server control plane | Create, get, update, delete, and list SQL Server resources; emulated server with `{name}.database.topaz.local.dev` as FQDN |
 | <span class="badge--preview">Preview</span> | SQL Database control plane | Create, get, update, delete, and list databases under a server — persisted as child resources on disk |
+
+---
+
+## ✅ Completed
+
+### v1.1-beta
+
+#### Key Vault — full secrets support
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Get Secret Versions | `GET {vaultBaseUrl}/secrets/{name}/versions` — paged list of all versions for a secret |
+| <span class="badge--stable">Stable</span> | Backup & Restore | `POST .../backup` and `POST .../restore` for opaque secret backup blobs |
+| <span class="badge--stable">Stable</span> | Deleted secrets operations | Soft-delete surface: list, get, recover, and purge deleted secrets |
+
+#### Container Registry — data plane preview
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | ACR OAuth2 token endpoint | `POST /oauth2/token` — completes the three-step ACR authentication flow |
+| <span class="badge--preview">Preview</span> | Repositories & Tags | List repositories (`/v2/_catalog`), list tags, delete tag via manifest reference |
+| <span class="badge--preview">Preview</span> | Manifest operations | GET, PUT, DELETE, HEAD for OCI manifests per registry |
+| <span class="badge--preview">Preview</span> | Blob operations | Full OCI blob upload/download: start session, stream chunks, complete, download, delete |
