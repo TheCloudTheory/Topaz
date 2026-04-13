@@ -27,8 +27,6 @@ docker run --rm -p 8899:8899 thecloudtheory/topaz-cli:<tag> start --log-level In
 docker run --rm -p 8899:8899 thecloudtheory/topaz-cli:<tag>
 ```
 
-See the [`start` command reference](./cli-reference/emulator/start.md) for the full list of options.
-
 ### Useful startup flags
 
 | Flag | Description |
