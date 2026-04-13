@@ -39,6 +39,19 @@ The recommended way to run Topaz on Windows is inside **WSL 2** (Windows Subsyst
 
 ## Step 1 — One-time DNS configuration
 
+:::tip[macOS — install with Homebrew]
+
+On macOS you can skip Steps 1 and 3 by installing via Homebrew. DNS setup and the `topaz` binary are handled automatically:
+
+```bash
+brew tap thecloudtheory/topaz
+brew install topaz
+```
+
+You will still need to complete **Step 2** (trusting the certificate). The certificate is installed at `$(brew --prefix)/bin/topaz.crt`.
+
+:::
+
 Topaz emulates Azure service hostnames (e.g. `*.blob.core.windows.net`) locally. A one-time DNS configuration is required so that these hostnames resolve to `127.0.0.1`. This needs admin privileges, but once done Topaz needs none at runtime.
 
 <Tabs groupId="os">
@@ -120,7 +133,8 @@ Available binaries by platform:
 
 | Platform | Binary |
 |---|---|
-| macOS (Intel & Apple Silicon via Rosetta 2) | `topaz-osx-x64` |
+| macOS (Apple Silicon) | `topaz-osx-arm64` |
+| macOS (Intel) | `topaz-osx-x64` |
 | Linux x64 | `topaz-linux-x64` |
 | Linux ARM64 | `topaz-linux-arm64` |
 | Windows | `topaz-win-x64.exe` (or use the Linux binary inside WSL) |

@@ -46,6 +46,10 @@ See the [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/)
 ## Getting started
 
 ```bash
+# Install with Homebrew (macOS)
+brew tap thecloudtheory/topaz
+brew install topaz
+
 # Run with Docker
 docker run -p 8891:8891 -p 8892:8892 -p 8898:8898 thecloudtheory/topaz-cli start
 
