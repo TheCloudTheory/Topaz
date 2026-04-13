@@ -35,14 +35,14 @@ public class TopazFixture
     public async Task StartAsync()
     {
         _container = new ContainerBuilder()
-            .WithImage("thecloudtheory/topaz-cli:<tag>")
+            .WithImage("thecloudtheory/topaz-host:<tag>")
             .WithPortBinding(8899)   // ARM / Resource Manager
             .WithPortBinding(8898)   // Key Vault
             .WithPortBinding(8891)   // Blob Storage
             .WithPortBinding(8890)   // Table Storage
             .WithPortBinding(8897)   // Event Hub (HTTP)
             .WithName("topaz.local.dev")
-            .WithCommand("start", "--log-level", "Information")
+            .WithCommand("--log-level", "Information")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8899))
             .Build();
 
@@ -75,14 +75,14 @@ public class TopazFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         _container = new ContainerBuilder()
-            .WithImage("thecloudtheory/topaz-cli:<tag>")
+            .WithImage("thecloudtheory/topaz-host:<tag>")
             .WithPortBinding(8899)
             .WithPortBinding(8898)
             .WithPortBinding(8891)
             .WithPortBinding(8890)
             .WithPortBinding(8897)
             .WithName("topaz.local.dev")
-            .WithCommand("start", "--log-level", "Information")
+            .WithCommand("--log-level", "Information")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8899))
             .Build();
 
@@ -126,14 +126,14 @@ public class TopazFixture
     public static async Task StartAsync(TestContext _)
     {
         _container = new ContainerBuilder()
-            .WithImage("thecloudtheory/topaz-cli:<tag>")
+            .WithImage("thecloudtheory/topaz-host:<tag>")
             .WithPortBinding(8899)
             .WithPortBinding(8898)
             .WithPortBinding(8891)
             .WithPortBinding(8890)
             .WithPortBinding(8897)
             .WithName("topaz.local.dev")
-            .WithCommand("start", "--log-level", "Information")
+            .WithCommand("--log-level", "Information")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8899))
             .Build();
 
@@ -215,13 +215,13 @@ var certificatePem = File.ReadAllBytes("topaz.crt");
 var privateKeyPem  = File.ReadAllBytes("topaz.key");
 
 _container = new ContainerBuilder()
-    .WithImage("thecloudtheory/topaz-cli:<tag>")
+    .WithImage("thecloudtheory/topaz-host:<tag>")
     .WithPortBinding(8899)
     .WithPortBinding(8898)
     .WithName("topaz.local.dev")
     .WithResourceMapping(certificatePem, "/app/topaz.crt")
     .WithResourceMapping(privateKeyPem,  "/app/topaz.key")
-    .WithCommand("start",
+    .WithCommand(
         "--certificate-file", "topaz.crt",
         "--certificate-key",  "topaz.key",
         "--log-level", "Information")
@@ -237,11 +237,11 @@ Hard-coding an image tag in tests makes upgrades tedious. Read the tag from an e
 
 ```csharp
 private static readonly string TopazImage =
-    Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE")
-    ?? "thecloudtheory/topaz-cli:latest";
+    Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE")
+    ?? "thecloudtheory/topaz-host:latest";
 ```
 
-In CI set `TOPAZ_CLI_CONTAINER_IMAGE` to the specific tag being tested. Locally, `latest` keeps things up to date automatically.
+In CI set `TOPAZ_HOST_CONTAINER_IMAGE` to the specific tag being tested. Locally, `latest` keeps things up to date automatically.
 
 ## Port reference
 

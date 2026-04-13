@@ -23,7 +23,7 @@ internal class Program
         // Create a builder for Topaz container image and all the ports
         // which are exposed by the emulator. Note you don't need to expose
         // every port available.
-        var container = new ContainerBuilder("thecloudtheory/topaz-cli:v1.0.468-alpha")
+        var container = new ContainerBuilder("thecloudtheory/topaz-host:v1.0.468-alpha")
             .WithPortBinding(8890)
             .WithPortBinding(8899)
             .WithPortBinding(8898)

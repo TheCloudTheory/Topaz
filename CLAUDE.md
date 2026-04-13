@@ -127,7 +127,7 @@ Both suites are required for every endpoint or control-plane change.
 - Use `GlobalSettings.ContainerRegistryPort` directly for port references.
 
 ### Terraform/debugging workflow
-- Terraform tests in `Topaz.Tests.Terraform` run against the Docker image (`topaz/cli`), not local binaries.
+- Terraform tests in `Topaz.Tests.Terraform` run against the Docker image (`topaz/host`), not local binaries.
 - After every code change that should affect Terraform tests, rebuild first: `./scripts/build-docker.sh arm64` (or `amd64`), then run the filtered test.
 - If a build fails, do not trust subsequent Terraform test output as validation of code changes.
 

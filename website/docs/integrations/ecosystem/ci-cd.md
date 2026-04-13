@@ -61,8 +61,7 @@ jobs:
             -p 8891:8891 \
             -p 8890:8890 \
             -p 8897:8897 \
-            thecloudtheory/topaz-cli:${{ env.TOPAZ_VERSION }} \
-            start --log-level Information
+            thecloudtheory/topaz-host:${{ env.TOPAZ_VERSION }}
         env:
           TOPAZ_VERSION: v1.0.299-alpha   # pin to a specific release tag
 
@@ -85,7 +84,7 @@ jobs:
       - name: Test
         run: dotnet test --no-build --verbosity normal
         env:
-          TOPAZ_CLI_CONTAINER_IMAGE: thecloudtheory/topaz-cli:${{ env.TOPAZ_VERSION }}
+          TOPAZ_HOST_CONTAINER_IMAGE: thecloudtheory/topaz-host:${{ env.TOPAZ_VERSION }}
 ```
 
 ### Using Testcontainers in tests (container managed by test code)
@@ -121,7 +120,7 @@ jobs:
         run: dotnet test --no-build --verbosity normal
         env:
           # Testcontainers reads this to pull the correct image
-          TOPAZ_CLI_CONTAINER_IMAGE: thecloudtheory/topaz-cli:v1.0.299-alpha
+          TOPAZ_HOST_CONTAINER_IMAGE: thecloudtheory/topaz-host:v1.0.299-alpha
 ```
 
 ### Using a locally built image
@@ -133,15 +132,15 @@ If your pipeline already builds a Topaz image from source (e.g. when testing cha
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Topaz.CLI/Dockerfile
+          file: ./Topaz.Host/Dockerfile
           push: false
-          tags: topaz/cli
+          tags: topaz/host
           platforms: linux/amd64
 
       - name: Test
         run: dotnet test --no-build --verbosity normal
         env:
-          TOPAZ_CLI_CONTAINER_IMAGE: topaz/cli
+          TOPAZ_HOST_CONTAINER_IMAGE: topaz/host
 ```
 
 ### Publishing test results and coverage
@@ -204,8 +203,7 @@ steps:
         -p 8891:8891 \
         -p 8890:8890 \
         -p 8897:8897 \
-        thecloudtheory/topaz-cli:$(TOPAZ_VERSION) \
-        start --log-level Information
+        thecloudtheory/topaz-host:$(TOPAZ_VERSION)
     displayName: Start Topaz
 
   - script: |
@@ -228,7 +226,7 @@ steps:
         --results-directory $(Agent.TempDirectory)/TestResults
     displayName: Test
     env:
-      TOPAZ_CLI_CONTAINER_IMAGE: thecloudtheory/topaz-cli:$(TOPAZ_VERSION)
+      TOPAZ_HOST_CONTAINER_IMAGE: thecloudtheory/topaz-host:$(TOPAZ_VERSION)
 
   - task: PublishTestResults@2
     condition: always()

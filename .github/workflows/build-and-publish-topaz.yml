@@ -33,15 +33,15 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Publish Linux (interim)
-      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r linux-x64 -o ./publish
+      run: dotnet publish ${{ github.workspace }}/Topaz.Host/Topaz.Host.csproj -c Release -r linux-x64 -o ./publish
     - name: Build interim Docker image
       id: push
       uses: docker/build-push-action@v6.18.0
       with:
         context: .
-        file: ./Topaz.CLI/Dockerfile
+        file: ./Topaz.Host/Dockerfile
         push: false
-        tags: topaz/cli
+        tags: topaz/host
         platforms: linux/amd64
     - name: Test
       run: dotnet test -m:1 --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults
@@ -72,6 +72,26 @@ jobs:
       run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r osx-arm64 -o ./publish/osx-arm64
     - name: Publish Arm64
       run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r linux-arm64 -o ./publish/linux-arm64
+    - name: Publish Host Windows
+      run: |
+        dotnet publish ${{ github.workspace }}/Topaz.Host/Topaz.Host.csproj -c Release -r win-x64 -o ./publish/host-win-x64
+        mv ./publish/host-win-x64/Topaz.Host.exe ./publish/host-win-x64/topaz-host-win-x64.exe
+    - name: Publish Host Linux
+      run: |
+        dotnet publish ${{ github.workspace }}/Topaz.Host/Topaz.Host.csproj -c Release -r linux-x64 -o ./publish/host-linux-x64
+        mv ./publish/host-linux-x64/Topaz.Host ./publish/host-linux-x64/topaz-host-linux-x64
+    - name: Publish Host macOS
+      run: |
+        dotnet publish ${{ github.workspace }}/Topaz.Host/Topaz.Host.csproj -c Release -r osx-x64 -o ./publish/host-osx-x64
+        mv ./publish/host-osx-x64/Topaz.Host ./publish/host-osx-x64/topaz-host-osx-x64
+    - name: Publish Host macOS Arm64
+      run: |
+        dotnet publish ${{ github.workspace }}/Topaz.Host/Topaz.Host.csproj -c Release -r osx-arm64 -o ./publish/host-osx-arm64
+        mv ./publish/host-osx-arm64/Topaz.Host ./publish/host-osx-arm64/topaz-host-osx-arm64
+    - name: Publish Host Arm64
+      run: |
+        dotnet publish ${{ github.workspace }}/Topaz.Host/Topaz.Host.csproj -c Release -r linux-arm64 -o ./publish/host-linux-arm64
+        mv ./publish/host-linux-arm64/Topaz.Host ./publish/host-linux-arm64/topaz-host-linux-arm64
     - name: Upload Windows artifact
       uses: actions/upload-artifact@v4
       with:
@@ -97,6 +117,31 @@ jobs:
       with:
         name: linux-arm64
         path: ./publish/linux-arm64
+    - name: Upload Host Windows artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: host-win-x64
+        path: ./publish/host-win-x64
+    - name: Upload Host Linux artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: host-linux-x64
+        path: ./publish/host-linux-x64
+    - name: Upload Host MacOS artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: host-osx-x64
+        path: ./publish/host-osx-x64
+    - name: Upload Host MacOS Arm64 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: host-osx-arm64
+        path: ./publish/host-osx-arm64
+    - name: Upload Host Arm64 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: host-linux-arm64
+        path: ./publish/host-linux-arm64
     - name: Stamp pipeline run with a tag
       run: nbgv tag
     - name: Push a tag

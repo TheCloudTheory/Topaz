@@ -19,9 +19,7 @@ namespace Topaz.Tests.Isolated;
 
 public class AspNetCoreExtensionTests
 {
-    private static readonly string TopazContainerImage = Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE") == null ? 
-        "topaz/cli"
-        : Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE")!;
+    private static readonly string TopazContainerImage = Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "topaz/host";
     
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
     private static readonly string CertificateFile = File.ReadAllText("topaz.crt");

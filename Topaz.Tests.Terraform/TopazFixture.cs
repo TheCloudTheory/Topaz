@@ -51,7 +51,7 @@ public class TopazFixture
                                        """;
 
     private static readonly string TopazContainerImage =
-        Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE") ?? "topaz/cli";
+        Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "topaz/host";
 
     private static readonly string CertificateFile = File.ReadAllText("topaz.crt");
     private static readonly string CertificateKey  = File.ReadAllText("topaz.key");

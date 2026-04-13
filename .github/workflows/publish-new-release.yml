@@ -111,13 +111,20 @@ jobs:
           **/linux-x64/topaz-linux-x64
           **/win-x64/topaz-win-x64.exe
           **/linux-arm64/topaz-linux-arm64
+          **/host-osx-x64/topaz-host-osx-x64
+          **/host-osx-arm64/topaz-host-osx-arm64
+          **/host-linux-x64/topaz-host-linux-x64
+          **/host-win-x64/topaz-host-win-x64.exe
+          **/host-linux-arm64/topaz-host-linux-arm64
           **/win-x64/topaz.crt
           **/win-x64/topaz.pfx
-    - name: Copy artifact for Docker
+    - name: Copy artifacts for Docker
       run: |
         mkdir publish
         cp -a ./linux-x64/. publish/
         cp -a ./linux-arm64/. publish/
+        cp -a ./host-linux-x64/. publish/
+        cp -a ./host-linux-arm64/. publish/
     - name: Log in to Docker Hub
       uses: docker/login-action@v3.5.0
       with:
@@ -137,15 +144,15 @@ jobs:
               "containerd-snapshotter": true
             }
           }
-    - name: Extract metadata (tags, labels) for Docker
+    - name: Extract metadata for CLI Docker image
       id: meta
       uses: docker/metadata-action@v5.7.0
       with:
-        images: thecloudtheory/topaz-cli
+        images: thecloudtheory/topaz
         tags: |
           type=raw,value=${{ steps.read-tag.outputs.tag }}
           type=raw,value=latest
-    - name: Build and push Docker image
+    - name: Build and push CLI Docker image
       id: push
       uses: docker/build-push-action@v6.18.0
       with:
@@ -155,11 +162,35 @@ jobs:
         platforms: linux/amd64,linux/arm64
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-    - name: Generate artifact attestation
+    - name: Generate artifact attestation for CLI
       uses: actions/attest-build-provenance@v2
       with:
-        subject-name: index.docker.io/thecloudtheory/topaz-cli
+        subject-name: index.docker.io/thecloudtheory/topaz
         subject-digest: ${{ steps.push.outputs.digest }}
+        push-to-registry: true
+    - name: Extract metadata for Host Docker image
+      id: meta-host
+      uses: docker/metadata-action@v5.7.0
+      with:
+        images: thecloudtheory/topaz-host
+        tags: |
+          type=raw,value=${{ steps.read-tag.outputs.tag }}
+          type=raw,value=latest
+    - name: Build and push Host Docker image
+      id: push-host
+      uses: docker/build-push-action@v6.18.0
+      with:
+        context: .
+        file: ./Topaz.Host/Dockerfile
+        push: true
+        platforms: linux/amd64,linux/arm64
+        tags: ${{ steps.meta-host.outputs.tags }}
+        labels: ${{ steps.meta-host.outputs.labels }}
+    - name: Generate artifact attestation for Host
+      uses: actions/attest-build-provenance@v2
+      with:
+        subject-name: index.docker.io/thecloudtheory/topaz-host
+        subject-digest: ${{ steps.push-host.outputs.digest }}
         push-to-registry: true
     - name: Trigger Homebrew formula update
       env:

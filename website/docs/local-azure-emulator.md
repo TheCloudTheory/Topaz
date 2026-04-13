@@ -56,7 +56,7 @@ Topaz ships as a Docker image, making it straightforward to add to any CI pipeli
 ```yaml
 services:
   topaz:
-    image: thecloudtheory/topaz-cli:latest
+    image: thecloudtheory/topaz-host:latest
     ports:
       - "8899:8899"
       - "8898:8898"

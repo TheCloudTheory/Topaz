@@ -73,7 +73,7 @@ Create or update `.vscode/mcp.json` in your workspace:
 }
 ```
 
-Replace `<version>` with the image tag matching your Topaz release (e.g. `v1.0.299-alpha`). Tags follow the same versioning scheme as the `topaz-cli` image.
+Replace `<version>` with the image tag matching your Topaz release (e.g. `v1.0.299-alpha`). Tags follow the same versioning scheme as the `topaz-host` image.
 
 :::tip[`--network host`]
 

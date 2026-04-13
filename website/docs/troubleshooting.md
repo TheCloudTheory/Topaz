@@ -248,10 +248,10 @@ var endpoint = new Uri("https://host.docker.internal:8899");
 
 Ensure you are using the correct image name and tag:
 ```bash
-docker pull thecloudtheory/topaz-cli:latest
+docker pull thecloudtheory/topaz-host:latest
 ```
 
-Check available tags at [Docker Hub](https://hub.docker.com/r/thecloudtheory/topaz-cli/tags).
+Check available tags at [Docker Hub](https://hub.docker.com/r/thecloudtheory/topaz-host/tags).
 
 ---
 

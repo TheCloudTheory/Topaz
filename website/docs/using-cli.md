@@ -1,7 +1,7 @@
 ---
 sidebar_position: 3
-description: Learn how to use the Topaz CLI to start the local Azure emulator, create subscriptions, manage resource groups, and interact with emulated Azure services from the command line.
-keywords: [topaz cli, azure emulator cli, local azure commands, topaz start, subscription management]
+description: Learn how to use the Topaz CLI to create subscriptions, manage resource groups, and interact with emulated Azure services from the command line.
+keywords: [topaz cli, azure emulator cli, local azure commands, subscription management]
 ---
 
 import Tabs from '@theme/Tabs';
@@ -9,25 +9,28 @@ import TabItem from '@theme/TabItem';
 
 # Using Topaz CLI
 
-Topaz is a single binary that acts as both the emulator and a CLI. The same executable can start the local Azure environment **and** issue commands to manage resources within it.
+Topaz is split into two separate executables:
 
-## Running the emulator
+- **`topaz-host`** — the emulator process. Start this first and leave it running.
+- **`topaz`** — the CLI tool. Use this to manage resources inside the running emulator.
 
-Use the `start` command to bring up the emulator:
+:::info[Pre-flight check]
+
+`topaz` verifies that `topaz-host` is running and that both are in the same working directory before executing any command. If the host is not running or the directories differ, the CLI will print a clear error message.
+
+:::
+
+## Starting the emulator
 
 ```bash
-topaz start --log-level Information
+topaz-host --log-level Information
 ```
 
-When running as a Docker container the `start` command is the default entrypoint, so it can be omitted:
+When running as a Docker container use the `topaz-host` image:
 
 ```bash
-# These two are equivalent
-docker run --rm -p 8899:8899 thecloudtheory/topaz-cli:<tag> start --log-level Information
-docker run --rm -p 8899:8899 thecloudtheory/topaz-cli:<tag>
+docker run --rm -p 8899:8899 thecloudtheory/topaz-host:<tag>
 ```
-
-See the [`start` command reference](./cli-reference/emulator/start.md) for the full list of options.
 
 ### Useful startup flags
 
@@ -35,7 +38,6 @@ See the [`start` command reference](./cli-reference/emulator/start.md) for the f
 |---|---|
 | `--log-level` | Verbosity: `Debug`, `Information`, `Warning`, `Error` |
 | `--default-subscription` | Creates a subscription with the given GUID at startup |
-| `--tenant-id` | Required when integrating with Azure CLI (Entra ID auth) |
 | `--enable-logging-to-file` | Persists log output to a file |
 | `--refresh-log` | Clears the log file on each start |
 | `--emulator-ip-address` | Override the listening IP (default `127.0.0.1`) |
@@ -45,7 +47,7 @@ See the [`start` command reference](./cli-reference/emulator/start.md) for the f
 By default Topaz starts with no subscriptions. Pass `--default-subscription` to have one created automatically at startup — useful for automated environments and CI pipelines:
 
 ```bash
-topaz start \
+topaz-host \
   --log-level Information \
   --default-subscription 00000000-0000-0000-0000-000000000001
 ```
@@ -53,7 +55,7 @@ topaz start \
 ### Logging to file
 
 ```bash
-topaz start --log-level Debug --enable-logging-to-file --refresh-log
+topaz-host --log-level Debug --enable-logging-to-file --refresh-log
 ```
 
 Logs are written to the `.topaz` directory inside the working folder.
@@ -66,7 +68,7 @@ If you cannot trust the bundled self-signed certificate (e.g. in a corporate env
 <TabItem value="executable" label="Standalone executable">
 
 ```bash
-topaz start \
+topaz-host \
   --certificate-file "/path/to/your/certificate.crt" \
   --certificate-key "/path/to/your/private.key"
 ```
@@ -84,12 +86,12 @@ Mount the certificate and key into the container, then reference them via the fl
 
 ```bash
 docker run --rm \
-  --name topaz \
+  --name topaz.local.dev \
   -p 8899:8899 \
   -v /path/to/your/certificate.crt:/app/certificate.crt:ro \
   -v /path/to/your/private.key:/app/private.key:ro \
-  thecloudtheory/topaz-cli:<tag> \
-  start --certificate-file "certificate.crt" --certificate-key "private.key"
+  thecloudtheory/topaz-host:<tag> \
+  --certificate-file "certificate.crt" --certificate-key "private.key"
 ```
 
 </TabItem>
@@ -97,7 +99,7 @@ docker run --rm \
 
 ## Using the CLI to manage resources
 
-While the emulator is running in the background, use the same binary (or a second terminal) to issue CLI commands against it. The CLI communicates with the locally running emulator over HTTP.
+With the emulator running in the background, use `topaz` in a second terminal to manage resources. The CLI communicates with the locally running emulator over HTTP.
 
 ### Quick-start: subscription and resource group
 

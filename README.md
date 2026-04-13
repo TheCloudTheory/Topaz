@@ -51,10 +51,10 @@ brew tap thecloudtheory/topaz
 brew install topaz
 
 # Run with Docker
-docker run -p 8891:8891 -p 8892:8892 -p 8898:8898 thecloudtheory/topaz-cli start
+docker run -p 8891:8891 -p 8892:8892 -p 8898:8898 thecloudtheory/topaz-host
 
 # Or download the binary and run directly
-topaz start
+topaz-host
 ```
 
 Point your Azure SDK at the relevant local port — no code changes required. To verify Topaz is running, try listing resource groups with the Azure CLI:

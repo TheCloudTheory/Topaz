@@ -125,11 +125,28 @@ When running Topaz as a Docker container you can expose only the HTTP data-plane
 
 ```bash
 cd <download-directory>
-chmod +x topaz-linux-x64          # use topaz-osx-x64 on macOS; topaz-linux-arm64 on ARM
-./topaz-linux-x64 start --log-level Information
+chmod +x topaz-host-linux-x64   # use topaz-host-osx-x64 on macOS; topaz-host-linux-arm64 on ARM
+./topaz-host-linux-x64 --log-level Information
 ```
 
-Available binaries by platform:
+Topaz is split into two executables:
+
+| Binary | Purpose |
+|---|---|
+| `topaz-host-*` | Runs the emulator — start this first |
+| `topaz-*` | CLI for managing resources in the running emulator |
+
+Available **Host** binaries by platform:
+
+| Platform | Binary |
+|---|---|
+| macOS (Apple Silicon) | `topaz-host-osx-arm64` |
+| macOS (Intel) | `topaz-host-osx-x64` |
+| Linux x64 | `topaz-host-linux-x64` |
+| Linux ARM64 | `topaz-host-linux-arm64` |
+| Windows | `topaz-host-win-x64.exe` |
+
+Available **CLI** binaries by platform:
 
 | Platform | Binary |
 |---|---|
@@ -148,21 +165,22 @@ Typing the full binary name every time is tedious. Create a shell alias or move 
 
 ```bash
 # Option A — symlink into /usr/local/bin
+sudo ln -s "$(pwd)/topaz-host-linux-x64" /usr/local/bin/topaz-host
 sudo ln -s "$(pwd)/topaz-linux-x64" /usr/local/bin/topaz
 
 # Option B — add alias to your shell profile
-echo 'alias topaz="/path/to/topaz-linux-x64"' >> ~/.zshrc   # macOS (Zsh)
-echo 'alias topaz="/path/to/topaz-linux-x64"' >> ~/.bashrc  # Linux / WSL
+echo 'alias topaz-host="/path/to/topaz-host-linux-x64"' >> ~/.zshrc   # macOS (Zsh)
+echo 'alias topaz-host="/path/to/topaz-host-linux-x64"' >> ~/.bashrc  # Linux / WSL
 source ~/.zshrc   # or ~/.bashrc
 ```
 
-After this you can simply run `topaz start --log-level Information` from any directory.
+After this you can run `topaz-host --log-level Information` to start the emulator and `topaz` in a second terminal to manage resources.
 
 </TabItem>
 <TabItem value="docker" label="Docker">
 
 ```bash
-docker pull thecloudtheory/topaz-cli:<tag>
+docker pull thecloudtheory/topaz-host:<tag>
 
 # Run with the most commonly used ports exposed
 docker run --rm \
@@ -176,7 +194,7 @@ docker run --rm \
   -p 8889:8889 \   # Service Bus (AMQP)
   -p 5671:5671 \   # Service Bus (AMQP/TLS)
   -p 8892:8892 \   # Container Registry data plane (HTTPS)
-  thecloudtheory/topaz-cli:<tag> start --log-level Information
+  thecloudtheory/topaz-host:<tag>
 ```
 
 Image tags match the Git release tags. Expose only the ports you actually need.
@@ -189,7 +207,7 @@ By default, all state is held in memory and lost when the container stops. Mount
 docker run --rm \
   -p 8899:8899 \
   -v topaz-data:/app/.topaz \
-  thecloudtheory/topaz-cli:<tag> start --log-level Information
+  thecloudtheory/topaz-host:<tag>
 ```
 
 :::

@@ -75,8 +75,7 @@ jobs:
             -p 8888:8888 \
             -p 8889:8889 \
             -p 8887:8887 \
-            thecloudtheory/topaz-cli:${{ env.TOPAZ_VERSION }} \
-            start --log-level Information
+            thecloudtheory/topaz-host:${{ env.TOPAZ_VERSION }}
 
       - name: Wait for Topaz
         run: |

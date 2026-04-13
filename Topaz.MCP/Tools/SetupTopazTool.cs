@@ -24,14 +24,14 @@ public class SetupTopazTool
         string version = "v1.0.299-alpha")
     {
         _container = new ContainerBuilder()
-            .WithImage($"thecloudtheory/topaz-cli:{version}")
+            .WithImage($"thecloudtheory/topaz-host:{version}")
             .WithPortBinding(8890)
             .WithPortBinding(8899)
             .WithPortBinding(8898)
             .WithPortBinding(8897)
             .WithPortBinding(8891)
             .WithName("topaz.local.dev")
-            .WithCommand("start", "--log-level", logLevel.ToString())
+            .WithCommand("--log-level", logLevel.ToString())
             .Build();
 
         await _container.StartAsync()

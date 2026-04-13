@@ -9,9 +9,7 @@ using Topaz.Identity;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
 
-var topazContainerImage = Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE") == null
-    ? "topaz/cli"
-    : Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE")!;
+var topazContainerImage = Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "topaz/host";
 
 var builder = WebApplication.CreateBuilder(args);
 
