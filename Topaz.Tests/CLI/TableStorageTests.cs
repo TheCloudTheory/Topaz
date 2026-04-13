@@ -13,7 +13,7 @@ public class TableStorageTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -21,7 +21,7 @@ public class TableStorageTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -31,14 +31,14 @@ public class TableStorageTests
             SubscriptionName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
             ResourceGroupName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",
@@ -49,7 +49,7 @@ public class TableStorageTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "storage",
             "account",
             "delete",
@@ -61,7 +61,7 @@ public class TableStorageTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "storage",
             "account",
             "create",
@@ -82,7 +82,7 @@ public class TableStorageTests
         var tableDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
             SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".azure-storage", "test", ".table", "test", "metadata.json");
         
-        await Program.Main([
+        await Program.RunAsync([
             "storage",
             "table",
             "create",
@@ -105,7 +105,7 @@ public class TableStorageTests
         var tableDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
             SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".azure-storage", "test", ".table", "test", "metadata.json");
         
-        await Program.Main([
+        await Program.RunAsync([
             "storage",
             "table",
             "create",
@@ -119,7 +119,7 @@ public class TableStorageTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "storage",
             "table",
             "delete",

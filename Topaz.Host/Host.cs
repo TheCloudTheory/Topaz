@@ -144,6 +144,8 @@ public class Host
         ExtractEndpointsForProtocols(services, httpEndpoints, [Protocol.Http, Protocol.Https]);
         ExtractEndpointsForProtocols(services, amqpEndpoints, [Protocol.Amqp]);
 
+        httpEndpoints.Add(new GetHealthEndpoint());
+
         await CreateWebserverForHttpEndpointsAsync([.. httpEndpoints], idFactory, cancellationToken);
         CreateAmqpListenersForAmpqEndpoints([.. amqpEndpoints]);
 

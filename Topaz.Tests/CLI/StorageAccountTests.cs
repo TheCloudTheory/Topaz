@@ -13,7 +13,7 @@ namespace Topaz.Tests.CLI
         [SetUp]
         public async Task SetUp()
         {
-            await Program.Main(
+            await Program.RunAsync(
             [
                 "subscription",
                 "delete",
@@ -21,7 +21,7 @@ namespace Topaz.Tests.CLI
                 SubscriptionId.ToString()
             ]);
 
-            await Program.Main(
+            await Program.RunAsync(
             [
                 "subscription",
                 "create",
@@ -31,14 +31,14 @@ namespace Topaz.Tests.CLI
                 SubscriptionName
             ]);
 
-            await Program.Main([
+            await Program.RunAsync([
                 "group",
                 "delete",
                 "--name",
                 ResourceGroupName
             ]);
 
-            await Program.Main([
+            await Program.RunAsync([
                 "group",
                 "create",
                 "--name",
@@ -49,7 +49,7 @@ namespace Topaz.Tests.CLI
                 SubscriptionId.ToString()
             ]);
 
-            await Program.Main([
+            await Program.RunAsync([
                 "storage",
                 "account",
                 "delete",
@@ -61,7 +61,7 @@ namespace Topaz.Tests.CLI
                 SubscriptionId.ToString()
             ]);
 
-            await Program.Main([
+            await Program.RunAsync([
                 "storage",
                 "account",
                 "create",
@@ -91,7 +91,7 @@ namespace Topaz.Tests.CLI
             var accountDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
                 SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".azure-storage", StorageAccountName, "metadata.json");
 
-            await Program.Main([
+            await Program.RunAsync([
                 "storage",
                 "account",
                 "delete",
@@ -109,7 +109,7 @@ namespace Topaz.Tests.CLI
         [Test]
         public async Task StorageAccountTests_WhenStorageAccountExists_ItShouldBePossibleToListItsKeys()
         {
-            var result = await Program.Main([
+            var result = await Program.RunAsync([
                 "storage",
                 "account",
                 "keys",
@@ -128,7 +128,7 @@ namespace Topaz.Tests.CLI
         [Test]
         public async Task StorageAccountTests_WhenStorageAccountExists_ItShouldBePossibleToGetConnectionString()
         {
-            var result = await Program.Main([
+            var result = await Program.RunAsync([
                 "storage",
                 "account",
                 "show-connection-string",

@@ -12,7 +12,7 @@ public class KeyVaultTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -20,7 +20,7 @@ public class KeyVaultTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -30,7 +30,7 @@ public class KeyVaultTests
             SubscriptionName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -39,7 +39,7 @@ public class KeyVaultTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",
@@ -50,7 +50,7 @@ public class KeyVaultTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "keyvault",
             "delete",
             "--name",
@@ -61,7 +61,7 @@ public class KeyVaultTests
             SubscriptionId.ToString(),
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "keyvault",
             "create",
             "--name",
@@ -92,7 +92,7 @@ public class KeyVaultTests
             SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".azure-key-vault", VaultName,
             "metadata.json");
 
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "keyvault",
             "delete",
             "--name",
@@ -113,7 +113,7 @@ public class KeyVaultTests
     [Test]
     public async Task KeyVaultTests_WhenCheckNameIsCalledAndKeyVaultExists_ItShouldReturnFalse()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "keyvault",
             "check-name",
             "--name",
@@ -131,7 +131,7 @@ public class KeyVaultTests
     [Test]
     public async Task KeyVaultTests_WhenCheckNameIsCalledAndKeyVaultDoeNotExist_ItShouldReturnTrue()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "keyvault",
             "check-name",
             "--name",
@@ -150,7 +150,7 @@ public class KeyVaultTests
     [Test]
     public async Task KeyVaultTests_WhenDuplicatedKeyVaultIsAttemptedToBeCreated_ItShouldFailGracefullyWithMeaningfulError()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "keyvault",
             "create",
             "--name",
@@ -175,7 +175,7 @@ public class KeyVaultTests
     [TestCase("kv--test")]
     public async Task KeyVaultTests_WhenInvalidKeyVaultNameIsProvided_ItShouldFailGracefullyWithMeaningfulError(string invalidName)
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "keyvault",
             "create",
             "--name",

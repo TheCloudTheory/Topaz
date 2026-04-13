@@ -1,4 +1,6 @@
+using System.Net.Http;
 using System.Reflection;
+using System.Text.Json;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
@@ -23,6 +25,15 @@ internal class Program
 {
     internal static async Task<int> Main(string[] args)
     {
+        var hostCheck = await CheckHostAsync();
+        if (hostCheck != 0)
+            return hostCheck;
+
+        return await RunAsync(args);
+    }
+
+    internal static async Task<int> RunAsync(string[] args)
+    {
         try
         {
             var registrations = new ServiceCollection();
@@ -40,6 +51,51 @@ internal class Program
             await Console.Error.WriteLineAsync(ex.Message);
             await Console.Error.WriteLineAsync(ex.StackTrace);
 
+            return 1;
+        }
+    }
+
+    private static async Task<int> CheckHostAsync()
+    {
+        using var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+        };
+        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
+
+        try
+        {
+            var response = await client.GetAsync(
+                $"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/health");
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+
+            if (!doc.RootElement.TryGetProperty("workingDirectory", out var wdElement))
+                return 0;
+
+            var hostDir = Path.GetFullPath(wdElement.GetString() ?? string.Empty);
+            var cliDir = Path.GetFullPath(Environment.CurrentDirectory);
+
+            if (!string.Equals(hostDir, cliDir, StringComparison.OrdinalIgnoreCase))
+            {
+                await Console.Error.WriteLineAsync(
+                    $"Topaz Host is running from a different directory ('{hostDir}'). " +
+                    "Run the CLI from the same directory as the Host.");
+                return 1;
+            }
+
+            return 0;
+        }
+        catch (HttpRequestException)
+        {
+            await Console.Error.WriteLineAsync(
+                "Topaz Host is not running. Please start it first using `topaz-host`.");
+            return 1;
+        }
+        catch (TaskCanceledException)
+        {
+            await Console.Error.WriteLineAsync(
+                "Topaz Host is not running. Please start it first using `topaz-host`.");
             return 1;
         }
     }

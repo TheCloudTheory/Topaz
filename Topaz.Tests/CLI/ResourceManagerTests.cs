@@ -14,7 +14,7 @@ public class ResourceManagerTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -22,7 +22,7 @@ public class ResourceManagerTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -32,7 +32,7 @@ public class ResourceManagerTests
             SubscriptionName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -41,7 +41,7 @@ public class ResourceManagerTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",
@@ -56,7 +56,7 @@ public class ResourceManagerTests
     [Test]
     public async Task ResourceManagerTests_WhenNewDeploymentIsCreatedWithExplicitName_ItShouldBeCreated()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "deployment",
             "group",
             "create",
@@ -81,7 +81,7 @@ public class ResourceManagerTests
     [Test]
     public async Task ResourceManagerTests_WhenNewDeploymentIsCreatedWithNoExplicitNameAndNoTemplate_ItShouldBeCreatedAndNameShouldBeGeneratedAutomatically()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "deployment",
             "group",
             "create",
@@ -106,7 +106,7 @@ public class ResourceManagerTests
     public async Task
         ResourceManagerTests_WhenNewDeploymentIsCreatedWithWithEmptyTemplateFileProvidedAndNoNameProvided_ItShouldBeCreatedAndNameShouldBeGeneratedAutomatically()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "deployment",
             "group",
             "create",
@@ -131,7 +131,7 @@ public class ResourceManagerTests
     [Test]
     public async Task ResourceManagerTests_WhenDeploymentIsRequestedForNotExistingResourceGroup_ItMustFail()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "deployment",
             "group",
             "create",
@@ -146,7 +146,7 @@ public class ResourceManagerTests
 
     [Test] public async Task ResourceManagerTests_WhenThereAreMultipleDeploymentsAvailable_TheyShouldBeReturned()
     {
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -155,7 +155,7 @@ public class ResourceManagerTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",
@@ -166,7 +166,7 @@ public class ResourceManagerTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "deployment",
             "group",
             "create",
@@ -180,7 +180,7 @@ public class ResourceManagerTests
             "deployment1"
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "deployment",
             "group",
             "create",
@@ -194,7 +194,7 @@ public class ResourceManagerTests
             "deployment2"
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "deployment",
             "group",
             "create",
@@ -223,7 +223,7 @@ public class ResourceManagerTests
         
         Assert.That(deploymentPaths.Select(File.Exists).All(p => p), Is.True);
         
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "deployment",
             "group",
             "list",

@@ -12,7 +12,7 @@ public class ServiceBusTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -20,7 +20,7 @@ public class ServiceBusTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -30,14 +30,14 @@ public class ServiceBusTests
             "sub-test"
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
             ResourceGroupName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",
@@ -48,7 +48,7 @@ public class ServiceBusTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "servicebus",
             "namespace",
             "delete",
@@ -60,7 +60,7 @@ public class ServiceBusTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "servicebus",
             "namespace",
             "create",
@@ -72,7 +72,7 @@ public class ServiceBusTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "servicebus",
             "queue",
             "create",
@@ -102,7 +102,7 @@ public class ServiceBusTests
         var namespacePath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
             SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".service-bus", NamespaceName, "metadata.json");
 
-        var code = await Program.Main([
+        var code = await Program.RunAsync([
             "servicebus",
             "namespace",
             "delete",
@@ -136,7 +136,7 @@ public class ServiceBusTests
         var queuePath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
             SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".service-bus", NamespaceName, "queues", QueueName, "metadata.json");
         
-        var code = await Program.Main([
+        var code = await Program.RunAsync([
             "servicebus",
             "queue",
             "delete",

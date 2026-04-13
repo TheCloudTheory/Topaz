@@ -15,7 +15,7 @@ public class ResourceGroupTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -23,7 +23,7 @@ public class ResourceGroupTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -33,7 +33,7 @@ public class ResourceGroupTests
             SubscriptionName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -42,7 +42,7 @@ public class ResourceGroupTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",
@@ -69,7 +69,7 @@ public class ResourceGroupTests
         var resourceGroupPath = Path.Combine(Directory.GetCurrentDirectory(), ".topaz", ".subscription",
             SubscriptionId.ToString(), ".resource-group", ResourceGroupName, "metadata.json");
 
-        var code = await Program.Main([
+        var code = await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -88,7 +88,7 @@ public class ResourceGroupTests
     [Test]
     public async Task ResourceGroupTests_WhenDeletedResourceGroupDoesNotExists_ItShouldReportError()
     {
-        var code = await Program.Main([
+        var code = await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -103,7 +103,7 @@ public class ResourceGroupTests
     [Test]
     public async Task ResourceGroupTests_WhenResourceGroupsAreListed_CommandShouldExecuteSuccessfully()
     {
-        var code = await Program.Main([
+        var code = await Program.RunAsync([
             "group",
             "list",
             "--subscription-id",
@@ -116,7 +116,7 @@ public class ResourceGroupTests
     [Test]
     public async Task ResourceGroupTests_WhenResourceGroupsIsCreatedWithSpecificLocation_TheLocationShouldBeReturned()
     {
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -125,7 +125,7 @@ public class ResourceGroupTests
             SubscriptionId.ToString()
         ]);
         
-        var code = await Program.Main([
+        var code = await Program.RunAsync([
             "group",
             "create",
             "--name",
@@ -138,7 +138,7 @@ public class ResourceGroupTests
         
         Assert.That(code, Is.EqualTo(0));
         
-        var code2 = await Program.Main([
+        var code2 = await Program.RunAsync([
             "group",
             "show",
             "--name",
@@ -164,7 +164,7 @@ public class ResourceGroupTests
     [Test]
     public async Task ResourceGroupTests_WhenResourceGroupIsGoingToBeCreatedInNonExistentSubscription_TheCommandMustFail()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "group",
             "create",
             "--name",

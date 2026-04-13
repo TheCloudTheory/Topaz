@@ -18,7 +18,7 @@ public class SubscriptionTests
 
         foreach (var subscription in subscriptions)
         {
-            var result = await Program.Main([
+            var result = await Program.RunAsync([
                 "subscription",
                 "create",
                 "--id",
@@ -30,7 +30,7 @@ public class SubscriptionTests
             Assert.That(result, Is.EqualTo(0));
         }
         
-        var listResult = await Program.Main([
+        var listResult = await Program.RunAsync([
             "subscription",
             "list"
         ]);

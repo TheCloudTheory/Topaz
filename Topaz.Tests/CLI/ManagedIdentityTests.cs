@@ -12,7 +12,7 @@ public class ManagedIdentityTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -20,7 +20,7 @@ public class ManagedIdentityTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -30,7 +30,7 @@ public class ManagedIdentityTests
             SubscriptionName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -39,7 +39,7 @@ public class ManagedIdentityTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",
@@ -50,7 +50,7 @@ public class ManagedIdentityTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "identity",
             "delete",
             "--name",
@@ -61,7 +61,7 @@ public class ManagedIdentityTests
             SubscriptionId.ToString(),
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "identity",
             "create",
             "--name",
@@ -92,7 +92,7 @@ public class ManagedIdentityTests
             SubscriptionId.ToString(), ".resource-group", ResourceGroupName, ".managed-identity", IdentityName,
             "metadata.json");
 
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "identity",
             "delete",
             "--name",
@@ -113,7 +113,7 @@ public class ManagedIdentityTests
     [Test]
     public async Task ManagedIdentityTests_WhenDeletingNonExistentIdentity_ItShouldReturnError()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "identity",
             "delete",
             "--name",
@@ -130,7 +130,7 @@ public class ManagedIdentityTests
     [Test]
     public async Task ManagedIdentityTests_WhenShowingExistingIdentity_ItShouldReturnDetails()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "identity",
             "show",
             "--name",
@@ -147,7 +147,7 @@ public class ManagedIdentityTests
     [Test]
     public async Task ManagedIdentityTests_WhenShowingNonExistentIdentity_ItShouldReturnError()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "identity",
             "show",
             "--name",
@@ -164,7 +164,7 @@ public class ManagedIdentityTests
     [Test]
     public async Task ManagedIdentityTests_WhenListingIdentitiesByResourceGroup_ItShouldReturnList()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "identity",
             "list",
             "-g",
@@ -179,7 +179,7 @@ public class ManagedIdentityTests
     [Test]
     public async Task ManagedIdentityTests_WhenListingIdentitiesBySubscription_ItShouldReturnList()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "identity",
             "list",
             "--subscription-id",
@@ -192,7 +192,7 @@ public class ManagedIdentityTests
     [Test]
     public async Task ManagedIdentityTests_WhenDuplicatedIdentityIsAttemptedToBeCreated_ItShouldFailGracefullyWithMeaningfulError()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "identity",
             "create",
             "--name",
@@ -213,7 +213,7 @@ public class ManagedIdentityTests
     {
         const string identityNameWithTags = "identity-with-tags";
         
-        await Program.Main([
+        await Program.RunAsync([
             "identity",
             "delete",
             "--name",
@@ -224,7 +224,7 @@ public class ManagedIdentityTests
             SubscriptionId.ToString()
         ]);
 
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "identity",
             "create",
             "--name",
@@ -253,7 +253,7 @@ public class ManagedIdentityTests
     [Test]
     public async Task ManagedIdentityTests_WhenUpdatingIdentityTags_ItShouldUpdateSuccessfully()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "identity",
             "update",
             "--name",
@@ -274,7 +274,7 @@ public class ManagedIdentityTests
     [Test]
     public async Task ManagedIdentityTests_WhenUpdatingNonExistentIdentity_ItShouldReturnError()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "identity",
             "update",
             "--name",
@@ -293,7 +293,7 @@ public class ManagedIdentityTests
     [Test]
     public async Task ManagedIdentityTests_WhenCreatingIdentityInNonExistentResourceGroup_ItShouldReturnError()
     {
-        var result = await Program.Main([
+        var result = await Program.RunAsync([
             "identity",
             "create",
             "--name",

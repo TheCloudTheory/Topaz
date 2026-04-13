@@ -12,7 +12,7 @@ public class ContainerRegistryTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -20,7 +20,7 @@ public class ContainerRegistryTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -30,7 +30,7 @@ public class ContainerRegistryTests
             SubscriptionName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -39,7 +39,7 @@ public class ContainerRegistryTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",
@@ -50,7 +50,7 @@ public class ContainerRegistryTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "acr",
             "delete",
             "--name",
@@ -61,7 +61,7 @@ public class ContainerRegistryTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "acr",
             "create",
             "--name",
@@ -80,7 +80,7 @@ public class ContainerRegistryTests
     {
         SeedRepository("sample-repo");
 
-        var code = await Program.Main([
+        var code = await Program.RunAsync([
             "acr",
             "repository",
             "list",
@@ -101,7 +101,7 @@ public class ContainerRegistryTests
         const string repositoryName = "delete-me";
         var repositoryPath = SeedRepository(repositoryName);
 
-        var code = await Program.Main([
+        var code = await Program.RunAsync([
             "acr",
             "repository",
             "delete",
