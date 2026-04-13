@@ -45,23 +45,6 @@ html {
   box-shadow: 0 1px 0 0 var(--ifm-toc-border-color);
 }
 
-/* Fix navbar link click area.
-   With Docusaurus v4 cascade layers, flex-based centering on .navbar__items
-   causes the link bounding boxes to misalign from the visible text.
-   Fix: stretch links to full row height and use line-height (not flex) to
-   vertically center the text — avoids anonymous-flex-item positioning issues. */
-.navbar__items {
-  align-items: stretch !important;
-}
-
-.navbar__item.navbar__link {
-  display: block !important;
-  align-self: stretch !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  line-height: calc(var(--ifm-navbar-height) - 2 * var(--ifm-navbar-padding-vertical));
-}
-
 /* Slightly tighter base font rendering */
 body {
   -webkit-font-smoothing: antialiased;
