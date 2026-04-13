@@ -29,7 +29,31 @@ public class ListServicePrincipalsEndpoint(ITopazLogger logger) : IEndpointDefin
         logger.LogDebug(nameof(ListServicePrincipalsEndpoint), nameof(GetResponse), "Fetching service principals.");
 
         var operation = _dataPlane.ListServicePrincipals();
+        var principals = operation.Resource ?? [];
 
-        response.CreateJsonContentResponse(ServicePrincipalsListResponse.From(operation.Resource));
+        // Apply $filter=appId eq 'xxx' when provided (used by azuread Terraform provider)
+        if (context.Request.Query.TryGetValue("$filter", out var filterValue))
+        {
+            var filter = filterValue.ToString();
+            var appIdFilter = ParseAppIdFilter(filter);
+            if (appIdFilter != null)
+            {
+                principals = principals
+                    .Where(sp => string.Equals(sp.AppId, appIdFilter, StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+            }
+        }
+
+        response.CreateJsonContentResponse(ServicePrincipalsListResponse.From(principals));
+    }
+
+    private static string? ParseAppIdFilter(string filter)
+    {
+        // Matches: appId eq 'some-guid'
+        var match = System.Text.RegularExpressions.Regex.Match(
+            filter,
+            @"appId\s+eq\s+'([^']+)'",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return match.Success ? match.Groups[1].Value : null;
     }
 }
