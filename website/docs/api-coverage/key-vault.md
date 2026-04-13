@@ -42,6 +42,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 | List By Subscription | ✅ | |
 | List Deleted | ✅ | |
 | Purge Deleted | ✅ | |
+| Recover Deleted | ✅ | |
 | Update | ✅ | PATCH |
 | Update Access Policy | ✅ | |
 

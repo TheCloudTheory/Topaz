@@ -42,6 +42,7 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
         new CheckKeyVaultNameAvailabilityEndpoint(eventPipeline, logger),
         new CheckMhsmNameAvailabilityEndpoint(eventPipeline, logger),
         new PurgeDeletedVaultEndpoint(eventPipeline, logger),
+        new RecoverDeletedVaultEndpoint(eventPipeline, logger),
         new UpdateAccessPolicyEndpoint(eventPipeline, logger)
     ];
 

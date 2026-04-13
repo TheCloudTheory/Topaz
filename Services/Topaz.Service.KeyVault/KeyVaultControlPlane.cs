@@ -296,6 +296,30 @@ internal sealed class KeyVaultControlPlane(
         return keyVault == null ? (OperationResult.NotFound, null) : (OperationResult.Success, keyVault);
     }
 
+    public ControlPlaneOperationResult<KeyVaultFullResource> Recover(SubscriptionIdentifier subscriptionIdentifier, string keyVaultName)
+    {
+        var subscription = subscriptionControlPlane.Get(subscriptionIdentifier);
+        if (subscription.Resource == null || subscription.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.NotFound, null,
+                string.Format(KeyVaultNotFoundMessageTemplate, keyVaultName), KeyVaultNotFoundCode);
+        }
+
+        var (operationResult, keyVault) = ShowDeleted(subscriptionIdentifier, keyVaultName);
+        if (operationResult == OperationResult.NotFound || keyVault == null)
+        {
+            return new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.NotFound, null,
+                string.Format(KeyVaultNotFoundMessageTemplate, keyVaultName), KeyVaultNotFoundCode);
+        }
+
+        SetRecoverPropertiesForKeyVault(true, keyVault);
+
+        provider.CreateOrUpdate(subscriptionIdentifier, keyVault.GetResourceGroup(), keyVaultName, keyVault,
+            createOperation: false, recoverInstance: true);
+
+        return new ControlPlaneOperationResult<KeyVaultFullResource>(OperationResult.Updated, keyVault, null, null);
+    }
+
     public (OperationResult operationResult, string? vaultUri) Purge(SubscriptionIdentifier subscriptionIdentifier, string location, string keyVaultName)
     {
         var subscription = subscriptionControlPlane.Get(subscriptionIdentifier);
