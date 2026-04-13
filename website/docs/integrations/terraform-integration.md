@@ -1,13 +1,13 @@
 ---
 sidebar_position: 2
 slug: /terraform-integration
-description: Use Terraform with Topaz by configuring AzureRM to discover Topaz metadata endpoints, authenticate locally, and run apply/destroy against emulated Azure services.
-keywords: [terraform topaz, azurerm local emulator, azure terraform local, topaz metadata_host, terraform azure emulator]
+description: Run Terraform AzureRM local testing with Topaz — configure azurerm, azapi, and azuread providers to hit a local emulator instead of real Azure. No subscription required.
+keywords: [terraform topaz, azurerm local emulator, azure terraform local, topaz metadata_host, terraform azure emulator, terraform azurerm local testing, azurerm local testing]
 ---
 
 # Terraform integration
 
-Topaz can be used as a local Azure target for Terraform by configuring Terraform providers to discover endpoints from Topaz metadata instead of Azure public cloud.
+Topaz can be used as a local Azure target for Terraform, enabling full `azurerm` local testing without a real Azure subscription. Configure Terraform providers to discover endpoints from Topaz metadata instead of Azure public cloud, and run your complete `init` → `plan` → `apply` → `destroy` workflow locally.
 
 This page explains how Terraform integration works, how to configure it, and which settings are required.
 

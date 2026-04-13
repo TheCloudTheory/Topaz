@@ -45,6 +45,23 @@ html {
   box-shadow: 0 1px 0 0 var(--ifm-toc-border-color);
 }
 
+/* Fix navbar link click area.
+   With Docusaurus v4 cascade layers, flex-based centering on .navbar__items
+   causes the link bounding boxes to misalign from the visible text.
+   Fix: stretch links to full row height and use line-height (not flex) to
+   vertically center the text — avoids anonymous-flex-item positioning issues. */
+.navbar__items {
+  align-items: stretch !important;
+}
+
+.navbar__item.navbar__link {
+  display: block !important;
+  align-self: stretch !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: calc(var(--ifm-navbar-height) - 2 * var(--ifm-navbar-padding-vertical));
+}
+
 /* Slightly tighter base font rendering */
 body {
   -webkit-font-smoothing: antialiased;
@@ -100,7 +117,8 @@ body {
 
 /* ── Roadmap status badges ────────────────────────────────────── */
 .badge--stable,
-.badge--preview {
+.badge--preview,
+.badge--coming-soon {
   display: inline-block;
   padding: 0.18em 0.65em;
   border-radius: 999px;
@@ -122,6 +140,11 @@ body {
   color: #ffffff;
 }
 
+.badge--coming-soon {
+  background-color: #3f5a8a;
+  color: #ffffff;
+}
+
 [data-theme='dark'] .badge--stable {
   background-color: #1e9447;
   color: #ffffff;
@@ -129,5 +152,10 @@ body {
 
 [data-theme='dark'] .badge--preview {
   background-color: #b37f00;
+  color: #ffffff;
+}
+
+[data-theme='dark'] .badge--coming-soon {
+  background-color: #4d6fa5;
   color: #ffffff;
 }

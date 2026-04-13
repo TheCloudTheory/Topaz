@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
-description: Build and run a complete local Terraform workflow with Topaz, including initial setup, provider configuration, authentication, common gotchas, and validation.
-keywords: [topaz tutorial, terraform local azure, azurerm with topaz, local terraform development, topaz gotchas]
+description: Step-by-step tutorial for Terraform AzureRM local testing with Topaz. Covers provider configuration, authentication, init/plan/apply/destroy, and common gotchas — no Azure subscription needed.
+keywords: [topaz tutorial, terraform local azure, azurerm with topaz, local terraform development, topaz gotchas, terraform azurerm local testing, terraform local testing azure]
 ---
 
 # Local Terraform development with Topaz
