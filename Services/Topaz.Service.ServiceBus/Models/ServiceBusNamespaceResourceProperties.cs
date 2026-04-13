@@ -5,7 +5,6 @@ namespace Topaz.Service.ServiceBus.Models;
 
 internal sealed class ServiceBusNamespaceResourceProperties
 {
-    public ResourceSku? Sku { get; init; }
     public string? Location { get; init; }
     public object? Identity { get; init; }
     public object? MinimumTlsVersion { get; init; }
@@ -27,7 +26,6 @@ internal sealed class ServiceBusNamespaceResourceProperties
     {
         return new ServiceBusNamespaceResourceProperties
         {
-            Sku = request.Sku,
             Location = request.Location,
             Identity = request.Properties!.Identity,
             MinimumTlsVersion = request.Properties!.MinimumTlsVersion,

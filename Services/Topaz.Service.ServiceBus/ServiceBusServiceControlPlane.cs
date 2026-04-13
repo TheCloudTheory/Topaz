@@ -59,7 +59,8 @@ internal sealed class ServiceBusServiceControlPlane(
             var resource = new ServiceBusNamespaceResource(subscriptionIdentifier, resourceGroupIdentifier, location,
                 @namespace, properties)
             {
-                Tags = request.Tags
+                Tags = request.Tags,
+                Sku = request.Sku
             };
 
             provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, resource, true);
@@ -68,11 +69,18 @@ internal sealed class ServiceBusServiceControlPlane(
                 null);
         }
 
-        existingNamespace.Tags = request.Tags;
+        properties.CreatedOn = existingNamespace.Properties.CreatedOn;
         properties.UpdatedOn = DateTime.UtcNow;
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, properties);
+        var updatedResource = new ServiceBusNamespaceResource(subscriptionIdentifier, resourceGroupIdentifier,
+            request.Location ?? existingNamespace.Location ?? location,
+            @namespace, properties)
+        {
+            Tags = request.Tags ?? existingNamespace.Tags,
+            Sku = request.Sku ?? existingNamespace.Sku
+        };
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, updatedResource);
 
-        return new ControlPlaneOperationResult<ServiceBusNamespaceResource>(OperationResult.Updated, existingNamespace,
+        return new ControlPlaneOperationResult<ServiceBusNamespaceResource>(OperationResult.Updated, updatedResource,
             null, null);
     }
 
