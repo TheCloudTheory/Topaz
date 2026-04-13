@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
@@ -35,11 +36,11 @@ internal sealed class PurgeDeletedVaultEndpoint(Pipeline eventPipeline, ITopazLo
             var (operationResult, vaultUri) = _controlPlane.Purge(subscriptionIdentifier, location!, keyVaultName!);
             if (operationResult == OperationResult.NotFound || vaultUri == null)
             {
-                response.StatusCode = HttpStatusCode.NotFound;
+                response.CreateErrorResponse("VaultNotFound", $"Vault '{keyVaultName}' not found or not soft-deleted.", HttpStatusCode.NotFound);
                 return;
             }
 
-            response.StatusCode = HttpStatusCode.NoContent;
+            response.CreateJsonContentResponse(new PurgeDeletedVaultResponse());
         }
         catch (Exception ex)
         {
@@ -48,4 +49,9 @@ internal sealed class PurgeDeletedVaultEndpoint(Pipeline eventPipeline, ITopazLo
             response.Content = new StringContent(ex.Message);
         }
     }
+}
+
+internal sealed class PurgeDeletedVaultResponse
+{
+    public override string ToString() => JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
 }
