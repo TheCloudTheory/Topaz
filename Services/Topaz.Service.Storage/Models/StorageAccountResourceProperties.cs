@@ -4,6 +4,17 @@ using JetBrains.Annotations;
 namespace Topaz.Service.Storage.Models;
 
 [UsedImplicitly]
+internal record StorageAccountPrimaryEndpoints
+{
+    public string? Blob { get; set; }
+    public string? Queue { get; set; }
+    public string? Table { get; set; }
+    public string? File { get; set; }
+    public string? Web { get; set; }
+    public string? Dfs { get; set; }
+}
+
+[UsedImplicitly]
 internal record StorageAccountResourceProperties
 {
     public string? AllowedCopyScope { get; set; }
@@ -30,4 +41,5 @@ internal record StorageAccountResourceProperties
     public JsonElement? ImmutableStorageWithVersioning { get; set; }
     public string? DnsEndpointType { get; set; }
     public string ProvisioningState { get; set; } = "Succeeded";
+    public StorageAccountPrimaryEndpoints? PrimaryEndpoints { get; set; }
 }

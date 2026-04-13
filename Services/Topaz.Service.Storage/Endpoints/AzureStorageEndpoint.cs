@@ -91,8 +91,7 @@ public class AzureStorageEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         var keys = new ListKeysResponse(storageAccount.resource.Keys);
 
-        response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(keys.ToString());
+        response.CreateJsonContentResponse(keys);
     }
 
     private void HandleDeleteStorageAccount(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,
@@ -128,8 +127,7 @@ public class AzureStorageEndpoint(ITopazLogger logger) : IEndpointDefinition
             return;
         }
 
-        response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(storageAccount.resource.ToString());
+        response.CreateJsonContentResponse(storageAccount.resource);
     }
 
     private void HandleCreateOrUpdateStorageAccount(HttpResponseMessage response,
@@ -153,7 +151,6 @@ public class AzureStorageEndpoint(ITopazLogger logger) : IEndpointDefinition
         var result = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
             request);
 
-        response.Content = new StringContent(result.resource.ToString());
-        response.StatusCode = HttpStatusCode.OK;
+        response.CreateJsonContentResponse(result.resource);
     }
 }

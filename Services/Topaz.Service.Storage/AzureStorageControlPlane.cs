@@ -51,7 +51,10 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         {
             Name = StorageSkuName.StandardLrs.ToString()
         };
-        var properties = new StorageAccountResourceProperties();
+        var properties = new StorageAccountResourceProperties
+        {
+            PrimaryEndpoints = BuildPrimaryEndpoints(storageAccountName)
+        };
         var resource = new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
             location, sku, StorageKind.StorageV2.ToString(), properties);
 
@@ -115,9 +118,10 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         CreateOrUpdateStorageAccountRequest request)
     {
         var existingAccount = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        var properties = request.Properties! with { PrimaryEndpoints = BuildPrimaryEndpoints(storageAccountName) };
         var resource = new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
             request.Location!,
-            request.Sku!, request.Kind!, request.Properties!);
+            request.Sku!, request.Kind!, properties);
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, resource,
             existingAccount == null);
@@ -127,6 +131,16 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         return (string.IsNullOrWhiteSpace(existingAccount) ? OperationResult.Created : OperationResult.Updated,
             resource);
     }
+
+    private static StorageAccountPrimaryEndpoints BuildPrimaryEndpoints(string accountName) => new()
+    {
+        Blob = $"https://{accountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
+        Queue = $"https://{accountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/",
+        Table = $"https://{accountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/",
+        File = $"https://{accountName}.file.storage.topaz.local.dev:{GlobalSettings.DefaultFileStoragePort}/",
+        Web = $"https://{accountName}.web.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
+        Dfs = $"https://{accountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
+    };
 
     public ControlPlaneOperationResult<StorageAccountResource[]> List(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier)

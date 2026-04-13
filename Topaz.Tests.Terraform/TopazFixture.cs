@@ -137,6 +137,9 @@ public class TopazFixture
                 // Some CI/container environments start large providers slowly (azurerm schema load).
                 .WithEnvironment("TF_PLUGIN_TIMEOUT", "5m")
                 .WithExtraHost("topaz.local.dev", _containerTopaz.IpAddress)
+                // Key Vault data-plane: the azurerm provider pings the vault URI to verify availability.
+                .WithExtraHost("tfrm-kv-test.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
+                .WithExtraHost("tfrm-kv-sd.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
                 // Bind-mount host cache: providers + terraform binary are downloaded once and reused
                 // across all 17 fixture setups rather than re-downloaded for every test class.
                 .WithBindMount(TerraformCacheDir, "/tf-cache")

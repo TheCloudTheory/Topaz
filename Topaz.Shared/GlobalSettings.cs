@@ -33,6 +33,8 @@ public static class GlobalSettings
     public const ushort AdditionalServiceBusPort = 8887;
     public const ushort DefaultTableStoragePort = 8890;
     public const ushort DefaultBlobStoragePort = 8891;
+    public const ushort DefaultQueueStoragePort = 8893;
+    public const ushort DefaultFileStoragePort = 8894;
     public const ushort DefaultEventHubPort = 8897;
     public const ushort DefaultKeyVaultPort = 8898;
     public const ushort DefaultResourceManagerPort = 8899;

@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Topaz.Service.ContainerRegistry.Models.Requests;
+using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Models;
 
@@ -22,7 +23,7 @@ internal sealed class ContainerRegistryResourceProperties
     {
         return new ContainerRegistryResourceProperties
         {
-            LoginServer = $"{registryName}.cr.topaz.local.dev",
+            LoginServer = $"{registryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}",
             CreationDate = DateTimeOffset.UtcNow,
             ProvisioningState = "Succeeded",
             AdminUserEnabled = request.Properties?.AdminUserEnabled.GetValueOrDefault(false) ?? false,

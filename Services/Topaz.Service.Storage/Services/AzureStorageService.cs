@@ -17,7 +17,11 @@ public sealed class AzureStorageService(ITopazLogger logger) : IServiceDefinitio
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new AzureStorageEndpoint(logger),
-        new ListStorageAccountsEndpoint(logger)
+        new ListStorageAccountsEndpoint(logger),
+        new GetFileServicesDefaultEndpoint(logger),
+        new GetBlobServicesDefaultEndpoint(logger),
+        new GetTableServicesDefaultEndpoint(logger),
+        new GetQueueServicesDefaultEndpoint(logger)
     ];
 
     public void Bootstrap()
