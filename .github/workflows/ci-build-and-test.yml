@@ -188,7 +188,7 @@ jobs:
       with:
         reports: ./TestResults/**/coverage.cobertura.xml
         targetdir: coveragereport
-        reporttypes: Html;MarkdownSummaryGithub;Badges
+        reporttypes: HtmlSummary;MarkdownSummaryGithub;Badges
     - name: Upload coverage report artifact
       if: always() && steps.test_filter.outputs.skip != 'true'
       uses: actions/upload-artifact@v4
