@@ -65,6 +65,17 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
+          versions: {
+            current: {
+              label: 'Next (unreleased)',
+              badge: true,
+            },
+            'v1.1': {
+              label: 'v1.1 (stable)',
+              badge: false,
+            },
+          },
+          lastVersion: 'v1.1',
         },
         blog: {
           showReadingTime: true,
@@ -118,6 +129,10 @@ const config: Config = {
         { to: '/pricing', label: 'Pricing', position: 'left' },
         { to: '/demo', label: 'Demo', position: 'left' },
         { to: '/blog', label: 'Blog', position: 'left' },
+        {
+          type: 'docsVersionDropdown',
+          position: 'right',
+        },
         {
           href: 'https://github.com/TheCloudTheory/Topaz',
           label: 'GitHub',
