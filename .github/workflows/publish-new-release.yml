@@ -17,6 +17,7 @@ permissions:
   actions: read
   id-token: write
   attestations: write
+  issues: read
 
 jobs:
   build:
@@ -46,11 +47,53 @@ jobs:
         TAG=$(cat tag-info/tag-info.txt)
         echo "tag=$TAG" >> $GITHUB_OUTPUT
         echo "Using release tag: $TAG"
+    - name: Generate release notes
+      id: release-notes
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        TAG="${{ steps.read-tag.outputs.tag }}"
+        # Strip trailing .N to derive milestone name, e.g. v1.1-beta.5 -> v1.1-beta
+        MILESTONE=$(echo "$TAG" | sed 's/\.[0-9]*$//')
+        echo "Looking for milestone: $MILESTONE"
+
+        MILESTONE_NUMBER=$(gh api repos/${{ github.repository }}/milestones \
+          --jq ".[] | select(.title == \"$MILESTONE\") | .number")
+
+        if [ -z "$MILESTONE_NUMBER" ]; then
+          echo "No milestone found for '$MILESTONE', skipping release notes."
+          echo "## $TAG" > release-notes.md
+          exit 0
+        fi
+
+        echo "Found milestone #$MILESTONE_NUMBER"
+
+        gh api "repos/${{ github.repository }}/issues?milestone=$MILESTONE_NUMBER&state=closed&per_page=100" \
+          --jq '[.[] | select(.pull_request == null)]' > /tmp/issues.json
+
+        {
+          echo "## What's Changed in $TAG"
+          echo ""
+          ISSUE_COUNT=$(jq 'length' /tmp/issues.json)
+          if [ "$ISSUE_COUNT" -gt 0 ]; then
+            echo "### Closed Issues"
+            jq -r '.[] | "- " + .title + " ([#" + (.number|tostring) + "](" + .html_url + "))"' /tmp/issues.json
+            echo ""
+          else
+            echo "_No closed issues found for milestone \`$MILESTONE\`._"
+            echo ""
+          fi
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/milestone/$MILESTONE_NUMBER?closed=1"
+        } > release-notes.md
+
+        echo "Generated release notes:"
+        cat release-notes.md
     - uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.read-tag.outputs.tag }}
         name: ${{ steps.read-tag.outputs.tag }}
         prerelease: true
+        body_path: release-notes.md
         files: |
           **/osx-x64/topaz-osx-x64
           **/osx-arm64/topaz-osx-arm64
