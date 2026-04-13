@@ -267,6 +267,20 @@ TODO: ARM Deployments: List at subscription, management-group, and tenant scope
   labels: enhancement, resource-manager
 -->
 
+### Packaging — CLI and Host split
+
+<!--
+TODO: Split Topaz into separate CLI and Host executables
+  Separate the current monolithic Topaz CLI into two distinct artifacts:
+  - `topaz-host` — the standalone Host process that runs all emulated Azure services
+  - `topaz-cli` — a thin CLI tool that communicates with a running Host instance
+  Each artifact should be published as an independent binary and Docker image.
+  This is a breaking change: existing `topaz` CLI invocations and Docker image
+  references will need to be updated.
+  milestone: v1.2-beta
+  labels: enhancement, breaking-change
+-->
+
 ---
 
 ## v1.3-beta

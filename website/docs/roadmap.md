@@ -50,6 +50,12 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 | <span class="badge--preview">Preview</span> | What-If | Preview resource changes without applying them |
 | <span class="badge--stable">Stable</span> | List at all scopes | List deployments at subscription, management-group, and tenant scope |
 
+### Packaging — CLI and Host split
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Separate CLI and Host artifacts | Split the monolithic binary into `topaz-host` (service process) and `topaz-cli` (thin client) — ⚠️ **Breaking change**: existing invocations and Docker image references must be updated |
+
 ---
 
 ## v1.3-beta

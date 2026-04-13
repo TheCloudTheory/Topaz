@@ -74,15 +74,26 @@ jobs:
         {
           echo "## What's Changed in $TAG"
           echo ""
-          ISSUE_COUNT=$(jq 'length' /tmp/issues.json)
-          if [ "$ISSUE_COUNT" -gt 0 ]; then
-            echo "### Closed Issues"
-            jq -r '.[] | "- " + .title + " ([#" + (.number|tostring) + "](" + .html_url + "))"' /tmp/issues.json
+
+          BREAKING_COUNT=$(jq '[.[] | select(any(.labels[]; .name == "breaking-change"))] | length' /tmp/issues.json)
+          if [ "$BREAKING_COUNT" -gt 0 ]; then
+            echo "### ⚠️ Breaking Changes"
+            jq -r '.[] | select(any(.labels[]; .name == "breaking-change")) | "- " + .title + " ([#" + (.number|tostring) + "](" + .html_url + "))"' /tmp/issues.json
             echo ""
-          else
+          fi
+
+          OTHER_COUNT=$(jq '[.[] | select(any(.labels[]; .name == "breaking-change") | not)] | length' /tmp/issues.json)
+          if [ "$OTHER_COUNT" -gt 0 ]; then
+            echo "### Closed Issues"
+            jq -r '.[] | select(any(.labels[]; .name == "breaking-change") | not) | "- " + .title + " ([#" + (.number|tostring) + "](" + .html_url + "))"' /tmp/issues.json
+            echo ""
+          fi
+
+          if [ "$BREAKING_COUNT" -eq 0 ] && [ "$OTHER_COUNT" -eq 0 ]; then
             echo "_No closed issues found for milestone \`$MILESTONE\`._"
             echo ""
           fi
+
           echo "**Full Changelog**: https://github.com/${{ github.repository }}/milestone/$MILESTONE_NUMBER?closed=1"
         } > release-notes.md
 
