@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using System.Text;
 using Spectre.Console.Cli;
-using Topaz.CLI.Commands;
 using Topaz.Documentation.Command;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
@@ -21,7 +20,6 @@ static string EscapeMdx(string? text) =>
 
 _ = new[]
 {
-    typeof(GenericStartCommand),
     typeof(GenericResourceGroupCommand),
     typeof(GenericEventHubCommand),
     typeof(GenericKeyVaultCommand),

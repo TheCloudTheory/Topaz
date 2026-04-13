@@ -1,10 +1,12 @@
 using System.ComponentModel;
+using JetBrains.Annotations;
 using Spectre.Console.Cli;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
 namespace Topaz.Host;
 
+[UsedImplicitly]
 internal sealed class StartHostCommand : AsyncCommand<StartHostCommand.Settings>
 {
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)

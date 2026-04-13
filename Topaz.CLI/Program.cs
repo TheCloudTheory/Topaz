@@ -2,7 +2,6 @@ using System.Reflection;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
-using Topaz.CLI.Commands;
 using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
 using Topaz.Service.Authorization.Commands;
@@ -22,8 +21,6 @@ namespace Topaz.CLI;
 [UsedImplicitly]
 internal class Program
 {
-    internal static CancellationToken CancellationToken { get; set; } = CancellationToken.None;
-
     internal static async Task<int> Main(string[] args)
     {
         try
@@ -83,8 +80,6 @@ internal class Program
             .Select(type => Activator.CreateInstance(type) as IEmulatorCommand)
             .Where(command => command != null)
             .ToList();
-
-        commands.Add(new GenericStartCommand());
 
         foreach (var command in commands)
         {

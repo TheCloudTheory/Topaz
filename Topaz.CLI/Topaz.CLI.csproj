@@ -12,11 +12,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Topaz.Host/Topaz.Host.csproj" />
+    <ProjectReference Include="../Services/Topaz.Service.Authorization/Topaz.Service.Authorization.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.ContainerRegistry/Topaz.Service.ContainerRegistry.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.KeyVault/Topaz.Service.KeyVault.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.ResourceGroup/Topaz.Service.ResourceGroup.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.Storage/Topaz.Service.Storage.csproj" />
+    <ProjectReference Include="../Services/Topaz.Service.ResourceManager/Topaz.Service.ResourceManager.csproj" />
+    <ProjectReference Include="../Services/Topaz.Service.ServiceBus/Topaz.Service.ServiceBus.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.Subscription/Topaz.Service.Subscription.csproj" />
     <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.EventHub/Topaz.Service.EventHub.csproj" />
@@ -24,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Update="Nerdbank.GitVersioning">
       <Version>3.9.50</Version>
     </PackageReference>
