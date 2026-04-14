@@ -483,6 +483,24 @@ namespace Topaz.Tests.E2E
             // Assert
             Assert.That(properties, Is.Not.Null);
         }
+
+        [Test]
+        public void TableStorageTests_WhenTablePropertiesAreSet_UpdatedValuesMustBeReturned()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            var existing = tableServiceClient.GetProperties().Value;
+            var originalRead = existing.Logging.Read;
+
+            existing.Logging.Read = !originalRead;
+
+            // Act
+            tableServiceClient.SetProperties(existing);
+
+            // Assert
+            var updated = tableServiceClient.GetProperties().Value;
+            Assert.That(updated.Logging.Read, Is.EqualTo(!originalRead));
+        }
         
         [Test]
         public void TableStorageTests_WhenTableACLsAreRequested_TheyMustBeReturned()

@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text;
 using System.Web;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
@@ -7,12 +6,12 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints.Table;
 
-internal sealed class GetTableServicePropertiesEndpoint(ITopazLogger logger)
+internal sealed class SetTableServicePropertiesEndpoint(ITopazLogger logger)
     : TableDataPlaneEndpointBase(logger), IEndpointDefinition
 {
-    public string[] Endpoints => ["GET /"];
+    public string[] Endpoints => ["PUT /"];
 
-    public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/read"];
+    public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);
@@ -35,16 +34,17 @@ internal sealed class GetTableServicePropertiesEndpoint(ITopazLogger logger)
             return;
         }
 
-        ThrowIfGetPropertiesRequestIsInvalid(context.Request.QueryString);
+        ThrowIfSetPropertiesRequestIsInvalid(context.Request.QueryString);
 
-        var propertiesXml = ControlPlane.GetTablePropertiesXml(subscriptionIdentifier, resourceGroupIdentifier,
-            storageAccount.Name);
+        ControlPlane.SetTableProperties(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name,
+            context.Request.Body);
 
-        response.Content = new StringContent(propertiesXml, Encoding.UTF8, "application/xml");
-        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new ByteArrayContent([]);
+        response.Content.Headers.ContentType = null;
+        response.StatusCode = HttpStatusCode.Accepted;
     }
 
-    private static void ThrowIfGetPropertiesRequestIsInvalid(QueryString query)
+    private static void ThrowIfSetPropertiesRequestIsInvalid(QueryString query)
     {
         if (!query.HasValue) throw new Exception($"QueryString '{query}' is missing.");
 

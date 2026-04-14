@@ -70,6 +70,29 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         return properties;
     }
 
+    public string GetTablePropertiesXml(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
+    {
+        var storageControlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
+        var path = storageControlPlane.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        var propertiesFilePath = Path.Combine(path, "properties.xml");
+
+        if (!File.Exists(propertiesFilePath)) throw new InvalidOperationException();
+
+        return File.ReadAllText(propertiesFilePath);
+    }
+
+    public void SetTableProperties(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, Stream input)
+    {
+        var storageControlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
+        var path = storageControlPlane.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        var propertiesFilePath = Path.Combine(path, "properties.xml");
+
+        var document = XDocument.Load(input, LoadOptions.PreserveWhitespace);
+        document.Save(propertiesFilePath);
+    }
+
     public HttpStatusCode SetAcl(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string tableName, Stream input)
     {
         using var sr = new StreamReader(input);

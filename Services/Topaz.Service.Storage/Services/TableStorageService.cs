@@ -17,6 +17,7 @@ public sealed class TableStorageService(ITopazLogger logger) : IServiceDefinitio
     [
         // Specific routes first so they take priority over wildcard routes
         new GetTableServicePropertiesEndpoint(logger),
+        new SetTableServicePropertiesEndpoint(logger),
         new ListTablesEndpoint(logger),
         new CreateTableEndpoint(logger),
         new DeleteTableEndpoint(logger),

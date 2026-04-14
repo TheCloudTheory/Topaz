@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Xml.Linq;
 using System.Xml.Serialization;
 using Azure.Core;
 using Azure.Data.Tables.Models;
@@ -124,19 +125,36 @@ internal sealed class AzureStorageControlPlane(StorageResourceProvider provider,
 
         if (!File.Exists(propertiesFilePath))
         {
-            var logging = new TableAnalyticsLoggingSettings("1.0", true, true, true, new TableRetentionPolicy(true)
-            {
-                Days = 7
-            });
-            var metrics = new TableMetrics(true);
-            var properties = new TableServiceProperties(logging, metrics, metrics, new List<TableCorsRule>()
-            {
-                new("http://localhost", "*", "*", "*", 500)
-            });
-
-            using var sw = new StreamWriter(propertiesFilePath);
-            var serializer = new XmlSerializer(typeof(TableServiceProperties));
-            serializer.Serialize(sw, properties);
+            var document = new XDocument(
+                new XElement("StorageServiceProperties",
+                    new XElement("Logging",
+                        new XElement("Version", "1.0"),
+                        new XElement("Delete", "true"),
+                        new XElement("Read", "true"),
+                        new XElement("Write", "true"),
+                        new XElement("RetentionPolicy",
+                            new XElement("Enabled", "true"),
+                            new XElement("Days", "7"))),
+                    new XElement("HourMetrics",
+                        new XElement("Version", "1.0"),
+                        new XElement("Enabled", "true"),
+                        new XElement("RetentionPolicy",
+                            new XElement("Enabled", "true"),
+                            new XElement("Days", "7"))),
+                    new XElement("MinuteMetrics",
+                        new XElement("Version", "1.0"),
+                        new XElement("Enabled", "true"),
+                        new XElement("RetentionPolicy",
+                            new XElement("Enabled", "true"),
+                            new XElement("Days", "7"))),
+                    new XElement("Cors",
+                        new XElement("CorsRule",
+                            new XElement("AllowedOrigins", "http://localhost"),
+                            new XElement("AllowedMethods", "*"),
+                            new XElement("AllowedHeaders", "*"),
+                            new XElement("ExposedHeaders", "*"),
+                            new XElement("MaxAgeInSeconds", "500")))));
+            document.Save(propertiesFilePath);
         }
         else
         {

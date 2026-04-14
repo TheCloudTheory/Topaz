@@ -1,10 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Xml.Serialization;
 using Azure.Data.Tables.Models;
 
 namespace Topaz.Service.Storage.Models;
 
+[XmlRoot("StorageServiceProperties")]
 public class TableServiceProperties
 {
     [Obsolete("This constructor is for serialization only")]
