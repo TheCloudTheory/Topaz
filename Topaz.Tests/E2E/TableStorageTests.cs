@@ -543,6 +543,94 @@ namespace Topaz.Tests.E2E
             Assert.Throws<RequestFailedException>(() => tableServiceClient.CreateTableIfNotExists(tableName));
         }
 
+        [Test]
+        public void TableStorageTests_WhenEntityIsDeleted_ItShouldNoLongerBeReturned()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            tableServiceClient.CreateTable("testtable");
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            tableClient.AddEntity(new TestEntity
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo"
+            });
+
+            var entity = tableClient.Query<TestEntity>().First();
+
+            // Act
+            tableClient.DeleteEntity(entity.PartitionKey, entity.RowKey, ETag.All);
+
+            // Assert
+            var entities = tableClient.Query<TestEntity>().ToArray();
+            Assert.That(entities, Is.Empty);
+        }
+
+        [Test]
+        public void TableStorageTests_WhenEntityIsDeletedWithMatchingETag_ItShouldSucceed()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            tableServiceClient.CreateTable("testtable");
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            tableClient.AddEntity(new TestEntity
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo"
+            });
+
+            var entity = tableClient.Query<TestEntity>().First();
+
+            // Act
+            tableClient.DeleteEntity(entity.PartitionKey, entity.RowKey, entity.ETag);
+
+            // Assert
+            var entities = tableClient.Query<TestEntity>().ToArray();
+            Assert.That(entities, Is.Empty);
+        }
+
+        [Test]
+        public void TableStorageTests_WhenEntityIsDeletedWithStalETag_ItShouldThrow()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            tableServiceClient.CreateTable("testtable");
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            tableClient.AddEntity(new TestEntity
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo"
+            });
+
+            var entity = tableClient.Query<TestEntity>().First();
+            // Update to create a newer ETag
+            entity.Name = "bar";
+            tableClient.UpdateEntity(entity, entity.ETag);
+
+            // Act & Assert — deleting with the original (now stale) ETag must fail
+            Assert.Throws<RequestFailedException>(() =>
+                tableClient.DeleteEntity(entity.PartitionKey, entity.RowKey, entity.ETag));
+        }
+
+        [Test]
+        public void TableStorageTests_WhenNonExistentEntityIsDeleted_ItShouldThrow()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            tableServiceClient.CreateTable("testtable");
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            // Act & Assert
+            Assert.Throws<RequestFailedException>(() =>
+                tableClient.DeleteEntity("test", "nonexistent", ETag.All));
+        }
+
         private class TestEntity : ITableEntity
         {
             public string? Name { get; set; }

@@ -139,4 +139,45 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task TableEntity_Delete_RemovesEntityFromTable()
+    {
+        const string storageAccountName = "topazstortblentdel01";
+        const string resourceGroup = "test-storage-table-entity-del-rg";
+        const string tableName = "testentities";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+                Assert.That(accountKey, Is.Not.Null.And.Not.Empty);
+            });
+
+        await RunAzureCliCommand(
+            $"az storage table create --name {tableName} --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://topaz.local.dev:8890");
+
+        await RunAzureCliCommand(
+            $"az storage entity insert --table-name {tableName} --entity PartitionKey=pk1 RowKey=rk1 Name=test --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://topaz.local.dev:8890");
+
+        await RunAzureCliCommand(
+            $"az storage entity delete --table-name {tableName} --partition-key pk1 --row-key rk1 --if-match \"*\" --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://topaz.local.dev:8890");
+
+        await RunAzureCliCommand(
+            $"az storage entity query --table-name {tableName} --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://topaz.local.dev:8890",
+            (resp) =>
+            {
+                var items = resp["items"]!.AsArray();
+                Assert.That(items, Is.Empty);
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

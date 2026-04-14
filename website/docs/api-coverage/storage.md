@@ -125,7 +125,7 @@ Table Storage is served on port **8890** (HTTP) in Topaz.
 | Insert Entity | ✅ | `POST /{tableName}` |
 | Upsert Entity (InsertOrReplace) | ✅ | `PUT /{tableName}(...)` |
 | Merge Entity (InsertOrMerge) | ✅ | `PATCH` |
-| Delete Entity | ❌ | |
+| Delete Entity | ✅ | `DELETE /{tableName}(PartitionKey='{pk}',RowKey='{rk}')` |
 | Query Entities | ✅ | `GET /{tableName}` |
 
 ---

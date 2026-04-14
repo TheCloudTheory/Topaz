@@ -68,6 +68,47 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
         return entities; 
     }
 
+    internal void DeleteEntity(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName,
+        string partitionKey, string rowKey, IHeaderDictionary headers)
+    {
+        var etag = headers["If-Match"].FirstOrDefault() ?? "*";
+        DeleteEntity(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName,
+            partitionKey, rowKey, etag);
+    }
+
+    internal void DeleteEntity(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName,
+        string partitionKey, string rowKey, string etag = "*")
+    {
+        logger.LogDebug(nameof(TableServiceDataPlane), nameof(DeleteEntity), "Executing {0}: {1} {2}", nameof(DeleteEntity), tableName, storageAccountName);
+
+        PathGuard.ValidateName(partitionKey);
+        PathGuard.ValidateName(rowKey);
+
+        var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
+
+        var fileName = $"{PathGuard.SanitizeName(partitionKey)}_{PathGuard.SanitizeName(rowKey)}.json";
+        var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
+
+        if (!File.Exists(entityPath))
+        {
+            logger.LogDebug(nameof(TableServiceDataPlane), nameof(DeleteEntity), "Executing {0}: Entity not found.", nameof(DeleteEntity));
+            throw new EntityNotFoundException();
+        }
+
+        if (etag != "*")
+        {
+            var file = File.ReadAllText(entityPath);
+            var currentData = JsonSerializer.Deserialize<GenericTableEntity>(file, GlobalSettings.JsonOptions) ??
+                throw new Exception("Cannot proceed if entity data is null.");
+            if (currentData.ETag.ToString() != etag) throw new UpdateConditionNotSatisfiedException();
+        }
+
+        File.Delete(entityPath);
+    }
+
     internal void UpdateEntity(Stream input, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName, string partitionKey,
                                string rowKey, IHeaderDictionary headers)

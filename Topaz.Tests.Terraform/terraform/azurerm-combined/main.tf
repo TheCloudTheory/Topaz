@@ -161,6 +161,33 @@ resource "azurerm_storage_account" "stor_tls" {
   min_tls_version          = "TLS1_2"
 }
 
+resource "azurerm_resource_group" "stor_table_rg" {
+  name     = "tf-rm-stor-table-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_storage_account" "stor_table" {
+  name                     = "tfrmstortableacct"
+  resource_group_name      = azurerm_resource_group.stor_table_rg.name
+  location                 = azurerm_resource_group.stor_table_rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+}
+
+resource "azurerm_storage_table" "stor_table_entities" {
+  name                 = "tfrmentities"
+  storage_account_name = azurerm_storage_account.stor_table.name
+}
+
+resource "azurerm_storage_table_entity" "stor_table_entity" {
+  storage_table_id = azurerm_storage_table.stor_table_entities.id
+  partition_key    = "pk1"
+  row_key          = "rk1"
+  entity = {
+    name = "terraform-entity"
+  }
+}
+
 # ── Managed Identity ───────────────────────────────────────────────────────────
 
 resource "azurerm_resource_group" "id_rg" {
@@ -263,6 +290,8 @@ output "sb_t_topic_name"            { value = azurerm_servicebus_topic.sb_t.name
 output "stor_account_name"          { value = azurerm_storage_account.stor.name }
 output "stor_primary_blob_endpoint" { value = azurerm_storage_account.stor.primary_blob_endpoint }
 output "stor_tls_account_name"      { value = azurerm_storage_account.stor_tls.name }
+output "stor_table_entity_partition_key" { value = azurerm_storage_table_entity.stor_table_entity.partition_key }
+output "stor_table_entity_row_key"       { value = azurerm_storage_table_entity.stor_table_entity.row_key }
 
 output "id_name"                    { value = azurerm_user_assigned_identity.id.name }
 output "id_client_id"               { value = azurerm_user_assigned_identity.id.client_id }
