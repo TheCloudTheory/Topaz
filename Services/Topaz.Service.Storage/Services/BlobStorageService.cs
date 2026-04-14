@@ -1,5 +1,5 @@
 using Topaz.Service.Shared;
-using Topaz.Service.Storage.Endpoints;
+using Topaz.Service.Storage.Endpoints.Blob;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Services;
@@ -14,7 +14,12 @@ public class BlobStorageService(ITopazLogger logger) : IServiceDefinition
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new BlobEndpoint(logger)
+        new CreateContainerEndpoint(logger),
+        new PutBlobEndpoint(logger),
+        new ListBlobsEndpoint(logger),
+        new ListContainersEndpoint(logger),
+        new GetBlobPropertiesEndpoint(logger),
+        new DeleteBlobEndpoint(logger),
     ];
 
     public void Bootstrap()
