@@ -144,5 +144,26 @@ namespace Topaz.Tests.CLI
             
             Assert.That(result, Is.EqualTo(0));
         }
+
+        [Test]
+        public async Task StorageAccountTests_WhenStorageAccountExists_ItShouldBePossibleToRegenerateKey()
+        {
+            var result = await Program.RunAsync([
+                "storage",
+                "account",
+                "keys",
+                "renew",
+                "--account-name",
+                StorageAccountName,
+                "--resource-group",
+                ResourceGroupName,
+                "--subscription-id",
+                SubscriptionId.ToString(),
+                "--key-name",
+                "key1"
+            ]);
+
+            Assert.That(result, Is.EqualTo(0));
+        }
     }
 }

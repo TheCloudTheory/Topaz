@@ -19,6 +19,7 @@ public sealed class GenericStorageCommand : IEmulatorCommand
                 account.AddBranch("keys", keys =>
                 {
                     keys.AddCommand<ListStorageAccountKeysCommand>("list");
+                    keys.AddCommand<RegenerateStorageAccountKeyCommand>("renew");
                 });
             });
 

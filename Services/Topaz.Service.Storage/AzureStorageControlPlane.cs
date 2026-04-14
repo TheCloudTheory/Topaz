@@ -223,6 +223,46 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         return new ControlPlaneOperationResult<StorageAccountResource[]>(OperationResult.Success, resources, null, null);
     }
 
+    public ControlPlaneOperationResult<StorageAccountResource> RegenerateKey(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string keyName)
+    {
+        var existingJson = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        if (string.IsNullOrEmpty(existingJson))
+            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.NotFound, null, null, null);
+
+        var existing = JsonSerializer.Deserialize<StorageAccountResource>(existingJson, GlobalSettings.JsonOptions);
+        if (existing == null)
+            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Failed, null, null, null);
+
+        var updatedKeys = existing.Keys
+            .Select(k => string.Equals(k.KeyName, keyName, StringComparison.OrdinalIgnoreCase)
+                ? new TopazStorageAccountKey(k.KeyName, Guid.NewGuid().ToString(), k.Permissions, DateTimeOffset.Now)
+                : k)
+            .ToArray();
+
+        if (!updatedKeys.Any(k => string.Equals(k.KeyName, keyName, StringComparison.OrdinalIgnoreCase)))
+            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.NotFound, null, null, null);
+
+        var updated = new StorageAccountResource(
+            subscriptionIdentifier,
+            resourceGroupIdentifier,
+            storageAccountName,
+            existing.Location!,
+            existing.Sku!,
+            existing.Kind!,
+            existing.Properties,
+            updatedKeys);
+
+        updated.Tags = existing.Tags;
+
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, updated, false);
+
+        return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Success, updated, null, null);
+    }
+
     public ControlPlaneOperationResult<StorageAccountResource> Update(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

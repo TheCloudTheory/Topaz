@@ -216,4 +216,34 @@ public class AzureStorageServiceTests
             Assert.That(updatedKeys[1].Value, Is.EqualTo(originalKeys[1].Value));
         });
     }
+
+    [Test]
+    public void StorageAccount_RegenerateKey_ReturnsNewKeyValueAndPreservesOtherKey()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var sku = new StorageSku(StorageSkuName.StandardLrs);
+        var createContent = new StorageAccountCreateOrUpdateContent(sku,
+            StorageKind.StorageV2, AzureLocation.WestEurope);
+
+        var created = resourceGroup.Value.GetStorageAccounts()
+            .CreateOrUpdate(WaitUntil.Completed, StorageAccountName, createContent);
+        var originalKeys = created.Value.GetKeys().ToArray();
+
+        // Act
+        var regeneratedKeys = created.Value.RegenerateKey(new StorageAccountRegenerateKeyContent("key1")).ToArray();
+
+        // Assert — key1 changed
+        Assert.That(regeneratedKeys[0].Value, Is.Not.EqualTo(originalKeys[0].Value));
+        // Assert — key2 unchanged
+        Assert.That(regeneratedKeys[1].Value, Is.EqualTo(originalKeys[1].Value));
+        Assert.Multiple(() =>
+        {
+            Assert.That(regeneratedKeys[0].KeyName, Is.EqualTo("key1"));
+            Assert.That(regeneratedKeys[1].KeyName, Is.EqualTo("key2"));
+        });
+    }
 }

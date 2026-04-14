@@ -21,6 +21,7 @@ public sealed class AzureStorageService(ITopazLogger logger) : IServiceDefinitio
         new DeleteStorageAccountEndpoint(logger),
         new CheckStorageAccountNameAvailabilityEndpoint(logger),
         new ListStorageAccountKeysEndpoint(logger),
+        new RegenerateStorageAccountKeyEndpoint(logger),
         new ListStorageAccountsEndpoint(logger),
         new ListStorageAccountsBySubscriptionEndpoint(logger),
         new GetFileServicesDefaultEndpoint(logger),
