@@ -1,6 +1,5 @@
 ﻿using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
-using Topaz.Service.Storage.Endpoints;
 using Topaz.Service.Storage.Endpoints.StorageAccount;
 using Topaz.Shared;
 
@@ -16,7 +15,10 @@ public sealed class AzureStorageService(ITopazLogger logger) : IServiceDefinitio
     public string Name => "Azure Storage";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new AzureStorageEndpoint(logger),
+        new CreateOrUpdateStorageAccountEndpoint(logger),
+        new GetStorageAccountEndpoint(logger),
+        new DeleteStorageAccountEndpoint(logger),
+        new ListStorageAccountKeysEndpoint(logger),
         new ListStorageAccountsEndpoint(logger),
         new GetFileServicesDefaultEndpoint(logger),
         new GetBlobServicesDefaultEndpoint(logger),

@@ -3,7 +3,6 @@ using System.Text.Json.Nodes;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
-using Topaz.Service.Entra;
 
 namespace Topaz.Tests.AzureCLI;
 
@@ -38,9 +37,7 @@ public class ContainerRegistryDockerPushTests
     private static readonly string TopazImage =
         Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "topaz/host";
 
-    private static readonly string TenantId = EntraService.TenantId;
-
-    private static readonly string CertFile = File.ReadAllText("topaz.crt");
+private static readonly string CertFile = File.ReadAllText("topaz.crt");
     private static readonly string CertKey  = File.ReadAllText("topaz.key");
 
     private const string CloudConfig = """
@@ -82,8 +79,6 @@ public class ContainerRegistryDockerPushTests
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertFile), "/app/topaz.crt")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertKey),  "/app/topaz.key")
             .WithCommand(
-                "start",
-                "--tenant-id",        TenantId,
                 "--certificate-file", "topaz.crt",
                 "--certificate-key",  "topaz.key",
                 "--log-level",        "Debug",
