@@ -24,7 +24,9 @@ public class ContainerEnumerationResult : IXmlSerializable
     public int MaxResults { get; set; }
 
     private Container[]? Containers { get; set; }
-    
+
+    public Container[] GetContainers() => Containers ?? [];
+
     public XmlSchema? GetSchema()
     {
         return null;

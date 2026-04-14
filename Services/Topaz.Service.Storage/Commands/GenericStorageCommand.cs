@@ -12,8 +12,11 @@ public sealed class GenericStorageCommand : IEmulatorCommand
             branch.AddBranch("account", account =>
             {
                 account.AddCommand<CreateStorageAccountCommand>("create");
+                account.AddCommand<ShowStorageAccountCommand>("show");
+                account.AddCommand<UpdateStorageAccountCommand>("update");
                 account.AddCommand<DeleteStorageAccountCommand>("delete");
                 account.AddCommand<ListStorageAccountsCommand>("list");
+                account.AddCommand<CheckStorageAccountNameAvailabilityCommand>("check-name");
                 account.AddCommand<ShowStorageAccountConnectionStringCommand>("show-connection-string");
                 account.AddCommand<GenerateAccountSasCommand>("generate-sas");
                 account.AddCommand<GenerateServiceSasCommand>("generate-service-sas");
@@ -25,16 +28,17 @@ public sealed class GenericStorageCommand : IEmulatorCommand
                 });
             });
 
-            branch.AddBranch("table", account =>
+            branch.AddBranch("table", table =>
             {
-                account.AddCommand<CreateTableCommand>("create");
-                account.AddCommand<DeleteTableCommand>("delete");
+                table.AddCommand<CreateTableCommand>("create");
+                table.AddCommand<DeleteTableCommand>("delete");
             });
-                
-            branch.AddBranch("container", account =>
+
+            branch.AddBranch("container", container =>
             {
-                account.AddCommand<CreateBlobContainerCommand>("create");
+                container.AddCommand<CreateBlobContainerCommand>("create");
+                container.AddCommand<ListBlobContainersCommand>("list");
             });
-        });    
+        });
     }
 }
