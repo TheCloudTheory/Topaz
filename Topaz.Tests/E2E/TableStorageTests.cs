@@ -23,7 +23,7 @@ namespace Topaz.Tests.E2E
         [SetUp]
         public async Task SetUp()
         {
-            await Program.Main(
+            await Program.RunAsync(
             [
                 "subscription",
                 "delete",
@@ -31,7 +31,7 @@ namespace Topaz.Tests.E2E
                 SubscriptionId.ToString()
             ]);
         
-            await Program.Main(
+            await Program.RunAsync(
             [
                 "subscription",
                 "create",
@@ -41,7 +41,7 @@ namespace Topaz.Tests.E2E
                 SubscriptionName
             ]);
 
-            await Program.Main([
+            await Program.RunAsync([
                 "group",
                 "delete",
                 "--name",
@@ -50,7 +50,7 @@ namespace Topaz.Tests.E2E
                 SubscriptionId.ToString()
             ]);
 
-            await Program.Main([
+            await Program.RunAsync([
                 "group",
                 "create",
                 "--name",
@@ -61,7 +61,7 @@ namespace Topaz.Tests.E2E
                 SubscriptionId.ToString()
             ]);
         
-            await Program.Main([
+            await Program.RunAsync([
                 "storage",
                 "account",
                 "delete",
@@ -73,7 +73,7 @@ namespace Topaz.Tests.E2E
                 SubscriptionId.ToString()
             ]);
 
-            await Program.Main([
+            await Program.RunAsync([
                 "storage",
                 "account",
                 "create",

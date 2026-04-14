@@ -13,7 +13,7 @@ public class SubscriptionTests
     public async Task SubscriptionTests_WhenSubscriptionIsRequested_ItShouldBeAvailable()
     {
         // Arrange 
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -21,7 +21,7 @@ public class SubscriptionTests
             Guid.Empty.ToString()
         ]);
 
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -51,7 +51,7 @@ public class SubscriptionTests
     {
         // Arrange 
         var subscriptionId = Guid.NewGuid().ToString();
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -59,7 +59,7 @@ public class SubscriptionTests
             subscriptionId
         ]);
 
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -91,7 +91,7 @@ public class SubscriptionTests
     {
         // Arrange 
         var subscriptionId = Guid.NewGuid().ToString();
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -99,7 +99,7 @@ public class SubscriptionTests
             subscriptionId
         ]);
 
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -133,7 +133,7 @@ public class SubscriptionTests
     {
         // Arrange 
         var subscriptionId = Guid.NewGuid().ToString();
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -141,7 +141,7 @@ public class SubscriptionTests
             subscriptionId
         ]);
 
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -174,7 +174,7 @@ public class SubscriptionTests
     {
         // Arrange 
         var subscriptionId = Guid.NewGuid().ToString();
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -182,7 +182,7 @@ public class SubscriptionTests
             subscriptionId
         ]);
 
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -209,7 +209,7 @@ public class SubscriptionTests
     {
         // Arrange
         var subscriptionId = Guid.NewGuid().ToString();
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -217,7 +217,7 @@ public class SubscriptionTests
             subscriptionId
         ]);
 
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -246,7 +246,7 @@ public class SubscriptionTests
     {
         // Arrange
         var subscriptionId = Guid.NewGuid().ToString();
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -254,7 +254,7 @@ public class SubscriptionTests
             subscriptionId
         ]);
 
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",

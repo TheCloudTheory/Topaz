@@ -28,7 +28,7 @@ public class ScenariosTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -36,7 +36,7 @@ public class ScenariosTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -46,7 +46,7 @@ public class ScenariosTests
             SubscriptionName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -55,7 +55,7 @@ public class ScenariosTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",
@@ -202,7 +202,7 @@ public class ScenariosTests
         // PUT {scope}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}
         var roleAssignmentName = Guid.NewGuid().ToString();
 
-        return Program.Main([
+        return Program.RunAsync([
             "role",
             "assignment",
             "create",

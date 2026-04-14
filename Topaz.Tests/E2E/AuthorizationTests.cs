@@ -20,7 +20,7 @@ public class AuthorizationTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -28,7 +28,7 @@ public class AuthorizationTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -38,7 +38,7 @@ public class AuthorizationTests
             SubscriptionName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -47,7 +47,7 @@ public class AuthorizationTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",

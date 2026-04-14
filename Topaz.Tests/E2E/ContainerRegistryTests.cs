@@ -32,17 +32,17 @@ public class ContainerRegistryTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(["subscription", "delete", "--id", SubscriptionId.ToString()]);
-        await Program.Main(["subscription", "create", "--id", SubscriptionId.ToString(), "--name", SubscriptionName]);
+        await Program.RunAsync(["subscription", "delete", "--id", SubscriptionId.ToString()]);
+        await Program.RunAsync(["subscription", "create", "--id", SubscriptionId.ToString(), "--name", SubscriptionName]);
 
-        await Program.Main(["group", "delete", "--name", ResourceGroupName, "--subscription-id", SubscriptionId.ToString()]);
-        await Program.Main(["group", "create", "--name", ResourceGroupName, "--location", "westeurope", "--subscription-id", SubscriptionId.ToString()]);
+        await Program.RunAsync(["group", "delete", "--name", ResourceGroupName, "--subscription-id", SubscriptionId.ToString()]);
+        await Program.RunAsync(["group", "create", "--name", ResourceGroupName, "--location", "westeurope", "--subscription-id", SubscriptionId.ToString()]);
     }
 
     [TearDown]
     public async Task TearDown()
     {
-        await Program.Main(["group", "delete", "--name", ResourceGroupName, "--subscription-id", SubscriptionId.ToString()]);
+        await Program.RunAsync(["group", "delete", "--name", ResourceGroupName, "--subscription-id", SubscriptionId.ToString()]);
     }
 
     [Test]

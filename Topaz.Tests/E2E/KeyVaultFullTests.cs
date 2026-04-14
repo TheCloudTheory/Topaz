@@ -23,7 +23,7 @@ public class KeyVaultFullTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -31,7 +31,7 @@ public class KeyVaultFullTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -41,7 +41,7 @@ public class KeyVaultFullTests
             SubscriptionName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -50,7 +50,7 @@ public class KeyVaultFullTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",
@@ -65,7 +65,7 @@ public class KeyVaultFullTests
     [TearDown]
     public async Task TearDown()
     {
-        await Program.Main([
+        await Program.RunAsync([
             "keyvault",
             "delete",
             "--resource-group",

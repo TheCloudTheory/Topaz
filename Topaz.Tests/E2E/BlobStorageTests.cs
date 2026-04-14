@@ -22,7 +22,7 @@ public class BlobStorageTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -30,7 +30,7 @@ public class BlobStorageTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -40,7 +40,7 @@ public class BlobStorageTests
             SubscriptionName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -49,7 +49,7 @@ public class BlobStorageTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",
@@ -60,7 +60,7 @@ public class BlobStorageTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "storage",
             "account",
             "delete",
@@ -72,7 +72,7 @@ public class BlobStorageTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "storage",
             "account",
             "create",

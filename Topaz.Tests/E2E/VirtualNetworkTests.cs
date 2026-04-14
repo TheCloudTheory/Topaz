@@ -21,7 +21,7 @@ public class VirtualNetworkTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -29,7 +29,7 @@ public class VirtualNetworkTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -39,7 +39,7 @@ public class VirtualNetworkTests
             SubscriptionName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -48,7 +48,7 @@ public class VirtualNetworkTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",

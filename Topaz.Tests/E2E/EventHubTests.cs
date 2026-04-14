@@ -28,7 +28,7 @@ public class EventHubTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -36,7 +36,7 @@ public class EventHubTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -46,7 +46,7 @@ public class EventHubTests
             SubscriptionName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -55,7 +55,7 @@ public class EventHubTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",
@@ -66,7 +66,7 @@ public class EventHubTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "eventhubs",
             "namespace",
             "delete",
@@ -78,7 +78,7 @@ public class EventHubTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "eventhubs",
             "namespace",
             "create",
@@ -92,7 +92,7 @@ public class EventHubTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "eventhubs",
             "eventhub",
             "delete",
@@ -106,7 +106,7 @@ public class EventHubTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "eventhubs",
             "eventhub",
             "create",
@@ -120,7 +120,7 @@ public class EventHubTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "storage",
             "account",
             "delete",
@@ -132,7 +132,7 @@ public class EventHubTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "storage",
             "account",
             "create",
@@ -146,7 +146,7 @@ public class EventHubTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "storage",
             "container",
             "create",

@@ -18,7 +18,7 @@ public class ServiceBusTests
     [SetUp]
     public async Task SetUp()
     {
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "delete",
@@ -26,7 +26,7 @@ public class ServiceBusTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main(
+        await Program.RunAsync(
         [
             "subscription",
             "create",
@@ -36,7 +36,7 @@ public class ServiceBusTests
             SubscriptionName
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "delete",
             "--name",
@@ -45,7 +45,7 @@ public class ServiceBusTests
             SubscriptionId.ToString()
         ]);
 
-        await Program.Main([
+        await Program.RunAsync([
             "group",
             "create",
             "--name",
@@ -56,7 +56,7 @@ public class ServiceBusTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "servicebus",
             "namespace",
             "delete",
@@ -68,7 +68,7 @@ public class ServiceBusTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "servicebus",
             "namespace",
             "create",
@@ -80,7 +80,7 @@ public class ServiceBusTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "servicebus",
             "queue",
             "delete",
@@ -94,7 +94,7 @@ public class ServiceBusTests
             SubscriptionId.ToString()
         ]);
         
-        await Program.Main([
+        await Program.RunAsync([
             "servicebus",
             "queue",
             "create",
