@@ -16,6 +16,7 @@ public sealed class AzureStorageService(ITopazLogger logger) : IServiceDefinitio
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new CreateOrUpdateStorageAccountEndpoint(logger),
+        new UpdateStorageAccountEndpoint(logger),
         new GetStorageAccountEndpoint(logger),
         new DeleteStorageAccountEndpoint(logger),
         new CheckStorageAccountNameAvailabilityEndpoint(logger),

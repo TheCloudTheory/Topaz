@@ -36,6 +36,24 @@ internal sealed class StorageAccountResource
             new TopazStorageAccountKey("key2", Guid.NewGuid().ToString(), nameof(StorageAccountKeyPermission.Full), DateTimeOffset.Now)
         ];
     }
+
+    public StorageAccountResource(SubscriptionIdentifier subscriptionId,
+        ResourceGroupIdentifier resourceGroupName,
+        string name,
+        AzureLocation location,
+        ResourceSku sku,
+        string kind,
+        StorageAccountResourceProperties resourceProperties,
+        TopazStorageAccountKey[] existingKeys)
+    {
+        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{name}";
+        Name = name;
+        Location = location;
+        Sku = sku;
+        Kind = kind;
+        Properties = resourceProperties;
+        Keys = existingKeys;
+    }
     
     public override string Id { get; init; }
     public override string Name { get; init; }

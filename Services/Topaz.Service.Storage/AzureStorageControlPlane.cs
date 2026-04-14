@@ -223,6 +223,73 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         return new ControlPlaneOperationResult<StorageAccountResource[]>(OperationResult.Success, resources, null, null);
     }
 
+    public ControlPlaneOperationResult<StorageAccountResource> Update(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        UpdateStorageAccountRequest request)
+    {
+        var existingJson = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        if (string.IsNullOrEmpty(existingJson))
+            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.NotFound, null, null, null);
+
+        var existing = JsonSerializer.Deserialize<StorageAccountResource>(existingJson, GlobalSettings.JsonOptions);
+        if (existing == null)
+            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Failed, null, null, null);
+
+        var mergedProperties = request.Properties != null
+            ? MergeProperties(existing.Properties, request.Properties)
+            : existing.Properties;
+
+        var updated = new StorageAccountResource(
+            subscriptionIdentifier,
+            resourceGroupIdentifier,
+            storageAccountName,
+            request.Location ?? existing.Location!,
+            request.Sku ?? existing.Sku!,
+            request.Kind ?? existing.Kind!,
+            mergedProperties,
+            existing.Keys);
+
+        updated.Tags = request.Tags ?? existing.Tags;
+
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, updated, false);
+
+        return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Updated, updated, null, null);
+    }
+
+    private static StorageAccountResourceProperties MergeProperties(
+        StorageAccountResourceProperties existing,
+        StorageAccountResourceProperties patch)
+    {
+        return existing with
+        {
+            AllowedCopyScope = patch.AllowedCopyScope ?? existing.AllowedCopyScope,
+            PublicNetworkAccess = patch.PublicNetworkAccess ?? existing.PublicNetworkAccess,
+            SasPolicy = patch.SasPolicy ?? existing.SasPolicy,
+            CustomDomain = patch.CustomDomain ?? existing.CustomDomain,
+            Encryption = patch.Encryption ?? existing.Encryption,
+            NetworkRuleSet = patch.NetworkRuleSet ?? existing.NetworkRuleSet,
+            AccessTier = patch.AccessTier ?? existing.AccessTier,
+            AzureFilesIdentityBasedAuthentication = patch.AzureFilesIdentityBasedAuthentication ?? existing.AzureFilesIdentityBasedAuthentication,
+            EnableHttpsTrafficOnly = patch.EnableHttpsTrafficOnly ?? existing.EnableHttpsTrafficOnly,
+            IsSftpEnabled = patch.IsSftpEnabled ?? existing.IsSftpEnabled,
+            IsLocalUserEnabled = patch.IsLocalUserEnabled ?? existing.IsLocalUserEnabled,
+            IsExtendedGroupEnabled = patch.IsExtendedGroupEnabled ?? existing.IsExtendedGroupEnabled,
+            IsHnsEnabled = patch.IsHnsEnabled ?? existing.IsHnsEnabled,
+            LargeFileSharesState = patch.LargeFileSharesState ?? existing.LargeFileSharesState,
+            RoutingPreference = patch.RoutingPreference ?? existing.RoutingPreference,
+            AllowBlobPublicAccess = patch.AllowBlobPublicAccess ?? existing.AllowBlobPublicAccess,
+            MinimumTlsVersion = patch.MinimumTlsVersion ?? existing.MinimumTlsVersion,
+            AllowSharedKeyAccess = patch.AllowSharedKeyAccess ?? existing.AllowSharedKeyAccess,
+            IsNfsV3Enabled = patch.IsNfsV3Enabled ?? existing.IsNfsV3Enabled,
+            AllowCrossTenantReplication = patch.AllowCrossTenantReplication ?? existing.AllowCrossTenantReplication,
+            IsDefaultToOAuthAuthentication = patch.IsDefaultToOAuthAuthentication ?? existing.IsDefaultToOAuthAuthentication,
+            ImmutableStorageWithVersioning = patch.ImmutableStorageWithVersioning ?? existing.ImmutableStorageWithVersioning,
+            DnsEndpointType = patch.DnsEndpointType ?? existing.DnsEndpointType,
+        };
+    }
+
     public OperationResult Deploy(GenericResource resource)
     {
         var storageAccount = resource.As<StorageAccountResource, StorageAccountResourceProperties>();

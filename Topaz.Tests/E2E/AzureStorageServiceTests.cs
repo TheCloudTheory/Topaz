@@ -182,4 +182,38 @@ public class AzureStorageServiceTests
             Assert.That(unavailableResult.Value.Reason?.ToString(), Is.EqualTo("AlreadyExists"));
         });
     }
+
+    [Test]
+    public void StorageAccount_Update_AppliesTagsAndPreservesKeys()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var sku = new StorageSku(StorageSkuName.StandardLrs);
+        var createContent = new StorageAccountCreateOrUpdateContent(sku,
+            StorageKind.StorageV2, AzureLocation.WestEurope);
+
+        var created = resourceGroup.Value.GetStorageAccounts()
+            .CreateOrUpdate(WaitUntil.Completed, StorageAccountName, createContent);
+        var originalKeys = created.Value.GetKeys().ToArray();
+
+        // Act — update tags via PATCH
+        var patch = new StorageAccountPatch();
+        patch.Tags["env"] = "test";
+        var updated = created.Value.Update(patch);
+
+        // Assert — tags applied
+        Assert.That(updated.Value.Data.Tags.ContainsKey("env"), Is.True);
+        Assert.That(updated.Value.Data.Tags["env"], Is.EqualTo("test"));
+
+        // Assert — keys preserved
+        var updatedKeys = updated.Value.GetKeys().ToArray();
+        Assert.Multiple(() =>
+        {
+            Assert.That(updatedKeys[0].Value, Is.EqualTo(originalKeys[0].Value));
+            Assert.That(updatedKeys[1].Value, Is.EqualTo(originalKeys[1].Value));
+        });
+    }
 }

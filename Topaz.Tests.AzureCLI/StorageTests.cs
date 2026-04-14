@@ -62,4 +62,25 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task StorageAccount_Update_AppliesTags()
+    {
+        const string storageAccountName = "topazstorageupd01";
+        const string resourceGroup = "test-storage-update-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        await RunAzureCliCommand(
+            $"az storage account update --name {storageAccountName} --resource-group {resourceGroup} --tags env=test",
+            (resp) =>
+            {
+                Assert.That(resp["tags"]!["env"]!.GetValue<string>(), Is.EqualTo("test"));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

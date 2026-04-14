@@ -38,7 +38,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 | List By Resource Group | ✅ | |
 | List Keys | ✅ | `POST .../listKeys` |
 | Check Name Availability | ✅ | `POST /subscriptions/{subscriptionId}/providers/Microsoft.Storage/checkNameAvailability` |
-| Update | ❌ | |
+| Update | ✅ | `PATCH .../storageAccounts/{accountName}` |
 | Regenerate Key | ❌ | |
 | List Account SAS | ❌ | |
 | List Service SAS | ❌ | |
