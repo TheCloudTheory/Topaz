@@ -127,7 +127,7 @@ public class StorageTests : TopazFixture
             $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
 
         await RunAzureCliCommand(
-            $"az storage account generate-sas --account-name {storageAccountName} --resource-group {resourceGroup} --services b --resource-types s --permissions r --expiry {expiry} --https-only",
+            $"az storage account generate-sas --account-name {storageAccountName} --services b --resource-types s --permissions r --expiry {expiry} --https-only",
             (resp) =>
             {
                 var token = resp.GetValue<string>();
