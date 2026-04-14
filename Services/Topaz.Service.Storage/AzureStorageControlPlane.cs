@@ -392,6 +392,77 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         };
     }
 
+    public ControlPlaneOperationResult<ListServiceSasResponse> ListServiceSas(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        ListServiceSasRequest request)
+    {
+        var storageAccount = provider.GetAs<StorageAccountResource>(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        if (storageAccount == null)
+            return new ControlPlaneOperationResult<ListServiceSasResponse>(OperationResult.NotFound, null, null, null);
+
+        var keyName = string.IsNullOrWhiteSpace(request.KeyToSign) ? "key1" : request.KeyToSign;
+        var signingKey = storageAccount.Keys.FirstOrDefault(k =>
+            string.Equals(k.KeyName, keyName, StringComparison.OrdinalIgnoreCase));
+        if (signingKey == null)
+            return new ControlPlaneOperationResult<ListServiceSasResponse>(OperationResult.NotFound, null, null, null);
+
+        const string signedVersion = "2023-01-01";
+        var permissions = request.SignedPermission ?? string.Empty;
+        var start = request.SignedStart ?? string.Empty;
+        var expiry = request.SignedExpiry ?? string.Empty;
+        var canonicalizedResource = request.CanonicalizedResource ?? string.Empty;
+        var signedIdentifier = request.SignedIdentifier ?? string.Empty;
+        var ip = request.SignedIp ?? string.Empty;
+        var protocol = request.SignedProtocol ?? string.Empty;
+        var signedResource = request.SignedResource ?? string.Empty;
+
+        // String-to-sign for service SAS (version 2020-12-06+)
+        var stringToSign = string.Join("\n",
+            permissions,
+            start,
+            expiry,
+            canonicalizedResource,
+            signedIdentifier,
+            ip,
+            protocol,
+            signedVersion,
+            signedResource,
+            string.Empty,  // signedSnapshotTime
+            string.Empty,  // signedEncryptionScope
+            string.Empty,  // rscc (Cache-Control)
+            string.Empty,  // rscd (Content-Disposition)
+            string.Empty,  // rsce (Content-Encoding)
+            string.Empty,  // rscl (Content-Language)
+            string.Empty); // rsct (Content-Type)
+
+        var keyBytes = System.Text.Encoding.UTF8.GetBytes(signingKey.Value);
+        var signature = Convert.ToBase64String(
+            System.Security.Cryptography.HMACSHA256.HashData(keyBytes,
+                System.Text.Encoding.UTF8.GetBytes(stringToSign)));
+
+        var tokenParts = new System.Text.StringBuilder();
+        tokenParts.Append($"sv={Uri.EscapeDataString(signedVersion)}");
+        tokenParts.Append($"&sr={Uri.EscapeDataString(signedResource)}");
+        tokenParts.Append($"&sp={Uri.EscapeDataString(permissions)}");
+        if (!string.IsNullOrEmpty(start))
+            tokenParts.Append($"&st={Uri.EscapeDataString(start)}");
+        tokenParts.Append($"&se={Uri.EscapeDataString(expiry)}");
+        if (!string.IsNullOrEmpty(ip))
+            tokenParts.Append($"&sip={Uri.EscapeDataString(ip)}");
+        if (!string.IsNullOrEmpty(protocol))
+            tokenParts.Append($"&spr={Uri.EscapeDataString(protocol)}");
+        if (!string.IsNullOrEmpty(signedIdentifier))
+            tokenParts.Append($"&si={Uri.EscapeDataString(signedIdentifier)}");
+        tokenParts.Append($"&sig={Uri.EscapeDataString(signature)}");
+
+        return new ControlPlaneOperationResult<ListServiceSasResponse>(
+            OperationResult.Success,
+            new ListServiceSasResponse(tokenParts.ToString()),
+            null, null);
+    }
+
     public OperationResult Deploy(GenericResource resource)
     {
         var storageAccount = resource.As<StorageAccountResource, StorageAccountResourceProperties>();

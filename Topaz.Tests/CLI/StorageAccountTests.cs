@@ -191,5 +191,31 @@ namespace Topaz.Tests.CLI
 
             Assert.That(result, Is.EqualTo(0));
         }
+
+        [Test]
+        public async Task StorageAccountTests_WhenStorageAccountExists_ItShouldBePossibleToGenerateServiceSas()
+        {
+            var result = await Program.RunAsync([
+                "storage",
+                "account",
+                "generate-service-sas",
+                "--account-name",
+                StorageAccountName,
+                "--resource-group",
+                ResourceGroupName,
+                "--subscription-id",
+                SubscriptionId.ToString(),
+                "--canonicalized-resource",
+                $"/blob/{StorageAccountName}/mycontainer",
+                "--resource",
+                "c",
+                "--permissions",
+                "r",
+                "--expiry",
+                DateTimeOffset.UtcNow.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ")
+            ]);
+
+            Assert.That(result, Is.EqualTo(0));
+        }
     }
 }

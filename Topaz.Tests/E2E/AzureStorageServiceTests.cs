@@ -280,4 +280,38 @@ public class AzureStorageServiceTests
         Assert.That(sasToken, Does.Contain("se="));
         Assert.That(sasToken, Does.Contain("sig="));
     }
+
+    [Test]
+    public void StorageAccount_ListServiceSas_ReturnsTokenWithExpectedParameters()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var sku = new StorageSku(StorageSkuName.StandardLrs);
+        var createContent = new StorageAccountCreateOrUpdateContent(sku,
+            StorageKind.StorageV2, AzureLocation.WestEurope);
+
+        var created = resourceGroup.Value.GetStorageAccounts()
+            .CreateOrUpdate(WaitUntil.Completed, StorageAccountName, createContent);
+
+        var sasParams = new ServiceSasContent($"/blob/{StorageAccountName}/mycontainer")
+        {
+            Resource = ServiceSasSignedResourceType.Container,
+            Permissions = StorageAccountSasPermission.R,
+            SharedAccessExpiryOn = DateTimeOffset.UtcNow.AddHours(1)
+        };
+
+        // Act
+        var sasToken = created.Value.GetServiceSas(sasParams).Value.ServiceSasToken;
+
+        // Assert
+        Assert.That(sasToken, Is.Not.Null.And.Not.Empty);
+        Assert.That(sasToken, Does.Contain("sv="));
+        Assert.That(sasToken, Does.Contain("sr="));
+        Assert.That(sasToken, Does.Contain("sp="));
+        Assert.That(sasToken, Does.Contain("se="));
+        Assert.That(sasToken, Does.Contain("sig="));
+    }
 }

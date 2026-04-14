@@ -41,7 +41,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Update | ✅ | `PATCH .../storageAccounts/{accountName}` |
 | Regenerate Key | ✅ | `POST .../regenerateKey` |
 | List Account SAS | ✅ | `POST .../ListAccountSas` |
-| List Service SAS | ❌ | |
+| List Service SAS | ✅ | `POST .../ListServiceSas` |
 | Failover | ❌ | |
 | Restore Blob Ranges | ❌ | |
 | Revoke User Delegation Keys | ❌ | |
