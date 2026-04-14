@@ -115,8 +115,8 @@ Table Storage is served on port **8890** (HTTP) in Topaz.
 | Create Table | ✅ | `POST /Tables` |
 | Delete Table | ✅ | `DELETE /Tables('{tableName}')` |
 | Query Tables | ✅ | `GET /Tables` |
-| Get Table ACL | ❌ | |
-| Set Table ACL | ❌ | |
+| Get Table ACL | ✅ | `GET /{tableName}?comp=acl` |
+| Set Table ACL | ✅ | `PUT /{tableName}?comp=acl` |
 
 ### Entities
 
