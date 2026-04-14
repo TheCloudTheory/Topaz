@@ -32,6 +32,10 @@ public sealed class GenericStorageCommand : IEmulatorCommand
             {
                 table.AddCommand<CreateTableCommand>("create");
                 table.AddCommand<DeleteTableCommand>("delete");
+                table.AddCommand<ListTablesCommand>("list");
+                table.AddCommand<ShowTableCommand>("show");
+                table.AddCommand<InsertTableEntityCommand>("insert-entity");
+                table.AddCommand<QueryTableEntitiesCommand>("query-entity");
             });
 
             branch.AddBranch("container", container =>
