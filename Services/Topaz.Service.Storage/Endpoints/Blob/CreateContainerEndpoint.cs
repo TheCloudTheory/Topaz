@@ -13,7 +13,7 @@ internal sealed class CreateContainerEndpoint(ITopazLogger logger)
 
     public string[] Endpoints => ["PUT /{containerName}"];
 
-    public string[] Permissions => ["*"];
+    public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultBlobStoragePort], Protocol.Http);

@@ -16,7 +16,7 @@ internal sealed class ListBlobsEndpoint(ITopazLogger logger)
 
     public string[] Endpoints => ["GET /{containerName}"];
 
-    public string[] Permissions => ["*"];
+    public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultBlobStoragePort], Protocol.Http);
