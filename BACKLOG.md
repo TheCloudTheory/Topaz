@@ -343,6 +343,24 @@ TODO: Network Security Groups: Full control plane
   labels: enhancement, virtual-network
 -->
 
+### Entra ID authentication for Azure Storage
+
+<!--
+TODO: Azure Storage: Entra ID bearer-token authentication for Blob and Table data plane
+  Allow the Blob Storage and Table Storage data-plane endpoints to accept requests
+  authenticated with an Entra ID bearer token (Authorization: Bearer <token>) in addition
+  to the existing shared-key mechanism.
+  Implementation steps:
+  - Validate incoming Bearer tokens against the Topaz Entra ID service (reuse the token
+    validation logic already used by other services).
+  - Map the token's `oid` claim to a storage account via the existing ResourceProvider.
+  - Return 401 with a `WWW-Authenticate: Bearer ...` challenge when no valid token or
+    shared key is present, matching the real Azure Storage OAuth error contract.
+  - Update BlobStorageService and TableStorageService to opt-in to the auth middleware.
+  milestone: v1.3-beta
+  labels: enhancement, storage, security
+-->
+
 ### Azure Virtual Machines — initial control plane
 
 <!--

@@ -75,6 +75,12 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 | <span class="badge--stable">Stable</span> | Subnets — full CRUD | Create, get, delete, and list subnets within a VNet |
 | <span class="badge--preview">Preview</span> | Network Security Groups | Full NSG control plane: create, get, delete, list, update tags |
 
+### Entra ID authentication for Azure Storage
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Entra ID bearer-token auth on Blob & Table data plane | Accept `Authorization: Bearer` tokens validated against the Topaz Entra ID service; returns a proper `WWW-Authenticate` challenge when credentials are absent or invalid |
+
 ### Azure Virtual Machines — initial control plane
 
 | | Feature | Description |
