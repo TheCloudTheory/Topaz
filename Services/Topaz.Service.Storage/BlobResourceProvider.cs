@@ -14,6 +14,9 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
         
         var metadata = Path.Combine(GetContainerMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName));
         Directory.CreateDirectory(metadata);
+
+        var data = GetContainerDataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
+        Directory.CreateDirectory(data);
     }
     
     private static string GetContainerId(string storageAccountName, string containerName)

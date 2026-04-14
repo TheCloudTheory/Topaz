@@ -70,6 +70,16 @@ public record GlobalDnsEntries
 
     private static GlobalDnsEntries? GetDnsEntriesFromFile()
     {
+        if (!File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))
+        {
+            var emulatorDir = Path.GetDirectoryName(GlobalSettings.GlobalDnsEntriesFilePath);
+            if (!string.IsNullOrEmpty(emulatorDir) && !Directory.Exists(emulatorDir))
+                Directory.CreateDirectory(emulatorDir);
+
+            File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath,
+                JsonSerializer.Serialize(new GlobalDnsEntries()));
+        }
+
         var file = File.ReadAllText(GlobalSettings.GlobalDnsEntriesFilePath);
         var entries = JsonSerializer.Deserialize<GlobalDnsEntries>(file, GlobalSettings.JsonOptions);
         return entries;

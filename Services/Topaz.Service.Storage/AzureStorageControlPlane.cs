@@ -165,9 +165,14 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
     {
         var existingAccount = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         var properties = request.Properties! with { PrimaryEndpoints = BuildPrimaryEndpoints(storageAccountName) };
-        var resource = new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
-            request.Location!,
-            request.Sku!, request.Kind!, properties);
+        var existingKeys = existingAccount != null
+            ? JsonSerializer.Deserialize<StorageAccountResource>(existingAccount, GlobalSettings.JsonOptions)?.Keys
+            : null;
+        var resource = existingKeys != null
+            ? new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
+                request.Location!, request.Sku!, request.Kind!, properties, existingKeys)
+            : new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
+                request.Location!, request.Sku!, request.Kind!, properties);
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, resource,
             existingAccount == null);
