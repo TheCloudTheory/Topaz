@@ -12,7 +12,7 @@ internal sealed class InsertTableEntityEndpoint(ITopazLogger logger)
 {
     public string[] Endpoints => ["POST /{tableName}"];
 
-    public string[] Permissions => ["*"];
+    public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);

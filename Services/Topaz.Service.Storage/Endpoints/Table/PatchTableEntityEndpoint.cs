@@ -11,7 +11,7 @@ internal sealed class PatchTableEntityEndpoint(ITopazLogger logger)
 {
     public string[] Endpoints => [@"PATCH /^.*?\(PartitionKey='.*?',RowKey='.*?'\)$"];
 
-    public string[] Permissions => ["*"];
+    public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);

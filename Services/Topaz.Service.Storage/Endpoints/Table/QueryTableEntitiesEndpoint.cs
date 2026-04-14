@@ -17,7 +17,7 @@ internal sealed class QueryTableEntitiesEndpoint(ITopazLogger logger)
 {
     public string[] Endpoints => ["GET /{tableName}"];
 
-    public string[] Permissions => ["*"];
+    public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);

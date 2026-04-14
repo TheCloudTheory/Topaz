@@ -13,7 +13,7 @@ internal sealed class CreateTableEndpoint(ITopazLogger logger)
 {
     public string[] Endpoints => ["POST /Tables"];
 
-    public string[] Permissions => ["*"];
+    public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);

@@ -11,7 +11,7 @@ internal sealed class SetTableAclEndpoint(ITopazLogger logger)
 {
     public string[] Endpoints => ["PUT /{tableName}"];
 
-    public string[] Permissions => ["*"];
+    public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);

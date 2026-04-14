@@ -12,7 +12,7 @@ internal sealed class ListTablesEndpoint(ITopazLogger logger)
 {
     public string[] Endpoints => ["GET /Tables"];
 
-    public string[] Permissions => ["*"];
+    public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);

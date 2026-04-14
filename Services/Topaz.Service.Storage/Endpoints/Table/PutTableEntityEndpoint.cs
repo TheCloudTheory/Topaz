@@ -11,7 +11,7 @@ internal sealed class PutTableEntityEndpoint(ITopazLogger logger)
 {
     public string[] Endpoints => [@"PUT /^.*?\(PartitionKey='.*?',RowKey='.*?'\)$"];
 
-    public string[] Permissions => ["*"];
+    public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);

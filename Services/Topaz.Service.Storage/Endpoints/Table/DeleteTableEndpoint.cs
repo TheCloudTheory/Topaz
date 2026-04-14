@@ -13,7 +13,7 @@ internal sealed class DeleteTableEndpoint(ITopazLogger logger)
 {
     public string[] Endpoints => [@"DELETE /^Tables\('.*?'\)$"];
 
-    public string[] Permissions => ["*"];
+    public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/delete"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);
