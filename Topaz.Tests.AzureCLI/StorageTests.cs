@@ -114,4 +114,29 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task StorageAccount_GenerateAccountSas_ReturnsTokenWithExpectedParameters()
+    {
+        const string storageAccountName = "topazstorsas01";
+        const string resourceGroup = "test-storage-sas-rg";
+        var expiry = DateTime.UtcNow.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        await RunAzureCliCommand(
+            $"az storage account generate-sas --account-name {storageAccountName} --resource-group {resourceGroup} --services b --resource-types s --permissions r --expiry {expiry} --https-only",
+            (resp) =>
+            {
+                var token = resp.GetValue<string>();
+                Assert.That(token, Is.Not.Null.And.Not.Empty);
+                Assert.That(token, Does.Contain("sv="));
+                Assert.That(token, Does.Contain("sig="));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

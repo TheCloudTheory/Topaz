@@ -223,6 +223,68 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         return new ControlPlaneOperationResult<StorageAccountResource[]>(OperationResult.Success, resources, null, null);
     }
 
+    public ControlPlaneOperationResult<ListAccountSasResponse> ListAccountSas(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        ListAccountSasRequest request)
+    {
+        var storageAccount = provider.GetAs<StorageAccountResource>(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        if (storageAccount == null)
+            return new ControlPlaneOperationResult<ListAccountSasResponse>(OperationResult.NotFound, null, null, null);
+
+        var keyName = string.IsNullOrWhiteSpace(request.KeyToSign) ? "key1" : request.KeyToSign;
+        var signingKey = storageAccount.Keys.FirstOrDefault(k =>
+            string.Equals(k.KeyName, keyName, StringComparison.OrdinalIgnoreCase));
+        if (signingKey == null)
+            return new ControlPlaneOperationResult<ListAccountSasResponse>(OperationResult.NotFound, null, null, null);
+
+        const string signedVersion = "2023-01-01";
+        var services = request.SignedServices ?? string.Empty;
+        var resourceTypes = request.SignedResourceTypes ?? string.Empty;
+        var permissions = request.SignedPermission ?? string.Empty;
+        var start = request.SignedStart ?? string.Empty;
+        var expiry = request.SignedExpiry ?? string.Empty;
+        var ip = request.SignedIp ?? string.Empty;
+        var protocol = request.SignedProtocol ?? string.Empty;
+
+        var stringToSign = string.Join("\n",
+            storageAccountName,
+            permissions,
+            services,
+            resourceTypes,
+            start,
+            expiry,
+            ip,
+            protocol,
+            signedVersion,
+            string.Empty);
+
+        var keyBytes = System.Text.Encoding.UTF8.GetBytes(signingKey.Value);
+        var signature = Convert.ToBase64String(
+            System.Security.Cryptography.HMACSHA256.HashData(keyBytes,
+                System.Text.Encoding.UTF8.GetBytes(stringToSign)));
+
+        var tokenParts = new System.Text.StringBuilder();
+        tokenParts.Append($"sv={Uri.EscapeDataString(signedVersion)}");
+        tokenParts.Append($"&ss={Uri.EscapeDataString(services)}");
+        tokenParts.Append($"&srt={Uri.EscapeDataString(resourceTypes)}");
+        tokenParts.Append($"&sp={Uri.EscapeDataString(permissions)}");
+        if (!string.IsNullOrEmpty(start))
+            tokenParts.Append($"&st={Uri.EscapeDataString(start)}");
+        tokenParts.Append($"&se={Uri.EscapeDataString(expiry)}");
+        if (!string.IsNullOrEmpty(ip))
+            tokenParts.Append($"&sip={Uri.EscapeDataString(ip)}");
+        if (!string.IsNullOrEmpty(protocol))
+            tokenParts.Append($"&spr={Uri.EscapeDataString(protocol)}");
+        tokenParts.Append($"&sig={Uri.EscapeDataString(signature)}");
+
+        return new ControlPlaneOperationResult<ListAccountSasResponse>(
+            OperationResult.Success,
+            new ListAccountSasResponse(tokenParts.ToString()),
+            null, null);
+    }
+
     public ControlPlaneOperationResult<StorageAccountResource> RegenerateKey(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

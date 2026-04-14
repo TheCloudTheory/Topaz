@@ -246,4 +246,38 @@ public class AzureStorageServiceTests
             Assert.That(regeneratedKeys[1].KeyName, Is.EqualTo("key2"));
         });
     }
+
+    [Test]
+    public void StorageAccount_ListAccountSas_ReturnsTokenWithExpectedParameters()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var sku = new StorageSku(StorageSkuName.StandardLrs);
+        var createContent = new StorageAccountCreateOrUpdateContent(sku,
+            StorageKind.StorageV2, AzureLocation.WestEurope);
+
+        var created = resourceGroup.Value.GetStorageAccounts()
+            .CreateOrUpdate(WaitUntil.Completed, StorageAccountName, createContent);
+
+        var sasParams = new AccountSasContent(
+            StorageAccountSasSignedService.B,
+            StorageAccountSasSignedResourceType.S,
+            StorageAccountSasPermission.R,
+            DateTimeOffset.UtcNow.AddHours(1));
+
+        // Act
+        var sasToken = created.Value.GetAccountSas(sasParams).Value.AccountSasToken;
+
+        // Assert
+        Assert.That(sasToken, Is.Not.Null.And.Not.Empty);
+        Assert.That(sasToken, Does.Contain("sv="));
+        Assert.That(sasToken, Does.Contain("ss="));
+        Assert.That(sasToken, Does.Contain("srt="));
+        Assert.That(sasToken, Does.Contain("sp="));
+        Assert.That(sasToken, Does.Contain("se="));
+        Assert.That(sasToken, Does.Contain("sig="));
+    }
 }
