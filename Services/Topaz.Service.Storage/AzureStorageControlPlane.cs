@@ -3,11 +3,13 @@ using System.Xml.Serialization;
 using Azure.Core;
 using Azure.Data.Tables.Models;
 using Azure.ResourceManager.Storage.Models;
+using Topaz.Dns;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Models.Requests;
+using Topaz.Service.Storage.Models.Responses;
 using Topaz.Service.Storage.Services;
 using Topaz.Shared;
 using TableAnalyticsLoggingSettings = Topaz.Service.Storage.Models.TableAnalyticsLoggingSettings;
@@ -64,6 +66,55 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         InitializeServicePropertiesFiles(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
         return (OperationResult.Created, resource);
+    }
+
+    public (OperationResult result, CheckStorageAccountNameAvailabilityResponse response) CheckNameAvailability(
+        SubscriptionIdentifier subscriptionIdentifier, string storageAccountName, string? resourceType)
+    {
+        if (!IsStorageAccountNameValid(storageAccountName))
+        {
+            return (OperationResult.Success, new CheckStorageAccountNameAvailabilityResponse
+            {
+                NameAvailable = false,
+                Reason = CheckStorageAccountNameAvailabilityResponse.NameUnavailableReason.AccountNameInvalid,
+                Message = $"The storage account name '{storageAccountName}' is invalid. A storage account name must be 3-24 characters long and use lowercase letters and numbers only."
+            });
+        }
+
+        var dnsEntry = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, storageAccountName);
+        if (dnsEntry == null)
+        {
+            return (OperationResult.Success, new CheckStorageAccountNameAvailabilityResponse
+            {
+                NameAvailable = true
+            });
+        }
+
+        var existingStorageAccount = provider.GetAs<StorageAccountResource>(subscriptionIdentifier,
+            ResourceGroupIdentifier.From(dnsEntry.Value.resourceGroup), storageAccountName);
+        if (existingStorageAccount == null)
+        {
+            return (OperationResult.Success, new CheckStorageAccountNameAvailabilityResponse
+            {
+                NameAvailable = true
+            });
+        }
+
+        if (!string.IsNullOrWhiteSpace(resourceType) &&
+            !string.Equals(existingStorageAccount.Type, resourceType, StringComparison.OrdinalIgnoreCase))
+        {
+            return (OperationResult.Success, new CheckStorageAccountNameAvailabilityResponse
+            {
+                NameAvailable = true
+            });
+        }
+
+        return (OperationResult.Success, new CheckStorageAccountNameAvailabilityResponse
+        {
+            NameAvailable = false,
+            Reason = CheckStorageAccountNameAvailabilityResponse.NameUnavailableReason.AlreadyExists,
+            Message = $"The storage account name '{storageAccountName}' is already in use."
+        });
     }
 
     private void InitializeServicePropertiesFiles(SubscriptionIdentifier subscriptionIdentifier,
@@ -131,6 +182,13 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
 
         return (string.IsNullOrWhiteSpace(existingAccount) ? OperationResult.Created : OperationResult.Updated,
             resource);
+    }
+
+    private static bool IsStorageAccountNameValid(string storageAccountName)
+    {
+        return !string.IsNullOrWhiteSpace(storageAccountName)
+               && storageAccountName.Length is >= 3 and <= 24
+               && storageAccountName.All(character => char.IsLower(character) || char.IsDigit(character));
     }
 
     private static StorageAccountPrimaryEndpoints BuildPrimaryEndpoints(string accountName) => new()

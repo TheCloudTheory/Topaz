@@ -143,10 +143,43 @@ public class AzureStorageServiceTests
             .CreateOrUpdate(WaitUntil.Completed, StorageAccountName, createContent);
 
         // Act
-        var accounts = subscription.Value.GetStorageAccounts().ToArray();
+        var accounts = subscription.GetStorageAccounts().ToArray();
 
         // Assert
         Assert.That(accounts, Is.Not.Empty);
         Assert.That(accounts.Any(a => a.Data.Name == StorageAccountName), Is.True);
+    }
+
+    [Test]
+    public void StorageAccount_CheckNameAvailability_ReturnsExpectedAvailability()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var sku = new StorageSku(StorageSkuName.StandardLrs);
+        var createContent = new StorageAccountCreateOrUpdateContent(sku,
+            StorageKind.StorageV2, AzureLocation.WestEurope);
+
+        var availableResult = subscription.CheckStorageAccountNameAvailability(
+            new StorageAccountNameAvailabilityContent("storcheckavail123"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(availableResult.Value.IsNameAvailable, Is.True);
+            Assert.That(availableResult.Value.Reason, Is.Null);
+        });
+
+        _ = resourceGroup.Value.GetStorageAccounts()
+            .CreateOrUpdate(WaitUntil.Completed, StorageAccountName, createContent);
+
+        var unavailableResult = subscription.CheckStorageAccountNameAvailability(
+            new StorageAccountNameAvailabilityContent(StorageAccountName));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(unavailableResult.Value.IsNameAvailable, Is.False);
+            Assert.That(unavailableResult.Value.Reason?.ToString(), Is.EqualTo("AlreadyExists"));
+        });
     }
 }
