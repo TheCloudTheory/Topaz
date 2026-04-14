@@ -20,7 +20,6 @@ using Topaz.Service.Storage;
 using Topaz.Service.VirtualNetwork;
 using Topaz.Shared;
 using DeploymentResource = Topaz.Service.ResourceManager.Models.DeploymentResource;
-using StorageResourceProvider = Topaz.Service.Storage.ResourceProvider;
 
 namespace Topaz.Service.ResourceManager;
 

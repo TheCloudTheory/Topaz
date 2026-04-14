@@ -16,7 +16,7 @@ public sealed class ListStorageAccountsCommand(ITopazLogger logger)
         logger.LogInformation("Listing storage accounts...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var controlPlane = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
+        var controlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
 
         if (!string.IsNullOrEmpty(settings.ResourceGroup))
         {

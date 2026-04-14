@@ -18,7 +18,7 @@ public sealed class RegenerateStorageAccountKeyCommand(ITopazLogger logger)
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var controlPlane = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
+        var controlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
 
         var result = controlPlane.RegenerateKey(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!, settings.KeyName!);
 

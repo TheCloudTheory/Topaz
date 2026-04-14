@@ -18,7 +18,7 @@ public sealed class UpdateStorageAccountCommand(ITopazLogger logger)
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var controlPlane = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
+        var controlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
 
         var request = new UpdateStorageAccountRequest
         {

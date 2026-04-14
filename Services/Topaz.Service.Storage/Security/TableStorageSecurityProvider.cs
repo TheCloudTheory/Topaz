@@ -10,7 +10,7 @@ namespace Topaz.Service.Storage.Security;
 
 internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
 {
-    private readonly AzureStorageControlPlane _controlPlane = new(new ResourceProvider(logger), logger);
+    private readonly AzureStorageControlPlane _controlPlane = new(new StorageResourceProvider(logger), logger);
 
     public bool RequestIsAuthorized(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, IHeaderDictionary headers,

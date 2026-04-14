@@ -15,7 +15,7 @@ public class DeleteStorageAccountCommand(ITopazLogger logger) : Command<DeleteSt
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var rp = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
+        var rp = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
         
         rp.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 

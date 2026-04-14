@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Endpoints.StorageAccount;
 
 internal sealed class CreateOrUpdateStorageAccountEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly AzureStorageControlPlane _controlPlane = new(new ResourceProvider(logger), logger);
+    private readonly AzureStorageControlPlane _controlPlane = new(new StorageResourceProvider(logger), logger);
 
     public string[] Endpoints =>
     [

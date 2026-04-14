@@ -24,7 +24,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly TableServiceControlPlane _controlPlane = new(new TableResourceProvider(logger), logger);
     private readonly TableServiceDataPlane _dataPlane = new(new TableResourceProvider(logger), logger);
-    private readonly ResourceProvider _resourceProvider = new(logger);
+    private readonly StorageResourceProvider _storageResourceProvider = new(logger);
     private readonly TableStorageSecurityProvider _securityProvider = new(logger);
 
     public string[] Endpoints =>
@@ -493,7 +493,7 @@ public class TableEndpoint(ITopazLogger logger) : IEndpointDefinition
         var identifiers = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, accountName!);
         if (identifiers != null)
         {
-            storageAccount = _resourceProvider.GetAs<StorageAccountResource>(
+            storageAccount = _storageResourceProvider.GetAs<StorageAccountResource>(
                 SubscriptionIdentifier.From(identifiers.Value.subscription),
                 ResourceGroupIdentifier.From(identifiers.Value.resourceGroup), accountName);
             return true;

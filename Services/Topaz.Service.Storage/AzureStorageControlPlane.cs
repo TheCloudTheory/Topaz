@@ -18,11 +18,11 @@ using TableServiceProperties = Topaz.Service.Storage.Models.TableServiceProperti
 
 namespace Topaz.Service.Storage;
 
-internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopazLogger logger) : IControlPlane
+internal sealed class AzureStorageControlPlane(StorageResourceProvider provider, ITopazLogger logger) : IControlPlane
 {
     public static AzureStorageControlPlane New(ITopazLogger logger)
     {
-        return new AzureStorageControlPlane(new ResourceProvider(logger), logger);
+        return new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
     }
     
     public ControlPlaneOperationResult<StorageAccountResource> Get(SubscriptionIdentifier subscriptionIdentifier,
@@ -321,9 +321,10 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
             existing.Sku!,
             existing.Kind!,
             existing.Properties,
-            updatedKeys);
-
-        updated.Tags = existing.Tags;
+            updatedKeys)
+        {
+            Tags = existing.Tags
+        };
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, updated, false);
 
@@ -356,9 +357,10 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
             request.Sku ?? existing.Sku!,
             request.Kind ?? existing.Kind!,
             mergedProperties,
-            existing.Keys);
-
-        updated.Tags = request.Tags ?? existing.Tags;
+            existing.Keys)
+        {
+            Tags = request.Tags ?? existing.Tags
+        };
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, updated, false);
 

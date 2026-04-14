@@ -16,7 +16,7 @@ public sealed class CheckStorageAccountNameAvailabilityCommand(ITopazLogger logg
         logger.LogInformation("Checking storage account name availability...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var controlPlane = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
+        var controlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
         var operation = controlPlane.CheckNameAvailability(subscriptionIdentifier, settings.Name!, null);
 
         if (operation.Result == OperationResult.Failed || operation.Resource == null)

@@ -58,14 +58,6 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
     {
         logger.LogDebug(nameof(TableServiceDataPlane), nameof(QueryEntities), "Executing {0}: {1} {2} {3}", nameof(QueryEntities), query, tableName, storageAccountName);
 
-        // TODO: Add OData parser
-        // string? filter = null;
-        // var potentialFilter = query.Value.Split('&').FirstOrDefault(q => q.StartsWith("$filter"));
-        // if(string.IsNullOrEmpty(potentialFilter) == false)
-        // {
-        //     filter = potentialFilter.Replace("$filter=", string.Empty);
-        // }
-
         var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
         var files = Directory.EnumerateFiles(path);
         var entities = files.Select(e => {

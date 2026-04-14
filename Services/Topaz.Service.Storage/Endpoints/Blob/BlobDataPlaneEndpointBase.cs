@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Endpoints.Blob;
 
 internal abstract class BlobDataPlaneEndpointBase(ITopazLogger logger)
 {
-    private readonly ResourceProvider _resourceProvider = new(logger);
+    private readonly StorageResourceProvider _storageResourceProvider = new(logger);
     protected readonly ITopazLogger Logger = logger;
 
     protected bool TryGetStorageAccount(IHeaderDictionary headers, out StorageAccountResource? storageAccount)
@@ -37,7 +37,7 @@ internal abstract class BlobDataPlaneEndpointBase(ITopazLogger logger)
         var identifiers = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, accountName!);
         if (identifiers != null)
         {
-            storageAccount = _resourceProvider.GetAs<StorageAccountResource>(
+            storageAccount = _storageResourceProvider.GetAs<StorageAccountResource>(
                 SubscriptionIdentifier.From(identifiers.Value.subscription),
                 ResourceGroupIdentifier.From(identifiers.Value.resourceGroup), accountName);
             return true;

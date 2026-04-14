@@ -58,7 +58,7 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
 
     public TableServiceProperties GetTableProperties(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
     {
-        var storageControlPlane = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
+        var storageControlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
         var path = storageControlPlane.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         var propertiesFilePath = Path.Combine(path, "properties.xml");
 

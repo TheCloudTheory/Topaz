@@ -17,7 +17,7 @@ public sealed class ListStorageAccountKeysCommand(ITopazLogger logger) : Command
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var controlPlane = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
+        var controlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
         var storageAccount = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 
         if (storageAccount.Result == OperationResult.Failed || storageAccount.Result == OperationResult.Failed ||
