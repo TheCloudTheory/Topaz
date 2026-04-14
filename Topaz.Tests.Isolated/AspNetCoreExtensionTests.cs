@@ -48,7 +48,7 @@ public class AspNetCoreExtensionTests
             .WithName("topaz.local.dev")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateKey), "/app/topaz.key")
-            .WithCommand("start", "--certificate-file", "topaz.crt", "--certificate-key", "topaz.key", "--log-level", "Debug")
+            .WithCommand("--certificate-file", "topaz.crt", "--certificate-key", "topaz.key", "--log-level", "Debug")
             .Build();
 
         await _container.StartAsync()
