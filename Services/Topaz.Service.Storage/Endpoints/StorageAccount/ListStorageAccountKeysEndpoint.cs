@@ -37,7 +37,7 @@ internal sealed class ListStorageAccountKeysEndpoint(ITopazLogger logger) : IEnd
             }
 
             var storageAccount = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
-            if (storageAccount.result == OperationResult.NotFound || storageAccount.resource == null)
+            if (storageAccount.Result == OperationResult.NotFound || storageAccount.Resource == null)
             {
                 logger.LogInformation($"Storage account [{storageAccountName}] not found.");
                 response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode,
@@ -45,7 +45,7 @@ internal sealed class ListStorageAccountKeysEndpoint(ITopazLogger logger) : IEnd
                 return;
             }
 
-            var keys = new ListKeysResponse(storageAccount.resource.Keys);
+            var keys = new ListKeysResponse(storageAccount.Resource.Keys);
             response.CreateJsonContentResponse(keys);
         }
         catch (Exception ex)

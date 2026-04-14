@@ -25,21 +25,23 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         return new AzureStorageControlPlane(new ResourceProvider(logger), logger);
     }
     
-    public (OperationResult result, StorageAccountResource? resource) Get(SubscriptionIdentifier subscriptionIdentifier,
+    public ControlPlaneOperationResult<StorageAccountResource> Get(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
     {
         var storageAccount = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         if (string.IsNullOrEmpty(storageAccount))
         {
-            return (OperationResult.NotFound, null);
+            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.NotFound, null, null, null);
         }
 
         var resource = JsonSerializer.Deserialize<StorageAccountResource>(storageAccount, GlobalSettings.JsonOptions);
 
-        return resource == null ? (OperationResult.Failed, null) : (OperationResult.Success, resource);
+        return resource == null
+            ? new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Failed, null, null, null)
+            : new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Success, resource, null, null);
     }
 
-    public (OperationResult result, StorageAccountResource? resource) Create(string storageAccountName,
+    public ControlPlaneOperationResult<StorageAccountResource> Create(string storageAccountName,
         ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location,
         SubscriptionIdentifier subscriptionIdentifier)
     {
@@ -47,7 +49,7 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         if (!string.IsNullOrEmpty(storageAccount))
         {
             logger.LogError($"Storage account '{storageAccountName}' already exists.");
-            return (OperationResult.Failed, null);
+            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Failed, null, null, null);
         }
 
         var sku = new ResourceSku
@@ -65,56 +67,47 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
 
         InitializeServicePropertiesFiles(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
-        return (OperationResult.Created, resource);
+        return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Created, resource, null, null);
     }
 
-    public (OperationResult result, CheckStorageAccountNameAvailabilityResponse response) CheckNameAvailability(
+    public ControlPlaneOperationResult<CheckStorageAccountNameAvailabilityResponse> CheckNameAvailability(
         SubscriptionIdentifier subscriptionIdentifier, string storageAccountName, string? resourceType)
     {
         if (!IsStorageAccountNameValid(storageAccountName))
         {
-            return (OperationResult.Success, new CheckStorageAccountNameAvailabilityResponse
-            {
-                NameAvailable = false,
-                Reason = CheckStorageAccountNameAvailabilityResponse.NameUnavailableReason.AccountNameInvalid,
-                Message = $"The storage account name '{storageAccountName}' is invalid. A storage account name must be 3-24 characters long and use lowercase letters and numbers only."
-            });
+            return new ControlPlaneOperationResult<CheckStorageAccountNameAvailabilityResponse>(OperationResult.Success,
+                new CheckStorageAccountNameAvailabilityResponse
+                {
+                    NameAvailable = false,
+                    Reason = CheckStorageAccountNameAvailabilityResponse.NameUnavailableReason.AccountNameInvalid,
+                    Message = $"The storage account name '{storageAccountName}' is invalid. A storage account name must be 3-24 characters long and use lowercase letters and numbers only."
+                }, null, null);
         }
 
         var dnsEntry = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, storageAccountName);
         if (dnsEntry == null)
         {
-            return (OperationResult.Success, new CheckStorageAccountNameAvailabilityResponse
-            {
-                NameAvailable = true
-            });
+            return new ControlPlaneOperationResult<CheckStorageAccountNameAvailabilityResponse>(OperationResult.Success,
+                new CheckStorageAccountNameAvailabilityResponse { NameAvailable = true }, null, null);
         }
 
         var existingStorageAccount = provider.GetAs<StorageAccountResource>(subscriptionIdentifier,
             ResourceGroupIdentifier.From(dnsEntry.Value.resourceGroup), storageAccountName);
-        if (existingStorageAccount == null)
-        {
-            return (OperationResult.Success, new CheckStorageAccountNameAvailabilityResponse
-            {
-                NameAvailable = true
-            });
-        }
 
-        if (!string.IsNullOrWhiteSpace(resourceType) &&
+        if (existingStorageAccount == null || !string.IsNullOrWhiteSpace(resourceType) &&
             !string.Equals(existingStorageAccount.Type, resourceType, StringComparison.OrdinalIgnoreCase))
         {
-            return (OperationResult.Success, new CheckStorageAccountNameAvailabilityResponse
-            {
-                NameAvailable = true
-            });
+            return new ControlPlaneOperationResult<CheckStorageAccountNameAvailabilityResponse>(OperationResult.Success,
+                new CheckStorageAccountNameAvailabilityResponse { NameAvailable = true }, null, null);
         }
 
-        return (OperationResult.Success, new CheckStorageAccountNameAvailabilityResponse
-        {
-            NameAvailable = false,
-            Reason = CheckStorageAccountNameAvailabilityResponse.NameUnavailableReason.AlreadyExists,
-            Message = $"The storage account name '{storageAccountName}' is already in use."
-        });
+        return new ControlPlaneOperationResult<CheckStorageAccountNameAvailabilityResponse>(OperationResult.Success,
+            new CheckStorageAccountNameAvailabilityResponse
+            {
+                NameAvailable = false,
+                Reason = CheckStorageAccountNameAvailabilityResponse.NameUnavailableReason.AlreadyExists,
+                Message = $"The storage account name '{storageAccountName}' is already in use."
+            }, null, null);
     }
 
     private void InitializeServicePropertiesFiles(SubscriptionIdentifier subscriptionIdentifier,
@@ -152,10 +145,11 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         }
     }
 
-    internal void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
-        string storageAccountName)
+    internal ControlPlaneOperationResult Delete(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
     {
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        return new ControlPlaneOperationResult(OperationResult.Success);
     }
 
     public string GetServiceInstancePath(SubscriptionIdentifier subscriptionIdentifier,
@@ -164,7 +158,7 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         return provider.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
     }
 
-    public (OperationResult result, StorageAccountResource resource) CreateOrUpdate(
+    public ControlPlaneOperationResult<StorageAccountResource> CreateOrUpdate(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
         CreateOrUpdateStorageAccountRequest request)
@@ -180,8 +174,8 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
 
         InitializeServicePropertiesFiles(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
-        return (string.IsNullOrWhiteSpace(existingAccount) ? OperationResult.Created : OperationResult.Updated,
-            resource);
+        var operationResult = string.IsNullOrWhiteSpace(existingAccount) ? OperationResult.Created : OperationResult.Updated;
+        return new ControlPlaneOperationResult<StorageAccountResource>(operationResult, resource, null, null);
     }
 
     private static bool IsStorageAccountNameValid(string storageAccountName)
@@ -246,6 +240,6 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
                 Properties = storageAccount.Properties
             });
 
-        return result.result;
+        return result.Result;
     }
 }

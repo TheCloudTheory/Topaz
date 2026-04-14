@@ -74,7 +74,7 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
         }
 
         var storageAccountResource = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
-        if (storageAccountResource.result != OperationResult.Success || storageAccountResource.resource == null)
+        if (storageAccountResource.Result != OperationResult.Success || storageAccountResource.Resource == null)
         {
             throw new InvalidOperationException($"Storage account {storageAccountName} does not exist.");
         }
@@ -83,8 +83,8 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
         
         // Calculate hashes for both keys as we don't know which key was used for 
         // sending a request
-        var hash1 = ComputeHashForKey(storageAccountResource.resource.Keys[0].Value, stringToSign);
-        var hash2 = ComputeHashForKey(storageAccountResource.resource.Keys[1].Value, stringToSign);
+        var hash1 = ComputeHashForKey(storageAccountResource.Resource.Keys[0].Value, stringToSign);
+        var hash2 = ComputeHashForKey(storageAccountResource.Resource.Keys[1].Value, stringToSign);
         
         if (hash1 == signature) return true;
         return hash2 == signature;

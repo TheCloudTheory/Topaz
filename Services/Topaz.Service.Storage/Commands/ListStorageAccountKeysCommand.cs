@@ -20,14 +20,14 @@ public sealed class ListStorageAccountKeysCommand(ITopazLogger logger) : Command
         var controlPlane = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
         var storageAccount = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 
-        if (storageAccount.result == OperationResult.Failed || storageAccount.result == OperationResult.Failed ||
-            storageAccount.resource == null)
+        if (storageAccount.Result == OperationResult.Failed || storageAccount.Result == OperationResult.Failed ||
+            storageAccount.Resource == null)
         {
-            logger.LogError($"[{storageAccount.result}] There was an error fetching storage account keys.");
+            logger.LogError($"[{storageAccount.Result}] There was an error fetching storage account keys.");
             return 1;
         }
 
-        var keys = new ListKeysResponse(storageAccount.resource.Keys);
+        var keys = new ListKeysResponse(storageAccount.Resource.Keys);
         logger.LogInformation(keys.ToString());
 
         return 0;

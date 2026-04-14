@@ -40,9 +40,8 @@ internal sealed class CheckStorageAccountNameAvailabilityEndpoint(ITopazLogger l
                 return;
             }
 
-            var (_, availability) = _controlPlane.CheckNameAvailability(subscriptionIdentifier, request.Name,
-                request.Type);
-            response.CreateJsonContentResponse(availability);
+            var result = _controlPlane.CheckNameAvailability(subscriptionIdentifier, request.Name, request.Type);
+            response.CreateJsonContentResponse(result.Resource);
         }
         catch (JsonException ex)
         {

@@ -20,12 +20,12 @@ public sealed class CreateStorageAccountCommand(ITopazLogger logger) : Command<C
         var sa = controlPlane.Create(settings.Name!, resourceGroupIdentifier,
             settings.Location!, subscriptionIdentifier);
 
-        if (sa.result == OperationResult.Failed || sa.resource == null)
+        if (sa.Result == OperationResult.Failed || sa.Resource == null)
         {
             return 1;
         }
 
-        logger.LogInformation(sa.resource.ToString());
+        logger.LogInformation(sa.Resource.ToString());
 
         return 0;
     }

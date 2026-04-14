@@ -20,13 +20,13 @@ public sealed class ShowStorageAccountConnectionStringCommand(ITopazLogger logge
         var controlPlane = new AzureStorageControlPlane(new ResourceProvider(logger), logger);
         var operation = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 
-        if (operation.result == OperationResult.Failed || operation.resource == null)
+        if (operation.Result == OperationResult.Failed || operation.Resource == null)
         {
             logger.LogError("Failed to get storage account connection string");
             return 1;
         }
         
-        var connectionString = new StorageAccountConnectionString(settings.Name!, operation.resource.Keys[0].Value);
+        var connectionString = new StorageAccountConnectionString(settings.Name!, operation.Resource.Keys[0].Value);
         
         logger.LogInformation(connectionString.ToString());
 

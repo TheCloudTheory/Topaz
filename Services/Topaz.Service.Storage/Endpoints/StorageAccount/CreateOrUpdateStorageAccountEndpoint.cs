@@ -49,7 +49,7 @@ internal sealed class CreateOrUpdateStorageAccountEndpoint(ITopazLogger logger) 
             }
 
             var result = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, request);
-            response.CreateJsonContentResponse(result.resource);
+            response.CreateJsonContentResponse(result.Resource);
         }
         catch (Exception ex)
         {
