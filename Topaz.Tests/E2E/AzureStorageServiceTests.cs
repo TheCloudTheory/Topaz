@@ -126,4 +126,27 @@ public class AzureStorageServiceTests
             Assert.That(keys[1].CreatedOn, Is.Not.Null);
         });
     }
+
+    [Test]
+    public void StorageAccount_ListBySubscription_ReturnsAllAccountsInSubscription()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var sku = new StorageSku(StorageSkuName.StandardLrs);
+        var createContent = new StorageAccountCreateOrUpdateContent(sku,
+            StorageKind.StorageV2, AzureLocation.WestEurope);
+
+        _ = resourceGroup.Value.GetStorageAccounts()
+            .CreateOrUpdate(WaitUntil.Completed, StorageAccountName, createContent);
+
+        // Act
+        var accounts = subscription.Value.GetStorageAccounts().ToArray();
+
+        // Assert
+        Assert.That(accounts, Is.Not.Empty);
+        Assert.That(accounts.Any(a => a.Data.Name == StorageAccountName), Is.True);
+    }
 }

@@ -34,7 +34,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Create | ✅ | Via PUT (CreateOrUpdate) |
 | Delete | ✅ | |
 | Get Properties | ✅ | |
-| List | ❌ | Subscription-level listing not implemented |
+| List | ✅ | `GET /subscriptions/{subscriptionId}/providers/Microsoft.Storage/storageAccounts` |
 | List By Resource Group | ✅ | |
 | List Keys | ✅ | `POST .../listKeys` |
 | Check Name Availability | ❌ | |

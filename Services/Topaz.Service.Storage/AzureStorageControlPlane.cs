@@ -8,6 +8,7 @@ using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Models.Requests;
+using Topaz.Service.Storage.Services;
 using Topaz.Shared;
 using TableAnalyticsLoggingSettings = Topaz.Service.Storage.Models.TableAnalyticsLoggingSettings;
 using TableMetrics = Topaz.Service.Storage.Models.TableMetrics;
@@ -142,16 +143,32 @@ internal sealed class AzureStorageControlPlane(ResourceProvider provider, ITopaz
         Dfs = $"https://{accountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
     };
 
+    // LocalDirectoryPath has 5 segments; add 3 for .topaz prefix, account-name dir, and metadata.json
+    private static readonly uint StorageAccountFileSegmentCount =
+        (uint)(AzureStorageService.LocalDirectoryPath.Split("/").Length + 3);
+
     public ControlPlaneOperationResult<StorageAccountResource[]> List(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier)
     {
         var resources =
-            provider.ListAs<StorageAccountResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8);
+            provider.ListAs<StorageAccountResource>(subscriptionIdentifier, resourceGroupIdentifier, null,
+                StorageAccountFileSegmentCount);
         var filteredResources = resources.Where(resource =>
             resource.IsInSubscription(subscriptionIdentifier) && resource.IsInResourceGroup(resourceGroupIdentifier));
 
         return new ControlPlaneOperationResult<StorageAccountResource[]>(OperationResult.Success,
             filteredResources.ToArray(), null, null);
+    }
+
+    public ControlPlaneOperationResult<StorageAccountResource[]> ListBySubscription(
+        SubscriptionIdentifier subscriptionIdentifier)
+    {
+        var resources = provider.ListAs<StorageAccountResource>(subscriptionIdentifier, null,
+                lookForNoOfSegments: StorageAccountFileSegmentCount)
+            .Where(r => r.IsInSubscription(subscriptionIdentifier))
+            .ToArray();
+
+        return new ControlPlaneOperationResult<StorageAccountResource[]>(OperationResult.Success, resources, null, null);
     }
 
     public OperationResult Deploy(GenericResource resource)

@@ -13,6 +13,7 @@ public sealed class GenericStorageCommand : IEmulatorCommand
             {
                 account.AddCommand<CreateStorageAccountCommand>("create");
                 account.AddCommand<DeleteStorageAccountCommand>("delete");
+                account.AddCommand<ListStorageAccountsCommand>("list");
                 account.AddCommand<ShowStorageAccountConnectionStringCommand>("show-connection-string");
                     
                 account.AddBranch("keys", keys =>
