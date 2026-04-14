@@ -24,7 +24,7 @@ internal sealed class StorageAccountResource
         string kind,
         StorageAccountResourceProperties resourceProperties)
     {
-        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{name}";
+        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{name}";
         Name = name;
         Location = location;
         Sku = sku;

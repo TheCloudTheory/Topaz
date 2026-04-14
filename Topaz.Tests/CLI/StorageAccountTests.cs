@@ -35,7 +35,9 @@ namespace Topaz.Tests.CLI
                 "group",
                 "delete",
                 "--name",
-                ResourceGroupName
+                ResourceGroupName,
+                "--subscription-id",
+                SubscriptionId.ToString()
             ]);
 
             await Program.RunAsync([
