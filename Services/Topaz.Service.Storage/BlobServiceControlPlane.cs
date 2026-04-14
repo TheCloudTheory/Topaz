@@ -25,6 +25,13 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
         return new ContainerEnumerationResult(storageAccountName, containers.ToArray()!);
     }
     
+    public System.Net.HttpStatusCode DeleteContainer(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
+    {
+        provider.DeleteContainer(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
+        return System.Net.HttpStatusCode.NoContent;
+    }
+
     public string GetServicePath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
     {
         return provider.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);

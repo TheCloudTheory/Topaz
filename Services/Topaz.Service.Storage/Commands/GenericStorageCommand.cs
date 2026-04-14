@@ -38,6 +38,16 @@ public sealed class GenericStorageCommand : IEmulatorCommand
             {
                 container.AddCommand<CreateBlobContainerCommand>("create");
                 container.AddCommand<ListBlobContainersCommand>("list");
+                container.AddCommand<DeleteBlobContainerCommand>("delete");
+            });
+
+            branch.AddBranch("blob", blob =>
+            {
+                blob.AddCommand<UploadBlobCommand>("upload");
+                blob.AddCommand<DownloadBlobCommand>("download");
+                blob.AddCommand<DeleteBlobCommand>("delete");
+                blob.AddCommand<ListBlobsCommand>("list");
+                blob.AddCommand<ShowBlobCommand>("show");
             });
         });
     }

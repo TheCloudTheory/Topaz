@@ -24,7 +24,9 @@ public class BlobEnumerationResult : IXmlSerializable
     public int MaxResults { get; set; }
 
     private Blob[]? Blobs { get; set; }
-    
+
+    public Blob[] GetBlobs() => Blobs ?? [];
+
     public XmlSchema? GetSchema()
     {
         return null;

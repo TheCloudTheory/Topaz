@@ -139,6 +139,20 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         return path;
     }
 
+    public (HttpStatusCode code, string? content) GetBlob(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetBlob), "Executing {0}: {1} {2}", nameof(GetBlob),
+            storageAccountName, blobPath);
+
+        var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+
+        if (!File.Exists(fullPath))
+            return (HttpStatusCode.NotFound, null);
+
+        return (HttpStatusCode.OK, File.ReadAllText(fullPath));
+    }
+
     // TODO: Add support for `snapshot` and `versionid` query params
     public HttpStatusCode DeleteBlob(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName)
     {
