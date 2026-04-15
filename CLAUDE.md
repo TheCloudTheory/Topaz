@@ -7,7 +7,8 @@ Project-specific knowledge for AI coding agents working in this repository.
 ```bash
 dotnet build Topaz.sln
 dotnet test Topaz.sln
-dotnet run --project Topaz.CLI -- start
+dotnet run --project Topaz.Host   # starts the emulator host
+dotnet run --project Topaz.CLI    # interacts with a running host
 ```
 
 ## Architecture
