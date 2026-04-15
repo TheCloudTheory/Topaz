@@ -105,7 +105,7 @@ Table Storage is served on port **8890** (HTTP) in Topaz.
 |-----------|--------|-------|
 | Get Table Service Properties | ✅ | `GET /` |
 | Set Table Service Properties | ✅ | `PUT /?restype=service&comp=properties` |
-| Get Table Service Stats | ❌ | |
+| Get Table Service Stats | ✅ | `GET /?restype=service&comp=stats` |
 | Preflight Table Request | ❌ | |
 
 ### Tables

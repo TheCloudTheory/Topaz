@@ -4,6 +4,7 @@ using System.Web;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Storage.Endpoints.Table;
 
@@ -32,6 +33,14 @@ internal sealed class GetTableServicePropertiesEndpoint(ITopazLogger logger)
                 context.Request.Headers, context.Request.Method, context.Request.Path, context.Request.QueryString))
         {
             response.StatusCode = HttpStatusCode.Unauthorized;
+            return;
+        }
+
+        if (context.Request.QueryString.TryGetValueForKey("comp", out var comp) && comp == "stats")
+        {
+            var statsXml = ControlPlane.GetTableServiceStatsXml();
+            response.Content = new StringContent(statsXml, Encoding.UTF8, "application/xml");
+            response.StatusCode = HttpStatusCode.OK;
             return;
         }
 

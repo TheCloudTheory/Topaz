@@ -82,6 +82,20 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         return File.ReadAllText(propertiesFilePath);
     }
 
+    public string GetTableServiceStatsXml()
+    {
+        var lastSyncTime = DateTimeOffset.UtcNow.ToString("R");
+        return $"""
+                <?xml version="1.0" encoding="utf-8"?>
+                <StorageServiceStats>
+                  <GeoReplication>
+                    <Status>live</Status>
+                    <LastSyncTime>{lastSyncTime}</LastSyncTime>
+                  </GeoReplication>
+                </StorageServiceStats>
+                """;
+    }
+
     public void SetTableProperties(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, Stream input)
     {

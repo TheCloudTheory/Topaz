@@ -688,6 +688,23 @@ namespace Topaz.Tests.E2E
                 tableClient.DeleteEntity("test", "nonexistent", ETag.All));
         }
 
+        [Test]
+        public void TableStorageTests_WhenServiceStatsAreRequested_TheyMustBeReturned()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+
+            // Act
+            var stats = tableServiceClient.GetStatistics();
+
+            // Assert
+            Assert.That(stats, Is.Not.Null);
+            Assert.That(stats.Value, Is.Not.Null);
+            Assert.That(stats.Value.GeoReplication, Is.Not.Null);
+            Assert.That(stats.Value.GeoReplication.Status.ToString(), Is.EqualTo("live"));
+            Assert.That(stats.Value.GeoReplication.LastSyncedOn, Is.Not.Null);
+        }
+
         private class TestEntity : ITableEntity
         {
             public string? Name { get; set; }
