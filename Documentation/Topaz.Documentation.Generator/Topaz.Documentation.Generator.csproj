@@ -10,6 +10,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\Topaz.CLI\Topaz.CLI.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.Authorization\Topaz.Service.Authorization.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.ContainerRegistry\Topaz.Service.ContainerRegistry.csproj" />
       <ProjectReference Include="..\..\Services\Topaz.Service.EventHub\Topaz.Service.EventHub.csproj" />
       <ProjectReference Include="..\..\Services\Topaz.Service.KeyVault\Topaz.Service.KeyVault.csproj" />
       <ProjectReference Include="..\..\Services\Topaz.Service.ResourceGroup\Topaz.Service.ResourceGroup.csproj" />

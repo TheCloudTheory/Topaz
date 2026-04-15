@@ -2,6 +2,8 @@
 using System.Text;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.Service.Authorization.Commands;
+using Topaz.Service.ContainerRegistry.Commands;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
 using Topaz.Service.ManagedIdentity.Commands;
@@ -20,6 +22,8 @@ static string EscapeMdx(string? text) =>
 
 _ = new[]
 {
+    typeof(GenericRoleCommand),
+    typeof(GenericContainerRegistryCommand),
     typeof(GenericResourceGroupCommand),
     typeof(GenericEventHubCommand),
     typeof(GenericKeyVaultCommand),
