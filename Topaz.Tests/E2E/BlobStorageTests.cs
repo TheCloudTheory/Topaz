@@ -4,6 +4,7 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 
@@ -295,5 +296,122 @@ public class BlobStorageTests
         Assert.That(signedIdentifiers, Has.Length.EqualTo(1));
         Assert.That(signedIdentifiers[0].Id, Is.EqualTo("pol1"));
         Assert.That(signedIdentifiers[0].AccessPolicy.Permissions, Is.EqualTo("r"));
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenContainerLeaseIsAcquired_ItShouldSucceed()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("lease-acquire-test");
+        var containerClient = serviceClient.GetBlobContainerClient("lease-acquire-test");
+
+        // Act
+        var leaseClient = containerClient.GetBlobLeaseClient();
+        var leaseResponse = leaseClient.Acquire(TimeSpan.FromSeconds(30));
+
+        // Assert
+        Assert.That(leaseResponse, Is.Not.Null);
+        Assert.That(leaseResponse.GetRawResponse().Status, Is.EqualTo(201));
+        Assert.That(leaseResponse.Value.LeaseId, Is.Not.Null.And.Not.Empty);
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenContainerLeaseIsRenewed_ItShouldSucceed()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("lease-renew-test");
+        var containerClient = serviceClient.GetBlobContainerClient("lease-renew-test");
+        var leaseClient = containerClient.GetBlobLeaseClient();
+        leaseClient.Acquire(TimeSpan.FromSeconds(30));
+
+        // Act
+        var renewResponse = leaseClient.Renew();
+
+        // Assert
+        Assert.That(renewResponse, Is.Not.Null);
+        Assert.That(renewResponse.GetRawResponse().Status, Is.EqualTo(200));
+        Assert.That(renewResponse.Value.LeaseId, Is.Not.Null.And.Not.Empty);
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenContainerLeaseIsChanged_NewLeaseIdShouldBeReturned()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("lease-change-test");
+        var containerClient = serviceClient.GetBlobContainerClient("lease-change-test");
+        var leaseClient = containerClient.GetBlobLeaseClient();
+        leaseClient.Acquire(TimeSpan.FromSeconds(30));
+
+        var newLeaseId = Guid.NewGuid().ToString();
+
+        // Act
+        var changeResponse = leaseClient.Change(newLeaseId);
+
+        // Assert
+        Assert.That(changeResponse, Is.Not.Null);
+        Assert.That(changeResponse.GetRawResponse().Status, Is.EqualTo(200));
+        Assert.That(changeResponse.Value.LeaseId, Is.EqualTo(newLeaseId));
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenContainerLeaseIsReleased_ContainerShouldBeAvailable()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("lease-release-test");
+        var containerClient = serviceClient.GetBlobContainerClient("lease-release-test");
+        var leaseClient = containerClient.GetBlobLeaseClient();
+        leaseClient.Acquire(TimeSpan.FromSeconds(30));
+
+        // Act
+        var releaseResponse = leaseClient.Release();
+
+        // Assert
+        Assert.That(releaseResponse, Is.Not.Null);
+        Assert.That(releaseResponse.GetRawResponse().Status, Is.EqualTo(200));
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenContainerLeaseIsBroken_ItShouldSucceed()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("lease-break-test");
+        var containerClient = serviceClient.GetBlobContainerClient("lease-break-test");
+        var leaseClient = containerClient.GetBlobLeaseClient();
+        leaseClient.Acquire(TimeSpan.FromSeconds(30));
+
+        // Act
+        var breakResponse = leaseClient.Break(TimeSpan.Zero);
+
+        // Assert
+        Assert.That(breakResponse, Is.Not.Null);
+        Assert.That(breakResponse.GetRawResponse().Status, Is.EqualTo(202));
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenAcquiringLeaseOnAlreadyLeasedContainer_ConflictShouldBeReturned()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("lease-conflict-test");
+        var containerClient = serviceClient.GetBlobContainerClient("lease-conflict-test");
+        var leaseClient = containerClient.GetBlobLeaseClient();
+        leaseClient.Acquire(TimeSpan.FromSeconds(30));
+
+        // Act & Assert
+        var secondLeaseClient = containerClient.GetBlobLeaseClient();
+        try
+        {
+            secondLeaseClient.Acquire(TimeSpan.FromSeconds(30));
+            Assert.Fail("Expected RequestFailedException was not thrown.");
+        }
+        catch (RequestFailedException ex) when (ex.Status == 409)
+        {
+            Assert.Pass();
+        }
     }
 }

@@ -50,6 +50,15 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
         return (exists, filePath);
     }
 
+    public (bool exists, string leaseFilePath) GetContainerLeaseState(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName, string containerName)
+    {
+        var exists = provider.ContainerExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
+        var filePath = provider.GetContainerLeaseFilePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
+        return (exists, filePath);
+    }
+
     public string GetServicePath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
     {
         return provider.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);

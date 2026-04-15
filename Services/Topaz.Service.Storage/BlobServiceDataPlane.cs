@@ -310,4 +310,141 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         File.WriteAllText(aclFilePath, body);
         return HttpStatusCode.OK;
     }
+
+    /// <summary>
+    /// Implements the Lease Container operation.
+    /// Returns the HTTP status code for the response plus the resulting lease state (null on error).
+    /// </summary>
+    public (HttpStatusCode statusCode, ContainerLease? lease) LeaseContainer(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string containerName,
+        string leaseAction,
+        int leaseDuration,
+        string? proposedLeaseId,
+        string? currentLeaseId,
+        int? breakPeriod)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(LeaseContainer),
+            "Account: `{0}`, Container: {1}, Action: {2}", storageAccountName, containerName, leaseAction);
+
+        var (exists, leaseFilePath) = controlPlane.GetContainerLeaseState(subscriptionIdentifier,
+            resourceGroupIdentifier, storageAccountName, containerName);
+
+        if (!exists)
+            return (HttpStatusCode.NotFound, null);
+
+        // Load or initialize the current lease
+        ContainerLease lease;
+        if (File.Exists(leaseFilePath))
+        {
+            lease = JsonSerializer.Deserialize<ContainerLease>(File.ReadAllText(leaseFilePath),
+                GlobalSettings.JsonOptions) ?? new ContainerLease();
+        }
+        else
+        {
+            lease = new ContainerLease();
+        }
+
+        var effectiveState = lease.EffectiveState();
+
+        switch (leaseAction.ToLowerInvariant())
+        {
+            case "acquire":
+            {
+                if (effectiveState == ContainerLeaseState.Leased)
+                    return (HttpStatusCode.Conflict, null);
+
+                var newLeaseId = string.IsNullOrEmpty(proposedLeaseId) ? Guid.NewGuid().ToString() : proposedLeaseId;
+                lease.LeaseId = newLeaseId;
+                lease.State = ContainerLeaseState.Leased;
+                lease.Duration = leaseDuration;
+                lease.ExpiresAt = leaseDuration == -1 ? null : DateTimeOffset.UtcNow.AddSeconds(leaseDuration);
+                lease.BreakTime = null;
+                SaveLease(leaseFilePath, lease);
+                return (HttpStatusCode.Created, lease);
+            }
+            case "renew":
+            {
+                if (effectiveState != ContainerLeaseState.Leased)
+                    return (HttpStatusCode.Conflict, null);
+                if (!string.Equals(lease.LeaseId, currentLeaseId, StringComparison.OrdinalIgnoreCase))
+                    return (HttpStatusCode.PreconditionFailed, null);
+
+                lease.ExpiresAt = lease.Duration == -1 ? null : DateTimeOffset.UtcNow.AddSeconds(lease.Duration);
+                lease.State = ContainerLeaseState.Leased;
+                lease.BreakTime = null;
+                SaveLease(leaseFilePath, lease);
+                return (HttpStatusCode.OK, lease);
+            }
+            case "change":
+            {
+                if (effectiveState != ContainerLeaseState.Leased)
+                    return (HttpStatusCode.Conflict, null);
+                if (!string.Equals(lease.LeaseId, currentLeaseId, StringComparison.OrdinalIgnoreCase))
+                    return (HttpStatusCode.PreconditionFailed, null);
+                if (string.IsNullOrEmpty(proposedLeaseId))
+                    return (HttpStatusCode.BadRequest, null);
+
+                lease.LeaseId = proposedLeaseId;
+                SaveLease(leaseFilePath, lease);
+                return (HttpStatusCode.OK, lease);
+            }
+            case "release":
+            {
+                if (effectiveState != ContainerLeaseState.Leased)
+                    return (HttpStatusCode.Conflict, null);
+                if (!string.Equals(lease.LeaseId, currentLeaseId, StringComparison.OrdinalIgnoreCase))
+                    return (HttpStatusCode.PreconditionFailed, null);
+
+                lease.State = ContainerLeaseState.Available;
+                lease.LeaseId = null;
+                lease.ExpiresAt = null;
+                lease.BreakTime = null;
+                SaveLease(leaseFilePath, lease);
+                return (HttpStatusCode.OK, lease);
+            }
+            case "break":
+            {
+                if (effectiveState == ContainerLeaseState.Available || effectiveState == ContainerLeaseState.Broken)
+                    return (HttpStatusCode.Conflict, null);
+
+                if (effectiveState == ContainerLeaseState.Breaking)
+                {
+                    // Already breaking — just return remaining time
+                    return (HttpStatusCode.Accepted, lease);
+                }
+
+                // Determine how long until the lease breaks
+                int breakSeconds;
+                if (breakPeriod.HasValue)
+                {
+                    breakSeconds = breakPeriod.Value;
+                }
+                else if (lease.Duration == -1)
+                {
+                    breakSeconds = 0;
+                }
+                else
+                {
+                    breakSeconds = lease.ExpiresAt.HasValue
+                        ? (int)Math.Max(0, (lease.ExpiresAt.Value - DateTimeOffset.UtcNow).TotalSeconds)
+                        : 0;
+                }
+
+                lease.State = ContainerLeaseState.Breaking;
+                lease.BreakTime = DateTimeOffset.UtcNow.AddSeconds(breakSeconds);
+                SaveLease(leaseFilePath, lease);
+                return (HttpStatusCode.Accepted, lease);
+            }
+            default:
+                return (HttpStatusCode.BadRequest, null);
+        }
+    }
+
+    private static void SaveLease(string path, ContainerLease lease)
+    {
+        File.WriteAllText(path, JsonSerializer.Serialize(lease, GlobalSettings.JsonOptions));
+    }
 }
