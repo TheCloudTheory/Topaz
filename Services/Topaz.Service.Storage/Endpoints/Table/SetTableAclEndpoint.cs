@@ -37,9 +37,11 @@ internal sealed class SetTableAclEndpoint(ITopazLogger logger)
         if (context.Request.QueryString.TryGetValueForKey("comp", out var comp) && comp == "acl")
         {
             var tableName = context.Request.Path.Value!.Replace("/", string.Empty);
-            var code = ControlPlane.SetAcl(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name,
+            var aclOp = ControlPlane.SetAcl(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name,
                 tableName, context.Request.Body);
-            response.StatusCode = code;
+            response.StatusCode = aclOp.Result == OperationResult.BadRequest
+                ? HttpStatusCode.BadRequest
+                : HttpStatusCode.NoContent;
             return;
         }
 

@@ -75,11 +75,11 @@ internal sealed class QueryTableEntitiesEndpoint(ITopazLogger logger)
             nameof(HandleGetAclRequest));
 
         var tableName = path.Replace("/", string.Empty);
-        var acls = ControlPlane.GetAcl(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName);
+        var aclsOp = ControlPlane.GetAcl(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName);
 
         using var sw = new EncodingAwareStringWriter();
         var serializer = new XmlSerializer(typeof(SignedIdentifiers));
-        serializer.Serialize(sw, acls);
+        serializer.Serialize(sw, aclsOp.Resource!);
 
         response.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/xml");
         response.StatusCode = HttpStatusCode.OK;

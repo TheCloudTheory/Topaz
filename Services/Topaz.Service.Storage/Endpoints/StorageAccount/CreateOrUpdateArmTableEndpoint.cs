@@ -38,6 +38,7 @@ internal sealed class CreateOrUpdateArmTableEndpoint(ITopazLogger logger) : IEnd
         if (!tableExists)
         {
             _controlPlane.CreateTable(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
+            // Result discarded intentionally — existence check above handles the create/skip logic
         }
 
         var id =

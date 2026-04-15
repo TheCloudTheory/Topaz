@@ -62,12 +62,12 @@ internal sealed class CreateTableEndpoint(ITopazLogger logger)
             return;
         }
 
-        var table = ControlPlane.CreateTable(subscriptionIdentifier, resourceGroupIdentifier,
+        var tableOp = ControlPlane.CreateTable(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccount.Name, request);
 
         if (!context.Request.Headers.TryGetValue("Prefer", out var prefer) || prefer != "return-no-content")
         {
-            response.Content = JsonContent.Create(table);
+            response.Content = JsonContent.Create(tableOp.Resource);
             response.StatusCode = HttpStatusCode.Created;
             response.Headers.Add("Preference-Applied", "return-content");
         }

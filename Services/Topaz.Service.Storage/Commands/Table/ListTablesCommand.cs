@@ -17,7 +17,8 @@ public sealed class ListTablesCommand(ITopazLogger logger) : Command<ListTablesC
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
 
         var controlPlane = new TableServiceControlPlane(new TableResourceProvider(logger), logger);
-        var tables = controlPlane.GetTables(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!);
+        var tablesOp = controlPlane.GetTables(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!);
+        var tables = tablesOp.Resource ?? [];
 
         if (tables.Length == 0)
         {

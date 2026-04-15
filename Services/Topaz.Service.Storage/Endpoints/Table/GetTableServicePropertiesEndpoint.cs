@@ -38,7 +38,7 @@ internal sealed class GetTableServicePropertiesEndpoint(ITopazLogger logger)
 
         if (context.Request.QueryString.TryGetValueForKey("comp", out var comp) && comp == "stats")
         {
-            var statsXml = ControlPlane.GetTableServiceStatsXml();
+            var statsXml = TableServiceControlPlane.GetTableServiceStatsXml();
             response.Content = new StringContent(statsXml, Encoding.UTF8, "application/xml");
             response.StatusCode = HttpStatusCode.OK;
             return;
@@ -46,10 +46,16 @@ internal sealed class GetTableServicePropertiesEndpoint(ITopazLogger logger)
 
         ThrowIfGetPropertiesRequestIsInvalid(context.Request.QueryString);
 
-        var propertiesXml = ControlPlane.GetTablePropertiesXml(subscriptionIdentifier, resourceGroupIdentifier,
+        var propertiesXmlOp = ControlPlane.GetTablePropertiesXml(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccount.Name);
 
-        response.Content = new StringContent(propertiesXml, Encoding.UTF8, "application/xml");
+        if (propertiesXmlOp.Result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
+        response.Content = new StringContent(propertiesXmlOp.Resource!, Encoding.UTF8, "application/xml");
         response.StatusCode = HttpStatusCode.OK;
     }
 

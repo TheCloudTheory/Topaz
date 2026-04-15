@@ -16,9 +16,9 @@ public sealed class CreateTableCommand(ITopazLogger logger) : Command<CreateTabl
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
         var rp = new TableServiceControlPlane(new TableResourceProvider(logger), logger);
-        var sa = rp.CreateTable(subscriptionIdentifier, resourceGroupIdentifier, settings.Name, settings.AccountName);
+        var saOp = rp.CreateTable(subscriptionIdentifier, resourceGroupIdentifier, settings.Name, settings.AccountName);
 
-        logger.LogInformation($"Table created: {sa!}");
+        logger.LogInformation($"Table created: {saOp.Resource!}");
 
         return 0;
     }

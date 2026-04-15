@@ -42,8 +42,9 @@ internal sealed class PreflightTableRequestEndpoint(ITopazLogger logger)
 
         try
         {
-            var properties = ControlPlane.GetTableProperties(subscriptionIdentifier, resourceGroupIdentifier,
+            var propertiesOp = ControlPlane.GetTableProperties(subscriptionIdentifier, resourceGroupIdentifier,
                 storageAccount.Name);
+            var properties = propertiesOp.Resource ?? throw new InvalidOperationException(propertiesOp.Reason);
 
             if (properties.Cors == null || properties.Cors.Count == 0)
             {

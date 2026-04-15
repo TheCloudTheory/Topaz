@@ -35,8 +35,8 @@ internal sealed class ListTablesEndpoint(ITopazLogger logger)
             return;
         }
 
-        var tables = ControlPlane.GetTables(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name);
-        response.Content = JsonContent.Create(new TableEndpointResponse(tables));
+        var tablesOp = ControlPlane.GetTables(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name);
+        response.Content = JsonContent.Create(new TableEndpointResponse(tablesOp.Resource!));
     }
 
     private sealed class TableEndpointResponse(TableProperties[] tables)
