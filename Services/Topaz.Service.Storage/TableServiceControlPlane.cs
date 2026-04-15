@@ -104,6 +104,14 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         var propertiesFilePath = Path.Combine(path, "properties.xml");
 
         var document = XDocument.Load(input, LoadOptions.PreserveWhitespace);
+
+        // Ensure the <Cors> element is always present; the Azure Data Tables SDK
+        // iterates over it and throws if it is null (i.e. absent from the XML).
+        if (document.Root?.Element("Cors") == null)
+        {
+            document.Root?.Add(new XElement("Cors"));
+        }
+
         document.Save(propertiesFilePath);
     }
 

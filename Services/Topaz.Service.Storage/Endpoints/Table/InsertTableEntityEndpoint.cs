@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Exceptions;
@@ -48,7 +49,8 @@ internal sealed class InsertTableEntityEndpoint(ITopazLogger logger)
                     prefer != "return-no-content")
                 {
                     response.StatusCode = HttpStatusCode.Created;
-                    response.Content = JsonContent.Create(payload);
+                    var entity = JsonSerializer.Deserialize<object>(payload, GlobalSettings.JsonOptions);
+                    response.Content = JsonContent.Create(entity);
                 }
 
                 if (prefer == "return-no-content")
