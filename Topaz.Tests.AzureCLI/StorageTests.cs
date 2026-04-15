@@ -182,6 +182,47 @@ public class StorageTests : TopazFixture
     }
 
     [Test]
+    public async Task TableEntity_Show_ReturnsEntityByKey()
+    {
+        const string storageAccountName = "topazstortblshow01";
+        const string resourceGroup = "test-storage-table-entity-show-rg";
+        const string tableName = "testentities";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+                Assert.That(accountKey, Is.Not.Null.And.Not.Empty);
+            });
+
+        await RunAzureCliCommand(
+            $"az storage table create --name {tableName} --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://topaz.local.dev:8890");
+
+        await RunAzureCliCommand(
+            $"az storage entity insert --table-name {tableName} --entity PartitionKey=pk1 RowKey=rk1 Name=test --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://topaz.local.dev:8890");
+
+        await RunAzureCliCommand(
+            $"az storage entity show --table-name {tableName} --partition-key pk1 --row-key rk1 --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://topaz.local.dev:8890",
+            (resp) =>
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(resp["PartitionKey"]!.GetValue<string>(), Is.EqualTo("pk1"));
+                    Assert.That(resp["RowKey"]!.GetValue<string>(), Is.EqualTo("rk1"));
+                });
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
     public async Task TableServiceProperties_Set_UpdatesLoggingSettings()
     {
         const string storageAccountName = "topazstortblprops01";

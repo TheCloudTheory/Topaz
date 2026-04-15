@@ -637,6 +637,45 @@ namespace Topaz.Tests.E2E
         }
 
         [Test]
+        public void TableStorageTests_WhenEntityIsInsertedAndFetchedByKey_ItMustReturnCorrectEntity()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            tableServiceClient.CreateTable("testtable");
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            tableClient.AddEntity(new TestEntity
+            {
+                PartitionKey = "test",
+                RowKey = "1",
+                Name = "foo"
+            });
+
+            // Act
+            var entity = tableClient.GetEntity<TestEntity>("test", "1");
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(entity.Value.PartitionKey, Is.EqualTo("test"));
+                Assert.That(entity.Value.RowKey, Is.EqualTo("1"));
+                Assert.That(entity.Value.Name, Is.EqualTo("foo"));
+            });
+        }
+
+        [Test]
+        public void TableStorageTests_WhenNonExistentEntityIsFetchedByKey_ItShouldThrow()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            tableServiceClient.CreateTable("testtable");
+            var tableClient = tableServiceClient.GetTableClient("testtable");
+
+            // Act & Assert
+            Assert.Throws<RequestFailedException>(() => tableClient.GetEntity<TestEntity>("test", "nonexistent"));
+        }
+
+        [Test]
         public void TableStorageTests_WhenNonExistentEntityIsDeleted_ItShouldThrow()
         {
             // Arrange

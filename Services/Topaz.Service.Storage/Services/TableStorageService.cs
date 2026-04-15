@@ -22,6 +22,7 @@ public sealed class TableStorageService(ITopazLogger logger) : IServiceDefinitio
         new CreateTableEndpoint(logger),
         new DeleteTableEndpoint(logger),
         // Regex entity-key routes before wildcard routes for the same method
+        new GetTableEntityEndpoint(logger),
         new InsertOrMergeTableEntityEndpoint(logger),
         new PutTableEntityEndpoint(logger),
         new PatchTableEntityEndpoint(logger),

@@ -53,6 +53,29 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
         return rawContent;
     }
 
+    internal string GetEntity(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName,
+        string partitionKey, string rowKey)
+    {
+        logger.LogDebug(nameof(TableServiceDataPlane), nameof(GetEntity), "Executing {0}: {1} {2}", nameof(GetEntity), tableName, storageAccountName);
+
+        PathGuard.ValidateName(partitionKey);
+        PathGuard.ValidateName(rowKey);
+
+        var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
+
+        var fileName = $"{PathGuard.SanitizeName(partitionKey)}_{PathGuard.SanitizeName(rowKey)}.json";
+        var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
+
+        if (!File.Exists(entityPath))
+        {
+            throw new EntityNotFoundException();
+        }
+
+        return File.ReadAllText(entityPath);
+    }
+
     internal object?[] QueryEntities(QueryString query, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
