@@ -6,6 +6,7 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Shared;
 
 namespace Topaz.Tests.E2E
 {
@@ -703,6 +704,66 @@ namespace Topaz.Tests.E2E
             Assert.That(stats.Value.GeoReplication, Is.Not.Null);
             Assert.That(stats.Value.GeoReplication.Status.ToString(), Is.EqualTo("live"));
             Assert.That(stats.Value.GeoReplication.LastSyncedOn, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task TableStorageTests_WhenPreflightRequestMatchesCorsRule_ItShouldReturn200WithCorsHeaders()
+        {
+            // Arrange — configure a CORS rule on the table service
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            var properties = tableServiceClient.GetProperties().Value;
+            properties.CorsRules.Clear();
+            properties.CorsRules.Add(new TableCorsRule(
+                allowedOrigins: "http://cors-test.example.com",
+                allowedMethods: "GET,POST",
+                allowedHeaders: "*",
+                exposedHeaders: "x-ms-request-id",
+                maxAgeInSeconds: 300));
+            tableServiceClient.SetProperties(properties);
+
+            var baseUrl = $"http://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
+            using var httpClient = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Options, $"{baseUrl}/Tables");
+            request.Headers.Add("Origin", "http://cors-test.example.com");
+            request.Headers.Add("Access-Control-Request-Method", "GET");
+
+            // Act
+            var response = await httpClient.SendAsync(request);
+
+            // Assert
+            Assert.That((int)response.StatusCode, Is.EqualTo(200));
+            Assert.That(response.Headers.Contains("Access-Control-Allow-Origin"), Is.True);
+            Assert.That(response.Headers.GetValues("Access-Control-Allow-Origin").First(),
+                Is.EqualTo("http://cors-test.example.com"));
+            Assert.That(response.Headers.Contains("Access-Control-Allow-Methods"), Is.True);
+        }
+
+        [Test]
+        public async Task TableStorageTests_WhenPreflightRequestOriginDoesNotMatchAnyCorsRule_ItShouldReturn403()
+        {
+            // Arrange — configure a CORS rule that does not match the request origin
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            var properties = tableServiceClient.GetProperties().Value;
+            properties.CorsRules.Clear();
+            properties.CorsRules.Add(new TableCorsRule(
+                allowedOrigins: "http://allowed-origin.example.com",
+                allowedMethods: "GET",
+                allowedHeaders: "*",
+                exposedHeaders: "",
+                maxAgeInSeconds: 300));
+            tableServiceClient.SetProperties(properties);
+
+            var baseUrl = $"http://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
+            using var httpClient = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Options, $"{baseUrl}/Tables");
+            request.Headers.Add("Origin", "http://other-origin.example.com");
+            request.Headers.Add("Access-Control-Request-Method", "GET");
+
+            // Act
+            var response = await httpClient.SendAsync(request);
+
+            // Assert
+            Assert.That((int)response.StatusCode, Is.EqualTo(403));
         }
 
         private class TestEntity : ITableEntity

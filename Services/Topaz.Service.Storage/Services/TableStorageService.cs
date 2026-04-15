@@ -15,6 +15,8 @@ public sealed class TableStorageService(ITopazLogger logger) : IServiceDefinitio
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
+        // OPTIONS preflight must be first so it takes priority over all other routes
+        new PreflightTableRequestEndpoint(logger),
         // Specific routes first so they take priority over wildcard routes
         new GetTableServicePropertiesEndpoint(logger),
         new SetTableServicePropertiesEndpoint(logger),
