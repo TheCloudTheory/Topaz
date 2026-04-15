@@ -293,6 +293,44 @@ public class StorageTests : TopazFixture
     }
 
     [Test]
+    public async Task Blob_List_ReturnsUploadedBlob()
+    {
+        const string storageAccountName = "topazstorbloblist01";
+        const string resourceGroup = "test-storage-blob-list-rg";
+        const string containerName = "bloblistcontainer";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+                Assert.That(accountKey, Is.Not.Null.And.Not.Empty);
+            });
+
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"printf 'hello world' >/tmp/blob-list-upload.txt && az storage blob upload --container-name {containerName} --name test.txt --file /tmp/blob-list-upload.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob list --container-name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            (resp) =>
+            {
+                var blobs = resp.AsArray();
+                Assert.That(blobs.Any(blob => blob?["name"]?.GetValue<string>() == "test.txt"), Is.True);
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
     public async Task Container_ShowPermission_ReturnsEmptySignedIdentifiers()
     {
         const string storageAccountName = "topazstorcntracl01";

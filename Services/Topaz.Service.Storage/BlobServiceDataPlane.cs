@@ -19,24 +19,20 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var files = Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories);
         var entities = files.Select(file => new Blob
         {
-            Name = file,
+            Name = Path.GetRelativePath(path, file).Replace(Path.DirectorySeparatorChar, '/'),
             Properties = GetDeserializedBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccountName, file)
+                storageAccountName, containerName, Path.GetRelativePath(path, file).Replace(Path.DirectorySeparatorChar, '/'))
         }).ToArray();
 
         return new BlobEnumerationResult(storageAccountName, entities); 
     }
 
     private BlobProperties? GetDeserializedBlobProperties(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName,
-        string localBlobPath)
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName,
+        string blobName)
     {
-        // Note that we will perform a 2-step cleanup for the file path. The reason for that 
-        // is that physical file path is a completely different concept than a virtual
-        // path used on a service level
-        var servicePath = controlPlane.GetServicePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         var filePath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
-            localBlobPath.Replace(servicePath, string.Empty).Replace("data/", string.Empty));
+            $"/{containerName}/{blobName}");
         var content = File.ReadAllText(filePath);
 
         return JsonSerializer.Deserialize<BlobProperties>(content);

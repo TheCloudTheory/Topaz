@@ -57,6 +57,7 @@ public class BlobEnumerationResult : IXmlSerializable
                     writer.WriteStartElement("Properties");
                     writer.WriteElementString("Last-Modified", blob.Properties.LastModified);
                     writer.WriteElementString("Etag", blob.Properties.ETag.ToString());
+                    writer.WriteElementString("BlobType", blob.Properties.BlobType);
                     writer.WriteEndElement();
                 }
                 
