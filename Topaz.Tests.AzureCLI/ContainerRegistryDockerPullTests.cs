@@ -40,7 +40,7 @@ public class ContainerRegistryDockerPullTests
     private const string AzureCliImage  = "mcr.microsoft.com/azure-cli:2.84.0";
 
     private static readonly string TopazImage =
-        Environment.GetEnvironmentVariable("TOPAZ_CLI_CONTAINER_IMAGE") ?? "topaz/cli";
+        Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "topaz/host";
 
     private static readonly string TenantId = EntraService.TenantId;
 
