@@ -121,6 +121,7 @@ public class TopazFixture
         if (_containerAzureCli != null && _containerTopaz != null)
         {
             await KeyVaultHostMapper.EnsureVaultHostsMapped(_containerAzureCli, _containerTopaz, command);
+            await StorageHostMapper.EnsureStorageHostsMapped(_containerAzureCli, _containerTopaz, command);
         }
 
         var result = await _containerAzureCli!.ExecAsync(new List<string>()
