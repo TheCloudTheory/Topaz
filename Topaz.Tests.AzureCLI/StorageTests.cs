@@ -242,7 +242,7 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage logging set --services t --log rwd --retention 5 --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://{storageAccountName}.table.storage.topaz.local.dev:8890");
+            $"az storage logging update --services t --log rwd --retention 5 --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://{storageAccountName}.table.storage.topaz.local.dev:8890");
 
         await RunAzureCliCommand(
             $"az storage logging show --services t --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://{storageAccountName}.table.storage.topaz.local.dev:8890",
