@@ -703,7 +703,7 @@ namespace Topaz.Tests.E2E
             Assert.That(stats.Value, Is.Not.Null);
             Assert.That(stats.Value.GeoReplication, Is.Not.Null);
             Assert.That(stats.Value.GeoReplication.Status.ToString(), Is.EqualTo("live"));
-            Assert.That(stats.Value.GeoReplication.LastSyncedOn, Is.Not.Null);
+            Assert.That(stats.Value.GeoReplication.LastSyncedOn, Is.GreaterThan(DateTimeOffset.MinValue));
         }
 
         [Test]
@@ -712,8 +712,8 @@ namespace Topaz.Tests.E2E
             // Arrange — configure a CORS rule on the table service
             var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             var properties = tableServiceClient.GetProperties().Value;
-            properties.CorsRules.Clear();
-            properties.CorsRules.Add(new TableCorsRule(
+            properties.Cors.Clear();
+            properties.Cors.Add(new TableCorsRule(
                 allowedOrigins: "http://cors-test.example.com",
                 allowedMethods: "GET,POST",
                 allowedHeaders: "*",
@@ -744,8 +744,8 @@ namespace Topaz.Tests.E2E
             // Arrange — configure a CORS rule that does not match the request origin
             var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
             var properties = tableServiceClient.GetProperties().Value;
-            properties.CorsRules.Clear();
-            properties.CorsRules.Add(new TableCorsRule(
+            properties.Cors.Clear();
+            properties.Cors.Add(new TableCorsRule(
                 allowedOrigins: "http://allowed-origin.example.com",
                 allowedMethods: "GET",
                 allowedHeaders: "*",
