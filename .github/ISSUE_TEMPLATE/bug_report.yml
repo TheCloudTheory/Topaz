@@ -1,0 +1,121 @@
+name: Bug report
+description: Something isn't working as expected.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. The more detail you provide, the faster we can reproduce and fix it.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched existing issues and this hasn't been reported yet.
+          required: true
+        - label: I checked the [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/) and the operation is listed as implemented.
+          required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Topaz version
+      placeholder: "e.g. v1.1.0-beta"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: run_mode
+    attributes:
+      label: How are you running Topaz?
+      options:
+        - Binary (topaz-host)
+        - Docker container
+        - Testcontainers (in tests)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Linux (x64)
+        - Linux (arm64)
+        - Windows
+    validations:
+      required: true
+
+  - type: dropdown
+    id: service
+    attributes:
+      label: Affected Azure service
+      options:
+        - Azure Storage (Blob)
+        - Azure Storage (Table)
+        - Azure Storage (Queue)
+        - Azure Key Vault
+        - Azure Service Bus
+        - Azure Event Hub
+        - Azure Container Registry
+        - Azure Resource Manager
+        - Microsoft Entra ID
+        - Virtual Networks
+        - Other / Multiple
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tool
+    attributes:
+      label: SDK or tool
+      description: Select all that apply.
+      multiple: true
+      options:
+        - Azure SDK for .NET
+        - Azure SDK for Python
+        - Azure SDK for JavaScript / TypeScript
+        - Azure SDK for Java
+        - Azure CLI
+        - Terraform (AzureRM provider)
+        - Terraform (AzAPI provider)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start Topaz with ...
+        2. Run ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the full error message or unexpected response.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste any relevant Topaz output. This will be formatted as a code block automatically.
+      render: shell

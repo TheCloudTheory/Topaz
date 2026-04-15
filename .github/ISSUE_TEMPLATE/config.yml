@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discord community
+    url: https://discord.gg/eGTkS76w
+    about: Ask questions, share workflows, and get help from the community.
+  - name: GitHub Discussions
+    url: https://github.com/TheCloudTheory/Topaz/discussions
+    about: Long-form questions, ideas, and general discussion.

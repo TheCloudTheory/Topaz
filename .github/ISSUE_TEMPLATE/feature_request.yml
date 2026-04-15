@@ -1,0 +1,87 @@
+name: Feature request
+description: Request a missing API endpoint, a new Azure service, or an improvement to existing functionality.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion! Before submitting, check the [roadmap](https://topaz.thecloudtheory.com/docs/roadmap) and the [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/) — your request may already be planned or in progress.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before you submit
+      options:
+        - label: I checked the [roadmap](https://topaz.thecloudtheory.com/docs/roadmap) and this isn't already planned.
+          required: true
+        - label: I searched existing issues and this hasn't been requested yet.
+          required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Request type
+      options:
+        - Missing API endpoint (operation not yet implemented)
+        - New Azure service (service not yet emulated)
+        - Enhancement to existing functionality
+        - Developer experience / tooling
+    validations:
+      required: true
+
+  - type: dropdown
+    id: service
+    attributes:
+      label: Azure service
+      options:
+        - Azure Storage (Blob)
+        - Azure Storage (Table)
+        - Azure Storage (Queue)
+        - Azure Key Vault
+        - Azure Service Bus
+        - Azure Event Hub
+        - Azure Container Registry
+        - Azure Resource Manager
+        - Microsoft Entra ID
+        - Virtual Networks
+        - New service (not listed)
+        - Not service-specific
+    validations:
+      required: true
+
+  - type: input
+    id: endpoint
+    attributes:
+      label: API operation or endpoint (if applicable)
+      description: The specific REST operation you need.
+      placeholder: "e.g. POST {vaultBaseUrl}/keys/{name}/create"
+
+  - type: input
+    id: docs_link
+    attributes:
+      label: Azure REST API docs link (if applicable)
+      placeholder: "https://learn.microsoft.com/en-us/rest/api/..."
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Use case and motivation
+      description: What are you trying to do, and why does the missing functionality block you?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tool
+    attributes:
+      label: SDK or tool
+      description: Select all that apply.
+      multiple: true
+      options:
+        - Azure SDK for .NET
+        - Azure SDK for Python
+        - Azure SDK for JavaScript / TypeScript
+        - Azure SDK for Java
+        - Azure CLI
+        - Terraform (AzureRM provider)
+        - Terraform (AzAPI provider)
+        - Other
