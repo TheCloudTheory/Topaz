@@ -53,6 +53,14 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
             ".container-metadata.json");
     }
 
+    public string GetContainerAclFilePath(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
+    {
+        return Path.Combine(
+            GetContainerPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
+            ".container-acl.xml");
+    }
+
     public void DeleteContainer(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
     {

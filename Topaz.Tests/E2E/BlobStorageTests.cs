@@ -3,6 +3,7 @@ using Azure;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 
@@ -244,5 +245,55 @@ public class BlobStorageTests
         // Assert
         Assert.That(props.Value.Metadata["env"], Is.EqualTo("prod"));
         Assert.That(props.Value.Metadata["owner"], Is.EqualTo("team-a"));
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenContainerAclIsRequested_EmptySignedIdentifiersShouldBeReturned()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("acl-test");
+        var containerClient = serviceClient.GetBlobContainerClient("acl-test");
+
+        // Act
+        var policy = containerClient.GetAccessPolicy();
+
+        // Assert
+        Assert.That(policy, Is.Not.Null);
+        Assert.That(policy.GetRawResponse().Status, Is.EqualTo(200));
+        Assert.That(policy.Value.SignedIdentifiers, Is.Empty);
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenContainerAclIsSet_ItShouldBeRetrievable()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("acl-set-test");
+        var containerClient = serviceClient.GetBlobContainerClient("acl-set-test");
+
+        var identifiers = new[]
+        {
+            new BlobSignedIdentifier
+            {
+                Id = "pol1",
+                AccessPolicy = new BlobAccessPolicy
+                {
+                    StartsOn = DateTimeOffset.UtcNow.AddMinutes(-1),
+                    ExpiresOn = DateTimeOffset.UtcNow.AddHours(1),
+                    Permissions = "r"
+                }
+            }
+        };
+
+        // Act
+        containerClient.SetAccessPolicy(PublicAccessType.None, identifiers);
+        var policy = containerClient.GetAccessPolicy();
+
+        // Assert
+        var signedIdentifiers = policy.Value.SignedIdentifiers.ToArray();
+        Assert.That(signedIdentifiers, Has.Length.EqualTo(1));
+        Assert.That(signedIdentifiers[0].Id, Is.EqualTo("pol1"));
+        Assert.That(signedIdentifiers[0].AccessPolicy.Permissions, Is.EqualTo("r"));
     }
 }

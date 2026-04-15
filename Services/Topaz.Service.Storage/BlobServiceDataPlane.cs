@@ -261,4 +261,53 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         return (HttpStatusCode.OK, metadata);
     }
+
+    public (HttpStatusCode statusCode, string? xml) GetContainerAcl(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string containerName)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetContainerAcl),
+            "Account: `{0}`, Container: {1}", storageAccountName, containerName);
+
+        var (exists, aclFilePath) = controlPlane.GetContainerAclState(subscriptionIdentifier,
+            resourceGroupIdentifier, storageAccountName, containerName);
+
+        if (!exists)
+            return (HttpStatusCode.NotFound, null);
+
+        if (!File.Exists(aclFilePath))
+            return (HttpStatusCode.OK, "<?xml version=\"1.0\" encoding=\"utf-8\"?><SignedIdentifiers />");
+
+        var xml = File.ReadAllText(aclFilePath);
+        return (HttpStatusCode.OK, xml);
+    }
+
+    public HttpStatusCode SetContainerAcl(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string containerName,
+        Stream input)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(SetContainerAcl),
+            "Account: `{0}`, Container: {1}", storageAccountName, containerName);
+
+        var (exists, aclFilePath) = controlPlane.GetContainerAclState(subscriptionIdentifier,
+            resourceGroupIdentifier, storageAccountName, containerName);
+
+        if (!exists)
+            return HttpStatusCode.NotFound;
+
+        using var sr = new StreamReader(input);
+        var body = sr.ReadToEnd();
+
+        // Normalise an empty body to an empty SignedIdentifiers document
+        if (string.IsNullOrWhiteSpace(body))
+            body = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SignedIdentifiers />";
+
+        File.WriteAllText(aclFilePath, body);
+        return HttpStatusCode.OK;
+    }
 }

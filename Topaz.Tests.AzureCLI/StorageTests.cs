@@ -291,4 +291,81 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task Container_ShowPermission_ReturnsEmptySignedIdentifiers()
+    {
+        const string storageAccountName = "topazstorcntracl01";
+        const string resourceGroup = "test-storage-cntr-acl-rg";
+        const string containerName = "aclcontainer";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+                Assert.That(accountKey, Is.Not.Null.And.Not.Empty);
+            });
+
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage container show-permission --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            (resp) =>
+            {
+                Assert.That(resp["signedIdentifiers"]!.AsArray(), Is.Empty);
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task Container_SetPermission_PersistsAndIsRetrievable()
+    {
+        const string storageAccountName = "topazstorcntracl02";
+        const string resourceGroup = "test-storage-cntr-acl2-rg";
+        const string containerName = "aclcontainer2";
+        const string policyId = "read-policy";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+                Assert.That(accountKey, Is.Not.Null.And.Not.Empty);
+            });
+
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        var start = DateTime.UtcNow.AddMinutes(-1).ToString("yyyy-MM-ddTHH:mm:ssZ");
+        var expiry = DateTime.UtcNow.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+        await RunAzureCliCommand(
+            $"az storage container set-permission --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --signed-identifiers \"[{{\\\"id\\\":\\\"{policyId}\\\",\\\"accessPolicy\\\":{{\\\"permission\\\":\\\"r\\\",\\\"start\\\":\\\"{start}\\\",\\\"expiry\\\":\\\"{expiry}\\\"}}}}]\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage container show-permission --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            (resp) =>
+            {
+                var identifiers = resp["signedIdentifiers"]!.AsArray();
+                Assert.That(identifiers, Has.Count.EqualTo(1));
+                Assert.That(identifiers[0]!["id"]!.GetValue<string>(), Is.EqualTo(policyId));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }
