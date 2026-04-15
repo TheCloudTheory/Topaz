@@ -58,11 +58,12 @@ internal abstract class TableDataPlaneEndpointBase(ITopazLogger logger)
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
         IHeaderDictionary headers,
+        string method,
         string path,
         QueryString query)
     {
         return _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
-            storageAccountName, headers, path, query);
+            storageAccountName, headers, method, path, query);
     }
 
     protected bool IsPathReferencingTable(

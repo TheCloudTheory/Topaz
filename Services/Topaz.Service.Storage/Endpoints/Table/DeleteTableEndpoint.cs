@@ -30,7 +30,7 @@ internal sealed class DeleteTableEndpoint(ITopazLogger logger)
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
 
         if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name,
-                context.Request.Headers, context.Request.Path, context.Request.QueryString))
+                context.Request.Headers, context.Request.Method, context.Request.Path, context.Request.QueryString))
         {
             response.StatusCode = HttpStatusCode.Unauthorized;
             return;

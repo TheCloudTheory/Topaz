@@ -14,7 +14,7 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
 
     public bool RequestIsAuthorized(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, IHeaderDictionary headers,
-        string absolutePath,
+        string method, string absolutePath,
         QueryString query)
     {
         if (!headers.TryGetValue("Authorization", out var value))
@@ -29,6 +29,9 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
 
         switch (scheme)
         {
+            case "SharedKey":
+                return IsAuthorizedForSharedKeyScheme(subscriptionIdentifier, resourceGroupIdentifier,
+                    storageAccountName, parts[1], headers, method, absolutePath, query);
             case "SharedKeyLite":
                 return IsAuthorizedForSharedKeyLiteScheme(subscriptionIdentifier, resourceGroupIdentifier,
                     storageAccountName, parts[1], headers, absolutePath, query);
@@ -36,6 +39,54 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
                 logger.LogError($"Authentication failure for {scheme}. Scheme is not supported.");
                 return false;
         }
+    }
+
+    private bool IsAuthorizedForSharedKeyScheme(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string headerValue,
+        IHeaderDictionary headers, string method, string absolutePath, QueryString query)
+    {
+        var valueParts = headerValue.Split(':');
+        if (valueParts.Length != 2)
+        {
+            logger.LogError($"Authentication failure for SharedKey scheme. Header value isn't correct.");
+            return false;
+        }
+
+        var accountName = valueParts[0];
+        var signature = valueParts[1];
+
+        if (accountName != storageAccountName)
+        {
+            logger.LogError($"Authentication failure for SharedKey scheme. Storage account name isn't correct.");
+            return false;
+        }
+
+        var storageAccountResource = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        if (storageAccountResource.Result != OperationResult.Success || storageAccountResource.Resource == null)
+            throw new InvalidOperationException($"Storage account {storageAccountName} does not exist.");
+
+        var stringToSign = BuildStringToSignForSharedKey(storageAccountName, method, absolutePath, headers, query);
+
+        var hash1 = ComputeHashForKey(storageAccountResource.Resource.Keys[0].Value, stringToSign);
+        var hash2 = ComputeHashForKey(storageAccountResource.Resource.Keys[1].Value, stringToSign);
+
+        if (hash1 == signature) return true;
+        return hash2 == signature;
+    }
+
+    private string BuildStringToSignForSharedKey(string storageAccountName, string method, string absolutePath,
+        IHeaderDictionary headers, QueryString query)
+    {
+        headers.TryGetValue("Content-MD5", out var contentMd5);
+        headers.TryGetValue("Content-Type", out var contentType);
+        headers.TryGetValue("x-ms-date", out var date);
+
+        var canonicalizedResource = "/" + storageAccountName + absolutePath;
+        if (query.TryGetValueForKey("comp", out var comp))
+            canonicalizedResource += "?comp=" + comp;
+
+        return method + "\n" + contentMd5.ToString() + "\n" + contentType.ToString() + "\n" +
+               date.ToString() + "\n" + canonicalizedResource;
     }
 
     private bool IsAuthorizedForSharedKeyLiteScheme(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string headerValue,
