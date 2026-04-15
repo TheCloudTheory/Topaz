@@ -2,7 +2,7 @@ using TopazHost = Topaz.Host.Host;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
-namespace Topaz.Tests.E2E;
+namespace Topaz.Tests;
 
 [SetUpFixture]
 public class E2EFixture
