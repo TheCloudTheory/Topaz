@@ -204,4 +204,24 @@ public class BlobStorageTests
         // Assert
         Assert.That(info, Is.Not.Null);
     }
+
+    [Test]
+    public void BlobStorageTests_WhenContainerMetadataAreSet_TheyShouldBeAccepted()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("meta-test");
+        var containerClient = serviceClient.GetBlobContainerClient("meta-test");
+
+        // Act
+        var info = containerClient.SetMetadata(new Dictionary<string, string>
+        {
+            { "env", "prod" },
+            { "owner", "team-a" }
+        });
+
+        // Assert
+        Assert.That(info, Is.Not.Null);
+        Assert.That(info.GetRawResponse().Status, Is.EqualTo(200));
+    }
 }

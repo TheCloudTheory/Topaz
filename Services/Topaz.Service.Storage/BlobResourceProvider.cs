@@ -37,6 +37,22 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
         return Path.Combine(tablePath, ".metadata");
     }
     
+    public bool ContainerExists(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
+    {
+        var path = GetContainerPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, containerName);
+        return Directory.Exists(path);
+    }
+
+    public string GetContainerMetadataFilePath(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
+    {
+        return Path.Combine(
+            GetContainerPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
+            ".container-metadata.json");
+    }
+
     public void DeleteContainer(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
     {

@@ -261,4 +261,34 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task Container_SetMetadata_StoresMetadataSuccessfully()
+    {
+        const string storageAccountName = "topazstorcntrmeta01";
+        const string resourceGroup = "test-storage-cntr-meta-rg";
+        const string containerName = "metacontainer";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+                Assert.That(accountKey, Is.Not.Null.And.Not.Empty);
+            });
+
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage container metadata update --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --metadata env=prod owner=team-a --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

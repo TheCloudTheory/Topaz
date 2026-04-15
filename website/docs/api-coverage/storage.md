@@ -64,7 +64,7 @@ Blob Storage is served on port **8891** (HTTP) in Topaz.
 | Get Container | ✅ | |
 | Delete Container | ✅ | |
 | List Containers | ✅ | `GET /` |
-| Set Container Metadata | ❌ | |
+| Set Container Metadata | ✅ | `PUT /{containerName}?restype=container&comp=metadata` |
 | Get Container Metadata | ❌ | |
 | Get Container ACL | ❌ | |
 | Set Container ACL | ❌ | |

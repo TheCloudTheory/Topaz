@@ -207,4 +207,34 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         return path;
     }
+
+    public HttpStatusCode SetContainerMetadata(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName,
+        IHeaderDictionary headers)
+    {
+        var metadataHeaders = headers
+            .Where(h => h.Key.StartsWith("x-ms-meta-", StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(h => h.Key, h => h.Value.ToString());
+
+        return SetContainerMetadata(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
+            containerName, metadataHeaders);
+    }
+
+    public HttpStatusCode SetContainerMetadata(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName,
+        Dictionary<string, string> metadata)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(SetContainerMetadata),
+            "Account: `{0}`, Container: {1}", storageAccountName, containerName);
+
+        var (exists, metadataFilePath) = controlPlane.GetContainerMetadataState(subscriptionIdentifier,
+            resourceGroupIdentifier, storageAccountName, containerName);
+
+        if (!exists)
+            return HttpStatusCode.NotFound;
+
+        File.WriteAllText(metadataFilePath, JsonSerializer.Serialize(metadata));
+
+        return HttpStatusCode.OK;
+    }
 }

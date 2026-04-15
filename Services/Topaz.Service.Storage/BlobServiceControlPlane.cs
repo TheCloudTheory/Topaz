@@ -32,6 +32,15 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
         return System.Net.HttpStatusCode.NoContent;
     }
 
+    public (bool exists, string metadataFilePath) GetContainerMetadataState(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName, string containerName)
+    {
+        var exists = provider.ContainerExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
+        var filePath = provider.GetContainerMetadataFilePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
+        return (exists, filePath);
+    }
+
     public string GetServicePath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
     {
         return provider.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
