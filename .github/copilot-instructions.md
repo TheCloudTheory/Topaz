@@ -42,6 +42,7 @@ Code generation & edits: practical guidelines
 
 Where to look first (recommended reading order)
 - [Topaz.Host/Host.cs](../Topaz.Host/Host.cs) — host composition, service list, endpoint wiring.
+- [Topaz.MCP/](../Topaz.MCP/) — MCP server exposing Topaz management tools to AI assistants (GitHub Copilot, Claude, etc.).
 - [Topaz.CLI/Program.cs](../Topaz.CLI/Program.cs) and [Topaz.CLI/Commands/StartCommand.cs](../Topaz.CLI/Commands/StartCommand.cs) — how commands bootstrap the host.
 - [Topaz.ResourceManager/ArmResource.cs](../Topaz.ResourceManager/ArmResource.cs) — resource model base and ID parsing.
 - [Topaz.Shared/GlobalSettings.cs](../Topaz.Shared/GlobalSettings.cs) — JSON and default ports.
@@ -64,6 +65,7 @@ Backlog & Roadmap (mandatory)
 - `website/docs/roadmap.md` is the public-facing view of the same plan, rendered as tables with `<span class="badge--stable">Stable</span>` or `<span class="badge--preview">Preview</span>` badges in a **Status** column.
 - **When adding items to `BACKLOG.md`**: always mirror them in `website/docs/roadmap.md` — add a new row to the matching milestone table (or create the milestone section if it doesn't exist yet). Choose the badge based on the expected quality at release: use `Stable` for well-defined, fully-specified features; use `Preview` for exploratory or incomplete implementations.
 - **When removing or completing items**: remove or strike through the corresponding row in `website/docs/roadmap.md` as well.
+- **Versioned docs**: mirror every roadmap change in `website/versioned_docs/version-v1.1/roadmap.md` too. Both files must stay in sync.
 - Badge CSS lives in `website/src/css/custom.css` (`.badge--stable` and `.badge--preview`). Do not add inline styles; always use these classes.
 
 Mandatory steps
@@ -71,7 +73,7 @@ Mandatory steps
 - If you add new services or endpoints, ensure they are registered in the host and have corresponding tests.
 - **Always add or update tests** when implementing or modifying endpoints / control-plane logic. Both test suites must be covered:
   - `Topaz.Tests/E2E/` — use the Azure SDK (`ArmClient`, service-specific clients) against the in-process Topaz host started by `E2EFixture`.
-  - `Topaz.Tests.AzureCLI/` — use `RunAzureCliCommand(...)` with an `az ...` command string and an optional assertion callback. Tests run against a Dockerised Topaz + Azure CLI container pair via `TopazFixture`.
+  - `Topaz.Tests.AzureCLI/` — use `RunAzureCliCommand(...)` with an `az ...` command string and an optional assertion callback. Tests run against a Dockerised Topaz + Azure CLI container pair via `TopazFixture`. Every new hostname (registry login server, vault URL, etc.) must be registered as a `WithExtraHost(...)` entry in `TopazFixture.cs` — a missing entry causes a silent curl timeout (exit code 28), not a DNS error.
   - Prefer a dedicated `[Test]` method per operation rather than expanding an existing test; reuse known stable built-in resources (e.g. the Reader role `acdd72a7-3385-48ef-bd42-f606fba81ae7`) where no setup/teardown is needed.
 - **Terraform test rule**: `Topaz.Tests.Terraform` uses Dockerized Topaz. After any code change expected to affect Terraform behavior, rebuild the image (`./scripts/build-docker.sh <arch>`) before running Terraform tests. Treat test runs without a rebuild as non-authoritative.
 - **Portal work (definition of done)**: Any task that adds or modifies `Topaz.Portal` UI behaviour **must** include a bUnit component test in `Topaz.Tests.Portal/`. Key conventions:

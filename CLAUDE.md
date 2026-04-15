@@ -33,6 +33,7 @@ Services live under `Services/Topaz.Service.*`. Each service has:
 | Portal tests | `Topaz.Tests.Portal/` |
 | API coverage docs | `website/docs/api-coverage/` |
 | Backlog | `BACKLOG.md` (root) + `website/docs/roadmap.md` |
+| MCP server | `Topaz.MCP/` |
 
 ## Mandatory steps
 
@@ -55,6 +56,7 @@ Services live under `Services/Topaz.Service.*`. Each service has:
 - New work → add `<!-- TODO: ... -->` to `BACKLOG.md` **and** a row to `website/docs/roadmap.md`.
 - Completed work → remove/strikethrough from both files.
 - Badges: `<span class="badge--stable">Stable</span>` or `<span class="badge--preview">Preview</span>` — use CSS classes, never inline styles.
+- **Versioned docs** — always mirror roadmap changes in `website/versioned_docs/version-v1.1/roadmap.md` as well. Both files must stay in sync.
 
 ## Coding conventions
 
@@ -125,6 +127,7 @@ Both suites are required for every endpoint or control-plane change.
 ### `Topaz.Tests.AzureCLI/`
 - Use `RunAzureCliCommand("az ...")` via `TopazFixture`.
 - Use `GlobalSettings.ContainerRegistryPort` directly for port references.
+- **DNS**: every new hostname used in a test (registry login server, vault URL, etc.) must be added as a `WithExtraHost(...)` entry in `TopazFixture.cs`. A missing entry causes a silent curl timeout (exit code 28), not a DNS error.
 
 ### Terraform/debugging workflow
 - Terraform tests in `Topaz.Tests.Terraform` run against the Docker image (`topaz/host`), not local binaries.
