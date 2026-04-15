@@ -1,9 +1,11 @@
 using Topaz.CLI;
 using Azure;
+using Azure.Core;
 using Azure.Data.Tables;
 using Azure.Data.Tables.Models;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
+using Azure.ResourceManager.Storage.Models;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 using Topaz.Shared;
@@ -690,10 +692,37 @@ namespace Topaz.Tests.E2E
         }
 
         [Test]
-        public void TableStorageTests_WhenServiceStatsAreRequested_TheyMustBeReturned()
+        public void TableStorageTests_WhenServiceStatsAreRequestedForLrsAccount_FeatureNotSupportedIsReturned()
         {
-            // Arrange
+            // Arrange — the setup account is Standard_LRS, which has no readable secondary
             var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+
+            // Act & Assert
+            var ex = Assert.Throws<RequestFailedException>(() => tableServiceClient.GetStatistics());
+            Assert.That(ex!.Status, Is.EqualTo(403));
+        }
+
+        [Test]
+        public async Task TableStorageTests_WhenServiceStatsAreRequestedForRagrsAccount_StatsAreReturned()
+        {
+            // Arrange — create a Standard_RAGRS account which has a readable secondary endpoint
+            const string ragrsAccount = "tablestatsragrs";
+            var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+            var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+            var subscription = await armClient.GetDefaultSubscriptionAsync();
+            var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+
+            var createContent = new StorageAccountCreateOrUpdateContent(
+                new StorageSku(StorageSkuName.StandardRagrs),
+                StorageKind.StorageV2,
+                AzureLocation.WestEurope);
+
+            var accountOp = await resourceGroup.Value.GetStorageAccounts()
+                .CreateOrUpdateAsync(Azure.WaitUntil.Completed, ragrsAccount, createContent);
+            var ragrsKey = accountOp.Value.GetKeys().First().Value;
+
+            var tableServiceClient = new TableServiceClient(
+                TopazResourceHelpers.GetAzureStorageConnectionString(ragrsAccount, ragrsKey));
 
             // Act
             var stats = tableServiceClient.GetStatistics();

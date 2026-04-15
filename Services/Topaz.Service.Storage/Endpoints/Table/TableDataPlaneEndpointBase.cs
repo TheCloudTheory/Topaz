@@ -66,6 +66,43 @@ internal abstract class TableDataPlaneEndpointBase(ITopazLogger logger)
             storageAccountName, headers, method, path, query);
     }
 
+    /// <summary>
+    /// Attempts to resolve a storage account from a secondary-endpoint request.
+    /// The Azure SDK sends GetStatistics to {account}-secondary.table.* — this method
+    /// strips the "-secondary" suffix and looks up the primary account.
+    /// Returns false when the host header is missing or the account does not exist.
+    /// </summary>
+    protected bool TryGetStorageAccountFromSecondaryHost(IHeaderDictionary headers,
+        out StorageAccountResource? storageAccount)
+    {
+        if (!headers.TryGetValue("Host", out var host))
+        {
+            storageAccount = null;
+            return false;
+        }
+
+        var firstLabel = host.ToString().Split('.')[0];
+        const string suffix = "-secondary";
+        if (!firstLabel.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+        {
+            storageAccount = null;
+            return false;
+        }
+
+        var primaryName = firstLabel[..^suffix.Length];
+        var identifiers = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, primaryName);
+        if (identifiers == null)
+        {
+            storageAccount = null;
+            return false;
+        }
+
+        storageAccount = _storageResourceProvider.GetAs<StorageAccountResource>(
+            SubscriptionIdentifier.From(identifiers.Value.subscription),
+            ResourceGroupIdentifier.From(identifiers.Value.resourceGroup), primaryName);
+        return storageAccount != null;
+    }
+
     protected bool IsPathReferencingTable(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

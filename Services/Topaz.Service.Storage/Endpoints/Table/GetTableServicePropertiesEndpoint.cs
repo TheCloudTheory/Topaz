@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Web;
+using Azure.ResourceManager.Storage.Models;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -20,6 +21,12 @@ internal sealed class GetTableServicePropertiesEndpoint(ITopazLogger logger)
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
+        if (context.Request.QueryString.TryGetValueForKey("comp", out var comp) && comp == "stats")
+        {
+            HandleGetStats(context, response);
+            return;
+        }
+
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
         {
             response.StatusCode = HttpStatusCode.NotFound;
@@ -36,14 +43,6 @@ internal sealed class GetTableServicePropertiesEndpoint(ITopazLogger logger)
             return;
         }
 
-        if (context.Request.QueryString.TryGetValueForKey("comp", out var comp) && comp == "stats")
-        {
-            var statsXml = TableServiceControlPlane.GetTableServiceStatsXml();
-            response.Content = new StringContent(statsXml, Encoding.UTF8, "application/xml");
-            response.StatusCode = HttpStatusCode.OK;
-            return;
-        }
-
         ThrowIfGetPropertiesRequestIsInvalid(context.Request.QueryString);
 
         var propertiesXmlOp = ControlPlane.GetTablePropertiesXml(subscriptionIdentifier, resourceGroupIdentifier,
@@ -57,6 +56,37 @@ internal sealed class GetTableServicePropertiesEndpoint(ITopazLogger logger)
 
         response.Content = new StringContent(propertiesXmlOp.Resource!, Encoding.UTF8, "application/xml");
         response.StatusCode = HttpStatusCode.OK;
+    }
+
+    private void HandleGetStats(HttpContext context, HttpResponseMessage response)
+    {
+        // GetStatistics is only valid on the -secondary endpoint of an RA-GRS/RA-GZRS account.
+        if (!TryGetStorageAccountFromSecondaryHost(context.Request.Headers, out var storageAccount))
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
+        if (!IsRaGrsAccount(storageAccount!))
+        {
+            const string errorXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+                                    "<Error><Code>FeatureNotSupported</Code>" +
+                                    "<Message>The account does not support the specified HTTP verb.</Message></Error>";
+            response.StatusCode = HttpStatusCode.Forbidden;
+            response.Content = new StringContent(errorXml, Encoding.UTF8, "application/xml");
+            return;
+        }
+
+        var statsXml = TableServiceControlPlane.GetTableServiceStatsXml();
+        response.Content = new StringContent(statsXml, Encoding.UTF8, "application/xml");
+        response.StatusCode = HttpStatusCode.OK;
+    }
+
+    private static bool IsRaGrsAccount(Models.StorageAccountResource storageAccount)
+    {
+        var skuName = storageAccount.Sku?.Name;
+        return string.Equals(skuName, StorageSkuName.StandardRagrs.ToString(), StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(skuName, StorageSkuName.StandardRagzrs.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
     private static void ThrowIfGetPropertiesRequestIsInvalid(QueryString query)

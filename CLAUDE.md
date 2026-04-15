@@ -153,3 +153,7 @@ Both suites are required for every endpoint or control-plane change.
 
 - Changes to networking ports, resource ID formats, or `GlobalSettings.JsonOptions` — confirm desired behaviour before applying broad changes.
 - Public API changes or anything affecting resource IDs or serialization — present a summary before applying.
+
+## Git rules
+
+- **Never commit automatically.** Always show the user the proposed commit message and wait for explicit approval before running `git commit`.
