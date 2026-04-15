@@ -18,6 +18,7 @@ public class BlobStorageService(ITopazLogger logger) : IServiceDefinition
         new GetContainerMetadataEndpoint(logger),
         new SetContainerAclEndpoint(logger),
         new GetContainerAclEndpoint(logger),
+        new GetContainerPropertiesEndpoint(logger),
         new LeaseContainerEndpoint(logger),
         new CreateContainerEndpoint(logger),
         new PutBlobEndpoint(logger),

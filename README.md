@@ -1,4 +1,4 @@
-# Topaz ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/TheCloudTheory/Topaz/ci-build-and-test.yml) ![GitHub Release](https://img.shields.io/github/v/release/TheCloudTheory/Topaz?include_prereleases)
+# Topaz ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/TheCloudTheory/Topaz/ci-build-and-test.yml) ![GitHub Release](https://img.shields.io/github/v/release/TheCloudTheory/Topaz?include_prereleases) [![Discord](https://img.shields.io/discord/1383721799736492032?logo=discord&label=Discord&color=5865F2)](https://discord.gg/eGTkS76w)
 
 <div align="center">
   <img src="./static/topaz-logo.png" />

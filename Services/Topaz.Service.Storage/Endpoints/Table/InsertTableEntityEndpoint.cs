@@ -36,12 +36,16 @@ internal sealed class InsertTableEntityEndpoint(ITopazLogger logger)
             return;
         }
 
-        if (IsPathReferencingTable(subscriptionIdentifier, resourceGroupIdentifier, context.Request.Path,
+        var normalizedTablePath = context.Request.Path.Value!
+            .Replace("()", string.Empty)
+            .Replace("/", string.Empty);
+
+        if (IsPathReferencingTable(subscriptionIdentifier, resourceGroupIdentifier, "/" + normalizedTablePath,
                 storageAccount.Name))
         {
             try
             {
-                var tableName = context.Request.Path.Value!.Replace("/", string.Empty);
+                var tableName = normalizedTablePath;
                 var payload = DataPlane.InsertEntity(context.Request.Body, subscriptionIdentifier,
                     resourceGroupIdentifier, tableName, storageAccount.Name);
 

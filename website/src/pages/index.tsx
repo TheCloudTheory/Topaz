@@ -57,6 +57,21 @@ export default function Home(): ReactNode {
       <HomepageHeader />
       <main>
         <HomepageFeatures />
+        <section style={{padding: '3rem 0', textAlign: 'center', background: 'var(--ifm-color-emphasis-100)'}}>
+          <div className="container">
+            <Heading as="h2">Join the community</Heading>
+            <p style={{marginBottom: '1.5rem'}}>Ask questions, share workflows, and follow development on Discord.</p>
+            <iframe
+              src="https://discord.com/widget?id=1383721799736492032&theme=dark"
+              width="350"
+              height="500"
+              allowTransparency={true}
+              frameBorder={0}
+              sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+              style={{borderRadius: '8px'}}
+            />
+          </div>
+        </section>
       </main>
     </Layout>
   );

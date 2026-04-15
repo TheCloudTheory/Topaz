@@ -113,6 +113,14 @@ internal abstract class TableDataPlaneEndpointBase(ITopazLogger logger)
         Logger.LogDebug(nameof(TableDataPlaneEndpointBase), nameof(HandleUpdateEntityRequest),
             "Matched the update operation.");
 
+        if (!matches.Success)
+        {
+            var error = new TableErrorResponse("InvalidInput", "Invalid entity key format in request path.");
+            response.StatusCode = HttpStatusCode.BadRequest;
+            response.Content = JsonContent.Create(error);
+            return;
+        }
+
         var (tableName, partitionKey, rowKey) = GetOperationDataForUpdateOperation(matches);
 
         try

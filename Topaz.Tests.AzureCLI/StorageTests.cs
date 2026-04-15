@@ -319,7 +319,8 @@ public class StorageTests : TopazFixture
             $"az storage container show-permission --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
-                Assert.That(resp["signedIdentifiers"]!.AsArray(), Is.Empty);
+                var signedIdentifiers = resp["signedIdentifiers"]?.AsArray();
+                Assert.That(signedIdentifiers == null || signedIdentifiers.Count == 0, Is.True);
             });
 
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
@@ -354,15 +355,16 @@ public class StorageTests : TopazFixture
         var expiry = DateTime.UtcNow.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ");
 
         await RunAzureCliCommand(
-            $"az storage container set-permission --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --signed-identifiers \"[{{\\\"id\\\":\\\"{policyId}\\\",\\\"accessPolicy\\\":{{\\\"permission\\\":\\\"r\\\",\\\"start\\\":\\\"{start}\\\",\\\"expiry\\\":\\\"{expiry}\\\"}}}}]\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container policy create --container-name {containerName} --name {policyId} --permissions r --start \"{start}\" --expiry \"{expiry}\" --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
             $"az storage container show-permission --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
-                var identifiers = resp["signedIdentifiers"]!.AsArray();
-                Assert.That(identifiers, Has.Count.EqualTo(1));
-                Assert.That(identifiers[0]!["id"]!.GetValue<string>(), Is.EqualTo(policyId));
+                var identifiers = resp["signedIdentifiers"]?.AsArray();
+                Assert.That(identifiers, Is.Not.Null);
+                Assert.That(identifiers!.Count, Is.EqualTo(1));
+                Assert.That(identifiers![0]?["id"]?.GetValue<string>(), Is.EqualTo(policyId));
             });
 
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
