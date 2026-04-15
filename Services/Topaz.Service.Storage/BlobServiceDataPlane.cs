@@ -237,4 +237,28 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
 
         return HttpStatusCode.OK;
     }
+
+    public (HttpStatusCode statusCode, Dictionary<string, string>? metadata) GetContainerMetadata(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string containerName)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetContainerMetadata),
+            "Account: `{0}`, Container: {1}", storageAccountName, containerName);
+
+        var (exists, metadataFilePath) = controlPlane.GetContainerMetadataState(subscriptionIdentifier,
+            resourceGroupIdentifier, storageAccountName, containerName);
+
+        if (!exists)
+            return (HttpStatusCode.NotFound, null);
+
+        if (!File.Exists(metadataFilePath))
+            return (HttpStatusCode.OK, new Dictionary<string, string>());
+
+        var content = File.ReadAllText(metadataFilePath);
+        var metadata = JsonSerializer.Deserialize<Dictionary<string, string>>(content) ?? new Dictionary<string, string>();
+
+        return (HttpStatusCode.OK, metadata);
+    }
 }

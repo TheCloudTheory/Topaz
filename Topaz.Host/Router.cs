@@ -40,8 +40,21 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
             {
                 var methodAndPath = endpointUrl.Split(" ");
                 var endpointMethod = methodAndPath[0];
-                var endpointPath = methodAndPath[1];
-                                
+                var endpointPathAndQuery = methodAndPath[1];
+
+                // Parse optional query-string constraints from pattern (e.g. "GET /{name}?comp=metadata")
+                Dictionary<string, string>? queryConstraint = null;
+                var endpointPath = endpointPathAndQuery;
+                var queryIndex = endpointPathAndQuery.IndexOf('?');
+                if (queryIndex >= 0)
+                {
+                    endpointPath = endpointPathAndQuery[..queryIndex];
+                    queryConstraint = endpointPathAndQuery[(queryIndex + 1)..].Split('&')
+                        .Select(kv => kv.Split('='))
+                        .Where(kv => kv.Length == 2)
+                        .ToDictionary(kv => kv[0], kv => kv[1], StringComparer.OrdinalIgnoreCase);
+                }
+
                 if(method != endpointMethod) continue;
                                 
                 var endpointParts = endpointPath.Split('/');
@@ -79,6 +92,16 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
 
                         endpoint = httpEndpoint;
                     }
+                }
+
+                // If query constraints are declared, all must match the incoming request query
+                if (endpoint != null && queryConstraint is { Count: > 0 })
+                {
+                    var requestQuery = context.Request.Query;
+                    if (!queryConstraint.All(kvp =>
+                            requestQuery.TryGetValue(kvp.Key, out var v) &&
+                            string.Equals(v, kvp.Value, StringComparison.OrdinalIgnoreCase)))
+                        endpoint = null;
                 }
 
                 // If we have endpoint assigned after validating the URL, we don't need to process other endpoints

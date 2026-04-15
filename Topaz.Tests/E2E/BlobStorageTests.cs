@@ -224,4 +224,25 @@ public class BlobStorageTests
         Assert.That(info, Is.Not.Null);
         Assert.That(info.GetRawResponse().Status, Is.EqualTo(200));
     }
+
+    [Test]
+    public void BlobStorageTests_WhenContainerMetadataAreSet_TheyShouldBeRetrievable()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("meta-retrieve-test");
+        var containerClient = serviceClient.GetBlobContainerClient("meta-retrieve-test");
+        containerClient.SetMetadata(new Dictionary<string, string>
+        {
+            { "env", "prod" },
+            { "owner", "team-a" }
+        });
+
+        // Act
+        var props = containerClient.GetProperties();
+
+        // Assert
+        Assert.That(props.Value.Metadata["env"], Is.EqualTo("prod"));
+        Assert.That(props.Value.Metadata["owner"], Is.EqualTo("team-a"));
+    }
 }

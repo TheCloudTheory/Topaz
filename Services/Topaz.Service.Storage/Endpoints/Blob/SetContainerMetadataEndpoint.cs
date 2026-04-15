@@ -1,16 +1,19 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Storage.Endpoints.Blob;
 
-internal sealed class CreateContainerEndpoint(ITopazLogger logger)
+internal sealed class SetContainerMetadataEndpoint(ITopazLogger logger)
     : BlobDataPlaneEndpointBase(logger), IEndpointDefinition
 {
-    private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger));
+    private readonly BlobServiceDataPlane _dataPlane =
+        new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
-    public string[] Endpoints => ["PUT /{containerName}"];
+    public string[] Endpoints => ["PUT /{containerName}?comp=metadata"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/write"];
 
@@ -32,13 +35,21 @@ internal sealed class CreateContainerEndpoint(ITopazLogger logger)
         {
             var containerName = GetContainerName(context.Request.Path);
 
-            Logger.LogDebug(nameof(CreateContainerEndpoint), nameof(GetResponse),
-                "Creating container: {0}", containerName);
+            Logger.LogDebug(nameof(SetContainerMetadataEndpoint), nameof(GetResponse),
+                "Setting metadata for container: {0}", containerName);
 
-            var code = _controlPlane.CreateContainer(subscriptionIdentifier, resourceGroupIdentifier, containerName,
-                storageAccount!.Name);
+            var result = _dataPlane.SetContainerMetadata(subscriptionIdentifier, resourceGroupIdentifier,
+                storageAccount!.Name, containerName, context.Request.Headers);
 
-            response.StatusCode = code;
+            response.StatusCode = result;
+
+            if (result != HttpStatusCode.OK) return;
+
+            var now = DateTimeOffset.UtcNow;
+            response.Headers.ETag = new EntityTagHeaderValue($"\"{now.Ticks}\"");
+            response.Content = new ByteArrayContent([]);
+            response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
+            response.Content.Headers.TryAddWithoutValidation("Last-Modified", now.ToString("R"));
         }
         catch (Exception ex)
         {

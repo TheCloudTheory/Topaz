@@ -14,6 +14,8 @@ public class BlobStorageService(ITopazLogger logger) : IServiceDefinition
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
+        new SetContainerMetadataEndpoint(logger),
+        new GetContainerMetadataEndpoint(logger),
         new CreateContainerEndpoint(logger),
         new PutBlobEndpoint(logger),
         new ListContainersEndpoint(logger),
