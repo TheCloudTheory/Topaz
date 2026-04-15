@@ -5,7 +5,8 @@ This file captures the project-specific knowledge an AI coding agent needs to be
 Quick start
 - Build: `dotnet build Topaz.sln` (there's a VS Code task named `dotnet: build`).
 - Tests: `dotnet test Topaz.sln` (tests live under `Topaz.Tests`).
-- Run locally: `dotnet run --project Topaz.CLI -- start` (see `Topaz.CLI/Commands/StartCommand.cs`).
+- Start the host: `dotnet run --project Topaz.Host` — runs all emulated Azure services.
+- Interact with a running host: `dotnet run --project Topaz.CLI` — thin CLI client, requires the host to already be running.
 
 Big picture (high level)
 - Topaz is a single .NET solution that emulates many Azure services. The host process is `Topaz.Host` which composes services and exposes HTTP/AMQP endpoints.

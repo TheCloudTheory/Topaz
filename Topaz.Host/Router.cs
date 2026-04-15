@@ -43,9 +43,11 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
                 var endpointPathAndQuery = methodAndPath[1];
 
                 // Parse optional query-string constraints from pattern (e.g. "GET /{name}?comp=metadata")
+                // Skip ?-parsing for regex patterns (paths containing '^') to avoid treating
+                // lazy-quantifier '?' in patterns like '^.*?\(PartitionKey=...' as a query separator.
                 Dictionary<string, string>? queryConstraint = null;
                 var endpointPath = endpointPathAndQuery;
-                var queryIndex = endpointPathAndQuery.IndexOf('?');
+                var queryIndex = endpointPathAndQuery.Contains('^') ? -1 : endpointPathAndQuery.IndexOf('?');
                 if (queryIndex >= 0)
                 {
                     endpointPath = endpointPathAndQuery[..queryIndex];

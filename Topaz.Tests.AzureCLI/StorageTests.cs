@@ -361,7 +361,8 @@ public class StorageTests : TopazFixture
             $"az storage container show-permission --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
-                var identifiers = resp["signedIdentifiers"]?.AsArray();
+                // Azure CLI may output camelCase ("signedIdentifiers") or snake_case ("signed_identifiers")
+                var identifiers = resp["signedIdentifiers"]?.AsArray() ?? resp["signed_identifiers"]?.AsArray();
                 Assert.That(identifiers, Is.Not.Null);
                 Assert.That(identifiers!.Count, Is.EqualTo(1));
                 Assert.That(identifiers![0]?["id"]?.GetValue<string>(), Is.EqualTo(policyId));
