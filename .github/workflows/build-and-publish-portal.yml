@@ -1,0 +1,69 @@
+name: Build_and_publish_Topaz_Portal
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: write
+      checks: write
+      pull-requests: write
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Install nbgv
+      run: dotnet tool install -g nbgv
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test (Portal)
+      run: dotnet test ${{ github.workspace }}/Topaz.Tests.Portal/Topaz.Tests.Portal.csproj --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: |
+          ${{ github.workspace }}/**/*.trx
+    - name: ReportGenerator
+      uses: danielpalme/ReportGenerator-GitHub-Action@5.4.8
+      with:
+        reports: ./TestResults/**/coverage.cobertura.xml
+        targetdir: coveragereport
+        reporttypes: Html;MarkdownSummaryGithub;Badges
+    - name: Upload coverage report artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: CoverageReport
+        path: coveragereport
+    - name: Publish Portal
+      run: dotnet publish ${{ github.workspace }}/Topaz.Portal/Topaz.Portal.csproj -c Release -o ./publish/portal
+    - name: Upload Portal artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: portal
+        path: ./publish/portal
+    - name: Stamp pipeline run with a tag
+      run: nbgv tag
+    - name: Push a tag
+      run: git push origin --tags
+    - name: Get the generated tag
+      id: get-tag
+      run: |
+        TAG=$(git describe --tags --abbrev=0)
+        echo "Generated tag: $TAG"
+        echo $TAG > tag-info.txt
+    - name: Upload tag info artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: tag-info
+        path: tag-info.txt
+        retention-days: 1
