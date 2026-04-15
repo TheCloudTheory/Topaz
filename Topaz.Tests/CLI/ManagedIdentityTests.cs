@@ -192,20 +192,33 @@ public class ManagedIdentityTests
     [Test]
     public async Task ManagedIdentityTests_WhenDuplicatedIdentityIsAttemptedToBeCreated_ItShouldFailGracefullyWithMeaningfulError()
     {
-        var result = await Program.RunAsync([
-            "identity",
-            "create",
-            "--name",
-            IdentityName,
-            "-g",
-            ResourceGroupName,
-            "--location",
-            "westeurope",
-            "--subscription-id",
-            SubscriptionId.ToString()
-        ]);
-        
-        Assert.That(result, Is.EqualTo(1));
+        var stderr = new StringWriter();
+        var previousError = Console.Error;
+        Console.SetError(stderr);
+
+        int result;
+        try
+        {
+            result = await Program.RunAsync([
+                "identity",
+                "create",
+                "--name",
+                IdentityName,
+                "-g",
+                ResourceGroupName,
+                "--location",
+                "westeurope",
+                "--subscription-id",
+                SubscriptionId.ToString()
+            ]);
+        }
+        finally
+        {
+            Console.SetError(previousError);
+        }
+
+        Assert.That(result, Is.EqualTo(1),
+            $"Expected exit code 1 (duplicate identity error) but got {result}. stderr: {stderr}");
     }
 
     [Test]
