@@ -88,6 +88,16 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 | <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.VirtualMachine` project with models, resource provider, and service registration |
 | <span class="badge--preview">Preview</span> | Core control plane | Create/update, get, delete, list VMs — emulated only (no actual boot) |
 
+### MCP Server — resource provisioning and tooling
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Resource provisioning tools | `CreateResourceGroup`, `CreateKeyVault`, `CreateServiceBusNamespace/Queue/Topic`, `CreateStorageAccount/BlobContainer` — thin wrappers over `TopazArmClient` following the `SubscriptionTool.cs` pattern |
+| <span class="badge--preview">Preview</span> | Event Hub and Container Registry tools | `CreateEventHubNamespace`, `CreateEventHub`, `CreateContainerRegistry` |
+| <span class="badge--preview">Preview</span> | `GetConnectionStrings` tool | Returns ready-to-use connection strings and URIs for all provisioned resources in a subscription — closes the provisioning workflow |
+| <span class="badge--preview">Preview</span> | `GetTopazStatus` diagnostics tool | Wraps the Topaz health-check endpoint; returns running version, live services, and bound ports |
+| <span class="badge--preview">Preview</span> | Pre-defined MCP prompts | Guided multi-step setup scenarios ("microservice environment", "CI bootstrap") that compose the provisioning tools into a single natural-language command |
+
 ---
 
 ## v1.4-beta

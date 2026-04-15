@@ -390,6 +390,65 @@ TODO: Azure Virtual Machines: Core control plane endpoints
   labels: enhancement, virtual-machines
 -->
 
+### MCP Server — resource provisioning and tooling
+
+<!--
+TODO: MCP: Resource provisioning tools for Key Vault, Service Bus, and Storage
+  Extend Topaz.MCP with tools that provision the most common Azure resources into a running Topaz instance:
+  - CreateResourceGroup — create a resource group in a subscription
+  - CreateKeyVault — create a Key Vault and optionally seed a secret
+  - CreateServiceBusNamespace / CreateServiceBusQueue / CreateServiceBusTopic — Service Bus topology
+  - CreateStorageAccount / CreateBlobContainer — Storage resources
+  Each tool follows the existing SubscriptionTool.cs pattern using TopazArmClient REST calls.
+  milestone: v1.3-beta
+  labels: enhancement, mcp
+-->
+
+<!--
+TODO: MCP: Event Hub and Container Registry provisioning tools
+  Add MCP tools for the remaining commonly-used services:
+  - CreateEventHubNamespace / CreateEventHub
+  - CreateContainerRegistry
+  milestone: v1.3-beta
+  labels: enhancement, mcp
+-->
+
+<!--
+TODO: MCP: GetConnectionStrings tool
+  Add a GetConnectionStrings tool that queries the running Topaz instance and returns
+  ready-to-use connection strings and URIs for all provisioned resources in a subscription:
+  - Storage account connection strings
+  - Service Bus connection strings
+  - Key Vault URI
+  - Event Hub connection strings
+  - Container Registry login server
+  This closes the provisioning workflow: after creating resources the developer immediately
+  gets the values needed to configure their application or CI environment.
+  milestone: v1.3-beta
+  labels: enhancement, mcp
+-->
+
+<!--
+TODO: MCP: GetTopazStatus diagnostics tool
+  Add a GetTopazStatus tool that calls the Topaz health-check endpoint and returns
+  the running version, which services are up, and which ports are bound.
+  Useful for debugging when an MCP-assisted setup fails partway through.
+  milestone: v1.3-beta
+  labels: enhancement, mcp
+-->
+
+<!--
+TODO: MCP: Pre-defined prompts for common setup scenarios
+  Implement MCP prompts (the Prompts capability of the MCP protocol) for common
+  development environment patterns:
+  - "Set up a local Azure environment for a .NET microservice" — guides the AI to create
+    resource group → storage account → service bus namespace + queue → key vault → output connection strings
+  - "Bootstrap a CI environment" — subscription → registry → storage → env var export
+  Prompts compose the existing provisioning tools into guided multi-step workflows.
+  milestone: v1.3-beta
+  labels: enhancement, mcp
+-->
+
 ---
 
 ## v1.4-beta
