@@ -32,8 +32,8 @@ internal sealed class StorageAccountResource
         Properties = resourceProperties;
         Keys =
         [
-            new TopazStorageAccountKey("key1", Guid.NewGuid().ToString(), nameof(StorageAccountKeyPermission.Full), DateTimeOffset.Now),
-            new TopazStorageAccountKey("key2", Guid.NewGuid().ToString(), nameof(StorageAccountKeyPermission.Full), DateTimeOffset.Now)
+            new TopazStorageAccountKey("key1", Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64)), nameof(StorageAccountKeyPermission.Full), DateTimeOffset.Now),
+            new TopazStorageAccountKey("key2", Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64)), nameof(StorageAccountKeyPermission.Full), DateTimeOffset.Now)
         ];
     }
 

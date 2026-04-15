@@ -324,7 +324,7 @@ internal sealed class AzureStorageControlPlane(StorageResourceProvider provider,
 
         var updatedKeys = existing.Keys
             .Select(k => string.Equals(k.KeyName, keyName, StringComparison.OrdinalIgnoreCase)
-                ? new TopazStorageAccountKey(k.KeyName, Guid.NewGuid().ToString(), k.Permissions, DateTimeOffset.Now)
+                ? new TopazStorageAccountKey(k.KeyName, Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64)), k.Permissions, DateTimeOffset.Now)
                 : k)
             .ToArray();
 

@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 
@@ -12,7 +10,7 @@ internal sealed class TopazStorageAccountKey(
     DateTimeOffset? createdOn)
 {
     [UsedImplicitly] public string KeyName { get; } = keyName;
-    [UsedImplicitly] public string Value { get; } = Convert.ToHexString(SHA1.HashData(Encoding.UTF8.GetBytes(value)));
+    [UsedImplicitly] public string Value { get; } = value;
     [UsedImplicitly] public string? Permissions { get; } = permissions;
     
     [JsonPropertyName("creationTime")]
