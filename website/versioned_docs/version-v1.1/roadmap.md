@@ -109,6 +109,15 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 | <span class="badge--preview">Preview</span> | Auto-purge soft-deleted vaults | Background scheduler permanently removes soft-deleted vaults once their `scheduledPurgeDate` has elapsed |
 | <span class="badge--preview">Preview</span> | Auto-purge soft-deleted secrets | Background scheduler permanently removes soft-deleted secrets once their `scheduledPurgeDate` has elapsed |
 
+### Storage Account — geo-replication semantics
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Secondary endpoint DNS & ARM response | Register `{accountName}-secondary.*` hostnames and populate `secondaryEndpoints` in the ARM response for RA-GRS/RA-GZRS accounts |
+| <span class="badge--preview">Preview</span> | `GetServiceStats` on secondary endpoints | Return a realistic `GeoReplicationStats` payload (status: live, lastSyncTime: now) for Blob, Table, and Queue secondary endpoints |
+| <span class="badge--preview">Preview</span> | `FeatureNotSupported` for non-RA-GRS stats | Return 403 on stats requests for LRS/ZRS accounts across all storage services (Table already done; extend to Blob and Queue) |
+| <span class="badge--preview">Preview</span> | Read-only enforcement on secondary | Mutating operations (PUT, DELETE, POST) on secondary endpoints return 403 `WriteOperationNotSupportedOnSecondary` |
+
 ---
 
 ## v1.5-beta

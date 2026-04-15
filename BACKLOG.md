@@ -497,6 +497,28 @@ TODO: Key Vault: Automated purging of soft-deleted secrets
   labels: enhancement, key-vault
 -->
 
+### Storage Account — geo-replication semantics
+
+<!--
+TODO: Storage Account: Full geo-replicated (RA-GRS/RA-GZRS) semantics
+  Implement full emulation of geo-redundant storage account behaviour for accounts
+  created with Standard_RAGRS or Standard_RAGZRS SKUs.
+  Scope:
+  - Register secondary DNS hostnames ({accountName}-secondary.*) for RA-GRS accounts
+    so that SDK clients can resolve and reach the secondary endpoint
+  - Return a valid secondary endpoint URLs in the storage account ARM response
+    (secondaryEndpoints.blob, .table, .queue, .file)
+  - Implement `GET ?restype=service&comp=stats` for Blob, Table, and Queue secondary
+    endpoints returning a realistic GeoReplicationStats payload (status: live,
+    lastSyncTime: current time)
+  - Return 403 FeatureNotSupported for the stats endpoint on non-RA-GRS accounts
+    (already done for Table; extend to Blob and Queue service endpoints)
+  - Enforce read-only behaviour on secondary endpoints: mutating operations (PUT, DELETE,
+    POST) should return 403 WriteOperationNotSupportedOnSecondary
+  milestone: v1.4-beta
+  labels: enhancement, storage
+-->
+
 ---
 
 ## v1.5-beta
