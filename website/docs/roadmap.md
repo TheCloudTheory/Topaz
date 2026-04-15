@@ -1,5 +1,5 @@
 ---
-sidebar_position: 11
+sidebar_position: 9
 description: Topaz release roadmap — planned features and milestones across upcoming beta versions.
 keywords: [topaz roadmap, azure emulator roadmap, planned features, upcoming releases]
 ---

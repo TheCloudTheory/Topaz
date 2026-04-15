@@ -1,6 +1,6 @@
 {
   "label": "Tutorials",
-  "position": 7,
+  "position": 12,
   "link": {
     "type": "generated-index",
     "description": "Hands-on, end-to-end guides that walk through complete Topaz workflows with code samples, setup details, and troubleshooting tips."

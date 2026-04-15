@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 8
 description: Troubleshooting guide for common Topaz issues — TLS certificate errors, DNS resolution failures, Azure SDK connection problems, AMQP connectivity, and more.
 keywords: [topaz troubleshooting, azure emulator errors, tls certificate error, dns resolution azure local, azurite alternative issues]
 ---

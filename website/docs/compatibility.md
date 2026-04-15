@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 5
 description: Compatibility matrix for Topaz — tested Terraform provider versions, Azure SDK package versions, and .NET runtime requirements.
 keywords: [topaz compatibility, terraform azurerm version, azure sdk version, topaz supported versions, azurerm provider version]
 ---
