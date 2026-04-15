@@ -25,9 +25,12 @@ internal class Program
 {
     internal static async Task<int> Main(string[] args)
     {
-        var hostCheck = await CheckHostAsync();
-        if (hostCheck != 0)
-            return hostCheck;
+        if (args.Length == 0 || args[0] != "health")
+        {
+            var hostCheck = await CheckHostAsync();
+            if (hostCheck != 0)
+                return hostCheck;
+        }
 
         return await RunAsync(args);
     }
@@ -104,10 +107,19 @@ internal class Program
     {
         registrations.AddSingleton<ITopazLogger, PrettyTopazLogger>();
         registrations.AddSingleton<Pipeline, Pipeline>();
+
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+        };
+        registrations.AddSingleton(new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) });
     }
 
     private static void FindAndRegisterCommands(IConfigurator config)
     {
+        config.AddCommand<Commands.HealthCommand>("health")
+            .WithDescription("Check whether the Topaz host is running and display its status.");
+
         Console.WriteLine("Searching and configuring commands...");
 
         // Even though the types will be loaded via reflection, they must be explicitly

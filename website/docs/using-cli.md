@@ -20,6 +20,27 @@ Topaz is split into two separate executables:
 
 :::
 
+## Checking host status
+
+Run `topaz health` at any time to confirm the emulator is reachable and display its status:
+
+```bash
+topaz health
+```
+
+Example output when the host is running:
+
+```
+Host is running
+  Status:       Healthy
+  Host version: 1.1.84-beta+1e5ac1d3d1
+  CLI version:  1.1.84-beta+1e5ac1d3d1
+  Directory:    /home/user/my-project
+  Port:         8899
+```
+
+If the host is not reachable the command exits with code `1` and prints a message telling you to start `topaz-host`. Unlike other commands, `topaz health` does **not** require the host to already be running — it is designed to be the check itself.
+
 ## Starting the emulator
 
 ```bash

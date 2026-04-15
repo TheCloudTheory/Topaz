@@ -14,10 +14,10 @@ internal sealed class GetHealthEndpoint : IEndpointDefinition
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        response.CreateJsonContentResponse(new HealthResponse(Environment.CurrentDirectory));
+        response.CreateJsonContentResponse(new HealthResponse(Environment.CurrentDirectory, ThisAssembly.AssemblyInformationalVersion));
     }
 
-    private sealed record HealthResponse(string WorkingDirectory)
+    private sealed record HealthResponse(string WorkingDirectory, string Version)
     {
         public string Status => "Healthy";
 

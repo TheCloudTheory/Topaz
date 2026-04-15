@@ -217,11 +217,26 @@ docker run --rm \
 
 ## Step 4 — Verify the emulator is running
 
-Once started, Topaz logs the list of bound endpoints. You can also do a quick health check against the ARM endpoint:
+Once started, Topaz logs the list of bound endpoints. The quickest way to confirm everything is working is to run:
 
 ```bash
-curl -k https://localhost:8899/subscriptions
-# Expected: HTTP 200 with an empty subscriptions list
+topaz health
+```
+
+If the host is up, you'll see something like:
+
+```
+Host is running
+  Status:    Healthy
+  Directory: /home/user/my-project
+  Port:      8899
+```
+
+You can also hit the health endpoint directly:
+
+```bash
+curl -k https://localhost:8899/health
+# Expected: HTTP 200 with {"status":"Healthy", ...}
 ```
 
 The `-k` flag skips TLS verification for the quick check. In normal usage the certificate will be trusted after Step 2, so you won't need it.
