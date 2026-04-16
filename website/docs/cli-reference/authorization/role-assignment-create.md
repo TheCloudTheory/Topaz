@@ -7,10 +7,10 @@ Creates (or updates) an Azure RBAC role assignment for a principal at a given sc
 
 ## Options
 * `-n, --name` - (Required) role assignment name (GUID). This becomes the roleAssignment resource name.
-* `-d, --role-definition-id` - (Required) role definition ID. Example: /providers/Microsoft.Authorization/roleDefinitions/<roleGuid>.
+* `-d, --role-definition-id` - (Required) role definition ID. Example: /providers/Microsoft.Authorization/roleDefinitions/&lt;roleGuid&gt;.
 * `-p, --principal-id` - (Required) principal (object) ID in Entra ID (GUID).
 * `-t, --principal-type` - (Required) principal type. Common value: ServicePrincipal.
-* `--scope` - (Required) scope for the role assignment. Example: /subscriptions/<subId> or a resource ID.
+* `--scope` - (Required) scope for the role assignment. Example: /subscriptions/&lt;subId&gt; or a resource ID.
 * `-s, --subscription-id` - (Required) subscription ID (GUID).
 
 ## Examples

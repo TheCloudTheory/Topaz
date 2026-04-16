@@ -16,9 +16,11 @@ using Topaz.Service.Subscription.Commands;
 Console.WriteLine($"Topaz.Documentation.Generator {ThisAssembly.AssemblyInformationalVersion}");
 
 // Escape characters that MDX (used by Docusaurus) would otherwise interpret
-// as JSX expression delimiters, causing "Could not parse expression with acorn" errors.
+// as JSX expression delimiters or JSX tags, causing parse errors.
 static string EscapeMdx(string? text) =>
-    string.IsNullOrEmpty(text) ? string.Empty : text.Replace("{", "\\{").Replace("}", "\\}");
+    string.IsNullOrEmpty(text) ? string.Empty : text
+        .Replace("{", "\\{").Replace("}", "\\}")
+        .Replace("<", "&lt;").Replace(">", "&gt;");
 
 _ = new[]
 {
