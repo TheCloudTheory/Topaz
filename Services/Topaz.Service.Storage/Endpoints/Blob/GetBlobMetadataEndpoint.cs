@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
@@ -7,13 +8,13 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints.Blob;
 
-internal sealed class GetBlobPropertiesEndpoint(ITopazLogger logger)
+internal sealed class GetBlobMetadataEndpoint(ITopazLogger logger)
     : BlobDataPlaneEndpointBase(logger), IEndpointDefinition
 {
     private readonly BlobServiceDataPlane _dataPlane =
         new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
-    public string[] Endpoints => ["HEAD /{containerName}/..."];
+    public string[] Endpoints => ["GET /{containerName}/...?comp=metadata"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"];
 
@@ -33,41 +34,33 @@ internal sealed class GetBlobPropertiesEndpoint(ITopazLogger logger)
 
         try
         {
-            if (!TryGetBlobName(context.Request.Path.Value!, out var blobName))
-            {
-                response.StatusCode = HttpStatusCode.BadRequest;
-                return;
-            }
+            Logger.LogDebug(nameof(GetBlobMetadataEndpoint), nameof(GetResponse),
+                "Handling blob metadata for {0}.", context.Request.Path.Value);
 
-            Logger.LogDebug(nameof(GetBlobPropertiesEndpoint), nameof(GetResponse),
-                "Handling blob properties for {0}.", context.Request.Path.Value);
+            var (statusCode, metadata) = _dataPlane.GetBlobMetadata(subscriptionIdentifier,
+                resourceGroupIdentifier, storageAccount!.Name, context.Request.Path.Value!);
 
-            var properties = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccount!.Name, context.Request.Path.Value!, blobName!);
-
-            if (properties.code == HttpStatusCode.NotFound)
+            if (statusCode == HttpStatusCode.NotFound)
             {
                 response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Blob not found",
                     HttpStatusCode.NotFound);
+                return;
             }
-            else
+
+            response.StatusCode = HttpStatusCode.OK;
+
+            var now = DateTimeOffset.UtcNow;
+            response.Headers.ETag = new EntityTagHeaderValue($"\"{now.Ticks}\"");
+
+            if (metadata != null)
             {
-                response.StatusCode = properties.code;
-
-                if (properties.properties != null)
-                {
-                    response.Headers.Add("x-ms-meta-Name", properties.properties.Name);
-                }
-
-                var (_, metadata) = _dataPlane.GetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier,
-                    storageAccount!.Name, context.Request.Path.Value!);
-
-                if (metadata != null)
-                {
-                    foreach (var (key, value) in metadata)
-                        response.Headers.TryAddWithoutValidation(key, value);
-                }
+                foreach (var (key, value) in metadata)
+                    response.Headers.TryAddWithoutValidation(key, value);
             }
+
+            response.Content = new ByteArrayContent([]);
+            response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
+            response.Content.Headers.TryAddWithoutValidation("Last-Modified", now.ToString("R"));
         }
         catch (Exception ex)
         {

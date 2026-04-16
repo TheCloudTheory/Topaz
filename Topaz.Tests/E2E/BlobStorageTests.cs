@@ -188,6 +188,29 @@ public class BlobStorageTests
     }
 
     [Test]
+    public void BlobStorageTests_WhenBlobMetadataIsSet_ItShouldBeRetrievable()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("metadata-retrieve-test");
+        var containerClient = serviceClient.GetBlobContainerClient("metadata-retrieve-test");
+        var blobClient = containerClient.GetBlobClient("test.txt");
+        blobClient.Upload(new BinaryData("some content"));
+        blobClient.SetMetadata(new Dictionary<string, string>
+        {
+            { "env", "prod" },
+            { "version", "42" }
+        });
+
+        // Act
+        var properties = blobClient.GetProperties();
+
+        // Assert
+        Assert.That(properties.Value.Metadata["env"], Is.EqualTo("prod"));
+        Assert.That(properties.Value.Metadata["version"], Is.EqualTo("42"));
+    }
+
+    [Test]
     public void BlobStorageTests_WhenBlobMetadataAreSet_TheyShouldAccepted()
     {
         // Arrange

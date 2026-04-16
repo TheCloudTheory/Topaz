@@ -169,6 +169,35 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         return HttpStatusCode.Accepted;
     }
 
+    public (HttpStatusCode statusCode, Dictionary<string, string>? metadata) GetBlobMetadata(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string blobPath)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetBlobMetadata),
+            "Account: `{0}`, Path: {1}", storageAccountName, blobPath);
+
+        var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+
+        if (!File.Exists(fullPath))
+            return (HttpStatusCode.NotFound, null);
+
+        var metadataPath = GetBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+
+        if (!File.Exists(metadataPath))
+            return (HttpStatusCode.OK, new Dictionary<string, string>());
+
+        var lines = File.ReadAllLines(metadataPath);
+        var metadata = lines
+            .Where(l => l.Contains('='))
+            .ToDictionary(
+                l => l[..l.IndexOf('=')],
+                l => l[(l.IndexOf('=') + 1)..]);
+
+        return (HttpStatusCode.OK, metadata);
+    }
+
     // TODO: Setting metadata should update / append values instead of replacing them
     public HttpStatusCode SetBlobMetadata(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath,
