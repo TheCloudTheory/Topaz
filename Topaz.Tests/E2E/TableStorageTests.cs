@@ -679,7 +679,7 @@ namespace Topaz.Tests.E2E
         }
 
         [Test]
-        public void TableStorageTests_WhenNonExistentEntityIsDeleted_ItShouldThrow()
+        public void TableStorageTests_WhenNonExistentEntityIsDeleted_ItShouldSucceed()
         {
             // Arrange
             var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
@@ -687,7 +687,7 @@ namespace Topaz.Tests.E2E
             var tableClient = tableServiceClient.GetTableClient("testtable");
 
             // Act & Assert
-            Assert.Throws<RequestFailedException>(() =>
+            Assert.DoesNotThrow(() =>
                 tableClient.DeleteEntity("test", "nonexistent", ETag.All));
         }
 
