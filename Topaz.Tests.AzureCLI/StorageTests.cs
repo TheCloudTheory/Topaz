@@ -488,9 +488,9 @@ public class StorageTests : TopazFixture
             $"az storage container show-permission --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
-                // azure-cli with azure-storage-blob 12.x returns signed_identifiers as a JSON object (dict keyed by policy id)
-                var signedIdentifiers = resp["signed_identifiers"]?.AsObject();
-                Assert.That(signedIdentifiers == null || signedIdentifiers.Count == 0, Is.True);
+                // az storage container show-permission only returns publicAccess (its CLI transform strips signed_identifiers)
+                Assert.That(resp["publicAccess"]?.GetValue<string>(), Is.EqualTo("off"));
+                Assert.That(resp["signed_identifiers"], Is.Null);
             });
 
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
@@ -527,15 +527,16 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand(
             $"az storage container policy create --container-name {containerName} --name {policyId} --permissions r --start \"{start}\" --expiry \"{expiry}\" --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
+        // az storage container show-permission strips signed_identifiers via its transform function;
+        // use policy list which returns the stored access policies as a JSON object keyed by policy id.
         await RunAzureCliCommand(
-            $"az storage container show-permission --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage container policy list --container-name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
-                // azure-cli with azure-storage-blob 12.x returns signed_identifiers as a JSON object (dict keyed by policy id)
-                var sigObj = resp["signed_identifiers"]?.AsObject();
-                Assert.That(sigObj, Is.Not.Null, "signed_identifiers should not be null after setting a policy");
-                Assert.That(sigObj!.Count, Is.EqualTo(1), "Expected exactly one signed identifier");
-                Assert.That(sigObj!.ContainsKey(policyId), Is.True, $"Expected policy '{policyId}' to exist");
+                var policies = resp.AsObject();
+                Assert.That(policies, Is.Not.Null, "policy list should not be null after setting a policy");
+                Assert.That(policies!, Has.Count.EqualTo(1), "Expected exactly one policy");
+                Assert.That(policies!.ContainsKey(policyId), Is.True, $"Expected policy '{policyId}' to exist");
             });
 
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");

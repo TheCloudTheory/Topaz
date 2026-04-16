@@ -64,6 +64,7 @@ public class TopazFixture
             .WithCommand("--certificate-file", "topaz.crt", "--certificate-key",
                 "topaz.key", "--log-level", "Debug", "--default-subscription",
                 Guid.NewGuid().ToString())
+            .WithOutputConsumer(Consume.RedirectStdoutAndStderrToConsole())
             .Build();
 
         await _containerTopaz.StartAsync()

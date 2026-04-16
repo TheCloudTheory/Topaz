@@ -129,11 +129,51 @@ Both suites are required for every endpoint or control-plane change.
 - Use `RunAzureCliCommand("az ...")` via `TopazFixture`.
 - Use `GlobalSettings.ContainerRegistryPort` directly for port references.
 - **DNS**: every new hostname used in a test (registry login server, vault URL, etc.) must be added as a `WithExtraHost(...)` entry in `TopazFixture.cs`. A missing entry causes a silent curl timeout (exit code 28), not a DNS error.
+- **Rebuild before running**: `Topaz.Tests.AzureCLI` runs against the Docker image, not local binaries. Always rebuild with `./scripts/build-docker.sh arm64` (or `amd64`) after any code change before running these tests. Results from a stale image are not valid evidence.
 
 ### Terraform/debugging workflow
 - Terraform tests in `Topaz.Tests.Terraform` run against the Docker image (`topaz/host`), not local binaries.
 - After every code change that should affect Terraform tests, rebuild first: `./scripts/build-docker.sh arm64` (or `amd64`), then run the filtered test.
 - If a build fails, do not trust subsequent Terraform test output as validation of code changes.
+
+### Debugging failing tests — mandatory process
+
+**Before reasoning about a test failure, always:**
+1. Run the test locally: `dotnet test <project>.csproj --filter "<TestName>" -v normal`
+2. Read the Topaz host logs emitted to the test console — the router, endpoint selection, request body, and response body are all logged at Debug/Information level.
+3. Only form hypotheses after seeing the actual log output.
+
+**Checking the Docker image timestamp:** verify `docker images topaz/host` shows a build time *after* your last file edit. If not, rebuild.
+
+**Adding `--debug` to an `az` command** (inside a `RunAzureCliCommand`) prints the full HTTP request and response including headers — useful when the SDK appears to ignore a valid Topaz response.
+
+### Investigating Azure CLI / SDK response-parsing issues
+
+When an azure-cli command returns unexpected JSON (e.g. missing fields that Topaz clearly returned):
+
+1. **Check the CLI transform first.** Every `az storage ...` command registered in `commands.py` can have a `transform=` kwarg that post-processes the SDK result before printing. The transform may intentionally drop fields. Find it with:
+   ```bash
+   docker run --rm mcr.microsoft.com/azure-cli:2.84.0 \
+     grep -n '<subcommand>' /usr/lib/az/lib/python3.12/site-packages/azure/cli/command_modules/storage/commands.py
+   ```
+   Then read the referenced transformer in `_transformers.py`.
+
+2. **Simulate the SDK deserialization.** Run a quick Python script inside the CLI container to verify the SDK can parse your XML/JSON:
+   ```bash
+   docker run --rm mcr.microsoft.com/azure-cli:2.84.0 sh -c "PYTHONPATH=/usr/lib/az/lib/python3.12/site-packages python3 << 'EOF'
+   from azure.storage.blob._generated._utils.serialization import Deserializer, RawDeserializer
+   from azure.storage.blob._generated import models as _models
+   client_models = {k: v for k, v in _models.__dict__.items() if isinstance(v, type)}
+   result = RawDeserializer.deserialize_from_http_generics('<your xml>', {'content-type': 'application/xml'})
+   print(Deserializer(client_models)('[SignedIdentifier]', result))
+   EOF"
+   ```
+
+3. **Known SDK behaviour — `content_type` is read from the `content-type` response header.** `_RequestsTransportResponseBase.__init__` sets `self.content_type = requests_response.headers.get("content-type")`. If the header is absent or wrong, XML is parsed as JSON (default) and deserialization silently returns `None` or an empty list.
+
+4. **Known CLI behaviour — `az storage container show-permission`** always strips `signed_identifiers` via `transform_container_permission_output` and only returns `{"publicAccess": "..."}`. To read stored access policies use `az storage container policy list` instead.
+
+5. **ContentDecodePolicy skips deserialization when `stream=True`.** The policy's `on_response` returns early if `response.context.options.get("stream", True)` is truthy. Generated operation code explicitly sets `_stream = False` before calling the pipeline, which is the correct pattern.
 
 ### `Topaz.Tests.Portal/` (Portal work definition of done)
 - Inherit from `BunitTestContext`.

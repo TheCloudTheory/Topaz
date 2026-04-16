@@ -1,7 +1,5 @@
 using System.Text;
-using System.Text.Json;
 using Azure;
-using Azure.Deployments.Core.Definitions.Schema;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Topaz.Service.ResourceManager.Models.Requests;
