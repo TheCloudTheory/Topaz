@@ -138,6 +138,9 @@ public class TopazFixture
                 // Key Vault data-plane: the azurerm provider pings the vault URI to verify availability.
                 .WithExtraHost("tfrm-kv-test.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
                 .WithExtraHost("tfrm-kv-sd.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
+                // Table Storage data-plane: azurerm_storage_table/azurerm_storage_table_entity need
+                // to connect to the table endpoint directly.
+                .WithExtraHost("tfrmstortableacct.table.storage.topaz.local.dev", _containerTopaz.IpAddress)
                 // Bind-mount host cache: providers + terraform binary are downloaded once and reused
                 // across all 17 fixture setups rather than re-downloaded for every test class.
                 .WithBindMount(TerraformCacheDir, "/tf-cache")

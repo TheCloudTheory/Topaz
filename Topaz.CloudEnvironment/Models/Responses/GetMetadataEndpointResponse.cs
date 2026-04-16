@@ -37,7 +37,10 @@ internal sealed class GetMetadataEndpointResponse
         { "sqlServerHostname", "sql.topaz.local.dev" },
         { "azureDataLakeAnalyticsCatalogAndJob", "analytics.topaz.local.dev" },
         { "keyVaultDns", "vault.topaz.local.dev" },
-        { "storage", "storage.topaz.local.dev" },
+        // Port 8890 is included so that giovanni v0.28.0's ParseAccountID (used by azurerm v4)
+        // passes its strings.HasSuffix(uri.Host, domainSuffix) check.  uri.Host includes the
+        // non-standard port, so the suffix must match the full host+port string.
+        { "storage", "storage.topaz.local.dev:8890" },
         { "azureFrontDoorEndpointSuffix", "frontdoor.topaz.local.dev" },
         { "storageSyncEndpointSuffix", "storagesync.topaz.local.dev" },
         { "mhsmDns", "managedhsm.topaz.local.dev" },
