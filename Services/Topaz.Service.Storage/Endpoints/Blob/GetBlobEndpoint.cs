@@ -8,13 +8,13 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints.Blob;
 
-internal sealed class GetBlobPropertiesEndpoint(ITopazLogger logger)
+internal sealed class GetBlobEndpoint(ITopazLogger logger)
     : BlobDataPlaneEndpointBase(logger), IEndpointDefinition
 {
     private readonly BlobServiceDataPlane _dataPlane =
         new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
-    public string[] Endpoints => ["HEAD /{containerName}/..."];
+    public string[] Endpoints => ["GET /{containerName}/..."];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"];
 
@@ -40,11 +40,11 @@ internal sealed class GetBlobPropertiesEndpoint(ITopazLogger logger)
                 return;
             }
 
-            Logger.LogDebug(nameof(GetBlobPropertiesEndpoint), nameof(GetResponse),
-                "Handling blob properties for {0}.", context.Request.Path.Value);
+            Logger.LogDebug(nameof(GetBlobEndpoint), nameof(GetResponse),
+                "Handling blob download for {0}.", context.Request.Path.Value);
 
-            var (code, properties) = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccount!.Name, context.Request.Path.Value!, blobName!);
+            var (code, content) = _dataPlane.GetBlob(subscriptionIdentifier, resourceGroupIdentifier,
+                storageAccount!.Name, context.Request.Path.Value!);
 
             if (code == HttpStatusCode.NotFound)
             {
@@ -53,7 +53,17 @@ internal sealed class GetBlobPropertiesEndpoint(ITopazLogger logger)
                 return;
             }
 
-            response.StatusCode = code;
+            var (_, properties) = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
+                storageAccount!.Name, context.Request.Path.Value!, blobName!);
+
+            response.StatusCode = HttpStatusCode.OK;
+
+            var bytes = content != null ? System.Text.Encoding.UTF8.GetBytes(content) : [];
+            response.Content = new ByteArrayContent(bytes);
+
+            var contentType = properties?.ContentType ?? "application/octet-stream";
+            response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
+            response.Content.Headers.ContentLength = bytes.Length;
 
             if (properties != null)
             {
@@ -66,43 +76,23 @@ internal sealed class GetBlobPropertiesEndpoint(ITopazLogger logger)
                 response.Headers.TryAddWithoutValidation("x-ms-lease-status", "unlocked");
                 response.Headers.TryAddWithoutValidation("x-ms-lease-state", "available");
 
-                if (!string.IsNullOrEmpty(properties.DateUploaded))
-                    response.Headers.TryAddWithoutValidation("x-ms-creation-time", properties.DateUploaded);
-
-                response.Content = new ByteArrayContent([]);
-                response.Content.Headers.ContentType =
-                    MediaTypeHeaderValue.Parse(properties.ContentType);
-                response.Content.Headers.ContentLength = properties.ContentLength;
-
                 if (!string.IsNullOrEmpty(properties.LastModified))
                     response.Content.Headers.TryAddWithoutValidation("Last-Modified", properties.LastModified);
 
                 if (!string.IsNullOrEmpty(properties.ContentEncoding))
-                    response.Content.Headers.TryAddWithoutValidation("Content-Encoding", properties.ContentEncoding);
+                    response.Content.Headers.TryAddWithoutValidation("Content-Encoding",
+                        properties.ContentEncoding);
 
                 if (!string.IsNullOrEmpty(properties.ContentLanguage))
-                    response.Content.Headers.TryAddWithoutValidation("Content-Language", properties.ContentLanguage);
+                    response.Content.Headers.TryAddWithoutValidation("Content-Language",
+                        properties.ContentLanguage);
 
                 if (!string.IsNullOrEmpty(properties.CacheControl))
                     response.Content.Headers.TryAddWithoutValidation("Cache-Control", properties.CacheControl);
 
                 if (!string.IsNullOrEmpty(properties.ContentDisposition))
-                    response.Content.Headers.TryAddWithoutValidation("Content-Disposition", properties.ContentDisposition);
-
-                if (!string.IsNullOrEmpty(properties.CopyId))
-                {
-                    response.Headers.TryAddWithoutValidation("x-ms-copy-id", properties.CopyId);
-                    response.Headers.TryAddWithoutValidation("x-ms-copy-status", "success");
-                }
-            }
-
-            var (_, metadata) = _dataPlane.GetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccount!.Name, context.Request.Path.Value!);
-
-            if (metadata != null)
-            {
-                foreach (var (key, value) in metadata)
-                    response.Headers.TryAddWithoutValidation(key, value);
+                    response.Content.Headers.TryAddWithoutValidation("Content-Disposition",
+                        properties.ContentDisposition);
             }
         }
         catch (Exception ex)

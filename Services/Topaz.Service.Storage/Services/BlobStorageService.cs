@@ -26,6 +26,7 @@ public class BlobStorageService(ITopazLogger logger) : IServiceDefinition
         new PutBlobEndpoint(logger),
         new GetBlobMetadataEndpoint(logger),
         new ListContainersEndpoint(logger),
+        new GetBlobEndpoint(logger),
         new GetBlobPropertiesEndpoint(logger),
         new DeleteBlobEndpoint(logger),
     ];

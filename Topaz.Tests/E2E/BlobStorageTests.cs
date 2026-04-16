@@ -489,4 +489,58 @@ public class BlobStorageTests
             Assert.Pass();
         }
     }
+
+    [Test]
+    public void BlobStorageTests_WhenBlobIsCopied_DestinationShouldHaveSameContent()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("copy-source");
+        serviceClient.CreateBlobContainer("copy-dest");
+        var sourceBlob = serviceClient.GetBlobContainerClient("copy-source").GetBlobClient("original.txt");
+        sourceBlob.Upload(new BinaryData("hello copy world"));
+
+        // Act
+        var destBlob = serviceClient.GetBlobContainerClient("copy-dest").GetBlobClient("copied.txt");
+        destBlob.StartCopyFromUri(sourceBlob.Uri).WaitForCompletion();
+
+        // Assert
+        var download = destBlob.DownloadContent();
+        Assert.That(download.Value.Content.ToString(), Is.EqualTo("hello copy world"));
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenBlobIsCopied_DestinationPropertiesShouldMatch()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("copy-props-src");
+        serviceClient.CreateBlobContainer("copy-props-dst");
+        var sourceBlob = serviceClient.GetBlobContainerClient("copy-props-src").GetBlobClient("source.txt");
+        sourceBlob.Upload(new BinaryData("properties test"),
+            new BlobUploadOptions { HttpHeaders = new BlobHttpHeaders { ContentType = "text/plain" } });
+
+        // Act
+        var destBlob = serviceClient.GetBlobContainerClient("copy-props-dst").GetBlobClient("dest.txt");
+        destBlob.StartCopyFromUri(sourceBlob.Uri).WaitForCompletion();
+        var properties = destBlob.GetProperties();
+
+        // Assert
+        Assert.That(properties.Value.ContentType, Is.EqualTo("text/plain"));
+        Assert.That(properties.Value.ContentLength, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenCopyingNonExistentBlob_NotFoundShouldBeReturned()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("copy-nf-src");
+        serviceClient.CreateBlobContainer("copy-nf-dst");
+        var sourceBlob = serviceClient.GetBlobContainerClient("copy-nf-src").GetBlobClient("does-not-exist.txt");
+        var destBlob = serviceClient.GetBlobContainerClient("copy-nf-dst").GetBlobClient("dest.txt");
+
+        // Assert
+        Assert.Throws<RequestFailedException>(() => destBlob.StartCopyFromUri(sourceBlob.Uri));
+    }
 }

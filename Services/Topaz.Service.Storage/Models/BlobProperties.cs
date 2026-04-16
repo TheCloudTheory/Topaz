@@ -35,4 +35,5 @@ public sealed class BlobProperties
     public string? ContentLanguage { get; set; }
     public string? CacheControl { get; set; }
     public string? ContentDisposition { get; set; }
+    public string? CopyId { get; set; }
 }

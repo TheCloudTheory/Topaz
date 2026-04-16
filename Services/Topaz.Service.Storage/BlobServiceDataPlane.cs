@@ -151,6 +151,54 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         return (HttpStatusCode.OK, File.ReadAllText(fullPath));
     }
 
+    public (HttpStatusCode code, BlobProperties? properties, string? copyId) CopyBlob(
+        SubscriptionIdentifier srcSubscriptionId, ResourceGroupIdentifier srcResourceGroupId, string srcAccountName, string srcBlobPath,
+        SubscriptionIdentifier dstSubscriptionId, ResourceGroupIdentifier dstResourceGroupId, string dstAccountName, string dstBlobPath, string dstBlobName)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(CopyBlob), "Copying from {0}/{1} to {2}/{3}",
+            srcAccountName, srcBlobPath, dstAccountName, dstBlobPath);
+
+        var srcContentPath = GetBlobPath(srcSubscriptionId, srcResourceGroupId, srcAccountName, srcBlobPath);
+        var srcPropertiesPath = GetBlobPropertiesPath(srcSubscriptionId, srcResourceGroupId, srcAccountName, srcBlobPath);
+
+        if (!File.Exists(srcContentPath))
+            return (HttpStatusCode.NotFound, null, null);
+
+        var dstContentPath = GetBlobPath(dstSubscriptionId, dstResourceGroupId, dstAccountName, dstBlobPath);
+        var dstDirectory = Path.GetDirectoryName(dstContentPath);
+
+        if (string.IsNullOrWhiteSpace(dstDirectory))
+        {
+            logger.LogError("Couldn't determine the destination blob directory.");
+            return (HttpStatusCode.BadRequest, null, null);
+        }
+
+        if (!Directory.Exists(dstDirectory))
+            Directory.CreateDirectory(dstDirectory);
+
+        File.Copy(srcContentPath, dstContentPath, overwrite: true);
+
+        var srcProperties = JsonSerializer.Deserialize<BlobProperties>(File.ReadAllText(srcPropertiesPath))!;
+        var copyId = Guid.NewGuid().ToString();
+        var dstProperties = new BlobProperties(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
+        {
+            Name = dstBlobName,
+            ETag = new ETag(DateTimeOffset.UtcNow.Ticks.ToString()),
+            ContentLength = srcProperties.ContentLength,
+            ContentType = srcProperties.ContentType,
+            ContentEncoding = srcProperties.ContentEncoding,
+            ContentLanguage = srcProperties.ContentLanguage,
+            CacheControl = srcProperties.CacheControl,
+            ContentDisposition = srcProperties.ContentDisposition,
+            CopyId = copyId,
+        };
+
+        var dstPropertiesPath = GetBlobPropertiesPath(dstSubscriptionId, dstResourceGroupId, dstAccountName, dstBlobPath);
+        File.WriteAllText(dstPropertiesPath, JsonSerializer.Serialize(dstProperties));
+
+        return (HttpStatusCode.Accepted, dstProperties, copyId);
+    }
+
     // TODO: Add support for `snapshot` and `versionid` query params
     public HttpStatusCode DeleteBlob(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName)
     {

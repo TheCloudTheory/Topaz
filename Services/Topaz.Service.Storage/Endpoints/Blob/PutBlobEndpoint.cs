@@ -1,7 +1,10 @@
 using System.Net;
 using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Http;
+using Topaz.Dns;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Service.Storage.Services;
 using Topaz.Service.Storage.Utils;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
@@ -45,11 +48,22 @@ internal sealed class PutBlobEndpoint(ITopazLogger logger)
                 HandleSetBlobMetadataRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
                     context.Request.Path, blobName!, context.Request.Headers, response);
             }
+            else if (context.Request.Headers.TryGetValue("x-ms-copy-source", out var copySource) &&
+                     !string.IsNullOrEmpty(copySource))
+            {
+                HandleCopyBlobRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
+                    context.Request.Path.Value!, blobName!, copySource!, response);
+            }
             else
             {
+                // Prefer x-ms-blob-content-type (set by SDK via BlobHttpHeaders.ContentType)
+                // over the HTTP Content-Type header (which reflects the request body encoding).
+                var contentType = context.Request.Headers.TryGetValue("x-ms-blob-content-type", out var blobContentType)
+                    ? blobContentType.ToString()
+                    : context.Request.ContentType;
+
                 HandleUploadBlobRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
-                    context.Request.Path, blobName!, context.Request.Body, response,
-                    context.Request.ContentType);
+                    context.Request.Path, blobName!, context.Request.Body, response, contentType);
             }
         }
         catch (Exception ex)
@@ -117,5 +131,55 @@ internal sealed class PutBlobEndpoint(ITopazLogger logger)
 
             SetResponseHeaders(response, properties.properties);
         }
+    }
+
+    private void HandleCopyBlobRequest(
+        SubscriptionIdentifier dstSubscriptionId,
+        ResourceGroupIdentifier dstResourceGroupId,
+        string dstAccountName,
+        string dstBlobPath,
+        string dstBlobName,
+        string copySourceUrl,
+        HttpResponseMessage response)
+    {
+        Logger.LogDebug(nameof(PutBlobEndpoint), nameof(HandleCopyBlobRequest),
+            "Handling copy blob to {0} from {1}.", dstBlobPath, copySourceUrl);
+
+        if (!Uri.TryCreate(copySourceUrl, UriKind.Absolute, out var sourceUri))
+        {
+            Logger.LogError($"Invalid x-ms-copy-source URL: {copySourceUrl}");
+            response.StatusCode = HttpStatusCode.BadRequest;
+            return;
+        }
+
+        var srcAccountName = sourceUri.Host.Split('.')[0];
+        var srcBlobPath = sourceUri.AbsolutePath;
+
+        var srcIdentifiers = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, srcAccountName);
+        if (srcIdentifiers == null)
+        {
+            response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Source blob not found", HttpStatusCode.NotFound);
+            return;
+        }
+
+        var srcSubscriptionId = SubscriptionIdentifier.From(srcIdentifiers.Value.subscription);
+        var srcResourceGroupId = ResourceGroupIdentifier.From(srcIdentifiers.Value.resourceGroup);
+
+        var (code, properties, copyId) = _dataPlane.CopyBlob(
+            srcSubscriptionId, srcResourceGroupId, srcAccountName, srcBlobPath,
+            dstSubscriptionId, dstResourceGroupId, dstAccountName, dstBlobPath, dstBlobName);
+
+        if (code == HttpStatusCode.NotFound)
+        {
+            response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Source blob not found", HttpStatusCode.NotFound);
+            return;
+        }
+
+        response.StatusCode = HttpStatusCode.Accepted;
+        response.Headers.TryAddWithoutValidation("x-ms-copy-id", copyId);
+        response.Headers.TryAddWithoutValidation("x-ms-copy-status", "success");
+
+        if (properties != null)
+            SetResponseHeaders(response, properties);
     }
 }

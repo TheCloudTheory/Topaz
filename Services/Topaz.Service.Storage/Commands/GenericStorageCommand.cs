@@ -60,6 +60,7 @@ public sealed class GenericStorageCommand : IEmulatorCommand
                 blob.AddCommand<ListBlobsCommand>("list");
                 blob.AddCommand<ShowBlobCommand>("show");
                 blob.AddCommand<SetBlobPropertiesCommand>("update");
+                blob.AddCommand<CopyBlobCommand>("copy");
 
                 blob.AddBranch("metadata", metadata =>
                 {
