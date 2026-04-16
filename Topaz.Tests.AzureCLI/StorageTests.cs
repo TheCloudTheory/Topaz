@@ -374,8 +374,13 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand(
             $"printf 'hello update' >/tmp/blob-update.txt && az storage blob upload --container-name {containerName} --name update.txt --file /tmp/blob-update.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
+        // Use --connection-string with explicit BlobEndpoint so the Azure CLI content-settings
+        // validator (get_content_setting_validator in _validators.py) passes the full endpoint URL
+        // when pre-fetching current blob properties.  Without it the validator builds account_kwargs
+        // without account_url, causing get_account_url() to construct an https:// URL to the wrong
+        // port (8890) which produces an SSL record-layer failure.
         await RunAzureCliCommand(
-            $"az storage blob update --container-name {containerName} --name update.txt --content-type text/plain --content-encoding utf-8 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage blob update --container-name {containerName} --name update.txt --content-type text/plain --content-encoding utf-8 --connection-string \"AccountName={storageAccountName};AccountKey={accountKey};BlobEndpoint=http://{storageAccountName}.blob.storage.topaz.local.dev:8891\"");
 
         await RunAzureCliCommand(
             $"az storage blob show --container-name {containerName} --name update.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",

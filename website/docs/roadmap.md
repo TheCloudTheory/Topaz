@@ -145,6 +145,16 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 ---
 
+## v1.6-beta
+
+### Azure Storage — unified data-plane port
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Unified storage port | Consolidate blob, table, queue, and file data-plane services onto a single HTTPS port with subdomain-based routing, matching real Azure's port topology and removing per-service port constants |
+
+---
+
 ## ✅ Completed
 
 ### v1.1-beta

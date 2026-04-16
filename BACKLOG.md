@@ -601,6 +601,40 @@ TODO: Azure SQL: Database control plane endpoints
 
 ---
 
+## v1.6-beta
+
+### Azure Storage — unified data-plane port
+
+<!--
+TODO: Storage: Consolidate all data-plane services onto a single HTTPS port
+  Real Azure exposes all storage sub-services (blob, table, queue, file) on port 443 with
+  subdomain-based routing ({account}.blob.core.windows.net, etc.).  Topaz currently uses
+  separate HTTP ports per sub-service (blob=8891, table=8890, queue=8893, file=8894).
+  This causes problems for Azure CLI/SDK code paths that construct storage URLs via
+  get_account_url() — the function builds a single https:// URL from the cloud-suffix
+  `storage_endpoint`, which can only encode one port, so blob/table/queue/file end up on
+  the wrong port or wrong scheme.
+
+  Work required:
+  - Add subdomain-aware filtering to the Router (filter by Host header prefix before port match,
+    or let all storage endpoints share one port and disambiguate by subdomain in the router).
+  - Consolidate DefaultBlobStoragePort / DefaultTableStoragePort / DefaultQueueStoragePort /
+    DefaultFileStoragePort into a single DefaultStoragePort constant.
+  - Update all PortsAndProtocol declarations in Endpoints/Blob, Endpoints/Table, Endpoints/Queue,
+    Endpoints/File to use the unified port and Protocol.Https.
+  - Update BuildPrimaryEndpoints in AzureStorageControlPlane to emit https:// URLs on the
+    single port for all sub-services.
+  - Update the `storage` suffix in GetMetadataEndpointResponse.Suffixes to reflect the new
+    host:port, and re-evaluate the Terraform ParseAccountID suffix workaround.
+  - Update TopazResourceHelpers connection-string builder.
+  - Update all tests (E2E, AzureCLI, Terraform) that reference explicit storage ports.
+  See also: website/docs/known-limitations.md — "Azure Storage — per-service ports".
+  milestone: v1.6-beta
+  labels: enhancement, storage
+-->
+
+---
+
 ## Unplanned / Ideas
 
 _Rough ideas not yet tied to a specific version._
