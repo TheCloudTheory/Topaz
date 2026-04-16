@@ -357,7 +357,8 @@ public class StorageTests : TopazFixture
             $"az storage container show-permission --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
-                var signedIdentifiers = resp["signedIdentifiers"]?.AsArray();
+                // azure-cli with azure-storage-blob 12.x returns signed_identifiers as a JSON object (dict keyed by policy id)
+                var signedIdentifiers = resp["signed_identifiers"]?.AsObject();
                 Assert.That(signedIdentifiers == null || signedIdentifiers.Count == 0, Is.True);
             });
 
@@ -399,11 +400,11 @@ public class StorageTests : TopazFixture
             $"az storage container show-permission --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
-                // Azure CLI may output camelCase ("signedIdentifiers") or snake_case ("signed_identifiers")
-                var identifiers = resp["signedIdentifiers"]?.AsArray() ?? resp["signed_identifiers"]?.AsArray();
-                Assert.That(identifiers, Is.Not.Null);
-                Assert.That(identifiers!.Count, Is.EqualTo(1));
-                Assert.That(identifiers![0]?["id"]?.GetValue<string>(), Is.EqualTo(policyId));
+                // azure-cli with azure-storage-blob 12.x returns signed_identifiers as a JSON object (dict keyed by policy id)
+                var sigObj = resp["signed_identifiers"]?.AsObject();
+                Assert.That(sigObj, Is.Not.Null, "signed_identifiers should not be null after setting a policy");
+                Assert.That(sigObj!.Count, Is.EqualTo(1), "Expected exactly one signed identifier");
+                Assert.That(sigObj!.ContainsKey(policyId), Is.True, $"Expected policy '{policyId}' to exist");
             });
 
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
