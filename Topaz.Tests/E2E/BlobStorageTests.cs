@@ -580,4 +580,53 @@ public class BlobStorageTests
             Assert.That(response.GetRawResponse().Status, Is.EqualTo(201));
         }
     }
+
+    [Test]
+    public void BlobStorageTests_WhenBlockListIsCommitted_BlobShouldBeDownloadable()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("blocklist-test");
+        var blockBlobClient = serviceClient.GetBlobContainerClient("blocklist-test")
+            .GetBlockBlobClient("assembled.txt");
+
+        var blocks = new[] { "Hello, ", "block ", "world!" };
+        var blockIds = blocks
+            .Select((_, i) => Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"blk-{i:D3}")))
+            .ToList();
+
+        for (var i = 0; i < blocks.Length; i++)
+            blockBlobClient.StageBlock(blockIds[i], BinaryData.FromString(blocks[i]).ToStream());
+
+        // Act
+        var commitResponse = blockBlobClient.CommitBlockList(blockIds);
+
+        // Assert
+        Assert.That(commitResponse.GetRawResponse().Status, Is.EqualTo(201));
+
+        var download = blockBlobClient.DownloadContent();
+        Assert.That(download.Value.Content.ToString(), Is.EqualTo("Hello, block world!"));
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenBlockListIsCommitted_PropertiesShouldReflectAssembledBlob()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("blocklist-props-test");
+        var blockBlobClient = serviceClient.GetBlobContainerClient("blocklist-props-test")
+            .GetBlockBlobClient("props.txt");
+
+        var blockId = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("only-block"));
+        blockBlobClient.StageBlock(blockId, BinaryData.FromString("content data").ToStream());
+
+        // Act
+        blockBlobClient.CommitBlockList([blockId]);
+        var properties = blockBlobClient.GetProperties();
+
+        // Assert
+        Assert.That(properties.Value.ContentLength, Is.GreaterThan(0));
+        Assert.That(properties.Value.ETag, Is.Not.EqualTo(default(ETag)));
+        Assert.That(properties.Value.BlobType, Is.EqualTo(BlobType.Block));
+    }
 }

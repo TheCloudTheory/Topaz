@@ -106,6 +106,110 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         return HttpStatusCode.Created;
     }
 
+    public (HttpStatusCode code, BlobProperties? properties) PutBlockList(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string blobPath,
+        string blobName,
+        Stream input,
+        string? contentType = null)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(PutBlockList),
+            "Executing {0}: {1} {2}", nameof(PutBlockList), storageAccountName, blobPath);
+
+        using var sr = new StreamReader(input);
+        var xml = sr.ReadToEnd();
+
+        // Parse the ordered list of block IDs from the XML body.
+        // The SDK sends a <BlockList> element containing <Latest>, <Committed>, or <Uncommitted> children.
+        var blockIds = ParseBlockListXml(xml);
+        if (blockIds == null)
+        {
+            logger.LogError("PutBlockList: could not parse BlockList XML.");
+            return (HttpStatusCode.BadRequest, null);
+        }
+
+        var containerName = GetContainerNameFromBlobPath(blobPath);
+        var blobSubpathKey = GetBlobSubpathKey(blobPath);
+        var stagingDir = controlPlane.GetBlobBlocksStagingPath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, containerName, blobSubpathKey);
+
+        var parts = new List<string>(blockIds.Count);
+        foreach (var blockId in blockIds)
+        {
+            var safeBlockId = blockId.Replace("/", "_").Replace("+", "-");
+            var blockFile = Path.Combine(stagingDir, safeBlockId);
+            if (!File.Exists(blockFile))
+            {
+                logger.LogError("PutBlockList: staged block '{0}' not found at '{1}'.", blockId, blockFile);
+                return (HttpStatusCode.BadRequest, null);
+            }
+
+            parts.Add(File.ReadAllText(blockFile));
+        }
+
+        var assembled = string.Concat(parts);
+        var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+        var blobDirectory = Path.GetDirectoryName(fullPath);
+
+        if (string.IsNullOrWhiteSpace(blobDirectory))
+        {
+            logger.LogError("PutBlockList: couldn't determine the blob directory.");
+            return (HttpStatusCode.BadRequest, null);
+        }
+
+        if (!Directory.Exists(blobDirectory))
+            Directory.CreateDirectory(blobDirectory);
+
+        var metadata = new BlobProperties(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
+        {
+            Name = blobName,
+            ETag = new ETag(DateTimeOffset.UtcNow.Ticks.ToString()),
+            ContentLength = System.Text.Encoding.UTF8.GetByteCount(assembled),
+            ContentType = string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType,
+        };
+
+        File.WriteAllText(GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath),
+            JsonSerializer.Serialize(metadata));
+        File.WriteAllText(fullPath, assembled);
+
+        // Clean up staged blocks now that they have been committed.
+        if (Directory.Exists(stagingDir))
+            Directory.Delete(stagingDir, recursive: true);
+
+        return (HttpStatusCode.Created, metadata);
+    }
+
+    private static List<string>? ParseBlockListXml(string xml)
+    {
+        if (string.IsNullOrWhiteSpace(xml))
+            return [];
+
+        try
+        {
+            var doc = new System.Xml.XmlDocument();
+            doc.LoadXml(xml);
+
+            var root = doc.DocumentElement;
+            if (root == null) return [];
+
+            var ids = new List<string>();
+            foreach (System.Xml.XmlNode child in root.ChildNodes)
+            {
+                if (child.NodeType != System.Xml.XmlNodeType.Element) continue;
+                if (child.InnerText is { Length: > 0 } id)
+                    ids.Add(id);
+            }
+
+            return ids;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private static string GetBlobSubpathKey(string blobPath)
     {
         var segments = blobPath.Split('/', StringSplitOptions.RemoveEmptyEntries);

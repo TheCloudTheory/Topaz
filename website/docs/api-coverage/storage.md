@@ -85,7 +85,7 @@ Blob Storage is served on port **8891** (HTTP) in Topaz.
 | List Blobs | ✅ | `GET /{containerName}` |
 | Copy Blob | ✅ | `PUT /{containerName}/{blobName}` with `x-ms-copy-source` header; synchronous within-emulator copy |
 | Put Block | ✅ | `PUT /{containerName}/{blobName}?comp=block&blockid={blockId}` — stages a block for later commit via Put Block List |
-| Put Block List | ❌ | |
+| Put Block List | ✅ | `PUT /{containerName}/{blobName}?comp=blocklist` — assembles staged blocks into a committed blob |
 | Get Block List | ❌ | |
 | Put Page | ❌ | |
 | Get Page Ranges | ❌ | |
