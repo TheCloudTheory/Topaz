@@ -225,6 +225,78 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         return HttpStatusCode.OK;
     }
 
+    public (HttpStatusCode statusCode, BlobProperties? properties) SetBlobProperties(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string blobPath,
+        IHeaderDictionary headers)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(SetBlobProperties),
+            "Account: `{0}`, Path: {1}", storageAccountName, blobPath);
+
+        var propertiesPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+
+        if (!File.Exists(propertiesPath))
+            return (HttpStatusCode.NotFound, null);
+
+        var properties = JsonSerializer.Deserialize<BlobProperties>(File.ReadAllText(propertiesPath))!;
+
+        if (headers.TryGetValue("x-ms-blob-content-type", out var contentType) && !string.IsNullOrEmpty(contentType))
+            properties.ContentType = contentType!;
+
+        if (headers.TryGetValue("x-ms-blob-content-encoding", out var encoding) && !string.IsNullOrEmpty(encoding))
+            properties.ContentEncoding = encoding!;
+
+        if (headers.TryGetValue("x-ms-blob-content-language", out var language) && !string.IsNullOrEmpty(language))
+            properties.ContentLanguage = language!;
+
+        if (headers.TryGetValue("x-ms-blob-cache-control", out var cacheControl) && !string.IsNullOrEmpty(cacheControl))
+            properties.CacheControl = cacheControl!;
+
+        if (headers.TryGetValue("x-ms-blob-content-disposition", out var disposition) && !string.IsNullOrEmpty(disposition))
+            properties.ContentDisposition = disposition!;
+
+        properties.LastModified = DateTimeOffset.UtcNow.ToString("R");
+        properties.ETag = new Azure.ETag(DateTimeOffset.UtcNow.Ticks.ToString());
+
+        File.WriteAllText(propertiesPath, JsonSerializer.Serialize(properties));
+
+        return (HttpStatusCode.OK, properties);
+    }
+
+    public (HttpStatusCode statusCode, BlobProperties? properties) SetBlobProperties(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string blobPath,
+        string? contentType,
+        string? contentEncoding,
+        string? contentLanguage,
+        string? cacheControl,
+        string? contentDisposition)
+    {
+        var propertiesPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+
+        if (!File.Exists(propertiesPath))
+            return (HttpStatusCode.NotFound, null);
+
+        var properties = JsonSerializer.Deserialize<BlobProperties>(File.ReadAllText(propertiesPath))!;
+
+        if (contentType != null) properties.ContentType = contentType;
+        if (contentEncoding != null) properties.ContentEncoding = contentEncoding;
+        if (contentLanguage != null) properties.ContentLanguage = contentLanguage;
+        if (cacheControl != null) properties.CacheControl = cacheControl;
+        if (contentDisposition != null) properties.ContentDisposition = contentDisposition;
+
+        properties.LastModified = DateTimeOffset.UtcNow.ToString("R");
+        properties.ETag = new Azure.ETag(DateTimeOffset.UtcNow.Ticks.ToString());
+
+        File.WriteAllText(propertiesPath, JsonSerializer.Serialize(properties));
+
+        return (HttpStatusCode.OK, properties);
+    }
+
     private string GetBlobMetadataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
     {
         var containerName = GetContainerNameFromBlobPath(blobPath);

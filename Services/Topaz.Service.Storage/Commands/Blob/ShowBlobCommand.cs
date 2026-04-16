@@ -4,7 +4,7 @@ using Spectre.Console.Cli;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
-namespace Topaz.Service.Storage.Commands;
+namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
 public sealed class ShowBlobCommand(ITopazLogger logger) : Command<ShowBlobCommand.ShowBlobCommandSettings>
@@ -32,6 +32,16 @@ public sealed class ShowBlobCommand(ITopazLogger logger) : Command<ShowBlobComma
         logger.LogInformation($"ETag:          {props.ETag}");
         logger.LogInformation($"Last Modified: {props.LastModified}");
         logger.LogInformation($"Date Uploaded: {props.DateUploaded}");
+        logger.LogInformation($"Content Type:  {props.ContentType}");
+        logger.LogInformation($"Content Length:{props.ContentLength}");
+        if (!string.IsNullOrEmpty(props.ContentEncoding))
+            logger.LogInformation($"Content Encoding:    {props.ContentEncoding}");
+        if (!string.IsNullOrEmpty(props.ContentLanguage))
+            logger.LogInformation($"Content Language:    {props.ContentLanguage}");
+        if (!string.IsNullOrEmpty(props.CacheControl))
+            logger.LogInformation($"Cache Control:       {props.CacheControl}");
+        if (!string.IsNullOrEmpty(props.ContentDisposition))
+            logger.LogInformation($"Content Disposition: {props.ContentDisposition}");
 
         return 0;
     }

@@ -1,5 +1,6 @@
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.Service.Storage.Commands.Blob;
 
 namespace Topaz.Service.Storage.Commands;
 
@@ -58,6 +59,12 @@ public sealed class GenericStorageCommand : IEmulatorCommand
                 blob.AddCommand<DeleteBlobCommand>("delete");
                 blob.AddCommand<ListBlobsCommand>("list");
                 blob.AddCommand<ShowBlobCommand>("show");
+                blob.AddCommand<SetBlobPropertiesCommand>("update");
+
+                blob.AddBranch("metadata", metadata =>
+                {
+                    metadata.AddCommand<GetBlobMetadataCommand>("show");
+                });
             });
         });
     }

@@ -81,7 +81,7 @@ Blob Storage is served on port **8891** (HTTP) in Topaz.
 | Set Blob Metadata | ✅ | `PUT /{containerName}/{blobName}?comp=metadata` |
 | Get Blob Metadata | ✅ | `GET /{containerName}/{blobName}?comp=metadata` |
 | Get Blob Properties | ✅ | `HEAD /{containerName}/{blobName}` — returns Content-Type, Content-Length, ETag, Last-Modified, x-ms-blob-type, x-ms-creation-time, x-ms-meta-* |
-| Set Blob Properties | ❌ | |
+| Set Blob Properties | ✅ | `PUT /{containerName}/{blobName}?comp=properties` |
 | List Blobs | ✅ | `GET /{containerName}` |
 | Copy Blob | ❌ | |
 | Put Block | ❌ | |

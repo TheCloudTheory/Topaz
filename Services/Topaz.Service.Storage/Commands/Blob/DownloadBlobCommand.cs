@@ -4,7 +4,7 @@ using Spectre.Console.Cli;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
-namespace Topaz.Service.Storage.Commands;
+namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
 public sealed class DownloadBlobCommand(ITopazLogger logger) : Command<DownloadBlobCommand.DownloadBlobCommandSettings>

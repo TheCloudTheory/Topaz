@@ -76,6 +76,18 @@ internal sealed class GetBlobPropertiesEndpoint(ITopazLogger logger)
 
                 if (!string.IsNullOrEmpty(properties.LastModified))
                     response.Content.Headers.TryAddWithoutValidation("Last-Modified", properties.LastModified);
+
+                if (!string.IsNullOrEmpty(properties.ContentEncoding))
+                    response.Content.Headers.TryAddWithoutValidation("Content-Encoding", properties.ContentEncoding);
+
+                if (!string.IsNullOrEmpty(properties.ContentLanguage))
+                    response.Content.Headers.TryAddWithoutValidation("Content-Language", properties.ContentLanguage);
+
+                if (!string.IsNullOrEmpty(properties.CacheControl))
+                    response.Content.Headers.TryAddWithoutValidation("Cache-Control", properties.CacheControl);
+
+                if (!string.IsNullOrEmpty(properties.ContentDisposition))
+                    response.Content.Headers.TryAddWithoutValidation("Content-Disposition", properties.ContentDisposition);
             }
 
             var (_, metadata) = _dataPlane.GetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier,

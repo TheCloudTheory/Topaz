@@ -27,8 +27,12 @@ public sealed class BlobProperties
     public string Name { get; init; } = null!;
     public string DateUploaded { get; init; }
     public string BlobType => "BlockBlob";
-    public ETag ETag { get; init; }
-    public string? LastModified { get; init; }
+    public ETag ETag { get; set; }
+    public string? LastModified { get; set; }
     public long ContentLength { get; init; }
-    public string ContentType { get; init; } = "application/octet-stream";
+    public string ContentType { get; set; } = "application/octet-stream";
+    public string? ContentEncoding { get; set; }
+    public string? ContentLanguage { get; set; }
+    public string? CacheControl { get; set; }
+    public string? ContentDisposition { get; set; }
 }

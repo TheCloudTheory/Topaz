@@ -7,40 +7,48 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
-public sealed class UploadBlobCommand(ITopazLogger logger) : Command<UploadBlobCommand.UploadBlobCommandSettings>
+public sealed class GetBlobMetadataCommand(ITopazLogger logger) : Command<GetBlobMetadataCommand.GetBlobMetadataCommandSettings>
 {
-    public override int Execute(CommandContext context, UploadBlobCommandSettings settings)
+    public override int Execute(CommandContext context, GetBlobMetadataCommandSettings settings)
     {
-        logger.LogInformation("Uploading blob...");
+        logger.LogInformation("Getting blob metadata...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
 
-        using var stream = File.OpenRead(settings.FilePath!);
-        var blobPath = $"/{settings.ContainerName}/{settings.BlobName ?? Path.GetFileName(settings.FilePath)}";
-
+        var blobPath = $"/{settings.ContainerName}/{settings.BlobName}";
         var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
-        var result = dataPlane.PutBlob(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!,
-            blobPath, settings.BlobName ?? Path.GetFileName(settings.FilePath)!, stream);
+        var result = dataPlane.GetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier,
+            settings.AccountName!, blobPath);
 
-        if (result.code == System.Net.HttpStatusCode.Created)
-            logger.LogInformation($"Blob uploaded: {blobPath}");
-        else
-            logger.LogError($"Upload failed with status {result.code}.");
+        if (result.statusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            logger.LogError($"Blob '{blobPath}' not found.");
+            return 1;
+        }
 
-        return result.code == System.Net.HttpStatusCode.Created ? 0 : 1;
+        var metadata = result.metadata ?? new Dictionary<string, string>();
+
+        if (metadata.Count == 0)
+        {
+            logger.LogInformation("No metadata set on this blob.");
+            return 0;
+        }
+
+        foreach (var (key, value) in metadata)
+            logger.LogInformation($"{key}: {value}");
+
+        return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, UploadBlobCommandSettings settings)
+    public override ValidationResult Validate(CommandContext context, GetBlobMetadataCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.AccountName))
             return ValidationResult.Error("Storage account name can't be null.");
         if (string.IsNullOrEmpty(settings.ContainerName))
             return ValidationResult.Error("Container name can't be null.");
-        if (string.IsNullOrEmpty(settings.FilePath))
-            return ValidationResult.Error("File path can't be null.");
-        if (!File.Exists(settings.FilePath))
-            return ValidationResult.Error($"File '{settings.FilePath}' does not exist.");
+        if (string.IsNullOrEmpty(settings.BlobName))
+            return ValidationResult.Error("Blob name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))
             return ValidationResult.Error("Resource group can't be null.");
         if (string.IsNullOrEmpty(settings.SubscriptionId))
@@ -49,11 +57,10 @@ public sealed class UploadBlobCommand(ITopazLogger logger) : Command<UploadBlobC
     }
 
     [UsedImplicitly]
-    public sealed class UploadBlobCommandSettings : CommandSettings
+    public sealed class GetBlobMetadataCommandSettings : CommandSettings
     {
         [CommandOption("--account-name")] public string? AccountName { get; set; }
         [CommandOption("-c|--container-name")] public string? ContainerName { get; set; }
-        [CommandOption("-f|--file")] public string? FilePath { get; set; }
         [CommandOption("-n|--name")] public string? BlobName { get; set; }
         [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
         [CommandOption("-s|--subscription-id")] public string? SubscriptionId { get; set; }

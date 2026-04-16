@@ -147,6 +147,36 @@ public class BlobStorageTests
     }
 
     [Test]
+    public void BlobStorageTests_WhenBlobPropertiesAreSet_TheyShouldBeRetrievable()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("set-props-test");
+        var containerClient = serviceClient.GetBlobContainerClient("set-props-test");
+        var blobClient = containerClient.GetBlobClient("hello.txt");
+        blobClient.Upload(new BinaryData("hello world"));
+
+        // Act
+        blobClient.SetHttpHeaders(new BlobHttpHeaders
+        {
+            ContentType = "text/plain",
+            ContentEncoding = "utf-8",
+            ContentLanguage = "en-US",
+            CacheControl = "max-age=3600",
+            ContentDisposition = "inline"
+        });
+
+        var properties = blobClient.GetProperties();
+
+        // Assert
+        Assert.That(properties.Value.ContentType, Is.EqualTo("text/plain"));
+        Assert.That(properties.Value.ContentEncoding, Is.EqualTo("utf-8"));
+        Assert.That(properties.Value.ContentLanguage, Is.EqualTo("en-US"));
+        Assert.That(properties.Value.CacheControl, Is.EqualTo("max-age=3600"));
+        Assert.That(properties.Value.ContentDisposition, Is.EqualTo("inline"));
+    }
+
+    [Test]
     public void BlobStorageTests_WhenBlobPropertiesAreRequested_ContentTypeAndLengthShouldBeReturned()
     {
         // Arrange
