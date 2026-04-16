@@ -2,7 +2,7 @@ using Azure;
 
 namespace Topaz.Service.Storage.Models;
 
-// TODO: Add additional properties as listed in https://learn.microsoft.com/en-us/rest/api/storageservices/get-blob-properties?tabs=microsoft-entra-id
+// See https://learn.microsoft.com/en-us/rest/api/storageservices/get-blob-properties?tabs=microsoft-entra-id#response-headers
 public sealed class BlobProperties
 {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
@@ -29,4 +29,6 @@ public sealed class BlobProperties
     public string BlobType => "BlockBlob";
     public ETag ETag { get; init; }
     public string? LastModified { get; init; }
+    public long ContentLength { get; init; }
+    public string ContentType { get; init; } = "application/octet-stream";
 }

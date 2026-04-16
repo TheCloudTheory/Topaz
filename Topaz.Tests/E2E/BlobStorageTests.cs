@@ -147,6 +147,28 @@ public class BlobStorageTests
     }
 
     [Test]
+    public void BlobStorageTests_WhenBlobPropertiesAreRequested_ContentTypeAndLengthShouldBeReturned()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("props-test");
+        var containerClient = serviceClient.GetBlobContainerClient("props-test");
+        var blobClient = containerClient.GetBlobClient("hello.txt");
+        var content = new BinaryData("hello world");
+        blobClient.Upload(content, new BlobUploadOptions { HttpHeaders = new BlobHttpHeaders { ContentType = "text/plain" } });
+
+        // Act
+        var properties = blobClient.GetProperties();
+
+        // Assert
+        Assert.That(properties.Value.ContentType, Is.EqualTo("text/plain"));
+        Assert.That(properties.Value.ContentLength, Is.GreaterThan(0));
+        Assert.That(properties.Value.BlobType, Is.EqualTo(BlobType.Block));
+        Assert.That(properties.Value.LastModified, Is.Not.EqualTo(default(DateTimeOffset)));
+        Assert.That(properties.Value.ETag, Is.Not.EqualTo(default(ETag)));
+    }
+
+    [Test]
     public void BlobStorageTests_WhenBlobPropertiesAreRequested_TheyShouldReturned()
     {
         // Arrange

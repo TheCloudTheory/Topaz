@@ -41,7 +41,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     // TODO: This method must support different kinds of blobs
     public (HttpStatusCode code, BlobProperties? properties) PutBlob(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName,
-        Stream input)
+        Stream input, string? contentType = null)
     {
         logger.LogDebug(nameof(BlobServiceDataPlane), nameof(PutBlob), "Executing {0}: {1} {2} {3}", nameof(PutBlob), storageAccountName, blobPath, blobName);
 
@@ -67,6 +67,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         {
             Name = blobName,
             ETag = new ETag(DateTimeOffset.Now.Ticks.ToString()),
+            ContentLength = System.Text.Encoding.UTF8.GetByteCount(rawContent),
+            ContentType = string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType,
         };
 
         File.WriteAllText(GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath), JsonSerializer.Serialize(metadata));

@@ -48,7 +48,8 @@ internal sealed class PutBlobEndpoint(ITopazLogger logger)
             else
             {
                 HandleUploadBlobRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
-                    context.Request.Path, blobName!, context.Request.Body, response);
+                    context.Request.Path, blobName!, context.Request.Body, response,
+                    context.Request.ContentType);
             }
         }
         catch (Exception ex)
@@ -67,13 +68,14 @@ internal sealed class PutBlobEndpoint(ITopazLogger logger)
         string blobPath,
         string blobName,
         Stream input,
-        HttpResponseMessage response)
+        HttpResponseMessage response,
+        string? contentType = null)
     {
         Logger.LogDebug(nameof(PutBlobEndpoint), nameof(HandleUploadBlobRequest), "Handling blob upload for {0}.",
             blobPath);
 
         var result = _dataPlane.PutBlob(subscriptionIdentifier, resourceGroupIdentifier,
-            storageAccountName, blobPath, blobName, input);
+            storageAccountName, blobPath, blobName, input, contentType);
 
         // TODO: The response must include the response headers from https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob?tabs=microsoft-entra-id#response
         response.StatusCode = result.code;

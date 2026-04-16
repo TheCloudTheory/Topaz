@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
@@ -42,31 +43,48 @@ internal sealed class GetBlobPropertiesEndpoint(ITopazLogger logger)
             Logger.LogDebug(nameof(GetBlobPropertiesEndpoint), nameof(GetResponse),
                 "Handling blob properties for {0}.", context.Request.Path.Value);
 
-            var properties = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
+            var (code, properties) = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
                 storageAccount!.Name, context.Request.Path.Value!, blobName!);
 
-            if (properties.code == HttpStatusCode.NotFound)
+            if (code == HttpStatusCode.NotFound)
             {
                 response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Blob not found",
                     HttpStatusCode.NotFound);
+                return;
             }
-            else
+
+            response.StatusCode = code;
+
+            if (properties != null)
             {
-                response.StatusCode = properties.code;
+                var etag = properties.ETag.ToString();
+                response.Headers.ETag = new EntityTagHeaderValue(
+                    etag.StartsWith('"') ? etag : $"\"{etag}\"");
 
-                if (properties.properties != null)
-                {
-                    response.Headers.Add("x-ms-meta-Name", properties.properties.Name);
-                }
+                response.Headers.TryAddWithoutValidation("x-ms-blob-type", properties.BlobType);
+                response.Headers.TryAddWithoutValidation("x-ms-server-encrypted", "true");
+                response.Headers.TryAddWithoutValidation("x-ms-lease-status", "unlocked");
+                response.Headers.TryAddWithoutValidation("x-ms-lease-state", "available");
 
-                var (_, metadata) = _dataPlane.GetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier,
-                    storageAccount!.Name, context.Request.Path.Value!);
+                if (!string.IsNullOrEmpty(properties.DateUploaded))
+                    response.Headers.TryAddWithoutValidation("x-ms-creation-time", properties.DateUploaded);
 
-                if (metadata != null)
-                {
-                    foreach (var (key, value) in metadata)
-                        response.Headers.TryAddWithoutValidation(key, value);
-                }
+                response.Content = new ByteArrayContent([]);
+                response.Content.Headers.ContentType =
+                    MediaTypeHeaderValue.Parse(properties.ContentType);
+                response.Content.Headers.ContentLength = properties.ContentLength;
+
+                if (!string.IsNullOrEmpty(properties.LastModified))
+                    response.Content.Headers.TryAddWithoutValidation("Last-Modified", properties.LastModified);
+            }
+
+            var (_, metadata) = _dataPlane.GetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier,
+                storageAccount!.Name, context.Request.Path.Value!);
+
+            if (metadata != null)
+            {
+                foreach (var (key, value) in metadata)
+                    response.Headers.TryAddWithoutValidation(key, value);
             }
         }
         catch (Exception ex)
