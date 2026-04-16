@@ -37,10 +37,10 @@ internal sealed class GetBlobMetadataEndpoint(ITopazLogger logger)
             Logger.LogDebug(nameof(GetBlobMetadataEndpoint), nameof(GetResponse),
                 "Handling blob metadata for {0}.", context.Request.Path.Value);
 
-            var (statusCode, metadata) = _dataPlane.GetBlobMetadata(subscriptionIdentifier,
+            var op = _dataPlane.GetBlobMetadata(subscriptionIdentifier,
                 resourceGroupIdentifier, storageAccount!.Name, context.Request.Path.Value!);
 
-            if (statusCode == HttpStatusCode.NotFound)
+            if (op.Result == OperationResult.NotFound)
             {
                 response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Blob not found",
                     HttpStatusCode.NotFound);
@@ -52,9 +52,9 @@ internal sealed class GetBlobMetadataEndpoint(ITopazLogger logger)
             var now = DateTimeOffset.UtcNow;
             response.Headers.ETag = new EntityTagHeaderValue($"\"{now.Ticks}\"");
 
-            if (metadata != null)
+            if (op.Resource != null)
             {
-                foreach (var (key, value) in metadata)
+                foreach (var (key, value) in op.Resource)
                     response.Headers.TryAddWithoutValidation(key, value);
             }
 

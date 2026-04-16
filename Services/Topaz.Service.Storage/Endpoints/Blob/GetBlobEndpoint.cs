@@ -43,56 +43,56 @@ internal sealed class GetBlobEndpoint(ITopazLogger logger)
             Logger.LogDebug(nameof(GetBlobEndpoint), nameof(GetResponse),
                 "Handling blob download for {0}.", context.Request.Path.Value);
 
-            var (code, content) = _dataPlane.GetBlob(subscriptionIdentifier, resourceGroupIdentifier,
+            var op = _dataPlane.GetBlob(subscriptionIdentifier, resourceGroupIdentifier,
                 storageAccount!.Name, context.Request.Path.Value!);
 
-            if (code == HttpStatusCode.NotFound)
+            if (op.Result == OperationResult.NotFound)
             {
                 response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Blob not found",
                     HttpStatusCode.NotFound);
                 return;
             }
 
-            var (_, properties) = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
+            var props = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
                 storageAccount!.Name, context.Request.Path.Value!, blobName!);
 
             response.StatusCode = HttpStatusCode.OK;
 
-            var bytes = content != null ? System.Text.Encoding.UTF8.GetBytes(content) : [];
+            var bytes = op.Resource != null ? System.Text.Encoding.UTF8.GetBytes(op.Resource) : [];
             response.Content = new ByteArrayContent(bytes);
 
-            var contentType = properties?.ContentType ?? "application/octet-stream";
+            var contentType = props.Resource?.ContentType ?? "application/octet-stream";
             response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
             response.Content.Headers.ContentLength = bytes.Length;
 
-            if (properties != null)
+            if (props.Resource != null)
             {
-                var etag = properties.ETag.ToString();
+                var etag = props.Resource.ETag.ToString();
                 response.Headers.ETag = new EntityTagHeaderValue(
                     etag.StartsWith('"') ? etag : $"\"{etag}\"");
 
-                response.Headers.TryAddWithoutValidation("x-ms-blob-type", properties.BlobType);
+                response.Headers.TryAddWithoutValidation("x-ms-blob-type", props.Resource.BlobType);
                 response.Headers.TryAddWithoutValidation("x-ms-server-encrypted", "true");
                 response.Headers.TryAddWithoutValidation("x-ms-lease-status", "unlocked");
                 response.Headers.TryAddWithoutValidation("x-ms-lease-state", "available");
 
-                if (!string.IsNullOrEmpty(properties.LastModified))
-                    response.Content.Headers.TryAddWithoutValidation("Last-Modified", properties.LastModified);
+                if (!string.IsNullOrEmpty(props.Resource.LastModified))
+                    response.Content.Headers.TryAddWithoutValidation("Last-Modified", props.Resource.LastModified);
 
-                if (!string.IsNullOrEmpty(properties.ContentEncoding))
+                if (!string.IsNullOrEmpty(props.Resource.ContentEncoding))
                     response.Content.Headers.TryAddWithoutValidation("Content-Encoding",
-                        properties.ContentEncoding);
+                        props.Resource.ContentEncoding);
 
-                if (!string.IsNullOrEmpty(properties.ContentLanguage))
+                if (!string.IsNullOrEmpty(props.Resource.ContentLanguage))
                     response.Content.Headers.TryAddWithoutValidation("Content-Language",
-                        properties.ContentLanguage);
+                        props.Resource.ContentLanguage);
 
-                if (!string.IsNullOrEmpty(properties.CacheControl))
-                    response.Content.Headers.TryAddWithoutValidation("Cache-Control", properties.CacheControl);
+                if (!string.IsNullOrEmpty(props.Resource.CacheControl))
+                    response.Content.Headers.TryAddWithoutValidation("Cache-Control", props.Resource.CacheControl);
 
-                if (!string.IsNullOrEmpty(properties.ContentDisposition))
+                if (!string.IsNullOrEmpty(props.Resource.ContentDisposition))
                     response.Content.Headers.TryAddWithoutValidation("Content-Disposition",
-                        properties.ContentDisposition);
+                        props.Resource.ContentDisposition);
             }
         }
         catch (Exception ex)

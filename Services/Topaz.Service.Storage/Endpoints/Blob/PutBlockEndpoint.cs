@@ -42,7 +42,7 @@ internal sealed class PutBlockEndpoint(ITopazLogger logger)
                 return;
             }
 
-            var statusCode = _dataPlane.PutBlock(
+            var op = _dataPlane.PutBlock(
                 subscriptionIdentifier,
                 resourceGroupIdentifier,
                 storageAccount!.Name,
@@ -50,7 +50,7 @@ internal sealed class PutBlockEndpoint(ITopazLogger logger)
                 blockId!,
                 context.Request.Body);
 
-            response.StatusCode = statusCode;
+            response.StatusCode = op.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.BadRequest;
             response.Content = new ByteArrayContent([]);
             response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
         }

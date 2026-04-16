@@ -41,17 +41,17 @@ internal sealed class DeleteBlobEndpoint(ITopazLogger logger)
 
             Logger.LogDebug(nameof(DeleteBlobEndpoint), nameof(GetResponse), "Handling deleting blob {0}.", blobName);
 
-            var result = _dataPlane.DeleteBlob(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
+            var op = _dataPlane.DeleteBlob(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
                 context.Request.Path.Value!, blobName!);
 
-            if (result == HttpStatusCode.NotFound)
+            if (op.Result == OperationResult.NotFound)
             {
                 response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Blob not found",
                     HttpStatusCode.NotFound);
             }
             else
             {
-                response.StatusCode = result;
+                response.StatusCode = HttpStatusCode.Accepted;
             }
         }
         catch (Exception ex)

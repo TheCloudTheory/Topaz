@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -20,14 +21,14 @@ public sealed class DownloadBlobCommand(ITopazLogger logger) : Command<DownloadB
         var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
         var result = dataPlane.GetBlob(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!, blobPath);
 
-        if (result.code == System.Net.HttpStatusCode.NotFound)
+        if (result.Result == OperationResult.NotFound)
         {
             logger.LogError($"Blob '{blobPath}' not found.");
             return 1;
         }
 
         var destination = settings.Destination ?? settings.BlobName!;
-        File.WriteAllText(destination, result.content);
+        File.WriteAllText(destination, result.Resource);
         logger.LogInformation($"Blob downloaded to: {destination}");
 
         return 0;

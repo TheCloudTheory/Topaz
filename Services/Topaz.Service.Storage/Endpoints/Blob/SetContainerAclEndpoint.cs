@@ -37,12 +37,12 @@ internal sealed class SetContainerAclEndpoint(ITopazLogger logger)
             Logger.LogDebug(nameof(SetContainerAclEndpoint), nameof(GetResponse),
                 "Setting ACL for container: {0}", containerName);
 
-            var statusCode = _dataPlane.SetContainerAcl(subscriptionIdentifier, resourceGroupIdentifier,
+            var op = _dataPlane.SetContainerAcl(subscriptionIdentifier, resourceGroupIdentifier,
                 storageAccount!.Name, containerName, context.Request.Body);
 
-            response.StatusCode = statusCode;
+            response.StatusCode = op.Result == OperationResult.Updated ? HttpStatusCode.OK : HttpStatusCode.NotFound;
 
-            if (statusCode != HttpStatusCode.OK) return;
+            if (op.Result != OperationResult.Updated) return;
 
             var now = DateTimeOffset.UtcNow;
             response.Headers.ETag = new EntityTagHeaderValue($"\"{now.Ticks}\"");

@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -21,7 +22,7 @@ public sealed class DeleteBlobCommand(ITopazLogger logger) : Command<DeleteBlobC
         var result = dataPlane.DeleteBlob(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!,
             blobPath, settings.BlobName!);
 
-        if (result == System.Net.HttpStatusCode.NotFound)
+        if (result.Result == OperationResult.NotFound)
         {
             logger.LogError($"Blob '{blobPath}' not found.");
             return 1;

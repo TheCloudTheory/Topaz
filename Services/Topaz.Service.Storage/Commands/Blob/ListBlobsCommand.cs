@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -21,7 +22,7 @@ public sealed class ListBlobsCommand(ITopazLogger logger) : Command<ListBlobsCom
         var result = dataPlane.ListBlobs(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!,
             settings.ContainerName!);
 
-        var blobs = result.GetBlobs();
+        var blobs = result.Resource!.GetBlobs();
         if (blobs.Length == 0)
         {
             logger.LogInformation("No blobs found.");

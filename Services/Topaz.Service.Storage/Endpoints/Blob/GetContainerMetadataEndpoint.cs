@@ -37,17 +37,17 @@ internal sealed class GetContainerMetadataEndpoint(ITopazLogger logger)
             Logger.LogDebug(nameof(GetContainerMetadataEndpoint), nameof(GetResponse),
                 "Getting metadata for container: {0}", containerName);
 
-            var (statusCode, metadata) = _dataPlane.GetContainerMetadata(subscriptionIdentifier,
+            var op = _dataPlane.GetContainerMetadata(subscriptionIdentifier,
                 resourceGroupIdentifier, storageAccount!.Name, containerName);
 
-            response.StatusCode = statusCode;
+            response.StatusCode = op.Result == OperationResult.Success ? HttpStatusCode.OK : HttpStatusCode.NotFound;
 
-            if (statusCode != HttpStatusCode.OK) return;
+            if (op.Result != OperationResult.Success) return;
 
             var now = DateTimeOffset.UtcNow;
             response.Headers.ETag = new EntityTagHeaderValue($"\"{now.Ticks}\"");
 
-            foreach (var (key, value) in metadata!)
+            foreach (var (key, value) in op.Resource!)
                 response.Headers.TryAddWithoutValidation(key, value);
 
             response.Content = new ByteArrayContent([]);

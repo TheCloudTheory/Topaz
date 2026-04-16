@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -21,13 +22,13 @@ public sealed class GetBlobMetadataCommand(ITopazLogger logger) : Command<GetBlo
         var result = dataPlane.GetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier,
             settings.AccountName!, blobPath);
 
-        if (result.statusCode == System.Net.HttpStatusCode.NotFound)
+        if (result.Result == OperationResult.NotFound)
         {
             logger.LogError($"Blob '{blobPath}' not found.");
             return 1;
         }
 
-        var metadata = result.metadata ?? new Dictionary<string, string>();
+        var metadata = result.Resource ?? new Dictionary<string, string>();
 
         if (metadata.Count == 0)
         {

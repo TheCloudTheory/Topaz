@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -21,13 +22,13 @@ public sealed class ShowBlobCommand(ITopazLogger logger) : Command<ShowBlobComma
         var result = dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
             settings.AccountName!, blobPath, settings.BlobName!);
 
-        if (result.code == System.Net.HttpStatusCode.NotFound)
+        if (result.Result == OperationResult.NotFound)
         {
             logger.LogError($"Blob '{blobPath}' not found.");
             return 1;
         }
 
-        var props = result.properties!;
+        var props = result.Resource!;
         logger.LogInformation($"Name:          {props.Name}");
         logger.LogInformation($"ETag:          {props.ETag}");
         logger.LogInformation($"Last Modified: {props.LastModified}");

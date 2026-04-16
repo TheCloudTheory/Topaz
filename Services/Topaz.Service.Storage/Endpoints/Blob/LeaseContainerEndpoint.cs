@@ -69,19 +69,29 @@ internal sealed class LeaseContainerEndpoint(ITopazLogger logger)
             Logger.LogDebug(nameof(LeaseContainerEndpoint), nameof(GetResponse),
                 "Lease action '{0}' on container: {1}", leaseAction, containerName);
 
-            var (statusCode, lease) = _dataPlane.LeaseContainer(
+            var op = _dataPlane.LeaseContainer(
                 subscriptionIdentifier, resourceGroupIdentifier,
                 storageAccount!.Name, containerName,
                 leaseAction, leaseDuration, proposedLeaseId, currentLeaseId, breakPeriod);
 
-            response.StatusCode = statusCode;
+            response.StatusCode = op.Result switch
+            {
+                OperationResult.Created => HttpStatusCode.Created,
+                OperationResult.Accepted => HttpStatusCode.Accepted,
+                OperationResult.Success => HttpStatusCode.OK,
+                OperationResult.NotFound => HttpStatusCode.NotFound,
+                OperationResult.Conflict => HttpStatusCode.Conflict,
+                OperationResult.PreconditionFailed => HttpStatusCode.PreconditionFailed,
+                OperationResult.BadRequest => HttpStatusCode.BadRequest,
+                _ => HttpStatusCode.InternalServerError
+            };
 
-            if (lease == null)
+            if (op.Resource == null)
             {
                 response.CreateBlobErrorResponse(
-                    GetLeaseErrorCode(statusCode, leaseAction, currentLeaseId),
-                    GetLeaseErrorMessage(statusCode, leaseAction, containerName, currentLeaseId),
-                    statusCode);
+                    GetLeaseErrorCode(op.Result, leaseAction, currentLeaseId),
+                    GetLeaseErrorMessage(op.Result, leaseAction, containerName, currentLeaseId),
+                    response.StatusCode);
                 return;
             }
 
@@ -90,12 +100,12 @@ internal sealed class LeaseContainerEndpoint(ITopazLogger logger)
             response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
             response.Content.Headers.TryAddWithoutValidation("Last-Modified", now.ToString("R"));
 
-            if (lease.LeaseId != null)
-                response.Headers.TryAddWithoutValidation("x-ms-lease-id", lease.LeaseId);
+            if (op.Resource.LeaseId != null)
+                response.Headers.TryAddWithoutValidation("x-ms-lease-id", op.Resource.LeaseId);
 
-            if (statusCode == HttpStatusCode.Accepted && lease.BreakTime.HasValue)
+            if (op.Result == OperationResult.Accepted && op.Resource.BreakTime.HasValue)
             {
-                var remainingSeconds = (int)Math.Max(0, Math.Ceiling((lease.BreakTime.Value - now).TotalSeconds));
+                var remainingSeconds = (int)Math.Max(0, Math.Ceiling((op.Resource.BreakTime.Value - now).TotalSeconds));
                 response.Headers.TryAddWithoutValidation("x-ms-lease-time", remainingSeconds.ToString());
             }
         }
@@ -107,37 +117,37 @@ internal sealed class LeaseContainerEndpoint(ITopazLogger logger)
         }
     }
 
-    private static string GetLeaseErrorCode(HttpStatusCode statusCode, string leaseAction, string? currentLeaseId)
+    private static string GetLeaseErrorCode(OperationResult result, string leaseAction, string? currentLeaseId)
     {
-        return statusCode switch
+        return result switch
         {
-            HttpStatusCode.NotFound => "ContainerNotFound",
-            HttpStatusCode.PreconditionFailed => "LeaseIdMismatchWithContainerOperation",
-            HttpStatusCode.BadRequest when string.Equals(leaseAction, "change", StringComparison.OrdinalIgnoreCase) =>
+            OperationResult.NotFound => "ContainerNotFound",
+            OperationResult.PreconditionFailed => "LeaseIdMismatchWithContainerOperation",
+            OperationResult.BadRequest when string.Equals(leaseAction, "change", StringComparison.OrdinalIgnoreCase) =>
                 "InvalidHeaderValue",
-            HttpStatusCode.Conflict when string.Equals(leaseAction, "acquire", StringComparison.OrdinalIgnoreCase) =>
+            OperationResult.Conflict when string.Equals(leaseAction, "acquire", StringComparison.OrdinalIgnoreCase) =>
                 "LeaseAlreadyPresent",
-            HttpStatusCode.Conflict when RequiresLeaseId(leaseAction) && string.IsNullOrWhiteSpace(currentLeaseId) =>
+            OperationResult.Conflict when RequiresLeaseId(leaseAction) && string.IsNullOrWhiteSpace(currentLeaseId) =>
                 "LeaseIdMissing",
-            HttpStatusCode.Conflict => "LeaseNotPresentWithContainerOperation",
+            OperationResult.Conflict => "LeaseNotPresentWithContainerOperation",
             _ => "OperationNotAllowed"
         };
     }
 
-    private static string GetLeaseErrorMessage(HttpStatusCode statusCode, string leaseAction, string containerName,
+    private static string GetLeaseErrorMessage(OperationResult result, string leaseAction, string containerName,
         string? currentLeaseId)
     {
-        return statusCode switch
+        return result switch
         {
-            HttpStatusCode.NotFound => $"Container '{containerName}' was not found.",
-            HttpStatusCode.PreconditionFailed => "The specified lease ID did not match the active lease.",
-            HttpStatusCode.BadRequest when string.Equals(leaseAction, "change", StringComparison.OrdinalIgnoreCase) =>
+            OperationResult.NotFound => $"Container '{containerName}' was not found.",
+            OperationResult.PreconditionFailed => "The specified lease ID did not match the active lease.",
+            OperationResult.BadRequest when string.Equals(leaseAction, "change", StringComparison.OrdinalIgnoreCase) =>
                 "A proposed lease ID is required when changing a lease.",
-            HttpStatusCode.Conflict when string.Equals(leaseAction, "acquire", StringComparison.OrdinalIgnoreCase) =>
+            OperationResult.Conflict when string.Equals(leaseAction, "acquire", StringComparison.OrdinalIgnoreCase) =>
                 "There is already an active lease on the container.",
-            HttpStatusCode.Conflict when RequiresLeaseId(leaseAction) && string.IsNullOrWhiteSpace(currentLeaseId) =>
+            OperationResult.Conflict when RequiresLeaseId(leaseAction) && string.IsNullOrWhiteSpace(currentLeaseId) =>
                 "A lease ID must be specified for this lease operation.",
-            HttpStatusCode.Conflict => "There is no active lease on the container.",
+            OperationResult.Conflict => "There is no active lease on the container.",
             _ => $"Lease action '{leaseAction}' is not allowed."
         };
     }

@@ -38,16 +38,16 @@ internal sealed class GetContainerAclEndpoint(ITopazLogger logger)
             Logger.LogDebug(nameof(GetContainerAclEndpoint), nameof(GetResponse),
                 "Getting ACL for container: {0}", containerName);
 
-            var (statusCode, xml) = _dataPlane.GetContainerAcl(subscriptionIdentifier,
+            var op = _dataPlane.GetContainerAcl(subscriptionIdentifier,
                 resourceGroupIdentifier, storageAccount!.Name, containerName);
 
-            response.StatusCode = statusCode;
+            response.StatusCode = op.Result == OperationResult.Success ? HttpStatusCode.OK : HttpStatusCode.NotFound;
 
-            if (statusCode != HttpStatusCode.OK) return;
+            if (op.Result != OperationResult.Success) return;
 
             var now = DateTimeOffset.UtcNow;
             response.Headers.ETag = new EntityTagHeaderValue($"\"{now.Ticks}\"");
-            response.Content = new StringContent(xml!, Encoding.UTF8);
+            response.Content = new StringContent(op.Resource!, Encoding.UTF8);
             response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
             response.Content.Headers.TryAddWithoutValidation("Last-Modified", now.ToString("R"));
         }

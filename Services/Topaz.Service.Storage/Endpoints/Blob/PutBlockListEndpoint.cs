@@ -44,7 +44,7 @@ internal sealed class PutBlockListEndpoint(ITopazLogger logger)
                 ? blobContentType.ToString()
                 : null;
 
-            var (statusCode, properties) = _dataPlane.PutBlockList(
+            var op = _dataPlane.PutBlockList(
                 subscriptionIdentifier,
                 resourceGroupIdentifier,
                 storageAccount!.Name,
@@ -53,16 +53,16 @@ internal sealed class PutBlockListEndpoint(ITopazLogger logger)
                 context.Request.Body,
                 contentType);
 
-            response.StatusCode = statusCode;
+            response.StatusCode = op.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.BadRequest;
 
-            if (properties == null)
+            if (op.Resource == null)
             {
                 response.Content = new ByteArrayContent([]);
                 response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
                 return;
             }
 
-            SetResponseHeaders(response, properties);
+            SetResponseHeaders(response, op.Resource);
         }
         catch (Exception ex)
         {

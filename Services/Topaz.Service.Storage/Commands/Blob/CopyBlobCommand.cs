@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -22,25 +23,25 @@ public sealed class CopyBlobCommand(ITopazLogger logger) : Command<CopyBlobComma
         var dstBlobPath = $"/{settings.DestinationContainerName}/{settings.DestinationBlobName}";
 
         var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
-        var (code, _, copyId) = dataPlane.CopyBlob(
+        var op = dataPlane.CopyBlob(
             srcSubscriptionId, srcResourceGroupId, settings.SourceAccountName!,
             srcBlobPath,
             dstSubscriptionId, dstResourceGroupId, settings.DestinationAccountName!,
             dstBlobPath, settings.DestinationBlobName!);
 
-        if (code == System.Net.HttpStatusCode.NotFound)
+        if (op.Result == OperationResult.NotFound)
         {
             logger.LogError($"Source blob '{srcBlobPath}' not found.");
             return 1;
         }
 
-        if (code != System.Net.HttpStatusCode.Accepted)
+        if (op.Result != OperationResult.Accepted)
         {
-            logger.LogError($"Copy failed with status {code}.");
+            logger.LogError($"Copy failed with status {op.Result}.");
             return 1;
         }
 
-        logger.LogInformation($"Blob copied: {srcBlobPath} -> {dstBlobPath} (copy-id: {copyId})");
+        logger.LogInformation($"Blob copied: {srcBlobPath} -> {dstBlobPath} (copy-id: {op.Resource!.CopyId})");
         return 0;
     }
 

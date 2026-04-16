@@ -45,17 +45,17 @@ internal sealed class GetBlockListEndpoint(ITopazLogger logger)
             Logger.LogDebug(nameof(GetBlockListEndpoint), nameof(GetResponse),
                 "Getting block list for {0}, type={1}.", context.Request.Path.Value, blockListType);
 
-            var (statusCode, committed, uncommitted) = _dataPlane.GetBlockList(
+            var op = _dataPlane.GetBlockList(
                 subscriptionIdentifier, resourceGroupIdentifier,
                 storageAccount!.Name, context.Request.Path.Value!, blockListType);
 
-            if (statusCode == HttpStatusCode.NotFound)
+            if (op.Result == OperationResult.NotFound)
             {
                 response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Blob not found", HttpStatusCode.NotFound);
                 return;
             }
 
-            var result = BlockListResult.From(committed, uncommitted);
+            var result = BlockListResult.From(op.Resource!.Committed, op.Resource!.Uncommitted);
             using var sw = new EncodingAwareStringWriter();
             new XmlSerializer(typeof(BlockListResult)).Serialize(sw, result);
             response.StatusCode = HttpStatusCode.OK;

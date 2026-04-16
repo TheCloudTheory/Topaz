@@ -88,15 +88,13 @@ internal sealed class PutBlobEndpoint(ITopazLogger logger)
         Logger.LogDebug(nameof(PutBlobEndpoint), nameof(HandleUploadBlobRequest), "Handling blob upload for {0}.",
             blobPath);
 
-        var result = _dataPlane.PutBlob(subscriptionIdentifier, resourceGroupIdentifier,
+        var op = _dataPlane.PutBlob(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccountName, blobPath, blobName, input, contentType);
 
         // TODO: The response must include the response headers from https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob?tabs=microsoft-entra-id#response
-        response.StatusCode = result.code;
+        response.StatusCode = op.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.BadRequest;
 
-        if (result.properties == null) return;
-
-        SetResponseHeaders(response, result.properties);
+        if (op.Resource != null) SetResponseHeaders(response, op.Resource);
     }
 
     private void HandleSetBlobMetadataRequest(
@@ -114,7 +112,7 @@ internal sealed class PutBlobEndpoint(ITopazLogger logger)
         var result = _dataPlane.SetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
             blobPath, headers);
 
-        if (result == HttpStatusCode.NotFound)
+        if (result.Result == OperationResult.NotFound)
         {
             response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Blob not found", HttpStatusCode.NotFound);
             Logger.LogDebug(nameof(PutBlobEndpoint), nameof(HandleSetBlobMetadataRequest),
@@ -122,14 +120,12 @@ internal sealed class PutBlobEndpoint(ITopazLogger logger)
         }
         else
         {
-            var properties = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
+            var props = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
                 storageAccountName, blobPath, blobName);
 
-            response.StatusCode = result;
+            response.StatusCode = HttpStatusCode.OK;
 
-            if (properties.properties == null) return;
-
-            SetResponseHeaders(response, properties.properties);
+            if (props.Resource != null) SetResponseHeaders(response, props.Resource);
         }
     }
 
@@ -165,21 +161,21 @@ internal sealed class PutBlobEndpoint(ITopazLogger logger)
         var srcSubscriptionId = SubscriptionIdentifier.From(srcIdentifiers.Value.subscription);
         var srcResourceGroupId = ResourceGroupIdentifier.From(srcIdentifiers.Value.resourceGroup);
 
-        var (code, properties, copyId) = _dataPlane.CopyBlob(
+        var op = _dataPlane.CopyBlob(
             srcSubscriptionId, srcResourceGroupId, srcAccountName, srcBlobPath,
             dstSubscriptionId, dstResourceGroupId, dstAccountName, dstBlobPath, dstBlobName);
 
-        if (code == HttpStatusCode.NotFound)
+        if (op.Result == OperationResult.NotFound)
         {
             response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Source blob not found", HttpStatusCode.NotFound);
             return;
         }
 
         response.StatusCode = HttpStatusCode.Accepted;
-        response.Headers.TryAddWithoutValidation("x-ms-copy-id", copyId);
+        response.Headers.TryAddWithoutValidation("x-ms-copy-id", op.Resource!.CopyId);
         response.Headers.TryAddWithoutValidation("x-ms-copy-status", "success");
 
-        if (properties != null)
-            SetResponseHeaders(response, properties);
+        if (op.Resource.Properties != null)
+            SetResponseHeaders(response, op.Resource.Properties);
     }
 }

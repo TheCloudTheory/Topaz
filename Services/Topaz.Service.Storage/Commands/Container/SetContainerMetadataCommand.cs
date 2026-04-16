@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -22,7 +23,7 @@ public sealed class SetContainerMetadataCommand(ITopazLogger logger)
         var result = dataPlane.SetContainerMetadata(subscriptionIdentifier, resourceGroupIdentifier,
             settings.AccountName!, settings.Name!, metadata);
 
-        if (result == System.Net.HttpStatusCode.NotFound)
+        if (result.Result == OperationResult.NotFound)
         {
             logger.LogError($"Container '{settings.Name}' not found.");
             return 1;

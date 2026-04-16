@@ -43,12 +43,12 @@ internal sealed class ListBlobsEndpoint(ITopazLogger logger)
             // ?restype=container&comp=list&prefix=localhost/eh-test/$default/ownership/&include=Metadata
             // We need to handle them as well
 
-            var blobs = _dataPlane.ListBlobs(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
+            var op = _dataPlane.ListBlobs(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
                 containerName);
 
             using var sw = new EncodingAwareStringWriter();
             var serializer = new XmlSerializer(typeof(BlobEnumerationResult));
-            serializer.Serialize(sw, blobs);
+            serializer.Serialize(sw, op.Resource);
 
             response.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/xml");
             response.StatusCode = HttpStatusCode.OK;

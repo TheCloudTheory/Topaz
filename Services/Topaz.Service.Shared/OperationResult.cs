@@ -8,5 +8,8 @@ public enum OperationResult
     NotFound,
     Success,
     Deleted,
-    BadRequest
+    BadRequest,
+    Conflict,
+    PreconditionFailed,
+    Accepted
 }

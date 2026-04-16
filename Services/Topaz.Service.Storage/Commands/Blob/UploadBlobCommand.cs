@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -23,12 +24,12 @@ public sealed class UploadBlobCommand(ITopazLogger logger) : Command<UploadBlobC
         var result = dataPlane.PutBlob(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!,
             blobPath, settings.BlobName ?? Path.GetFileName(settings.FilePath)!, stream);
 
-        if (result.code == System.Net.HttpStatusCode.Created)
+        if (result.Result == OperationResult.Created)
             logger.LogInformation($"Blob uploaded: {blobPath}");
         else
-            logger.LogError($"Upload failed with status {result.code}.");
+            logger.LogError($"Upload failed with status {result.Result}.");
 
-        return result.code == System.Net.HttpStatusCode.Created ? 0 : 1;
+        return result.Result == OperationResult.Created ? 0 : 1;
     }
 
     public override ValidationResult Validate(CommandContext context, UploadBlobCommandSettings settings)

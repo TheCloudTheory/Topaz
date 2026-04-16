@@ -37,11 +37,11 @@ internal sealed class SetBlobPropertiesEndpoint(ITopazLogger logger)
             Logger.LogDebug(nameof(SetBlobPropertiesEndpoint), nameof(GetResponse),
                 "Handling set blob properties for {0}.", context.Request.Path.Value);
 
-            var (statusCode, properties) = _dataPlane.SetBlobProperties(subscriptionIdentifier,
+            var op = _dataPlane.SetBlobProperties(subscriptionIdentifier,
                 resourceGroupIdentifier, storageAccount!.Name, context.Request.Path.Value!,
                 context.Request.Headers);
 
-            if (statusCode == HttpStatusCode.NotFound)
+            if (op.Result == OperationResult.NotFound)
             {
                 response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Blob not found",
                     HttpStatusCode.NotFound);
@@ -50,9 +50,9 @@ internal sealed class SetBlobPropertiesEndpoint(ITopazLogger logger)
 
             response.StatusCode = HttpStatusCode.OK;
 
-            if (properties != null)
+            if (op.Resource != null)
             {
-                var etag = properties.ETag.ToString();
+                var etag = op.Resource.ETag.ToString();
                 response.Headers.ETag = new EntityTagHeaderValue(
                     etag.StartsWith('"') ? etag : $"\"{etag}\"");
             }
@@ -60,8 +60,8 @@ internal sealed class SetBlobPropertiesEndpoint(ITopazLogger logger)
             response.Content = new ByteArrayContent([]);
             response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
 
-            if (properties?.LastModified != null)
-                response.Content.Headers.TryAddWithoutValidation("Last-Modified", properties.LastModified);
+            if (op.Resource?.LastModified != null)
+                response.Content.Headers.TryAddWithoutValidation("Last-Modified", op.Resource.LastModified);
         }
         catch (Exception ex)
         {

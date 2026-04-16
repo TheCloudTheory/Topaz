@@ -43,65 +43,65 @@ internal sealed class GetBlobPropertiesEndpoint(ITopazLogger logger)
             Logger.LogDebug(nameof(GetBlobPropertiesEndpoint), nameof(GetResponse),
                 "Handling blob properties for {0}.", context.Request.Path.Value);
 
-            var (code, properties) = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
+            var op = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
                 storageAccount!.Name, context.Request.Path.Value!, blobName!);
 
-            if (code == HttpStatusCode.NotFound)
+            if (op.Result == OperationResult.NotFound)
             {
                 response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Blob not found",
                     HttpStatusCode.NotFound);
                 return;
             }
 
-            response.StatusCode = code;
+            response.StatusCode = HttpStatusCode.OK;
 
-            if (properties != null)
+            if (op.Resource != null)
             {
-                var etag = properties.ETag.ToString();
+                var etag = op.Resource.ETag.ToString();
                 response.Headers.ETag = new EntityTagHeaderValue(
                     etag.StartsWith('"') ? etag : $"\"{etag}\"");
 
-                response.Headers.TryAddWithoutValidation("x-ms-blob-type", properties.BlobType);
+                response.Headers.TryAddWithoutValidation("x-ms-blob-type", op.Resource.BlobType);
                 response.Headers.TryAddWithoutValidation("x-ms-server-encrypted", "true");
                 response.Headers.TryAddWithoutValidation("x-ms-lease-status", "unlocked");
                 response.Headers.TryAddWithoutValidation("x-ms-lease-state", "available");
 
-                if (!string.IsNullOrEmpty(properties.DateUploaded))
-                    response.Headers.TryAddWithoutValidation("x-ms-creation-time", properties.DateUploaded);
+                if (!string.IsNullOrEmpty(op.Resource.DateUploaded))
+                    response.Headers.TryAddWithoutValidation("x-ms-creation-time", op.Resource.DateUploaded);
 
                 response.Content = new ByteArrayContent([]);
                 response.Content.Headers.ContentType =
-                    MediaTypeHeaderValue.Parse(properties.ContentType);
-                response.Content.Headers.ContentLength = properties.ContentLength;
+                    MediaTypeHeaderValue.Parse(op.Resource.ContentType);
+                response.Content.Headers.ContentLength = op.Resource.ContentLength;
 
-                if (!string.IsNullOrEmpty(properties.LastModified))
-                    response.Content.Headers.TryAddWithoutValidation("Last-Modified", properties.LastModified);
+                if (!string.IsNullOrEmpty(op.Resource.LastModified))
+                    response.Content.Headers.TryAddWithoutValidation("Last-Modified", op.Resource.LastModified);
 
-                if (!string.IsNullOrEmpty(properties.ContentEncoding))
-                    response.Content.Headers.TryAddWithoutValidation("Content-Encoding", properties.ContentEncoding);
+                if (!string.IsNullOrEmpty(op.Resource.ContentEncoding))
+                    response.Content.Headers.TryAddWithoutValidation("Content-Encoding", op.Resource.ContentEncoding);
 
-                if (!string.IsNullOrEmpty(properties.ContentLanguage))
-                    response.Content.Headers.TryAddWithoutValidation("Content-Language", properties.ContentLanguage);
+                if (!string.IsNullOrEmpty(op.Resource.ContentLanguage))
+                    response.Content.Headers.TryAddWithoutValidation("Content-Language", op.Resource.ContentLanguage);
 
-                if (!string.IsNullOrEmpty(properties.CacheControl))
-                    response.Headers.TryAddWithoutValidation("Cache-Control", properties.CacheControl);
+                if (!string.IsNullOrEmpty(op.Resource.CacheControl))
+                    response.Headers.TryAddWithoutValidation("Cache-Control", op.Resource.CacheControl);
 
-                if (!string.IsNullOrEmpty(properties.ContentDisposition))
-                    response.Content.Headers.TryAddWithoutValidation("Content-Disposition", properties.ContentDisposition);
+                if (!string.IsNullOrEmpty(op.Resource.ContentDisposition))
+                    response.Content.Headers.TryAddWithoutValidation("Content-Disposition", op.Resource.ContentDisposition);
 
-                if (!string.IsNullOrEmpty(properties.CopyId))
+                if (!string.IsNullOrEmpty(op.Resource.CopyId))
                 {
-                    response.Headers.TryAddWithoutValidation("x-ms-copy-id", properties.CopyId);
+                    response.Headers.TryAddWithoutValidation("x-ms-copy-id", op.Resource.CopyId);
                     response.Headers.TryAddWithoutValidation("x-ms-copy-status", "success");
                 }
             }
 
-            var (_, metadata) = _dataPlane.GetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier,
+            var metaOp = _dataPlane.GetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier,
                 storageAccount!.Name, context.Request.Path.Value!);
 
-            if (metadata != null)
+            if (metaOp.Resource != null)
             {
-                foreach (var (key, value) in metadata)
+                foreach (var (key, value) in metaOp.Resource)
                     response.Headers.TryAddWithoutValidation(key, value);
             }
         }
