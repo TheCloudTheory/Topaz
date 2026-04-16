@@ -84,7 +84,7 @@ internal sealed class GetBlobPropertiesEndpoint(ITopazLogger logger)
                     response.Content.Headers.TryAddWithoutValidation("Content-Language", properties.ContentLanguage);
 
                 if (!string.IsNullOrEmpty(properties.CacheControl))
-                    response.Content.Headers.TryAddWithoutValidation("Cache-Control", properties.CacheControl);
+                    response.Headers.TryAddWithoutValidation("Cache-Control", properties.CacheControl);
 
                 if (!string.IsNullOrEmpty(properties.ContentDisposition))
                     response.Content.Headers.TryAddWithoutValidation("Content-Disposition", properties.ContentDisposition);
