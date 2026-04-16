@@ -76,6 +76,18 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
             GetContainerId(storageAccountName, containerName));
     }
 
+    public string GetBlobBlocksStagingPath(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string containerName,
+        string blobSubpathKey)
+    {
+        var containerPath = GetContainerPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, containerName);
+        return Path.Combine(containerPath, ".blocks", blobSubpathKey);
+    }
+
     private string GetContainerPathWithReplacedValues(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
     {

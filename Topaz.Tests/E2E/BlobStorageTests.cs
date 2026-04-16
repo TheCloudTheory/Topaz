@@ -543,4 +543,41 @@ public class BlobStorageTests
         // Assert
         Assert.Throws<RequestFailedException>(() => destBlob.StartCopyFromUri(sourceBlob.Uri));
     }
+
+    [Test]
+    public void BlobStorageTests_WhenBlockIsStaged_ItShouldReturn201()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("block-test");
+        var blockBlobClient = serviceClient.GetBlobContainerClient("block-test")
+            .GetBlockBlobClient("staged.txt");
+
+        var blockId = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("block-001"));
+        var blockContent = BinaryData.FromString("hello block world");
+
+        // Act
+        var response = blockBlobClient.StageBlock(blockId, blockContent.ToStream());
+
+        // Assert
+        Assert.That(response.GetRawResponse().Status, Is.EqualTo(201));
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenMultipleBlocksAreStaged_AllShouldReturn201()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("multiblock-test");
+        var blockBlobClient = serviceClient.GetBlobContainerClient("multiblock-test")
+            .GetBlockBlobClient("multi.txt");
+
+        // Act & Assert
+        for (var i = 0; i < 3; i++)
+        {
+            var blockId = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"block-{i:D3}"));
+            var response = blockBlobClient.StageBlock(blockId, BinaryData.FromString($"chunk {i}").ToStream());
+            Assert.That(response.GetRawResponse().Status, Is.EqualTo(201));
+        }
+    }
 }

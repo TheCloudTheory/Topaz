@@ -73,4 +73,12 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
     {
         return provider.GetContainerMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
     }
+
+    public string GetBlobBlocksStagingPath(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName,
+        string blobSubpathKey)
+    {
+        return provider.GetBlobBlocksStagingPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
+            containerName, blobSubpathKey);
+    }
 }

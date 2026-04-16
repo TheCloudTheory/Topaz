@@ -77,6 +77,41 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         return (HttpStatusCode.Created, metadata);
     }
 
+    public HttpStatusCode PutBlock(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string blobPath,
+        string blockId,
+        Stream input)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(PutBlock),
+            "Executing {0}: {1} {2} blockId={3}", nameof(PutBlock), storageAccountName, blobPath, blockId);
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+
+        var containerName = GetContainerNameFromBlobPath(blobPath);
+        var blobSubpathKey = GetBlobSubpathKey(blobPath);
+        var safeBlockId = blockId.Replace("/", "_").Replace("+", "-");
+
+        var stagingDir = controlPlane.GetBlobBlocksStagingPath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, containerName, blobSubpathKey);
+
+        if (!Directory.Exists(stagingDir))
+            Directory.CreateDirectory(stagingDir);
+
+        File.WriteAllText(Path.Combine(stagingDir, safeBlockId), rawContent);
+
+        return HttpStatusCode.Created;
+    }
+
+    private static string GetBlobSubpathKey(string blobPath)
+    {
+        var segments = blobPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        return string.Join("_", segments.Skip(1));
+    }
+
     public (HttpStatusCode code, BlobProperties? properties) GetBlobProperties(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName, string blobPath, string blobName)
