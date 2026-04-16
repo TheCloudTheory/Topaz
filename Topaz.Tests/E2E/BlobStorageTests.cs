@@ -629,4 +629,86 @@ public class BlobStorageTests
         Assert.That(properties.Value.ETag, Is.Not.EqualTo(default(ETag)));
         Assert.That(properties.Value.BlobType, Is.EqualTo(BlobType.Block));
     }
+
+    [Test]
+    public void BlobStorageTests_WhenBlocksAreStaged_GetBlockListShouldReturnUncommittedBlocks()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("get-blocklist-uncommitted");
+        var blockBlobClient = serviceClient.GetBlobContainerClient("get-blocklist-uncommitted")
+            .GetBlockBlobClient("staged-only.txt");
+
+        var blockId1 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("block-a"));
+        var blockId2 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("block-b"));
+        blockBlobClient.StageBlock(blockId1, BinaryData.FromString("hello ").ToStream());
+        blockBlobClient.StageBlock(blockId2, BinaryData.FromString("world").ToStream());
+
+        // Act
+        var blockList = blockBlobClient.GetBlockList(BlockListTypes.Uncommitted);
+
+        // Assert
+        Assert.That(blockList.Value.UncommittedBlocks.Count, Is.EqualTo(2));
+        Assert.That(blockList.Value.UncommittedBlocks.Select(b => b.Name),
+            Is.EquivalentTo(new[] { blockId1, blockId2 }));
+        Assert.That(blockList.Value.UncommittedBlocks.All(b => b.SizeLong > 0), Is.True);
+        Assert.That(blockList.Value.CommittedBlocks, Is.Empty);
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenBlockListIsCommitted_GetBlockListShouldReturnCommittedBlocks()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("get-blocklist-committed");
+        var blockBlobClient = serviceClient.GetBlobContainerClient("get-blocklist-committed")
+            .GetBlockBlobClient("committed.txt");
+
+        var blocks = new[] { "Hello, ", "block ", "world!" };
+        var blockIds = blocks
+            .Select((_, i) => Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"blk-{i:D3}")))
+            .ToArray();
+
+        for (var i = 0; i < blocks.Length; i++)
+            blockBlobClient.StageBlock(blockIds[i], BinaryData.FromString(blocks[i]).ToStream());
+
+        blockBlobClient.CommitBlockList(blockIds);
+
+        // Act
+        var blockList = blockBlobClient.GetBlockList(BlockListTypes.Committed);
+
+        // Assert
+        Assert.That(blockList.Value.CommittedBlocks.Count, Is.EqualTo(3));
+        Assert.That(blockList.Value.CommittedBlocks.Select(b => b.Name),
+            Is.EqualTo(blockIds));
+        Assert.That(blockList.Value.CommittedBlocks.All(b => b.SizeLong > 0), Is.True);
+        Assert.That(blockList.Value.UncommittedBlocks, Is.Empty);
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenBlockListTypeIsAll_GetBlockListShouldReturnBothCommittedAndUncommitted()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("get-blocklist-all");
+        var blockBlobClient = serviceClient.GetBlobContainerClient("get-blocklist-all")
+            .GetBlockBlobClient("mixed.txt");
+
+        var committedId = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("committed-blk"));
+        var uncommittedId = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("uncommitted-blk"));
+
+        blockBlobClient.StageBlock(committedId, BinaryData.FromString("committed content").ToStream());
+        blockBlobClient.CommitBlockList([committedId]);
+
+        blockBlobClient.StageBlock(uncommittedId, BinaryData.FromString("pending content").ToStream());
+
+        // Act
+        var blockList = blockBlobClient.GetBlockList(BlockListTypes.All);
+
+        // Assert
+        Assert.That(blockList.Value.CommittedBlocks.Count, Is.EqualTo(1));
+        Assert.That(blockList.Value.CommittedBlocks.First().Name, Is.EqualTo(committedId));
+        Assert.That(blockList.Value.UncommittedBlocks.Count, Is.EqualTo(1));
+        Assert.That(blockList.Value.UncommittedBlocks.First().Name, Is.EqualTo(uncommittedId));
+    }
 }

@@ -102,6 +102,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             Directory.CreateDirectory(stagingDir);
 
         File.WriteAllText(Path.Combine(stagingDir, safeBlockId), rawContent);
+        // Persist original block ID for GetBlockList (safeBlockId may differ due to +/→-/_ substitutions)
+        File.WriteAllText(Path.Combine(stagingDir, safeBlockId + ".meta"), blockId);
 
         return HttpStatusCode.Created;
     }
@@ -121,9 +123,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         using var sr = new StreamReader(input);
         var xml = sr.ReadToEnd();
 
-        // Parse the ordered list of block IDs from the XML body.
-        // The SDK sends a <BlockList> element containing <Latest>, <Committed>, or <Uncommitted> children.
-        var blockIds = ParseBlockListXml(xml);
+        var request = BlockListCommitRequest.Parse(xml);
+        var blockIds = request?.AllBlockIds.ToList();
         if (blockIds == null)
         {
             logger.LogError("PutBlockList: could not parse BlockList XML.");
@@ -174,6 +175,14 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             JsonSerializer.Serialize(metadata));
         File.WriteAllText(fullPath, assembled);
 
+        // Persist committed block list for GetBlockList before deleting the staging dir.
+        var committedBlocks = blockIds
+            .Zip(parts, (id, content) => new BlockRecord(id, System.Text.Encoding.UTF8.GetByteCount(content)))
+            .ToList();
+        File.WriteAllText(
+            GetCommittedBlocksPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath),
+            JsonSerializer.Serialize(committedBlocks));
+
         // Clean up staged blocks now that they have been committed.
         if (Directory.Exists(stagingDir))
             Directory.Delete(stagingDir, recursive: true);
@@ -181,34 +190,6 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         return (HttpStatusCode.Created, metadata);
     }
 
-    private static List<string>? ParseBlockListXml(string xml)
-    {
-        if (string.IsNullOrWhiteSpace(xml))
-            return [];
-
-        try
-        {
-            var doc = new System.Xml.XmlDocument();
-            doc.LoadXml(xml);
-
-            var root = doc.DocumentElement;
-            if (root == null) return [];
-
-            var ids = new List<string>();
-            foreach (System.Xml.XmlNode child in root.ChildNodes)
-            {
-                if (child.NodeType != System.Xml.XmlNodeType.Element) continue;
-                if (child.InnerText is { Length: > 0 } id)
-                    ids.Add(id);
-            }
-
-            return ids;
-        }
-        catch
-        {
-            return null;
-        }
-    }
 
     private static string GetBlobSubpathKey(string blobPath)
     {
@@ -274,6 +255,81 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             $"{metadataFileName}.properties.json");
 
         return path;
+    }
+
+    private string GetCommittedBlocksPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
+    {
+        var containerName = GetContainerNameFromBlobPath(blobPath);
+        var metadataFileName = blobPath.Replace("/.blob", string.Empty).Replace("/", "_");
+        return Path.Combine(
+            controlPlane.GetContainerBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
+            $"{metadataFileName}.committed-blocks.json");
+    }
+
+    public (HttpStatusCode code, IReadOnlyList<BlockRecord> committed, IReadOnlyList<BlockRecord> uncommitted) GetBlockList(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string blobPath,
+        string blockListType)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetBlockList),
+            "Account: `{0}`, Path: {1}, Type: {2}", storageAccountName, blobPath, blockListType);
+
+        var propertiesPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+        var blobExists = File.Exists(propertiesPath);
+
+        var getCommitted = blockListType is "committed" or "all";
+        var getUncommitted = blockListType is "uncommitted" or "all";
+
+        // For committed-only requests, the blob must already exist
+        if (getCommitted && !getUncommitted && !blobExists)
+            return (HttpStatusCode.NotFound, [], []);
+
+        // For uncommitted or all, determine staging dir existence for 404 check
+        if (!blobExists && getUncommitted)
+        {
+            var containerName = GetContainerNameFromBlobPath(blobPath);
+            var blobSubpathKey = GetBlobSubpathKey(blobPath);
+            var stagingDir = controlPlane.GetBlobBlocksStagingPath(subscriptionIdentifier, resourceGroupIdentifier,
+                storageAccountName, containerName, blobSubpathKey);
+            if (!Directory.Exists(stagingDir))
+                return (HttpStatusCode.NotFound, [], []);
+        }
+
+        List<BlockRecord> committed = [];
+        List<BlockRecord> uncommitted = [];
+
+        if (getCommitted)
+        {
+            var committedPath = GetCommittedBlocksPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+            if (File.Exists(committedPath))
+                committed = JsonSerializer.Deserialize<List<BlockRecord>>(File.ReadAllText(committedPath)) ?? [];
+        }
+
+        if (getUncommitted)
+        {
+            var containerName = GetContainerNameFromBlobPath(blobPath);
+            var blobSubpathKey = GetBlobSubpathKey(blobPath);
+            var stagingDir = controlPlane.GetBlobBlocksStagingPath(subscriptionIdentifier, resourceGroupIdentifier,
+                storageAccountName, containerName, blobSubpathKey);
+
+            if (Directory.Exists(stagingDir))
+            {
+                foreach (var contentFile in Directory.EnumerateFiles(stagingDir)
+                             .Where(f => !f.EndsWith(".meta"))
+                             .OrderBy(f => f))
+                {
+                    var safeBlockId = Path.GetFileName(contentFile);
+                    var metaPath = contentFile + ".meta";
+                    var originalId = File.Exists(metaPath) ? File.ReadAllText(metaPath).Trim() : safeBlockId;
+                    var size = (long)System.Text.Encoding.UTF8.GetByteCount(File.ReadAllText(contentFile));
+                    uncommitted.Add(new BlockRecord(originalId, size));
+                }
+            }
+        }
+
+        return (HttpStatusCode.OK, committed, uncommitted);
     }
 
     public (HttpStatusCode code, string? content) GetBlob(SubscriptionIdentifier subscriptionIdentifier,
