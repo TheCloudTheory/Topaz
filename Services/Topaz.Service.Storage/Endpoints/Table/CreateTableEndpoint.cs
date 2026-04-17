@@ -16,7 +16,7 @@ internal sealed class CreateTableEndpoint(ITopazLogger logger)
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);
+        ([GlobalSettings.DefaultTableStoragePort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

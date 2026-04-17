@@ -59,7 +59,7 @@ You can find which service uses which port below:
 Service Name|Port|Protocol
 ------------|----|--------
 Resource Manager|8899, 443|HTTPS
-Table Storage|8890|HTTP
+Table Storage|8890|HTTPS
 Blob Storage|8891|HTTP
 Azure Key Vault|8898, 443|HTTPS
 Azure Event Hub|8897|HTTPS

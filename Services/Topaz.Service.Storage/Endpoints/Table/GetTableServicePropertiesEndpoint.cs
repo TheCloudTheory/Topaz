@@ -17,7 +17,7 @@ internal sealed class GetTableServicePropertiesEndpoint(ITopazLogger logger)
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);
+        ([GlobalSettings.DefaultTableStoragePort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

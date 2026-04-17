@@ -18,7 +18,7 @@ internal sealed class PreflightTableRequestEndpoint(ITopazLogger logger)
     public string[] Permissions => [];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);
+        ([GlobalSettings.DefaultTableStoragePort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

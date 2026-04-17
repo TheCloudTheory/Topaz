@@ -17,7 +17,7 @@ internal sealed class GetTableEntityEndpoint(ITopazLogger logger)
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultTableStoragePort], Protocol.Http);
+        ([GlobalSettings.DefaultTableStoragePort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

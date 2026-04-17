@@ -54,7 +54,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 
 ## Data Plane — Blob Storage
 
-Blob Storage is served on port **8891** (HTTP) in Topaz.
+Blob Storage is served on port **8891** (HTTP) in Topaz. (Note: Blob Storage uses plain HTTP; Table Storage uses HTTPS.)
 
 ### Containers
 
@@ -97,7 +97,7 @@ Blob Storage is served on port **8891** (HTTP) in Topaz.
 
 ## Data Plane — Table Storage
 
-Table Storage is served on port **8890** (HTTP) in Topaz.
+Table Storage is served on port **8890** (HTTPS) in Topaz.
 
 ### Service
 
