@@ -1,0 +1,60 @@
+using JetBrains.Annotations;
+using Spectre.Console;
+using Spectre.Console.Cli;
+using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
+
+namespace Topaz.Service.Storage.Commands.Blob;
+
+[UsedImplicitly]
+public sealed class UndeleteBlobCommand(ITopazLogger logger) : Command<UndeleteBlobCommand.UndeleteBlobCommandSettings>
+{
+    public override int Execute(CommandContext context, UndeleteBlobCommandSettings settings)
+    {
+        logger.LogInformation("Undeleting blob...");
+
+        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
+
+        var blobPath = $"/{settings.ContainerName}/{settings.BlobName}";
+        var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
+
+        var result = dataPlane.UndeleteBlob(subscriptionIdentifier, resourceGroupIdentifier,
+            settings.AccountName!, blobPath);
+
+        if (result.Result == OperationResult.NotFound)
+        {
+            logger.LogError($"Blob '{blobPath}' not found in soft-deleted state.");
+            return 1;
+        }
+
+        logger.LogInformation("Blob undeleted successfully.");
+        return 0;
+    }
+
+    public override ValidationResult Validate(CommandContext context, UndeleteBlobCommandSettings settings)
+    {
+        if (string.IsNullOrEmpty(settings.AccountName))
+            return ValidationResult.Error("Storage account name can't be null.");
+        if (string.IsNullOrEmpty(settings.ContainerName))
+            return ValidationResult.Error("Container name can't be null.");
+        if (string.IsNullOrEmpty(settings.BlobName))
+            return ValidationResult.Error("Blob name can't be null.");
+        if (string.IsNullOrEmpty(settings.ResourceGroup))
+            return ValidationResult.Error("Resource group can't be null.");
+        if (string.IsNullOrEmpty(settings.SubscriptionId))
+            return ValidationResult.Error("Subscription ID can't be null.");
+        return base.Validate(context, settings);
+    }
+
+    [UsedImplicitly]
+    public sealed class UndeleteBlobCommandSettings : CommandSettings
+    {
+        [CommandOption("--account-name")] public string? AccountName { get; set; }
+        [CommandOption("-c|--container-name")] public string? ContainerName { get; set; }
+        [CommandOption("-n|--name")] public string? BlobName { get; set; }
+        [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
+        [CommandOption("-s|--subscription-id")] public string? SubscriptionId { get; set; }
+    }
+}

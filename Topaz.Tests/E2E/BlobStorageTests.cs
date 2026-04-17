@@ -1040,4 +1040,64 @@ public class BlobStorageTests
             Assert.Pass();
         }
     }
+
+    [Test]
+    public async Task BlobUndelete_AfterDelete_RestoresBlobSuccessfully()
+    {
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        var containerClient = serviceClient.GetBlobContainerClient("blob-undelete-restore");
+        await containerClient.CreateIfNotExistsAsync();
+        var blobClient = containerClient.GetBlobClient("undelete-me.txt");
+
+        await blobClient.UploadAsync(BinaryData.FromString("restore me"), overwrite: true);
+        await blobClient.DeleteAsync();
+
+        Assert.That((await blobClient.ExistsAsync()).Value, Is.False);
+
+        await blobClient.UndeleteAsync();
+
+        Assert.That((await blobClient.ExistsAsync()).Value, Is.True);
+        var content = (await blobClient.DownloadContentAsync()).Value.Content.ToString();
+        Assert.That(content, Is.EqualTo("restore me"));
+    }
+
+    [Test]
+    public async Task BlobUndelete_BlobNeverDeleted_ReturnsNotFound()
+    {
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        var containerClient = serviceClient.GetBlobContainerClient("blob-undelete-notfound");
+        await containerClient.CreateIfNotExistsAsync();
+        var blobClient = containerClient.GetBlobClient("never-deleted.txt");
+
+        await blobClient.UploadAsync(BinaryData.FromString("still here"), overwrite: true);
+
+        try
+        {
+            await blobClient.UndeleteAsync();
+            Assert.Fail("Expected RequestFailedException was not thrown.");
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            Assert.Pass();
+        }
+    }
+
+    [Test]
+    public async Task BlobUndelete_MultipleDeletesAndUndeletes_RestoresMostRecent()
+    {
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        var containerClient = serviceClient.GetBlobContainerClient("blob-undelete-multiple");
+        await containerClient.CreateIfNotExistsAsync();
+        var blobClient = containerClient.GetBlobClient("cycle.txt");
+
+        await blobClient.UploadAsync(BinaryData.FromString("version 2"), overwrite: true);
+        await blobClient.DeleteAsync();
+        await Task.Delay(50);
+
+        await blobClient.UndeleteAsync();
+
+        Assert.That((await blobClient.ExistsAsync()).Value, Is.True);
+        var content = (await blobClient.DownloadContentAsync()).Value.Content.ToString();
+        Assert.That(content, Is.EqualTo("version 2"));
+    }
 }

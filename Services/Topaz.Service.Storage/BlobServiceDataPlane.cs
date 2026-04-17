@@ -16,7 +16,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         logger.LogDebug(nameof(BlobServiceDataPlane), nameof(ListBlobs), "Executing {0}: {1} {2}", nameof(ListBlobs), storageAccountName, containerName);
         
         var path = controlPlane.GetContainerDataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
-        var files = Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories);
+        var files = Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories)
+            .Where(f => !Path.GetRelativePath(path, f).Split(Path.DirectorySeparatorChar).Any(s => s.StartsWith('.')));
         var entities = files.Select(file => new Blob
         {
             Name = Path.GetRelativePath(path, file).Replace(Path.DirectorySeparatorChar, '/'),
@@ -657,11 +658,30 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         {
             return new DataPlaneOperationResult(OperationResult.NotFound, null, null);
         }
-        
-        var fullPropertiesPathPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
-        
-        File.Delete(fullPath);
-        File.Delete(fullPropertiesPathPath);
+
+        var containerName = GetContainerNameFromBlobPath(blobPath);
+        var safeTimestamp = DateTimeOffset.UtcNow.ToString("O").Replace(":", "_").Replace(".", "-");
+
+        var deletedDataDir = Path.Combine(
+            controlPlane.GetContainerDataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
+            ".deleted");
+        var deletedMetaDir = Path.Combine(
+            controlPlane.GetContainerBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
+            ".deleted");
+
+        Directory.CreateDirectory(deletedDataDir);
+        Directory.CreateDirectory(deletedMetaDir);
+
+        var blobFileName = Path.GetFileName(fullPath);
+        File.Move(fullPath, Path.Combine(deletedDataDir, $"{blobFileName}__{safeTimestamp}"), overwrite: true);
+
+        var propertiesPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+        if (File.Exists(propertiesPath))
+            File.Move(propertiesPath, Path.Combine(deletedMetaDir, $"{Path.GetFileName(propertiesPath)}__{safeTimestamp}"), overwrite: true);
+
+        var metadataPath = GetBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+        if (File.Exists(metadataPath))
+            File.Move(metadataPath, Path.Combine(deletedMetaDir, $"{Path.GetFileName(metadataPath)}__{safeTimestamp}"), overwrite: true);
         
         return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
     }
@@ -1198,7 +1218,58 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             $"{metadataFileName}.blob-lease.json");
     }
 
-    public DataPlaneOperationResult<string> SnapshotBlob(
+    public DataPlaneOperationResult UndeleteBlob(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string blobPath)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(UndeleteBlob),
+            "Account: `{0}`, Path: {1}", storageAccountName, blobPath);
+
+        var containerName = GetContainerNameFromBlobPath(blobPath);
+        var contentPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+
+        var deletedDataDir = Path.Combine(
+            controlPlane.GetContainerDataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
+            ".deleted");
+        var deletedMetaDir = Path.Combine(
+            controlPlane.GetContainerBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
+            ".deleted");
+
+        var blobFileName = Path.GetFileName(contentPath);
+        var deletedContentFiles = Directory.Exists(deletedDataDir)
+            ? Directory.GetFiles(deletedDataDir, $"{blobFileName}__*").OrderByDescending(f => f).ToArray()
+            : [];
+
+        if (deletedContentFiles.Length == 0)
+            return new DataPlaneOperationResult(OperationResult.NotFound, null, null);
+
+        var mostRecentDeleted = deletedContentFiles[0];
+        var suffix = Path.GetFileName(mostRecentDeleted)[(blobFileName.Length + 2)..];
+
+        var blobDirectory = Path.GetDirectoryName(contentPath)!;
+        if (!Directory.Exists(blobDirectory))
+            Directory.CreateDirectory(blobDirectory);
+
+        File.Move(mostRecentDeleted, contentPath, overwrite: true);
+
+        var propertiesFileName = Path.GetFileName(GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath));
+        var deletedPropertiesPath = Path.Combine(deletedMetaDir, $"{propertiesFileName}__{suffix}");
+        var originalPropertiesPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+        if (File.Exists(deletedPropertiesPath))
+            File.Move(deletedPropertiesPath, originalPropertiesPath, overwrite: true);
+
+        var metadataFileName = Path.GetFileName(GetBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath));
+        var deletedMetadataPath = Path.Combine(deletedMetaDir, $"{metadataFileName}__{suffix}");
+        var originalMetadataPath = GetBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+        if (File.Exists(deletedMetadataPath))
+            File.Move(deletedMetadataPath, originalMetadataPath, overwrite: true);
+
+        return new DataPlaneOperationResult(OperationResult.Success, null, null);
+    }
+
+        public DataPlaneOperationResult<string> SnapshotBlob(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,

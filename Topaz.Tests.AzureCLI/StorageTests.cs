@@ -1003,4 +1003,54 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task BlobUndelete_AfterDelete_RestoresBlobSuccessfully()
+    {
+        const string storageAccountName = "topazstorblobundel01";
+        const string resourceGroup = "test-blob-undelete-rg";
+        const string containerName = "blob-undelete-ctr";
+        const string blobName = "undelete-me.txt";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"restore me\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob delete --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob exists --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            (resp) =>
+            {
+                Assert.That(resp["exists"]!.GetValue<bool>(), Is.False);
+            });
+
+        await RunAzureCliCommand(
+            $"az storage blob undelete --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob exists --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            (resp) =>
+            {
+                Assert.That(resp["exists"]!.GetValue<bool>(), Is.True);
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

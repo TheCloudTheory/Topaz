@@ -91,7 +91,7 @@ Blob Storage is served on port **8891** (HTTP) in Topaz.
 | Get Page Ranges | ✅ | `GET /{containerName}/{blobName}?comp=pagelist` — supports `Range`/`x-ms-range` filtering and returns Azure-compatible `PageList` XML |
 | Lease Blob | ✅ | `PUT /{containerName}/{blobName}?comp=lease` — acquire, renew, change, release, break |
 | Snapshot Blob | ✅ | |
-| Undelete Blob | ❌ | |
+| Undelete Blob | ✅ | |
 
 ---
 
