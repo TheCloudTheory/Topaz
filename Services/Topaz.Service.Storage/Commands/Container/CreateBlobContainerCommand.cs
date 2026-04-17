@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -16,7 +17,10 @@ public sealed class CreateBlobContainerCommand(ITopazLogger logger) : Command<Cr
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
         var rp = new BlobServiceControlPlane(new BlobResourceProvider(logger));
-        _ = rp.CreateContainer(subscriptionIdentifier, resourceGroupIdentifier, settings.Name, settings.AccountName);
+        var result = rp.CreateContainer(subscriptionIdentifier, resourceGroupIdentifier, settings.Name, settings.AccountName);
+
+        if (result.Result != OperationResult.Created)
+            return 1;
 
         logger.LogInformation("Container created.");
 

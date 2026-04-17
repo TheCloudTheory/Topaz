@@ -35,10 +35,12 @@ internal sealed class CreateContainerEndpoint(ITopazLogger logger)
             Logger.LogDebug(nameof(CreateContainerEndpoint), nameof(GetResponse),
                 "Creating container: {0}", containerName);
 
-            var code = _controlPlane.CreateContainer(subscriptionIdentifier, resourceGroupIdentifier, containerName,
+            var op = _controlPlane.CreateContainer(subscriptionIdentifier, resourceGroupIdentifier, containerName,
                 storageAccount!.Name);
 
-            response.StatusCode = code;
+            response.StatusCode = op.Result == OperationResult.Created
+                ? HttpStatusCode.Created
+                : HttpStatusCode.BadRequest;
         }
         catch (Exception ex)
         {

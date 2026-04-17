@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -17,8 +18,11 @@ public sealed class DeleteBlobContainerCommand(ITopazLogger logger)
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
         var controlPlane = new BlobServiceControlPlane(new BlobResourceProvider(logger));
-        controlPlane.DeleteContainer(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!,
+        var result = controlPlane.DeleteContainer(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!,
             settings.Name!);
+
+        if (result.Result != OperationResult.Success)
+            return 1;
 
         logger.LogInformation($"Container '{settings.Name}' deleted.");
         return 0;

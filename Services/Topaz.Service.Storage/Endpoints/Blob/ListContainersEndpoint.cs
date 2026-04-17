@@ -36,12 +36,18 @@ internal sealed class ListContainersEndpoint(ITopazLogger logger)
             Logger.LogDebug(nameof(ListContainersEndpoint), nameof(GetResponse),
                 "Handling listing containers for {0}.", storageAccount!.Name);
 
-            var containers = _controlPlane.ListContainers(subscriptionIdentifier, resourceGroupIdentifier,
+            var op = _controlPlane.ListContainers(subscriptionIdentifier, resourceGroupIdentifier,
                 storageAccount!.Name);
+
+            if (op.Result != OperationResult.Success || op.Resource == null)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                return;
+            }
 
             using var sw = new EncodingAwareStringWriter();
             var serializer = new XmlSerializer(typeof(ContainerEnumerationResult));
-            serializer.Serialize(sw, containers);
+            serializer.Serialize(sw, op.Resource);
 
             response.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/xml");
             response.StatusCode = HttpStatusCode.OK;

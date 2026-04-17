@@ -1,4 +1,5 @@
 using System.Net;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Serialization;
@@ -7,29 +8,39 @@ namespace Topaz.Service.Storage;
 
 internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
 {
-    public HttpStatusCode CreateContainer(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string containerName, string storageAccountName)
+    public ControlPlaneOperationResult<Container> CreateContainer(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string containerName, string storageAccountName)
     {
-        provider.Create(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName, new Container
+        var container = new Container
         {
             Name = containerName
-        });
-        
-        return HttpStatusCode.Created;
+        };
+
+        provider.Create(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName, container);
+
+        return new ControlPlaneOperationResult<Container>(OperationResult.Created, container, null, null);
     }
 
-    public ContainerEnumerationResult ListContainers(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
+    public ControlPlaneOperationResult<ContainerEnumerationResult> ListContainers(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName)
     {
         var containers =
             provider.ListAs<Container>(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, 10);
 
-        return new ContainerEnumerationResult(storageAccountName, containers.ToArray()!);
+        return new ControlPlaneOperationResult<ContainerEnumerationResult>(
+            OperationResult.Success,
+            new ContainerEnumerationResult(storageAccountName, containers.ToArray()!),
+            null,
+            null);
     }
     
-    public System.Net.HttpStatusCode DeleteContainer(SubscriptionIdentifier subscriptionIdentifier,
+    public ControlPlaneOperationResult DeleteContainer(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
     {
         provider.DeleteContainer(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
-        return System.Net.HttpStatusCode.NoContent;
+        return new ControlPlaneOperationResult(OperationResult.Success);
     }
 
     public (bool exists, string metadataFilePath) GetContainerMetadataState(

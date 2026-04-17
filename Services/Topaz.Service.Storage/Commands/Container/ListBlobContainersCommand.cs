@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
@@ -19,7 +20,10 @@ public sealed class ListBlobContainersCommand(ITopazLogger logger)
         var controlPlane = new BlobServiceControlPlane(new BlobResourceProvider(logger));
         var result = controlPlane.ListContainers(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!);
 
-        var containers = result.GetContainers();
+        if (result.Result != OperationResult.Success || result.Resource == null)
+            return 1;
+
+        var containers = result.Resource.GetContainers();
         if (containers.Length == 0)
         {
             logger.LogInformation("No containers found.");
