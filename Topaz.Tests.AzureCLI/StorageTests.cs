@@ -161,16 +161,16 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage table create --name {tableName} --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://{storageAccountName}.table.storage.topaz.local.dev:8890");
+            $"az storage table create --name {tableName} --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint https://{storageAccountName}.table.storage.topaz.local.dev:8890");
 
         await RunAzureCliCommand(
-            $"az storage entity insert --table-name {tableName} --entity PartitionKey=pk1 RowKey=rk1 Name=test --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://{storageAccountName}.table.storage.topaz.local.dev:8890");
+            $"az storage entity insert --table-name {tableName} --entity PartitionKey=pk1 RowKey=rk1 Name=test --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint https://{storageAccountName}.table.storage.topaz.local.dev:8890");
 
         await RunAzureCliCommand(
-            $"az storage entity delete --table-name {tableName} --partition-key pk1 --row-key rk1 --if-match \"*\" --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://{storageAccountName}.table.storage.topaz.local.dev:8890");
+            $"az storage entity delete --table-name {tableName} --partition-key pk1 --row-key rk1 --if-match \"*\" --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint https://{storageAccountName}.table.storage.topaz.local.dev:8890");
 
         await RunAzureCliCommand(
-            $"az storage entity query --table-name {tableName} --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://{storageAccountName}.table.storage.topaz.local.dev:8890",
+            $"az storage entity query --table-name {tableName} --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint https://{storageAccountName}.table.storage.topaz.local.dev:8890",
             (resp) =>
             {
                 var items = resp["items"]!.AsArray();
@@ -202,13 +202,13 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage table create --name {tableName} --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://{storageAccountName}.table.storage.topaz.local.dev:8890");
+            $"az storage table create --name {tableName} --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint https://{storageAccountName}.table.storage.topaz.local.dev:8890");
 
         await RunAzureCliCommand(
-            $"az storage entity insert --table-name {tableName} --entity PartitionKey=pk1 RowKey=rk1 Name=test --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://{storageAccountName}.table.storage.topaz.local.dev:8890");
+            $"az storage entity insert --table-name {tableName} --entity PartitionKey=pk1 RowKey=rk1 Name=test --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint https://{storageAccountName}.table.storage.topaz.local.dev:8890");
 
         await RunAzureCliCommand(
-            $"az storage entity show --table-name {tableName} --partition-key pk1 --row-key rk1 --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint http://{storageAccountName}.table.storage.topaz.local.dev:8890",
+            $"az storage entity show --table-name {tableName} --partition-key pk1 --row-key rk1 --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint https://{storageAccountName}.table.storage.topaz.local.dev:8890",
             (resp) =>
             {
                 Assert.Multiple(() =>
@@ -242,10 +242,10 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage logging update --services t --log rwd --retention 5 --connection-string \"AccountName={storageAccountName};AccountKey={accountKey};TableEndpoint=http://{storageAccountName}.table.storage.topaz.local.dev:8890\"");
+            $"az storage logging update --services t --log rwd --retention 5 --connection-string \"AccountName={storageAccountName};AccountKey={accountKey};TableEndpoint=https://{storageAccountName}.table.storage.topaz.local.dev:8890\"");
 
         await RunAzureCliCommand(
-            $"az storage logging show --services t --connection-string \"AccountName={storageAccountName};AccountKey={accountKey};TableEndpoint=http://{storageAccountName}.table.storage.topaz.local.dev:8890\"",
+            $"az storage logging show --services t --connection-string \"AccountName={storageAccountName};AccountKey={accountKey};TableEndpoint=https://{storageAccountName}.table.storage.topaz.local.dev:8890\"",
             (resp) =>
             {
                 var table = resp["table"]!;
