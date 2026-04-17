@@ -987,4 +987,57 @@ public class BlobStorageTests
             Assert.Pass();
         }
     }
+
+    [Test]
+    public async Task BlobSnapshot_Create_ReturnsSnapshotTimestamp()
+    {
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        var containerClient = serviceClient.GetBlobContainerClient("blob-snapshot-create");
+        await containerClient.CreateIfNotExistsAsync();
+        var blobClient = containerClient.GetBlobClient("snap-target.txt");
+        await blobClient.UploadAsync(BinaryData.FromString("snapshot me").ToStream());
+
+        var response = await blobClient.CreateSnapshotAsync();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.GetRawResponse().Status, Is.EqualTo(201));
+            Assert.That(response.Value.Snapshot, Is.Not.Null.And.Not.Empty);
+        });
+    }
+
+    [Test]
+    public async Task BlobSnapshot_Create_MultipleSnapshots_EachHasUniqueTimestamp()
+    {
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        var containerClient = serviceClient.GetBlobContainerClient("blob-snapshot-multi");
+        await containerClient.CreateIfNotExistsAsync();
+        var blobClient = containerClient.GetBlobClient("snap-multi.txt");
+        await blobClient.UploadAsync(BinaryData.FromString("multi snapshot").ToStream());
+
+        var snap1 = await blobClient.CreateSnapshotAsync();
+        await Task.Delay(10);
+        var snap2 = await blobClient.CreateSnapshotAsync();
+
+        Assert.That(snap1.Value.Snapshot, Is.Not.EqualTo(snap2.Value.Snapshot));
+    }
+
+    [Test]
+    public async Task BlobSnapshot_BlobNotFound_ReturnsNotFound()
+    {
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        var containerClient = serviceClient.GetBlobContainerClient("blob-snapshot-notfound");
+        await containerClient.CreateIfNotExistsAsync();
+        var blobClient = containerClient.GetBlobClient("does-not-exist.txt");
+
+        try
+        {
+            await blobClient.CreateSnapshotAsync();
+            Assert.Fail("Expected RequestFailedException was not thrown.");
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            Assert.Pass();
+        }
+    }
 }

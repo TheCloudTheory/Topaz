@@ -965,4 +965,42 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task BlobSnapshot_Create_ReturnsSnapshotTimestamp()
+    {
+        const string storageAccountName = "topazstorblobsnap01";
+        const string resourceGroup = "test-blob-snapshot-rg";
+        const string containerName = "blob-snapshot-ctr";
+        const string blobName = "snap-target.txt";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"snapshot me\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob snapshot --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            (resp) =>
+            {
+                var snapshot = resp["snapshot"]?.GetValue<string>();
+                Assert.That(snapshot, Is.Not.Null.And.Not.Empty);
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

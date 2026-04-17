@@ -1198,6 +1198,73 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             $"{metadataFileName}.blob-lease.json");
     }
 
+    public DataPlaneOperationResult<string> SnapshotBlob(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string blobPath,
+        string? leaseId,
+        Dictionary<string, string>? snapshotMetadata = null)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(SnapshotBlob),
+            "Account: `{0}`, Path: {1}", storageAccountName, blobPath);
+
+        var contentPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+        var propertiesPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+
+        if (!File.Exists(contentPath))
+            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null, null, null);
+
+        var leaseFilePath = GetBlobLeaseFilePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+        if (File.Exists(leaseFilePath))
+        {
+            var lease = JsonSerializer.Deserialize<ContainerLease>(File.ReadAllText(leaseFilePath));
+            if (lease?.State is ContainerLeaseState.Leased or ContainerLeaseState.Breaking)
+            {
+                if (!string.Equals(lease.LeaseId, leaseId, StringComparison.OrdinalIgnoreCase))
+                    return new DataPlaneOperationResult<string>(OperationResult.PreconditionFailed, null, null, null);
+            }
+        }
+
+        var snapshotTimestamp = DateTimeOffset.UtcNow.ToString("O");
+        var safeTimestamp = snapshotTimestamp.Replace(":", "_").Replace(".", "-");
+
+        var containerName = GetContainerNameFromBlobPath(blobPath);
+        var snapshotDataDir = Path.Combine(
+            controlPlane.GetContainerDataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
+            ".snapshots");
+        var snapshotMetaDir = Path.Combine(
+            controlPlane.GetContainerBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
+            ".snapshots");
+
+        Directory.CreateDirectory(snapshotDataDir);
+        Directory.CreateDirectory(snapshotMetaDir);
+
+        var blobFileName = Path.GetFileName(contentPath);
+        var snapshotContentPath = Path.Combine(snapshotDataDir, $"{blobFileName}__{safeTimestamp}");
+        File.Copy(contentPath, snapshotContentPath, overwrite: true);
+
+        var metadataFileName = blobPath.Replace("/.blob", string.Empty).Replace("/", "_");
+        var snapshotPropertiesPath = Path.Combine(snapshotMetaDir, $"{metadataFileName}__{safeTimestamp}.properties.json");
+
+        var properties = File.Exists(propertiesPath)
+            ? JsonSerializer.Deserialize<BlobProperties>(File.ReadAllText(propertiesPath))!
+            : new BlobProperties(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow) { Name = Path.GetFileName(contentPath) };
+
+        properties.ETag = new ETag(DateTimeOffset.UtcNow.Ticks.ToString());
+        properties.LastModified = DateTimeOffset.UtcNow.ToString("R");
+
+        if (snapshotMetadata?.Count > 0)
+        {
+            var snapshotMetadataPath = Path.Combine(snapshotMetaDir, $"{metadataFileName}__{safeTimestamp}.metadata.json");
+            File.WriteAllLines(snapshotMetadataPath, snapshotMetadata.Select(kvp => $"x-ms-meta-{kvp.Key}={kvp.Value}"));
+        }
+
+        File.WriteAllText(snapshotPropertiesPath, JsonSerializer.Serialize(properties, GlobalSettings.JsonOptions));
+
+        return new DataPlaneOperationResult<string>(OperationResult.Created, snapshotTimestamp, null, null);
+    }
+
     private static void SaveLease(string path, ContainerLease lease)
     {
         File.WriteAllText(path, JsonSerializer.Serialize(lease, GlobalSettings.JsonOptions));
