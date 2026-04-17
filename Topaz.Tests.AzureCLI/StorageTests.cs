@@ -768,4 +768,201 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task BlobLease_Acquire_Succeeds()
+    {
+        const string storageAccountName = "topazbloblease01";
+        const string resourceGroup = "test-blob-lease-acq-rg";
+        const string containerName = "blob-lease-acq";
+        const string blobName = "lease-target.txt";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"hello\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob lease acquire --blob-name {blobName} --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            (resp) =>
+            {
+                var leaseId = resp.GetValue<string>();
+                Assert.That(leaseId, Is.Not.Null.And.Not.Empty);
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task BlobLease_Release_Succeeds()
+    {
+        const string storageAccountName = "topazbloblease02";
+        const string resourceGroup = "test-blob-lease-rel-rg";
+        const string containerName = "blob-lease-rel";
+        const string blobName = "lease-release.txt";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"hello\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        string? leaseId = null;
+        await RunAzureCliCommand(
+            $"az storage blob lease acquire --blob-name {blobName} --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            (resp) => { leaseId = resp.GetValue<string>(); });
+
+        await RunAzureCliCommand(
+            $"az storage blob lease release --blob-name {blobName} --container-name {containerName} --lease-id \"{leaseId}\" --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task BlobLease_Break_ReturnsAccepted()
+    {
+        const string storageAccountName = "topazbloblease03";
+        const string resourceGroup = "test-blob-lease-brk-rg";
+        const string containerName = "blob-lease-brk";
+        const string blobName = "lease-break.txt";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"hello\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob lease acquire --blob-name {blobName} --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob lease break --blob-name {blobName} --container-name {containerName} --lease-break-period 0 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            (resp) =>
+            {
+                Assert.That(resp.GetValue<int>(), Is.GreaterThanOrEqualTo(0));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task BlobCopy_Start_CopiesBlobSuccessfully()
+    {
+        const string storageAccountName = "topazstorblobcopy01";
+        const string resourceGroup = "test-blob-copy-rg";
+        const string srcContainer = "blob-copy-src";
+        const string dstContainer = "blob-copy-dst";
+        const string srcBlobName = "source.txt";
+        const string dstBlobName = "destination.txt";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        await RunAzureCliCommand(
+            $"az storage container create --name {srcContainer} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+        await RunAzureCliCommand(
+            $"az storage container create --name {dstContainer} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {srcContainer} --name {srcBlobName} --data \"hello copy\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob copy start --source-uri http://{storageAccountName}.blob.storage.topaz.local.dev:8891/{srcContainer}/{srcBlobName} --destination-blob {dstBlobName} --destination-container {dstContainer} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            (resp) =>
+            {
+                Assert.That(resp["status"]?.GetValue<string>(), Is.EqualTo("success"));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task BlobDelete_Delete_RemovesBlobSuccessfully()
+    {
+        const string storageAccountName = "topazstorblobdel01";
+        const string resourceGroup = "test-blob-delete-rg";
+        const string containerName = "blob-delete-ctr";
+        const string blobName = "delete-me.txt";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"to be deleted\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob delete --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"az storage blob exists --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            (resp) =>
+            {
+                Assert.That(resp["exists"]!.GetValue<bool>(), Is.False);
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

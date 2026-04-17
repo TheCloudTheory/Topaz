@@ -720,6 +720,29 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         return new DataPlaneOperationResult(OperationResult.Updated, null, null);
     }
 
+    public DataPlaneOperationResult SetBlobMetadata(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath,
+        Dictionary<string, string> metadata)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(SetBlobMetadata),
+            "Account: `{0}`, Path: {1}", storageAccountName, blobPath);
+
+        var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+
+        if (!File.Exists(fullPath))
+        {
+            return new DataPlaneOperationResult(OperationResult.NotFound, null, null);
+        }
+
+        var lines = metadata.Select(kvp => $"x-ms-meta-{kvp.Key}={kvp.Value}").ToArray();
+
+        File.WriteAllLines(
+            GetBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath),
+            lines);
+
+        return new DataPlaneOperationResult(OperationResult.Updated, null, null);
+    }
+
     public DataPlaneOperationResult<BlobProperties> SetBlobProperties(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
@@ -1035,6 +1058,144 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             default:
                 return new DataPlaneOperationResult<ContainerLease>(OperationResult.BadRequest, null, null, null);
         }
+    }
+
+    /// <summary>
+    /// Implements the Lease Blob operation.
+    /// Returns the operation result plus the resulting lease state (null on error).
+    /// </summary>
+    public DataPlaneOperationResult<ContainerLease> LeaseBlob(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string blobPath,
+        string leaseAction,
+        int leaseDuration,
+        string? proposedLeaseId,
+        string? currentLeaseId,
+        int? breakPeriod)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(LeaseBlob),
+            "Account: `{0}`, BlobPath: {1}, Action: {2}", storageAccountName, blobPath, leaseAction);
+
+        var fullBlobPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+        if (!File.Exists(fullBlobPath))
+            return new DataPlaneOperationResult<ContainerLease>(OperationResult.NotFound, null, null, null);
+
+        var leaseFilePath = GetBlobLeaseFilePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+
+        ContainerLease lease;
+        if (File.Exists(leaseFilePath))
+        {
+            lease = JsonSerializer.Deserialize<ContainerLease>(File.ReadAllText(leaseFilePath),
+                GlobalSettings.JsonOptions) ?? new ContainerLease();
+        }
+        else
+        {
+            lease = new ContainerLease();
+        }
+
+        var effectiveState = lease.EffectiveState();
+
+        switch (leaseAction.ToLowerInvariant())
+        {
+            case "acquire":
+            {
+                if (effectiveState == ContainerLeaseState.Leased)
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+
+                var newLeaseId = string.IsNullOrEmpty(proposedLeaseId) ? Guid.NewGuid().ToString() : proposedLeaseId;
+                lease.LeaseId = newLeaseId;
+                lease.State = ContainerLeaseState.Leased;
+                lease.Duration = leaseDuration;
+                lease.ExpiresAt = leaseDuration == -1 ? null : DateTimeOffset.UtcNow.AddSeconds(leaseDuration);
+                lease.BreakTime = null;
+                SaveLease(leaseFilePath, lease);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Created, lease, null, null);
+            }
+            case "renew":
+            {
+                if (effectiveState != ContainerLeaseState.Leased)
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+                if (!string.Equals(lease.LeaseId, currentLeaseId, StringComparison.OrdinalIgnoreCase))
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null, null, null);
+
+                lease.ExpiresAt = lease.Duration == -1 ? null : DateTimeOffset.UtcNow.AddSeconds(lease.Duration);
+                lease.State = ContainerLeaseState.Leased;
+                lease.BreakTime = null;
+                SaveLease(leaseFilePath, lease);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease, null, null);
+            }
+            case "change":
+            {
+                if (effectiveState != ContainerLeaseState.Leased)
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+                if (!string.Equals(lease.LeaseId, currentLeaseId, StringComparison.OrdinalIgnoreCase))
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null, null, null);
+                if (string.IsNullOrEmpty(proposedLeaseId))
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.BadRequest, null, null, null);
+
+                lease.LeaseId = proposedLeaseId;
+                SaveLease(leaseFilePath, lease);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease, null, null);
+            }
+            case "release":
+            {
+                if (effectiveState != ContainerLeaseState.Leased)
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+                if (!string.Equals(lease.LeaseId, currentLeaseId, StringComparison.OrdinalIgnoreCase))
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.PreconditionFailed, null, null, null);
+
+                lease.State = ContainerLeaseState.Available;
+                lease.LeaseId = null;
+                lease.ExpiresAt = null;
+                lease.BreakTime = null;
+                SaveLease(leaseFilePath, lease);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Success, lease, null, null);
+            }
+            case "break":
+            {
+                if (effectiveState == ContainerLeaseState.Available || effectiveState == ContainerLeaseState.Broken)
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Conflict, null, null, null);
+
+                if (effectiveState == ContainerLeaseState.Breaking)
+                    return new DataPlaneOperationResult<ContainerLease>(OperationResult.Accepted, lease, null, null);
+
+                int breakSeconds;
+                if (breakPeriod.HasValue)
+                {
+                    breakSeconds = breakPeriod.Value;
+                }
+                else if (lease.Duration == -1)
+                {
+                    breakSeconds = 0;
+                }
+                else
+                {
+                    breakSeconds = lease.ExpiresAt.HasValue
+                        ? (int)Math.Max(0, (lease.ExpiresAt.Value - DateTimeOffset.UtcNow).TotalSeconds)
+                        : 0;
+                }
+
+                lease.State = ContainerLeaseState.Breaking;
+                lease.BreakTime = DateTimeOffset.UtcNow.AddSeconds(breakSeconds);
+                SaveLease(leaseFilePath, lease);
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.Accepted, lease, null, null);
+            }
+            default:
+                return new DataPlaneOperationResult<ContainerLease>(OperationResult.BadRequest, null, null, null);
+        }
+    }
+
+    private string GetBlobLeaseFilePath(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
+    {
+        var containerName = GetContainerNameFromBlobPath(blobPath);
+        var metadataFileName = blobPath.Replace("/.blob", string.Empty).Replace("/", "_");
+        return Path.Combine(
+            controlPlane.GetContainerBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier,
+                storageAccountName, containerName),
+            $"{metadataFileName}.blob-lease.json");
     }
 
     private static void SaveLease(string path, ContainerLease lease)
