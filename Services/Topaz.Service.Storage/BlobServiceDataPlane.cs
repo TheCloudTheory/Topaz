@@ -70,7 +70,24 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
                 return new DataPlaneOperationResult<BlobProperties>(OperationResult.BadRequest, null, "PageBlob requires x-ms-blob-content-length.", "InvalidBlobType");
             }
 
-            File.WriteAllBytes(fullPath, new byte[pageBlobSize.Value]);
+            using var pageContent = new MemoryStream();
+            input.CopyTo(pageContent);
+
+            if (pageContent.Length > 0 && pageContent.Length != pageBlobSize.Value)
+            {
+                logger.LogError(nameof(BlobServiceDataPlane), nameof(PutBlob),
+                    "PageBlob payload length {0} must match x-ms-blob-content-length {1}.", pageContent.Length, pageBlobSize.Value);
+                return new DataPlaneOperationResult<BlobProperties>(OperationResult.BadRequest, null, "PageBlob payload length must match x-ms-blob-content-length.", "InvalidBlobContentLength");
+            }
+
+            if (pageContent.Length == 0)
+            {
+                File.WriteAllBytes(fullPath, new byte[pageBlobSize.Value]);
+            }
+            else
+            {
+                File.WriteAllBytes(fullPath, pageContent.ToArray());
+            }
 
             var metadata = new BlobProperties(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
             {
@@ -79,6 +96,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
                 ETag = new ETag(DateTimeOffset.UtcNow.Ticks.ToString()),
                 ContentLength = pageBlobSize.Value,
                 ContentType = string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType,
+                PageRanges = pageContent.Length == 0 ? [] : [new BlobPageRange(0, pageBlobSize.Value - 1)],
             };
 
             File.WriteAllText(GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath), JsonSerializer.Serialize(metadata));
@@ -140,6 +158,13 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
         var rangeLength = endByte - startByte + 1;
 
+        if (startByte < 0 || endByte < startByte || endByte >= properties.ContentLength)
+        {
+            logger.LogError(nameof(BlobServiceDataPlane), nameof(PutPage),
+                "Range bytes={0}-{1} is outside blob length {2}.", startByte, endByte, properties.ContentLength);
+            return new DataPlaneOperationResult<BlobProperties>(OperationResult.BadRequest, null, "Page range must be within the blob length.", "InvalidRange");
+        }
+
         using (var fs = new FileStream(fullPath, FileMode.Open, FileAccess.Write, FileShare.None))
         {
             fs.Seek(startByte, SeekOrigin.Begin);
@@ -147,10 +172,22 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             if (pageWrite.Equals("clear", StringComparison.OrdinalIgnoreCase))
             {
                 fs.Write(new byte[rangeLength], 0, (int)rangeLength);
+                properties.PageRanges = ClearPageRange(properties.PageRanges, startByte, endByte);
             }
             else
             {
-                input.CopyTo(fs);
+                using var ms = new MemoryStream();
+                input.CopyTo(ms);
+                if (ms.Length != rangeLength)
+                {
+                    logger.LogError(nameof(BlobServiceDataPlane), nameof(PutPage),
+                        "Payload length {0} does not match requested page range length {1}.", ms.Length, rangeLength);
+                    return new DataPlaneOperationResult<BlobProperties>(OperationResult.BadRequest, null, "Payload length must match the page range length.", "InvalidPageRange");
+                }
+
+                ms.Position = 0;
+                ms.CopyTo(fs);
+                properties.PageRanges = MergePageRange(properties.PageRanges, startByte, endByte);
             }
         }
 
@@ -160,6 +197,62 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         File.WriteAllText(propertiesPath, JsonSerializer.Serialize(properties));
 
         return new DataPlaneOperationResult<BlobProperties>(OperationResult.Created, properties, null, null);
+    }
+
+    public DataPlaneOperationResult<BlobPageRangesResult> GetPageRanges(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string blobPath,
+        long? startByte = null,
+        long? endByte = null)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetPageRanges),
+            "Executing {0}: {1} {2} range={3}-{4}", nameof(GetPageRanges), storageAccountName, blobPath, startByte, endByte);
+
+        var propertiesPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+        if (!File.Exists(propertiesPath))
+            return new DataPlaneOperationResult<BlobPageRangesResult>(OperationResult.NotFound, null, null, null);
+
+        var properties = JsonSerializer.Deserialize<BlobProperties>(File.ReadAllText(propertiesPath))!;
+
+        if (properties.BlobType != "PageBlob")
+        {
+            logger.LogError(nameof(BlobServiceDataPlane), nameof(GetPageRanges),
+                "Blob {0} is not a PageBlob.", blobPath);
+            return new DataPlaneOperationResult<BlobPageRangesResult>(OperationResult.BadRequest, null, "Get Page Ranges is only supported on page blobs.", "InvalidBlobType");
+        }
+
+        if ((startByte.HasValue && !endByte.HasValue) || (!startByte.HasValue && endByte.HasValue))
+        {
+            return new DataPlaneOperationResult<BlobPageRangesResult>(OperationResult.BadRequest, null, "Both start and end range values are required.", "InvalidRange");
+        }
+
+        if (startByte.HasValue && endByte.HasValue &&
+            (startByte.Value < 0 || endByte.Value < startByte.Value || endByte.Value >= properties.ContentLength))
+        {
+            return new DataPlaneOperationResult<BlobPageRangesResult>(OperationResult.BadRequest, null, "Requested range must be within the blob length.", "InvalidRange");
+        }
+
+        var filteredRanges = properties.PageRanges;
+        if (startByte.HasValue && endByte.HasValue)
+        {
+            filteredRanges = properties.PageRanges
+                .Select(range => IntersectRange(range, startByte.Value, endByte.Value))
+                .Where(range => range != null)
+                .Select(range => range!)
+                .ToList();
+        }
+
+        return new DataPlaneOperationResult<BlobPageRangesResult>(
+            OperationResult.Success,
+            new BlobPageRangesResult
+            {
+                BlobProperties = properties,
+                PageRanges = filteredRanges,
+            },
+            null,
+            null);
     }
 
     public DataPlaneOperationResult<byte[]> GetBlobBytes(SubscriptionIdentifier subscriptionIdentifier,
@@ -173,6 +266,67 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             return new DataPlaneOperationResult<byte[]>(OperationResult.NotFound, null, null, null);
 
         return new DataPlaneOperationResult<byte[]>(OperationResult.Success, File.ReadAllBytes(fullPath), null, null);
+    }
+
+    private static List<BlobPageRange> MergePageRange(IEnumerable<BlobPageRange> existingRanges, long startByte, long endByte)
+    {
+        var orderedRanges = existingRanges
+            .Append(new BlobPageRange(startByte, endByte))
+            .OrderBy(range => range.Start)
+            .ToList();
+
+        if (orderedRanges.Count == 0)
+            return [];
+
+        var merged = new List<BlobPageRange> { orderedRanges[0] };
+        foreach (var range in orderedRanges.Skip(1))
+        {
+            var current = merged[^1];
+            if (range.Start <= current.End + 1)
+            {
+                merged[^1] = new BlobPageRange(current.Start, Math.Max(current.End, range.End));
+                continue;
+            }
+
+            merged.Add(range);
+        }
+
+        return merged;
+    }
+
+    private static List<BlobPageRange> ClearPageRange(IEnumerable<BlobPageRange> existingRanges, long startByte, long endByte)
+    {
+        var remainingRanges = new List<BlobPageRange>();
+        foreach (var range in existingRanges)
+        {
+            if (endByte < range.Start || startByte > range.End)
+            {
+                remainingRanges.Add(range);
+                continue;
+            }
+
+            if (startByte > range.Start)
+            {
+                remainingRanges.Add(new BlobPageRange(range.Start, startByte - 1));
+            }
+
+            if (endByte < range.End)
+            {
+                remainingRanges.Add(new BlobPageRange(endByte + 1, range.End));
+            }
+        }
+
+        return remainingRanges;
+    }
+
+    private static BlobPageRange? IntersectRange(BlobPageRange range, long startByte, long endByte)
+    {
+        var intersectionStart = Math.Max(range.Start, startByte);
+        var intersectionEnd = Math.Min(range.End, endByte);
+
+        return intersectionStart <= intersectionEnd
+            ? new BlobPageRange(intersectionStart, intersectionEnd)
+            : null;
     }
 
     public DataPlaneOperationResult PutBlock(

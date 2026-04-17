@@ -720,11 +720,49 @@ public class StorageTests : TopazFixture
 
         // Download and verify content size
         await RunAzureCliCommand(
-            $"bash -c \"az storage blob download --account-name {storageAccountName} --account-key \\\"{accountKey}\\\" --container-name {containerName} --name {blobName} --file /tmp/topaz_page_dl.bin --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891 && wc -c < /tmp/topaz_page_dl.bin\"",
+            $"bash -c \"az storage blob download --account-name {storageAccountName} --account-key \\\"{accountKey}\\\" --container-name {containerName} --name {blobName} --file /tmp/topaz_page_dl.bin --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891 -o none && wc -c < /tmp/topaz_page_dl.bin\"",
             (resp) =>
             {
-                // wc -c returns byte count as a string
-                Assert.That(resp.GetValue<string>()!.Trim(), Is.EqualTo("512"));
+                Assert.That(resp.GetValue<int>(), Is.EqualTo(512));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task PageBlob_Show_ShouldIncludePageRanges()
+    {
+        const string storageAccountName = "topazpageblob03";
+        const string resourceGroup = "test-page-ranges-rg";
+        const string containerName = "page-ranges-container";
+        const string blobName = "ranges-page.bin";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"bash -c \"python3 -c \\\"import sys; sys.stdout.buffer.write(b'\\\\x43' * 1024)\\\" > /tmp/topaz_page3.bin && az storage blob upload --account-name {storageAccountName} --account-key \\\"{accountKey}\\\" --container-name {containerName} --name {blobName} --file /tmp/topaz_page3.bin --type page --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891\"");
+
+        await RunAzureCliCommand(
+            $"az storage blob show --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            (resp) =>
+            {
+                Assert.That(resp["properties"]!["pageRanges"]!.AsArray(), Has.Count.EqualTo(1));
+                Assert.That(resp["properties"]!["pageRanges"]![0]!["start"]!.GetValue<int>(), Is.EqualTo(0));
+                Assert.That(resp["properties"]!["pageRanges"]![0]!["end"]!.GetValue<int>(), Is.EqualTo(1023));
             });
 
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");

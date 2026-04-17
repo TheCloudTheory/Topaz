@@ -36,4 +36,5 @@ public sealed class BlobProperties
     public string? CacheControl { get; set; }
     public string? ContentDisposition { get; set; }
     public string? CopyId { get; set; }
+    public List<BlobPageRange> PageRanges { get; set; } = [];
 }

@@ -88,7 +88,7 @@ Blob Storage is served on port **8891** (HTTP) in Topaz. (Note: Blob Storage use
 | Put Block List | ✅ | `PUT /{containerName}/{blobName}?comp=blocklist` — assembles staged blocks into a committed blob |
 | Get Block List | ✅ | `GET /{containerName}/{blobName}?comp=blocklist` — `blocklisttype` supports `committed`, `uncommitted`, `all` |
 | Put Page | ✅ | `PUT /{containerName}/{blobName}?comp=page` — supports `x-ms-page-write: update` (write) and `clear` (zero-fill); range must be 512-byte aligned |
-| Get Page Ranges | ❌ | |
+| Get Page Ranges | ✅ | `GET /{containerName}/{blobName}?comp=pagelist` — supports `Range`/`x-ms-range` filtering and returns Azure-compatible `PageList` XML |
 | Lease Blob | ❌ | |
 | Snapshot Blob | ❌ | |
 | Undelete Blob | ❌ | |

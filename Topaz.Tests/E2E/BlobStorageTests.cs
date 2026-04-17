@@ -802,4 +802,66 @@ public class BlobStorageTests
         Assert.That(properties.Value.ETag, Is.Not.EqualTo(default(ETag)));
         Assert.That(properties.Value.LastModified, Is.Not.EqualTo(default(DateTimeOffset)));
     }
+
+    [Test]
+    public void BlobStorageTests_WhenPageRangesAreRequested_ValidRangesShouldBeReturned()
+    {
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("page-ranges");
+        var pageBlob = serviceClient.GetBlobContainerClient("page-ranges")
+            .GetPageBlobClient("ranges-page.bin");
+
+        pageBlob.Create(1024);
+        pageBlob.UploadPages(new BinaryData(new byte[512]).ToStream(), 0);
+        pageBlob.UploadPages(new BinaryData(new byte[512]).ToStream(), 512);
+
+        var response = pageBlob.GetPageRanges();
+        var ranges = response.Value.PageRanges.ToArray();
+
+        Assert.That(response.GetRawResponse().Status, Is.EqualTo(200));
+        Assert.That(ranges, Has.Length.EqualTo(1));
+        Assert.That(ranges[0].Offset, Is.EqualTo(0));
+        Assert.That(ranges[0].Length, Is.EqualTo(1024));
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenPageRangesAreRequestedForSubset_OnlyIntersectingRangesShouldBeReturned()
+    {
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("page-ranges-subset");
+        var pageBlob = serviceClient.GetBlobContainerClient("page-ranges-subset")
+            .GetPageBlobClient("subset-page.bin");
+
+        pageBlob.Create(1024);
+        pageBlob.UploadPages(new BinaryData(new byte[512]).ToStream(), 0);
+        pageBlob.UploadPages(new BinaryData(new byte[512]).ToStream(), 512);
+
+        var response = pageBlob.GetPageRanges(new HttpRange(512, 512));
+        var ranges = response.Value.PageRanges.ToArray();
+
+        Assert.That(ranges, Has.Length.EqualTo(1));
+        Assert.That(ranges[0].Offset, Is.EqualTo(512));
+        Assert.That(ranges[0].Length, Is.EqualTo(512));
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenPagesAreCleared_TheClearedRangeShouldNotBeReturned()
+    {
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("page-ranges-clear");
+        var pageBlob = serviceClient.GetBlobContainerClient("page-ranges-clear")
+            .GetPageBlobClient("clear-page.bin");
+
+        pageBlob.Create(1024);
+        pageBlob.UploadPages(new BinaryData(new byte[512]).ToStream(), 0);
+        pageBlob.UploadPages(new BinaryData(new byte[512]).ToStream(), 512);
+        pageBlob.ClearPages(new HttpRange(0, 512));
+
+        var response = pageBlob.GetPageRanges();
+        var ranges = response.Value.PageRanges.ToArray();
+
+        Assert.That(ranges, Has.Length.EqualTo(1));
+        Assert.That(ranges[0].Offset, Is.EqualTo(512));
+        Assert.That(ranges[0].Length, Is.EqualTo(512));
+    }
 }

@@ -69,11 +69,22 @@ internal sealed class GetBlobEndpoint(ITopazLogger logger)
                 bytes = textOp.Resource != null ? System.Text.Encoding.UTF8.GetBytes(textOp.Resource) : [];
             }
 
+            string? contentRangeHeader = null;
+            if (TryGetRequestedRange(context.Request.Headers, bytes.Length, out var startByte, out var endByte))
+            {
+                var totalLength = props.Resource?.ContentLength ?? bytes.Length;
+                bytes = bytes[startByte..(endByte + 1)];
+                response.StatusCode = HttpStatusCode.PartialContent;
+                contentRangeHeader = $"bytes {startByte}-{endByte}/{totalLength}";
+            }
+
             response.Content = new ByteArrayContent(bytes);
 
             var contentType = props.Resource?.ContentType ?? "application/octet-stream";
             response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
             response.Content.Headers.ContentLength = bytes.Length;
+            if (!string.IsNullOrEmpty(contentRangeHeader))
+                response.Content.Headers.TryAddWithoutValidation("Content-Range", contentRangeHeader);
 
             if (props.Resource != null)
             {
@@ -85,6 +96,7 @@ internal sealed class GetBlobEndpoint(ITopazLogger logger)
                 response.Headers.TryAddWithoutValidation("x-ms-server-encrypted", "true");
                 response.Headers.TryAddWithoutValidation("x-ms-lease-status", "unlocked");
                 response.Headers.TryAddWithoutValidation("x-ms-lease-state", "available");
+                response.Headers.TryAddWithoutValidation("Accept-Ranges", "bytes");
 
                 if (!string.IsNullOrEmpty(props.Resource.LastModified))
                     response.Content.Headers.TryAddWithoutValidation("Last-Modified", props.Resource.LastModified);
@@ -112,5 +124,38 @@ internal sealed class GetBlobEndpoint(ITopazLogger logger)
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }
+    }
+
+    private static bool TryGetRequestedRange(IHeaderDictionary headers, int blobLength, out int startByte, out int endByte)
+    {
+        startByte = 0;
+        endByte = 0;
+
+        var rangeHeader = headers.TryGetValue("x-ms-range", out var xMsRange)
+            ? xMsRange.ToString()
+            : headers.TryGetValue("Range", out var range)
+                ? range.ToString()
+                : null;
+
+        if (string.IsNullOrWhiteSpace(rangeHeader))
+            return false;
+
+        var withoutPrefix = rangeHeader.StartsWith("bytes=", StringComparison.OrdinalIgnoreCase)
+            ? rangeHeader["bytes=".Length..]
+            : rangeHeader;
+
+        var parts = withoutPrefix.Split('-');
+        if (parts.Length != 2 || !int.TryParse(parts[0], out startByte))
+            return false;
+
+        if (!string.IsNullOrWhiteSpace(parts[1]) && !int.TryParse(parts[1], out endByte))
+            return false;
+
+        if (string.IsNullOrWhiteSpace(parts[1]))
+            endByte = blobLength - 1;
+        else
+            endByte = Math.Min(endByte, blobLength - 1);
+
+        return startByte >= 0 && startByte <= endByte && startByte < blobLength;
     }
 }
