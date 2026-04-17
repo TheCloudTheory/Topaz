@@ -750,7 +750,7 @@ namespace Topaz.Tests.E2E
                 maxAgeInSeconds: 300));
             tableServiceClient.SetProperties(properties);
 
-            var baseUrl = $"http://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
+            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
             using var httpClient = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Options, $"{baseUrl}/Tables");
             request.Headers.Add("Origin", "http://cors-test.example.com");
@@ -782,7 +782,7 @@ namespace Topaz.Tests.E2E
                 maxAgeInSeconds: 300));
             tableServiceClient.SetProperties(properties);
 
-            var baseUrl = $"http://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
+            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
             using var httpClient = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Options, $"{baseUrl}/Tables");
             request.Headers.Add("Origin", "http://other-origin.example.com");

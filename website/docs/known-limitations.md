@@ -31,3 +31,19 @@ az storage blob update \
 ### Planned fix — v1.6-beta
 
 Consolidate all storage data-plane services onto a single HTTPS port with subdomain-based routing in the Topaz router. This aligns the port topology with real Azure and removes the need for per-service port constants.
+
+## Table Storage — explicit endpoint required in connection strings
+
+**Affected services:** Table Storage (port 8890)
+
+Table Storage data-plane endpoints are served over HTTPS (port 8890) using the Topaz self-signed certificate, which covers `*.table.storage.topaz.local.dev`. However, connection strings must always specify an explicit `TableEndpoint=https://…:8890` component. If you rely on `DefaultEndpointsProtocol=https` alone (without an explicit `TableEndpoint`), the Azure SDK derives the table URL from the default cloud suffix (`core.windows.net`), which does not resolve to the Topaz emulator.
+
+### Impact
+
+Constructing a `TableServiceClient` with only `DefaultEndpointsProtocol=https;AccountName=…;AccountKey=…` will attempt to reach `https://<account>.table.core.windows.net` rather than the Topaz host.
+
+**Workaround:** always use `TopazResourceHelpers.GetAzureStorageConnectionString(...)`, which explicitly sets `TableEndpoint=https://…:8890`.
+
+### Planned fix — v1.6-beta
+
+Covered by the single-port HTTPS consolidation planned for Blob/Table/Queue/File storage (see above).

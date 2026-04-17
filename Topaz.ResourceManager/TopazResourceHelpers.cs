@@ -21,10 +21,10 @@ public static class TopazResourceHelpers
     /// <param name="accountKey">The account key for authentication.</param>
     /// <returns>A connection string configured to use local storage emulator endpoints.</returns>
     /// <remarks>
-    /// All endpoints use HTTP protocol for local development.
+    /// Blob and Queue endpoints use plain HTTP. Table Storage uses HTTPS (the Topaz certificate covers *.table.storage.topaz.local.dev).
     /// </remarks>
     public static string GetAzureStorageConnectionString(string storageAccountName, string accountKey) =>
-        $"DefaultEndpointsProtocol=http;AccountName={storageAccountName};AccountKey={accountKey};BlobEndpoint=http://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;QueueEndpoint=http://{storageAccountName}.queue.storage.topaz.local.dev:8899;TableEndpoint=http://{storageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort};";
+        $"DefaultEndpointsProtocol=http;AccountName={storageAccountName};AccountKey={accountKey};BlobEndpoint=http://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;QueueEndpoint=http://{storageAccountName}.queue.storage.topaz.local.dev:8899;TableEndpoint=https://{storageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort};";
 
     /// <summary>
     /// Gets the Service Bus connection string for the local development emulator.
