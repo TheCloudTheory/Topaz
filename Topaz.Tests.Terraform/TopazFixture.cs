@@ -176,7 +176,7 @@ public class TopazFixture
             });
 
             Assert.That(setupResult.ExitCode, Is.EqualTo(0),
-                $"Container setup failed. STDOUT: {setupResult.Stdout}, STDERR: {setupResult.Stderr}");
+                $"Container setup failed. STDOUT: {TruncateForOutput(setupResult.Stdout)}, STDERR: {TruncateForOutput(setupResult.Stderr)}");
 
             await WaitForTopazReadiness();
 
@@ -464,25 +464,41 @@ public class TopazFixture
         Console.WriteLine($"[terraform] {command}");
 
         if (result.Stdout.Length > 0)
-            Console.WriteLine(result.Stdout);
+            Console.WriteLine(TruncateForOutput(result.Stdout));
 
         if (result.ExitCode != 0)
         {
-            await Console.Error.WriteLineAsync(result.Stderr);
+            await Console.Error.WriteLineAsync(TruncateForOutput(result.Stderr));
 
             var topazLogs = ReadDockerLogs("topaz.local.dev", 400);
             if (!string.IsNullOrWhiteSpace(topazLogs))
                 await Console.Error.WriteLineAsync($"[docker logs topaz.local.dev]\n{topazLogs}");
 
             Assert.That(result.ExitCode, Is.EqualTo(0),
-                $"`{command}` failed.\nSTDOUT: {result.Stdout}\nSTDERR: {result.Stderr}" +
+                $"`{command}` failed.\nSTDOUT: {TruncateForOutput(result.Stdout)}\nSTDERR: {TruncateForOutput(result.Stderr)}" +
                 (string.IsNullOrWhiteSpace(topazLogs) ? "" : $"\n[Topaz Docker logs]\n{topazLogs}"));
         }
 
         Assert.That(result.ExitCode, Is.EqualTo(0),
-            $"`{command}` failed.\nSTDOUT: {result.Stdout}\nSTDERR: {result.Stderr}");
+            $"`{command}` failed.\nSTDOUT: {TruncateForOutput(result.Stdout)}\nSTDERR: {TruncateForOutput(result.Stderr)}");
 
         return (result.Stdout, result.Stderr);
+    }
+
+    /// <summary>
+    /// Truncates a string to at most <paramref name="maxChars"/> characters, keeping the first and
+    /// last halves separated by an ellipsis marker. This prevents the NUnit TRX logger from writing
+    /// multi-megabyte text nodes that exceed the XML parser limit used by the CI result publisher.
+    /// </summary>
+    private static string TruncateForOutput(string text, int maxChars = 8_000)
+    {
+        if (text.Length <= maxChars)
+            return text;
+
+        var half = maxChars / 2;
+        return text[..half] +
+               $"\n... [{text.Length - maxChars:N0} characters omitted] ...\n" +
+               text[^half..];
     }
 
     private async Task WaitForTopazReadiness()
@@ -527,10 +543,10 @@ public class TopazFixture
         Console.WriteLine($"[az] {command}");
 
         if (result.ExitCode != 0)
-            await Console.Error.WriteLineAsync(result.Stderr);
+            await Console.Error.WriteLineAsync(TruncateForOutput(result.Stderr));
 
         Assert.That(result.ExitCode, Is.EqualTo(0),
-            $"`{command}` failed.\nSTDOUT: {result.Stdout}\nSTDERR: {result.Stderr}");
+            $"`{command}` failed.\nSTDOUT: {TruncateForOutput(result.Stdout)}\nSTDERR: {TruncateForOutput(result.Stderr)}");
     }
 
     private async Task EnsureSubscriptionExistsInTopaz()
