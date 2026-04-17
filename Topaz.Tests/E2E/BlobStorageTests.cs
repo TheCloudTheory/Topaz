@@ -711,4 +711,95 @@ public class BlobStorageTests
         Assert.That(blockList.Value.UncommittedBlocks.Count, Is.EqualTo(1));
         Assert.That(blockList.Value.UncommittedBlocks.First().Name, Is.EqualTo(uncommittedId));
     }
+
+    [Test]
+    public void BlobStorageTests_WhenPageBlobIsCreated_ItShouldHaveCorrectProperties()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("page-blob-create");
+        var pageBlob = serviceClient.GetBlobContainerClient("page-blob-create")
+            .GetPageBlobClient("test-page.bin");
+
+        // Act
+        pageBlob.Create(512);
+        var properties = pageBlob.GetProperties();
+
+        // Assert
+        Assert.That(properties.Value.BlobType, Is.EqualTo(BlobType.Page));
+        Assert.That(properties.Value.ContentLength, Is.EqualTo(512));
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenPagesAreUploaded_DownloadedContentShouldMatch()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("page-blob-upload");
+        var pageBlob = serviceClient.GetBlobContainerClient("page-blob-upload")
+            .GetPageBlobClient("uploaded-page.bin");
+
+        pageBlob.Create(512);
+
+        var pageContent = new byte[512];
+        for (var i = 0; i < pageContent.Length; i++)
+            pageContent[i] = (byte)(i % 256);
+
+        // Act
+        pageBlob.UploadPages(new BinaryData(pageContent).ToStream(), 0);
+        var download = pageBlob.DownloadContent();
+
+        // Assert
+        Assert.That(download.GetRawResponse().Status, Is.EqualTo(200));
+        Assert.That(download.Value.Content.ToArray(), Is.EqualTo(pageContent));
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenPagesAreUploadedAtOffset_ContentShouldMatchAtThatOffset()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("page-blob-offset");
+        var pageBlob = serviceClient.GetBlobContainerClient("page-blob-offset")
+            .GetPageBlobClient("offset-page.bin");
+
+        pageBlob.Create(1024);
+
+        var pageContent = new byte[512];
+        for (var i = 0; i < pageContent.Length; i++)
+            pageContent[i] = 0xAB;
+
+        // Act: write to the second page (offset 512)
+        pageBlob.UploadPages(new BinaryData(pageContent).ToStream(), 512);
+        var download = pageBlob.DownloadContent();
+        var downloaded = download.Value.Content.ToArray();
+
+        // Assert: first page should be zeros, second page should match our content
+        Assert.That(downloaded.Length, Is.EqualTo(1024));
+        Assert.That(downloaded[..512], Is.All.EqualTo(0));
+        Assert.That(downloaded[512..], Is.EqualTo(pageContent));
+    }
+
+    [Test]
+    public void BlobStorageTests_WhenPageBlobPropertiesAreRequested_BlobTypeShouldBePageBlob()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer("page-blob-props");
+        var pageBlob = serviceClient.GetBlobContainerClient("page-blob-props")
+            .GetPageBlobClient("props-page.bin");
+
+        pageBlob.Create(512);
+        var pageContent = new byte[512];
+        pageBlob.UploadPages(new BinaryData(pageContent).ToStream(), 0);
+
+        // Act
+        var properties = pageBlob.GetProperties();
+
+        // Assert
+        Assert.That(properties.Value.BlobType, Is.EqualTo(BlobType.Page));
+        Assert.That(properties.Value.ContentLength, Is.EqualTo(512));
+        Assert.That(properties.Value.ETag, Is.Not.EqualTo(default(ETag)));
+        Assert.That(properties.Value.LastModified, Is.Not.EqualTo(default(DateTimeOffset)));
+    }
 }

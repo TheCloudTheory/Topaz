@@ -63,7 +63,7 @@ internal sealed class PutBlobEndpoint(ITopazLogger logger)
                     : context.Request.ContentType;
 
                 HandleUploadBlobRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
-                    context.Request.Path, blobName!, context.Request.Body, response, contentType);
+                    context.Request.Path, blobName!, context.Request.Body, context.Request.Headers, response, contentType);
             }
         }
         catch (Exception ex)
@@ -82,14 +82,26 @@ internal sealed class PutBlobEndpoint(ITopazLogger logger)
         string blobPath,
         string blobName,
         Stream input,
+        IHeaderDictionary requestHeaders,
         HttpResponseMessage response,
         string? contentType = null)
     {
         Logger.LogDebug(nameof(PutBlobEndpoint), nameof(HandleUploadBlobRequest), "Handling blob upload for {0}.",
             blobPath);
 
+        requestHeaders.TryGetValue("x-ms-blob-type", out var blobTypeValue);
+        var blobType = blobTypeValue.FirstOrDefault();
+
+        long? pageBlobSize = null;
+        if (blobType == "PageBlob" &&
+            requestHeaders.TryGetValue("x-ms-blob-content-length", out var pageSizeValue) &&
+            long.TryParse(pageSizeValue.FirstOrDefault(), out var parsedSize))
+        {
+            pageBlobSize = parsedSize;
+        }
+
         var op = _dataPlane.PutBlob(subscriptionIdentifier, resourceGroupIdentifier,
-            storageAccountName, blobPath, blobName, input, contentType);
+            storageAccountName, blobPath, blobName, input, contentType, blobType, pageBlobSize);
 
         // TODO: The response must include the response headers from https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob?tabs=microsoft-entra-id#response
         response.StatusCode = op.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.BadRequest;

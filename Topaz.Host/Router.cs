@@ -124,7 +124,8 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "[{0}] {1}{2}", method, path, query);
 
         var response = CallEndpoint(endpoint, context);
-        var textResponse = await response.Content.ReadAsStringAsync();
+        var responseBytes = await response.Content.ReadAsByteArrayAsync();
+        var textResponse = System.Text.Encoding.UTF8.GetString(responseBytes);
 
         logger.LogInformation($"[{method}][{context.Request.Host}:{path}{query}][{response.StatusCode}] {textResponse}");
         
@@ -152,7 +153,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
                 // Evert Hub SDK validates a checkpoint), a specific error code is checked.
                 if (!HttpMethods.IsHead(context.Request.Method))
                 {
-                    await context.Response.WriteAsync(textResponse);
+                    await context.Response.Body.WriteAsync(responseBytes);
                 }
                 return;
             case HttpStatusCode.InternalServerError:
@@ -167,7 +168,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
             // HEAD responses must not include a body; only status and headers are returned.
             if (!HttpMethods.IsHead(context.Request.Method))
             {
-                await context.Response.WriteAsync(textResponse);
+                await context.Response.Body.WriteAsync(responseBytes);
             }
         }
     }

@@ -26,7 +26,7 @@ public sealed class BlobProperties
     
     public string Name { get; init; } = null!;
     public string DateUploaded { get; init; }
-    public string BlobType => "BlockBlob";
+    public string BlobType { get; init; } = "BlockBlob";
     public ETag ETag { get; set; }
     public string? LastModified { get; set; }
     public long ContentLength { get; init; }

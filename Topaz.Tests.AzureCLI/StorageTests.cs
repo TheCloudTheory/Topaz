@@ -652,4 +652,82 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task PageBlob_Create_AndUpload_ShouldHavePageBlobType()
+    {
+        const string storageAccountName = "topazpageblob01";
+        const string resourceGroup = "test-page-blob-rg";
+        const string containerName = "page-container";
+        const string blobName = "test-page.bin";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        // Generate 512 bytes of data and upload as a page blob
+        await RunAzureCliCommand(
+            $"bash -c \"python3 -c \\\"import sys; sys.stdout.buffer.write(b'\\\\x41' * 512)\\\" > /tmp/topaz_page.bin && az storage blob upload --account-name {storageAccountName} --account-key \\\"{accountKey}\\\" --container-name {containerName} --name {blobName} --file /tmp/topaz_page.bin --type page --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891\"");
+
+        await RunAzureCliCommand(
+            $"az storage blob show --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            (resp) =>
+            {
+                Assert.That(resp["properties"]!["blobType"]!.GetValue<string>(), Is.EqualTo("PageBlob"));
+                Assert.That(resp["properties"]!["contentLength"]!.GetValue<long>(), Is.EqualTo(512));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task PageBlob_UploadedContent_ShouldBeDownloadable()
+    {
+        const string storageAccountName = "topazpageblob02";
+        const string resourceGroup = "test-page-blob-dl-rg";
+        const string containerName = "page-dl-container";
+        const string blobName = "download-page.bin";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+
+        await RunAzureCliCommand(
+            $"bash -c \"python3 -c \\\"import sys; sys.stdout.buffer.write(b'\\\\x42' * 512)\\\" > /tmp/topaz_page2.bin && az storage blob upload --account-name {storageAccountName} --account-key \\\"{accountKey}\\\" --container-name {containerName} --name {blobName} --file /tmp/topaz_page2.bin --type page --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891\"");
+
+        // Download and verify content size
+        await RunAzureCliCommand(
+            $"bash -c \"az storage blob download --account-name {storageAccountName} --account-key \\\"{accountKey}\\\" --container-name {containerName} --name {blobName} --file /tmp/topaz_page_dl.bin --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891 && wc -c < /tmp/topaz_page_dl.bin\"",
+            (resp) =>
+            {
+                // wc -c returns byte count as a string
+                Assert.That(resp.GetValue<string>()!.Trim(), Is.EqualTo("512"));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

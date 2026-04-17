@@ -43,22 +43,32 @@ internal sealed class GetBlobEndpoint(ITopazLogger logger)
             Logger.LogDebug(nameof(GetBlobEndpoint), nameof(GetResponse),
                 "Handling blob download for {0}.", context.Request.Path.Value);
 
-            var op = _dataPlane.GetBlob(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccount!.Name, context.Request.Path.Value!);
+            var props = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
+                storageAccount!.Name, context.Request.Path.Value!, blobName!);
 
-            if (op.Result == OperationResult.NotFound)
+            if (props.Result == OperationResult.NotFound)
             {
                 response.CreateBlobErrorResponse(BlobErrorCode.BlobNotFound, "Blob not found",
                     HttpStatusCode.NotFound);
                 return;
             }
 
-            var props = _dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccount!.Name, context.Request.Path.Value!, blobName!);
-
             response.StatusCode = HttpStatusCode.OK;
 
-            var bytes = op.Resource != null ? System.Text.Encoding.UTF8.GetBytes(op.Resource) : [];
+            byte[] bytes;
+            if (props.Resource?.BlobType == "PageBlob")
+            {
+                var binaryOp = _dataPlane.GetBlobBytes(subscriptionIdentifier, resourceGroupIdentifier,
+                    storageAccount!.Name, context.Request.Path.Value!);
+                bytes = binaryOp.Resource ?? [];
+            }
+            else
+            {
+                var textOp = _dataPlane.GetBlob(subscriptionIdentifier, resourceGroupIdentifier,
+                    storageAccount!.Name, context.Request.Path.Value!);
+                bytes = textOp.Resource != null ? System.Text.Encoding.UTF8.GetBytes(textOp.Resource) : [];
+            }
+
             response.Content = new ByteArrayContent(bytes);
 
             var contentType = props.Resource?.ContentType ?? "application/octet-stream";

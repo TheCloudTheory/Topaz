@@ -38,15 +38,12 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         return JsonSerializer.Deserialize<BlobProperties>(content);
     }
     
-    // TODO: This method must support different kinds of blobs
     public DataPlaneOperationResult<BlobProperties> PutBlob(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath, string blobName,
-        Stream input, string? contentType = null)
+        Stream input, string? contentType = null, string? blobType = null, long? pageBlobSize = null)
     {
         logger.LogDebug(nameof(BlobServiceDataPlane), nameof(PutBlob), "Executing {0}: {1} {2} {3}", nameof(PutBlob), storageAccountName, blobPath, blobName);
 
-        using var sr = new StreamReader(input);
-        var rawContent = sr.ReadToEnd();
         var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
         var blobDirectory = Path.GetDirectoryName(fullPath);
 
@@ -63,18 +60,119 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             logger.LogDebug(nameof(BlobServiceDataPlane), nameof(PutBlob), "Blob directory {0} created.", blobDirectory);
         }
 
-        var metadata = new BlobProperties(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
+        var resolvedBlobType = string.IsNullOrWhiteSpace(blobType) ? "BlockBlob" : blobType;
+
+        if (resolvedBlobType == "PageBlob")
         {
-            Name = blobName,
-            ETag = new ETag(DateTimeOffset.Now.Ticks.ToString()),
-            ContentLength = System.Text.Encoding.UTF8.GetByteCount(rawContent),
-            ContentType = string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType,
-        };
+            if (pageBlobSize == null || pageBlobSize <= 0)
+            {
+                logger.LogError("PageBlob requires a positive x-ms-blob-content-length.");
+                return new DataPlaneOperationResult<BlobProperties>(OperationResult.BadRequest, null, "PageBlob requires x-ms-blob-content-length.", "InvalidBlobType");
+            }
 
-        File.WriteAllText(GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath), JsonSerializer.Serialize(metadata));
-        File.WriteAllText(fullPath, rawContent);
+            File.WriteAllBytes(fullPath, new byte[pageBlobSize.Value]);
 
-        return new DataPlaneOperationResult<BlobProperties>(OperationResult.Created, metadata, null, null);
+            var metadata = new BlobProperties(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
+            {
+                Name = blobName,
+                BlobType = "PageBlob",
+                ETag = new ETag(DateTimeOffset.UtcNow.Ticks.ToString()),
+                ContentLength = pageBlobSize.Value,
+                ContentType = string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType,
+            };
+
+            File.WriteAllText(GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath), JsonSerializer.Serialize(metadata));
+            return new DataPlaneOperationResult<BlobProperties>(OperationResult.Created, metadata, null, null);
+        }
+        else
+        {
+            using var sr = new StreamReader(input);
+            var rawContent = sr.ReadToEnd();
+
+            var metadata = new BlobProperties(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
+            {
+                Name = blobName,
+                ETag = new ETag(DateTimeOffset.Now.Ticks.ToString()),
+                ContentLength = System.Text.Encoding.UTF8.GetByteCount(rawContent),
+                ContentType = string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType,
+            };
+
+            File.WriteAllText(GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath), JsonSerializer.Serialize(metadata));
+            File.WriteAllText(fullPath, rawContent);
+
+            return new DataPlaneOperationResult<BlobProperties>(OperationResult.Created, metadata, null, null);
+        }
+    }
+
+    public DataPlaneOperationResult<BlobProperties> PutPage(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string blobPath,
+        long startByte,
+        long endByte,
+        string pageWrite,
+        Stream input)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(PutPage),
+            "Executing {0}: {1} {2} range={3}-{4} write={5}", nameof(PutPage), storageAccountName, blobPath, startByte, endByte, pageWrite);
+
+        if (startByte % 512 != 0 || (endByte + 1) % 512 != 0)
+        {
+            logger.LogError(nameof(BlobServiceDataPlane), nameof(PutPage),
+                "Range bytes={0}-{1} is not 512-byte aligned.", startByte, endByte);
+            return new DataPlaneOperationResult<BlobProperties>(OperationResult.BadRequest, null, "Page range must be 512-byte aligned.", "InvalidPageRange");
+        }
+
+        var propertiesPath = GetBlobPropertiesPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+        if (!File.Exists(propertiesPath))
+            return new DataPlaneOperationResult<BlobProperties>(OperationResult.NotFound, null, null, null);
+
+        var properties = JsonSerializer.Deserialize<BlobProperties>(File.ReadAllText(propertiesPath))!;
+
+        if (properties.BlobType != "PageBlob")
+        {
+            logger.LogError(nameof(BlobServiceDataPlane), nameof(PutPage),
+                "Blob {0} is not a PageBlob.", blobPath);
+            return new DataPlaneOperationResult<BlobProperties>(OperationResult.BadRequest, null, "Put Page is only supported on page blobs.", "InvalidBlobType");
+        }
+
+        var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+        var rangeLength = endByte - startByte + 1;
+
+        using (var fs = new FileStream(fullPath, FileMode.Open, FileAccess.Write, FileShare.None))
+        {
+            fs.Seek(startByte, SeekOrigin.Begin);
+
+            if (pageWrite.Equals("clear", StringComparison.OrdinalIgnoreCase))
+            {
+                fs.Write(new byte[rangeLength], 0, (int)rangeLength);
+            }
+            else
+            {
+                input.CopyTo(fs);
+            }
+        }
+
+        properties.ETag = new ETag(DateTimeOffset.UtcNow.Ticks.ToString());
+        properties.LastModified = DateTimeOffset.UtcNow.ToString("R");
+
+        File.WriteAllText(propertiesPath, JsonSerializer.Serialize(properties));
+
+        return new DataPlaneOperationResult<BlobProperties>(OperationResult.Created, properties, null, null);
+    }
+
+    public DataPlaneOperationResult<byte[]> GetBlobBytes(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetBlobBytes), "Executing {0}: {1} {2}", nameof(GetBlobBytes), storageAccountName, blobPath);
+
+        var fullPath = GetBlobPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, blobPath);
+
+        if (!File.Exists(fullPath))
+            return new DataPlaneOperationResult<byte[]>(OperationResult.NotFound, null, null, null);
+
+        return new DataPlaneOperationResult<byte[]>(OperationResult.Success, File.ReadAllBytes(fullPath), null, null);
     }
 
     public DataPlaneOperationResult PutBlock(
