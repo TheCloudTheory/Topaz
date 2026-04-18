@@ -644,4 +644,70 @@ public class KeyVaultTests : TopazFixture
     }
 
     #endregion
+
+    #region Key Tests
+
+    [Test]
+    public async Task KeyVaultTests_WhenCreateRsaKeyCommandIsCalled_KeyShouldBeCreated()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name KeyVaultRsa01 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault key create --vault-name KeyVaultRsa01 --name my-rsa-key --kty RSA", (response) =>
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(response["key"], Is.Not.Null);
+                Assert.That(response["key"]!["kid"]!.GetValue<string>(), Does.Contain("my-rsa-key"));
+                Assert.That(response["key"]!["kty"]!.GetValue<string>(), Is.EqualTo("RSA"));
+                Assert.That(response["key"]!["n"], Is.Not.Null);
+                Assert.That(response["key"]!["e"], Is.Not.Null);
+                Assert.That(response["attributes"], Is.Not.Null);
+                Assert.That(response["attributes"]!["enabled"]!.GetValue<bool>(), Is.True);
+            });
+        });
+        await RunAzureCliCommand("az keyvault delete --name KeyVaultRsa01 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    [Test]
+    public async Task KeyVaultTests_WhenCreateEcKeyCommandIsCalled_KeyShouldBeCreated()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name KeyVaultEc01 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault key create --vault-name KeyVaultEc01 --name my-ec-key --kty EC --curve P-256", (response) =>
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(response["key"], Is.Not.Null);
+                Assert.That(response["key"]!["kid"]!.GetValue<string>(), Does.Contain("my-ec-key"));
+                Assert.That(response["key"]!["kty"]!.GetValue<string>(), Is.EqualTo("EC"));
+                Assert.That(response["key"]!["crv"]!.GetValue<string>(), Is.EqualTo("P-256"));
+                Assert.That(response["key"]!["x"], Is.Not.Null);
+                Assert.That(response["key"]!["y"], Is.Not.Null);
+                Assert.That(response["attributes"]!["enabled"]!.GetValue<bool>(), Is.True);
+            });
+        });
+        await RunAzureCliCommand("az keyvault delete --name KeyVaultEc01 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    [Test]
+    public async Task KeyVaultTests_WhenCreateRsaKeyIsCalledWithSize_KeyShouldHaveCorrectSize()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name KeyVaultSz01 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault key create --vault-name KeyVaultSz01 --name my-big-key --kty RSA --size 4096", (response) =>
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(response["key"]!["kty"]!.GetValue<string>(), Is.EqualTo("RSA"));
+                // 4096-bit key: modulus is 512 bytes, base64url-encoded → >500 chars
+                Assert.That(response["key"]!["n"]!.GetValue<string>().Length, Is.GreaterThan(500));
+            });
+        });
+        await RunAzureCliCommand("az keyvault delete --name KeyVaultSz01 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    #endregion
 }

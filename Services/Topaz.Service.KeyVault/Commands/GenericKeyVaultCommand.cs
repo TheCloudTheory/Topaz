@@ -1,5 +1,6 @@
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.Service.KeyVault.Commands.Keys;
 using Topaz.Service.KeyVault.Commands.Secrets;
 
 namespace Topaz.Service.KeyVault.Commands;
@@ -26,6 +27,10 @@ public sealed class GenericKeyVaultCommand : IEmulatorCommand
                 secret.AddCommand<DeleteSecretCommand>("delete");
                 secret.AddCommand<RecoverDeletedSecretCommand>("recover");
                 secret.AddCommand<PurgeDeletedSecretCommand>("purge");
+            });
+            keyVault.AddBranch("key", key =>
+            {
+                key.AddCommand<CreateKeyCommand>("create");
             });
         });
     }

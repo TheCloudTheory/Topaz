@@ -50,6 +50,28 @@ resource "azurerm_key_vault" "kv_sd" {
   enable_rbac_authorization  = true
 }
 
+resource "azurerm_resource_group" "kv_keys_rg" {
+  name     = "tf-rm-kv-keys-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_key_vault" "kv_keys" {
+  name                      = "tfrm-kv-keys"
+  location                  = azurerm_resource_group.kv_keys_rg.location
+  resource_group_name       = azurerm_resource_group.kv_keys_rg.name
+  tenant_id                 = data.azurerm_client_config.current.tenant_id
+  sku_name                  = "standard"
+  enable_rbac_authorization = true
+}
+
+resource "azurerm_key_vault_key" "kv_rsa_key" {
+  name         = "tfrm-rsa-key"
+  key_vault_id = azurerm_key_vault.kv_keys.id
+  key_type     = "RSA"
+  key_size     = 2048
+  key_opts     = ["decrypt", "encrypt", "sign", "unwrapKey", "verify", "wrapKey"]
+}
+
 # ── Event Hub ──────────────────────────────────────────────────────────────────
 
 resource "azurerm_resource_group" "eh_ns_rg" {
@@ -278,6 +300,8 @@ output "rg_tags_environment"        { value = azurerm_resource_group.rg_tags.tag
 output "kv_basic_vault_name"        { value = azurerm_key_vault.kv_basic.name }
 output "kv_basic_vault_uri"         { value = azurerm_key_vault.kv_basic.vault_uri }
 output "kv_sd_vault_name"           { value = azurerm_key_vault.kv_sd.name }
+output "kv_rsa_key_name"            { value = azurerm_key_vault_key.kv_rsa_key.name }
+output "kv_rsa_key_id"              { value = azurerm_key_vault_key.kv_rsa_key.id }
 
 output "eh_ns_namespace_name"       { value = azurerm_eventhub_namespace.eh_ns.name }
 output "ehub_name"                  { value = azurerm_eventhub.ehub.name }

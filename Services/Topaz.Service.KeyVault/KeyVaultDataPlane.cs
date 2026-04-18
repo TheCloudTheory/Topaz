@@ -494,4 +494,120 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedSecret), "Executing {0}: Purged secret {1}.", nameof(PurgeDeletedSecret), secretName);
         return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
     }
+
+    public DataPlaneOperationResult<KeyBundle> CreateKey(Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(CreateKey), "Executing {0}: {1} {2}", nameof(CreateKey), keyName, vaultName);
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+
+        if (string.IsNullOrEmpty(rawContent))
+        {
+            return new DataPlaneOperationResult<KeyBundle>(OperationResult.Failed, null, "Empty request body.", "BadRequest");
+        }
+
+        var request = JsonSerializer.Deserialize<CreateKeyRequest>(rawContent, GlobalSettings.JsonOptions)
+            ?? throw new InvalidOperationException("Failed to deserialize CreateKeyRequest.");
+
+        var keyType = request.KeyType ?? "RSA";
+        var keyBundle = GenerateKeyBundle(vaultName, keyName, keyType, request);
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var keysPath = Path.Combine(basePath, "keys");
+        Directory.CreateDirectory(keysPath);
+
+        var entityPath = Path.Combine(keysPath, $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (File.Exists(entityPath))
+        {
+            var existing = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!.ToList();
+            existing.Add(keyBundle);
+            File.WriteAllText(entityPath, JsonSerializer.Serialize(existing.ToArray(), GlobalSettings.JsonOptions));
+        }
+        else
+        {
+            File.WriteAllText(entityPath, JsonSerializer.Serialize(new[] { keyBundle }, GlobalSettings.JsonOptions));
+        }
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(CreateKey), "Key {0} created in vault {1}.", keyName, vaultName);
+        return new DataPlaneOperationResult<KeyBundle>(OperationResult.Created, keyBundle, null, null);
+    }
+
+    public DataPlaneOperationResult<KeyBundle> GetKey(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName, string? version)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetKey), "Executing {0}: {1} {2}", nameof(GetKey), keyName, vaultName);
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (!File.Exists(entityPath))
+        {
+            return new DataPlaneOperationResult<KeyBundle>(OperationResult.NotFound, null, $"Key {keyName} not found.", "KeyNotFound");
+        }
+
+        var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
+
+        if (string.IsNullOrEmpty(version))
+        {
+            return new DataPlaneOperationResult<KeyBundle>(OperationResult.Success, bundles.Last(), null, null);
+        }
+
+        var match = bundles.LastOrDefault(b => b.Key.Kid.EndsWith(version, StringComparison.OrdinalIgnoreCase));
+        return match == null
+            ? new DataPlaneOperationResult<KeyBundle>(OperationResult.NotFound, null, $"Key {keyName} version {version} not found.", "KeyNotFound")
+            : new DataPlaneOperationResult<KeyBundle>(OperationResult.Success, match, null, null);
+    }
+
+    private static KeyBundle GenerateKeyBundle(string vaultName, string keyName, string keyType,
+        CreateKeyRequest request)
+    {
+        var defaultOps = new[] { "encrypt", "decrypt", "sign", "verify", "wrapKey", "unwrapKey" };
+        var keyOps = request.KeyOperations ?? defaultOps;
+
+        switch (keyType.ToUpperInvariant())
+        {
+            case "RSA":
+            case "RSA-HSM":
+            {
+                var keySize = request.KeySize ?? 2048;
+                using var rsa = RSA.Create(keySize);
+                var parameters = rsa.ExportParameters(false);
+                return new KeyBundle(keyName, vaultName, keyType, keySize, null, keyOps,
+                    parameters.Modulus, parameters.Exponent, null, null);
+            }
+            case "EC":
+            case "EC-HSM":
+            {
+                var curve = (request.Curve ?? "P-256") switch
+                {
+                    "P-384" => ECCurve.NamedCurves.nistP384,
+                    "P-521" => ECCurve.NamedCurves.nistP521,
+                    _       => ECCurve.NamedCurves.nistP256,
+                };
+                using var ec = ECDsa.Create(curve);
+                var parameters = ec.ExportParameters(false);
+                return new KeyBundle(keyName, vaultName, keyType, null, request.Curve ?? "P-256", keyOps,
+                    null, null, parameters.Q.X, parameters.Q.Y);
+            }
+            default:
+                // Symmetric / oct keys — no public material exposed.
+                return new KeyBundle(keyName, vaultName, keyType, request.KeySize, null, keyOps,
+                    null, null, null, null);
+        }
+    }
 }

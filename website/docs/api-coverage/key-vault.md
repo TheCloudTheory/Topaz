@@ -69,7 +69,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 
 ## Data Plane
 
-The data plane covers operations served directly from the vault's own hostname (e.g. `<vault-name>.vault.azure.net`) on port **8898** in Topaz. Only Secrets are partially implemented; Keys and Certificates are not emulated.
+The data plane covers operations served directly from the vault's own hostname (e.g. `<vault-name>.vault.azure.net`) on port **8898** in Topaz. Secrets are fully implemented; the first Key operation is now available.
 
 ### Secrets
 
@@ -94,9 +94,9 @@ The data plane covers operations served directly from the vault's own hostname (
 
 > [REST reference](https://learn.microsoft.com/en-us/rest/api/keyvault/keys/operation-groups?view=rest-keyvault-keys-7.4)
 
-| Operation | Status |
-|-----------|--------|
-| Create Key | ❌ |
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| Create Key | ✅ | `POST /keys/{key-name}/create` — RSA and EC key types |
 | Import Key | ❌ |
 | Get Key | ❌ |
 | Get Keys | ❌ |

@@ -1,6 +1,7 @@
 ﻿using Topaz.EventPipeline;
 using Topaz.Service.KeyVault.Endpoints;
 using Topaz.Service.KeyVault.Endpoints.AccessPolicies;
+using Topaz.Service.KeyVault.Endpoints.Keys;
 using Topaz.Service.KeyVault.Endpoints.Secrets;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
@@ -29,6 +30,8 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
         new RecoverDeletedSecretEndpoint(eventPipeline, logger),
         new PurgeDeletedSecretEndpoint(eventPipeline, logger),
         new UpdateSecretEndpoint(eventPipeline, logger),
+        new CreateKeyEndpoint(eventPipeline, logger),
+        new GetKeyEndpoint(eventPipeline, logger),
         new CreateOrUpdateKeyVaultEndpoint(eventPipeline, logger),
         new GetKeyVaultEndpoint(eventPipeline, logger),
         new UpdateKeyVaultEndpoint(eventPipeline, logger),

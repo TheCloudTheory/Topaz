@@ -17,4 +17,14 @@ public class KeyVaultTests : AzureRmBatchFixture
     {
         Assert.That(GetOutput<string>("kv_sd_vault_name"), Is.EqualTo("tfrm-kv-sd"));
     }
+
+    [Test]
+    public void KeyVault_CreateRsaKey_Succeeds()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(GetOutput<string>("kv_rsa_key_name"), Is.EqualTo("tfrm-rsa-key"));
+            Assert.That(GetOutput<string>("kv_rsa_key_id"), Does.Contain("tfrm-rsa-key"));
+        });
+    }
 }
