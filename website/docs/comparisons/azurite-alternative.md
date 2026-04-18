@@ -22,21 +22,21 @@ For Azure Storage specifically, the two tools have different coverage and differ
 | **Connection strings** | Real Azure format | `UseDevelopmentStorage=true` shortcut |
 | **Azure Storage Explorer** | Via connection string | Built-in emulator shortcut |
 | **Blob: basic operations** (put, get, delete, head, list) | ✅ | ✅ |
-| **Blob: metadata** (container get/set, blob set) | ✅ Container; set-only for blobs | ✅ |
+| **Blob: metadata** (container get/set, blob get/set) | ✅ | ✅ |
 | **Blob: container ACLs** | ✅ | ✅ |
 | **Blob: container leases** | ✅ (acquire, renew, change, release, break) | ✅ |
-| **Blob: blob leases** | <span class="badge--coming-soon">Coming soon</span> | ✅ |
-| **Blob: block blobs** (put-block, put-block-list) | <span class="badge--coming-soon">Coming soon</span> | ✅ |
-| **Blob: page blobs** | <span class="badge--coming-soon">Coming soon</span> | ✅ |
-| **Blob: copy operations** | <span class="badge--coming-soon">Coming soon</span> | ✅ |
-| **Blob: snapshots** | <span class="badge--coming-soon">Coming soon</span> | ✅ |
+| **Blob: blob leases** | ✅ (acquire, renew, change, release, break) | ✅ |
+| **Blob: block blobs** (put-block, put-block-list, get-block-list) | ✅ | ✅ |
+| **Blob: page blobs** (put-page, get-page-ranges) | ✅ | ✅ |
+| **Blob: copy operations** | ✅ | ✅ |
+| **Blob: snapshots** | ✅ | ✅ |
 | **Blob: authentication** | Not enforced | Optional (enforced with `--oauth`) |
 | **Table: create, delete, query** | ✅ | ✅ |
 | **Table: entities** (insert, upsert, merge, delete, query) | ✅ | ✅ |
 | **Table: SharedKeyLite + SharedKey auth** | Always enforced | Optional |
 | **Queue Storage** | <span class="badge--coming-soon">Coming soon</span> | ✅ |
 
-The trade-off is scope: Azurite is more complete for Storage alone; Topaz covers a narrower Storage feature set in exchange for emulating the wider Azure service landscape in the same process.
+For Blob and Table storage, Topaz and Azurite are now at near-parity on implemented operations. The remaining gap is Queue Storage, which Azurite covers fully and Topaz does not yet implement. The main design difference is that Topaz models storage accounts as first-class ARM resources while Azurite provides a single fixed account.
 
 ## Multiple storage accounts
 
@@ -66,7 +66,7 @@ Then paste it into Storage Explorer under **Connect to Azure Storage → Connect
 Azurite is the right choice if:
 
 - Your application uses only Azure Storage and a single account is sufficient
-- You need Queue Storage, block blobs, page blobs, copy operations, blob snapshots, or blob-level leases — Topaz does not implement these yet
+- You need Queue Storage — Topaz does not implement it yet
 - You need a mature, Microsoft-maintained emulator with high compatibility guarantees
 - Your toolchain is already built around Azurite and migration is not worth the effort
 
@@ -74,7 +74,7 @@ Azurite is the right choice if:
 
 Topaz is the right choice if:
 
-- Your application uses Key Vault, Service Bus, Event Hubs, or any service beyond Storage
+- Your application uses Key Vault (secrets fully implemented; key create, import, and get available), Service Bus, Event Hubs, or any service beyond Storage
 - You need multiple named storage accounts in local or CI environments
 - You want a single process to replace multiple emulators
 - You use Terraform with the `azurerm` provider and need a local target for `terraform apply`
