@@ -573,6 +573,97 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
             : new DataPlaneOperationResult<KeyBundle>(OperationResult.Success, match, null, null);
     }
 
+    public DataPlaneOperationResult<KeyBundle> ImportKey(Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(ImportKey), "Executing {0}: {1} {2}", nameof(ImportKey), keyName, vaultName);
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+
+        if (string.IsNullOrEmpty(rawContent))
+            return new DataPlaneOperationResult<KeyBundle>(OperationResult.Failed, null, "Empty request body.", "BadRequest");
+
+        var request = JsonSerializer.Deserialize<ImportKeyRequest>(rawContent, GlobalSettings.JsonOptions)
+            ?? throw new InvalidOperationException("Failed to deserialize ImportKeyRequest.");
+
+        if (request.Key == null)
+            return new DataPlaneOperationResult<KeyBundle>(OperationResult.Failed, null, "Missing 'key' in request body.", "BadRequest");
+
+        var jwk = request.Key;
+        var keyType = jwk.KeyType ?? "RSA";
+        var defaultOps = new[] { "encrypt", "decrypt", "sign", "verify", "wrapKey", "unwrapKey" };
+        var keyOps = jwk.KeyOperations ?? defaultOps;
+
+        KeyBundle keyBundle;
+        switch (keyType.ToUpperInvariant())
+        {
+            case "RSA":
+            case "RSA-HSM":
+            {
+                if (string.IsNullOrEmpty(jwk.N) || string.IsNullOrEmpty(jwk.E))
+                    return new DataPlaneOperationResult<KeyBundle>(OperationResult.Failed, null,
+                        "RSA import requires 'n' (modulus) and 'e' (exponent) in the JWK.", "BadRequest");
+
+                var n = Base64UrlDecode(jwk.N);
+                var e = Base64UrlDecode(jwk.E);
+                keyBundle = new KeyBundle(keyName, vaultName, keyType, null, null, keyOps, n, e, null, null);
+                break;
+            }
+            case "EC":
+            case "EC-HSM":
+            {
+                if (string.IsNullOrEmpty(jwk.X) || string.IsNullOrEmpty(jwk.Y))
+                    return new DataPlaneOperationResult<KeyBundle>(OperationResult.Failed, null,
+                        "EC import requires 'x' and 'y' coordinates in the JWK.", "BadRequest");
+
+                var x = Base64UrlDecode(jwk.X);
+                var y = Base64UrlDecode(jwk.Y);
+                keyBundle = new KeyBundle(keyName, vaultName, keyType, null, jwk.Crv ?? "P-256", keyOps, null, null, x, y);
+                break;
+            }
+            default:
+                // Symmetric / oct — no public material to validate.
+                keyBundle = new KeyBundle(keyName, vaultName, keyType, null, null, keyOps, null, null, null, null);
+                break;
+        }
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var keysPath = Path.Combine(basePath, "keys");
+        Directory.CreateDirectory(keysPath);
+
+        var entityPath = Path.Combine(keysPath, $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (File.Exists(entityPath))
+        {
+            var existing = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!.ToList();
+            existing.Add(keyBundle);
+            File.WriteAllText(entityPath, JsonSerializer.Serialize(existing.ToArray(), GlobalSettings.JsonOptions));
+        }
+        else
+        {
+            File.WriteAllText(entityPath, JsonSerializer.Serialize(new[] { keyBundle }, GlobalSettings.JsonOptions));
+        }
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(ImportKey), "Key {0} imported into vault {1}.", keyName, vaultName);
+        return new DataPlaneOperationResult<KeyBundle>(OperationResult.Created, keyBundle, null, null);
+    }
+
+    private static byte[] Base64UrlDecode(string value)
+    {
+        var s = value.Replace('-', '+').Replace('_', '/');
+        var padding = s.Length % 4;
+        if (padding == 2) s += "==";
+        else if (padding == 3) s += "=";
+        return Convert.FromBase64String(s);
+    }
+
     private static KeyBundle GenerateKeyBundle(string vaultName, string keyName, string keyType,
         CreateKeyRequest request)
     {

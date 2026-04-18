@@ -31,6 +31,7 @@ public sealed class GenericKeyVaultCommand : IEmulatorCommand
             keyVault.AddBranch("key", key =>
             {
                 key.AddCommand<CreateKeyCommand>("create");
+                key.AddCommand<ImportKeyCommand>("import");
             });
         });
     }

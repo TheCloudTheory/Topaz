@@ -4,6 +4,7 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.Security.KeyVault.Keys;
+using System.Security.Cryptography;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 
@@ -154,6 +155,96 @@ public class KeyVaultKeyTests
             Assert.That(kid, Does.Contain(TestKeyVaultName));
             Assert.That(kid, Does.Contain("keys"));
             Assert.That(kid, Does.Contain("id-check-key"));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_ImportRsaKey_ShouldReturnValidKeyBundle()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        using var rsa = RSA.Create(2048);
+        var jwk = new JsonWebKey(rsa, includePrivateParameters: false);
+
+        // Act
+        var result = client.ImportKey(new ImportKeyOptions("imported-rsa-key", jwk));
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value, Is.Not.Null);
+            Assert.That(result.Value.Name, Is.EqualTo("imported-rsa-key"));
+            Assert.That(result.Value.KeyType, Is.EqualTo(KeyType.Rsa));
+            Assert.That(result.Value.Id, Is.Not.Null);
+            Assert.That(result.Value.Key.N, Is.Not.Null);
+            Assert.That(result.Value.Key.E, Is.Not.Null);
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_ImportEcKey_ShouldReturnValidKeyBundle()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        using var ec = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var jwk = new JsonWebKey(ec, includePrivateParameters: false);
+
+        // Act
+        var result = client.ImportKey(new ImportKeyOptions("imported-ec-key", jwk));
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value, Is.Not.Null);
+            Assert.That(result.Value.Name, Is.EqualTo("imported-ec-key"));
+            Assert.That(result.Value.KeyType, Is.EqualTo(KeyType.Ec));
+            Assert.That(result.Value.Key.CurveName, Is.EqualTo(KeyCurveName.P256));
+            Assert.That(result.Value.Key.X, Is.Not.Null);
+            Assert.That(result.Value.Key.Y, Is.Not.Null);
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_ImportKeyTwice_ShouldCreateNewVersions()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        using var rsa1 = RSA.Create(2048);
+        using var rsa2 = RSA.Create(2048);
+
+        // Act
+        var v1 = client.ImportKey(new ImportKeyOptions("import-versioned", new JsonWebKey(rsa1, includePrivateParameters: false)));
+        var v2 = client.ImportKey(new ImportKeyOptions("import-versioned", new JsonWebKey(rsa2, includePrivateParameters: false)));
+
+        // Assert — each import creates a distinct version
+        Assert.That(v1.Value.Id.ToString(), Is.Not.EqualTo(v2.Value.Id.ToString()));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_ImportedKeyCanBeRetrievedByGet()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        using var rsa = RSA.Create(2048);
+        client.ImportKey(new ImportKeyOptions("get-after-import", new JsonWebKey(rsa, includePrivateParameters: false)));
+
+        // Act
+        var result = client.GetKey("get-after-import");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value, Is.Not.Null);
+            Assert.That(result.Value.Name, Is.EqualTo("get-after-import"));
+            Assert.That(result.Value.KeyType, Is.EqualTo(KeyType.Rsa));
         });
     }
 }

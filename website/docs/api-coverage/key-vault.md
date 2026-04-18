@@ -97,7 +97,7 @@ The data plane covers operations served directly from the vault's own hostname (
 | Operation | Status | Notes |
 |-----------|--------|-------|
 | Create Key | ✅ | `POST /keys/{key-name}/create` — RSA and EC key types |
-| Import Key | ❌ |
+| Import Key | ✅ | `PUT /keys/{key-name}` — RSA and EC key types |
 | Get Key | ❌ |
 | Get Keys | ❌ |
 | Get Key Versions | ❌ |
