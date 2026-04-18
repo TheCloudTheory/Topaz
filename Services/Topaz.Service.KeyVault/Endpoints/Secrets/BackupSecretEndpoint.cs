@@ -12,6 +12,7 @@ public sealed class BackupSecretEndpoint(Pipeline eventPipeline, ITopazLogger lo
 {
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
+    private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
     public string[] Endpoints => ["POST /secrets/{secretName}/backup"];
 
@@ -43,6 +44,20 @@ public sealed class BackupSecretEndpoint(Pipeline eventPipeline, ITopazLogger lo
 
             var subscriptionIdentifier = vaultOperation.Resource!.GetSubscription();
             var resourceGroupIdentifier = vaultOperation.Resource!.GetResourceGroup();
+
+            var authHeader = context.Request.Headers["Authorization"].ToString();
+            if (string.IsNullOrEmpty(authHeader))
+            {
+                response.StatusCode = HttpStatusCode.Unauthorized;
+                response.Headers.Add("WWW-Authenticate", KeyVaultAuthorizationChecker.WwwAuthenticateChallenge);
+                return;
+            }
+
+            if (!_authChecker.IsAuthorized(authHeader, vaultOperation.Resource!, Permissions, "backup"))
+            {
+                response.StatusCode = HttpStatusCode.Forbidden;
+                return;
+            }
 
             var operation = _dataPlane.BackupSecret(subscriptionIdentifier, resourceGroupIdentifier,
                 vaultName!, secretName);

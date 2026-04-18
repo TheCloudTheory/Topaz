@@ -11,6 +11,7 @@ public sealed class GetSecretsEndpoint(Pipeline eventPipeline, ITopazLogger logg
 {
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
+    private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
     public string[] Endpoints => ["GET /secrets", "GET /secrets/"];
 
@@ -41,6 +42,20 @@ public sealed class GetSecretsEndpoint(Pipeline eventPipeline, ITopazLogger logg
 
             var subscriptionIdentifier = vaultOperation.Resource!.GetSubscription();
             var resourceGroupIdentifier = vaultOperation.Resource!.GetResourceGroup();
+
+            var authHeader = context.Request.Headers["Authorization"].ToString();
+            if (string.IsNullOrEmpty(authHeader))
+            {
+                response.StatusCode = HttpStatusCode.Unauthorized;
+                response.Headers.Add("WWW-Authenticate", KeyVaultAuthorizationChecker.WwwAuthenticateChallenge);
+                return;
+            }
+
+            if (!_authChecker.IsAuthorized(authHeader, vaultOperation.Resource!, Permissions, "list"))
+            {
+                response.StatusCode = HttpStatusCode.Forbidden;
+                return;
+            }
 
             var operation = _dataPlane.GetSecrets(subscriptionIdentifier, resourceGroupIdentifier, vaultName!);
             var content = new GetSecretsResponse

@@ -11,6 +11,7 @@ public sealed class GetKeyEndpoint(Pipeline eventPipeline, ITopazLogger logger) 
 {
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
+    private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
     public string[] Endpoints =>
     [
@@ -47,6 +48,20 @@ public sealed class GetKeyEndpoint(Pipeline eventPipeline, ITopazLogger logger) 
 
             var subscriptionIdentifier = vaultOperation.Resource!.GetSubscription();
             var resourceGroupIdentifier = vaultOperation.Resource!.GetResourceGroup();
+
+            var authHeader = context.Request.Headers["Authorization"].ToString();
+            if (string.IsNullOrEmpty(authHeader))
+            {
+                response.StatusCode = HttpStatusCode.Unauthorized;
+                response.Headers.Add("WWW-Authenticate", KeyVaultAuthorizationChecker.WwwAuthenticateChallenge);
+                return;
+            }
+
+            if (!_authChecker.IsAuthorized(authHeader, vaultOperation.Resource!, Permissions, "get", "keys"))
+            {
+                response.StatusCode = HttpStatusCode.Forbidden;
+                return;
+            }
 
             var version = context.Request.Path.Value.ExtractValueFromPath(3);
             var operation = _dataPlane.GetKey(subscriptionIdentifier, resourceGroupIdentifier,

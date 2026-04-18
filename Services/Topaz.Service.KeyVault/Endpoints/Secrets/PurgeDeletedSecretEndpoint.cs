@@ -12,6 +12,7 @@ public sealed class PurgeDeletedSecretEndpoint(Pipeline eventPipeline, ITopazLog
 {
     private readonly KeyVaultDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
+    private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
     public string[] Endpoints => ["DELETE /deletedsecrets/{secretName}"];
 
@@ -49,6 +50,20 @@ public sealed class PurgeDeletedSecretEndpoint(Pipeline eventPipeline, ITopazLog
 
             var subscriptionIdentifier = kvResult.Resource.GetSubscription();
             var resourceGroupIdentifier = kvResult.Resource.GetResourceGroup();
+
+            var authHeader = context.Request.Headers["Authorization"].ToString();
+            if (string.IsNullOrEmpty(authHeader))
+            {
+                response.StatusCode = HttpStatusCode.Unauthorized;
+                response.Headers.Add("WWW-Authenticate", KeyVaultAuthorizationChecker.WwwAuthenticateChallenge);
+                return;
+            }
+
+            if (!_authChecker.IsAuthorized(authHeader, kvResult.Resource, Permissions, "purge"))
+            {
+                response.StatusCode = HttpStatusCode.Forbidden;
+                return;
+            }
 
             var operation = _dataPlane.PurgeDeletedSecret(subscriptionIdentifier, resourceGroupIdentifier,
                 vaultName, secretName);

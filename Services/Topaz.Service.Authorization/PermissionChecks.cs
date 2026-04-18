@@ -12,10 +12,13 @@ internal static class PermissionChecks
         var required = requiredPermissions?.ToArray() ?? Array.Empty<string>();
 
         return (from block in grantedPermissions ?? []
-            let actions = block.Actions ?? Enumerable.Empty<string>()
-            let notActions = (block.NotActions ?? Enumerable.Empty<string>()).ToArray()
+            let actions = (block.Actions ?? Enumerable.Empty<string>())
+                .Concat(block.DataActions ?? Enumerable.Empty<string>())
+            let notActions = (block.NotActions ?? Enumerable.Empty<string>())
+                .Concat(block.NotDataActions ?? Enumerable.Empty<string>())
+                .ToArray()
             where (from req in required
-                let allowedByActions = actions.Any<string>(a => Matches(a, req))
+                let allowedByActions = actions.Any(a => Matches(a, req))
                 where allowedByActions
                 select notActions.Any(na => Matches(na, req))).Any(deniedByNotActions => !deniedByNotActions)
             select actions).Any();

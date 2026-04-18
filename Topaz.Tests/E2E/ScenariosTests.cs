@@ -22,8 +22,8 @@ public class ScenariosTests
         "acdd72a7-3385-48ef-bd42-f606fba81ae7";
     private const string KeyVaultContributorRoleDefinitionId =
         "f25e0fa2-a7c8-4377-a976-54943a77a395";
-    private const string KeyVaultSecretsUserRoleDefinitionId =
-        "4633458b-17de-408a-b874-0445c86b69e6";
+    private const string KeyVaultSecretsOfficerRoleDefinitionId =
+        "b86a8fe4-44ce-4948-aee5-eccb2c155cd7";
 
     [SetUp]
     public async Task SetUp()
@@ -151,7 +151,10 @@ public class ScenariosTests
         var kvCollection = resourceGroup.Value.GetKeyVaults();
         var kvCreate = new KeyVaultCreateOrUpdateContent(
             AzureLocation.WestEurope,
-            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))
+            {
+                EnableRbacAuthorization = true
+            });
 
         await kvCollection.CreateOrUpdateAsync(WaitUntil.Completed, kvName, kvCreate, CancellationToken.None);
 
@@ -165,8 +168,8 @@ public class ScenariosTests
         // Grant Key Vault management-plane access (control plane ops on the vault resource).
         await CreateRoleAssignmentAsync(KeyVaultContributorRoleDefinitionId, principalId, resourceGroupScope);
 
-        // Grant Key Vault secrets data-plane access.
-        await CreateRoleAssignmentAsync(KeyVaultSecretsUserRoleDefinitionId, principalId, keyVaultScope);
+        // Grant Key Vault secrets data-plane access (set + get via Key Vault Secrets Officer).
+        await CreateRoleAssignmentAsync(KeyVaultSecretsOfficerRoleDefinitionId, principalId, keyVaultScope);
 
         // Act (perform control-plane + data-plane operations as the managed identity)
         var managedIdentityCredential = new ManagedIdentityLocalCredential(principalId);

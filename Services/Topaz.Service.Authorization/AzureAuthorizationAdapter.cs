@@ -112,6 +112,25 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
         return (false, null);
     }
 
+    public bool PrincipalHasPermissions(SubscriptionIdentifier subscriptionIdentifier, string objectId,
+        string[] requiredPermissions)
+    {
+        var assignments =
+            _controlPlane.ListSubscriptionRoleAssignmentsByEntraObject(subscriptionIdentifier, objectId);
+        if (assignments.Resource == null || assignments.Resource.Length == 0) return false;
+
+        foreach (var assignment in assignments.Resource)
+        {
+            var definition = _controlPlane.Get(subscriptionIdentifier,
+                RoleDefinitionIdentifier.From(assignment.Properties.RoleDefinitionId));
+            if (definition.Resource == null) continue;
+            if (PermissionChecks.HasAnyRequiredPermission(definition.Resource.Properties.Permissions,
+                    requiredPermissions)) return true;
+        }
+
+        return false;
+    }
+
     private static ClaimsPrincipal GetClaimsPrincipal(JwtSecurityToken validatedToken)
     {
         return new ClaimsPrincipal(new ClaimsIdentity([

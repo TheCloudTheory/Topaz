@@ -13,6 +13,7 @@ public sealed class GetDeletedSecretEndpoint(Pipeline eventPipeline, ITopazLogge
 {
     private readonly KeyVaultDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
+    private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
     public string[] Endpoints => ["GET /deletedsecrets/{secretName}"];
 
@@ -50,6 +51,20 @@ public sealed class GetDeletedSecretEndpoint(Pipeline eventPipeline, ITopazLogge
 
             var subscriptionIdentifier = kvResult.Resource.GetSubscription();
             var resourceGroupIdentifier = kvResult.Resource.GetResourceGroup();
+
+            var authHeader = context.Request.Headers["Authorization"].ToString();
+            if (string.IsNullOrEmpty(authHeader))
+            {
+                response.StatusCode = HttpStatusCode.Unauthorized;
+                response.Headers.Add("WWW-Authenticate", KeyVaultAuthorizationChecker.WwwAuthenticateChallenge);
+                return;
+            }
+
+            if (!_authChecker.IsAuthorized(authHeader, kvResult.Resource, Permissions, "get"))
+            {
+                response.StatusCode = HttpStatusCode.Forbidden;
+                return;
+            }
 
             var operation = _dataPlane.GetDeletedSecret(subscriptionIdentifier, resourceGroupIdentifier,
                 vaultName!, secretName);

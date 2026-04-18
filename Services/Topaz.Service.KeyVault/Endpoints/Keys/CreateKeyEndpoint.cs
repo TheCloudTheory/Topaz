@@ -11,6 +11,7 @@ public sealed class CreateKeyEndpoint(Pipeline eventPipeline, ITopazLogger logge
 {
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
+    private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
     public string[] Endpoints => ["POST /keys/{keyName}/create"];
 
@@ -43,13 +44,26 @@ public sealed class CreateKeyEndpoint(Pipeline eventPipeline, ITopazLogger logge
             var subscriptionIdentifier = vaultOperation.Resource!.GetSubscription();
             var resourceGroupIdentifier = vaultOperation.Resource!.GetResourceGroup();
 
+            var authHeader = context.Request.Headers["Authorization"].ToString();
+            if (string.IsNullOrEmpty(authHeader))
+            {
+                response.StatusCode = HttpStatusCode.Unauthorized;
+                response.Headers.Add("WWW-Authenticate", KeyVaultAuthorizationChecker.WwwAuthenticateChallenge);
+                return;
+            }
+
+            if (!_authChecker.IsAuthorized(authHeader, vaultOperation.Resource!, Permissions, "create", "keys"))
+            {
+                response.StatusCode = HttpStatusCode.Forbidden;
+                return;
+            }
+
             var operation = _dataPlane.CreateKey(context.Request.Body,
                 subscriptionIdentifier, resourceGroupIdentifier, vaultName!, keyName!);
 
             if (operation.Result == OperationResult.Failed)
             {
-                response.Headers.Add("WWW-Authenticate",
-                    $"Bearer authorization=\"https://keyvault.topaz.local.dev:{GlobalSettings.DefaultKeyVaultPort}/{Guid.Empty}\", resource=\"https://keyvault.topaz.local.dev:{GlobalSettings.DefaultKeyVaultPort}\"");
+                response.Headers.Add("WWW-Authenticate", KeyVaultAuthorizationChecker.WwwAuthenticateChallenge);
                 response.StatusCode = HttpStatusCode.Unauthorized;
                 return;
             }
