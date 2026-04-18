@@ -247,4 +247,82 @@ public class KeyVaultKeyTests
             Assert.That(result.Value.KeyType, Is.EqualTo(KeyType.Rsa));
         });
     }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKey_LatestVersion_ReturnsNewestBundle()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        // Create two versions
+        var v1 = client.CreateRsaKey(new CreateRsaKeyOptions("get-latest-key"));
+        var v2 = client.CreateRsaKey(new CreateRsaKeyOptions("get-latest-key"));
+
+        // Act — no version → latest
+        var result = client.GetKey("get-latest-key");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value, Is.Not.Null);
+            Assert.That(result.Value.Id.ToString(), Is.EqualTo(v2.Value.Id.ToString()));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKey_SpecificVersion_ReturnsMatchingBundle()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        var v1 = client.CreateRsaKey(new CreateRsaKeyOptions("get-version-key"));
+        client.CreateRsaKey(new CreateRsaKeyOptions("get-version-key")); // create a second version
+
+        // Extract the version segment from the v1 kid (last path segment)
+        var v1Version = v1.Value.Id.ToString().Split('/').Last();
+
+        // Act
+        var result = client.GetKey("get-version-key", v1Version);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value, Is.Not.Null);
+            Assert.That(result.Value.Id.ToString(), Is.EqualTo(v1.Value.Id.ToString()));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKey_NonExistentKey_ThrowsException()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        // Act & Assert
+        Assert.Throws<RequestFailedException>(() => client.GetKey("key-that-does-not-exist"));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKey_IdContainsVaultNameAndKeyName()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("id-verify-key"));
+
+        // Act
+        var result = client.GetKey("id-verify-key");
+
+        // Assert
+        var kid = result.Value.Id.ToString();
+        Assert.Multiple(() =>
+        {
+            Assert.That(kid, Does.Contain(TestKeyVaultName));
+            Assert.That(kid, Does.Contain("keys"));
+            Assert.That(kid, Does.Contain("id-verify-key"));
+        });
+    }
 }
