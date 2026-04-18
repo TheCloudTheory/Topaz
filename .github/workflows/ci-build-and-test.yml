@@ -180,6 +180,7 @@ jobs:
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always() && steps.test_filter.outputs.skip != 'true'
       with:
+        large_files: true
         files: |
           ${{ github.workspace }}/**/*.trx
     - name: ReportGenerator
