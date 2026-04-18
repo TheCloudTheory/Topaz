@@ -573,6 +573,29 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
             : new DataPlaneOperationResult<KeyBundle>(OperationResult.Success, match, null, null);
     }
 
+    public DataPlaneOperationResult<KeyBundle[]> GetKeyVersions(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetKeyVersions), "Executing {0}: {1} {2}", nameof(GetKeyVersions), keyName, vaultName);
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (!File.Exists(entityPath))
+        {
+            return new DataPlaneOperationResult<KeyBundle[]>(OperationResult.NotFound, null, $"Key {keyName} not found.", "KeyNotFound");
+        }
+
+        var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
+        return new DataPlaneOperationResult<KeyBundle[]>(OperationResult.Success, bundles, null, null);
+    }
+
     public DataPlaneOperationResult<KeyBundle> ImportKey(Stream input,
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

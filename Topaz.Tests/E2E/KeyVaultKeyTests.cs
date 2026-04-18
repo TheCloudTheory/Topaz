@@ -325,4 +325,69 @@ public class KeyVaultKeyTests
             Assert.That(kid, Does.Contain("id-verify-key"));
         });
     }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKeyVersions_ReturnsAllVersions()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        client.CreateRsaKey(new CreateRsaKeyOptions("versioned-list-key"));
+        client.CreateRsaKey(new CreateRsaKeyOptions("versioned-list-key"));
+        client.CreateRsaKey(new CreateRsaKeyOptions("versioned-list-key"));
+
+        // Act
+        var versions = client.GetPropertiesOfKeyVersions("versioned-list-key").ToList();
+
+        // Assert
+        Assert.That(versions, Has.Count.EqualTo(3));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKeyVersions_EachVersionHasDistinctId()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        client.CreateRsaKey(new CreateRsaKeyOptions("distinct-versions-key"));
+        client.CreateRsaKey(new CreateRsaKeyOptions("distinct-versions-key"));
+
+        // Act
+        var versions = client.GetPropertiesOfKeyVersions("distinct-versions-key").ToList();
+
+        // Assert
+        var ids = versions.Select(v => v.Id.ToString()).ToList();
+        Assert.That(ids.Distinct().Count(), Is.EqualTo(ids.Count));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKeyVersions_VersionsHaveCorrectKeyName()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        client.CreateRsaKey(new CreateRsaKeyOptions("name-check-versions-key"));
+        client.CreateRsaKey(new CreateRsaKeyOptions("name-check-versions-key"));
+
+        // Act
+        var versions = client.GetPropertiesOfKeyVersions("name-check-versions-key").ToList();
+
+        // Assert
+        Assert.That(versions, Has.All.Matches<KeyProperties>(v => v.Name == "name-check-versions-key"));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKeyVersions_NonExistentKey_ThrowsException()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        // Act & Assert — enumerating a non-existent key should throw
+        Assert.Throws<RequestFailedException>(
+            () => client.GetPropertiesOfKeyVersions("nonexistent-versions-key").ToList());
+    }
 }
