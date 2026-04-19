@@ -555,6 +555,50 @@ public class KeyVaultKeyTests
         Assert.Throws<RequestFailedException>(() => client.UpdateKeyProperties(fakeProps));
     }
 
+    // ── Backup Key ───────────────────────────────────────────────────────────
+
+    [Test]
+    public void KeyVaultKeyTests_BackupKey_ReturnsNonNullBytes()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("backup-rsa-key"));
+
+        // Act
+        var result = client.BackupKey("backup-rsa-key");
+
+        // Assert
+        Assert.That(result.Value, Is.Not.Null.And.Not.Empty);
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_BackupKey_NonExistentKey_ThrowsException()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        // Act & Assert
+        Assert.Throws<RequestFailedException>(() => client.BackupKey("key-that-does-not-exist"));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_BackupKey_MultipleVersions_BackupSucceeds()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("multi-version-backup-key"));
+        client.CreateRsaKey(new CreateRsaKeyOptions("multi-version-backup-key"));
+
+        // Act
+        var result = client.BackupKey("multi-version-backup-key");
+
+        // Assert
+        Assert.That(result.Value, Is.Not.Null.And.Not.Empty);
+    }
+
     // ── Delete Key ────────────────────────────────────────────────────────────
 
     [Test]

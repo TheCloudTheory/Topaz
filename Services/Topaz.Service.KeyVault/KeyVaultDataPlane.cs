@@ -14,14 +14,14 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 {
     // AES-256-CBC key used to encrypt backup blobs. This is the emulator's vault-specific master key.
     // Structure of an encrypted blob: [9 magic][1 version][16 IV][n ciphertext], then base64url-encoded.
-    private static readonly byte[] BackupKey = Encoding.UTF8.GetBytes("Topaz Key Vault Backup Key 2024!");
+    private static readonly byte[] BackupEncryptionKey = Convert.FromHexString("546F70617A4B565F42434B5F56312E30546F70617A4B565F42434B5F56312E30");
     private static readonly byte[] BackupMagic = Encoding.UTF8.GetBytes("TOPAZKVBK");
     private const byte BackupVersion = 0x01;
 
     private static string EncryptBackup(byte[] plaintext)
     {
         using var aes = Aes.Create();
-        aes.Key = BackupKey;
+        aes.Key = BackupEncryptionKey;
         aes.Mode = CipherMode.CBC;
         aes.Padding = PaddingMode.PKCS7;
         aes.GenerateIV();
@@ -64,7 +64,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         Array.Copy(blob, headerLength, ciphertext, 0, ciphertext.Length);
 
         using var aes = Aes.Create();
-        aes.Key = BackupKey;
+        aes.Key = BackupEncryptionKey;
         aes.IV = iv;
         aes.Mode = CipherMode.CBC;
         aes.Padding = PaddingMode.PKCS7;
@@ -781,6 +781,34 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(ImportKey), "Key {0} imported into vault {1}.", keyName, vaultName);
         return new DataPlaneOperationResult<KeyBundle>(OperationResult.Created, keyBundle, null, null);
+    }
+
+    public DataPlaneOperationResult<string> BackupKey(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string keyName)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(BackupKey), "Executing {0}: {1} {2}", nameof(BackupKey), keyName, vaultName);
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (!File.Exists(entityPath))
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(BackupKey), "Executing {0}: Key {1} not found.", nameof(BackupKey), keyName);
+            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null, $"Key {keyName} not found.", "KeyNotFound");
+        }
+
+        var data = File.ReadAllText(entityPath);
+        var versions = JsonSerializer.Deserialize<KeyBundle[]>(data, GlobalSettings.JsonOptions)!;
+        var plaintext = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(versions, GlobalSettings.JsonOptions));
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(BackupKey), "Executing {0}: Backing up {1} version(s) of key {2}.", nameof(BackupKey), versions.Length, keyName);
+
+        var encoded = EncryptBackup(plaintext);
+        return new DataPlaneOperationResult<string>(OperationResult.Success, encoded, null, null);
     }
 
     private static byte[] Base64UrlDecode(string value)
