@@ -68,14 +68,14 @@ const config: Config = {
           versions: {
             current: {
               label: 'Next (unreleased)',
-              badge: true,
+              badge: false,
             },
             'v1.1': {
               label: 'v1.1 (stable)',
-              badge: false,
+              badge: true,
             },
           },
-          lastVersion: 'v1.1',
+          lastVersion: 'current',
         },
         blog: {
           showReadingTime: true,
