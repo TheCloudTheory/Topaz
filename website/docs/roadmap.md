@@ -88,6 +88,18 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 | <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.VirtualMachine` project with models, resource provider, and service registration |
 | <span class="badge--preview">Preview</span> | Core control plane | Create/update, get, delete, list VMs — emulated only (no actual boot) |
 
+### Key Vault — full certificate operations support
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Core CRUD | Create, import, get, update, delete certificates; list certificates and versions |
+| <span class="badge--preview">Preview</span> | Backup & Restore | Export and restore opaque certificate backup blobs |
+| <span class="badge--preview">Preview</span> | Certificate contacts | Get, set, and delete the vault-level certificate administrator contacts |
+| <span class="badge--preview">Preview</span> | Certificate issuers | Create, get, update, delete, and list certificate issuers |
+| <span class="badge--preview">Preview</span> | Pending operations | Get, update, and cancel in-flight certificate creation operations |
+| <span class="badge--preview">Preview</span> | Merge certificate | Merge a certificate from external PKI with a pending Key Vault CSR |
+| <span class="badge--preview">Preview</span> | Soft-delete surface | List, get, recover, and purge deleted certificates |
+
 ### MCP Server — resource provisioning and tooling
 
 | | Feature | Description |

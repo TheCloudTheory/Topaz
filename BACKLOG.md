@@ -390,6 +390,84 @@ TODO: Azure Virtual Machines: Core control plane endpoints
   labels: enhancement, virtual-machines
 -->
 
+### Key Vault — full certificate operations support
+
+<!--
+TODO: Key Vault Certificates: Core CRUD operations
+  Implement the data-plane certificate management surface:
+  - POST  {vaultBaseUrl}/certificates/{name}/create         – create certificate (or begin async CSR)
+  - POST  {vaultBaseUrl}/certificates/{name}/import         – import PEM/PFX certificate
+  - GET   {vaultBaseUrl}/certificates/{name}/{version}      – get certificate
+  - PATCH {vaultBaseUrl}/certificates/{name}/{version}      – update certificate attributes
+  - DELETE {vaultBaseUrl}/certificates/{name}               – delete certificate
+  - GET   {vaultBaseUrl}/certificates                       – list certificates
+  - GET   {vaultBaseUrl}/certificates/{name}/versions       – list certificate versions
+  milestone: v1.3-beta
+  labels: enhancement, key-vault
+-->
+
+<!--
+TODO: Key Vault Certificates: Backup and Restore
+  Implement:
+  - POST {vaultBaseUrl}/certificates/{name}/backup   – export opaque certificate backup blob
+  - POST {vaultBaseUrl}/certificates/restore         – restore from backup blob
+  Follows the same pattern as the secret and key backup/restore endpoints.
+  milestone: v1.3-beta
+  labels: enhancement, key-vault
+-->
+
+<!--
+TODO: Key Vault Certificates: Certificate contacts
+  Implement vault-level certificate administrator contact management:
+  - PUT    {vaultBaseUrl}/certificates/contacts  – set contacts
+  - GET    {vaultBaseUrl}/certificates/contacts  – get contacts
+  - DELETE {vaultBaseUrl}/certificates/contacts  – delete all contacts
+  milestone: v1.3-beta
+  labels: enhancement, key-vault
+-->
+
+<!--
+TODO: Key Vault Certificates: Certificate issuers
+  Implement certificate issuer (CA) management:
+  - PUT    {vaultBaseUrl}/certificates/issuers/{issuerName}  – create or update issuer
+  - GET    {vaultBaseUrl}/certificates/issuers/{issuerName}  – get issuer
+  - PATCH  {vaultBaseUrl}/certificates/issuers/{issuerName}  – update issuer
+  - DELETE {vaultBaseUrl}/certificates/issuers/{issuerName}  – delete issuer
+  - GET    {vaultBaseUrl}/certificates/issuers               – list issuers
+  milestone: v1.3-beta
+  labels: enhancement, key-vault
+-->
+
+<!--
+TODO: Key Vault Certificates: Pending certificate operations
+  Implement in-flight certificate operation endpoints (used when creation is async / CSR-based):
+  - GET    {vaultBaseUrl}/certificates/{name}/pending          – get pending operation
+  - PATCH  {vaultBaseUrl}/certificates/{name}/pending          – update (e.g. merge CSR response)
+  - DELETE {vaultBaseUrl}/certificates/{name}/pending          – cancel pending operation
+  milestone: v1.3-beta
+  labels: enhancement, key-vault
+-->
+
+<!--
+TODO: Key Vault Certificates: Merge certificate
+  Implement:
+  - POST {vaultBaseUrl}/certificates/{name}/pending/merge  – merge an externally-signed certificate
+    (from a CA response) with the pending CSR stored in Key Vault.
+  milestone: v1.3-beta
+  labels: enhancement, key-vault
+-->
+
+<!--
+TODO: Key Vault Certificates: Soft-delete surface
+  Implement the soft-delete data-plane surface for certificates:
+  - GET  {vaultBaseUrl}/deletedcertificates              – list deleted certificates
+  - GET  {vaultBaseUrl}/deletedcertificates/{name}       – get deleted certificate
+  - POST {vaultBaseUrl}/deletedcertificates/{name}/recover – recover deleted certificate
+  - POST {vaultBaseUrl}/deletedcertificates/{name}/purge   – purge deleted certificate
+  milestone: v1.3-beta
+  labels: enhancement, key-vault
+-->
+
 ### MCP Server — resource provisioning and tooling
 
 <!--
