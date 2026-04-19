@@ -35,6 +35,7 @@ public sealed class GenericKeyVaultCommand : IEmulatorCommand
                 key.AddCommand<GetKeyCommand>("get");
                 key.AddCommand<ListKeysCommand>("list");
                 key.AddCommand<ListKeyVersionsCommand>("list-versions");
+                key.AddCommand<UpdateKeyCommand>("update");
             });
         });
     }

@@ -621,6 +621,43 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         return new DataPlaneOperationResult<KeyBundle[]>(OperationResult.Success, keys.ToArray(), null, null);
     }
 
+    public DataPlaneOperationResult<KeyBundle> UpdateKey(Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName, string version)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateKey), "Executing {0}: {1} {2}", nameof(UpdateKey), keyName, vaultName);
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+
+        var request = string.IsNullOrEmpty(rawContent)
+            ? null
+            : JsonSerializer.Deserialize<UpdateKeyRequest>(rawContent, GlobalSettings.JsonOptions);
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (!File.Exists(entityPath))
+            return new DataPlaneOperationResult<KeyBundle>(OperationResult.NotFound, null, $"Key {keyName} not found.", "KeyNotFound");
+
+        var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!.ToList();
+        var bundle = bundles.LastOrDefault(b => b.Key.Kid.EndsWith(version, StringComparison.OrdinalIgnoreCase));
+
+        if (bundle == null)
+            return new DataPlaneOperationResult<KeyBundle>(OperationResult.NotFound, null, $"Key {keyName} version {version} not found.", "KeyNotFound");
+
+        bundle.UpdateFromRequest(request ?? new UpdateKeyRequest());
+
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(bundles.ToArray(), GlobalSettings.JsonOptions));
+
+        return new DataPlaneOperationResult<KeyBundle>(OperationResult.Updated, bundle, null, null);
+    }
+
     public DataPlaneOperationResult<KeyBundle> ImportKey(Stream input,
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

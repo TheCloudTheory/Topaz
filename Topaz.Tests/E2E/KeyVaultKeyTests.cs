@@ -476,4 +476,82 @@ public class KeyVaultKeyTests
         Assert.That(keys[0].Id.ToString(), Does.Contain("keys"));
         Assert.That(keys[0].Id.ToString(), Does.Contain("id-list-key"));
     }
+
+    [Test]
+    public void KeyVaultKeyTests_UpdateKey_DisableKey_ShouldReflectInAttributes()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        var created = client.CreateRsaKey(new CreateRsaKeyOptions("update-disable-key"));
+        var version = created.Value.Id.ToString().Split('/').Last();
+
+        // Act
+        var props = created.Value.Properties;
+        props.Enabled = false;
+        var updated = client.UpdateKeyProperties(props);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(updated.Value, Is.Not.Null);
+            Assert.That(updated.Value.Properties.Enabled, Is.False);
+            Assert.That(updated.Value.Id.ToString(), Does.Contain(version));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_UpdateKey_EnableKey_ShouldReflectInAttributes()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        var created = client.CreateRsaKey(new CreateRsaKeyOptions("update-enable-key")
+        {
+            Enabled = false
+        });
+
+        // Act
+        var props = created.Value.Properties;
+        props.Enabled = true;
+        var updated = client.UpdateKeyProperties(props);
+
+        // Assert
+        Assert.That(updated.Value.Properties.Enabled, Is.True);
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_UpdateKey_UpdatedTimestampChanges()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        var created = client.CreateRsaKey(new CreateRsaKeyOptions("update-timestamp-key"));
+        var originalUpdated = created.Value.Properties.UpdatedOn;
+
+        // Ensure time advances
+        System.Threading.Thread.Sleep(1100);
+
+        // Act
+        var props = created.Value.Properties;
+        props.Enabled = true;
+        var updated = client.UpdateKeyProperties(props);
+
+        // Assert
+        Assert.That(updated.Value.Properties.UpdatedOn, Is.GreaterThan(originalUpdated));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_UpdateKey_NonExistentKey_ThrowsException()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        var fakeId = new Uri($"https://{TestKeyVaultName}.vault.azure.net/keys/nonexistent-key/{Guid.NewGuid():N}");
+
+        // Act & Assert
+        var fakeProps = new KeyProperties(fakeId);
+        fakeProps.Enabled = false;
+        Assert.Throws<RequestFailedException>(() => client.UpdateKeyProperties(fakeProps));
+    }
 }

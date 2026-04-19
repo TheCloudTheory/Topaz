@@ -100,8 +100,8 @@ The data plane covers operations served directly from the vault's own hostname (
 | Import Key | ✅ | `PUT /keys/{key-name}` — RSA and EC key types |
 | Get Key | ✅ | `GET /keys/{key-name}` and `GET /keys/{key-name}/{version}` |
 | Get Keys | ✅ | `GET /keys` — lists all keys (latest version of each) |
-| Get Key Versions | ❌ |
-| Update Key | ❌ |
+| Get Key Versions | ✅ | `GET /keys/{key-name}/versions` |
+| Update Key | ✅ | `PATCH /keys/{key-name}/{key-version}` |
 | Delete Key | ❌ |
 | Backup Key | ❌ |
 | Restore Key | ❌ |

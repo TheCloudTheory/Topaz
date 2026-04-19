@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Topaz.Shared;
+using Topaz.Service.KeyVault.Models.Requests;
 
 namespace Topaz.Service.KeyVault.Models;
 
@@ -55,6 +56,21 @@ public record class KeyBundle
 
     public override string ToString() =>
         JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
+
+    public void UpdateFromRequest(UpdateKeyRequest request)
+    {
+        Attributes = Attributes with
+        {
+            Enabled = request.Attributes?.Enabled ?? Attributes.Enabled,
+            Updated = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        if (request.KeyOps != null)
+            Key = Key with { KeyOps = request.KeyOps };
+
+        if (request.Tags != null)
+            Tags = request.Tags;
+    }
 
     private static string Base64UrlEncode(byte[] data)
     {
