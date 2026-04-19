@@ -52,6 +52,31 @@ You will still need to complete **Step 2** (trusting the certificate). The certi
 
 :::
 
+:::tip[Linux — shell installer or Homebrew on Linux]
+
+On Linux you can skip Step 3 by using the shell installer. It detects your architecture, downloads the correct `topaz` and `topaz-host` binaries from the latest GitHub release, and places them on your `PATH`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash
+```
+
+To pin a specific version, set `TOPAZ_VERSION` before piping:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | TOPAZ_VERSION=v1.1-beta.3 bash
+```
+
+Alternatively, if you already have [Homebrew on Linux](https://docs.brew.sh/Homebrew-on-Linux) installed, the same macOS tap works without any changes:
+
+```bash
+brew tap thecloudtheory/topaz
+brew install topaz
+```
+
+Either way, you still need to complete **Steps 1 and 2** (DNS and certificate trust).
+
+:::
+
 Topaz emulates Azure service hostnames (e.g. `*.blob.core.windows.net`) locally. A one-time DNS configuration is required so that these hostnames resolve to `127.0.0.1`. This needs admin privileges, but once done Topaz needs none at runtime.
 
 <Tabs groupId="os">
@@ -160,6 +185,10 @@ Available **CLI** binaries by platform:
 </Tabs>
 
 ### Setting up an alias (recommended)
+
+:::note
+If you installed via the shell installer or Homebrew, the binaries are already named `topaz` and `topaz-host` and placed on your `PATH`. You can skip this section.
+:::
 
 Typing the full binary name every time is tedious. Create a shell alias or move the binary to a directory on your `PATH`:
 
