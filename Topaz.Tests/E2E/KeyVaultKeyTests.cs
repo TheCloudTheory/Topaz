@@ -390,4 +390,90 @@ public class KeyVaultKeyTests
         Assert.Throws<RequestFailedException>(
             () => client.GetPropertiesOfKeyVersions("nonexistent-versions-key").ToList());
     }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKeys_EmptyVault_ReturnsEmptyList()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        // Act
+        var keys = client.GetPropertiesOfKeys().ToList();
+
+        // Assert
+        Assert.That(keys, Is.Empty);
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKeys_ReturnsAllKeys()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        client.CreateRsaKey(new CreateRsaKeyOptions("list-key-one"));
+        client.CreateRsaKey(new CreateRsaKeyOptions("list-key-two"));
+        client.CreateEcKey(new CreateEcKeyOptions("list-key-three"));
+
+        // Act
+        var keys = client.GetPropertiesOfKeys().ToList();
+
+        // Assert
+        Assert.That(keys, Has.Count.EqualTo(3));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKeys_EachKeyHasCorrectName()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        client.CreateRsaKey(new CreateRsaKeyOptions("named-key-alpha"));
+        client.CreateRsaKey(new CreateRsaKeyOptions("named-key-beta"));
+
+        // Act
+        var keys = client.GetPropertiesOfKeys().Select(k => k.Name).ToList();
+
+        // Assert
+        Assert.That(keys, Is.EquivalentTo(new[] { "named-key-alpha", "named-key-beta" }));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKeys_MultipleVersionsOfSameKey_ReturnsSingleEntry()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        client.CreateRsaKey(new CreateRsaKeyOptions("multi-version-list-key"));
+        client.CreateRsaKey(new CreateRsaKeyOptions("multi-version-list-key"));
+        client.CreateRsaKey(new CreateRsaKeyOptions("multi-version-list-key"));
+
+        // Act
+        var keys = client.GetPropertiesOfKeys().ToList();
+
+        // Assert — three versions of the same key → only one entry in the list
+        Assert.That(keys, Has.Count.EqualTo(1));
+        Assert.That(keys[0].Name, Is.EqualTo("multi-version-list-key"));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKeys_KeyHasValidId()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("id-list-key"));
+
+        // Act
+        var keys = client.GetPropertiesOfKeys().ToList();
+
+        // Assert
+        Assert.That(keys, Has.Count.EqualTo(1));
+        Assert.That(keys[0].Id.ToString(), Does.Contain(TestKeyVaultName));
+        Assert.That(keys[0].Id.ToString(), Does.Contain("keys"));
+        Assert.That(keys[0].Id.ToString(), Does.Contain("id-list-key"));
+    }
 }

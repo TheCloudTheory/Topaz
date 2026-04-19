@@ -596,6 +596,31 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         return new DataPlaneOperationResult<KeyBundle[]>(OperationResult.Success, bundles, null, null);
     }
 
+    public DataPlaneOperationResult<KeyBundle[]> GetKeys(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetKeys), "Executing {0}: {1}", nameof(GetKeys), vaultName);
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var keysPath = Path.Combine(basePath, "keys");
+
+        if (!Directory.Exists(keysPath))
+            return new DataPlaneOperationResult<KeyBundle[]>(OperationResult.Success, [], null, null);
+
+        var keys = new List<KeyBundle>();
+        foreach (var file in Directory.EnumerateFiles(keysPath, "*.json"))
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetKeys), "Reading key file: {0}", file);
+            var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(file), GlobalSettings.JsonOptions);
+            if (bundles is { Length: > 0 })
+                keys.Add(bundles.Last());
+        }
+
+        return new DataPlaneOperationResult<KeyBundle[]>(OperationResult.Success, keys.ToArray(), null, null);
+    }
+
     public DataPlaneOperationResult<KeyBundle> ImportKey(Stream input,
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

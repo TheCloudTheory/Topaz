@@ -99,7 +99,7 @@ The data plane covers operations served directly from the vault's own hostname (
 | Create Key | ✅ | `POST /keys/{key-name}/create` — RSA and EC key types |
 | Import Key | ✅ | `PUT /keys/{key-name}` — RSA and EC key types |
 | Get Key | ✅ | `GET /keys/{key-name}` and `GET /keys/{key-name}/{version}` |
-| Get Keys | ❌ |
+| Get Keys | ✅ | `GET /keys` — lists all keys (latest version of each) |
 | Get Key Versions | ❌ |
 | Update Key | ❌ |
 | Delete Key | ❌ |
