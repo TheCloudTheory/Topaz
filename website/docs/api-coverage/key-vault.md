@@ -104,7 +104,7 @@ The data plane covers operations served directly from the vault's own hostname (
 | Update Key | ✅ | `PATCH /keys/{key-name}/{key-version}` |
 | Delete Key | ✅ | `DELETE /keys/{key-name}` — soft-delete |
 | Backup Key | ✅ | `POST /keys/{key-name}/backup` |
-| Restore Key | ❌ |
+| Restore Key | ✅ |
 | Get Deleted Key | ❌ |
 | Get Deleted Keys | ❌ |
 | Recover Deleted Key | ❌ |

@@ -811,6 +811,45 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         return new DataPlaneOperationResult<string>(OperationResult.Success, encoded, null, null);
     }
 
+    public DataPlaneOperationResult<KeyBundle> RestoreKeyBackup(Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RestoreKeyBackup), "Executing {0}: {1}", nameof(RestoreKeyBackup), vaultName);
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+
+        if (string.IsNullOrEmpty(rawContent))
+            return new DataPlaneOperationResult<KeyBundle>(OperationResult.Failed, null, "Empty request body.", "BadRequest");
+
+        var request = JsonSerializer.Deserialize<RestoreKeyRequest>(rawContent, GlobalSettings.JsonOptions)
+                      ?? throw new InvalidOperationException("Invalid request body.");
+
+        if (string.IsNullOrEmpty(request.Value))
+            return new DataPlaneOperationResult<KeyBundle>(OperationResult.Failed, null, "Backup value is missing.", "BadRequest");
+
+        var plaintext = DecryptBackup(request.Value);
+        var versions = JsonSerializer.Deserialize<KeyBundle[]>(Encoding.UTF8.GetString(plaintext), GlobalSettings.JsonOptions);
+
+        if (versions == null || versions.Length == 0)
+            return new DataPlaneOperationResult<KeyBundle>(OperationResult.Failed, null, "Backup contains no key versions.", "BadRequest");
+
+        var keyName = PathGuard.SanitizeName(versions[0].Name);
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var keysPath = Path.Combine(basePath, "keys");
+        Directory.CreateDirectory(keysPath);
+        var entityPath = Path.Combine(keysPath, $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RestoreKeyBackup), "Executing {0}: Restoring {1} version(s) of key {2}.", nameof(RestoreKeyBackup), versions.Length, keyName);
+
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(versions, GlobalSettings.JsonOptions));
+
+        return new DataPlaneOperationResult<KeyBundle>(OperationResult.Created, versions.Last(), null, null);
+    }
+
     private static byte[] Base64UrlDecode(string value)
     {
         var s = value.Replace('-', '+').Replace('_', '/');

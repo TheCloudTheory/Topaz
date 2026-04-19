@@ -5,6 +5,7 @@ using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.Security.KeyVault.Keys;
 using System.Security.Cryptography;
+using System.Text;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 
@@ -597,6 +598,65 @@ public class KeyVaultKeyTests
 
         // Assert
         Assert.That(result.Value, Is.Not.Null.And.Not.Empty);
+    }
+
+    // ── Restore Key ──────────────────────────────────────────────────────────
+
+    [Test]
+    public void KeyVaultKeyTests_RestoreKey_RoundTrip_RestoredKeyIsRetrievable()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        const string keyName = "restore-rsa-key";
+        client.CreateRsaKey(new CreateRsaKeyOptions(keyName));
+        var backup = client.BackupKey(keyName).Value;
+
+        // Act
+        var restored = client.RestoreKeyBackup(backup);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(restored.Value, Is.Not.Null);
+            Assert.That(restored.Value.Name, Is.EqualTo(keyName));
+        });
+
+        // Confirm retrievable
+        var fetched = client.GetKey(keyName);
+        Assert.That(fetched.Value.Name, Is.EqualTo(keyName));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_RestoreKey_InvalidBlob_ThrowsRequestFailedException()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        // Act & Assert
+        Assert.Throws<RequestFailedException>(() => client.RestoreKeyBackup(Encoding.UTF8.GetBytes("not-a-valid-blob")));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_RestoreKey_MultipleVersions_AllVersionsRestored()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        const string keyName = "restore-multi-version-key";
+        client.CreateRsaKey(new CreateRsaKeyOptions(keyName));
+        client.CreateRsaKey(new CreateRsaKeyOptions(keyName));
+        var backup = client.BackupKey(keyName).Value;
+
+        // Act
+        var restored = client.RestoreKeyBackup(backup);
+
+        // Assert
+        Assert.That(restored.Value.Name, Is.EqualTo(keyName));
+
+        var versions = client.GetPropertiesOfKeyVersions(keyName).ToList();
+        Assert.That(versions.Count, Is.GreaterThanOrEqualTo(2));
     }
 
     // ── Delete Key ────────────────────────────────────────────────────────────
