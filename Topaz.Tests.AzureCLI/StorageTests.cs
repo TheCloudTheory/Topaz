@@ -919,7 +919,7 @@ public class StorageTests : TopazFixture
             $"az storage blob copy start --source-uri http://{storageAccountName}.blob.storage.topaz.local.dev:8891/{srcContainer}/{srcBlobName} --destination-blob {dstBlobName} --destination-container {dstContainer} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
-                Assert.That(resp["status"]?.GetValue<string>(), Is.EqualTo("success"));
+                Assert.That(resp["copy_status"]?.GetValue<string>(), Is.EqualTo("success"));
             });
 
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
