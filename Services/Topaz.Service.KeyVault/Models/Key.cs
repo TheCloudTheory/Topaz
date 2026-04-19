@@ -22,7 +22,7 @@ public record class KeyBundle
 
         Key = new JsonWebKey
         {
-            Kid = $"https://{vaultName}.keyvault.topaz.local.dev/keys/{name}/{version:N}",
+            Kid = $"https://{GlobalSettings.GetKeyVaultHost(vaultName)}/keys/{name}/{version:N}",
             Kty = keyType,
             KeyOps = keyOperations,
             // RSA components

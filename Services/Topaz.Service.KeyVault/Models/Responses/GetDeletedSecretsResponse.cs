@@ -43,7 +43,7 @@ internal sealed class GetDeletedSecretsResponse
                 },
                 DeletedDate = record.DeletedDate,
                 ScheduledPurgeDate = record.ScheduledPurgeDate,
-                RecoveryId = $"https://{vaultName}.keyvault.topaz.local.dev/deletedsecrets/{secret.Name}"
+                RecoveryId = $"https://{GlobalSettings.GetKeyVaultHost(vaultName)}/deletedsecrets/{secret.Name}"
             };
         }).ToArray();
 

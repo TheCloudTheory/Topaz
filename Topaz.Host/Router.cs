@@ -197,7 +197,8 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
             // and actual host, there's no easy way to say when and how to handle
             // all those pesky edge cases.
             var canBypassAuthorization = !context.Request.Headers.ContainsKey("Authorization") &&
-                                         context.Request.Host.Host.EndsWith(".keyvault.topaz.local.dev");
+                                         (context.Request.Host.Host.EndsWith($".{GlobalSettings.KeyVaultDnsSuffix}") ||
+                                          context.Request.Host.Host.EndsWith($".{GlobalSettings.LegacyKeyVaultDnsSuffix}"));
             
             var (isAuthorized, principal) = _authorizationAdapter.IsAuthorized(endpoint.Permissions,
                 context.Request.Headers["Authorization"].ToString(), context.Request.Path.Value,

@@ -8,7 +8,7 @@ public class KeyVaultTests : AzureRmBatchFixture
         Assert.Multiple(() =>
         {
             Assert.That(GetOutput<string>("kv_basic_vault_name"), Is.EqualTo("tfrm-kv-test"));
-            Assert.That(GetOutput<string>("kv_basic_vault_uri"), Does.Contain("tfrm-kv-test"));
+            Assert.That(GetOutput<string>("kv_basic_vault_uri"), Is.EqualTo("https://tfrm-kv-test.vault.topaz.local.dev:8898"));
         });
     }
 

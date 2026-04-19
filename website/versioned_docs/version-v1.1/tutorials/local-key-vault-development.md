@@ -52,7 +52,7 @@ az keyvault create \
   --location westeurope
 ```
 
-Topaz assigns the vault a local hostname: `myvault.keyvault.topaz.local.dev`, which resolves to `127.0.0.1` via the DNS setup you completed in the prerequisites.
+Topaz assigns the vault a local hostname: `myvault.vault.topaz.local.dev`, which resolves to `127.0.0.1` via the DNS setup you completed in the prerequisites.
 
 ## Step 4: Store and retrieve secrets
 
@@ -98,7 +98,7 @@ Connect to the local vault using `DefaultAzureCredential`, which picks up the Az
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
-var vaultUri = new Uri("https://myvault.keyvault.topaz.local.dev:8898");
+var vaultUri = new Uri("https://myvault.vault.topaz.local.dev:8898");
 var client = new SecretClient(vaultUri, new DefaultAzureCredential());
 
 KeyVaultSecret secret = await client.GetSecretAsync("MySecret");
@@ -107,7 +107,7 @@ Console.WriteLine(secret.Value); // hello-from-topaz
 
 :::tip[Switching to production]
 
-The only difference from production is the URI. Replace `https://myvault.keyvault.topaz.local.dev:8898` with `https://myvault.vault.azure.net` and the rest of the code — credentials, SDK calls, response handling — is identical.
+The only difference from production is the URI. Replace `https://myvault.vault.topaz.local.dev:8898` with `https://myvault.vault.azure.net` and the rest of the code — credentials, SDK calls, response handling — is identical.
 
 :::
 

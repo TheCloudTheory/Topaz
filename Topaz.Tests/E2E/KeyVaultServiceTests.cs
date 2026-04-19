@@ -86,6 +86,7 @@ public class KeyVaultServiceTests
             Assert.That(kv.Value.Data.Properties.TenantId, Is.EqualTo(operation.Properties.TenantId));
             Assert.That(kv.Value.Data.Properties.Sku.Family, Is.EqualTo(operation.Properties.Sku.Family));
             Assert.That(kv.Value.Data.Properties.Sku.Name, Is.EqualTo(operation.Properties.Sku.Name));
+            Assert.That(kv.Value.Data.Properties.VaultUri.Host, Is.EqualTo($"{testKeyVaultName}.vault.topaz.local.dev"));
         });
     }
 

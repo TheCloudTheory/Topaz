@@ -51,7 +51,7 @@ private static readonly string CertFile = File.ReadAllText("topaz.crt");
                                            "acr_login_server_endpoint":        "https://topaz.local.dev:8899"
                                          },
                                          "suffixes": {
-                                           "keyvault_dns":          ".keyvault.topaz.local.dev",
+                                           "keyvault_dns":          ".vault.topaz.local.dev",
                                            "acrLoginServerEndpoint": ".cr.topaz.local.dev"
                                          }
                                        }

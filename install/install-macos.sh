@@ -19,6 +19,9 @@ echo "port 53" >> /etc/resolver/topaz.local.dev
 echo "nameserver 127.0.0.1" > /etc/resolver/keyvault.topaz.local.dev
 echo "port 53" >> /etc/resolver/keyvault.topaz.local.dev
 
+echo "nameserver 127.0.0.1" > /etc/resolver/vault.topaz.local.dev
+echo "port 53" >> /etc/resolver/vault.topaz.local.dev
+
 echo "nameserver 127.0.0.1" > /etc/resolver/storage.topaz.local.dev
 echo "port 53" >> /etc/resolver/storage.topaz.local.dev
 
@@ -37,6 +40,7 @@ echo "port 53" >> /etc/resolver/cr.topaz.local.dev
 mkdir -p /opt/homebrew/etc/dnsmasq.d
 echo "address=/.topaz.local.dev/127.0.0.1" > /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
 echo "address=/.keyvault.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
+echo "address=/.vault.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
 echo "address=/.storage.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
 echo "address=/.cr.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf
 echo "address=/.servicebus.topaz.local.dev/127.0.0.1" >> /opt/homebrew/etc/dnsmasq.d/topaz.local.dev.conf

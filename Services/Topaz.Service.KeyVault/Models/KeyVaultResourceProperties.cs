@@ -12,7 +12,7 @@ internal sealed class KeyVaultResourceProperties
 
     private KeyVaultResourceProperties(string keyVaultName)
     {
-        VaultUri = $"https://{keyVaultName}.keyvault.topaz.local.dev:{GlobalSettings.DefaultKeyVaultPort}";
+        VaultUri = GlobalSettings.GetKeyVaultEndpoint(keyVaultName);
     }
     
     public Guid TenantId { get; init; }

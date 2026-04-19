@@ -20,8 +20,8 @@ internal sealed class KeyVaultAuthorizationChecker(Pipeline eventPipeline, ITopa
     /// The Azure SDK uses this to discover the token endpoint and then retries with a token.
     /// </summary>
     public static string WwwAuthenticateChallenge =>
-        $"Bearer authorization=\"https://keyvault.topaz.local.dev:{GlobalSettings.DefaultKeyVaultPort}/{Guid.Empty}\"," +
-        $" resource=\"https://keyvault.topaz.local.dev:{GlobalSettings.DefaultKeyVaultPort}\"";
+        $"Bearer authorization=\"https://{GlobalSettings.KeyVaultDnsSuffix}:{GlobalSettings.DefaultKeyVaultPort}/{Guid.Empty}\"," +
+        $" resource=\"https://{GlobalSettings.KeyVaultDnsSuffix}:{GlobalSettings.DefaultKeyVaultPort}\"";
 
     /// <summary>
     /// Returns true when the caller identified by <paramref name="authHeader"/> is allowed to perform

@@ -42,6 +42,13 @@ public static class GlobalSettings
     public const ushort ContainerRegistryPort = 8892;
     public const ushort AmqpTlsConnectionPort = 5671;
     public const string MainEmulatorDirectory = ".topaz";
+    public const string KeyVaultDnsSuffix = "vault.topaz.local.dev";
+    public const string LegacyKeyVaultDnsSuffix = "keyvault.topaz.local.dev";
 
     public static readonly string GlobalDnsEntriesFilePath = Path.Combine(MainEmulatorDirectory, "global-dns.json");
+
+    public static string GetKeyVaultHost(string vaultName) => $"{vaultName.ToLowerInvariant()}.{KeyVaultDnsSuffix}";
+
+    public static string GetKeyVaultEndpoint(string vaultName) =>
+        $"https://{GetKeyVaultHost(vaultName)}:{DefaultKeyVaultPort}";
 }

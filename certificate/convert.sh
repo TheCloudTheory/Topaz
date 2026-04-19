@@ -1,3 +1,3 @@
 #!/bin/bash
 
-openssl pkcs12 -inkey topaz.key -in topaz.crt -export -out topaz.pfx
+openssl pkcs12 -inkey topaz.key -in topaz.crt -export -out topaz.pfx -passout pass:qwerty

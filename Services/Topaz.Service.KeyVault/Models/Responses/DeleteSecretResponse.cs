@@ -19,7 +19,7 @@ public class DeleteSecretResponse
             Attributes = attributes,
             DeletedDate = DateTimeOffset.Now.ToUnixTimeSeconds(),
             ScheduledPurgeDate = DateTimeOffset.Now.ToUnixTimeSeconds(),
-            RecoveryId = $"https://{vaultName}.keyvault.topaz.local.dev/deletedsecrets/{secretName}"
+            RecoveryId = $"https://{GlobalSettings.GetKeyVaultHost(vaultName)}/deletedsecrets/{secretName}"
         };
     }
 

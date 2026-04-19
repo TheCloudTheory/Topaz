@@ -18,10 +18,12 @@ internal static class KeyVaultHostMapper
 
         foreach (var vaultName in vaultNames)
         {
+            await EnsureHostMapping(azureCliContainer, topazContainer, $"{vaultName}.vault.topaz.local.dev");
             await EnsureHostMapping(azureCliContainer, topazContainer, $"{vaultName}.keyvault.topaz.local.dev");
 
             if (!vaultName.Equals(vaultName.ToLowerInvariant(), StringComparison.Ordinal))
             {
+                await EnsureHostMapping(azureCliContainer, topazContainer, $"{vaultName.ToLowerInvariant()}.vault.topaz.local.dev");
                 await EnsureHostMapping(azureCliContainer, topazContainer, $"{vaultName.ToLowerInvariant()}.keyvault.topaz.local.dev");
             }
         }

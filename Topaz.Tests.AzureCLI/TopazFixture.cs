@@ -11,21 +11,21 @@ public class TopazFixture
     private const string AzureCliContainerImage = "mcr.microsoft.com/azure-cli:2.84.0";
 
     private const string CloudEnvironmentConfiguration = """
-                                                         {
-                                                           "endpoints":{
-                                                             "resourceManager": "https://topaz.local.dev:8899",
-                                                             "activeDirectory": "https://topaz.local.dev:8899",
-                                                             "activeDirectoryResourceId": "https://topaz.local.dev:8899",
-                                                             "activeDirectoryGraphResourceId": "https://topaz.local.dev:8899",
-                                                             "microsoft_graph_resource_id": "https://topaz.local.dev:8899",
-                                                             "acr_login_server_endpoint": "https://topaz.local.dev:8899"
-                                                           },
-                                                           "suffixes": {
-                                                             "keyvault_dns": ".keyvault.topaz.local.dev",
-                                                             "acrLoginServerEndpoint": ".cr.topaz.local.dev"
-                                                           }
-                                                         }
-                                                         """;
+{
+  "endpoints": {
+    "resourceManager": "https://topaz.local.dev:8899",
+    "activeDirectory": "https://topaz.local.dev:8899",
+    "activeDirectoryResourceId": "https://topaz.local.dev:8899",
+    "activeDirectoryGraphResourceId": "https://topaz.local.dev:8899",
+    "microsoft_graph_resource_id": "https://topaz.local.dev:8899",
+    "acr_login_server_endpoint": "https://topaz.local.dev:8899"
+  },
+  "suffixes": {
+    "keyvault_dns": ".vault.topaz.local.dev",
+    "acrLoginServerEndpoint": ".cr.topaz.local.dev"
+  }
+}
+""";
     
     private static readonly string TopazContainerImage = Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "topaz/host";
     

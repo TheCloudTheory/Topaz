@@ -34,21 +34,21 @@ public class TopazFixture
     private static readonly string TemplateAzureAd  = $"{TemplateRoot}/azuread";
 
     private const string CloudConfig = """
-                                       {
-                                         "endpoints":{
-                                           "resourceManager": "https://topaz.local.dev:8899",
-                                           "activeDirectory": "https://topaz.local.dev:8899",
-                                           "activeDirectoryResourceId": "https://topaz.local.dev:8899",
-                                           "activeDirectoryGraphResourceId": "https://topaz.local.dev:8899",
-                                           "microsoft_graph_resource_id": "https://topaz.local.dev:8899",
-                                           "acr_login_server_endpoint": "https://topaz.local.dev:8899"
-                                         },
-                                         "suffixes": {
-                                           "keyvault_dns": ".keyvault.topaz.local.dev",
-                                           "acrLoginServerEndpoint": ".cr.topaz.local.dev"
-                                         }
-                                       }
-                                       """;
+{
+  "endpoints": {
+    "resourceManager": "https://topaz.local.dev:8899",
+    "activeDirectory": "https://topaz.local.dev:8899",
+    "activeDirectoryResourceId": "https://topaz.local.dev:8899",
+    "activeDirectoryGraphResourceId": "https://topaz.local.dev:8899",
+    "microsoft_graph_resource_id": "https://topaz.local.dev:8899",
+    "acr_login_server_endpoint": "https://topaz.local.dev:8899"
+  },
+  "suffixes": {
+    "keyvault_dns": ".vault.topaz.local.dev",
+    "acrLoginServerEndpoint": ".cr.topaz.local.dev"
+  }
+}
+""";
 
     private static readonly string TopazContainerImage =
         Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "topaz/host";
@@ -136,6 +136,9 @@ public class TopazFixture
                 .WithEnvironment("TF_PLUGIN_TIMEOUT", "5m")
                 .WithExtraHost("topaz.local.dev", _containerTopaz.IpAddress)
                 // Key Vault data-plane: the azurerm provider pings the vault URI to verify availability.
+                .WithExtraHost("tfrm-kv-test.vault.topaz.local.dev", _containerTopaz.IpAddress)
+                .WithExtraHost("tfrm-kv-sd.vault.topaz.local.dev", _containerTopaz.IpAddress)
+                .WithExtraHost("tfrm-kv-keys.vault.topaz.local.dev", _containerTopaz.IpAddress)
                 .WithExtraHost("tfrm-kv-test.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
                 .WithExtraHost("tfrm-kv-sd.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
                 .WithExtraHost("tfrm-kv-keys.keyvault.topaz.local.dev", _containerTopaz.IpAddress)

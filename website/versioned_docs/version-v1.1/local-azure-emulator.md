@@ -27,7 +27,7 @@ Topaz implements the actual Azure REST APIs, not simplified mocks. The SDK calls
 ```csharp
 // Local: point at the Topaz-emulated vault
 var client = new SecretClient(
-    new Uri("https://myvault.keyvault.topaz.local.dev:8898"),
+    new Uri("https://myvault.vault.topaz.local.dev:8898"),
     new DefaultAzureCredential()
 );
 var secret = await client.GetSecretAsync("db-connection-string");

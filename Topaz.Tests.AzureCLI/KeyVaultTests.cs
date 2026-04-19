@@ -97,7 +97,7 @@ public class KeyVaultTests : TopazFixture
                 Assert.That(response["properties"]!["enableSoftDelete"]!.GetValue<bool>(), Is.True);
                 Assert.That(response["properties"]!["softDeleteRetentionInDays"]!.GetValue<int>(), Is.EqualTo(90));
                 Assert.That(response["properties"]!["enableRbacAuthorization"]!.GetValue<bool>(), Is.True);
-                Assert.That(response["properties"]!["vaultUri"], Is.Not.Null);
+                Assert.That(response["properties"]!["vaultUri"]!.GetValue<string>(), Is.EqualTo("https://testvault123.vault.topaz.local.dev:8898"));
             });
         });
         await RunAzureCliCommand("az keyvault delete --name TestVault123 --only-show-errors");

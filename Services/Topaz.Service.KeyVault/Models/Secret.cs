@@ -11,7 +11,7 @@ public record class Secret
 
     public Secret(string name, string value, Guid version, string vaultName = "")
     {
-        Id = $"https://{vaultName}.keyvault.topaz.local.dev/secrets/{name}/{version}";
+        Id = $"https://{GlobalSettings.GetKeyVaultHost(vaultName)}/secrets/{name}/{version}";
         Name = name;
         Value = value;
         Version = version;
