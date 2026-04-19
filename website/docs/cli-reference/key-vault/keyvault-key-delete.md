@@ -1,9 +1,9 @@
 ---
-sidebar_position: 20
+sidebar_position: 16
 ---
 
-# keyvault key list-versions
-Lists all versions of a key in an Azure Key Vault.
+# keyvault key delete
+Soft-deletes a key from an Azure Key Vault.
 
 ## Options
 * `--vault-name` - (Required) (Required) Key Vault name.
@@ -13,7 +13,7 @@ Lists all versions of a key in an Azure Key Vault.
 
 ## Examples
 
-### List key versions
+### Delete a key
 ```bash
-$ topaz keyvault key list-versions --vault-name "kvlocal" --name "my-key" --resource-group "rg-local" --subscription-id "36a28ebb-9370-46d8-981c-84efe02048ae"
+$ topaz keyvault key delete --vault-name "kvlocal" --name "my-key" --resource-group "rg-local" --subscription-id "36a28ebb-9370-46d8-981c-84efe02048ae"
 ```
