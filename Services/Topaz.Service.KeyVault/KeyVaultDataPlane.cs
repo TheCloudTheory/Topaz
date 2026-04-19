@@ -658,6 +658,32 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         return new DataPlaneOperationResult<KeyBundle>(OperationResult.Updated, bundle, null, null);
     }
 
+    public DataPlaneOperationResult<DeletedKeyRecord> GetDeletedKey(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetDeletedKey), "Executing {0}: {1} {2}", nameof(GetDeletedKey), keyName, vaultName);
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var deletedPath = Path.Combine(basePath, "keys", "deleted", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(deletedPath, basePath);
+
+        if (!File.Exists(deletedPath))
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetDeletedKey), "Executing {0}: Deleted key {1} not found.", nameof(GetDeletedKey), keyName);
+            return new DataPlaneOperationResult<DeletedKeyRecord>(OperationResult.NotFound, null, $"Deleted key {keyName} not found.", "KeyNotFound");
+        }
+
+        var data = File.ReadAllText(deletedPath);
+        var record = JsonSerializer.Deserialize<DeletedKeyRecord>(data, GlobalSettings.JsonOptions);
+
+        return new DataPlaneOperationResult<DeletedKeyRecord>(OperationResult.Success, record!, null, null);
+    }
+
     public DataPlaneOperationResult<DeletedKeyRecord> DeleteKey(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

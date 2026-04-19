@@ -722,4 +722,50 @@ public class KeyVaultKeyTests
         // Assert
         Assert.That(deleted.Value.RecoveryId, Is.Not.Null.And.Not.EqualTo(new Uri("about:blank")));
     }
+
+    // ── Get Deleted Key ───────────────────────────────────────────────────────
+
+    [Test]
+    public void KeyVaultKeyTests_GetDeletedKey_AfterDeletion_ReturnsDeletedKeyProperties()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("get-deleted-key"));
+        client.StartDeleteKey("get-deleted-key");
+
+        // Act
+        var deleted = client.GetDeletedKey("get-deleted-key");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(deleted.Value, Is.Not.Null);
+            Assert.That(deleted.Value.Name, Is.EqualTo("get-deleted-key"));
+            Assert.That(deleted.Value.RecoveryId.ToString(), Does.Contain("deletedkeys/get-deleted-key"));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetDeletedKey_NonExistentKey_ThrowsRequestFailedException()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        // Act & Assert
+        Assert.Throws<RequestFailedException>(() => client.GetDeletedKey("key-never-deleted"));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetDeletedKey_ActiveKey_ThrowsRequestFailedException()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("active-not-deleted-key"));
+
+        // Act & Assert — active key has no deleted record
+        Assert.Throws<RequestFailedException>(() => client.GetDeletedKey("active-not-deleted-key"));
+    }
 }
