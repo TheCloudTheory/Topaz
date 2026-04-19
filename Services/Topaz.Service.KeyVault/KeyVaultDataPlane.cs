@@ -658,6 +658,49 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         return new DataPlaneOperationResult<KeyBundle>(OperationResult.Updated, bundle, null, null);
     }
 
+    public DataPlaneOperationResult<DeletedKeyRecord> DeleteKey(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteKey), "Executing {0}: {1} {2}", nameof(DeleteKey), keyName, vaultName);
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var keysPath = Path.Combine(basePath, "keys");
+        var entityPath = Path.Combine(keysPath, $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (!File.Exists(entityPath))
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteKey), "Executing {0}: Key {1} not found.", nameof(DeleteKey), keyName);
+            return new DataPlaneOperationResult<DeletedKeyRecord>(OperationResult.NotFound, null, $"Key {keyName} not found.", "KeyNotFound");
+        }
+
+        var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
+        var latest = bundles.Last();
+
+        var deletedDir = Path.Combine(keysPath, "deleted");
+        Directory.CreateDirectory(deletedDir);
+
+        var record = new DeletedKeyRecord
+        {
+            Bundle = latest,
+            KeyName = keyName,
+            DeletedDate = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            ScheduledPurgeDate = DateTimeOffset.UtcNow.AddDays(90).ToUnixTimeSeconds()
+        };
+
+        File.WriteAllText(Path.Combine(deletedDir, $"{keyName}.json"),
+            JsonSerializer.Serialize(record, GlobalSettings.JsonOptions));
+        File.Delete(entityPath);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteKey), "Executing {0}: Key {1} soft-deleted.", nameof(DeleteKey), keyName);
+        return new DataPlaneOperationResult<DeletedKeyRecord>(OperationResult.Deleted, record, null, null);
+    }
+
     public DataPlaneOperationResult<KeyBundle> ImportKey(Stream input,
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

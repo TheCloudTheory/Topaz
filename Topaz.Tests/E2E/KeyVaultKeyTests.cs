@@ -554,4 +554,68 @@ public class KeyVaultKeyTests
         fakeProps.Enabled = false;
         Assert.Throws<RequestFailedException>(() => client.UpdateKeyProperties(fakeProps));
     }
+
+    // ── Delete Key ────────────────────────────────────────────────────────────
+
+    [Test]
+    public void KeyVaultKeyTests_DeleteKey_ExistingKey_ReturnsDeletedKeyBundle()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("delete-me-key"));
+
+        // Act
+        var deleted = client.StartDeleteKey("delete-me-key");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(deleted.Value, Is.Not.Null);
+            Assert.That(deleted.Value.Name, Is.EqualTo("delete-me-key"));
+            Assert.That(deleted.Value.RecoveryId.ToString(), Does.Contain("deletedkeys/delete-me-key"));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_DeleteKey_KeyNoLongerListedAfterDeletion()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("delete-list-key"));
+
+        // Act
+        client.StartDeleteKey("delete-list-key");
+        var keys = client.GetPropertiesOfKeys().ToList();
+
+        // Assert
+        Assert.That(keys.Any(k => k.Name == "delete-list-key"), Is.False);
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_DeleteKey_NonExistentKey_ThrowsException()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        // Act & Assert
+        Assert.Throws<RequestFailedException>(() => client.StartDeleteKey("nonexistent-delete-key"));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_DeleteKey_DeletedKeyHasRecoveryId()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("delete-recovery-key"));
+
+        // Act
+        var deleted = client.StartDeleteKey("delete-recovery-key");
+
+        // Assert
+        Assert.That(deleted.Value.RecoveryId, Is.Not.Null.And.Not.EqualTo(new Uri("about:blank")));
+    }
 }

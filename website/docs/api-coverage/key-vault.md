@@ -102,7 +102,7 @@ The data plane covers operations served directly from the vault's own hostname (
 | Get Keys | ✅ | `GET /keys` — lists all keys (latest version of each) |
 | Get Key Versions | ✅ | `GET /keys/{key-name}/versions` |
 | Update Key | ✅ | `PATCH /keys/{key-name}/{key-version}` |
-| Delete Key | ❌ |
+| Delete Key | ✅ | `DELETE /keys/{key-name}` — soft-delete |
 | Backup Key | ❌ |
 | Restore Key | ❌ |
 | Get Deleted Key | ❌ |
