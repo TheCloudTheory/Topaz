@@ -32,10 +32,15 @@ public sealed class ResourceManagerService : IServiceDefinition
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         new GetMetadataEndpointsEndpoint(),
+        new GetResourceProviderEndpoint(_eventPipeline, _logger),
         new ListResourceProvidersEndpoint(_eventPipeline, _logger),
-        new ResourceManagerEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
-        new ExportTemplateEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new CreateOrUpdateDeploymentEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new ListDeploymentsEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new GetDeploymentEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new DeleteDeploymentEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new ValidateDeploymentEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new CancelDeploymentEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new ExportTemplateEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
     ];
 
     public void Bootstrap()
