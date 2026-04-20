@@ -12,7 +12,7 @@ public sealed class RestoreSecretEndpoint(Pipeline eventPipeline, ITopazLogger l
     private readonly KeyVaultDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
-    public string[] Endpoints => ["POST /secrets/restore"];
+    public string[] Endpoints => ["POST /secrets/{secretName}/restore"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/secrets/restore/action"];
 
