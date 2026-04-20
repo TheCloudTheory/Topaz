@@ -756,6 +756,39 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         return new DataPlaneOperationResult<KeyBundle>(OperationResult.Success, recovered, null, null);
     }
 
+    public DataPlaneOperationResult<KeyRotationPolicy> GetKeyRotationPolicy(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetKeyRotationPolicy), "Executing {0}: {1} {2}", nameof(GetKeyRotationPolicy), keyName, vaultName);
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var keyPath = Path.Combine(basePath, "keys", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(keyPath, basePath);
+
+        if (!File.Exists(keyPath))
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetKeyRotationPolicy), "Key {0} not found.", keyName);
+            return new DataPlaneOperationResult<KeyRotationPolicy>(OperationResult.NotFound, null, $"Key {keyName} not found.", "KeyNotFound");
+        }
+
+        var policyPath = Path.Combine(basePath, "keys", $"{keyName}.rotationpolicy.json");
+        PathGuard.EnsureWithinDirectory(policyPath, basePath);
+
+        if (!File.Exists(policyPath))
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetKeyRotationPolicy), "No rotation policy set for key {0}, returning default.", keyName);
+            return new DataPlaneOperationResult<KeyRotationPolicy>(OperationResult.Success, KeyRotationPolicy.Default(vaultName, keyName), null, null);
+        }
+
+        var policy = JsonSerializer.Deserialize<KeyRotationPolicy>(File.ReadAllText(policyPath), GlobalSettings.JsonOptions)!;
+        return new DataPlaneOperationResult<KeyRotationPolicy>(OperationResult.Success, policy, null, null);
+    }
+
     public DataPlaneOperationResult<KeyBundle> RotateKey(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

@@ -1031,4 +1031,45 @@ public class KeyVaultKeyTests
         // Act & Assert
         Assert.Throws<RequestFailedException>(() => client.RotateKey("rotate-nonexistent-key"));
     }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKeyRotationPolicy_ExistingKey_ReturnsPolicy()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("rotation-policy-key"));
+
+        // Act
+        var policy = client.GetKeyRotationPolicy("rotation-policy-key");
+
+        // Assert
+        Assert.That(policy.Value, Is.Not.Null);
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKeyRotationPolicy_DefaultPolicy_HasEmptyLifetimeActions()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("rotation-policy-default-key"));
+
+        // Act
+        var policy = client.GetKeyRotationPolicy("rotation-policy-default-key");
+
+        // Assert
+        Assert.That(policy.Value.LifetimeActions, Is.Empty);
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKeyRotationPolicy_NonExistentKey_ThrowsRequestFailedException()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        // Act & Assert
+        Assert.Throws<RequestFailedException>(() => client.GetKeyRotationPolicy("rotation-policy-nonexistent"));
+    }
 }
