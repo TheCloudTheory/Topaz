@@ -167,14 +167,25 @@ public sealed class ResourceManagerEndpoint(
         // Attempt to fix broken Azure CLI serialization
         content = content.Replace(", template:{", ", \"template\":{");
         
-        logger.LogDebug(nameof(ResourceManagerEndpoint), nameof(HandleCreateOrUpdateDeployment),
+        logger.LogDebug(nameof(ResourceManagerEndpoint), nameof(HandleValidateDeployment),
             "Attempting to deserialize into {0}: {1}", nameof(CreateDeploymentRequest), content);
 
         var request = JsonSerializer.Deserialize<CreateDeploymentRequest>(content, GlobalSettings.JsonOptions);
-        var result =
-            _controlPlane.ValidateDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, request!);
+        if (request?.Properties?.Template == null)
+        {
+            response.CreateErrorResponse("InvalidTemplate", "The template is missing or invalid.", HttpStatusCode.BadRequest);
+            return;
+        }
 
-        // TODO: Finish validating a deployment
+        var result = _controlPlane.ValidateDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, request);
+        if (result.Result == OperationResult.Success)
+        {
+            response.CreateJsonContentResponse(result.Resource!);
+        }
+        else
+        {
+            response.CreateErrorResponse(result.Code ?? "InvalidTemplate", result.Reason ?? "Validation failed.", HttpStatusCode.BadRequest);
+        }
     }
 
     private void HandleGetDeployments(HttpResponseMessage response, SubscriptionIdentifier subscriptionIdentifier,

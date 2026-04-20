@@ -512,4 +512,69 @@ public class ResourceManagerTests
         var resources = result["template"]!["resources"]!.AsArray();
         Assert.That(resources, Has.Count.EqualTo(1));
     }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenDeploymentIsValidated_ItShouldReturnResult()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub";
+        const string resourceGroupName = "rg-validate";
+        const string deploymentName = "validate-deployment";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        // Act — validate does not require an existing deployment; build a resource ID reference
+        var deploymentId = new ResourceIdentifier(
+            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}");
+        var deploymentResource = armClient.GetArmDeploymentResource(deploymentId);
+        var validateResult = await deploymentResource.ValidateAsync(WaitUntil.Completed,
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment1.json"))
+            }));
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(validateResult.Value.Name, Is.EqualTo(deploymentName));
+            Assert.That(validateResult.Value.Id.ToString(), Does.Contain(deploymentName));
+            Assert.That(validateResult.Value.Properties?.ProvisioningState.ToString(), Is.EqualTo("Succeeded"));
+        });
+    }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenInvalidTemplateIsValidated_ItShouldReturnBadRequest()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub";
+        const string resourceGroupName = "rg-validate-invalid";
+        const string deploymentName = "validate-invalid";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        // Act & Assert — template with no $schema/contentVersion/resources should fail validation
+        var deploymentId = new ResourceIdentifier(
+            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}");
+        var deploymentResource = armClient.GetArmDeploymentResource(deploymentId);
+        Assert.ThrowsAsync<Azure.RequestFailedException>(async () =>
+            await deploymentResource.ValidateAsync(WaitUntil.Completed,
+                new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+                {
+                    Template = BinaryData.FromString("""{ "hello": "world" }""")
+                })));
+    }
 }

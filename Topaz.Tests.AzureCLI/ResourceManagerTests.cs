@@ -117,4 +117,18 @@ public class ResourceManagerTests : TopazFixture
         });
         await RunAzureCliCommand("az group delete -n rg-export-cli-wildcard --yes");
     }
+
+    [Test]
+    public async Task ResourceManagerTests_WhenDeploymentIsValidated_ItShouldSucceed()
+    {
+        await RunAzureCliCommand("az group create -n rg-validate -l westeurope");
+        await RunAzureCliCommand(
+            "az deployment group validate --name test-validate -g rg-validate --template-file \"/templates/empty-deployment.json\"",
+            response =>
+            {
+                Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo("test-validate"));
+                Assert.That(response["properties"]!["provisioningState"]!.GetValue<string>(), Is.EqualTo("Succeeded"));
+            });
+        await RunAzureCliCommand("az group delete -n rg-validate --yes");
+    }
 }

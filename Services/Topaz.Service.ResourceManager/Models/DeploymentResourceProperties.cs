@@ -45,4 +45,18 @@ public sealed class DeploymentResourceProperties
             Timestamp = DateTimeOffset.UtcNow,
         };
     }
+
+    internal static DeploymentResourceProperties ForValidate(CreateDeploymentRequest request)
+    {
+        return new DeploymentResourceProperties
+        {
+            CorrelationId = Guid.NewGuid().ToString(),
+            Mode = request.Properties?.Mode ?? "Incremental",
+            ProvisioningState = ResourcesProvisioningState.Succeeded.ToString(),
+            Timestamp = DateTimeOffset.UtcNow,
+            Parameters = request.Properties?.Parameters?.Parameters is { } parameters
+                ? BinaryData.FromObjectAsJson(parameters, GlobalSettings.JsonOptions)
+                : BinaryData.Empty
+        };
+    }
 }

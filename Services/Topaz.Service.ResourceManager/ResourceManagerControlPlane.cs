@@ -114,24 +114,24 @@ internal sealed class ResourceManagerControlPlane(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         string deploymentName, CreateDeploymentRequest request)
     {
-        var deploymentOperation = GetDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
-        if (deploymentOperation.Result == OperationResult.NotFound)
+        try
         {
-            return new ControlPlaneOperationResult<DeploymentValidateResult>(OperationResult.Failed,
-                new DeploymentValidateResult
-                {
-                    Error = new GenericErrorResponse(deploymentOperation.Code!, deploymentOperation.Reason!)
-                }, deploymentOperation.Reason, deploymentOperation.Code);
+            var template = request.ToTemplate();
+            // ValidateTemplate throws on invalid input; returns void on success
+            _templateEngineFacade.Validate(template);
+
+            return new ControlPlaneOperationResult<DeploymentValidateResult>(OperationResult.Success,
+                DeploymentValidateResult.FromRequest(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, request),
+                null, null);
         }
+        catch (Exception ex)
+        {
+            logger.LogDebug(nameof(ResourceManagerControlPlane), nameof(ValidateDeployment),
+                "Template validation failed: {0}", ex.Message);
 
-        _templateEngineFacade.Validate(request.ToTemplate());
-
-        return new ControlPlaneOperationResult<DeploymentValidateResult>(OperationResult.Success,
-            new DeploymentValidateResult
-            {
-                Name = deploymentName,
-                Properties = deploymentOperation.Resource!.Properties
-            }, null, null);
+            return new ControlPlaneOperationResult<DeploymentValidateResult>(OperationResult.Failed,
+                null, ex.Message, "InvalidTemplate");
+        }
     }
 
     public ExportTemplateResult ExportTemplate(
