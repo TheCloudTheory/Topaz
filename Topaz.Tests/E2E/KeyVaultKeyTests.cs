@@ -757,15 +757,90 @@ public class KeyVaultKeyTests
         Assert.Throws<RequestFailedException>(() => client.GetDeletedKey("key-never-deleted"));
     }
 
+    // ── Get Deleted Keys ──────────────────────────────────────────────────────
+
     [Test]
-    public void KeyVaultKeyTests_GetDeletedKey_ActiveKey_ThrowsRequestFailedException()
+    public void KeyVaultKeyTests_GetDeletedKeys_EmptyVault_ReturnsEmptyList()
     {
         // Arrange
         EnsureVault();
         var client = CreateKeyClient();
-        client.CreateRsaKey(new CreateRsaKeyOptions("active-not-deleted-key"));
 
-        // Act & Assert — active key has no deleted record
-        Assert.Throws<RequestFailedException>(() => client.GetDeletedKey("active-not-deleted-key"));
+        // Act
+        var deletedKeys = client.GetDeletedKeys().ToList();
+
+        // Assert
+        Assert.That(deletedKeys, Is.Empty);
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetDeletedKeys_AfterDeletion_ContainsDeletedKey()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("list-deleted-key"));
+        client.StartDeleteKey("list-deleted-key");
+
+        // Act
+        var deletedKeys = client.GetDeletedKeys().ToList();
+
+        // Assert
+        Assert.That(deletedKeys, Has.Count.EqualTo(1));
+        Assert.That(deletedKeys[0].Name, Is.EqualTo("list-deleted-key"));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetDeletedKeys_MultipleDeletedKeys_ReturnsAll()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("multi-deleted-one"));
+        client.CreateRsaKey(new CreateRsaKeyOptions("multi-deleted-two"));
+        client.StartDeleteKey("multi-deleted-one");
+        client.StartDeleteKey("multi-deleted-two");
+
+        // Act
+        var deletedKeys = client.GetDeletedKeys().Select(k => k.Name).ToList();
+
+        // Assert
+        Assert.That(deletedKeys, Is.EquivalentTo(new[] { "multi-deleted-one", "multi-deleted-two" }));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetDeletedKeys_DeletedKeyHasRecoveryId()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("recovery-id-deleted-key"));
+        client.StartDeleteKey("recovery-id-deleted-key");
+
+        // Act
+        var deletedKeys = client.GetDeletedKeys().ToList();
+
+        // Assert
+        Assert.That(deletedKeys, Has.Count.EqualTo(1));
+        Assert.That(deletedKeys[0].RecoveryId.ToString(), Does.Contain("deletedkeys/recovery-id-deleted-key"));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetDeletedKeys_ActiveKeyNotIncluded()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("active-key-not-deleted"));
+        client.CreateRsaKey(new CreateRsaKeyOptions("deleted-key-in-list"));
+        client.StartDeleteKey("deleted-key-in-list");
+
+        // Act
+        var deletedKeys = client.GetDeletedKeys().Select(k => k.Name).ToList();
+
+        // Assert
+        Assert.That(deletedKeys, Does.Contain("deleted-key-in-list"));
+        Assert.That(deletedKeys, Does.Not.Contain("active-key-not-deleted"));
     }
 }
+

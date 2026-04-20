@@ -106,7 +106,7 @@ The data plane covers operations served directly from the vault's own hostname (
 | Backup Key | ✅ | `POST /keys/{key-name}/backup` |
 | Restore Key | ✅ |
 | Get Deleted Key | ✅ |
-| Get Deleted Keys | ❌ |
+| Get Deleted Keys | ✅ |
 | Recover Deleted Key | ❌ |
 | Purge Deleted Key | ❌ |
 | Rotate Key | ❌ |
