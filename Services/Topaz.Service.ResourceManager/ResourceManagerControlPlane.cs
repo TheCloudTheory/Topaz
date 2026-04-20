@@ -1,4 +1,5 @@
 using Azure.Deployments.Core.Entities;
+using Azure.ResourceManager.Resources.Models;
 using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using Newtonsoft.Json.Linq;
 using System.Text.Json;
@@ -95,6 +96,23 @@ internal sealed class ResourceManagerControlPlane(
 
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
         return OperationResult.Deleted;
+    }
+
+    public OperationResult CancelDeployment(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string deploymentName)
+    {
+        var deploymentOp = GetDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
+        if (deploymentOp.Result == OperationResult.NotFound)
+            return OperationResult.NotFound;
+
+        // Only Created (queued-but-not-started) deployments can be cancelled
+        var provisioningState = deploymentOp.Resource!.Properties.ProvisioningState;
+        if (provisioningState != ResourcesProvisioningState.Created.ToString())
+            return OperationResult.Conflict;
+
+        return templateDeploymentOrchestrator.CancelDeployment(subscriptionIdentifier, resourceGroupIdentifier,
+            deploymentName);
     }
 
     public (OperationResult result, DeploymentResource[] resource) GetDeployments(

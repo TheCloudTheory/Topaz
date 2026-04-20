@@ -35,6 +35,7 @@ public sealed class ResourceManagerService : IServiceDefinition
         new ListResourceProvidersEndpoint(_eventPipeline, _logger),
         new ResourceManagerEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new ExportTemplateEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new CancelDeploymentEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
     ];
 
     public void Bootstrap()

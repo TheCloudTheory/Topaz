@@ -20,7 +20,9 @@ namespace Topaz.Service.ResourceManager.Deployment;
 
 public sealed class TemplateDeploymentOrchestrator(Pipeline eventPipeline, ResourceManagerResourceProvider provider, ITopazLogger logger)
 {
-    private static Queue<TemplateDeployment> DeploymentQueue { get; } = new();
+    private static readonly List<TemplateDeployment> DeploymentQueue = [];
+    private static readonly object QueueLock = new();
+    private static string? _currentDeploymentId;
     private static Thread? OrchestratorThread { get; set; }
 
     private readonly ArmTemplateEngineFacade _armTemplateEngineFacade = new();
@@ -31,7 +33,34 @@ public sealed class TemplateDeploymentOrchestrator(Pipeline eventPipeline, Resou
     {
         _armTemplateEngineFacade.ProcessTemplate(subscriptionIdentifier, resourceGroupIdentifier, template, metadataInsensitive, deploymentResource.Properties.Parameters);
         
-        DeploymentQueue.Enqueue(new TemplateDeployment(template, deploymentResource));
+        lock (QueueLock)
+        {
+            DeploymentQueue.Add(new TemplateDeployment(template, deploymentResource));
+        }
+    }
+
+    public OperationResult CancelDeployment(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string deploymentName)
+    {
+        var deploymentId =
+            $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}/providers/Microsoft.Resources/deployments/{deploymentName}";
+
+        TemplateDeployment? toCancel;
+        lock (QueueLock)
+        {
+            if (_currentDeploymentId == deploymentId)
+                return OperationResult.Conflict;
+
+            toCancel = DeploymentQueue.FirstOrDefault(d => d.Deployment.Id == deploymentId);
+            if (toCancel == null)
+                return OperationResult.Conflict;
+
+            DeploymentQueue.RemoveAll(d => d.Deployment.Id == deploymentId);
+        }
+
+        toCancel.Cancel();
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, deploymentName, toCancel.Deployment);
+        return OperationResult.Success;
     }
 
     public void Start(CancellationToken stoppingToken = default)
@@ -45,19 +74,35 @@ public sealed class TemplateDeploymentOrchestrator(Pipeline eventPipeline, Resou
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                if (DeploymentQueue.Count == 0)
+                TemplateDeployment? deployment = null;
+                lock (QueueLock)
+                {
+                    if (DeploymentQueue.Count > 0)
+                    {
+                        deployment = DeploymentQueue[0];
+                        DeploymentQueue.RemoveAt(0);
+                        _currentDeploymentId = deployment.Deployment.Id;
+                    }
+                }
+
+                if (deployment == null)
                 {
                     logger.LogInformation("No deployments in the queue, will attempt to check again in 10 seconds...");
                     Thread.Sleep(TimeSpan.FromSeconds(10));
                     
                     continue;
                 }
-            
-                logger.LogDebug(nameof(TemplateDeploymentOrchestrator), nameof(Start), "Attempting to dequeue a deployment from the queue...");
-                var deployment = DeploymentQueue.Dequeue();
+
                 logger.LogDebug(nameof(TemplateDeploymentOrchestrator), nameof(Start), "Fetched deployment for resource ID: {0}", deployment.Deployment.Id);
 
-                RouteDeployment(deployment);
+                try
+                {
+                    RouteDeployment(deployment);
+                }
+                finally
+                {
+                    lock (QueueLock) { _currentDeploymentId = null; }
+                }
             }
         });
         

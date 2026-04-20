@@ -131,4 +131,16 @@ public class ResourceManagerTests : TopazFixture
             });
         await RunAzureCliCommand("az group delete -n rg-validate --yes");
     }
+
+    [Test]
+    public async Task ResourceManagerTests_WhenCancellingCompletedDeployment_ItShouldReturnConflict()
+    {
+        await RunAzureCliCommand("az group create -n rg-cancel-cli -l westeurope");
+        await RunAzureCliCommand(
+            "az deployment group create --name cancel-test -g rg-cancel-cli --template-file \"/templates/empty-deployment.json\"");
+        // The deployment is already completed — cancel should return a non-zero exit code (409)
+        await RunAzureCliCommand("az deployment group cancel --name cancel-test -g rg-cancel-cli",
+            exitCode: 1);
+        await RunAzureCliCommand("az group delete -n rg-cancel-cli --yes");
+    }
 }

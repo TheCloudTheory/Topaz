@@ -32,7 +32,7 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 | Get | ✅ | |
 | List At Resource Group Scope | ✅ | |
 | Validate | ✅ | POST validate |
-| Cancel | ❌ | |
+| Cancel | ✅ | POST cancel; queued deployments only |
 | Export Template | ❌ | |
 | What If | ❌ | |
 | List At Subscription Scope | ❌ | |

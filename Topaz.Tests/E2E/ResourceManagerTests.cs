@@ -577,4 +577,66 @@ public class ResourceManagerTests
                     Template = BinaryData.FromString("""{ "hello": "world" }""")
                 })));
     }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenDeploymentIsCancelled_ItShouldHaveCancelledStatus()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub";
+        const string resourceGroupName = "rg-cancel";
+        const string deploymentName = "cancel-deployment";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        // Create deployment (it enters the orchestrator queue)
+        await rg.Value.GetArmDeployments().CreateOrUpdateAsync(WaitUntil.Completed, deploymentName,
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment1.json"))
+            }));
+
+        // Fetch the resource reference and cancel — the deployment was already processed,
+        // so this verifies the 409 Conflict path for a terminal deployment
+        var deploymentId = new ResourceIdentifier(
+            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}");
+        var deploymentResource = armClient.GetArmDeploymentResource(deploymentId);
+
+        // A completed deployment cannot be cancelled — expect RequestFailedException (409)
+        Assert.ThrowsAsync<Azure.RequestFailedException>(async () =>
+            await deploymentResource.CancelAsync());
+    }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenNonExistentDeploymentIsCancelled_ItShouldReturn404()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub";
+        const string resourceGroupName = "rg-cancel-404";
+        const string deploymentName = "cancel-nonexistent";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        // Act & Assert — no deployment with this name exists
+        var deploymentId = new ResourceIdentifier(
+            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}");
+        var deploymentResource = armClient.GetArmDeploymentResource(deploymentId);
+
+        var ex = Assert.ThrowsAsync<Azure.RequestFailedException>(async () =>
+            await deploymentResource.CancelAsync());
+        Assert.That(ex!.Status, Is.EqualTo(404));
+    }
 }

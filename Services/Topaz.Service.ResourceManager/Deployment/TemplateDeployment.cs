@@ -41,7 +41,14 @@ internal sealed class TemplateDeployment
         
         Deployment.CompleteDeployment();
     }
-    
+
+    public void Cancel()
+    {
+        Status = DeploymentStatus.Cancelled;
+
+        Deployment.CancelDeployment();
+    }
+
     public enum DeploymentStatus
     {
         New,

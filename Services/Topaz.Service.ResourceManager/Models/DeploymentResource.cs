@@ -46,4 +46,9 @@ public sealed class DeploymentResource
     {
         Properties.ProvisioningState = ResourcesProvisioningState.Failed.ToString();
     }
+
+    public void CancelDeployment()
+    {
+        Properties.ProvisioningState = ResourcesProvisioningState.Canceled.ToString();
+    }
 }
