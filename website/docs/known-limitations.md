@@ -32,6 +32,24 @@ az storage blob update \
 
 Consolidate all storage data-plane services onto a single HTTPS port with subdomain-based routing in the Topaz router. This aligns the port topology with real Azure and removes the need for per-service port constants.
 
+## ARM Deployments — running deployments cannot be cancelled
+
+**Affected services:** Azure Resource Manager (`Microsoft.Resources/deployments`)
+
+Real Azure allows cancelling a deployment that is actively running. The control plane stops provisioning further resources mid-flight and transitions the deployment's `provisioningState` to `Canceled`, leaving any already-provisioned child resources in place.
+
+Topaz's deployment engine is a single background thread that processes one deployment at a time, executing each resource in the template sequentially to completion. There is no cooperative interruption mechanism once a deployment has been dequeued and started. Cancellation is therefore only possible while a deployment is still in the queue — that is, while its `provisioningState` is `Created` and the orchestrator thread has not yet picked it up.
+
+### Impact
+
+Calling `POST .../deployments/{name}/cancel` against a deployment whose `provisioningState` is `Running` returns `409 Conflict`, matching the Azure response for a deployment that has already completed. If the deployment transitions from `Created` to `Running` between the state check and the cancel request, the cancel will also return `409`.
+
+**Workaround:** submit the cancel request immediately after `PUT .../deployments/{name}` to increase the likelihood of hitting the `Created` window. In practice, local deployments are fast enough that this window is narrow; use `provisioningState: Canceled` as a test fixture by cancelling a queued deployment before the orchestrator processes it.
+
+### Planned fix — v1.6-beta
+
+Introduce a cooperative cancellation token into the orchestrator thread so that a cancel request against a `Running` deployment signals the engine to stop processing further resources after the current one completes, matching real Azure mid-flight cancellation semantics.
+
 ## Table Storage — explicit endpoint required in connection strings
 
 **Affected services:** Table Storage (port 8890)

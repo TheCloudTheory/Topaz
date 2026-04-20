@@ -165,6 +165,12 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 |--|---------|-------------|
 | <span class="badge--stable">Stable</span> | Unified storage port | Consolidate blob, table, queue, and file data-plane services onto a single HTTPS port with subdomain-based routing, matching real Azure's port topology and removing per-service port constants |
 
+### ARM Deployments — mid-flight cancellation
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Cancel running deployments | Introduce cooperative cancellation into the orchestrator so that a cancel request against a `Running` deployment stops provisioning further resources after the current one completes, matching real Azure mid-flight cancellation semantics |
+
 ---
 
 ## ✅ Completed

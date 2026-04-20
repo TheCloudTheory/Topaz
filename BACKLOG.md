@@ -681,6 +681,24 @@ TODO: Azure SQL: Database control plane endpoints
 
 ## v1.6-beta
 
+### ARM Deployments — mid-flight cancellation
+
+<!--
+TODO: ARM Deployments: Cancel running deployments mid-flight
+  The current orchestrator processes deployments on a single background thread with no
+  interruption mechanism. A cancel request against a Running deployment returns 409 Conflict.
+  Introduce cooperative cancellation so that:
+  - A CancellationTokenSource is created per deployment when it is dequeued.
+  - CancelDeployment signals the token when the deployment is Running.
+  - RouteDeployment checks the token between resource provisions and stops early if signalled,
+    leaving already-provisioned resources in place.
+  - The deployment's provisioningState transitions to Canceled after the current resource
+    completes, matching real Azure mid-flight cancellation semantics.
+  See also: website/docs/known-limitations.md — "ARM Deployments — running deployments cannot be cancelled".
+  milestone: v1.6-beta
+  labels: enhancement, resource-manager
+-->
+
 ### Azure Storage — unified data-plane port
 
 <!--
