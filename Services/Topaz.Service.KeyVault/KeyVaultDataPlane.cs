@@ -934,7 +934,12 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         if (versions == null || versions.Length == 0)
             return new DataPlaneOperationResult<KeyBundle>(OperationResult.Failed, null, "Backup contains no key versions.", "BadRequest");
 
-        var keyName = PathGuard.SanitizeName(versions[0].Name);
+        // Name is [JsonIgnore] on KeyBundle, so extract it from the Kid URL:
+        // "https://{host}/keys/{keyName}/{version}" → second-to-last path segment.
+        var kid = versions[0].Key?.Kid ?? string.Empty;
+        var kidParts = kid.Split('/');
+        var rawKeyName = kidParts.Length >= 2 ? kidParts[^2] : string.Empty;
+        var keyName = PathGuard.SanitizeName(rawKeyName);
 
         var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var keysPath = Path.Combine(basePath, "keys");
