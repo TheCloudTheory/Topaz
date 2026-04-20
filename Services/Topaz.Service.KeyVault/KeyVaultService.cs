@@ -34,6 +34,7 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
         new RestoreKeyEndpoint(eventPipeline, logger),
         new GetDeletedKeysEndpoint(eventPipeline, logger),
         new GetDeletedKeyEndpoint(eventPipeline, logger),
+        new RecoverDeletedKeyEndpoint(eventPipeline, logger),
         new CreateKeyEndpoint(eventPipeline, logger),
         new ImportKeyEndpoint(eventPipeline, logger),
         new GetKeysEndpoint(eventPipeline, logger),

@@ -842,5 +842,80 @@ public class KeyVaultKeyTests
         Assert.That(deletedKeys, Does.Contain("deleted-key-in-list"));
         Assert.That(deletedKeys, Does.Not.Contain("active-key-not-deleted"));
     }
-}
 
+    // ── Recover Deleted Key ───────────────────────────────────────────────────
+
+    [Test]
+    public void KeyVaultKeyTests_RecoverDeletedKey_AfterDeletion_KeyAccessibleAgain()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("recover-key"));
+        var deleteOperation = client.StartDeleteKey("recover-key");
+        deleteOperation.WaitForCompletion();
+
+        // Act
+        var recoverOperation = client.StartRecoverDeletedKey("recover-key");
+        recoverOperation.WaitForCompletion();
+        var recovered = client.GetKey("recover-key");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(recovered.Value, Is.Not.Null);
+            Assert.That(recovered.Value.Name, Is.EqualTo("recover-key"));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_RecoverDeletedKey_AfterRecovery_KeyRemovedFromDeletedList()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("recover-list-cleanup-key"));
+        var deleteOperation = client.StartDeleteKey("recover-list-cleanup-key");
+        deleteOperation.WaitForCompletion();
+
+        // Act
+        var recoverOperation = client.StartRecoverDeletedKey("recover-list-cleanup-key");
+        recoverOperation.WaitForCompletion();
+        var deletedKeys = client.GetDeletedKeys().Select(key => key.Name).ToList();
+
+        // Assert
+        Assert.That(deletedKeys, Does.Not.Contain("recover-list-cleanup-key"));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_RecoverDeletedKey_MultipleVersions_AllVersionsRestored()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        const string keyName = "recover-versioned-key";
+        client.CreateRsaKey(new CreateRsaKeyOptions(keyName));
+        client.CreateRsaKey(new CreateRsaKeyOptions(keyName));
+        var deleteOperation = client.StartDeleteKey(keyName);
+        deleteOperation.WaitForCompletion();
+
+        // Act
+        var recoverOperation = client.StartRecoverDeletedKey(keyName);
+        recoverOperation.WaitForCompletion();
+        var versions = client.GetPropertiesOfKeyVersions(keyName).ToList();
+
+        // Assert
+        Assert.That(versions.Count, Is.GreaterThanOrEqualTo(2));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_RecoverDeletedKey_NonExistentKey_ThrowsRequestFailedException()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        // Act & Assert
+        Assert.Throws<RequestFailedException>(() => client.StartRecoverDeletedKey("recover-never-deleted"));
+    }
+}

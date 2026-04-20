@@ -6,6 +6,7 @@ namespace Topaz.Service.KeyVault.Models;
 internal record DeletedKeyRecord
 {
     public KeyBundle? Bundle { get; init; }
+    public KeyBundle[]? Bundles { get; init; }
     public string? KeyName { get; init; }
     public long DeletedDate { get; init; }
     public long ScheduledPurgeDate { get; init; }
