@@ -756,6 +756,55 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         return new DataPlaneOperationResult<KeyBundle>(OperationResult.Success, recovered, null, null);
     }
 
+    public DataPlaneOperationResult<KeyBundle> RotateKey(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RotateKey), "Executing {0}: {1} {2}", nameof(RotateKey), keyName, vaultName);
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (!File.Exists(entityPath))
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RotateKey), "Executing {0}: Key {1} not found.", nameof(RotateKey), keyName);
+            return new DataPlaneOperationResult<KeyBundle>(OperationResult.NotFound, null, $"Key {keyName} not found.", "KeyNotFound");
+        }
+
+        var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
+        var latest = bundles.Last();
+
+        // Infer RSA key size from the modulus (N) field length.
+        int? keySize = null;
+        if (latest.Key.N != null)
+        {
+            var padded = latest.Key.N.Replace('-', '+').Replace('_', '/');
+            padded += new string('=', (4 - padded.Length % 4) % 4);
+            keySize = Convert.FromBase64String(padded).Length * 8;
+        }
+
+        var request = new CreateKeyRequest
+        {
+            KeyType = latest.Key.Kty,
+            KeySize = keySize,
+            Curve = latest.Key.Crv,
+            KeyOperations = latest.Key.KeyOps.Length > 0 ? latest.Key.KeyOps : null
+        };
+
+        var newBundle = GenerateKeyBundle(vaultName, keyName, latest.Key.Kty, request);
+
+        var updatedBundles = bundles.Append(newBundle).ToArray();
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(updatedBundles, GlobalSettings.JsonOptions));
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RotateKey), "Executing {0}: Rotated key {1} to new version.", nameof(RotateKey), keyName);
+        return new DataPlaneOperationResult<KeyBundle>(OperationResult.Success, newBundle, null, null);
+    }
+
     public DataPlaneOperationResult PurgeDeletedKey(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

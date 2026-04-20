@@ -962,4 +962,73 @@ public class KeyVaultKeyTests
         // Act & Assert — recovering a purged key must fail
         Assert.Throws<RequestFailedException>(() => client.StartRecoverDeletedKey("purge-no-recover-key"));
     }
+
+    [Test]
+    public void KeyVaultKeyTests_RotateKey_CreatesNewVersion()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("rotate-rsa-key"));
+        var original = client.GetKey("rotate-rsa-key");
+
+        // Act
+        var rotated = client.RotateKey("rotate-rsa-key");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(rotated.Value, Is.Not.Null);
+            Assert.That(rotated.Value.Name, Is.EqualTo("rotate-rsa-key"));
+            Assert.That(rotated.Value.Id, Is.Not.EqualTo(original.Value.Id),
+                "Rotated key must have a new version ID");
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_RotateKey_IncreasesVersionCount()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("rotate-versioned-key"));
+        var versionsBefore = client.GetPropertiesOfKeyVersions("rotate-versioned-key").Count();
+
+        // Act
+        client.RotateKey("rotate-versioned-key");
+        var versionsAfter = client.GetPropertiesOfKeyVersions("rotate-versioned-key").Count();
+
+        // Assert
+        Assert.That(versionsAfter, Is.EqualTo(versionsBefore + 1));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_RotateKey_PreservesKeyType()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateEcKey(new CreateEcKeyOptions("rotate-ec-key") { CurveName = KeyCurveName.P384 });
+
+        // Act
+        var rotated = client.RotateKey("rotate-ec-key");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(rotated.Value.KeyType, Is.EqualTo(KeyType.Ec));
+            Assert.That(rotated.Value.Key.CurveName, Is.EqualTo(KeyCurveName.P384));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_RotateKey_NonExistentKey_ThrowsRequestFailedException()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        // Act & Assert
+        Assert.Throws<RequestFailedException>(() => client.RotateKey("rotate-nonexistent-key"));
+    }
 }
