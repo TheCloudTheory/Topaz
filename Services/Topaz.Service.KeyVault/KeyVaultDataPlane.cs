@@ -756,6 +756,42 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         return new DataPlaneOperationResult<KeyBundle>(OperationResult.Success, recovered, null, null);
     }
 
+    public DataPlaneOperationResult PurgeDeletedKey(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedKey), "Executing {0}: {1} {2}", nameof(PurgeDeletedKey), keyName, vaultName);
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var keysPath = Path.Combine(basePath, "keys");
+        var deletedDir = Path.Combine(keysPath, "deleted");
+
+        var deletedPath = Directory.Exists(deletedDir)
+            ? Directory.EnumerateFiles(deletedDir, "*.json")
+                .FirstOrDefault(file => string.Equals(
+                    Path.GetFileNameWithoutExtension(file),
+                    keyName,
+                    StringComparison.Ordinal))
+            : null;
+
+        if (deletedPath == null)
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedKey), "Executing {0}: Deleted key {1} not found.", nameof(PurgeDeletedKey), keyName);
+            return new DataPlaneOperationResult(OperationResult.NotFound, $"Deleted key {keyName} not found.", "KeyNotFound");
+        }
+
+        PathGuard.EnsureWithinDirectory(deletedPath, basePath);
+
+        File.Delete(deletedPath);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedKey), "Executing {0}: Purged key {1}.", nameof(PurgeDeletedKey), keyName);
+        return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
+    }
+
     public DataPlaneOperationResult<DeletedKeyRecord> DeleteKey(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

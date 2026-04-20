@@ -918,4 +918,48 @@ public class KeyVaultKeyTests
         // Act & Assert
         Assert.Throws<RequestFailedException>(() => client.StartRecoverDeletedKey("recover-never-deleted"));
     }
+
+    [Test]
+    public void KeyVaultKeyTests_PurgeDeletedKey_RemovesKeyFromDeletedList()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("purge-key"));
+        var deleteOperation = client.StartDeleteKey("purge-key");
+        deleteOperation.WaitForCompletion();
+
+        // Act
+        client.PurgeDeletedKey("purge-key");
+
+        // Assert — the key must not appear in the deleted list after purge
+        var deletedKeys = client.GetDeletedKeys().Select(k => k.Name).ToList();
+        Assert.That(deletedKeys, Does.Not.Contain("purge-key"));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_PurgeDeletedKey_NonExistentKey_ThrowsRequestFailedException()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        // Act & Assert
+        Assert.Throws<RequestFailedException>(() => client.PurgeDeletedKey("never-deleted-key"));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_PurgeDeletedKey_PurgedKeyCannotBeRecovered()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("purge-no-recover-key"));
+        var deleteOperation = client.StartDeleteKey("purge-no-recover-key");
+        deleteOperation.WaitForCompletion();
+        client.PurgeDeletedKey("purge-no-recover-key");
+
+        // Act & Assert — recovering a purged key must fail
+        Assert.Throws<RequestFailedException>(() => client.StartRecoverDeletedKey("purge-no-recover-key"));
+    }
 }

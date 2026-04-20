@@ -108,7 +108,7 @@ The data plane covers operations served directly from the vault's own hostname (
 | Get Deleted Key | ✅ |
 | Get Deleted Keys | ✅ |
 | Recover Deleted Key | ✅ |
-| Purge Deleted Key | ❌ |
+| Purge Deleted Key | ✅ |
 | Rotate Key | ❌ |
 | Get Key Rotation Policy | ❌ |
 | Update Key Rotation Policy | ❌ |
