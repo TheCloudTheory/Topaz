@@ -639,4 +639,60 @@ public class ResourceManagerTests
             await deploymentResource.CancelAsync());
         Assert.That(ex!.Status, Is.EqualTo(404));
     }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenExportDeploymentTemplateIsCalled_ItShouldReturnOriginalTemplate()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub";
+        const string resourceGroupName = "rg-export-deployment";
+        const string deploymentName = "deployment-to-export";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        var templateJson = await File.ReadAllTextAsync("templates/deployment1.json");
+        await rg.Value.GetArmDeployments().CreateOrUpdateAsync(WaitUntil.Completed, deploymentName,
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(templateJson)
+            }));
+
+        // Act
+        var result = await topaz.ExportDeploymentTemplateAsync(subscriptionId, resourceGroupName, deploymentName);
+
+        // Assert – the exported template must contain the same schema and contentVersion as what was deployed
+        var template = result["template"]!;
+        Assert.Multiple(() =>
+        {
+            Assert.That(template["$schema"]!.GetValue<string>(), Does.Contain("deploymentTemplate.json"));
+            Assert.That(template["contentVersion"]!.GetValue<string>(), Is.EqualTo("1.0.0.0"));
+        });
+    }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenExportDeploymentTemplateCalledForNonExistentDeployment_ItShouldReturn404()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub";
+        const string resourceGroupName = "rg-export-deployment-404";
+        const string deploymentName = "nonexistent-deployment";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+
+        // We use TopazArmClient directly because the Azure SDK's ExportTemplateAsync
+        // validates the deployment exists client-side before sending the request.
+        var ex = Assert.ThrowsAsync<HttpRequestException>(async () =>
+            await topaz.ExportDeploymentTemplateAsync(subscriptionId, resourceGroupName, deploymentName));
+        Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
+    }
 }

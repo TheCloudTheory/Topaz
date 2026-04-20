@@ -2,6 +2,7 @@ using Azure.Deployments.Core.Entities;
 using Azure.ResourceManager.Resources.Models;
 using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using Newtonsoft.Json.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Topaz.ResourceManager;
@@ -113,6 +114,36 @@ internal sealed class ResourceManagerControlPlane(
 
         return templateDeploymentOrchestrator.CancelDeployment(subscriptionIdentifier, resourceGroupIdentifier,
             deploymentName);
+    }
+
+    public ControlPlaneOperationResult<ExportTemplateResult> ExportDeploymentTemplate(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string deploymentName)
+    {
+        var deploymentOp = GetDeployment(subscriptionIdentifier, resourceGroupIdentifier, deploymentName);
+        if (deploymentOp.Result == OperationResult.NotFound)
+            return new ControlPlaneOperationResult<ExportTemplateResult>(OperationResult.NotFound, null,
+                string.Format(DeploymentNotFoundMessageTemplate, deploymentName), DeploymentNotFoundCode);
+
+        var templateBase64 = deploymentOp.Resource!.Properties.TemplateHash;
+        if (string.IsNullOrEmpty(templateBase64))
+            return new ControlPlaneOperationResult<ExportTemplateResult>(OperationResult.Failed, null,
+                $"Template is not available for deployment '{deploymentName}'.", "TemplateNotAvailable");
+
+        try
+        {
+            var templateJson = Encoding.UTF8.GetString(Convert.FromBase64String(templateBase64));
+            var template = JsonNode.Parse(templateJson)!;
+            return new ControlPlaneOperationResult<ExportTemplateResult>(OperationResult.Success,
+                new ExportTemplateResult { Template = template }, null, null);
+        }
+        catch (Exception ex) when (ex is FormatException or System.Text.Json.JsonException)
+        {
+            logger.LogDebug(nameof(ResourceManagerControlPlane), nameof(ExportDeploymentTemplate),
+                "Failed to decode stored template for deployment '{0}': {1}", deploymentName, ex.Message);
+            return new ControlPlaneOperationResult<ExportTemplateResult>(OperationResult.Failed, null,
+                $"Stored template for deployment '{deploymentName}' is invalid.", "InvalidStoredTemplate");
+        }
     }
 
     public (OperationResult result, DeploymentResource[] resource) GetDeployments(

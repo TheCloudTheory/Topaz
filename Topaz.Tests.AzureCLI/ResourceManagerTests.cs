@@ -143,4 +143,19 @@ public class ResourceManagerTests : TopazFixture
             exitCode: 1);
         await RunAzureCliCommand("az group delete -n rg-cancel-cli --yes");
     }
+
+    [Test]
+    public async Task ResourceManagerTests_WhenExportDeploymentTemplateIsCalled_ItShouldReturnOriginalTemplate()
+    {
+        await RunAzureCliCommand("az group create -n rg-deploy-export-cli -l westeurope");
+        await RunAzureCliCommand(
+            "az deployment group create --name export-test-deploy -g rg-deploy-export-cli --template-file \"/templates/empty-deployment.json\"");
+        await RunAzureCliCommand("az deployment group export --name export-test-deploy -g rg-deploy-export-cli",
+            response =>
+            {
+                Assert.That(response["$schema"]?.GetValue<string>(), Does.Contain("deploymentTemplate.json"));
+                Assert.That(response["contentVersion"]?.GetValue<string>(), Is.EqualTo("1.0.0.0"));
+            });
+        await RunAzureCliCommand("az group delete -n rg-deploy-export-cli --yes");
+    }
 }

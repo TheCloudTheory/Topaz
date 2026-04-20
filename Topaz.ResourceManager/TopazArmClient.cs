@@ -147,6 +147,28 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         return JsonNode.Parse(content)!;
     }
 
+    public async Task<JsonNode> ExportDeploymentTemplateAsync(Guid subscriptionId, string resourceGroupName, string deploymentName)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post,
+            $"subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}/exportTemplate");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+        request.Content = new ByteArrayContent([]);
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException($"Deployment not found: {message}", null, HttpStatusCode.NotFound);
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonNode.Parse(content)!;
+    }
+
     public void Dispose()
     {
         _httpClient.Dispose();

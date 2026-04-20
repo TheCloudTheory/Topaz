@@ -40,6 +40,7 @@ public sealed class ResourceManagerService : IServiceDefinition
         new DeleteDeploymentEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new ValidateDeploymentEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new CancelDeploymentEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new ExportDeploymentTemplateEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new ExportTemplateEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
     ];
 
