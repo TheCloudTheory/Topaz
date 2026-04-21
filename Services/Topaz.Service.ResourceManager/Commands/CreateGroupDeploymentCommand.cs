@@ -5,6 +5,7 @@ using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
+using Topaz.Service.ResourceManager;
 using Topaz.Service.ResourceManager.Deployment;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -32,9 +33,8 @@ public class CreateGroupDeploymentCommand(Pipeline eventPipeline, ITopazLogger l
         }
 
         var provider = new ResourceManagerResourceProvider(logger);
-        var controlPlane = new ResourceManagerControlPlane(provider, new TemplateDeploymentOrchestrator(eventPipeline, provider, logger), logger);
+        var controlPlane = new ResourceManagerControlPlane(provider, new TemplateDeploymentOrchestrator(eventPipeline, provider, new SubscriptionDeploymentResourceProvider(logger), logger), logger);
         var fakeRequest = GetTemplate(settings.TemplateFile);
-
         var deploymentName = DetermineDeploymentName(settings);
         var deployment = controlPlane.CreateOrUpdateDeployment(resourceGroupOperation.Resource.GetSubscription(),
             resourceGroupIdentifier, deploymentName, fakeRequest, null,

@@ -24,11 +24,7 @@ internal sealed class ArmTemplateEngineFacade
         ResourceGroupIdentifier resourceGroupIdentifier, Template template,
         InsensitiveDictionary<JToken> metadataInsensitive, BinaryData? propertiesParameters)
     {
-        var inputParameters = propertiesParameters == null || propertiesParameters.IsEmpty
-            ? InsensitiveDictionary<JToken>.Empty
-            : propertiesParameters?.ToObjectFromJson<Dictionary<string, CreateDeploymentRequest.ParameterValue>>(
-                    GlobalSettings.JsonOptions)
-                .ToInsensitiveDictionary(meta => meta.Key, meta => JToken.Parse(meta.Value.ToString()));
+        var inputParameters = BuildInputParameters(propertiesParameters);
 
         TemplateEngine.ProcessTemplateLanguageExpressions("topaz", subscriptionIdentifier.Value.ToString(),
             resourceGroupIdentifier.Value, template, "", inputParameters!,
@@ -36,6 +32,33 @@ internal sealed class ArmTemplateEngineFacade
             new PreprocessingTemplateExtensionResolver(template, null, null,
                 new FactBasedExtensionConfigSchemaDirectoryFactory().GetOrCreateDirectory()),
             new TemplateMetricsRecorder(), InsensitiveDictionary<JToken>.Empty);
+    }
+
+    /// <summary>
+    /// Processes ARM template language expressions at subscription scope.
+    /// Subscription-scoped functions such as <c>subscription()</c> and <c>tenant()</c> are evaluated;
+    /// <c>resourceGroup()</c> is not available at this scope and will not be resolved.
+    /// </summary>
+    public void ProcessTemplateAtSubscriptionScope(SubscriptionIdentifier subscriptionIdentifier,
+        Template template, InsensitiveDictionary<JToken> metadataInsensitive, BinaryData? propertiesParameters)
+    {
+        var inputParameters = BuildInputParameters(propertiesParameters);
+
+        TemplateEngine.ProcessTemplateLanguageExpressions("topaz", subscriptionIdentifier.Value.ToString(),
+            "", template, "", inputParameters!,
+            metadataInsensitive,
+            new PreprocessingTemplateExtensionResolver(template, null, null,
+                new FactBasedExtensionConfigSchemaDirectoryFactory().GetOrCreateDirectory()),
+            new TemplateMetricsRecorder(), InsensitiveDictionary<JToken>.Empty);
+    }
+
+    private static InsensitiveDictionary<JToken> BuildInputParameters(BinaryData? propertiesParameters)
+    {
+        return propertiesParameters == null || propertiesParameters.IsEmpty
+            ? InsensitiveDictionary<JToken>.Empty
+            : propertiesParameters.ToObjectFromJson<Dictionary<string, CreateDeploymentRequest.ParameterValue>>(
+                    GlobalSettings.JsonOptions)
+                .ToInsensitiveDictionary(meta => meta.Key, meta => JToken.Parse(meta.Value.ToString()));
     }
 
     public void Validate(Template template)

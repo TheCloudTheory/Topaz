@@ -4,6 +4,7 @@ using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
+using Topaz.Service.ResourceManager;
 using Topaz.Service.ResourceManager.Deployment;
 using Topaz.Service.ResourceManager.Models.Requests;
 using Topaz.Service.Shared;
@@ -43,7 +44,7 @@ public sealed class ExportGroupTemplateCommand(Pipeline eventPipeline, ITopazLog
         var provider = new ResourceManagerResourceProvider(logger);
         var controlPlane = new ResourceManagerControlPlane(
             provider,
-            new TemplateDeploymentOrchestrator(eventPipeline, provider, logger),
+            new TemplateDeploymentOrchestrator(eventPipeline, provider, new SubscriptionDeploymentResourceProvider(logger), logger),
             logger);
 
         var request = new ExportTemplateRequest

@@ -158,4 +158,27 @@ public class ResourceManagerTests : TopazFixture
             });
         await RunAzureCliCommand("az group delete -n rg-deploy-export-cli --yes");
     }
+
+    [Test]
+    public async Task ResourceManagerTests_WhenSubscriptionScopeDeploymentIsCreated_ItShouldBeListedAtSubscriptionScope()
+    {
+        await RunAzureCliCommand(
+            "az deployment sub create --name sub-dep-cli-1 --location westeurope --template-file \"/templates/empty-deployment.json\"");
+        await RunAzureCliCommand(
+            "az deployment sub create --name sub-dep-cli-2 --location westeurope --template-file \"/templates/empty-deployment.json\"");
+        await RunAzureCliCommand("az deployment sub list", response =>
+        {
+            var names = response.AsArray().Select(d => d!["name"]!.GetValue<string>()).ToList();
+            Assert.That(names, Contains.Item("sub-dep-cli-1"));
+            Assert.That(names, Contains.Item("sub-dep-cli-2"));
+            foreach (var item in response.AsArray())
+            {
+                var id = item!["id"]!.GetValue<string>();
+                Assert.That(id, Does.Not.Contain("/resourceGroups/"));
+                Assert.That(id, Does.Contain("/providers/Microsoft.Resources/deployments/"));
+            }
+        });
+        await RunAzureCliCommand("az deployment sub delete --name sub-dep-cli-1");
+        await RunAzureCliCommand("az deployment sub delete --name sub-dep-cli-2");
+    }
 }

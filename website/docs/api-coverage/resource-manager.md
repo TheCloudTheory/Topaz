@@ -35,7 +35,10 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 | Cancel | ✅ | POST cancel; queued deployments only |
 | Export Template | ✅ | POST exportTemplate; returns the template used for the deployment |
 | What If | ❌ | |
-| List At Subscription Scope | ❌ | |
+| Create Or Update At Subscription Scope | ✅ | PUT /subscriptions/{sub}/providers/Microsoft.Resources/deployments/{name} |
+| Get At Subscription Scope | ✅ | GET /subscriptions/{sub}/providers/Microsoft.Resources/deployments/{name} |
+| List At Subscription Scope | ✅ | GET /subscriptions/{sub}/providers/Microsoft.Resources/deployments |
+| Cancel At Subscription Scope | ✅ | POST /subscriptions/{sub}/providers/Microsoft.Resources/deployments/{name}/cancel |
 | List At Management Group Scope | ❌ | |
 | List At Tenant Scope | ❌ | |
 

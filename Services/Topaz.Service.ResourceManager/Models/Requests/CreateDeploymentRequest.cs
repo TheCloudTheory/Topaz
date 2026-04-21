@@ -8,6 +8,7 @@ namespace Topaz.Service.ResourceManager.Models.Requests;
 
 internal record CreateDeploymentRequest
 {
+    public string? Location { get; init; }
     public DeploymentProperties? Properties { get; init; }
 
     internal record DeploymentProperties

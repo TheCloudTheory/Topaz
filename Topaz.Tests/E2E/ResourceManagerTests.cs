@@ -695,4 +695,111 @@ public class ResourceManagerTests
             await topaz.ExportDeploymentTemplateAsync(subscriptionId, resourceGroupName, deploymentName));
         Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
     }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenSubscriptionScopeDeploymentIsCancelled_ItShouldReturn409WhenAlreadyCompleted()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub-cancel";
+        const string deploymentName = "sub-cancel-deployment";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+
+        var deploymentContent = new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+        {
+            Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment1.json"))
+        })
+        {
+            Location = AzureLocation.WestEurope
+        };
+
+        // Create and wait for completion
+        await subscription.GetArmDeployments().CreateOrUpdateAsync(
+            WaitUntil.Completed, deploymentName, deploymentContent);
+
+        // A completed deployment cannot be cancelled — expect 409 Conflict
+        var deploymentId = new ResourceIdentifier(
+            $"/subscriptions/{subscriptionId}/providers/Microsoft.Resources/deployments/{deploymentName}");
+        var deploymentResource = armClient.GetArmDeploymentResource(deploymentId);
+
+        Assert.ThrowsAsync<Azure.RequestFailedException>(async () =>
+            await deploymentResource.CancelAsync());
+    }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenNonExistentSubscriptionScopeDeploymentIsCancelled_ItShouldReturn404()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub-cancel-404";
+        const string deploymentName = "sub-cancel-nonexistent";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+
+        // Act & Assert — no deployment with this name exists
+        var deploymentId = new ResourceIdentifier(
+            $"/subscriptions/{subscriptionId}/providers/Microsoft.Resources/deployments/{deploymentName}");
+        var deploymentResource = armClient.GetArmDeploymentResource(deploymentId);
+
+        var ex = Assert.ThrowsAsync<Azure.RequestFailedException>(async () =>
+            await deploymentResource.CancelAsync());
+        Assert.That(ex!.Status, Is.EqualTo(404));
+    }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenSubscriptionScopeDeploymentsAreCreated_TheyShouldBeListedAtSubscriptionScope()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub-scope";
+        const string deploymentName1 = "sub-deployment-1";
+        const string deploymentName2 = "sub-deployment-2";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+
+        var templateJson = await File.ReadAllTextAsync("templates/deployment1.json");
+        var deploymentContent = new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+        {
+            Template = BinaryData.FromString(templateJson)
+        })
+        {
+            Location = AzureLocation.WestEurope
+        };
+
+        // Act – create two subscription-scope deployments
+        await subscription.GetArmDeployments().CreateOrUpdateAsync(
+            WaitUntil.Completed, deploymentName1, deploymentContent);
+        await subscription.GetArmDeployments().CreateOrUpdateAsync(
+            WaitUntil.Completed, deploymentName2, deploymentContent);
+
+        // List deployments at subscription scope
+        var deployments = subscription.GetArmDeployments().ToList();
+
+        // Assert – both deployments are present and have subscription-scope IDs (no /resourceGroups/ segment)
+        Assert.Multiple(() =>
+        {
+            var names = deployments.Select(d => d.Data.Name).ToList();
+            Assert.That(names, Contains.Item(deploymentName1));
+            Assert.That(names, Contains.Item(deploymentName2));
+
+            foreach (var deployment in deployments)
+            {
+                Assert.That(deployment.Data.Id!.ToString(), Does.Not.Contain("/resourceGroups/"));
+                Assert.That(deployment.Data.Id!.ToString(),
+                    Does.Match($@"/subscriptions/{subscriptionId}/providers/Microsoft\.Resources/deployments/"));
+            }
+        });
+    }
 }

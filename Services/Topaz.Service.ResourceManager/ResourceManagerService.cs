@@ -25,7 +25,11 @@ public sealed class ResourceManagerService : IServiceDefinition
         _eventPipeline = eventPipeline;
         _logger = logger;
         
-        _deploymentOrchestrator = new TemplateDeploymentOrchestrator(eventPipeline, new ResourceManagerResourceProvider(logger), logger);
+        _deploymentOrchestrator = new TemplateDeploymentOrchestrator(
+            eventPipeline,
+            new ResourceManagerResourceProvider(logger),
+            new SubscriptionDeploymentResourceProvider(logger),
+            logger);
         _deploymentOrchestrator.Start(cancellationToken);
     }
     
@@ -42,6 +46,10 @@ public sealed class ResourceManagerService : IServiceDefinition
         new CancelDeploymentEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new ExportDeploymentTemplateEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new ExportTemplateEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new CreateOrUpdateDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new ListDeploymentsAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new GetDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new CancelDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
     ];
 
     public void Bootstrap()

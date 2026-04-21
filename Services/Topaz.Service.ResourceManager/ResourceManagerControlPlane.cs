@@ -22,6 +22,7 @@ using Topaz.Service.Storage;
 using Topaz.Service.VirtualNetwork;
 using Topaz.Shared;
 using DeploymentResource = Topaz.Service.ResourceManager.Models.DeploymentResource;
+using DeploymentMetadata = Topaz.Service.ResourceManager.Deployment.DeploymentMetadata;
 
 namespace Topaz.Service.ResourceManager;
 
@@ -112,8 +113,8 @@ internal sealed class ResourceManagerControlPlane(
         if (provisioningState != ResourcesProvisioningState.Created.ToString())
             return OperationResult.Conflict;
 
-        return templateDeploymentOrchestrator.CancelDeployment(subscriptionIdentifier, resourceGroupIdentifier,
-            deploymentName);
+        return templateDeploymentOrchestrator.CancelDeployment(
+            $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}/providers/Microsoft.Resources/deployments/{deploymentName}");
     }
 
     public ControlPlaneOperationResult<ExportTemplateResult> ExportDeploymentTemplate(

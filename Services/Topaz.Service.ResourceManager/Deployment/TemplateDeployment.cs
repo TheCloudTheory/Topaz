@@ -1,53 +1,63 @@
 using Azure.Deployments.Core.Definitions.Schema;
-using Azure.Deployments.Core.Entities;
-using DeploymentResource = Topaz.Service.ResourceManager.Models.DeploymentResource;
 
 namespace Topaz.Service.ResourceManager.Deployment;
 
+/// <summary>
+/// Represents a queued template deployment job at any ARM scope (resource group or subscription).
+/// Lifecycle callbacks and persistence are injected as delegates, keeping the orchestrator
+/// scope-agnostic.
+/// </summary>
 internal sealed class TemplateDeployment
 {
-    public DeploymentStatus Status { get; private set; } = DeploymentStatus.New;
+    public string Id { get; }
+    public string Name { get; }
     public Template Template { get; }
-    public DeploymentResource Deployment { get; }
+    public DeploymentStatus Status { get; private set; } = DeploymentStatus.New;
 
-    public TemplateDeployment(Template template, DeploymentResource deployment)
+    private readonly Action _complete;
+    private readonly Action _cancel;
+    private readonly Action _fail;
+    private readonly Action _persist;
+
+    public TemplateDeployment(
+        string id,
+        string name,
+        Template template,
+        Action complete,
+        Action cancel,
+        Action fail,
+        Action persist)
     {
+        Id = id;
+        Name = name;
         Template = template;
-        Deployment = deployment;
-
-        HydratePropertiesOfResources();
+        _complete = complete;
+        _cancel = cancel;
+        _fail = fail;
+        _persist = persist;
     }
 
-    private void HydratePropertiesOfResources()
-    {
-        foreach (var resource in Template.Resources)
-        {
-            resource.Id = new TemplateGenericProperty<string>()
-            {
-                Value =
-                    $"/subscriptions/{Deployment.GetSubscription()}/resourceGroups/{Deployment.GetResourceGroup()}/providers/{resource.Type}/{resource.Name}"
-            };
-        }
-    }
+    public void Start() => Status = DeploymentStatus.Running;
 
-    public void Start()
-    {
-        Status = DeploymentStatus.Running;
-    }
-    
     public void Complete()
     {
+        _complete();
         Status = DeploymentStatus.Completed;
-        
-        Deployment.CompleteDeployment();
     }
 
     public void Cancel()
     {
+        _cancel();
         Status = DeploymentStatus.Cancelled;
-
-        Deployment.CancelDeployment();
     }
+
+    public void Fail()
+    {
+        _fail();
+        Status = DeploymentStatus.Failed;
+    }
+
+    public void Persist() => _persist();
 
     public enum DeploymentStatus
     {
@@ -56,12 +66,5 @@ internal sealed class TemplateDeployment
         Completed,
         Cancelled,
         Failed,
-    }
-
-    public void Fail()
-    {
-        Status = DeploymentStatus.Failed;
-        
-        Deployment.FailDeployment();
     }
 }
