@@ -106,6 +106,20 @@ internal sealed class SubscriptionDeploymentControlPlane(
             OperationResult.Success, filtered, null, null);
     }
 
+    public OperationResult Delete(SubscriptionIdentifier subscriptionIdentifier, string deploymentName)
+    {
+        logger.LogDebug(nameof(SubscriptionDeploymentControlPlane), nameof(Delete),
+            "Deleting subscription-scope deployment `{0}` in subscription {1}.", deploymentName,
+            subscriptionIdentifier.Value);
+
+        var resource = provider.GetAs<SubscriptionDeploymentResource>(subscriptionIdentifier, null, deploymentName);
+        if (resource == null || !resource.IsInSubscription(subscriptionIdentifier))
+            return OperationResult.NotFound;
+
+        provider.Delete(subscriptionIdentifier, null, deploymentName);
+        return OperationResult.Deleted;
+    }
+
     public ControlPlaneOperationResult<DeploymentValidateResult> ValidateDeployment(
         SubscriptionIdentifier subscriptionIdentifier,
         string deploymentName,

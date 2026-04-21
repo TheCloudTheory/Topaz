@@ -51,6 +51,7 @@ public sealed class ResourceManagerService : IServiceDefinition
         new ListDeploymentsAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new GetDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new CancelDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new DeleteDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new ListDeploymentsAtManagementGroupScopeEndpoint(_logger),
     ];
 

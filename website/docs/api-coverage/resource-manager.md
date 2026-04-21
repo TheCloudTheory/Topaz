@@ -40,6 +40,7 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 | Get At Subscription Scope | ✅ | GET /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125; |
 | List At Subscription Scope | ✅ | GET /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments |
 | Cancel At Subscription Scope | ✅ | POST /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125;/cancel |
+| Delete At Subscription Scope | ✅ | DELETE /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125; |
 | List At Management Group Scope | ✅ | GET /providers/Microsoft.Management/managementGroups/&#123;groupId&#125;/providers/Microsoft.Resources/deployments |
 | List At Tenant Scope | ❌ | |
 
