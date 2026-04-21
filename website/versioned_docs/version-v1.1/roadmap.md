@@ -45,11 +45,7 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 | | Feature | Description |
 |--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Create Or Update | Create or update a management group by ID |
-| <span class="badge--preview">Preview</span> | Get | Get a management group by ID |
-| <span class="badge--preview">Preview</span> | List | List all management groups in the tenant |
-| <span class="badge--preview">Preview</span> | Update | Patch display name or parent of a management group |
-| <span class="badge--preview">Preview</span> | Delete | Delete a management group (blocked if it has children) |
+| <span class="badge--preview">Preview</span> | Core CRUD | Create, update, get, delete, and list management groups |
 
 ### ARM Deployments — full support
 
@@ -69,6 +65,15 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 ---
 
 ## v1.3-beta
+
+### Management Groups — extended operations
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Get Descendants | List all child management groups and subscriptions under a group |
+| <span class="badge--preview">Preview</span> | Management Group Subscriptions | Associate, disassociate, and get subscriptions under a management group |
+| <span class="badge--preview">Preview</span> | Hierarchy Settings | Create, update, get, list, and delete tenant-level hierarchy settings |
+| <span class="badge--preview">Preview</span> | Entities list | `GET /providers/Microsoft.Management/getEntities` — list all accessible entities |
 
 ### Resource Providers — operations support
 
