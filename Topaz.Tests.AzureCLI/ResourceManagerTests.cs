@@ -160,6 +160,65 @@ public class ResourceManagerTests : TopazFixture
     }
 
     [Test]
+    public async Task ResourceManagerTests_WhenDeploymentWhatIfIsCalledWithNewResource_ItShouldReturnCreateChange()
+    {
+        await RunAzureCliCommand("az group create -n rg-whatif-cli-new -l westeurope");
+        try
+        {
+            await RunAzureCliCommand(
+                "az deployment group what-if --name whatif-cli-new -g rg-whatif-cli-new --template-file \"/templates/mi-deployment.json\" --no-pretty-print",
+                response =>
+                {
+                    Assert.That(response["status"]!.GetValue<string>(), Is.EqualTo("Succeeded"));
+                    var changes = response["changes"]!.AsArray();
+                    Assert.That(changes.Count, Is.GreaterThan(0), "Expected at least one change.");
+                    var change = changes.Single(c =>
+                        c!["resourceId"]!.GetValue<string>()
+                            .EndsWith("/mi-whatif-cli", StringComparison.OrdinalIgnoreCase));
+                    Assert.That(change!["changeType"]!.GetValue<string>(), Is.EqualTo("Create"));
+                });
+
+            // What-If must not mutate state — the identity must not have been created.
+            await RunAzureCliCommand(
+                "az identity show -n mi-whatif-cli -g rg-whatif-cli-new",
+                exitCode: 3);
+        }
+        finally
+        {
+            await RunAzureCliCommand("az group delete -n rg-whatif-cli-new --yes");
+        }
+    }
+
+    [Test]
+    public async Task ResourceManagerTests_WhenDeploymentWhatIfIsCalledAtSubscriptionScope_ItShouldSucceed()
+    {
+        await RunAzureCliCommand(
+            "az deployment sub what-if --name whatif-sub-cli --location westeurope --template-file \"/templates/empty-deployment.json\" --no-pretty-print",
+            response =>
+            {
+                Assert.That(response["status"]!.GetValue<string>(), Is.EqualTo("Succeeded"));
+                var changes = response["changes"]!.AsArray();
+                Assert.That(changes.Count, Is.EqualTo(0), "Expected no changes for empty template.");
+            });
+    }
+
+    [Test]
+    public async Task ResourceManagerTests_WhenDeploymentWhatIfIsCalledWithPrettyPrint_ItShouldSucceed()
+    {
+        await RunAzureCliCommand("az group create -n rg-whatif-cli-pretty -l westeurope");
+        try
+        {
+            // Verify the default pretty-print path exits successfully (stdout is not JSON — no assertion).
+            await RunAzureCliCommand(
+                "az deployment group what-if --name whatif-cli-pretty -g rg-whatif-cli-pretty --template-file \"/templates/mi-deployment.json\"");
+        }
+        finally
+        {
+            await RunAzureCliCommand("az group delete -n rg-whatif-cli-pretty --yes");
+        }
+    }
+
+    [Test]
     public async Task ResourceManagerTests_WhenSubscriptionScopeDeploymentIsCreated_ItShouldBeListedAtSubscriptionScope()
     {
         await RunAzureCliCommand(
