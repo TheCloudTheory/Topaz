@@ -6,6 +6,8 @@ using Azure.Data.Tables.Models;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Azure.ResourceManager.Storage.Models;
+using System.Security.Cryptography;
+using System.Text;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 using Topaz.Shared;
@@ -805,7 +807,10 @@ namespace Topaz.Tests.E2E
             var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
             using var httpClient = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/Tables('gettabletest')");
-            request.Headers.Add("Authorization", $"SharedKeyLite {StorageAccountName}:{_key}");
+            var date = DateTimeOffset.UtcNow.ToString("R");
+            var signature = ComputeSharedKeyLiteSignature(_key, StorageAccountName, "/Tables('gettabletest')", date);
+            request.Headers.Add("x-ms-date", date);
+            request.Headers.Add("Authorization", $"SharedKeyLite {StorageAccountName}:{signature}");
 
             // Act
             var response = await httpClient.SendAsync(request);
@@ -823,13 +828,31 @@ namespace Topaz.Tests.E2E
             var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
             using var httpClient = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/Tables('doesnotexist')");
-            request.Headers.Add("Authorization", $"SharedKeyLite {StorageAccountName}:{_key}");
+            var date = DateTimeOffset.UtcNow.ToString("R");
+            var signature = ComputeSharedKeyLiteSignature(_key, StorageAccountName, "/Tables('doesnotexist')", date);
+            request.Headers.Add("x-ms-date", date);
+            request.Headers.Add("Authorization", $"SharedKeyLite {StorageAccountName}:{signature}");
 
             // Act
             var response = await httpClient.SendAsync(request);
 
             // Assert
             Assert.That((int)response.StatusCode, Is.EqualTo(404));
+        }
+
+        /// <summary>
+        /// Computes a SharedKeyLite HMAC-SHA256 signature matching the format expected by
+        /// <c>TableStorageSecurityProvider.IsAuthorizedForSharedKeyLiteScheme</c>.
+        /// StringToSign = Date + "\n" + CanonicalizedResource
+        /// CanonicalizedResource = "/" + accountName + absolutePath
+        /// </summary>
+        private static string ComputeSharedKeyLiteSignature(string accountKey, string accountName,
+            string absolutePath, string date)
+        {
+            var canonicalizedResource = "/" + accountName + absolutePath;
+            var stringToSign = date + "\n" + canonicalizedResource;
+            using var hmac = new HMACSHA256(Convert.FromBase64String(accountKey));
+            return Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(stringToSign)));
         }
 
         private class TestEntity : ITableEntity
