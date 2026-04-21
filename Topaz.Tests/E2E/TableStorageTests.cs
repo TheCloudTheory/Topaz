@@ -795,6 +795,43 @@ namespace Topaz.Tests.E2E
             Assert.That((int)response.StatusCode, Is.EqualTo(403));
         }
 
+        [Test]
+        public async Task TableStorageTests_WhenGetTableByNameIsCalledForExistingTable_ItShouldReturn200WithTableName()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            tableServiceClient.CreateTableIfNotExists("gettabletest");
+
+            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
+            using var httpClient = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/Tables('gettabletest')");
+            request.Headers.Add("Authorization", $"SharedKeyLite {StorageAccountName}:{_key}");
+
+            // Act
+            var response = await httpClient.SendAsync(request);
+            var body = await response.Content.ReadAsStringAsync();
+
+            // Assert
+            Assert.That((int)response.StatusCode, Is.EqualTo(200));
+            Assert.That(body, Does.Contain("gettabletest"));
+        }
+
+        [Test]
+        public async Task TableStorageTests_WhenGetTableByNameIsCalledForNonExistentTable_ItShouldReturn404()
+        {
+            // Arrange
+            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
+            using var httpClient = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/Tables('doesnotexist')");
+            request.Headers.Add("Authorization", $"SharedKeyLite {StorageAccountName}:{_key}");
+
+            // Act
+            var response = await httpClient.SendAsync(request);
+
+            // Assert
+            Assert.That((int)response.StatusCode, Is.EqualTo(404));
+        }
+
         private class TestEntity : ITableEntity
         {
             public string? Name { get; set; }
