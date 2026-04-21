@@ -264,14 +264,6 @@ TODO: ARM Deployments: Export Template endpoint
 -->
 
 <!--
-TODO: ARM Deployments: What-If operation
-  Implement `POST .../deployments/{name}/whatIf` and `.../deployments/whatIf` (subscription scope).
-  Should return a diff of resources that would be created, modified, or deleted.
-  milestone: v1.2-beta
-  labels: enhancement, resource-manager
--->
-
-<!--
 TODO: ARM Deployments: List at subscription, management-group, and tenant scope
   Implement the remaining list-deployments endpoints:
   - GET /subscriptions/{sub}/providers/Microsoft.Resources/deployments

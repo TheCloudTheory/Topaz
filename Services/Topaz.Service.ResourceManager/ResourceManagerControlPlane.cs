@@ -1,3 +1,4 @@
+using Azure.Deployments.Core.Definitions.Schema;
 using Azure.Deployments.Core.Entities;
 using Azure.ResourceManager.Resources.Models;
 using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
@@ -23,6 +24,8 @@ using Topaz.Service.VirtualNetwork;
 using Topaz.Shared;
 using DeploymentResource = Topaz.Service.ResourceManager.Models.DeploymentResource;
 using DeploymentMetadata = Topaz.Service.ResourceManager.Deployment.DeploymentMetadata;
+using WhatIfOperationResult = Topaz.Service.ResourceManager.Models.Responses.WhatIfOperationResult;
+using WhatIfChange = Topaz.Service.ResourceManager.Models.Responses.WhatIfChange;
 
 namespace Topaz.Service.ResourceManager;
 
@@ -181,6 +184,230 @@ internal sealed class ResourceManagerControlPlane(
 
             return new ControlPlaneOperationResult<DeploymentValidateResult>(OperationResult.Failed,
                 null, ex.Message, "InvalidTemplate");
+        }
+    }
+
+    public ControlPlaneOperationResult<WhatIfOperationResult> WhatIfDeployment(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string deploymentName,
+        CreateDeploymentRequest request,
+        string location)
+    {
+        try
+        {
+            var template = request.ToTemplate();
+            var mode = request.Properties?.Mode ?? "Incremental";
+
+            var subscriptionMetadata = new SubscriptionMetadata(subscriptionIdentifier);
+            var resourceGroupMetadata =
+                new ResourceGroupMetadata(subscriptionIdentifier, resourceGroupIdentifier, location);
+            var metadata = new DeploymentMetadata
+            {
+                { DeploymentMetadata.SubscriptionKey, JToken.Parse(subscriptionMetadata.ToString()) },
+                { DeploymentMetadata.ResourceGroupKey, JToken.Parse(resourceGroupMetadata.ToString()) }
+            };
+            var metadataInsensitive =
+                metadata.ToInsensitiveDictionary(meta => meta.Key, meta => meta.Value);
+
+            _templateEngineFacade.ProcessTemplate(subscriptionIdentifier, resourceGroupIdentifier, template,
+                metadataInsensitive,
+                request.Properties?.Parameters?.Parameters == null ? null
+                    : BinaryData.FromObjectAsJson(request.Properties.Parameters.Parameters, GlobalSettings.JsonOptions));
+
+            foreach (var resource in template.Resources)
+            {
+                resource.Id = new TemplateGenericProperty<string>
+                {
+                    Value = $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}/providers/{resource.Type.Value}/{resource.Name.Value}"
+                };
+            }
+
+            var changes = BuildWhatIfChanges(
+                subscriptionIdentifier, resourceGroupIdentifier, template, mode,
+                isSubscriptionScope: false);
+
+            return new ControlPlaneOperationResult<WhatIfOperationResult>(
+                OperationResult.Success, WhatIfOperationResult.From(changes), null, null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(nameof(ResourceManagerControlPlane), nameof(WhatIfDeployment),
+                "What-If analysis failed: {0}", ex.Message);
+
+            return new ControlPlaneOperationResult<WhatIfOperationResult>(
+                OperationResult.Failed, null, ex.Message, "WhatIfFailed");
+        }
+    }
+
+    public ControlPlaneOperationResult<WhatIfOperationResult> WhatIfDeploymentAtSubscriptionScope(
+        SubscriptionIdentifier subscriptionIdentifier,
+        string deploymentName,
+        CreateDeploymentRequest request)
+    {
+        try
+        {
+            var template = request.ToTemplate();
+            var mode = request.Properties?.Mode ?? "Incremental";
+
+            var subscriptionMetadata = new SubscriptionMetadata(subscriptionIdentifier);
+            var metadata = new DeploymentMetadata
+            {
+                { DeploymentMetadata.SubscriptionKey, JToken.Parse(subscriptionMetadata.ToString()) }
+            };
+            var metadataInsensitive =
+                metadata.ToInsensitiveDictionary(meta => meta.Key, meta => meta.Value);
+
+            _templateEngineFacade.ProcessTemplateAtSubscriptionScope(subscriptionIdentifier, template,
+                metadataInsensitive,
+                request.Properties?.Parameters?.Parameters == null ? null
+                    : BinaryData.FromObjectAsJson(request.Properties.Parameters.Parameters, GlobalSettings.JsonOptions));
+
+            foreach (var resource in template.Resources)
+            {
+                resource.Id = new TemplateGenericProperty<string>
+                {
+                    Value = $"/subscriptions/{subscriptionIdentifier}/providers/{resource.Type.Value}/{resource.Name.Value}"
+                };
+            }
+
+            var changes = BuildWhatIfChanges(
+                subscriptionIdentifier, resourceGroupIdentifier: null, template, mode,
+                isSubscriptionScope: true);
+
+            return new ControlPlaneOperationResult<WhatIfOperationResult>(
+                OperationResult.Success, WhatIfOperationResult.From(changes), null, null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(nameof(ResourceManagerControlPlane), nameof(WhatIfDeploymentAtSubscriptionScope),
+                "What-If analysis failed: {0}", ex.Message);
+
+            return new ControlPlaneOperationResult<WhatIfOperationResult>(
+                OperationResult.Failed, null, ex.Message, "WhatIfFailed");
+        }
+    }
+
+    private List<WhatIfChange> BuildWhatIfChanges(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier? resourceGroupIdentifier,
+        Template template,
+        string mode,
+        bool isSubscriptionScope)
+    {
+        // Build "after" map keyed by the ARM resource ID computed directly from template fields.
+        // We do NOT rely on r.ToJson() to include a correctly-typed "id" property because
+        // TemplateGenericProperty<string> may serialize as an object rather than a plain string.
+        var afterNodes = new Dictionary<string, JsonNode>(StringComparer.OrdinalIgnoreCase);
+        foreach (var r in template.Resources)
+        {
+            var id = isSubscriptionScope
+                ? $"/subscriptions/{subscriptionIdentifier}/providers/{r.Type.Value}/{r.Name.Value}"
+                : $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}/providers/{r.Type.Value}/{r.Name.Value}";
+
+            var node = JsonNode.Parse(r.ToJson());
+            if (node == null) continue;
+            
+            // Strip unresolved ARM expressions before comparison to prevent false diffs.
+            // For example "[tenant().tenantId]" cannot be compared against a stored GUID value.
+            StripArmExpressionsFromNode(node);
+            afterNodes[id] = node;
+        }
+
+        var beforeResources = isSubscriptionScope
+            ? new Dictionary<string, GenericResource>(StringComparer.OrdinalIgnoreCase)
+            : CollectResourcesFromGroup(subscriptionIdentifier, resourceGroupIdentifier!)
+                .Where(r => r.Id != null)
+                .ToDictionary(r => r.Id, StringComparer.OrdinalIgnoreCase);
+
+        var changes = new List<WhatIfChange>();
+
+        foreach (var (id, afterNode) in afterNodes)
+        {
+            if (!beforeResources.TryGetValue(id, out var before))
+            {
+                changes.Add(WhatIfChange.ForCreate(id, afterNode));
+            }
+            else
+            {
+                var beforeJson = JsonSerializer.Serialize(before, GlobalSettings.JsonOptions);
+                var beforeNode = NormalizeStoredJsonForComparison(JsonNode.Parse(beforeJson)!);
+                var delta = WhatIfEngine.ComputeDelta(beforeNode, afterNode);
+
+                if (delta.Count == 0)
+                    changes.Add(WhatIfChange.ForNoChange(id, beforeNode));
+                else
+                    changes.Add(WhatIfChange.ForModify(id, beforeNode, afterNode, delta));
+            }
+        }
+
+        if (!mode.Equals("Complete", StringComparison.OrdinalIgnoreCase)) return changes;
+        {
+            foreach (var (id, before) in beforeResources)
+            {
+                if (afterNodes.ContainsKey(id)) continue;
+                
+                var beforeNode = JsonNode.Parse(JsonSerializer.Serialize(before, GlobalSettings.JsonOptions))!;
+                changes.Add(WhatIfChange.ForDelete(id, beforeNode));
+            }
+        }
+
+        return changes;
+    }
+
+    /// <summary>
+    /// Normalizes a resource JSON loaded from Topaz's disk format so that it can be compared
+    /// against a template-format resource JSON. Specifically, lifts <c>properties.sku</c> to
+    /// the resource level when no resource-level <c>sku</c> is present, matching the ARM
+    /// standard representation used by the template engine.
+    /// </summary>
+    private static JsonNode NormalizeStoredJsonForComparison(JsonNode node)
+    {
+        if (node is not JsonObject obj)
+            return node;
+
+        if (obj["sku"] is null
+            && obj["properties"] is JsonObject props
+            && props["sku"] is JsonNode skuNode)
+        {
+            obj["sku"] = skuNode.DeepClone();
+            props.Remove("sku");
+        }
+
+        return obj;
+    }
+
+    /// <summary>
+    /// Recursively removes any JSON object property whose value is an unresolved ARM template
+    /// expression (a string beginning with '[' and ending with ']').  Prevents false "Modify"
+    /// results in What-If comparisons when the template engine could not resolve a function such
+    /// as <c>tenant().tenantId</c>.
+    /// </summary>
+    private static void StripArmExpressionsFromNode(JsonNode? node)
+    {
+        switch (node)
+        {
+            case JsonObject obj:
+            {
+                var toRemove = new List<string>();
+                foreach (var (key, value) in obj)
+                {
+                    if (value is JsonValue v && v.TryGetValue<string>(out var s)
+                                             && s.StartsWith('[') && s.EndsWith(']'))
+                        toRemove.Add(key);
+                    else
+                        StripArmExpressionsFromNode(value);
+                }
+                foreach (var key in toRemove)
+                    obj.Remove(key);
+                break;
+            }
+            case JsonArray arr:
+            {
+                foreach (var item in arr)
+                    StripArmExpressionsFromNode(item);
+                break;
+            }
         }
     }
 

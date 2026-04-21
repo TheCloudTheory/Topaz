@@ -238,14 +238,27 @@ internal sealed class KeyVaultControlPlane(
                 new CreateOrUpdateKeyVaultRequest
                 {
                     Location = keyVault.Location,
+                    Tags = keyVault.Tags,
                     Properties = new CreateOrUpdateKeyVaultRequest.KeyVaultProperties
                     {
-                        Sku = new CreateOrUpdateKeyVaultRequest.KeyVaultProperties.KeyVaultSku
-                        {
-                            Name = keyVault.Sku!.Name,
-                            Family = keyVault.Sku.Family
-                        },
-                        TenantId = keyVault.Properties.TenantId
+                        Sku = keyVault.Sku != null
+                            ? new CreateOrUpdateKeyVaultRequest.KeyVaultProperties.KeyVaultSku
+                            {
+                                Name = keyVault.Sku.Name,
+                                Family = keyVault.Sku.Family
+                            }
+                            : null,
+                        TenantId = keyVault.Properties.TenantId,
+                        EnabledForDeployment = keyVault.Properties.EnabledForDeployment,
+                        EnabledForDiskEncryption = keyVault.Properties.EnabledForDiskEncryption,
+                        EnabledForTemplateDeployment = keyVault.Properties.EnabledForTemplateDeployment,
+                        EnableSoftDelete = keyVault.Properties.EnableSoftDelete,
+                        EnablePurgeProtection = keyVault.Properties.EnablePurgeProtection,
+                        EnableRbacAuthorization = keyVault.Properties.EnableRbacAuthorization,
+                        SoftDeleteRetentionInDays = keyVault.Properties.SoftDeleteRetentionInDays,
+                        AccessPolicies = keyVault.Properties.AccessPolicies.Count > 0
+                            ? [.. keyVault.Properties.AccessPolicies]
+                            : null
                     }
                 });
 

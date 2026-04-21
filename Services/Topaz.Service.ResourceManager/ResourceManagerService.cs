@@ -53,6 +53,8 @@ public sealed class ResourceManagerService : IServiceDefinition
         new CancelDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new DeleteDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new ListDeploymentsAtManagementGroupScopeEndpoint(_logger),
+        new WhatIfDeploymentEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new WhatIfDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
     ];
 
     public void Bootstrap()

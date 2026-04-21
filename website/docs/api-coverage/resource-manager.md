@@ -34,7 +34,7 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 | Validate | ✅ | POST validate |
 | Cancel | ✅ | POST cancel; queued deployments only |
 | Export Template | ✅ | POST exportTemplate; returns the template used for the deployment |
-| What If | ❌ | |
+| What If | ✅ | POST whatif; resource-level (Create/Modify/Delete/NoChange) and property-level delta |
 | Create Or Update At Subscription Scope | ✅ | PUT /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125; |
 | Validate At Subscription Scope | ✅ | POST /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125;/validate |
 | Get At Subscription Scope | ✅ | GET /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125; |

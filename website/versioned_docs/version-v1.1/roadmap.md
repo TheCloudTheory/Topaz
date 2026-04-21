@@ -53,7 +53,7 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 |--|---------|-------------|
 | <span class="badge--stable">Stable</span> | Cancel | Mark an in-progress deployment as cancelled |
 | <span class="badge--stable">Stable</span> | Export Template | Return the ARM template used for a deployment |
-| <span class="badge--preview">Preview</span> | What-If | Preview resource changes without applying them |
+| <span class="badge--preview">Preview</span> | ~~What-If~~ | ~~Preview resource changes without applying them~~ |
 | <span class="badge--stable">Stable</span> | List at all scopes | List deployments at subscription, management-group, and tenant scope |
 
 ### Packaging — CLI and Host split
