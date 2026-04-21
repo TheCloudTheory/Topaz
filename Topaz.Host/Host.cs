@@ -19,6 +19,7 @@ using Topaz.Service.Entra;
 using Topaz.Service.EventHub;
 using Topaz.Service.Insights;
 using Topaz.Service.KeyVault;
+using Topaz.Service.ManagementGroup;
 using Topaz.Service.ManagedIdentity;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ResourceManager;
@@ -93,6 +94,7 @@ public class Host
             new ResourceManagerService(_eventPipeline, _logger, cancellationToken),
             new VirtualNetworkService(_eventPipeline, _logger),
             new ManagedIdentityService(_eventPipeline, _logger),
+            new ManagementGroupService(_logger),
             new ResourceAuthorizationService(_logger),
             new ResourceGroupAuthorizationService(_logger),
             new RoleDefinitionService(_eventPipeline, _logger),

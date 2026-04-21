@@ -231,6 +231,46 @@ TODO: Azure PowerShell: Testcontainers-based test fixture and initial test suite
   labels: enhancement, azure-powershell, tests
 -->
 
+### Management Groups — basic CRUD
+
+<!--
+TODO: Management Groups: Get Descendants
+  Implement `GET /providers/Microsoft.Management/managementGroups/{groupId}/descendants`.
+  Returns all child management groups and subscriptions under a given management group.
+  milestone: v1.2-beta
+  labels: enhancement, management-groups
+-->
+
+<!--
+TODO: Management Groups: Management Group Subscriptions
+  Implement subscription association endpoints:
+  - PUT    /providers/Microsoft.Management/managementGroups/{groupId}/subscriptions/{subscriptionId}  – associate subscription
+  - DELETE /providers/Microsoft.Management/managementGroups/{groupId}/subscriptions/{subscriptionId}  – disassociate subscription
+  - GET    /providers/Microsoft.Management/managementGroups/{groupId}/subscriptions/{subscriptionId}  – get subscription under MG
+  milestone: v1.2-beta
+  labels: enhancement, management-groups
+-->
+
+<!--
+TODO: Management Groups: Hierarchy Settings
+  Implement tenant-level hierarchy settings endpoints:
+  - PUT    /providers/Microsoft.Management/managementGroups/{groupId}/settings/default  – create or update
+  - DELETE /providers/Microsoft.Management/managementGroups/{groupId}/settings/default  – delete
+  - GET    /providers/Microsoft.Management/managementGroups/{groupId}/settings/default  – get
+  - GET    /providers/Microsoft.Management/managementGroups/{groupId}/settings           – list
+  - PATCH  /providers/Microsoft.Management/managementGroups/{groupId}/settings/default  – update
+  milestone: v1.2-beta
+  labels: enhancement, management-groups
+-->
+
+<!--
+TODO: Management Groups: Entities list
+  Implement `GET /providers/Microsoft.Management/getEntities`.
+  Returns all management groups and subscriptions accessible by the caller.
+  milestone: v1.2-beta
+  labels: enhancement, management-groups
+-->
+
 ### ARM Deployments — full support
 
 <!--

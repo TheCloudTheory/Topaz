@@ -22,7 +22,7 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
     /// <summary>
     /// A static identifier of the Entra ID tenant. As Topaz supports only one tenant, this value can't be changed..
     /// </summary>
-    public static string TenantId => "50717675-3E5E-4A1E-8CB5-C62D8BE8CA48";
+    public static string TenantId => GlobalSettings.DefaultTenantId;
     
     public static string TenantDisplayName => "Topaz";
     public static string DefaultDomainName => "topaz.local.dev";

@@ -41,6 +41,16 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 | <span class="badge--stable">Stable</span> | Cloud environment registration | `Add-AzEnvironment` + `Connect-AzAccount` setup script and example |
 | <span class="badge--preview">Preview</span> | Test suite | `Topaz.Tests.AzurePowerShell` project with a Testcontainers fixture and smoke tests |
 
+### Management Groups — basic CRUD
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Create Or Update | Create or update a management group by ID |
+| <span class="badge--preview">Preview</span> | Get | Get a management group by ID |
+| <span class="badge--preview">Preview</span> | List | List all management groups in the tenant |
+| <span class="badge--preview">Preview</span> | Update | Patch display name or parent of a management group |
+| <span class="badge--preview">Preview</span> | Delete | Delete a management group (blocked if it has children) |
+
 ### ARM Deployments — full support
 
 | | Feature | Description |

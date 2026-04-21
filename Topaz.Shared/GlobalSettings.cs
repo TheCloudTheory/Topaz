@@ -44,6 +44,7 @@ public static class GlobalSettings
     public const string MainEmulatorDirectory = ".topaz";
     public const string KeyVaultDnsSuffix = "vault.topaz.local.dev";
     public const string LegacyKeyVaultDnsSuffix = "keyvault.topaz.local.dev";
+    public const string DefaultTenantId = "50717675-3E5E-4A1E-8CB5-C62D8BE8CA48";
 
     public static readonly string GlobalDnsEntriesFilePath = Path.Combine(MainEmulatorDirectory, "global-dns.json");
 

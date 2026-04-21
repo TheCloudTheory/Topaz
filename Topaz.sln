@@ -84,6 +84,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Portal", "Topaz.Porta
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ContainerRegistry", "Services\Topaz.Service.ContainerRegistry\Topaz.Service.ContainerRegistry.csproj", "{F9867CDF-C507-433C-8CBC-3266A4C1A96D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.ManagementGroup", "Services\Topaz.Service.ManagementGroup\Topaz.Service.ManagementGroup.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Portal", "Topaz.Tests.Portal\Topaz.Tests.Portal.csproj", "{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}"
 EndProject
 Global
@@ -516,6 +518,18 @@ Global
 		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Release|x64.Build.0 = Release|Any CPU
 		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Release|x86.ActiveCfg = Release|Any CPU
 		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1}.Release|x86.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|x64.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|x86.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|x64.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|x64.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|x86.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -544,6 +558,7 @@ Global
 		{844B794C-2335-44E3-A397-2AFE73310791} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
 		{B24193D0-443D-4D7C-B9CF-8455435D1826} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
 		{F9867CDF-C507-433C-8CBC-3266A4C1A96D} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
 		{F1ADD861-3FC7-431C-B3C1-7109EC0A48F1} = {5DCFF73A-7D3A-4162-8264-447FA524DBA0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

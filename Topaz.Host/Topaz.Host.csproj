@@ -25,6 +25,7 @@
     <ProjectReference Include="..\Services\Topaz.Service.ManagedIdentity\Topaz.Service.ManagedIdentity.csproj" />
     <ProjectReference Include="..\Services\Topaz.Service.ResourceManager\Topaz.Service.ResourceManager.csproj" />
     <ProjectReference Include="..\Services\Topaz.Service.ServiceBus\Topaz.Service.ServiceBus.csproj" />
+    <ProjectReference Include="..\Services\Topaz.Service.ManagementGroup\Topaz.Service.ManagementGroup.csproj" />
     <ProjectReference Include="..\Services\Topaz.Service.VirtualNetwork\Topaz.Service.VirtualNetwork.csproj" />
   </ItemGroup>
 
