@@ -47,6 +47,7 @@ public sealed class ResourceManagerService : IServiceDefinition
         new ExportDeploymentTemplateEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new ExportTemplateEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new CreateOrUpdateDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
+        new ValidateDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new ListDeploymentsAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new GetDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new CancelDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),

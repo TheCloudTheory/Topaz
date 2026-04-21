@@ -27,6 +27,19 @@ public sealed record DeploymentValidateResult
         };
     }
 
+    internal static DeploymentValidateResult FromRequestAtSubscriptionScope(
+        SubscriptionIdentifier subscriptionIdentifier,
+        string deploymentName,
+        CreateDeploymentRequest request)
+    {
+        return new DeploymentValidateResult
+        {
+            Id = $"/subscriptions/{subscriptionIdentifier}/providers/Microsoft.Resources/deployments/{deploymentName}",
+            Name = deploymentName,
+            Properties = DeploymentResourceProperties.ForValidate(request)
+        };
+    }
+
     public override string ToString()
     {
         return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);

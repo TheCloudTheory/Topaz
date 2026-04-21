@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using Topaz.Service.ResourceManager.Deployment;
 using Topaz.Service.ResourceManager.Models;
 using Topaz.Service.ResourceManager.Models.Requests;
+using Topaz.Service.ResourceManager.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -103,5 +104,29 @@ internal sealed class SubscriptionDeploymentControlPlane(
 
         return new ControlPlaneOperationResult<SubscriptionDeploymentResource[]>(
             OperationResult.Success, filtered, null, null);
+    }
+
+    public ControlPlaneOperationResult<DeploymentValidateResult> ValidateDeployment(
+        SubscriptionIdentifier subscriptionIdentifier,
+        string deploymentName,
+        CreateDeploymentRequest request)
+    {
+        try
+        {
+            var template = request.ToTemplate();
+            _templateEngineFacade.Validate(template);
+
+            return new ControlPlaneOperationResult<DeploymentValidateResult>(OperationResult.Success,
+                DeploymentValidateResult.FromRequestAtSubscriptionScope(subscriptionIdentifier, deploymentName, request),
+                null, null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(nameof(SubscriptionDeploymentControlPlane), nameof(ValidateDeployment),
+                "Template validation failed: {0}", ex.Message);
+
+            return new ControlPlaneOperationResult<DeploymentValidateResult>(OperationResult.Failed,
+                null, ex.Message, "InvalidTemplate");
+        }
     }
 }
