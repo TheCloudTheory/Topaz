@@ -35,11 +35,11 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 | Cancel | ✅ | POST cancel; queued deployments only |
 | Export Template | ✅ | POST exportTemplate; returns the template used for the deployment |
 | What If | ❌ | |
-| Create Or Update At Subscription Scope | ✅ | PUT /subscriptions/{sub}/providers/Microsoft.Resources/deployments/{name} |
-| Validate At Subscription Scope | ✅ | POST /subscriptions/{sub}/providers/Microsoft.Resources/deployments/{name}/validate |
-| Get At Subscription Scope | ✅ | GET /subscriptions/{sub}/providers/Microsoft.Resources/deployments/{name} |
-| List At Subscription Scope | ✅ | GET /subscriptions/{sub}/providers/Microsoft.Resources/deployments |
-| Cancel At Subscription Scope | ✅ | POST /subscriptions/{sub}/providers/Microsoft.Resources/deployments/{name}/cancel |
+| Create Or Update At Subscription Scope | ✅ | PUT /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125; |
+| Validate At Subscription Scope | ✅ | POST /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125;/validate |
+| Get At Subscription Scope | ✅ | GET /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125; |
+| List At Subscription Scope | ✅ | GET /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments |
+| Cancel At Subscription Scope | ✅ | POST /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125;/cancel |
 | List At Management Group Scope | ❌ | |
 | List At Tenant Scope | ❌ | |
 
