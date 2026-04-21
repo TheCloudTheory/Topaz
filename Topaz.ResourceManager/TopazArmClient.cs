@@ -169,6 +169,45 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         return JsonNode.Parse(content)!;
     }
 
+    public async Task CreateManagementGroupAsync(string groupId, string displayName)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put,
+            $"providers/Microsoft.Management/managementGroups/{groupId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var payload = new { properties = new { displayName } };
+        request.Content = new StringContent(
+            JsonSerializer.Serialize(payload, GlobalSettings.JsonOptions),
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<JsonNode> ListDeploymentsAtManagementGroupScopeAsync(string groupId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            $"providers/Microsoft.Management/managementGroups/{groupId}/providers/Microsoft.Resources/deployments");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(
+                $"Management group not found: {message}", null, HttpStatusCode.NotFound);
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonNode.Parse(content)!;
+    }
+
     public void Dispose()
     {
         _httpClient.Dispose();

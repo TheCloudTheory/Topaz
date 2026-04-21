@@ -802,4 +802,35 @@ public class ResourceManagerTests
             }
         });
     }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenManagementGroupExistsWithNoDeployments_ListAtManagementGroupScopeShouldReturnEmptyList()
+    {
+        // Arrange
+        const string groupId = "mg-empty-deploy-test";
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateManagementGroupAsync(groupId, "Empty Deploy MG");
+
+        // Act
+        var result = await topaz.ListDeploymentsAtManagementGroupScopeAsync(groupId);
+
+        // Assert
+        var value = result["value"]!.AsArray();
+        Assert.That(value, Is.Empty);
+    }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenManagementGroupDoesNotExist_ListAtManagementGroupScopeShouldReturn404()
+    {
+        // Arrange
+        const string groupId = "mg-nonexistent-list";
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<HttpRequestException>(async () =>
+            await topaz.ListDeploymentsAtManagementGroupScopeAsync(groupId));
+        Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
+    }
 }
