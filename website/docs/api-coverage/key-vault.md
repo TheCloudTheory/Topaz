@@ -111,7 +111,7 @@ The data plane covers operations served directly from the vault's own hostname (
 | Purge Deleted Key | ✅ |
 | Rotate Key | ✅ |
 | Get Key Rotation Policy | ✅ |
-| Update Key Rotation Policy | ❌ |
+| Update Key Rotation Policy | ✅ |
 | Get Random Bytes | ❌ |
 | encrypt | ❌ |
 | decrypt | ❌ |

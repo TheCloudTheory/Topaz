@@ -750,4 +750,67 @@ public class KeyVaultTests : TopazFixture
     }
 
     #endregion
+
+    #region Key Rotation Policy Tests
+
+    [Test]
+    public async Task KeyVaultTests_WhenRotationPolicyUpdateIsCalled_ItShouldSetExpiryTime()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name RotPolKv01 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault key create --vault-name RotPolKv01 --name rp-key --kty RSA");
+        await RunAzureCliCommand(
+            "az keyvault key rotation-policy update --vault-name RotPolKv01 --name rp-key --value '{\"attributes\":{\"expiryTime\":\"P2Y\"},\"lifetimeActions\":[]}'",
+            (response) =>
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(response["attributes"], Is.Not.Null);
+                    Assert.That(response["attributes"]!["expiryTime"]!.GetValue<string>(), Is.EqualTo("P2Y"));
+                });
+            });
+        await RunAzureCliCommand("az keyvault delete --name RotPolKv01 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    [Test]
+    public async Task KeyVaultTests_WhenRotationPolicyGetIsCalledAfterUpdate_ItShouldReturnUpdatedPolicy()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name RotPolKv02 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault key create --vault-name RotPolKv02 --name rp-key2 --kty RSA");
+        await RunAzureCliCommand(
+            "az keyvault key rotation-policy update --vault-name RotPolKv02 --name rp-key2 --value '{\"attributes\":{\"expiryTime\":\"P1Y\"},\"lifetimeActions\":[]}'");
+        await RunAzureCliCommand(
+            "az keyvault key rotation-policy show --vault-name RotPolKv02 --name rp-key2",
+            (response) =>
+            {
+                Assert.That(response["attributes"]!["expiryTime"]!.GetValue<string>(), Is.EqualTo("P1Y"));
+            });
+        await RunAzureCliCommand("az keyvault delete --name RotPolKv02 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    [Test]
+    public async Task KeyVaultTests_WhenRotationPolicyUpdateIsCalledWithLifetimeActions_ItShouldStoreActions()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name RotPolKv03 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault key create --vault-name RotPolKv03 --name rp-key3 --kty RSA");
+        await RunAzureCliCommand(
+            "az keyvault key rotation-policy update --vault-name RotPolKv03 --name rp-key3 --value '{\"attributes\":{\"expiryTime\":\"P2Y\"},\"lifetimeActions\":[{\"trigger\":{\"timeBeforeExpiry\":\"P30D\"},\"action\":{\"type\":\"Rotate\"}}]}'",
+            (response) =>
+            {
+                var actions = response["lifetimeActions"]!.AsArray();
+                Assert.Multiple(() =>
+                {
+                    Assert.That(actions, Has.Count.EqualTo(1));
+                    Assert.That(actions[0]!["action"]!["type"]!.GetValue<string>(), Is.EqualTo("Rotate"));
+                });
+            });
+        await RunAzureCliCommand("az keyvault delete --name RotPolKv03 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    #endregion
 }

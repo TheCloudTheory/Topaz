@@ -789,6 +789,73 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         return new DataPlaneOperationResult<KeyRotationPolicy>(OperationResult.Success, policy, null, null);
     }
 
+    public DataPlaneOperationResult<KeyRotationPolicy> UpdateKeyRotationPolicy(Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateKeyRotationPolicy), "Executing {0}: {1} {2}", nameof(UpdateKeyRotationPolicy), keyName, vaultName);
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var keyPath = Path.Combine(basePath, "keys", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(keyPath, basePath);
+
+        if (!File.Exists(keyPath))
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateKeyRotationPolicy), "Key {0} not found.", keyName);
+            return new DataPlaneOperationResult<KeyRotationPolicy>(OperationResult.NotFound, null, $"Key {keyName} not found.", "KeyNotFound");
+        }
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+
+        if (string.IsNullOrWhiteSpace(rawContent))
+            return new DataPlaneOperationResult<KeyRotationPolicy>(OperationResult.BadRequest, null, "Request body cannot be empty.", "BadParameter");
+
+        KeyRotationPolicy? requested;
+        try
+        {
+            requested = JsonSerializer.Deserialize<KeyRotationPolicy>(rawContent, GlobalSettings.JsonOptions);
+        }
+        catch (JsonException)
+        {
+            return new DataPlaneOperationResult<KeyRotationPolicy>(OperationResult.BadRequest, null, "Request body is not valid JSON.", "BadParameter");
+        }
+
+        if (requested == null)
+            return new DataPlaneOperationResult<KeyRotationPolicy>(OperationResult.BadRequest, null, "Request body is not valid JSON.", "BadParameter");
+
+        var policyPath = Path.Combine(basePath, "keys", $"{keyName}.rotationpolicy.json");
+        PathGuard.EnsureWithinDirectory(policyPath, basePath);
+
+        // Preserve Created timestamp from the existing policy; ignore client-supplied Id/Created/Updated.
+        long created = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        if (File.Exists(policyPath))
+        {
+            var existing = JsonSerializer.Deserialize<KeyRotationPolicy>(File.ReadAllText(policyPath), GlobalSettings.JsonOptions);
+            if (existing?.Attributes != null)
+                created = existing.Attributes.Created;
+        }
+
+        var policy = new KeyRotationPolicy
+        {
+            Id = $"https://{GlobalSettings.GetKeyVaultHost(vaultName)}/keys/{keyName}/rotationpolicy",
+            Attributes = new KeyRotationPolicyAttributes(
+                Created: created,
+                Updated: DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                ExpiryTime: requested.Attributes?.ExpiryTime),
+            LifetimeActions = requested.LifetimeActions ?? []
+        };
+
+        File.WriteAllText(policyPath, JsonSerializer.Serialize(policy, GlobalSettings.JsonOptions));
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateKeyRotationPolicy), "Rotation policy updated for key {0}.", keyName);
+        return new DataPlaneOperationResult<KeyRotationPolicy>(OperationResult.Updated, policy, null, null);
+    }
+
     public DataPlaneOperationResult<KeyBundle> RotateKey(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

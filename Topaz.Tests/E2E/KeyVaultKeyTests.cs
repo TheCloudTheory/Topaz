@@ -1072,4 +1072,121 @@ public class KeyVaultKeyTests
         // Act & Assert
         Assert.Throws<RequestFailedException>(() => client.GetKeyRotationPolicy("rotation-policy-nonexistent"));
     }
+
+    [Test]
+    public void KeyVaultKeyTests_UpdateKeyRotationPolicy_SetsExpiryTime_ReturnsUpdatedPolicy()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("update-rp-expiry-key"));
+
+        var newPolicy = new KeyRotationPolicy
+        {
+            ExpiresIn = "P2Y"
+        };
+
+        // Act
+        var result = client.UpdateKeyRotationPolicy("update-rp-expiry-key", newPolicy);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value, Is.Not.Null);
+            Assert.That(result.Value.ExpiresIn, Is.EqualTo("P2Y"));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_UpdateKeyRotationPolicy_WithLifetimeActions_StoresActions()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("update-rp-actions-key"));
+
+        var newPolicy = new KeyRotationPolicy
+        {
+            LifetimeActions =
+            {
+                new KeyRotationLifetimeAction(KeyRotationPolicyAction.Rotate)
+                {
+                    TimeBeforeExpiry = "P30D"
+                }
+            }
+        };
+
+        // Act
+        var result = client.UpdateKeyRotationPolicy("update-rp-actions-key", newPolicy);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value, Is.Not.Null);
+            Assert.That(result.Value.LifetimeActions, Has.Count.EqualTo(1));
+            Assert.That(result.Value.LifetimeActions[0].Action, Is.EqualTo(KeyRotationPolicyAction.Rotate));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_UpdateKeyRotationPolicy_PersistsAcrossGet()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("update-rp-persist-key"));
+
+        var newPolicy = new KeyRotationPolicy
+        {
+            ExpiresIn = "P1Y"
+        };
+
+        // Act
+        client.UpdateKeyRotationPolicy("update-rp-persist-key", newPolicy);
+        var retrieved = client.GetKeyRotationPolicy("update-rp-persist-key");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(retrieved.Value, Is.Not.Null);
+            Assert.That(retrieved.Value.ExpiresIn, Is.EqualTo("P1Y"));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_UpdateKeyRotationPolicy_PreservesCreatedTimestamp()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+        client.CreateRsaKey(new CreateRsaKeyOptions("update-rp-created-key"));
+
+        var firstPolicy = new KeyRotationPolicy { ExpiresIn = "P1Y" };
+        var firstResult = client.UpdateKeyRotationPolicy("update-rp-created-key", firstPolicy);
+        var createdAfterFirst = firstResult.Value.CreatedOn;
+
+        // Act — second update
+        var secondPolicy = new KeyRotationPolicy { ExpiresIn = "P2Y" };
+        var secondResult = client.UpdateKeyRotationPolicy("update-rp-created-key", secondPolicy);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(secondResult.Value.CreatedOn, Is.EqualTo(createdAfterFirst));
+            Assert.That(secondResult.Value.UpdatedOn, Is.GreaterThanOrEqualTo(createdAfterFirst));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_UpdateKeyRotationPolicy_NonExistentKey_ThrowsRequestFailedException()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        var policy = new KeyRotationPolicy { ExpiresIn = "P1Y" };
+
+        // Act & Assert
+        Assert.Throws<RequestFailedException>(() => client.UpdateKeyRotationPolicy("update-rp-nonexistent-key", policy));
+    }
 }

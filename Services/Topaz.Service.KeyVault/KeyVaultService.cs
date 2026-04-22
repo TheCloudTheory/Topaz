@@ -38,6 +38,7 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
         new PurgeDeletedKeyEndpoint(eventPipeline, logger),
         new RotateKeyEndpoint(eventPipeline, logger),
         new GetKeyRotationPolicyEndpoint(eventPipeline, logger),
+        new UpdateKeyRotationPolicyEndpoint(eventPipeline, logger),
         new CreateKeyEndpoint(eventPipeline, logger),
         new ImportKeyEndpoint(eventPipeline, logger),
         new GetKeysEndpoint(eventPipeline, logger),
