@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -8,6 +9,8 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
+[CommandDefinition("storage blob copy", "azure-storage/blob", "Copies a blob to a destination container, optionally across accounts.")]
+[CommandExample("Copy blob within same account", "topaz storage blob copy \\\n    --source-subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --source-resource-group \"rg-local\" \\\n    --source-account-name \"salocal\" \\\n    --source-container \"src\" \\\n    --source-blob \"file.txt\" \\\n    --dest-subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --dest-resource-group \"rg-local\" \\\n    --dest-account-name \"salocal\" \\\n    --dest-container \"dst\" \\\n    --dest-blob \"file-copy.txt\"")]
 public sealed class CopyBlobCommand(ITopazLogger logger) : Command<CopyBlobCommand.CopyBlobCommandSettings>
 {
     public override int Execute(CommandContext context, CopyBlobCommandSettings settings)
@@ -73,16 +76,26 @@ public sealed class CopyBlobCommand(ITopazLogger logger) : Command<CopyBlobComma
     [UsedImplicitly]
     public sealed class CopyBlobCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Source storage account name.", required: true)]
         [CommandOption("--source-account-name")] public string? SourceAccountName { get; set; }
+        [CommandOptionDefinition("(Required) Source container name.", required: true)]
         [CommandOption("--source-container")] public string? SourceContainerName { get; set; }
+        [CommandOptionDefinition("(Required) Source blob name.", required: true)]
         [CommandOption("--source-blob")] public string? SourceBlobName { get; set; }
+        [CommandOptionDefinition("(Required) Source resource group name.", required: true)]
         [CommandOption("--source-resource-group")] public string? SourceResourceGroup { get; set; }
+        [CommandOptionDefinition("(Required) Source subscription ID.", required: true)]
         [CommandOption("--source-subscription-id")] public string? SourceSubscriptionId { get; set; }
 
+        [CommandOptionDefinition("(Required) Destination storage account name.", required: true)]
         [CommandOption("--dest-account-name")] public string? DestinationAccountName { get; set; }
+        [CommandOptionDefinition("(Required) Destination container name.", required: true)]
         [CommandOption("--dest-container")] public string? DestinationContainerName { get; set; }
+        [CommandOptionDefinition("(Required) Destination blob name.", required: true)]
         [CommandOption("--dest-blob")] public string? DestinationBlobName { get; set; }
+        [CommandOptionDefinition("(Required) Destination resource group name.", required: true)]
         [CommandOption("--dest-resource-group")] public string? DestinationResourceGroup { get; set; }
+        [CommandOptionDefinition("(Required) Destination subscription ID.", required: true)]
         [CommandOption("--dest-subscription-id")] public string? DestinationSubscriptionId { get; set; }
     }
 }

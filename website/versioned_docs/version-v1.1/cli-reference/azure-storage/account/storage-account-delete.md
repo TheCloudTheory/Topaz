@@ -1,20 +1,21 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 ---
 
 # storage account delete
-
-Deletes a storage account.
+Deletes an Azure Storage account.
 
 ## Options
-* `-n|--name` - (Required) storage account name
+* `-n, --name` - (Required) (Required) Storage account name.
+* `-s, --subscription-id` - (Required) (Required) Subscription ID.
+* `-g, --resource-group` - (Required) (Required) Resource group name.
 
 ## Examples
 
 ### Delete a storage account
 ```bash
-$ topaz storage account delete --name "salocal"
+$ topaz storage account delete \
+    --subscription-id "00000000-0000-0000-0000-000000000000" \
+    --resource-group "rg-local" \
+    --name "salocal"
 ```
-
-## Remarks
-When storage account is deleted, all the data stored by its services (Table, Blob, Queue) will also be deleted.

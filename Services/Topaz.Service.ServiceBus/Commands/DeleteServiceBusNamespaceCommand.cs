@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -8,6 +9,8 @@ using Topaz.Shared;
 namespace Topaz.Service.ServiceBus.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("servicebus namespace delete", "service-bus", "Deletes a Service Bus namespace.")]
+[CommandExample("Delete a namespace", "topaz servicebus namespace delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"sblocal\"")]
 public sealed class DeleteServiceBusNamespaceCommand(Pipeline eventPipeline, ITopazLogger logger)
     : Command<DeleteServiceBusNamespaceCommand.DeleteServiceBusNamespaceCommandSettings>
 {
@@ -57,10 +60,13 @@ public sealed class DeleteServiceBusNamespaceCommand(Pipeline eventPipeline, ITo
     [UsedImplicitly]
     public sealed class DeleteServiceBusNamespaceCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Namespace name.", required: true)]
         [CommandOption("-n|--name")] public string? Name { get; set; }
 
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
 
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
         public string SubscriptionId { get; set; } = null!;
     }

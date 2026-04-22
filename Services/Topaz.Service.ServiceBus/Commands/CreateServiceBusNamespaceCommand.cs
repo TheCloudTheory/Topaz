@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ServiceBus.Models.Requests;
@@ -12,6 +13,8 @@ using Topaz.Shared;
 namespace Topaz.Service.ServiceBus.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("servicebus namespace create", "service-bus", "Creates or updates a Service Bus namespace.")]
+[CommandExample("Create a namespace", "topaz servicebus namespace create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"sblocal\"")]
 public sealed class CreateServiceBusNamespaceCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateServiceBusNamespaceCommand.CreateServiceBusNamespaceCommandSettings>
 {
     public override int Execute(CommandContext context, CreateServiceBusNamespaceCommandSettings settings)
@@ -72,12 +75,15 @@ public sealed class CreateServiceBusNamespaceCommand(Pipeline eventPipeline, ITo
     [UsedImplicitly]
     public sealed class CreateServiceBusNamespaceCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
         public string SubscriptionId { get; set; } = null!;
         
+        [CommandOptionDefinition("(Required) Namespace name.", required: true)]
         [CommandOption("-n|--name")]
         public string? Name { get; set; }
 
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")]
         public string? ResourceGroup { get; set; }
     }

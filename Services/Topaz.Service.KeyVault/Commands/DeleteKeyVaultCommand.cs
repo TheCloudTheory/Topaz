@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared.Domain;
@@ -10,6 +11,8 @@ using Topaz.Service.Subscription;
 namespace Topaz.Service.KeyVault.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("keyvault delete", "key-vault", "Deletes a Key Vault.")]
+[CommandExample("Delete a Key Vault", "topaz keyvault delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"kvlocal\"")]
 public sealed class DeleteKeyVaultCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<DeleteKeyVaultCommand.DeleteKeyVaultCommandSettings>
 {
     public override int Execute(CommandContext context, DeleteKeyVaultCommandSettings settings)
@@ -58,12 +61,15 @@ public sealed class DeleteKeyVaultCommand(Pipeline eventPipeline, ITopazLogger l
     [UsedImplicitly]
     public sealed class DeleteKeyVaultCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Key Vault name.", required: true)]
         [CommandOption("-n|--name")]
         public string? Name { get; set; }
         
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")]
         public string? ResourceGroup { get; set; }
         
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
         public string SubscriptionId { get; set; } = null!;
     }

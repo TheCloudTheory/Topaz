@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -8,6 +9,8 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
+[CommandDefinition("storage blob lease", "azure-storage/blob", "Manages lease operations on a blob (acquire, renew, change, release, break).")]
+[CommandExample("Acquire a lease", "topaz storage blob lease \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\" \\\n    --action \"acquire\" \\\n    --lease-duration 60")]
 public sealed class LeaseBlobCommand(ITopazLogger logger) : Command<LeaseBlobCommand.LeaseBlobCommandSettings>
 {
     public override int Execute(CommandContext context, LeaseBlobCommandSettings settings)
@@ -95,15 +98,25 @@ public sealed class LeaseBlobCommand(ITopazLogger logger) : Command<LeaseBlobCom
     [UsedImplicitly]
     public sealed class LeaseBlobCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Storage account name.", required: true)]
         [CommandOption("--account-name")] public string? AccountName { get; set; }
+        [CommandOptionDefinition("(Required) Container name.", required: true)]
         [CommandOption("-c|--container-name")] public string? ContainerName { get; set; }
+        [CommandOptionDefinition("(Required) Blob name.", required: true)]
         [CommandOption("-n|--name")] public string? BlobName { get; set; }
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")] public string? SubscriptionId { get; set; }
+        [CommandOptionDefinition("(Required) Lease action: acquire, renew, change, release, or break.", required: true)]
         [CommandOption("--action")] public string? Action { get; set; }
+        [CommandOptionDefinition("Lease duration in seconds (-1 for infinite).")]
         [CommandOption("--lease-duration")] public int? LeaseDuration { get; set; }
+        [CommandOptionDefinition("Existing lease ID (required for renew, change, release).")]
         [CommandOption("--lease-id")] public string? LeaseId { get; set; }
+        [CommandOptionDefinition("Proposed lease ID (required for change action).")]
         [CommandOption("--proposed-lease-id")] public string? ProposedLeaseId { get; set; }
+        [CommandOptionDefinition("Break period in seconds (used with break action).")]
         [CommandOption("--lease-break-period")] public int? LeaseBreakPeriod { get; set; }
     }
 }

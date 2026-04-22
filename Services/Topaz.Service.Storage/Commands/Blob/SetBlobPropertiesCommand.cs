@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -8,6 +9,8 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
+[CommandDefinition("storage blob update", "azure-storage/blob", "Updates the HTTP properties (content type, encoding, etc.) of a blob.")]
+[CommandExample("Update content type of a blob", "topaz storage blob update \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\" \\\n    --content-type \"text/plain\"")]
 public sealed class SetBlobPropertiesCommand(ITopazLogger logger) : Command<SetBlobPropertiesCommand.SetBlobPropertiesCommandSettings>
 {
     public override int Execute(CommandContext context, SetBlobPropertiesCommandSettings settings)
@@ -55,15 +58,25 @@ public sealed class SetBlobPropertiesCommand(ITopazLogger logger) : Command<SetB
     [UsedImplicitly]
     public sealed class SetBlobPropertiesCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Storage account name.", required: true)]
         [CommandOption("--account-name")] public string? AccountName { get; set; }
+        [CommandOptionDefinition("(Required) Container name.", required: true)]
         [CommandOption("-c|--container-name")] public string? ContainerName { get; set; }
+        [CommandOptionDefinition("(Required) Blob name.", required: true)]
         [CommandOption("-n|--name")] public string? BlobName { get; set; }
+        [CommandOptionDefinition("Content-Type header value (e.g. text/plain).")]
         [CommandOption("--content-type")] public string? ContentType { get; set; }
+        [CommandOptionDefinition("Content-Encoding header value.")]
         [CommandOption("--content-encoding")] public string? ContentEncoding { get; set; }
+        [CommandOptionDefinition("Content-Language header value.")]
         [CommandOption("--content-language")] public string? ContentLanguage { get; set; }
+        [CommandOptionDefinition("Cache-Control header value.")]
         [CommandOption("--cache-control")] public string? CacheControl { get; set; }
+        [CommandOptionDefinition("Content-Disposition header value.")]
         [CommandOption("--content-disposition")] public string? ContentDisposition { get; set; }
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")] public string? SubscriptionId { get; set; }
     }
 }

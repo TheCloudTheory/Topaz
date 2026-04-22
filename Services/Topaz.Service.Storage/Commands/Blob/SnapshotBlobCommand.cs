@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -8,6 +9,8 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
+[CommandDefinition("storage blob snapshot", "azure-storage/blob", "Creates a read-only snapshot of a blob at the current time.")]
+[CommandExample("Create a blob snapshot", "topaz storage blob snapshot \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\"")]
 public sealed class SnapshotBlobCommand(ITopazLogger logger) : Command<SnapshotBlobCommand.SnapshotBlobCommandSettings>
 {
     public override int Execute(CommandContext context, SnapshotBlobCommandSettings settings)
@@ -57,11 +60,17 @@ public sealed class SnapshotBlobCommand(ITopazLogger logger) : Command<SnapshotB
     [UsedImplicitly]
     public sealed class SnapshotBlobCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Storage account name.", required: true)]
         [CommandOption("--account-name")] public string? AccountName { get; set; }
+        [CommandOptionDefinition("(Required) Container name.", required: true)]
         [CommandOption("-c|--container-name")] public string? ContainerName { get; set; }
+        [CommandOptionDefinition("(Required) Blob name.", required: true)]
         [CommandOption("-n|--name")] public string? BlobName { get; set; }
+        [CommandOptionDefinition("Lease ID required if the blob has an active lease.")]
         [CommandOption("--lease-id")] public string? LeaseId { get; set; }
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")] public string? SubscriptionId { get; set; }
     }
 }

@@ -1,12 +1,15 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("storage table delete", "azure-storage/table", "Deletes a table from a storage account.")]
+[CommandExample("Delete a table", "topaz storage table delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --name \"mytable\"")]
 public sealed class DeleteTableCommand(ITopazLogger logger) : Command<DeleteTableCommand.DeleteTableCommandSettings>
 {
     public override int Execute(CommandContext context, DeleteTableCommandSettings settings)
@@ -48,10 +51,14 @@ public sealed class DeleteTableCommand(ITopazLogger logger) : Command<DeleteTabl
     [UsedImplicitly]
     public sealed class DeleteTableCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Table name.", required: true)]
         [CommandOption("-n|--name")] public string Name { get; set; } = null!;
+        [CommandOptionDefinition("(Required) Storage account name.", required: true)]
         [CommandOption("--account-name")] public string AccountName { get; set; } = null!;
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")]
         public string? ResourceGroup { get; set; }
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
         public string? SubscriptionId { get; set; }
     }

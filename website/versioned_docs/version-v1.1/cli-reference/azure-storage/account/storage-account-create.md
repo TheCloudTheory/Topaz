@@ -1,23 +1,23 @@
 ---
-sidebar_position: 1
+sidebar_position: 2
 ---
 
 # storage account create
-
-Creates a new storage account.
+Creates a new Azure Storage account.
 
 ## Options
-* `-s|--subscription-id` - (Required) subscription ID
-* `-n|--name` - (Required) storage account name
-* `-l|--location` - (Required) storage account name
-* `-g|--resource-group` - (Required) resource group name
+* `-n, --name` - (Required) (Required) Storage account name.
+* `-g, --resource-group` - (Required) (Required) Resource group name.
+* `-l, --location` - (Required) (Required) Location (e.g. westeurope).
+* `-s, --subscription-id` - (Required) (Required) Subscription ID.
 
 ## Examples
 
-### Create new storage account
+### Create a storage account
 ```bash
-$ topaz storage account create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \
+$ topaz storage account create \
+    --subscription-id "00000000-0000-0000-0000-000000000000" \
+    --resource-group "rg-local" \
     --name "salocal" \
-    --location "westeurope" \
-    --resource-group "rg-local"
+    --location "westeurope"
 ```

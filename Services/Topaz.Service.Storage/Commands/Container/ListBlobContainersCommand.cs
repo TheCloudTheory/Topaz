@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -8,6 +9,8 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("storage container list", "azure-storage/container", "Lists blob containers in a storage account.")]
+[CommandExample("List containers", "topaz storage container list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\"")]
 public sealed class ListBlobContainersCommand(ITopazLogger logger)
     : Command<ListBlobContainersCommand.ListBlobContainersCommandSettings>
 {
@@ -56,8 +59,11 @@ public sealed class ListBlobContainersCommand(ITopazLogger logger)
     [UsedImplicitly]
     public sealed class ListBlobContainersCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Storage account name.", required: true)]
         [CommandOption("-n|--account-name")] public string? AccountName { get; set; }
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")] public string SubscriptionId { get; set; } = null!;
     }
 }

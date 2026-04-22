@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
@@ -11,6 +12,8 @@ using Topaz.Shared;
 namespace Topaz.Service.ServiceBus.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("servicebus queue delete", "service-bus", "Deletes a queue from a Service Bus namespace.")]
+[CommandExample("Delete a queue", "topaz servicebus queue delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --namespace-name \"sblocal\" \\\n    --queue-name \"myqueue\"")]
 public sealed class DeleteServiceBusQueueCommand(Pipeline eventPipeline, ITopazLogger logger)
     : Command<DeleteServiceBusQueueCommand.DeleteServiceBusQueueCommandSettings>
 {
@@ -88,13 +91,17 @@ public sealed class DeleteServiceBusQueueCommand(Pipeline eventPipeline, ITopazL
     [UsedImplicitly]
     public sealed class DeleteServiceBusQueueCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
         public string SubscriptionId { get; set; } = null!;
 
+        [CommandOptionDefinition("(Required) Queue name.", required: true)]
         [CommandOption("-n|--queue-name")] public string? Name { get; set; }
 
+        [CommandOptionDefinition("(Required) Service Bus namespace name.", required: true)]
         [CommandOption("--namespace-name")] public string? NamespaceName { get; set; }
 
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
     }
 }

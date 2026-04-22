@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ServiceBus.Models.Requests;
@@ -12,6 +13,8 @@ using Topaz.Shared;
 namespace Topaz.Service.ServiceBus.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("servicebus queue create", "service-bus", "Creates or updates a queue in a Service Bus namespace.")]
+[CommandExample("Create a queue", "topaz servicebus queue create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --namespace-name \"sblocal\" \\\n    --queue-name \"myqueue\"")]
 public class CreateServiceBusQueueCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateServiceBusQueueCommand.CreateServiceBusQueueCommandSettings>
 {
     public override int Execute(CommandContext context, CreateServiceBusQueueCommandSettings settings)
@@ -83,15 +86,19 @@ public class CreateServiceBusQueueCommand(Pipeline eventPipeline, ITopazLogger l
     [UsedImplicitly]
     public sealed class CreateServiceBusQueueCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
         public string SubscriptionId { get; set; } = null!;
         
+        [CommandOptionDefinition("(Required) Queue name.", required: true)]
         [CommandOption("-n|--queue-name")]
         public string? Name { get; set; }
         
+        [CommandOptionDefinition("(Required) Service Bus namespace name.", required: true)]
         [CommandOption("--namespace-name")]
         public string? NamespaceName { get; set; }
 
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")]
         public string? ResourceGroup { get; set; }
     }

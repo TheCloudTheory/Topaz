@@ -1,12 +1,15 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("storage table list", "azure-storage/table", "Lists tables in a storage account.")]
+[CommandExample("List tables", "topaz storage table list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\"")]
 public sealed class ListTablesCommand(ITopazLogger logger) : Command<ListTablesCommand.ListTablesCommandSettings>
 {
     public override int Execute(CommandContext context, ListTablesCommandSettings settings)
@@ -46,8 +49,11 @@ public sealed class ListTablesCommand(ITopazLogger logger) : Command<ListTablesC
     [UsedImplicitly]
     public sealed class ListTablesCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Storage account name.", required: true)]
         [CommandOption("--account-name")] public string? AccountName { get; set; }
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")] public string? SubscriptionId { get; set; }
     }
 }

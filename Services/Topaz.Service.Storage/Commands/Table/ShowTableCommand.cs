@@ -1,12 +1,15 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("storage table show", "azure-storage/table", "Shows whether a table exists in a storage account.")]
+[CommandExample("Show a table", "topaz storage table show \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --name \"mytable\"")]
 public sealed class ShowTableCommand(ITopazLogger logger) : Command<ShowTableCommand.ShowTableCommandSettings>
 {
     public override int Execute(CommandContext context, ShowTableCommandSettings settings)
@@ -47,9 +50,13 @@ public sealed class ShowTableCommand(ITopazLogger logger) : Command<ShowTableCom
     [UsedImplicitly]
     public sealed class ShowTableCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Table name.", required: true)]
         [CommandOption("-n|--name")] public string? Name { get; set; }
+        [CommandOptionDefinition("(Required) Storage account name.", required: true)]
         [CommandOption("--account-name")] public string? AccountName { get; set; }
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")] public string? SubscriptionId { get; set; }
     }
 }

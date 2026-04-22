@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -8,6 +9,8 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("storage account check-name", "azure-storage/account", "Checks whether a storage account name is available.")]
+[CommandExample("Check name availability", "topaz storage account check-name \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --name \"salocal\"")]
 public sealed class CheckStorageAccountNameAvailabilityCommand(ITopazLogger logger)
     : Command<CheckStorageAccountNameAvailabilityCommand.CheckStorageAccountNameAvailabilityCommandSettings>
 {
@@ -46,7 +49,9 @@ public sealed class CheckStorageAccountNameAvailabilityCommand(ITopazLogger logg
     [UsedImplicitly]
     public sealed class CheckStorageAccountNameAvailabilityCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Storage account name to check.", required: true)]
         [CommandOption("-n|--name")] public string? Name { get; set; }
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")] public string SubscriptionId { get; set; } = null!;
     }
 }

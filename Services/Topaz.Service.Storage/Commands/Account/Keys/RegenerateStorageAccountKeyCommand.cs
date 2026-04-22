@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models.Responses;
@@ -9,6 +10,8 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("storage account keys renew", "azure-storage/account", "Regenerates an access key for a storage account.")]
+[CommandExample("Regenerate key1", "topaz storage account keys renew \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --key-name \"key1\"")]
 public sealed class RegenerateStorageAccountKeyCommand(ITopazLogger logger)
     : Command<RegenerateStorageAccountKeyCommand.RegenerateStorageAccountKeyCommandSettings>
 {
@@ -63,12 +66,16 @@ public sealed class RegenerateStorageAccountKeyCommand(ITopazLogger logger)
     [UsedImplicitly]
     public sealed class RegenerateStorageAccountKeyCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Storage account name.", required: true)]
         [CommandOption("-n|--account-name")] public string? AccountName { get; set; }
 
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
 
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")] public string SubscriptionId { get; set; } = null!;
 
+        [CommandOptionDefinition("(Required) The key to regenerate (key1 or key2).", required: true)]
         [CommandOption("-k|--key-name")] public string? KeyName { get; set; }
     }
 }

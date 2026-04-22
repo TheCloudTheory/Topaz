@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models.Requests;
@@ -9,6 +10,8 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("storage account generate-sas", "azure-storage/account", "Generates a Shared Access Signature (SAS) token for a storage account.")]
+[CommandExample("Generate SAS token", "topaz storage account generate-sas \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --services \"b\" \\\n    --resource-types \"sco\" \\\n    --permissions \"rwdlacup\" \\\n    --expiry \"2030-01-01T00:00:00Z\"")]
 public sealed class GenerateAccountSasCommand(ITopazLogger logger)
     : Command<GenerateAccountSasCommand.GenerateAccountSasCommandSettings>
 {
@@ -83,26 +86,37 @@ public sealed class GenerateAccountSasCommand(ITopazLogger logger)
     [UsedImplicitly]
     public sealed class GenerateAccountSasCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Storage account name.", required: true)]
         [CommandOption("-n|--account-name")] public string? AccountName { get; set; }
 
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
 
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")] public string SubscriptionId { get; set; } = null!;
 
+        [CommandOptionDefinition("(Required) The storage services to sign (b=blob, f=file, q=queue, t=table). Combine letters as needed.", required: true)]
         [CommandOption("--services")] public string? Services { get; set; }
 
+        [CommandOptionDefinition("(Required) The resource types accessible with the SAS (s=service, c=container, o=object).", required: true)]
         [CommandOption("--resource-types")] public string? ResourceTypes { get; set; }
 
+        [CommandOptionDefinition("(Required) The permissions granted by the SAS (e.g. rwdlacup).", required: true)]
         [CommandOption("--permissions")] public string? Permissions { get; set; }
 
+        [CommandOptionDefinition("(Required) Expiry date/time in UTC (ISO 8601, e.g. 2030-01-01T00:00:00Z).", required: true)]
         [CommandOption("--expiry")] public string? Expiry { get; set; }
 
+        [CommandOptionDefinition("Start date/time in UTC (ISO 8601).")]
         [CommandOption("--start")] public string? Start { get; set; }
 
+        [CommandOptionDefinition("Restrict to HTTPS connections only.")]
         [CommandOption("--https-only")] public bool? HttpsOnly { get; set; }
 
+        [CommandOptionDefinition("Restrict to a specific IP address or range.")]
         [CommandOption("--ip")] public string? Ip { get; set; }
 
+        [CommandOptionDefinition("The storage account key to use for signing (key1 or key2).")]
         [CommandOption("--key-to-sign")] public string? KeyToSign { get; set; }
 
         public string? Protocol => HttpsOnly == true ? "https" : null;

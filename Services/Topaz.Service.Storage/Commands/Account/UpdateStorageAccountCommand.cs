@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models.Requests;
@@ -9,6 +10,8 @@ using Topaz.Shared;
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("storage account update", "azure-storage/account", "Updates an Azure Storage account.")]
+[CommandExample("Update tags on a storage account", "topaz storage account update \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\" \\\n    --tags \"env=prod\" \"owner=team\"")]
 public sealed class UpdateStorageAccountCommand(ITopazLogger logger)
     : Command<UpdateStorageAccountCommand.UpdateStorageAccountCommandSettings>
 {
@@ -63,10 +66,14 @@ public sealed class UpdateStorageAccountCommand(ITopazLogger logger)
     [UsedImplicitly]
     public sealed class UpdateStorageAccountCommandSettings : CommandSettings
     {
+        [CommandOptionDefinition("(Required) Storage account name.", required: true)]
         [CommandOption("-n|--name")] public string? Name { get; set; }
+        [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
+        [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")] public string SubscriptionId { get; set; } = null!;
 
+        [CommandOptionDefinition("Resource tags as key=value pairs.")]
         [CommandOption("--tags")]
         public string[]? Tags { get; set; }
     }
