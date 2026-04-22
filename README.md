@@ -20,10 +20,10 @@ Most Azure emulators cover a single service. Topaz covers the full stack:
 
 * **One tool** — no more juggling multiple emulators per service
 * **Control & data plane** — not just data operations, but full resource management
-* **ARM / Bicep deployments** — deploy templates locally the same way you would in Azure
+* **ARM / Bicep / Terraform deployments** — deploy templates locally the same way you would in Azure
 * **Azure RBAC emulation** — role assignments and permission checks work locally
 * **Microsoft Entra ID tenant emulation** — identity flows without a real tenant
-* **Azure resource hierarchy** — subscriptions, resource groups, and resource IDs behave as expected
+* **Azure resource hierarchy** — management groups, subscriptions, resource groups, and resource IDs behave as expected
 * **Seamless Azure SDK integration** — no code changes; point your SDK at Topaz
 * **Full portability** — single executable or Docker container, runs anywhere
 
@@ -33,12 +33,13 @@ See the [roadmap](https://topaz.thecloudtheory.com/docs/roadmap) for what's comi
 
 | Service | Control Plane | Data Plane | Status |
 |---|---|---|---|
-| Azure Storage (Blob) | ✅ | ✅ | Stable |
+| Azure Storage (Blob) | ✅ | ✅ | Preview |
+| Azure Storage (Table) | ✅ | ✅ | Preview |
 | Azure Key Vault | ✅ | ✅ | Preview |
 | Azure Service Bus | ✅ | ✅ | Preview |
 | Azure Container Registry | ✅ | ✅ | Preview |
 | Azure Event Hub | ✅ | ✅ | Preview |
-| Azure Resource Manager | ✅ | — | Stable |
+| Azure Resource Manager | ✅ | — | Preview |
 | Microsoft Entra ID | ✅ | — | Preview |
 
 See the [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/) for the full operation-level breakdown per service.
@@ -96,5 +97,3 @@ If you need multiple services, RBAC, or ARM deployments locally, that's where To
 ## Privacy
 
 All state is local. Topaz never makes outbound calls and never transmits credentials or resource data to external services.
-
-Topaz is developed with assistance from AI tools (GitHub Copilot, JetBrains AI), limited to generating boilerplate, models, and DTOs. Conceptual design, core logic, and architecture are done manually.
