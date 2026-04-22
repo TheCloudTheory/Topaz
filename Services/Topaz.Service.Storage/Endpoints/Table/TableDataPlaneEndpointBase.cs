@@ -124,7 +124,7 @@ internal abstract class TableDataPlaneEndpointBase(ITopazLogger logger)
 
         var match = matches.Value;
         var dataMatches = Regex.Match(match,
-            @"^(?<tableName>\w+)\(PartitionKey='(?<partitionKey>\w+)',RowKey='(?<rowKey>\w+)'\)$");
+            @"^(?<tableName>\w+)\(PartitionKey='(?<partitionKey>\w+)',(%20|\s)?RowKey='(?<rowKey>\w+)'\)$");
 
         var tableName = dataMatches.Groups["tableName"].Value;
         var partitionKey = dataMatches.Groups["partitionKey"].Value;

@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Endpoints.Table;
 internal sealed class GetTableEntityEndpoint(ITopazLogger logger)
     : TableDataPlaneEndpointBase(logger), IEndpointDefinition
 {
-    public string[] Endpoints => [@"GET /^.*?\(PartitionKey='.*?',RowKey='.*?'\)$"];
+    public string[] Endpoints => [@"GET /^.*?\(PartitionKey='.*?',(%20|\s)?RowKey='.*?'\)$"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/read"];
 
@@ -37,7 +37,7 @@ internal sealed class GetTableEntityEndpoint(ITopazLogger logger)
             return;
         }
 
-        var matches = Regex.Match(context.Request.Path, @"\w+\(PartitionKey='\w+',RowKey='\w+'\)$",
+        var matches = Regex.Match(context.Request.Path, @"\w+\(PartitionKey='\w+',(%20|\s)?RowKey='\w+'\)$",
             RegexOptions.IgnoreCase);
 
         var (tableName, partitionKey, rowKey) = GetOperationDataForUpdateOperation(matches);

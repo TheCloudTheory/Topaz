@@ -9,7 +9,7 @@ namespace Topaz.Service.Storage.Endpoints.Table;
 internal sealed class PatchTableEntityEndpoint(ITopazLogger logger)
     : TableDataPlaneEndpointBase(logger), IEndpointDefinition
 {
-    public string[] Endpoints => [@"PATCH /^.*?\(PartitionKey='.*?',RowKey='.*?'\)$"];
+    public string[] Endpoints => [@"PATCH /^.*?\(PartitionKey='.*?',(%20|\s)?RowKey='.*?'\)$"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/write"];
 
@@ -34,7 +34,7 @@ internal sealed class PatchTableEntityEndpoint(ITopazLogger logger)
             return;
         }
 
-        var matches = Regex.Match(context.Request.Path, @"\w+\(PartitionKey='\w+',RowKey='\w+'\)$",
+        var matches = Regex.Match(context.Request.Path, @"\w+\(PartitionKey='\w+',(%20|\s)?RowKey='\w+'\)$",
             RegexOptions.IgnoreCase);
 
         HandleUpdateEntityRequest(context.Request.Body, context.Request.Headers, matches,

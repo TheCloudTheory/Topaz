@@ -840,6 +840,33 @@ namespace Topaz.Tests.E2E
             Assert.That((int)response.StatusCode, Is.EqualTo(404));
         }
 
+        [Test]
+        public async Task TableStorageTests_WhenEntityIsFetchedWithUrlEncodedSpaceBeforeRowKey_ItShouldReturn200()
+        {
+            // Arrange — simulate the Go SDK (Terraform AzureRM) URL format where a %20-encoded space
+            // is inserted between the comma and "RowKey" in the entity path.
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            tableServiceClient.CreateTableIfNotExists("gosdkentitytest");
+            var tableClient = tableServiceClient.GetTableClient("gosdkentitytest");
+            tableClient.AddEntity(new TestEntity { PartitionKey = "pk1", RowKey = "rk1", Name = "gosdk" });
+
+            // Build the raw path with %20 before RowKey (Go SDK behaviour).
+            var path = "/gosdkentitytest(PartitionKey='pk1',%20RowKey='rk1')";
+            var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
+            using var httpClient = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, new Uri(baseUrl + path));
+            var date = DateTimeOffset.UtcNow.ToString("R");
+            var signature = ComputeSharedKeyLiteSignature(_key, StorageAccountName, path, date);
+            request.Headers.Add("x-ms-date", date);
+            request.Headers.Add("Authorization", $"SharedKeyLite {StorageAccountName}:{signature}");
+
+            // Act
+            var response = await httpClient.SendAsync(request);
+
+            // Assert — must NOT return 401 (routing bug) and must return the entity
+            Assert.That((int)response.StatusCode, Is.EqualTo(200));
+        }
+
         /// <summary>
         /// Computes a SharedKeyLite HMAC-SHA256 signature matching the format expected by
         /// <c>TableStorageSecurityProvider.IsAuthorizedForSharedKeyLiteScheme</c>.
