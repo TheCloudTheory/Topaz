@@ -1053,4 +1053,103 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task StorageQueue_Create_SucceedsWithValidName()
+    {
+        const string storageAccountName = "topazstorqueuecrt01";
+        const string resourceGroup = "test-queue-create-rg";
+        const string queueName = "testqueue";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        await RunAzureCliCommand(
+            $"az storage queue create --name {queueName} --account-name {storageAccountName} --account-key \"{accountKey}\" --queue-endpoint http://{storageAccountName}.queue.storage.topaz.local.dev:8893",
+            (resp) =>
+            {
+                Assert.That(resp["created"]!.GetValue<bool>(), Is.True);
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task StorageQueue_List_ReturnsCreatedQueues()
+    {
+        const string storageAccountName = "topazstorqueuelist01";
+        const string resourceGroup = "test-queue-list-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        await RunAzureCliCommand(
+            $"az storage queue create --name queue1 --account-name {storageAccountName} --account-key \"{accountKey}\" --queue-endpoint http://{storageAccountName}.queue.storage.topaz.local.dev:8893");
+        await RunAzureCliCommand(
+            $"az storage queue create --name queue2 --account-name {storageAccountName} --account-key \"{accountKey}\" --queue-endpoint http://{storageAccountName}.queue.storage.topaz.local.dev:8893");
+
+        await RunAzureCliCommand(
+            $"az storage queue list --account-name {storageAccountName} --account-key \"{accountKey}\" --queue-endpoint http://{storageAccountName}.queue.storage.topaz.local.dev:8893",
+            (resp) =>
+            {
+                var arr = resp.AsArray();
+                Assert.That(arr.Any(q => q!["name"]!.GetValue<string>() == "queue1"), Is.True);
+                Assert.That(arr.Any(q => q!["name"]!.GetValue<string>() == "queue2"), Is.True);
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task StorageQueue_Delete_SucceedsWhenExists()
+    {
+        const string storageAccountName = "topazstorqueuedel01";
+        const string resourceGroup = "test-queue-delete-rg";
+        const string queueName = "queue-to-delete";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        await RunAzureCliCommand(
+            $"az storage queue create --name {queueName} --account-name {storageAccountName} --account-key \"{accountKey}\" --queue-endpoint http://{storageAccountName}.queue.storage.topaz.local.dev:8893");
+
+        await RunAzureCliCommand(
+            $"az storage queue delete --name {queueName} --account-name {storageAccountName} --account-key \"{accountKey}\" --queue-endpoint http://{storageAccountName}.queue.storage.topaz.local.dev:8893",
+            (resp) =>
+            {
+                Assert.That(resp["deleted"]!.GetValue<bool>(), Is.True);
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

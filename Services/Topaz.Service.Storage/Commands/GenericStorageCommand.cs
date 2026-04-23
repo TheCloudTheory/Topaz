@@ -71,6 +71,14 @@ public sealed class GenericStorageCommand : IEmulatorCommand
                     metadata.AddCommand<SetBlobMetadataCommand>("update");
                 });
             });
+
+            branch.AddBranch("queue", queue =>
+            {
+                queue.AddCommand<CreateQueueCommand>("create");
+                queue.AddCommand<DeleteQueueCommand>("delete");
+                queue.AddCommand<ListQueuesCommand>("list");
+                queue.AddCommand<ShowQueueCommand>("show");
+            });
         });
     }
 }

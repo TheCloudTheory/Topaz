@@ -1,0 +1,72 @@
+using System.Net;
+using Microsoft.AspNetCore.Http;
+using Topaz.Service.Shared;
+using Topaz.Shared;
+
+namespace Topaz.Service.Storage.Endpoints.Queue;
+
+internal sealed class CreateQueueEndpoint(ITopazLogger logger)
+    : QueueDataPlaneEndpointBase(logger), IEndpointDefinition
+{
+    private readonly QueueServiceControlPlane _controlPlane = new(new QueueResourceProvider(logger), logger);
+    private readonly QueueServiceDataPlane _dataPlane = new(new QueueServiceControlPlane(new QueueResourceProvider(logger), logger), logger);
+
+    public string[] Endpoints => ["PUT /{queue-name}"];
+
+    public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/queues/write"];
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultQueueStoragePort], Protocol.Https);
+
+    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    {
+        if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
+        var subscriptionIdentifier = storageAccount!.GetSubscription();
+        var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+
+        try
+        {
+            if (!TryGetQueueNameFromPath(context.Request.Path, out var queueName) || string.IsNullOrEmpty(queueName))
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                return;
+            }
+
+            Logger.LogDebug(nameof(CreateQueueEndpoint), nameof(GetResponse),
+                "Attempting to create queue: {0}.", queueName);
+
+            if (_controlPlane.QueueExists(subscriptionIdentifier, resourceGroupIdentifier,
+                    storageAccount.Name, queueName))
+            {
+                response.StatusCode = HttpStatusCode.Conflict;
+                return;
+            }
+
+            var result = _dataPlane.CreateQueue(subscriptionIdentifier, resourceGroupIdentifier,
+                storageAccount.Name, queueName);
+
+            if (result.Result == OperationResult.Created)
+            {
+                response.Content = new ByteArrayContent([]);
+                response.StatusCode = HttpStatusCode.Created;
+                Logger.LogDebug(nameof(CreateQueueEndpoint), nameof(GetResponse), "Queue {0} created.", queueName);
+            }
+            else
+            {
+                response.Content = new ByteArrayContent([]);
+                response.StatusCode = HttpStatusCode.InternalServerError;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex);
+            response.Content = new ByteArrayContent([]);
+            response.StatusCode = HttpStatusCode.InternalServerError;
+        }
+    }
+}

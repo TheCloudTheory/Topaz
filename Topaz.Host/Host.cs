@@ -84,6 +84,7 @@ public class Host
         {
             new AzureStorageService(_logger),
             new TableStorageService(_logger),
+            new QueueStorageService(_logger),
             new ResourceGroupService(_eventPipeline, _logger),
             new SubscriptionService(_eventPipeline, _logger),
             new KeyVaultService(_eventPipeline, _logger),

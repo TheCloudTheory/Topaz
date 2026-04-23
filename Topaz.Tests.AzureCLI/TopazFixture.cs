@@ -57,6 +57,7 @@ public class TopazFixture
             .WithPortBinding(8898)
             .WithPortBinding(8897)
             .WithPortBinding(8891)
+            .WithPortBinding(8893)
             .WithNetwork(_network)
             .WithName("topaz.local.dev")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")

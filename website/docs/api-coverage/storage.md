@@ -134,13 +134,13 @@ Table Storage is served on port **8890** (HTTPS) in Topaz.
 
 ## Data Plane — Queue Storage
 
-Queue Storage is **not implemented** in Topaz.
+Queue Storage is **partially implemented** in Topaz.
 
 | Operation | Status |
 |-----------|--------|
-| Create Queue | ❌ |
-| Delete Queue | ❌ |
-| List Queues | ❌ |
+| Create Queue | ✅ |
+| Delete Queue | ✅ |
+| List Queues | ✅ |
 | Put Message | ❌ |
 | Get Messages | ❌ |
 | Delete Message | ❌ |
