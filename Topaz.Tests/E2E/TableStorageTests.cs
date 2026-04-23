@@ -850,7 +850,9 @@ namespace Topaz.Tests.E2E
             var tableClient = tableServiceClient.GetTableClient("gosdkentitytest");
             tableClient.AddEntity(new TestEntity { PartitionKey = "pk1", RowKey = "rk1", Name = "gosdk" });
 
-            // Build the raw path with %20 before RowKey (Go SDK behaviour).
+            // The Go SDK (Terraform AzureRM) sends the path with %20 in the URL but signs
+            // using the decoded path (per Azure docs: URL-decode the resource URI before building
+            // the canonical resource string). ComputeSharedKeyLiteSignature does the same decoding.
             var path = "/gosdkentitytest(PartitionKey='pk1',%20RowKey='rk1')";
             var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
             using var httpClient = new HttpClient();
@@ -876,7 +878,7 @@ namespace Topaz.Tests.E2E
         private static string ComputeSharedKeyLiteSignature(string accountKey, string accountName,
             string absolutePath, string date)
         {
-            var canonicalizedResource = "/" + accountName + absolutePath;
+            var canonicalizedResource = "/" + accountName + Uri.UnescapeDataString(absolutePath);
             var stringToSign = date + "\n" + canonicalizedResource;
             using var hmac = new HMACSHA256(Convert.FromBase64String(accountKey));
             return Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(stringToSign)));

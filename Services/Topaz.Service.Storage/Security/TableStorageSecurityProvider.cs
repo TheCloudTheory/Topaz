@@ -81,7 +81,7 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
         headers.TryGetValue("Content-Type", out var contentType);
         headers.TryGetValue("x-ms-date", out var date);
 
-        var canonicalizedResource = "/" + storageAccountName + absolutePath;
+        var canonicalizedResource = "/" + storageAccountName + Uri.UnescapeDataString(absolutePath);
         if (query.TryGetValueForKey("comp", out var comp))
             canonicalizedResource += "?comp=" + comp;
 
@@ -132,10 +132,16 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
 
         var stringToSign = BuildStringToSign(storageAccountName, absolutePath, headers, query);
         
+        logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLiteScheme),
+            "StringToSign (base64): {0}", Convert.ToBase64String(Encoding.UTF8.GetBytes(stringToSign)));
+        
         // Calculate hashes for both keys as we don't know which key was used for 
         // sending a request
         var hash1 = ComputeHashForKey(storageAccountResource.Resource.Keys[0].Value, stringToSign);
         var hash2 = ComputeHashForKey(storageAccountResource.Resource.Keys[1].Value, stringToSign);
+        
+        logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLiteScheme),
+            "Computed hash1: {0}, Received: {1}, Match: {2}", hash1, signature, hash1 == signature);
         
         if (hash1 == signature) return true;
         return hash2 == signature;
@@ -158,12 +164,14 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
         // To calculate `CanonicalizedResource` for Table Storage we need to do a bunch of additional steps:
         // 1. Beginning with an empty string (""), append a forward slash (/), followed by the name of the account
         //    that owns the resource being accessed.
-        // 2. Append the resource's encoded URI path. If the request URI addresses a component of the resource,
-        //    append the appropriate query string. The query string should include the question mark and the comp parameter
-        //    (for example, ?comp=metadata). No other parameters should be included on the query string.
+        // 2. URL-decode the resource URI path and append it. Per Azure docs the client must URL-decode the URI
+        //    before building the canonical resource string, so we do the same when verifying the signature.
+        // 3. If the request URI addresses a component of the resource, append the appropriate query string.
+        //    The query string should include the question mark and the comp parameter (for example, ?comp=metadata).
+        //    No other parameters should be included on the query string.
         
         var canonicalizedResource = "/" + storageAccountName;
-        canonicalizedResource += actualPath;
+        canonicalizedResource += Uri.UnescapeDataString(actualPath);
         
         if (query.TryGetValueForKey("comp", out var comp))
         {
