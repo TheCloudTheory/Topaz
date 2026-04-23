@@ -152,7 +152,8 @@ public class QueueStorageTests
     {
         // Arrange
         var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
-        queueClient.CreateQueue("props-test-queue");
+        var createResponse = queueClient.CreateQueue("props-test-queue");
+        Assert.That(createResponse, Is.Not.Null, "Queue creation should not return null");
 
         // Act
         var queue = queueClient.GetQueueClient("props-test-queue");

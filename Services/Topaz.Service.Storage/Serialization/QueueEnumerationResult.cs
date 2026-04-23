@@ -46,14 +46,14 @@ public class QueueEnumerationResult : IXmlSerializable
         if (Queues is not null)
         {
             writer.WriteStartElement("Queues");
-
+            
             foreach (var queue in Queues)
             {
                 writer.WriteStartElement("Queue");
                 writer.WriteElementString("Name", queue.Name);
                 writer.WriteEndElement();
             }
-
+            
             writer.WriteEndElement();
         }
     }

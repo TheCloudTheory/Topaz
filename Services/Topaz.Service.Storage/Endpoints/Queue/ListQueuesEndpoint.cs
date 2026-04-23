@@ -45,15 +45,31 @@ internal sealed class ListQueuesEndpoint(ITopazLogger logger)
                 return;
             }
 
-            using var sw = new EncodingAwareStringWriter();
-            var serializer = new XmlSerializer(typeof(QueueEnumerationResult));
-            serializer.Serialize(sw, new QueueEnumerationResult(storageAccount.Name, op.Resource));
+            // Build XML manually to avoid XmlSerializer issues
+            var sb = new StringBuilder();
+            sb.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+            sb.Append($"<EnumerationResults ServiceEndpoint=\"https://{storageAccount.Name}.queue.core.windows.net\">");
+            sb.Append("<Prefix></Prefix>");
+            sb.Append("<Marker></Marker>");
+            sb.Append("<MaxResults>0</MaxResults>");
+            sb.Append("<Queues>");
+            
+            foreach (var queue in op.Resource)
+            {
+                sb.Append("<Queue>");
+                sb.Append($"<Name>{System.Net.WebUtility.HtmlEncode(queue.Name)}</Name>");
+                sb.Append("</Queue>");
+            }
+            
+            sb.Append("</Queues>");
+            sb.Append("</EnumerationResults>");
 
-            response.Content = new StringContent(sw.ToString(), Encoding.UTF8, "application/xml");
+            response.Content = new StringContent(sb.ToString(), Encoding.UTF8, "application/xml");
             response.StatusCode = HttpStatusCode.OK;
         }
         catch (Exception ex)
         {
+            Logger.LogError($"{ex.GetType().Name}: {ex.Message}. InnerException: {ex.InnerException?.Message}");
             Logger.LogError(ex);
 
             response.Content = new StringContent(ex.Message);
