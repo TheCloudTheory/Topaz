@@ -765,8 +765,8 @@ public class KeyVaultTests : TopazFixture
             {
                 Assert.Multiple(() =>
                 {
-                    Assert.That(response["attributes"], Is.Not.Null);
-                    Assert.That(response["attributes"]!["expiryTime"]!.GetValue<string>(), Is.EqualTo("P2Y"));
+                    Assert.That(response["expiresIn"], Is.Not.Null);
+                    Assert.That(response["expiresIn"]!.GetValue<string>(), Is.EqualTo("P2Y"));
                 });
             });
         await RunAzureCliCommand("az keyvault delete --name RotPolKv01 --only-show-errors");
@@ -785,7 +785,7 @@ public class KeyVaultTests : TopazFixture
             "az keyvault key rotation-policy show --vault-name RotPolKv02 --name rp-key2",
             (response) =>
             {
-                Assert.That(response["attributes"]!["expiryTime"]!.GetValue<string>(), Is.EqualTo("P1Y"));
+                Assert.That(response["expiresIn"]!.GetValue<string>(), Is.EqualTo("P1Y"));
             });
         await RunAzureCliCommand("az keyvault delete --name RotPolKv02 --only-show-errors");
         await RunAzureCliCommand("az group delete -n test-rg --yes");
@@ -805,7 +805,7 @@ public class KeyVaultTests : TopazFixture
                 Assert.Multiple(() =>
                 {
                     Assert.That(actions, Has.Count.EqualTo(1));
-                    Assert.That(actions[0]!["action"]!["type"]!.GetValue<string>(), Is.EqualTo("Rotate"));
+                    Assert.That(actions[0]!["action"]!.GetValue<string>(), Is.EqualTo("Rotate"));
                 });
             });
         await RunAzureCliCommand("az keyvault delete --name RotPolKv03 --only-show-errors");
