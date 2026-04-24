@@ -65,6 +65,21 @@ internal sealed class QueueResourceProvider(ITopazLogger logger) : ResourceProvi
             ".queue-properties.json");
     }
 
+    public string GetMessageFilePath(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName, string messageId)
+    {
+        var messagesPath = Path.Combine(GetQueueDataPath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, queueName), "messages");
+        return Path.Combine(messagesPath, $"{messageId}.json");
+    }
+
+    public string GetMessagesDirectoryPath(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName)
+    {
+        return Path.Combine(GetQueueDataPath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, queueName), "messages");
+    }
+
     private string GetQueuePathWithReplacedValues(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName)
     {

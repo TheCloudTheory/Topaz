@@ -23,11 +23,11 @@ public record Secret
             DateTimeOffset.Now.ToUnixTimeSeconds());
     }
 
-    public required string Id { get; init; }
-    public required string Value { get; init; }
-    public required string Name { get; init; }
+    public string? Id { get; init; }
+    public string? Value { get; init; }
+    public string? Name { get; init; }
     public Guid Version { get; set; }
-    public required SecretAttributes Attributes { get; set; }
+    public SecretAttributes? Attributes { get; set; }
     public string? ContentType { get; set; }
 
     public void UpdateFromRequest(UpdateSecretRequest request)

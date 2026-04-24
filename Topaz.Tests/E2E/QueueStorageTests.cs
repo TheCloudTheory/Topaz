@@ -180,4 +180,72 @@ public class QueueStorageTests
         Assert.That(queues.Any(q => q.Name == "list-queue-1"), Is.True);
         Assert.That(queues.Any(q => q.Name == "list-queue-2"), Is.True);
     }
+
+    [Test]
+    public void Queue_PutMessage_EnqueuesAndUpdatesMessage()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("message-test-queue");
+        var queue = queueClient.GetQueueClient("message-test-queue");
+        
+        var messageContent = "Test message content";
+
+        // Act - SendMessage (enqueue)
+        var sendResponse = queue.SendMessage(messageContent);
+        Assert.That(sendResponse.Value.MessageId, Is.Not.Null);
+        Assert.That(sendResponse.Value.PopReceipt, Is.Not.Null);
+
+        // Act - UpdateMessage (Put Message with new visibility)
+        var messageId = sendResponse.Value.MessageId;
+        var popReceipt = sendResponse.Value.PopReceipt;
+        var newContent = "Updated message content";
+        
+        var updateResponse = queue.UpdateMessage(messageId, popReceipt, new BinaryData(newContent), TimeSpan.FromSeconds(60));
+        
+        // Assert
+        Assert.That(updateResponse.Value.PopReceipt, Is.Not.Null);
+        Assert.That(updateResponse.Value.PopReceipt, Is.Not.EqualTo(popReceipt), "Pop receipt should be regenerated");
+    }
+
+    [Test]
+    public void Queue_PutMessage_WithVisibilityTimeout()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("visibility-test-queue");
+        var queue = queueClient.GetQueueClient("visibility-test-queue");
+        
+        var messageContent = "Visibility test message";
+
+        // Act - SendMessage
+        var sendResponse = queue.SendMessage(messageContent);
+        var messageId = sendResponse.Value.MessageId;
+        var popReceipt = sendResponse.Value.PopReceipt;
+
+        // Act - UpdateMessage with 120 second visibility timeout
+        var updateResponse = queue.UpdateMessage(messageId, popReceipt, new BinaryData(messageContent), TimeSpan.FromSeconds(120));
+
+        // Assert
+        Assert.That(updateResponse.Value.PopReceipt, Is.Not.Null);
+    }
+
+    [Test]
+    public void Queue_PutMessage_MessageCountIncreases()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("count-test-queue");
+        var queue = queueClient.GetQueueClient("count-test-queue");
+
+        // Act
+        queue.SendMessage("Message 1");
+        queue.SendMessage("Message 2");
+        queue.SendMessage("Message 3");
+
+        var properties = queue.GetProperties();
+
+        // Assert
+        Assert.That(properties.Value.ApproximateMessagesCount, Is.GreaterThanOrEqualTo(3));
+    }
 }

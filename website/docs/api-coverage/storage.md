@@ -141,8 +141,8 @@ Queue Storage is **partially implemented** in Topaz.
 | Create Queue | ✅ |
 | Delete Queue | ✅ |
 | List Queues | ✅ |
-| Put Message | ❌ |
+| Put Message | ✅ |
 | Get Messages | ❌ |
 | Delete Message | ❌ |
 | Peek Messages | ❌ |
-| Update Message | ❌ |
+| Update Message | ✅ |

@@ -8,6 +8,7 @@ namespace Topaz.Service.Storage;
 
 internal sealed class QueueServiceControlPlane(QueueResourceProvider provider, ITopazLogger logger)
 {
+    public static QueueServiceControlPlane New(ITopazLogger logger) => new(new QueueResourceProvider(logger), logger);
     public ControlPlaneOperationResult<QueueProperties[]> ListQueues(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName)
     {

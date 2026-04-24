@@ -8,8 +8,8 @@ namespace Topaz.Service.Storage.Endpoints.Queue;
 internal sealed class CreateQueueEndpoint(ITopazLogger logger)
     : QueueDataPlaneEndpointBase(logger), IEndpointDefinition
 {
-    private readonly QueueServiceControlPlane _controlPlane = new(new QueueResourceProvider(logger), logger);
-    private readonly QueueServiceDataPlane _dataPlane = new(new QueueServiceControlPlane(new QueueResourceProvider(logger), logger), logger);
+    private readonly QueueServiceControlPlane _controlPlane = QueueServiceControlPlane.New(logger);
+    private readonly QueueServiceDataPlane _dataPlane = QueueServiceDataPlane.New(logger);
 
     public string[] Endpoints => ["PUT /{queue-name}"];
 
