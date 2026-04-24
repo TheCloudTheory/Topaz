@@ -1,7 +1,6 @@
 using Azure.Deployments.Core.Definitions.Schema;
-using Azure.Deployments.Core.Entities;
 using Azure.Deployments.Templates.Engines;
-using Newtonsoft.Json;
+using JetBrains.Annotations;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Topaz.Service.ResourceManager.Models.Requests;
@@ -20,8 +19,8 @@ internal record CreateDeploymentRequest
 
     internal record DeploymentParameters
     {
-        public string? Schema { get; set; }
-        public string? ContentVersion { get; set; }
+        [UsedImplicitly] public string? Schema { get; set; }
+        [UsedImplicitly] public string? ContentVersion { get; set; }
         public Dictionary<string, ParameterValue>? Parameters { get; set; }
     }
 
@@ -38,6 +37,8 @@ internal record CreateDeploymentRequest
             ? throw new InvalidOperationException("Deployment template is missing.")
             : Properties.Template.ToString();
 
-        return TemplateParsingEngine.ParseTemplate(templateJson);
+        return string.IsNullOrWhiteSpace(templateJson)
+            ? throw new InvalidOperationException("Deployment template is empty.")
+            : TemplateParsingEngine.ParseTemplate(templateJson);
     }
 }

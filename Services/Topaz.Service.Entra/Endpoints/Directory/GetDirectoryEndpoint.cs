@@ -4,7 +4,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Entra.Endpoints.Directory;
 
-internal sealed class GetDirectoryEndpoint(ITopazLogger logger) : IEndpointDefinition
+internal sealed class GetDirectoryEndpoint() : IEndpointDefinition
 {
     public string[] Endpoints => ["GET /directory"];
     public string[] Permissions => [];

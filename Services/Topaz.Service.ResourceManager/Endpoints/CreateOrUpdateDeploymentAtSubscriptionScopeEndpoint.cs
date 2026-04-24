@@ -76,6 +76,6 @@ public sealed class CreateOrUpdateDeploymentAtSubscriptionScopeEndpoint(
             request.Location,
             request.Properties.Mode);
 
-        response.CreateJsonContentResponse(result.Resource, HttpStatusCode.Created);
+        response.CreateJsonContentResponse(result.Resource!, HttpStatusCode.Created);
     }
 }

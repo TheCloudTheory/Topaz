@@ -5,7 +5,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Entra.Endpoints.TenantRelationships;
 
-internal sealed class FindTenantInformationByTenantIdEndpoint(ITopazLogger logger) : IEndpointDefinition
+internal sealed class FindTenantInformationByTenantIdEndpoint() : IEndpointDefinition
 {
     public string[] Endpoints => [@"GET /tenantRelationships/^findTenantInformationByTenantId\(tenantId='.*?'\)"];
     public string[] Permissions => [];

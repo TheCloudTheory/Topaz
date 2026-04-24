@@ -1,13 +1,17 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 using Topaz.Service.KeyVault.Models.Requests;
 using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Models;
 
-public record class Secret
+public record Secret
 {
-    [System.Text.Json.Serialization.JsonConstructor]
-    public Secret() { }
+    [JsonConstructor]
+    public Secret()
+    {
+    }
 
     public Secret(string name, string value, Guid version, string vaultName = "")
     {
@@ -15,14 +19,15 @@ public record class Secret
         Name = name;
         Value = value;
         Version = version;
-        Attributes = new SecretAttributes(true, DateTimeOffset.Now.ToUnixTimeSeconds(), DateTimeOffset.Now.ToUnixTimeSeconds());
+        Attributes = new SecretAttributes(true, DateTimeOffset.Now.ToUnixTimeSeconds(),
+            DateTimeOffset.Now.ToUnixTimeSeconds());
     }
 
-    public string Id { get; set; }
-    public string Value { get; set; }
-    public string Name { get; set; }
+    public required string Id { get; init; }
+    public required string Value { get; init; }
+    public required string Name { get; init; }
     public Guid Version { get; set; }
-    public SecretAttributes Attributes { get; set; }
+    public required SecretAttributes Attributes { get; set; }
     public string? ContentType { get; set; }
 
     public void UpdateFromRequest(UpdateSecretRequest request)
@@ -38,7 +43,7 @@ public record class Secret
             ContentType = request.ContentType;
         }
     }
-    
+
     public override string ToString()
     {
         return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
@@ -47,5 +52,5 @@ public record class Secret
 
 public record SecretAttributes(bool Enabled, long Created, long Updated)
 {
-    public string RecoveryLevel => "Recoverable+Purgeable";
+    [UsedImplicitly] public string RecoveryLevel => "Recoverable+Purgeable";
 }

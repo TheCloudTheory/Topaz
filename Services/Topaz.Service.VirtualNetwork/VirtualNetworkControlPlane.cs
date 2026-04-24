@@ -10,9 +10,13 @@ using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork;
 
-internal sealed class VirtualNetworkControlPlane(Pipeline eventPipeline, VirtualNetworkResourceProvider provider, ITopazLogger logger) : IControlPlane
+internal sealed class VirtualNetworkControlPlane(
+    Pipeline eventPipeline,
+    VirtualNetworkResourceProvider provider,
+    ITopazLogger logger) : IControlPlane
 {
     private const string VirtualNetworkNotFoundCode = "VirtualNetworkNotFound";
+
     private const string VirtualNetworkNotFoundMessageTemplate =
         "Virtual network '{0}' could not be found";
 
@@ -22,7 +26,7 @@ internal sealed class VirtualNetworkControlPlane(Pipeline eventPipeline, Virtual
 
     public static VirtualNetworkControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
         new(eventPipeline, new VirtualNetworkResourceProvider(logger), logger);
-    
+
     public OperationResult Deploy(GenericResource resource)
     {
         var vnet = resource.As<VirtualNetworkResource, VirtualNetworkResourceProperties>();
@@ -37,15 +41,15 @@ internal sealed class VirtualNetworkControlPlane(Pipeline eventPipeline, Virtual
             {
                 Properties = new CreateOrUpdateVirtualNetworkRequest.CreateOrUpdateVirtualNetworkRequestProperties
                 {
-                     AddressSpace = vnet.Properties.AddressSpace,
-                     Subnets =  vnet.Properties.Subnets,
-                     EnableDdosProtection =  vnet.Properties.EnableDdosProtection,
-                     Encryption =  vnet.Properties.Encryption,
-                     BgpCommunities = vnet.Properties.BgpCommunities,
-                     FlowLogs = vnet.Properties.FlowLogs,
-                     FlowTimeoutInMinutes = vnet.Properties.FlowTimeoutInMinutes,
-                     EnableVmProtection = vnet.Properties.EnableVmProtection,
-                     PrivateEndpointVnetPolicy = vnet.Properties.PrivateEndpointVnetPolicy
+                    AddressSpace = vnet.Properties.AddressSpace,
+                    Subnets = vnet.Properties.Subnets,
+                    EnableDdosProtection = vnet.Properties.EnableDdosProtection,
+                    Encryption = vnet.Properties.Encryption,
+                    BgpCommunities = vnet.Properties.BgpCommunities,
+                    FlowLogs = vnet.Properties.FlowLogs,
+                    FlowTimeoutInMinutes = vnet.Properties.FlowTimeoutInMinutes,
+                    EnableVmProtection = vnet.Properties.EnableVmProtection,
+                    PrivateEndpointVnetPolicy = vnet.Properties.PrivateEndpointVnetPolicy
                 }
             });
 
@@ -63,7 +67,7 @@ internal sealed class VirtualNetworkControlPlane(Pipeline eventPipeline, Virtual
             return new ControlPlaneOperationResult<VirtualNetworkResource>(OperationResult.NotFound, null,
                 string.Format(VirtualNetworkNotFoundMessageTemplate, virtualNetworkName), VirtualNetworkNotFoundCode);
         }
-        
+
         return new ControlPlaneOperationResult<VirtualNetworkResource>(OperationResult.Success, resource, null, null);
     }
 
@@ -80,10 +84,11 @@ internal sealed class VirtualNetworkControlPlane(Pipeline eventPipeline, Virtual
         }
 
         var properties = VirtualNetworkResourceProperties.FromRequest(request);
-        var resource = new VirtualNetworkResource(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName, resourceGroupOperation.Resource!.Location, properties);
+        var resource = new VirtualNetworkResource(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName,
+            resourceGroupOperation.Resource!.Location!, properties);
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName, resource);
-        
+
         return new ControlPlaneOperationResult<VirtualNetworkResource>(OperationResult.Created, resource, null, null);
     }
 }

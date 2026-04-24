@@ -90,7 +90,7 @@ public class Host
             new KeyVaultService(_eventPipeline, _logger),
             new EventHubService(_logger),
             new BlobStorageService(_logger),
-            new TopazCloudEnvironmentService(_logger),
+            new TopazCloudEnvironmentService(),
             new ServiceBusService(_eventPipeline, _logger),
             new ResourceManagerService(_eventPipeline, _logger, cancellationToken),
             new VirtualNetworkService(_eventPipeline, _logger),

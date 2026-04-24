@@ -1,6 +1,5 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
-using Topaz.EventPipeline;
 using Topaz.Service.ResourceManager.Deployment;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -10,7 +9,6 @@ using Topaz.Shared.Extensions;
 namespace Topaz.Service.ResourceManager.Endpoints;
 
 public sealed class CancelDeploymentEndpoint(
-    Pipeline eventPipeline,
     ITopazLogger logger,
     TemplateDeploymentOrchestrator deploymentOrchestrator) : IEndpointDefinition
 {

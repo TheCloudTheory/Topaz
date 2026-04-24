@@ -39,7 +39,7 @@ internal sealed class GenerateContainerRegistryCredentialsEndpoint(Pipeline even
 
         if (operation.Result == OperationResult.NotFound)
         {
-            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode, registryName, resourceGroupName);
+            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode, registryName!, resourceGroupName!);
             return;
         }
 

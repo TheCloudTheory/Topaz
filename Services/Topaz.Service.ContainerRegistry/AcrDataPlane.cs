@@ -455,7 +455,7 @@ internal sealed class AcrDataPlane(ContainerRegistryResourceProvider provider, I
     /// Returns the sorted list of repository names stored in this registry.
     /// Corresponds to <c>GET /v2/_catalog</c>.
     /// </summary>
-    public IReadOnlyList<string> ListRepositories(
+    public List<string?> ListRepositories(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string registryName)
     {
         logger.LogDebug(nameof(AcrDataPlane), nameof(ListRepositories),
@@ -479,7 +479,7 @@ internal sealed class AcrDataPlane(ContainerRegistryResourceProvider provider, I
     /// Digest-only references (64-char lowercase hex filenames) are excluded.
     /// Corresponds to <c>GET /v2/{name}/tags/list</c>.
     /// </summary>
-    public IReadOnlyList<string> ListTags(
+    public List<string?> ListTags(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         string registryName, string repository)
     {

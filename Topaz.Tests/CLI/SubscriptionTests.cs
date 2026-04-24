@@ -24,7 +24,7 @@ public class SubscriptionTests
                 "--id",
                 subscription.SubscriptionId,
                 "--name",
-                subscription.DisplayName
+                subscription.DisplayName!
             ]);
             
             Assert.That(result, Is.EqualTo(0));

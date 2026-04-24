@@ -46,16 +46,14 @@ internal sealed class RegenerateContainerRegistryCredentialEndpoint(Pipeline eve
             registryName!,
             request.Name);
 
-        if (operation.Result == OperationResult.NotFound)
+        switch (operation.Result)
         {
-            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode, registryName, resourceGroupName);
-            return;
-        }
-
-        if (operation.Result == OperationResult.Failed)
-        {
-            response.CreateErrorResponse(operation.Code ?? "OPERATION_FAILED", operation.Reason ?? string.Empty, HttpStatusCode.BadRequest);
-            return;
+            case OperationResult.NotFound:
+                response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode, registryName!, resourceGroupName!);
+                return;
+            case OperationResult.Failed:
+                response.CreateErrorResponse(operation.Code ?? "OPERATION_FAILED", operation.Reason ?? string.Empty, HttpStatusCode.BadRequest);
+                return;
         }
 
         var props = operation.Resource!.Properties;
