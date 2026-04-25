@@ -1,6 +1,7 @@
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
 using Topaz.Service.Storage.Commands.Blob;
+using Topaz.Service.Storage.Commands.Message;
 
 namespace Topaz.Service.Storage.Commands;
 
@@ -78,6 +79,14 @@ public sealed class GenericStorageCommand : IEmulatorCommand
                 queue.AddCommand<DeleteQueueCommand>("delete");
                 queue.AddCommand<ListQueuesCommand>("list");
                 queue.AddCommand<ShowQueueCommand>("show");
+            });
+
+            branch.AddBranch("message", message =>
+            {
+                message.AddCommand<SendMessageCommand>("put");
+                message.AddCommand<GetMessagesCommand>("get");
+                message.AddCommand<DeleteMessageCommand>("delete");
+                message.AddCommand<UpdateMessageCommand>("update");
             });
         });
     }

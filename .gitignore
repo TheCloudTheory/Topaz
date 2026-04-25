@@ -16,3 +16,4 @@ Topaz.sln.DotSettings.user
 website/build/*
 Topaz.Tests.Terraform/TestResults/terraform-eventhub.trx
 GROWTH.md
+.plausible/*

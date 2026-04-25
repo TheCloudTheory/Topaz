@@ -141,7 +141,7 @@ Queue Storage is **partially implemented** in Topaz.
 | Create Queue | ✅ | |
 | Delete Queue | ✅ | |
 | List Queues | ✅ | |
-| Send Message (Enqueue) | ❌ | `POST /{queue-name}/messages` — create/enqueue a message |
+| Send Message (Enqueue) | ✅ | `POST /{queue-name}/messages` — create/enqueue a message |
 | Get Messages (Dequeue) | ✅ | `GET /{queue-name}/messages` — retrieve messages with visibility timeout |
 | Peek Messages | ❌ | `GET /{queue-name}/messages?peekonly=true` — retrieve without hiding |
 | Delete Message | ❌ | `DELETE /{queue-name}/messages/{messageId}` |

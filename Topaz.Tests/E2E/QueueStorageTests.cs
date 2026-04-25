@@ -356,7 +356,7 @@ public class QueueStorageTests
         var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
         queueClient.CreateQueue("visibility-hide-queue");
         var queue = queueClient.GetQueueClient("visibility-hide-queue");
-        
+
         queue.SendMessage("Hidden message");
 
         // Act - First receive with 60 second visibility
@@ -369,5 +369,57 @@ public class QueueStorageTests
         // Assert
         Assert.That(messages1, Has.Count.EqualTo(1), "First receive should get 1 message");
         Assert.That(messages2, Has.Count.EqualTo(0), "Second receive should get 0 messages (hidden during visibility)");
+    }
+
+    [Test]
+    public void Queue_SendMessage_ReturnsMessageIdAndPopReceipt()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("send-receipt-queue");
+        var queue = queueClient.GetQueueClient("send-receipt-queue");
+
+        // Act
+        var result = queue.SendMessage("Hello World");
+
+        // Assert
+        Assert.That(result.Value.MessageId, Is.Not.Null.And.Not.Empty);
+        Assert.That(result.Value.PopReceipt, Is.Not.Null.And.Not.Empty);
+        Assert.That(result.Value.InsertionTime, Is.Not.EqualTo(default(DateTimeOffset)));
+        Assert.That(result.Value.ExpirationTime, Is.Not.EqualTo(default(DateTimeOffset)));
+    }
+
+    [Test]
+    public void Queue_SendMessage_MessageIsDequeueableAfterSend()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("send-dequeue-queue");
+        var queue = queueClient.GetQueueClient("send-dequeue-queue");
+
+        // Act
+        queue.SendMessage("Dequeue me");
+        var received = queue.ReceiveMessages(1).Value;
+
+        // Assert
+        Assert.That(received, Has.Length.EqualTo(1));
+        Assert.That(received[0].Body.ToString(), Is.EqualTo("Dequeue me"));
+        Assert.That(received[0].MessageId, Is.Not.Null.And.Not.Empty);
+    }
+
+    [Test]
+    public void Queue_SendMessage_WithVisibilityTimeout_MessageIsInitiallyHidden()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("send-hidden-queue");
+        var queue = queueClient.GetQueueClient("send-hidden-queue");
+
+        // Act — enqueue with 60 second initial visibility delay
+        queue.SendMessage("Hidden on arrival", TimeSpan.FromSeconds(60));
+        var received = queue.ReceiveMessages(1).Value;
+
+        // Assert
+        Assert.That(received, Has.Length.EqualTo(0));
     }
 }

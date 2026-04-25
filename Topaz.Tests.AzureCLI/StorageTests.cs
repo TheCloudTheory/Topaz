@@ -1152,4 +1152,38 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task StorageMessage_Put_SucceedsWithValidContent()
+    {
+        const string storageAccountName = "topazstorqueuemsg01";
+        const string resourceGroup = "test-queue-msg-rg";
+        const string queueName = "msg-test-queue";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        await RunAzureCliCommand(
+            $"az storage queue create --name {queueName} --connection-string \"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={accountKey};QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:8893;\"");
+
+        await RunAzureCliCommand(
+            $"az storage message put --queue-name {queueName} --content \"Hello from CLI\" --connection-string \"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={accountKey};QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:8893;\"",
+            (resp) =>
+            {
+                Assert.That(resp["id"]!.GetValue<string>(), Is.Not.Null.And.Not.Empty);
+                Assert.That(resp["popReceipt"]!.GetValue<string>(), Is.Not.Null.And.Not.Empty);
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }
