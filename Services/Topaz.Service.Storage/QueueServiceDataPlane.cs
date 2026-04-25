@@ -82,6 +82,15 @@ internal sealed class QueueServiceDataPlane(QueueServiceControlPlane controlPlan
         var result = controlPlane.GetQueueProperties(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccountName, queueName);
 
+        if (result.Result == OperationResult.Success && result.Resource != null)
+        {
+            var messagesDir = resourceProvider.GetMessagesDirectoryPath(
+                subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName);
+            result.Resource.ApproximateMessageCount = Directory.Exists(messagesDir)
+                ? Directory.GetFiles(messagesDir, "*.json").Length
+                : 0;
+        }
+
         return new DataPlaneOperationResult<QueueProperties>(result.Result, result.Resource, result.Reason,
             result.Code);
     }
