@@ -134,3 +134,9 @@ The setup above works identically in a CI pipeline. Run Topaz as a service conta
 Topaz currently supports Terraform workflows for Azure Storage, Key Vault, Service Bus, Event Hubs, Container Registry, and Resource Manager operations including resource groups and ARM template deployments. The [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/) list which operations are implemented per service.
 
 Not every AzureRM resource type is emulated yet. If you hit a resource that Topaz does not support, the provider will return a `404` or an unsupported operation error. Check the API coverage page for current status, and open an issue if something you need is missing.
+
+:::tip[Try it in 5 minutes]
+Topaz installs as a single binary with no Azure subscription required. The getting-started guide walks through installation, DNS setup, and your first `terraform apply` against the local emulator.
+
+[Get started →](/docs/intro)
+:::
