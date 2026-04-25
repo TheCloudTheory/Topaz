@@ -111,6 +111,7 @@ Always use `GlobalSettings.*Port` constants:
 | `GlobalSettings.DefaultKeyVaultPort` | 8898 |
 | `GlobalSettings.DefaultResourceManagerPort` | 8899 |
 | `GlobalSettings.DefaultBlobStoragePort` | 8891 |
+| `GlobalSettings.DefaultQueueStoragePort` | 8893 |
 
 ### Resource model naming
 
@@ -129,6 +130,7 @@ Both suites are required for every endpoint or control-plane change.
 - Use `RunAzureCliCommand("az ...")` via `TopazFixture`.
 - Use `GlobalSettings.ContainerRegistryPort` directly for port references.
 - **DNS**: every new hostname used in a test (registry login server, vault URL, etc.) must be added as a `WithExtraHost(...)` entry in `TopazFixture.cs`. A missing entry causes a silent curl timeout (exit code 28), not a DNS error.
+- **Storage data-plane commands** (`az storage queue ...`, `az storage blob ...`) must use `--connection-string` rather than separate `--account-name`/`--account-key`/`--queue-endpoint` flags. The Python SDK only extracts the account name from `*.core.windows.net` and localhost URLs; Topaz's custom domain causes a client-side `ValueError: Unable to determine account name` before any network call is made. Connection string format: `"DefaultEndpointsProtocol=https;AccountName={account};AccountKey={key};QueueEndpoint=https://{account}.queue.storage.topaz.local.dev:8893;"`
 - **Rebuild before running**: `Topaz.Tests.AzureCLI` runs against the Docker image, not local binaries. Always rebuild with `./scripts/build-docker.sh arm64` (or `amd64`) after any code change before running these tests. Results from a stale image are not valid evidence.
 
 ### Terraform/debugging workflow
@@ -181,6 +183,18 @@ When an azure-cli command returns unexpected JSON (e.g. missing fields that Topa
 - After a click causes a re-render, re-query with a fresh `cut.Find(...)` — stored references hold stale event-handler IDs.
 - Use `cut.WaitForAssertion(...)` for async state changes.
 - One `[Test]` per user-visible behaviour; name: `<Component>_<Behaviour>_<ExpectedOutcome>`.
+
+## Azure Queue Storage — response contracts
+
+These differ from intuition; getting them wrong causes `NullReferenceException` inside the Azure SDK error parser.
+
+| Operation | Method | Path | Status | Response |
+|---|---|---|---|---|
+| Get Queue Metadata | `GET` | `/{queue}?comp=metadata` | 200 | Empty body; `x-ms-approximate-messages-count` header |
+| Update Message | `PUT` | `/{queue}/messages/{id}` | **204** | Empty body; `x-ms-popreceipt` + `x-ms-time-next-visible` headers |
+| Send Message | `POST` | `/{queue}/messages` | 201 | XML body (`QueueMessagesList`) |
+
+The `UpdateMessage` endpoint returns metadata in **response headers, not the body**. Any non-204 response causes the SDK to throw `RequestFailedException`, which then crashes in `StorageRequestFailedDetailsParser.TryParse` when the body isn't a valid error XML.
 
 ## ACR data-plane — implemented endpoints
 
