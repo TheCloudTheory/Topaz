@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -23,6 +24,8 @@ internal sealed class CreateQueueEndpoint(ITopazLogger logger)
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
         {
             response.StatusCode = HttpStatusCode.NotFound;
+            response.Content = new ByteArrayContent([]);
+            response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
             return;
         }
 
@@ -34,6 +37,8 @@ internal sealed class CreateQueueEndpoint(ITopazLogger logger)
             if (!TryGetQueueNameFromPath(context.Request.Path, out var queueName) || string.IsNullOrEmpty(queueName))
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new ByteArrayContent([]);
+                response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
                 return;
             }
 
@@ -44,6 +49,8 @@ internal sealed class CreateQueueEndpoint(ITopazLogger logger)
                     storageAccount.Name, queueName))
             {
                 response.StatusCode = HttpStatusCode.Conflict;
+                response.Content = new ByteArrayContent([]);
+                response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
                 return;
             }
 
@@ -54,12 +61,14 @@ internal sealed class CreateQueueEndpoint(ITopazLogger logger)
             {
                 response.Content = new ByteArrayContent([]);
                 response.StatusCode = HttpStatusCode.Created;
+                response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
                 Logger.LogDebug(nameof(CreateQueueEndpoint), nameof(GetResponse), "Queue {0} created.", queueName);
             }
             else
             {
                 response.Content = new ByteArrayContent([]);
                 response.StatusCode = HttpStatusCode.InternalServerError;
+                response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
             }
         }
         catch (Exception ex)
@@ -67,6 +76,7 @@ internal sealed class CreateQueueEndpoint(ITopazLogger logger)
             Logger.LogError(ex);
             response.Content = new ByteArrayContent([]);
             response.StatusCode = HttpStatusCode.InternalServerError;
+            response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
         }
     }
 }

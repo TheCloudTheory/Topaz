@@ -18,7 +18,10 @@ public class QueueStorageService(ITopazLogger logger) : IServiceDefinition
         new DeleteQueueEndpoint(logger),
         new ListQueuesEndpoint(logger),
         new GetQueuePropertiesEndpoint(logger),
+        new SendMessageEndpoint(logger),
+        new GetMessagesEndpoint(logger),
         new PutMessageEndpoint(logger),
+        new DeleteMessageEndpoint(logger),
     ];
 
     public void Bootstrap()

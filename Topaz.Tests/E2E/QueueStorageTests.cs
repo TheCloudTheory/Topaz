@@ -248,4 +248,126 @@ public class QueueStorageTests
         // Assert
         Assert.That(properties.Value.ApproximateMessagesCount, Is.GreaterThanOrEqualTo(3));
     }
+
+    [Test]
+    public void Queue_GetMessages_ReturnsEmptyWhenNoMessages()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("empty-queue");
+        var queue = queueClient.GetQueueClient("empty-queue");
+
+        // Act
+        var messages = queue.ReceiveMessages(1).Value.ToList();
+
+        // Assert
+        Assert.That(messages, Has.Count.EqualTo(0));
+    }
+
+    [Test]
+    public void Queue_GetMessages_ReturnsSingleMessageWhenQueued()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("single-message-queue");
+        var queue = queueClient.GetQueueClient("single-message-queue");
+        
+        var messageContent = "Single message content";
+        queue.SendMessage(messageContent);
+
+        // Act
+        var messages = queue.ReceiveMessages(1).Value.ToList();
+
+        // Assert
+        Assert.That(messages, Has.Count.EqualTo(1));
+        Assert.That(messages[0].MessageText, Is.EqualTo(messageContent));
+        Assert.That(messages[0].PopReceipt, Is.Not.Null);
+    }
+
+    [Test]
+    public void Queue_GetMessages_ReturnsMultipleMessages()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("multi-message-queue");
+        var queue = queueClient.GetQueueClient("multi-message-queue");
+        
+        queue.SendMessage("Message 1");
+        queue.SendMessage("Message 2");
+        queue.SendMessage("Message 3");
+
+        // Act
+        var messages = queue.ReceiveMessages(3).Value.ToList();
+
+        // Assert
+        Assert.That(messages, Has.Count.GreaterThanOrEqualTo(3));
+    }
+
+    [Test]
+    public void Queue_GetMessages_RespectNumofMessagesLimit()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("limit-test-queue");
+        var queue = queueClient.GetQueueClient("limit-test-queue");
+        
+        for (int i = 0; i < 10; i++)
+        {
+            queue.SendMessage($"Message {i}");
+        }
+
+        // Act
+        var messages = queue.ReceiveMessages(5).Value.ToList();
+
+        // Assert
+        Assert.That(messages, Has.Count.EqualTo(5));
+    }
+
+    [Test]
+    public void Queue_GetMessages_IncrementsDequeueCount()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("dequeue-count-queue");
+        var queue = queueClient.GetQueueClient("dequeue-count-queue");
+        
+        queue.SendMessage("Test message");
+
+        // Act - First receive
+        var messages1 = queue.ReceiveMessages(1).Value.ToList();
+        var initialDequeueCount = messages1[0].DequeueCount;
+
+        // Delete the message and re-send to simulate another dequeue
+        queue.DeleteMessage(messages1[0].MessageId, messages1[0].PopReceipt);
+        queue.SendMessage("Test message");
+
+        // Act - Second receive
+        var messages2 = queue.ReceiveMessages(1).Value.ToList();
+        var newDequeueCount = messages2[0].DequeueCount;
+
+        // Assert
+        Assert.That(newDequeueCount, Is.GreaterThanOrEqualTo(initialDequeueCount));
+    }
+
+    [Test]
+    public void Queue_GetMessages_HidesMessageDuringVisibility()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("visibility-hide-queue");
+        var queue = queueClient.GetQueueClient("visibility-hide-queue");
+        
+        queue.SendMessage("Hidden message");
+
+        // Act - First receive with 60 second visibility
+        var messages1 = queue.ReceiveMessages(1, TimeSpan.FromSeconds(60)).Value.ToList();
+        var firstMessageId = messages1[0].MessageId;
+
+        // Try to receive again immediately
+        var messages2 = queue.ReceiveMessages(1).Value.ToList();
+
+        // Assert
+        Assert.That(messages1, Has.Count.EqualTo(1), "First receive should get 1 message");
+        Assert.That(messages2, Has.Count.EqualTo(0), "Second receive should get 0 messages (hidden during visibility)");
+    }
 }

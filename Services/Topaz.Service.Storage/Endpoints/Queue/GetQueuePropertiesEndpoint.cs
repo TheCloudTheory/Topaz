@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -23,6 +24,8 @@ internal sealed class GetQueuePropertiesEndpoint(ITopazLogger logger)
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
         {
             response.StatusCode = HttpStatusCode.NotFound;
+            response.Content = new ByteArrayContent([]);
+            response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
             return;
         }
 
@@ -34,6 +37,8 @@ internal sealed class GetQueuePropertiesEndpoint(ITopazLogger logger)
             if (!TryGetQueueNameFromPath(context.Request.Path, out var queueName) || string.IsNullOrEmpty(queueName))
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new ByteArrayContent([]);
+                response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
                 return;
             }
 
@@ -47,18 +52,23 @@ internal sealed class GetQueuePropertiesEndpoint(ITopazLogger logger)
             {
                 response.Content = new ByteArrayContent([]);
                 response.StatusCode = HttpStatusCode.OK;
+                response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
                 response.Headers.Add("x-ms-approximate-messages-count", result.Resource.ApproximateMessageCount.ToString());
                 Logger.LogDebug(nameof(GetQueuePropertiesEndpoint), nameof(GetResponse), "Queue {0} properties retrieved.", queueName);
             }
             else
             {
                 response.StatusCode = HttpStatusCode.NotFound;
+                response.Content = new ByteArrayContent([]);
+                response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex);
             response.StatusCode = HttpStatusCode.InternalServerError;
+            response.Content = new ByteArrayContent([]);
+            response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
         }
     }
 }

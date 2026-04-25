@@ -2,6 +2,7 @@ using System.Text.Json;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
+using Topaz.Service.Storage.Utils;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage;
@@ -208,6 +209,144 @@ internal sealed class QueueServiceDataPlane(QueueServiceControlPlane controlPlan
 
         // Peek is similar to Get but without incrementing dequeue count or affecting visibility
         return GetMessage(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName, messageId);
+    }
+
+    public DataPlaneOperationResult<List<QueueMessage>> GetMessages(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName,
+        int numMessages = 1, int visibilityTimeout = 30)
+    {
+        logger.LogDebug(nameof(QueueServiceDataPlane), nameof(GetMessages),
+            "Executing {0}: {1} {2} numMessages={3} visibilityTimeout={4}", 
+            nameof(GetMessages), storageAccountName, queueName, numMessages, visibilityTimeout);
+
+        if (!controlPlane.QueueExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName))
+        {
+            return new DataPlaneOperationResult<List<QueueMessage>>(OperationResult.NotFound, null,
+                "Queue not found.", "QueueNotFound");
+        }
+
+        var messageDir = resourceProvider.GetMessagesDirectoryPath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, queueName);
+
+        if (!Directory.Exists(messageDir))
+        {
+            return new DataPlaneOperationResult<List<QueueMessage>>(OperationResult.Success, 
+                new List<QueueMessage>(), null, null);
+        }
+
+        var messages = new List<QueueMessage>();
+        var messageFiles = Directory.GetFiles(messageDir, "*.json").OrderBy(f => f).ToArray();
+
+        foreach (var filePath in messageFiles)
+        {
+            if (messages.Count >= numMessages)
+                break;
+
+            try
+            {
+                var messageContent = File.ReadAllText(filePath);
+                var message = JsonSerializer.Deserialize<QueueMessage>(messageContent, GlobalSettings.JsonOptions);
+
+                if (message == null)
+                    continue;
+
+                // Skip if expired
+                if (message.IsExpired())
+                {
+                    File.Delete(filePath);
+                    continue;
+                }
+
+                // Skip if not visible yet
+                if (!message.IsVisible())
+                    continue;
+
+                // Message is visible and not expired - prepare for return
+                message.DequeueCount++;
+                message.UpdateVisibility(visibilityTimeout);
+
+                // Persist the updated message
+                File.WriteAllText(filePath, JsonSerializer.Serialize(message, GlobalSettings.JsonOptions));
+
+                messages.Add(message);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(nameof(QueueServiceDataPlane), nameof(GetMessages),
+                    "Error processing message file {0}: {1}", filePath, ex.Message);
+            }
+        }
+
+        return new DataPlaneOperationResult<List<QueueMessage>>(OperationResult.Success, messages, null, null);
+    }
+
+    public DataPlaneOperationResult<QueueMessage> SendMessage(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName,
+        string messageContent, int visibilityTimeout = 0, int messageTtl = 604800)
+    {
+        logger.LogDebug(nameof(QueueServiceDataPlane), nameof(SendMessage),
+            "Executing {0}: {1} {2} visibilityTimeout={3} messageTtl={4}",
+            nameof(SendMessage), storageAccountName, queueName, visibilityTimeout, messageTtl);
+
+        if (!controlPlane.QueueExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName))
+        {
+            return new DataPlaneOperationResult<QueueMessage>(OperationResult.NotFound, null,
+                "Queue not found.", "QueueNotFound");
+        }
+
+        // Validate message size
+        if (!QueueMessageValidator.ValidateMessageSize(messageContent, out var sizeError))
+        {
+            logger.LogDebug(nameof(QueueServiceDataPlane), nameof(SendMessage),
+                "Message size validation failed: {0}", sizeError);
+            return new DataPlaneOperationResult<QueueMessage>(OperationResult.Failed, null,
+                sizeError, "MessageTooLarge");
+        }
+
+        // Validate visibility timeout
+        if (!QueueMessageValidator.ValidateVisibilityTimeout(visibilityTimeout, out var visibilityError))
+        {
+            logger.LogDebug(nameof(QueueServiceDataPlane), nameof(SendMessage),
+                "Visibility timeout validation failed: {0}", visibilityError);
+            return new DataPlaneOperationResult<QueueMessage>(OperationResult.Failed, null,
+                visibilityError, "InvalidVisibilityTimeout");
+        }
+
+        var messageDir = resourceProvider.GetMessagesDirectoryPath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, queueName);
+        Directory.CreateDirectory(messageDir);
+
+        // Generate unique message ID (GUID)
+        var messageId = Guid.NewGuid().ToString();
+        var messagePath = resourceProvider.GetMessageFilePath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, queueName, messageId);
+
+        // Create new message
+        var message = new QueueMessage(messageId, messageContent)
+        {
+            VisibilityTimeout = visibilityTimeout,
+            TimeToLive = messageTtl
+        };
+
+        // Set visibility timeout if specified
+        if (visibilityTimeout > 0)
+        {
+            message.UpdateVisibility(visibilityTimeout);
+        }
+
+        // Calculate expiry time
+        if (message.EnqueuedTime.HasValue && messageTtl > 0)
+        {
+            message.ExpiryTime = message.EnqueuedTime.Value.AddSeconds(messageTtl);
+        }
+
+        // Persist message
+        File.WriteAllText(messagePath, JsonSerializer.Serialize(message, GlobalSettings.JsonOptions));
+
+        logger.LogDebug(nameof(QueueServiceDataPlane), nameof(SendMessage),
+            "Message {0} enqueued to queue {1}", messageId, queueName);
+
+        return new DataPlaneOperationResult<QueueMessage>(OperationResult.Success, message, null, null);
     }
 }
 
