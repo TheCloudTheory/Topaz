@@ -1074,7 +1074,7 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage queue create --name {queueName} --account-name {storageAccountName} --account-key \"{accountKey}\" --queue-endpoint https://{storageAccountName}.queue.storage.topaz.local.dev:8893",
+            $"az storage queue create --name {queueName} --connection-string \"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={accountKey};QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:8893;\"",
             (resp) =>
             {
                 Assert.That(resp["created"]!.GetValue<bool>(), Is.True);
@@ -1103,12 +1103,12 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage queue create --name queue1 --account-name {storageAccountName} --account-key \"{accountKey}\" --queue-endpoint https://{storageAccountName}.queue.storage.topaz.local.dev:8893");
+            $"az storage queue create --name queue1 --connection-string \"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={accountKey};QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:8893;\"");
         await RunAzureCliCommand(
-            $"az storage queue create --name queue2 --account-name {storageAccountName} --account-key \"{accountKey}\" --queue-endpoint https://{storageAccountName}.queue.storage.topaz.local.dev:8893");
+            $"az storage queue create --name queue2 --connection-string \"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={accountKey};QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:8893;\"");
 
         await RunAzureCliCommand(
-            $"az storage queue list --account-name {storageAccountName} --account-key \"{accountKey}\" --queue-endpoint https://{storageAccountName}.queue.storage.topaz.local.dev:8893",
+            $"az storage queue list --connection-string \"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={accountKey};QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:8893;\"",
             (resp) =>
             {
                 var arr = resp.AsArray();
@@ -1140,10 +1140,10 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage queue create --name {queueName} --account-name {storageAccountName} --account-key \"{accountKey}\" --queue-endpoint https://{storageAccountName}.queue.storage.topaz.local.dev:8893");
+            $"az storage queue create --name {queueName} --connection-string \"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={accountKey};QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:8893;\"");
 
         await RunAzureCliCommand(
-            $"az storage queue delete --name {queueName} --account-name {storageAccountName} --account-key \"{accountKey}\" --queue-endpoint https://{storageAccountName}.queue.storage.topaz.local.dev:8893",
+            $"az storage queue delete --name {queueName} --connection-string \"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={accountKey};QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:8893;\"",
             (resp) =>
             {
                 Assert.That(resp["deleted"]!.GetValue<bool>(), Is.True);
