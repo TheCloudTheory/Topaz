@@ -2,10 +2,8 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Xml.Linq;
-using System.Xml.Serialization;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
-using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Utils;
 using Topaz.Shared;
 
@@ -162,10 +160,15 @@ internal sealed class PutMessageEndpoint(ITopazLogger logger)
             {
                 case OperationResult.Success when result.Resource != null:
                 {
-                    var xmlResponse = GenerateMessageResponse(result.Resource);
-                    response.Content = new StringContent(xmlResponse, Encoding.UTF8, "application/xml");
-                    response.StatusCode = HttpStatusCode.OK;
+                    response.StatusCode = HttpStatusCode.NoContent;
+                    response.Content = new ByteArrayContent([]);
                     response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
+                    response.Headers.Add("x-ms-popreceipt", result.Resource.PopReceipt ?? string.Empty);
+                    if (result.Resource.NextVisibleTime.HasValue)
+                    {
+                        response.Headers.Add("x-ms-time-next-visible",
+                            result.Resource.NextVisibleTime.Value.ToString("R"));
+                    }
 
                     Logger.LogDebug(nameof(PutMessageEndpoint), nameof(GetResponse),
                         "Message {0} in queue {1} updated successfully.", messageId, queueName);
@@ -193,37 +196,4 @@ internal sealed class PutMessageEndpoint(ITopazLogger logger)
         }
     }
 
-    /// <summary>
-    /// Generate XML response for message operation per Azure Queue Storage API.
-    /// </summary>
-    private string GenerateMessageResponse(Models.QueueMessage message)
-    {
-        try
-        {
-            var messageItem = new QueueMessageResponseItem
-            {
-                MessageId = message.Id,
-                InsertionTime = message.EnqueuedTime?.ToString("R"), // RFC 1123 format
-                ExpirationTime = message.ExpiryTime?.ToString("R"),   // RFC 1123 format
-                PopReceipt = message.PopReceipt,
-                TimeNextVisible = message.NextVisibleTime?.ToString("R") // RFC 1123 format
-            };
-
-            var response = new QueueMessagesResponse
-            {
-                Messages = new List<QueueMessageResponseItem> { messageItem }
-            };
-
-            using var memoryStream = new MemoryStream();
-            var serializer = new XmlSerializer(typeof(QueueMessagesResponse));
-            serializer.Serialize(memoryStream, response);
-            return Encoding.UTF8.GetString(memoryStream.ToArray());
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(nameof(PutMessageEndpoint), nameof(GenerateMessageResponse), 
-                "Error generating XML response: {0}. Stack: {1}", ex.Message, ex.StackTrace);
-            throw;
-        }
-    }
 }
