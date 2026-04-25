@@ -422,4 +422,96 @@ public class QueueStorageTests
         // Assert
         Assert.That(received, Has.Length.EqualTo(0));
     }
+
+    [Test]
+    public void Queue_PeekMessages_ReturnsEmptyWhenNoMessages()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("peek-empty-queue");
+        var queue = queueClient.GetQueueClient("peek-empty-queue");
+
+        // Act
+        var peeked = queue.PeekMessages(1).Value.ToList();
+
+        // Assert
+        Assert.That(peeked, Has.Count.EqualTo(0));
+    }
+
+    [Test]
+    public void Queue_PeekMessages_ReturnsMessageWithoutDequeuing()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("peek-nodequeue-queue");
+        var queue = queueClient.GetQueueClient("peek-nodequeue-queue");
+
+        queue.SendMessage("Peek me");
+
+        // Act
+        var peeked = queue.PeekMessages(1).Value.ToList();
+
+        // Assert — message is present and contains correct content
+        Assert.That(peeked, Has.Count.EqualTo(1));
+        Assert.That(peeked[0].Body.ToString(), Is.EqualTo("Peek me"));
+        Assert.That(peeked[0].MessageId, Is.Not.Null.And.Not.Empty);
+    }
+
+    [Test]
+    public void Queue_PeekMessages_MessageRemainsVisibleAfterPeek()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("peek-visible-queue");
+        var queue = queueClient.GetQueueClient("peek-visible-queue");
+
+        queue.SendMessage("Still here");
+
+        // Act — peek, then receive
+        queue.PeekMessages(1);
+        var received = queue.ReceiveMessages(1).Value.ToList();
+
+        // Assert — peek does not hide the message
+        Assert.That(received, Has.Count.EqualTo(1));
+        Assert.That(received[0].Body.ToString(), Is.EqualTo("Still here"));
+    }
+
+    [Test]
+    public void Queue_PeekMessages_DoesNotIncrementDequeueCount()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("peek-count-queue");
+        var queue = queueClient.GetQueueClient("peek-count-queue");
+
+        queue.SendMessage("Count test");
+
+        // Act — peek twice then receive
+        queue.PeekMessages(1);
+        queue.PeekMessages(1);
+        var received = queue.ReceiveMessages(1).Value.ToList();
+
+        // Assert — DequeueCount reflects only the actual receive, not the peeks
+        Assert.That(received, Has.Count.EqualTo(1));
+        Assert.That(received[0].DequeueCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Queue_PeekMessages_ReturnsMultipleMessages()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("peek-multi-queue");
+        var queue = queueClient.GetQueueClient("peek-multi-queue");
+
+        queue.SendMessage("Peek 1");
+        queue.SendMessage("Peek 2");
+        queue.SendMessage("Peek 3");
+
+        // Act
+        var peeked = queue.PeekMessages(3).Value.ToList();
+
+        // Assert
+        Assert.That(peeked, Has.Count.EqualTo(3));
+    }
 }

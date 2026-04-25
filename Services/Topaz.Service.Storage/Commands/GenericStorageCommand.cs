@@ -85,6 +85,7 @@ public sealed class GenericStorageCommand : IEmulatorCommand
             {
                 message.AddCommand<SendMessageCommand>("put");
                 message.AddCommand<GetMessagesCommand>("get");
+                message.AddCommand<PeekMessagesCommand>("peek");
                 message.AddCommand<DeleteMessageCommand>("delete");
                 message.AddCommand<UpdateMessageCommand>("update");
             });

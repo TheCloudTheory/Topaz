@@ -143,6 +143,6 @@ Queue Storage is **partially implemented** in Topaz.
 | List Queues | ✅ | |
 | Send Message (Enqueue) | ✅ | `POST /{queue-name}/messages` — create/enqueue a message |
 | Get Messages (Dequeue) | ✅ | `GET /{queue-name}/messages` — retrieve messages with visibility timeout |
-| Peek Messages | ❌ | `GET /{queue-name}/messages?peekonly=true` — retrieve without hiding |
+| Peek Messages | ✅ | `GET /{queue-name}/messages?peekonly=true` — retrieve without hiding |
 | Delete Message | ❌ | `DELETE /{queue-name}/messages/{messageId}` |
 | Update Message | ✅ | `PUT /{queue-name}/messages/{messageId}` — update visibility timeout and/or content |

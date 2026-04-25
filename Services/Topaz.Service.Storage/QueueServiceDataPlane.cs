@@ -289,6 +289,66 @@ internal sealed class QueueServiceDataPlane(QueueServiceControlPlane controlPlan
         return new DataPlaneOperationResult<List<QueueMessage>>(OperationResult.Success, messages, null, null);
     }
 
+    public DataPlaneOperationResult<List<QueueMessage>> PeekMessages(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName,
+        int numMessages = 1)
+    {
+        logger.LogDebug(nameof(QueueServiceDataPlane), nameof(PeekMessages),
+            "Executing {0}: {1} {2} numMessages={3}",
+            nameof(PeekMessages), storageAccountName, queueName, numMessages);
+
+        if (!controlPlane.QueueExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName))
+        {
+            return new DataPlaneOperationResult<List<QueueMessage>>(OperationResult.NotFound, null,
+                "Queue not found.", "QueueNotFound");
+        }
+
+        var messageDir = resourceProvider.GetMessagesDirectoryPath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, queueName);
+
+        if (!Directory.Exists(messageDir))
+        {
+            return new DataPlaneOperationResult<List<QueueMessage>>(OperationResult.Success,
+                new List<QueueMessage>(), null, null);
+        }
+
+        var messages = new List<QueueMessage>();
+        var messageFiles = Directory.GetFiles(messageDir, "*.json").OrderBy(f => f).ToArray();
+
+        foreach (var filePath in messageFiles)
+        {
+            if (messages.Count >= numMessages)
+                break;
+
+            try
+            {
+                var messageContent = File.ReadAllText(filePath);
+                var message = JsonSerializer.Deserialize<QueueMessage>(messageContent, GlobalSettings.JsonOptions);
+
+                if (message == null)
+                    continue;
+
+                if (message.IsExpired())
+                {
+                    File.Delete(filePath);
+                    continue;
+                }
+
+                if (!message.IsVisible())
+                    continue;
+
+                messages.Add(message);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(nameof(QueueServiceDataPlane), nameof(PeekMessages),
+                    "Error processing message file {0}: {1}", filePath, ex.Message);
+            }
+        }
+
+        return new DataPlaneOperationResult<List<QueueMessage>>(OperationResult.Success, messages, null, null);
+    }
+
     public DataPlaneOperationResult<QueueMessage> SendMessage(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName,
         string messageContent, int visibilityTimeout = 0, int messageTtl = 604800)
