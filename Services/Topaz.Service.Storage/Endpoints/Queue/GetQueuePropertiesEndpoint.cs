@@ -12,7 +12,7 @@ internal sealed class GetQueuePropertiesEndpoint(ITopazLogger logger)
     private readonly QueueServiceControlPlane _controlPlane = QueueServiceControlPlane.New(logger);
     private readonly QueueServiceDataPlane _dataPlane = QueueServiceDataPlane.New(logger);
 
-    public string[] Endpoints => ["HEAD /{queue-name}"];
+    public string[] Endpoints => ["GET /{queue-name}"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/queues/read"];
 
