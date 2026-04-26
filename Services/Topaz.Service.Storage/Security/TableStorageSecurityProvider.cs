@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
+using Topaz.Identity;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -35,6 +36,8 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
             case "SharedKeyLite":
                 return IsAuthorizedForSharedKeyLiteScheme(subscriptionIdentifier, resourceGroupIdentifier,
                     storageAccountName, parts[1], headers, absolutePath, query);
+            case "Bearer":
+                return IsAuthorizedForBearerScheme(headerValue);
             default:
                 logger.LogError($"Authentication failure for {scheme}. Scheme is not supported.");
                 return false;
@@ -72,6 +75,18 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
 
         if (hash1 == signature) return true;
         return hash2 == signature;
+    }
+
+    private bool IsAuthorizedForBearerScheme(string authHeader)
+    {
+        var token = JwtHelper.ValidateJwt(authHeader);
+        if (token == null)
+        {
+            logger.LogError("Authentication failure for Bearer scheme. JWT validation failed.");
+            return false;
+        }
+
+        return true;
     }
 
     private string BuildStringToSignForSharedKey(string storageAccountName, string method, string absolutePath,
