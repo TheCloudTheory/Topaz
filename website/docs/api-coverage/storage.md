@@ -134,15 +134,27 @@ Table Storage is served on port **8890** (HTTPS) in Topaz.
 
 ## Data Plane — Queue Storage
 
-Queue Storage data-plane operations are fully supported in Topaz.
+Queue Storage is served on port **8893** (HTTPS) in Topaz.
+
+### Queues
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create Queue | ✅ | |
-| Delete Queue | ✅ | |
-| List Queues | ✅ | |
-| Send Message (Enqueue) | ✅ | `POST /{queue-name}/messages` — create/enqueue a message |
-| Get Messages (Dequeue) | ✅ | `GET /{queue-name}/messages` — retrieve messages with visibility timeout |
+| Create Queue | ✅ | `PUT /{queue-name}` |
+| Delete Queue | ✅ | `DELETE /{queue-name}` |
+| List Queues | ✅ | `GET /` |
+| Get Queue Metadata | ✅ | `GET /{queue-name}?comp=metadata` |
+| Set Queue Metadata | ❌ | `PUT /{queue-name}?comp=metadata` |
+| Get Queue ACL | ❌ | `GET /{queue-name}?comp=acl` |
+| Set Queue ACL | ❌ | `PUT /{queue-name}?comp=acl` |
+
+### Messages
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| Send Message (Enqueue) | ✅ | `POST /{queue-name}/messages` |
+| Get Messages (Dequeue) | ✅ | `GET /{queue-name}/messages` — retrieve with visibility timeout |
 | Peek Messages | ✅ | `GET /{queue-name}/messages?peekonly=true` — retrieve without hiding |
 | Delete Message | ✅ | `DELETE /{queue-name}/messages/{messageId}?popreceipt={popReceipt}` |
 | Update Message | ✅ | `PUT /{queue-name}/messages/{messageId}` — update visibility timeout and/or content |
+| Clear Messages | ❌ | `DELETE /{queue-name}/messages` |

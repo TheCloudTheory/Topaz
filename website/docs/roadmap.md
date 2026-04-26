@@ -16,14 +16,14 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 ## v1.2-beta
 
-### Queue Storage — stable
+### Queue Storage
 
 | | Feature | Description |
 |--|---------|-------------|
 | <span class="badge--stable">Stable</span> | Queue CRUD | Create, delete, list queues ✅ |
 | <span class="badge--stable">Stable</span> | Message operations | Enqueue, dequeue, peek, update, delete ✅ |
-| <span class="badge--preview">Preview</span> | Service-level operations | Get/set service properties, get stats |
 | <span class="badge--preview">Preview</span> | Queue metadata & ACL | Get/set metadata and ACL per queue |
+| <span class="badge--preview">Preview</span> | Service-level operations | Get/set service properties, get stats |
 
 ### Key Vault — keys support
 
