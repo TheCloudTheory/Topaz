@@ -20,7 +20,7 @@ Resource Groups|✅|N/A
 Azure Storage|🚧|🚧
 Table Storage|🚧|✅
 Blob Storage|🚧|🚧
-Queue Storage|🔜|🔜
+Queue Storage|🚧|✅
 Key Vault|✅|🚧
 Event Hub|🚧|🚧
 Service Bus|🚧|🚧
@@ -61,6 +61,7 @@ Service Name|Port|Protocol
 Resource Manager|8899, 443|HTTPS
 Table Storage|8890|HTTPS
 Blob Storage|8891|HTTP
+Queue Storage|8893|HTTPS
 Azure Key Vault|8898, 443|HTTPS
 Azure Event Hub|8897|HTTPS
 Azure Event Hub (AMQP)|8888|AMQP
