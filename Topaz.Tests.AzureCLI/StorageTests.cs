@@ -1186,4 +1186,43 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task StorageQueue_SetMetadata_PersistsMetadata()
+    {
+        const string storageAccountName = "topazstorqueuemeta01";
+        const string resourceGroup = "test-queue-meta-rg";
+        const string queueName = "meta-queue";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        var connectionString = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={accountKey};QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:8893;";
+
+        await RunAzureCliCommand(
+            $"az storage queue create --name {queueName} --connection-string \"{connectionString}\"");
+
+        await RunAzureCliCommand(
+            $"az storage queue metadata update --name {queueName} --metadata env=test owner=topaz --connection-string \"{connectionString}\"");
+
+        await RunAzureCliCommand(
+            $"az storage queue metadata show --name {queueName} --connection-string \"{connectionString}\"",
+            (resp) =>
+            {
+                Assert.That(resp["env"]!.GetValue<string>(), Is.EqualTo("test"));
+                Assert.That(resp["owner"]!.GetValue<string>(), Is.EqualTo("topaz"));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

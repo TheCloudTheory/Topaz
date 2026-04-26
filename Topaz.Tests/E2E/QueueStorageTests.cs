@@ -551,6 +551,49 @@ public class QueueStorageTests
     }
 
     [Test]
+    public void Queue_SetMetadata_PersistsMetadata()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("meta-set-queue");
+        var queue = queueClient.GetQueueClient("meta-set-queue");
+
+        var metadata = new Dictionary<string, string> { { "env", "test" }, { "owner", "topaz" } };
+
+        // Act
+        Assert.DoesNotThrow(() => queue.SetMetadata(metadata));
+
+        var properties = queue.GetProperties().Value;
+
+        // Assert
+        Assert.That(properties.Metadata, Contains.Key("env"));
+        Assert.That(properties.Metadata["env"], Is.EqualTo("test"));
+        Assert.That(properties.Metadata, Contains.Key("owner"));
+        Assert.That(properties.Metadata["owner"], Is.EqualTo("topaz"));
+    }
+
+    [Test]
+    public void Queue_SetMetadata_OverwritesPreviousMetadata()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("meta-overwrite-queue");
+        var queue = queueClient.GetQueueClient("meta-overwrite-queue");
+
+        queue.SetMetadata(new Dictionary<string, string> { { "key1", "value1" } });
+
+        // Act
+        queue.SetMetadata(new Dictionary<string, string> { { "key2", "value2" } });
+
+        var properties = queue.GetProperties().Value;
+
+        // Assert
+        Assert.That(properties.Metadata, Does.Not.ContainKey("key1"));
+        Assert.That(properties.Metadata, Contains.Key("key2"));
+        Assert.That(properties.Metadata["key2"], Is.EqualTo("value2"));
+    }
+
+    [Test]
     public void Queue_DeleteMessage_MessageCountDecreasesAfterDelete()
     {
         // Arrange

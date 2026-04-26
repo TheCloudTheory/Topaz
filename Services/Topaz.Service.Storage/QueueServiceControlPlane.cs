@@ -65,6 +65,38 @@ internal sealed class QueueServiceControlPlane(QueueResourceProvider provider, I
         return provider.QueueExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName);
     }
 
+    public ControlPlaneOperationResult SetQueueMetadata(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName,
+        Dictionary<string, string> metadata)
+    {
+        if (!provider.QueueExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName))
+        {
+            return new ControlPlaneOperationResult(OperationResult.NotFound, "Queue not found.", "QueueNotFound");
+        }
+
+        var propertiesPath = provider.GetQueuePropertiesFilePath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, queueName);
+
+        QueueProperties properties;
+        if (File.Exists(propertiesPath))
+        {
+            var content = File.ReadAllText(propertiesPath);
+            properties = JsonSerializer.Deserialize<QueueProperties>(content, GlobalSettings.JsonOptions)
+                ?? new QueueProperties();
+        }
+        else
+        {
+            properties = new QueueProperties { Name = queueName };
+        }
+
+        properties.Metadata = metadata;
+        properties.UpdatedTime = DateTimeOffset.UtcNow;
+
+        File.WriteAllText(propertiesPath, JsonSerializer.Serialize(properties, GlobalSettings.JsonOptions));
+
+        return new ControlPlaneOperationResult(OperationResult.Success);
+    }
+
     public ControlPlaneOperationResult<QueueProperties> GetQueueProperties(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName)
     {

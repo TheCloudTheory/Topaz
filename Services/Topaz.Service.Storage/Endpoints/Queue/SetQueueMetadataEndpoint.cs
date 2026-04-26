@@ -6,15 +6,14 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints.Queue;
 
-internal sealed class GetQueuePropertiesEndpoint(ITopazLogger logger)
+internal sealed class SetQueueMetadataEndpoint(ITopazLogger logger)
     : QueueDataPlaneEndpointBase(logger), IEndpointDefinition
 {
-    private readonly QueueServiceControlPlane _controlPlane = QueueServiceControlPlane.New(logger);
     private readonly QueueServiceDataPlane _dataPlane = QueueServiceDataPlane.New(logger);
 
-    public string[] Endpoints => ["GET /{queue-name}"];
+    public string[] Endpoints => ["PUT /{queue-name}?comp=metadata"];
 
-    public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/queues/read"];
+    public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/queues/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultQueueStoragePort], Protocol.Https);
@@ -42,32 +41,31 @@ internal sealed class GetQueuePropertiesEndpoint(ITopazLogger logger)
                 return;
             }
 
-            Logger.LogDebug(nameof(GetQueuePropertiesEndpoint), nameof(GetResponse),
-                "Getting properties for queue: {0}.", queueName);
+            Logger.LogDebug(nameof(SetQueueMetadataEndpoint), nameof(GetResponse),
+                "Setting metadata for queue: {0}.", queueName);
 
-            var result = _dataPlane.GetQueueProperties(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccount.Name, queueName);
+            var result = _dataPlane.SetQueueMetadata(subscriptionIdentifier, resourceGroupIdentifier,
+                storageAccount.Name, queueName, context.Request.Headers);
 
-            if (result.Result == OperationResult.Success && result.Resource != null)
+            switch (result.Result)
             {
-                response.Content = new ByteArrayContent([]);
-                response.StatusCode = HttpStatusCode.OK;
-                response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
-                response.Headers.Add("x-ms-approximate-messages-count", result.Resource.ApproximateMessageCount.ToString());
-
-                if (result.Resource.Metadata != null)
-                {
-                    foreach (var (key, value) in result.Resource.Metadata)
-                        response.Headers.Add($"x-ms-meta-{key}", value);
-                }
-
-                Logger.LogDebug(nameof(GetQueuePropertiesEndpoint), nameof(GetResponse), "Queue {0} properties retrieved.", queueName);
-            }
-            else
-            {
-                response.StatusCode = HttpStatusCode.NotFound;
-                response.Content = new ByteArrayContent([]);
-                response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
+                case OperationResult.Success:
+                    response.StatusCode = HttpStatusCode.NoContent;
+                    response.Content = new ByteArrayContent([]);
+                    response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
+                    Logger.LogDebug(nameof(SetQueueMetadataEndpoint), nameof(GetResponse),
+                        "Metadata set for queue {0}.", queueName);
+                    break;
+                case OperationResult.NotFound:
+                    response.StatusCode = HttpStatusCode.NotFound;
+                    response.Content = new ByteArrayContent([]);
+                    response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
+                    break;
+                default:
+                    response.StatusCode = HttpStatusCode.InternalServerError;
+                    response.Content = new ByteArrayContent([]);
+                    response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
+                    break;
             }
         }
         catch (Exception ex)

@@ -95,6 +95,23 @@ internal sealed class QueueServiceDataPlane(QueueServiceControlPlane controlPlan
             result.Code);
     }
 
+    public DataPlaneOperationResult SetQueueMetadata(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName,
+        IEnumerable<KeyValuePair<string, Microsoft.Extensions.Primitives.StringValues>> headers)
+    {
+        logger.LogDebug(nameof(QueueServiceDataPlane), nameof(SetQueueMetadata),
+            "Executing {0}: {1} {2}", nameof(SetQueueMetadata), storageAccountName, queueName);
+
+        var metadata = headers
+            .Where(h => h.Key.StartsWith("x-ms-meta-", StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(h => h.Key["x-ms-meta-".Length..], h => h.Value.ToString());
+
+        var result = controlPlane.SetQueueMetadata(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, queueName, metadata);
+
+        return new DataPlaneOperationResult(result.Result, result.Reason, result.Code);
+    }
+
     public DataPlaneOperationResult<QueueMessage> PutMessage(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName,
         string messageId, string content, int visibilityTimeout = 30)

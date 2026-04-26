@@ -144,7 +144,7 @@ Queue Storage is served on port **8893** (HTTPS) in Topaz.
 | Delete Queue | ✅ | `DELETE /{queue-name}` |
 | List Queues | ✅ | `GET /` |
 | Get Queue Metadata | ✅ | `GET /{queue-name}?comp=metadata` |
-| Set Queue Metadata | ❌ | `PUT /{queue-name}?comp=metadata` |
+| Set Queue Metadata | ✅ | `PUT /{queue-name}?comp=metadata` |
 | Get Queue ACL | ❌ | `GET /{queue-name}?comp=acl` |
 | Set Queue ACL | ❌ | `PUT /{queue-name}?comp=acl` |
 
