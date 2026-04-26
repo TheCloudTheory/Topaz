@@ -23,6 +23,7 @@ public class QueueStorageService(ITopazLogger logger) : IServiceDefinition
         new PeekMessagesEndpoint(logger),
         new GetMessagesEndpoint(logger),
         new PutMessageEndpoint(logger),
+        new ClearMessagesEndpoint(logger),
         new DeleteMessageEndpoint(logger),
     ];
 

@@ -1188,6 +1188,49 @@ public class StorageTests : TopazFixture
     }
 
     [Test]
+    public async Task StorageQueue_ClearMessages_RemovesAllMessages()
+    {
+        const string storageAccountName = "topazstorqueueclr01";
+        const string resourceGroup = "test-queue-clear-rg";
+        const string queueName = "clear-test-queue";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        var connectionString = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={accountKey};QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:8893;";
+
+        await RunAzureCliCommand(
+            $"az storage queue create --name {queueName} --connection-string \"{connectionString}\"");
+
+        await RunAzureCliCommand(
+            $"az storage message put --queue-name {queueName} --content \"msg1\" --connection-string \"{connectionString}\"");
+        await RunAzureCliCommand(
+            $"az storage message put --queue-name {queueName} --content \"msg2\" --connection-string \"{connectionString}\"");
+
+        await RunAzureCliCommand(
+            $"az storage message clear --queue-name {queueName} --connection-string \"{connectionString}\"");
+
+        await RunAzureCliCommand(
+            $"az storage message peek --queue-name {queueName} --num-messages 10 --connection-string \"{connectionString}\"",
+            (resp) =>
+            {
+                Assert.That(resp.AsArray().Count, Is.EqualTo(0));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
     public async Task StorageQueue_SetMetadata_PersistsMetadata()
     {
         const string storageAccountName = "topazstorqueuemeta01";

@@ -516,6 +516,39 @@ public class QueueStorageTests
     }
 
     [Test]
+    public void Queue_ClearMessages_RemovesAllMessages()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("clear-all-queue");
+        var queue = queueClient.GetQueueClient("clear-all-queue");
+
+        queue.SendMessage("Message 1");
+        queue.SendMessage("Message 2");
+        queue.SendMessage("Message 3");
+
+        // Act
+        Assert.DoesNotThrow(() => queue.ClearMessages());
+
+        var remaining = queue.ReceiveMessages(10).Value.ToList();
+
+        // Assert
+        Assert.That(remaining, Has.Count.EqualTo(0));
+    }
+
+    [Test]
+    public void Queue_ClearMessages_EmptyQueueSucceeds()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("clear-empty-queue");
+        var queue = queueClient.GetQueueClient("clear-empty-queue");
+
+        // Act + Assert — clearing an already-empty queue should not throw
+        Assert.DoesNotThrow(() => queue.ClearMessages());
+    }
+
+    [Test]
     public void Queue_DeleteMessage_Succeeds()
     {
         // Arrange

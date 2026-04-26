@@ -202,6 +202,29 @@ internal sealed class QueueServiceDataPlane(QueueServiceControlPlane controlPlan
         return new DataPlaneOperationResult<QueueMessage>(OperationResult.Success, message, null, null);
     }
 
+    public DataPlaneOperationResult ClearMessages(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName)
+    {
+        logger.LogDebug(nameof(QueueServiceDataPlane), nameof(ClearMessages),
+            "Executing {0}: {1} {2}", nameof(ClearMessages), storageAccountName, queueName);
+
+        if (!controlPlane.QueueExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName))
+        {
+            return new DataPlaneOperationResult(OperationResult.NotFound, "Queue not found.", "QueueNotFound");
+        }
+
+        var messageDir = resourceProvider.GetMessagesDirectoryPath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, queueName);
+
+        if (Directory.Exists(messageDir))
+        {
+            foreach (var file in Directory.GetFiles(messageDir, "*.json"))
+                File.Delete(file);
+        }
+
+        return new DataPlaneOperationResult(OperationResult.Success, null, null);
+    }
+
     public DataPlaneOperationResult DeleteMessage(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName, string messageId)
     {

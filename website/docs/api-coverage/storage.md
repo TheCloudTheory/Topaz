@@ -157,4 +157,4 @@ Queue Storage is served on port **8893** (HTTPS) in Topaz.
 | Peek Messages | ✅ | `GET /{queue-name}/messages?peekonly=true` — retrieve without hiding |
 | Delete Message | ✅ | `DELETE /{queue-name}/messages/{messageId}?popreceipt={popReceipt}` |
 | Update Message | ✅ | `PUT /{queue-name}/messages/{messageId}` — update visibility timeout and/or content |
-| Clear Messages | ❌ | `DELETE /{queue-name}/messages` |
+| Clear Messages | ✅ | `DELETE /{queue-name}/messages` |
