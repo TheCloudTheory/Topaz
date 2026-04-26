@@ -514,4 +514,61 @@ public class QueueStorageTests
         // Assert
         Assert.That(peeked, Has.Count.EqualTo(3));
     }
+
+    [Test]
+    public void Queue_DeleteMessage_Succeeds()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("delete-msg-queue");
+        var queue = queueClient.GetQueueClient("delete-msg-queue");
+        queue.SendMessage("Delete me");
+
+        var received = queue.ReceiveMessages(1).Value;
+        Assert.That(received, Has.Length.EqualTo(1));
+
+        // Act + Assert — SDK throws on non-204 response
+        Assert.DoesNotThrow(() => queue.DeleteMessage(received[0].MessageId, received[0].PopReceipt));
+    }
+
+    [Test]
+    public void Queue_DeleteMessage_MessageIsRemovedFromQueue()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("delete-gone-queue");
+        var queue = queueClient.GetQueueClient("delete-gone-queue");
+        queue.SendMessage("To be deleted");
+
+        var received = queue.ReceiveMessages(1).Value;
+        queue.DeleteMessage(received[0].MessageId, received[0].PopReceipt);
+
+        // Act — receive with a long visibility timeout so the deleted message can't hide
+        var remaining = queue.ReceiveMessages(1, TimeSpan.FromSeconds(5)).Value.ToList();
+
+        // Assert
+        Assert.That(remaining, Has.Count.EqualTo(0));
+    }
+
+    [Test]
+    public void Queue_DeleteMessage_MessageCountDecreasesAfterDelete()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("delete-count-queue");
+        var queue = queueClient.GetQueueClient("delete-count-queue");
+        queue.SendMessage("Message A");
+        queue.SendMessage("Message B");
+
+        var before = queue.GetProperties().Value.ApproximateMessagesCount;
+
+        var received = queue.ReceiveMessages(1).Value;
+        queue.DeleteMessage(received[0].MessageId, received[0].PopReceipt);
+
+        // Act
+        var after = queue.GetProperties().Value.ApproximateMessagesCount;
+
+        // Assert
+        Assert.That(after, Is.LessThan(before));
+    }
 }
