@@ -1188,6 +1188,46 @@ public class StorageTests : TopazFixture
     }
 
     [Test]
+    public async Task StorageQueue_SetAcl_PolicyIsReturnedByPolicyList()
+    {
+        const string storageAccountName = "topazstorqueueacl02";
+        const string resourceGroup = "test-queue-acl2-rg";
+        const string queueName = "acl-set-queue";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        var connectionString = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={accountKey};QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:8893;";
+
+        await RunAzureCliCommand(
+            $"az storage queue create --name {queueName} --connection-string \"{connectionString}\"");
+
+        await RunAzureCliCommand(
+            $"az storage queue policy create --name read-policy --queue-name {queueName} --permissions r --connection-string \"{connectionString}\"");
+
+        await RunAzureCliCommand(
+            $"az storage queue policy list --queue-name {queueName} --connection-string \"{connectionString}\"",
+            (resp) =>
+            {
+                var obj = resp.AsObject();
+                Assert.That(obj.Count, Is.EqualTo(1));
+                Assert.That(obj.ContainsKey("read-policy"), Is.True);
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
     public async Task StorageQueue_GetAcl_ReturnsEmptyWhenNoPoliciesSet()
     {
         const string storageAccountName = "topazstorqueueacl01";

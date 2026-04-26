@@ -118,16 +118,6 @@ TODO: Queue Storage: Service-level operations
   labels: enhancement, storage
 -->
 
-<!--
-TODO: Queue Storage: Queue metadata & ACL
-  Implement per-queue metadata and access control operations:
-  - GET    /{queue-name}?comp=metadata – get queue metadata
-  - PUT    /{queue-name}?comp=metadata – set queue metadata
-  - GET    /{queue-name}?comp=acl      – get queue ACL
-  - PUT    /{queue-name}?comp=acl      – set queue ACL
-  milestone: v1.2-beta
-  labels: enhancement, storage
--->
 
 ### Key Vault — keys support
 

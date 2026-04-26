@@ -15,6 +15,7 @@ public class QueueStorageService(ITopazLogger logger) : IServiceDefinition
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         new SetQueueMetadataEndpoint(logger),
+        new SetQueueAclEndpoint(logger),
         new CreateQueueEndpoint(logger),
         new DeleteQueueEndpoint(logger),
         new ListQueuesEndpoint(logger),

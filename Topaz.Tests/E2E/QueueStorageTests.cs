@@ -516,6 +516,57 @@ public class QueueStorageTests
     }
 
     [Test]
+    public void Queue_SetAcl_PolicyIsReturnedByGetAcl()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("acl-set-queue");
+        var queue = queueClient.GetQueueClient("acl-set-queue");
+
+        var identifiers = new[]
+        {
+            new Azure.Storage.Queues.Models.QueueSignedIdentifier
+            {
+                Id = "read-policy",
+                AccessPolicy = new Azure.Storage.Queues.Models.QueueAccessPolicy
+                {
+                    StartsOn = DateTimeOffset.UtcNow.AddMinutes(-1),
+                    ExpiresOn = DateTimeOffset.UtcNow.AddHours(1),
+                    Permissions = "r"
+                }
+            }
+        };
+
+        // Act
+        Assert.DoesNotThrow(() => queue.SetAccessPolicy(identifiers));
+        var policies = queue.GetAccessPolicy().Value.ToList();
+
+        // Assert
+        Assert.That(policies, Has.Count.EqualTo(1));
+        Assert.That(policies[0].Id, Is.EqualTo("read-policy"));
+        Assert.That(policies[0].AccessPolicy.Permissions, Is.EqualTo("r"));
+    }
+
+    [Test]
+    public void Queue_SetAcl_OverwritesPreviousPolicies()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("acl-overwrite-queue");
+        var queue = queueClient.GetQueueClient("acl-overwrite-queue");
+
+        queue.SetAccessPolicy([new Azure.Storage.Queues.Models.QueueSignedIdentifier { Id = "old-policy" }]);
+
+        // Act
+        queue.SetAccessPolicy([new Azure.Storage.Queues.Models.QueueSignedIdentifier { Id = "new-policy" }]);
+        var policies = queue.GetAccessPolicy().Value.ToList();
+
+        // Assert
+        Assert.That(policies, Has.Count.EqualTo(1));
+        Assert.That(policies[0].Id, Is.EqualTo("new-policy"));
+    }
+
+    [Test]
     public void Queue_GetAcl_ReturnsEmptyWhenNoPoliciesSet()
     {
         // Arrange
