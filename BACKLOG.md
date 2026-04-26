@@ -119,27 +119,12 @@ TODO: Queue Storage: Service-level operations
 -->
 
 <!--
-TODO: Queue Storage: Queue CRUD operations
-  Implement per-queue control operations:
-  - PUT    /{queue-name}               – create queue
-  - DELETE /{queue-name}               – delete queue
+TODO: Queue Storage: Queue metadata & ACL
+  Implement per-queue metadata and access control operations:
   - GET    /{queue-name}?comp=metadata – get queue metadata
   - PUT    /{queue-name}?comp=metadata – set queue metadata
   - GET    /{queue-name}?comp=acl      – get queue ACL
   - PUT    /{queue-name}?comp=acl      – set queue ACL
-  milestone: v1.2-beta
-  labels: enhancement, storage
--->
-
-<!--
-TODO: Queue Storage: Message operations
-  Implement the message-level endpoints for Queue Storage:
-  - POST   /{queue-name}/messages                – enqueue message
-  - GET    /{queue-name}/messages                – dequeue message(s)
-  - GET    /{queue-name}/messages?peekonly=true  – peek message(s)
-  - PUT    /{queue-name}/messages/{message-id}   – update message visibility / content
-  - DELETE /{queue-name}/messages/{message-id}   – delete message
-  - DELETE /{queue-name}/messages                – clear all messages
   milestone: v1.2-beta
   labels: enhancement, storage
 -->
