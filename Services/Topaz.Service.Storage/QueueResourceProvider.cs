@@ -73,6 +73,14 @@ internal sealed class QueueResourceProvider(ITopazLogger logger) : ResourceProvi
         return Path.Combine(messagesPath, $"{messageId}.json");
     }
 
+    public string GetQueueAclFilePath(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName)
+    {
+        return Path.Combine(
+            GetQueuePathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName),
+            ".acl.xml");
+    }
+
     public string GetMessagesDirectoryPath(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName)
     {

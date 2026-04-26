@@ -95,6 +95,26 @@ internal sealed class QueueServiceDataPlane(QueueServiceControlPlane controlPlan
             result.Code);
     }
 
+    public DataPlaneOperationResult<string> GetQueueAcl(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName)
+    {
+        logger.LogDebug(nameof(QueueServiceDataPlane), nameof(GetQueueAcl),
+            "Executing {0}: {1} {2}", nameof(GetQueueAcl), storageAccountName, queueName);
+
+        var (exists, aclFilePath) = controlPlane.GetQueueAclState(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, queueName);
+
+        if (!exists)
+            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null, "Queue not found.", "QueueNotFound");
+
+        if (!File.Exists(aclFilePath))
+            return new DataPlaneOperationResult<string>(OperationResult.Success,
+                "<?xml version=\"1.0\" encoding=\"utf-8\"?><SignedIdentifiers />", null, null);
+
+        var xml = File.ReadAllText(aclFilePath);
+        return new DataPlaneOperationResult<string>(OperationResult.Success, xml, null, null);
+    }
+
     public DataPlaneOperationResult SetQueueMetadata(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName,
         IEnumerable<KeyValuePair<string, Microsoft.Extensions.Primitives.StringValues>> headers)

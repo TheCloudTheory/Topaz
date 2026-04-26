@@ -516,6 +516,21 @@ public class QueueStorageTests
     }
 
     [Test]
+    public void Queue_GetAcl_ReturnsEmptyWhenNoPoliciesSet()
+    {
+        // Arrange
+        var queueClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        queueClient.CreateQueue("acl-get-queue");
+        var queue = queueClient.GetQueueClient("acl-get-queue");
+
+        // Act
+        var policies = queue.GetAccessPolicy().Value.ToList();
+
+        // Assert
+        Assert.That(policies, Is.Empty);
+    }
+
+    [Test]
     public void Queue_ClearMessages_RemovesAllMessages()
     {
         // Arrange

@@ -65,6 +65,14 @@ internal sealed class QueueServiceControlPlane(QueueResourceProvider provider, I
         return provider.QueueExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName);
     }
 
+    public (bool exists, string aclFilePath) GetQueueAclState(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName)
+    {
+        var exists = provider.QueueExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName);
+        var filePath = provider.GetQueueAclFilePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName);
+        return (exists, filePath);
+    }
+
     public ControlPlaneOperationResult SetQueueMetadata(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName,
         Dictionary<string, string> metadata)
