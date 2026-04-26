@@ -1343,4 +1343,69 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    [Test]
+    public async Task StorageQueue_GetServiceProperties_ReturnsLoggingSettings()
+    {
+        const string storageAccountName = "topazstorqueuesvc01";
+        const string resourceGroup = "test-queue-svc-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        var connectionString = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={accountKey};QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:8893;";
+
+        await RunAzureCliCommand(
+            $"az storage logging show --services q --connection-string \"{connectionString}\"",
+            (resp) =>
+            {
+                Assert.That(resp["queue"], Is.Not.Null);
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task StorageQueue_SetServiceProperties_Succeeds()
+    {
+        const string storageAccountName = "topazstorqueuesvc02";
+        const string resourceGroup = "test-queue-svc2-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        var connectionString = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={accountKey};QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:8893;";
+
+        await RunAzureCliCommand(
+            $"az storage logging update --services q --log rwd --retention 7 --connection-string \"{connectionString}\"");
+
+        await RunAzureCliCommand(
+            $"az storage logging show --services q --connection-string \"{connectionString}\"",
+            (resp) =>
+            {
+                Assert.That(resp["queue"]!["retentionPolicy"]!["days"]!.GetValue<int>(), Is.EqualTo(7));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

@@ -136,13 +136,21 @@ Table Storage is served on port **8890** (HTTPS) in Topaz.
 
 Queue Storage is served on port **8893** (HTTPS) in Topaz.
 
+### Service
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| Get Queue Service Properties | ✅ | `GET /?restype=service&comp=properties` |
+| Set Queue Service Properties | ✅ | `PUT /?restype=service&comp=properties` |
+| Get Queue Service Stats | ✅ | `GET /?restype=service&comp=stats` — secondary endpoint only; returns 403 for non-RA-GRS accounts |
+
 ### Queues
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
 | Create Queue | ✅ | `PUT /{queue-name}` |
 | Delete Queue | ✅ | `DELETE /{queue-name}` |
-| List Queues | ✅ | `GET /` |
+| List Queues | ✅ | `GET /?comp=list` |
 | Get Queue Metadata | ✅ | `GET /{queue-name}?comp=metadata` |
 | Set Queue Metadata | ✅ | `PUT /{queue-name}?comp=metadata` |
 | Get Queue ACL | ✅ | `GET /{queue-name}?comp=acl` |

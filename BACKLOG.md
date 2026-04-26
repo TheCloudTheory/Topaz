@@ -104,21 +104,6 @@ TODO: Container Registry: Blob data plane operations
 
 ## v1.2-beta
 
-### Queue Storage — preview
-
-<!--
-TODO: Queue Storage: Service-level operations
-  Implement Queue Storage service operations on the storage data-plane port:
-  - GET  /?comp=list         – list queues
-  - GET  /?comp=properties   – get service properties
-  - PUT  /?comp=properties   – set service properties
-  - GET  /?comp=stats        – get service stats
-  Mirror the approach used for Blob and Table storage under Topaz.Service.Storage.
-  milestone: v1.2-beta
-  labels: enhancement, storage
--->
-
-
 ### Key Vault — keys support
 
 <!--

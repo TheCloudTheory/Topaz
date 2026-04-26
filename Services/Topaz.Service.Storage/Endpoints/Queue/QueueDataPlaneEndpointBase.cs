@@ -73,4 +73,35 @@ internal abstract class QueueDataPlaneEndpointBase(ITopazLogger logger)
         queueName = null;
         return false;
     }
+
+    protected bool TryGetStorageAccountFromSecondaryHost(IHeaderDictionary headers,
+        out StorageAccountResource? storageAccount)
+    {
+        if (!headers.TryGetValue("Host", out var host))
+        {
+            storageAccount = null;
+            return false;
+        }
+
+        var firstLabel = host.ToString().Split('.')[0];
+        const string suffix = "-secondary";
+        if (!firstLabel.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+        {
+            storageAccount = null;
+            return false;
+        }
+
+        var primaryName = firstLabel[..^suffix.Length];
+        var identifiers = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, primaryName);
+        if (identifiers == null)
+        {
+            storageAccount = null;
+            return false;
+        }
+
+        storageAccount = _storageResourceProvider.GetAs<StorageAccountResource>(
+            SubscriptionIdentifier.From(identifiers.Value.subscription),
+            ResourceGroupIdentifier.From(identifiers.Value.resourceGroup), primaryName);
+        return storageAccount != null;
+    }
 }

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Xml.Linq;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
@@ -104,6 +105,65 @@ internal sealed class QueueServiceControlPlane(QueueResourceProvider provider, I
 
         return new ControlPlaneOperationResult(OperationResult.Success);
     }
+
+    public ControlPlaneOperationResult<string> GetQueueServicePropertiesXml(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName)
+    {
+        var storageControlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
+        var path = storageControlPlane.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName);
+        var propertiesFilePath = Path.Combine(path, "queue-service-properties.xml");
+
+        if (!File.Exists(propertiesFilePath))
+            return new ControlPlaneOperationResult<string>(OperationResult.Success, DefaultQueueServicePropertiesXml,
+                null, null);
+
+        return new ControlPlaneOperationResult<string>(OperationResult.Success,
+            File.ReadAllText(propertiesFilePath), null, null);
+    }
+
+    public ControlPlaneOperationResult SetQueueServiceProperties(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, Stream input)
+    {
+        var storageControlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
+        var path = storageControlPlane.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName);
+        var propertiesFilePath = Path.Combine(path, "queue-service-properties.xml");
+
+        var document = XDocument.Load(input, LoadOptions.PreserveWhitespace);
+
+        if (document.Root?.Element("Cors") == null)
+            document.Root?.Add(new XElement("Cors"));
+
+        document.Save(propertiesFilePath);
+        return new ControlPlaneOperationResult(OperationResult.Success);
+    }
+
+    public static string GetQueueServiceStatsXml()
+    {
+        var lastSyncTime = DateTimeOffset.UtcNow.ToString("R");
+        return $"""
+                <?xml version="1.0" encoding="utf-8"?>
+                <StorageServiceStats>
+                  <GeoReplication>
+                    <Status>live</Status>
+                    <LastSyncTime>{lastSyncTime}</LastSyncTime>
+                  </GeoReplication>
+                </StorageServiceStats>
+                """;
+    }
+
+    private const string DefaultQueueServicePropertiesXml =
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+        "<StorageServiceProperties>" +
+        "<Logging><Version>1.0</Version><Delete>false</Delete><Read>false</Read><Write>false</Write>" +
+        "<RetentionPolicy><Enabled>false</Enabled></RetentionPolicy></Logging>" +
+        "<HourMetrics><Version>1.0</Version><Enabled>false</Enabled>" +
+        "<RetentionPolicy><Enabled>false</Enabled></RetentionPolicy></HourMetrics>" +
+        "<MinuteMetrics><Version>1.0</Version><Enabled>false</Enabled>" +
+        "<RetentionPolicy><Enabled>false</Enabled></RetentionPolicy></MinuteMetrics>" +
+        "<Cors /></StorageServiceProperties>";
 
     public ControlPlaneOperationResult<QueueProperties> GetQueueProperties(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string queueName)

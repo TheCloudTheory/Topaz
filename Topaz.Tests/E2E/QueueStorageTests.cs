@@ -713,4 +713,29 @@ public class QueueStorageTests
         // Assert
         Assert.That(after, Is.LessThan(before));
     }
+
+    [Test]
+    public void QueueService_GetProperties_ReturnsDefaultProperties()
+    {
+        var serviceClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+
+        Assert.DoesNotThrow(() =>
+        {
+            var props = serviceClient.GetProperties().Value;
+            Assert.That(props, Is.Not.Null);
+        });
+    }
+
+    [Test]
+    public void QueueService_SetAndGetProperties_Roundtrip()
+    {
+        var serviceClient = new QueueServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+
+        var original = serviceClient.GetProperties().Value;
+
+        Assert.DoesNotThrow(() => serviceClient.SetProperties(original));
+
+        var retrieved = serviceClient.GetProperties().Value;
+        Assert.That(retrieved, Is.Not.Null);
+    }
 }
