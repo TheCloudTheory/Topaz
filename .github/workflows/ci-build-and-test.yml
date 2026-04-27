@@ -72,6 +72,7 @@ jobs:
             - 'Topaz.Dns/**'
             - 'Topaz.EventPipeline/**'
             - 'Services/**'
+            - 'Topaz.Tests.AzurePowerShell/**'
           core:
             - 'Topaz.Host/**'
             - 'Topaz.ResourceManager/**'
@@ -106,6 +107,8 @@ jobs:
             - 'Topaz.Portal/**'
           terraform:
             - 'Topaz.Tests.Terraform/**'
+          azurepowershell:
+            - 'Topaz.Tests.AzurePowerShell/**'
     - name: Build test filter
       id: test_filter
       shell: bash
@@ -114,6 +117,8 @@ jobs:
         if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event_name }}" == "schedule" ]]; then
           echo "filter=" >> "$GITHUB_OUTPUT"
           echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "ps_filter=" >> "$GITHUB_OUTPUT"
+          echo "ps_skip=false" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
@@ -121,6 +126,8 @@ jobs:
         if [[ "${{ steps.changes.outputs.code }}" != "true" ]]; then
           echo "skip=true" >> "$GITHUB_OUTPUT"
           echo "filter=" >> "$GITHUB_OUTPUT"
+          echo "ps_skip=true" >> "$GITHUB_OUTPUT"
+          echo "ps_filter=" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
@@ -129,6 +136,8 @@ jobs:
         # Core/shared infrastructure changed: run all tests, no filter
         if [[ "${{ steps.changes.outputs.core }}" == "true" ]]; then
           echo "filter=" >> "$GITHUB_OUTPUT"
+          echo "ps_filter=" >> "$GITHUB_OUTPUT"
+          echo "ps_skip=false" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
@@ -155,11 +164,32 @@ jobs:
           JOINED=$(IFS='|'; echo "${PARTS[*]}")
           echo "filter=$JOINED" >> "$GITHUB_OUTPUT"
         fi
+
+        # Build AzurePowerShell test filter (only the 4 services covered by PS tests)
+        PS_PARTS=()
+        [[ "${{ steps.changes.outputs.keyvault }}"       == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.KeyVault")
+        [[ "${{ steps.changes.outputs.acr }}"            == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.ContainerRegistry")
+        [[ "${{ steps.changes.outputs.storage }}"        == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.Storage")
+        [[ "${{ steps.changes.outputs.resourcegroup }}"  == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.ResourceGroup")
+
+        if [[ "${{ steps.changes.outputs.azurepowershell }}" == "true" ]]; then
+          # PS test files themselves changed: run all PS tests
+          echo "ps_skip=false" >> "$GITHUB_OUTPUT"
+          echo "ps_filter=" >> "$GITHUB_OUTPUT"
+        elif [[ ${#PS_PARTS[@]} -eq 0 ]]; then
+          # No PS-related service or test files changed
+          echo "ps_skip=true" >> "$GITHUB_OUTPUT"
+          echo "ps_filter=" >> "$GITHUB_OUTPUT"
+        else
+          echo "ps_skip=false" >> "$GITHUB_OUTPUT"
+          PS_JOINED=$(IFS='|'; echo "${PS_PARTS[*]}")
+          echo "ps_filter=$PS_JOINED" >> "$GITHUB_OUTPUT"
+        fi
     - name: Test
       if: steps.test_filter.outputs.skip != 'true'
       run: |
         FILTER="${{ steps.test_filter.outputs.filter }}"
-        EXCLUDE="FullyQualifiedName!~Topaz.Tests.Terraform"
+        EXCLUDE="FullyQualifiedName!~Topaz.Tests.Terraform&FullyQualifiedName!~Topaz.Tests.AzurePowerShell"
         if [[ -n "$FILTER" ]]; then
           FILTER="${FILTER}&${EXCLUDE}"
         else
@@ -176,6 +206,20 @@ jobs:
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "FullyQualifiedName~Topaz.Tests.Terraform"
+    - name: Build PowerShell container
+      if: always() && steps.test_filter.outputs.ps_skip != 'true'
+      run: ./scripts/build-powershell-container.sh
+    - name: AzurePowerShell Tests
+      if: always() && steps.test_filter.outputs.ps_skip != 'true'
+      run: |
+        FILTER="${{ steps.test_filter.outputs.ps_filter }}"
+        if [[ -z "$FILTER" ]]; then
+          FILTER="FullyQualifiedName~Topaz.Tests.AzurePowerShell"
+        fi
+        dotnet test -m:1 --no-build --verbosity normal --logger trx \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ${{ github.workspace }}/TestResults \
+          --filter "$FILTER"
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always() && steps.test_filter.outputs.skip != 'true'
