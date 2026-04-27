@@ -39,6 +39,9 @@
       <None Update="scripts\setup-az-environment.ps1">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+      <None Update="scripts\restore-az-context.ps1">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

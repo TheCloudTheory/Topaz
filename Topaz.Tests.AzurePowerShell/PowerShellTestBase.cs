@@ -54,9 +54,9 @@ public abstract class PowerShellTestBase
 
         return string.Join('\n',
             "$ErrorActionPreference = \"Stop\"",
-            "& /tmp/setup-az-environment.ps1",
+            "& /tmp/restore-az-context.ps1",
             "$ctx = Get-AzContext",
-            "if ($null -eq $ctx) { throw \"No Azure context after setup script.\" }",
+            "if ($null -eq $ctx) { throw \"No Azure context after restore script.\" }",
             "$PSDefaultParameterValues['*:DefaultProfile'] = $ctx",
             "$scriptToRun = @'",
             escapedScript,

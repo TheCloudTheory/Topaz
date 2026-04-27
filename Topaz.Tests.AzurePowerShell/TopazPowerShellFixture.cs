@@ -27,6 +27,9 @@ public class TopazPowerShellFixture
     private static readonly string SetupScriptContent =
         File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "scripts", "setup-az-environment.ps1"));
 
+    private static readonly string RestoreScriptContent =
+        File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "scripts", "restore-az-context.ps1"));
+
     // Shared across all test classes via PowerShellTestBase
     internal static IContainer? ContainerPowerShell;
     internal static IContainer? ContainerTopaz;
@@ -49,7 +52,6 @@ public class TopazPowerShellFixture
             .WithPortBinding(8891)
             .WithPortBinding(8893)
             .WithNetwork(_network)
-            .WithName("topaz.local.dev")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateKey),  "/app/topaz.key")
             .WithCommand("--certificate-file", "topaz.crt", "--certificate-key",
@@ -82,6 +84,7 @@ public class TopazPowerShellFixture
             .WithCommand("-c", "tail -f /dev/null")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
             .WithResourceMapping(Encoding.UTF8.GetBytes(SetupScriptContent), "/tmp/setup-az-environment.ps1")
+            .WithResourceMapping(Encoding.UTF8.GetBytes(RestoreScriptContent), "/tmp/restore-az-context.ps1")
             // After update-ca-certificates runs, .NET will use this bundle
             .WithEnvironment("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt")
             // Disable real AAD instance discovery for all child processes

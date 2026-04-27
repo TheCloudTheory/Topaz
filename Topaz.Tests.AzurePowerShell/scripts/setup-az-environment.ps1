@@ -50,4 +50,8 @@ if ($null -ne $subscription)
     Set-AzContext -Subscription $subscription.Id -Tenant $TenantId | Out-Null
 }
 
+# Persist the context to a file so per-test pwsh processes can restore it cheaply
+# with Import-AzContext instead of re-running Connect-AzAccount every time.
+Save-AzContext -Path /tmp/az-context.json -Force | Out-Null
+
 Write-Host "Topaz PowerShell setup complete."
