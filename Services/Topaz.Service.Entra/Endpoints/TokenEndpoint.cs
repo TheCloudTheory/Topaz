@@ -1,4 +1,5 @@
 using System.Net;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using Azure.Core;
@@ -17,6 +18,7 @@ namespace Topaz.Service.Entra.Endpoints;
 public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private const string Issuer = "https://topaz.local.dev:8899/organizations/v2.0";
+    private static readonly ConcurrentDictionary<string, string> RefreshTokenUsernames = new();
 
     private readonly UserDataPlane _userDataPlane = UserDataPlane.New(logger);
 
@@ -135,6 +137,19 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                     }
 
                     objectId = validatedToken.Subject;
+
+                    var tokenUsername = validatedToken.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+                    if (!string.IsNullOrWhiteSpace(tokenUsername))
+                    {
+                        username = tokenUsername;
+                    }
+
+                    // Prefer the original username associated with this refresh token.
+                    // Az.Accounts expects preferred_username to remain stable across refreshes.
+                    if (RefreshTokenUsernames.TryGetValue(refreshToken, out var cachedUsername))
+                    {
+                        username = cachedUsername;
+                    }
                 }
                 catch (SecurityTokenExpiredException ex)
                 {
@@ -142,6 +157,18 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                     response.CreateJsonContentResponse(
                         ErrorResponse.Create(ErrorResponse.InvalidRequest, "Refresh token expired"),
                         HttpStatusCode.BadRequest);
+                }
+
+                // Rehydrate username for MSAL/Az.Accounts token cache matching.
+                // If preferred_username is replaced with object ID on refresh, cmdlets
+                // can fail looking up the cached account by UPN.
+                if (objectId != null && string.IsNullOrWhiteSpace(username))
+                {
+                    var userOperation = _userDataPlane.Get(UserIdentifier.From(objectId));
+                    if (userOperation.Resource != null && userOperation.Result == OperationResult.Success)
+                    {
+                        username = userOperation.Resource.UserPrincipalName;
+                    }
                 }
                 
                 break;
@@ -192,6 +219,11 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         var token = CreateTokenResponse(context, objectId, clientId, storedNonce, username, form);
 
+        if (!string.IsNullOrWhiteSpace(token.RefreshToken) && !string.IsNullOrWhiteSpace(username))
+        {
+            RefreshTokenUsernames[token.RefreshToken] = username;
+        }
+
         response.CreateJsonContentResponse(token);
     }
 
@@ -202,9 +234,9 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
         {
             var token = new TokenResponse
             {
-                AccessToken = new AzureLocalCredential(objectId)
+                AccessToken = new AzureLocalCredential(objectId, preferredUsername: username)
                     .GetToken(new TokenRequestContext(), CancellationToken.None).Token,
-                RefreshToken = new AzureLocalCredential(objectId)
+                RefreshToken = new AzureLocalCredential(objectId, preferredUsername: username)
                     .GetToken(new TokenRequestContext(), CancellationToken.None).Token,
                 IdToken = CreateIdToken(Issuer, clientId!, storedNonce, username ?? objectId, objectId,
                     EntraService.TenantId),

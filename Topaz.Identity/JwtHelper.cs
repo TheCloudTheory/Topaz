@@ -11,9 +11,10 @@ public static class JwtHelper
     private static readonly byte[] SecretKey =
         "yD1sMV1WcwVjSfNUxxLNfVHn5sbqD056LwOnkXCkIDnWkXcrg95plLQ3T1tvinLAnuNNiRRZrKyUvs6YzZnJ/A=="u8.ToArray();
 
-    internal static string GenerateJwt(string objectId, bool isForGraph = false)
+    internal static string GenerateJwt(string objectId, bool isForGraph = false, string? preferredUsername = null)
     {
-        return CreateJwt(objectId, isForGraph ? "https://topaz.local.dev:8899/.graph" : "https://topaz.local.dev:8899");
+        return CreateJwt(objectId, isForGraph ? "https://topaz.local.dev:8899/.graph" : "https://topaz.local.dev:8899",
+            preferredUsername);
     }
 
     /// <summary>
@@ -24,18 +25,26 @@ public static class JwtHelper
         return CreateJwt(objectId, "https://topaz.local.dev:8899");
     }
 
-    private static string CreateJwt(string objectId, string audience)
+    private static string CreateJwt(string objectId, string audience, string? preferredUsername = null)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
+        var claims = new List<Claim>
+        {
+            new("sub", objectId),
+            new("oid", objectId),
+            new("appid", objectId),
+            new("azp", objectId),
+            new("tid", TenantId)
+        };
+
+        if (!string.IsNullOrWhiteSpace(preferredUsername))
+        {
+            claims.Add(new Claim("preferred_username", preferredUsername));
+        }
+
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity([
-                new Claim("sub", objectId),
-                new Claim("oid", objectId),
-                new Claim("appid", objectId),
-                new Claim("azp", objectId),
-                new Claim("tid", TenantId)
-            ]),
+            Subject = new ClaimsIdentity(claims),
             Issuer = "https://topaz.local.dev:8899",
             Audience = audience,
             NotBefore = DateTime.UtcNow,

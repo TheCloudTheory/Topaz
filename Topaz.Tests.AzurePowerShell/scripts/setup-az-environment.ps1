@@ -9,24 +9,26 @@ $ErrorActionPreference = "Stop"
 # Import Az.Accounts explicitly to warm up the assembly loader before any cmdlets are used.
 Import-Module Az.Accounts -Force
 
-# Disable WAM (Windows Authentication Manager) — not available on Linux but safe to set;
-# also ensures legacy credential flows are used rather than interactive browser.
-Update-AzConfig -EnableLoginByWam $false | Out-Null
+# Keep the context in-memory only. Enabling autosave triggers MSAL to try
+# persisting tokens via the OS keyring (libsecret), which hangs in Docker
+# containers that have no keyring daemon. Everything runs in one pwsh process
+# per test invocation so disk persistence is not needed.
+Disable-AzContextAutosave | Out-Null
 
-# Ensure context is saved to disk so subsequent pwsh processes pick it up.
-Enable-AzContextAutosave -Scope CurrentUser | Out-Null
-
-# Register the Topaz cloud environment.
-$null = Add-AzEnvironment `
-    -Name                                "Topaz" `
-    -ResourceManagerUrl                  $ResourceManagerUrl `
-    -ActiveDirectoryAuthority            "$ResourceManagerUrl/" `
-    -ActiveDirectoryServiceEndpointResourceId $ResourceManagerUrl `
-    -GraphEndpointResourceId             $ResourceManagerUrl `
-    -GraphUrl                            $ResourceManagerUrl `
-    -StorageEndpointSuffix               "storage.topaz.local.dev" `
-    -AzureKeyVaultDnsSuffix              "vault.topaz.local.dev" `
-    -AzureKeyVaultServiceEndpointResourceId $ResourceManagerUrl
+# Register the Topaz cloud environment (idempotent across repeated runs).
+if (-not (Get-AzEnvironment -Name "Topaz" -ErrorAction SilentlyContinue))
+{
+    $null = Add-AzEnvironment `
+        -Name                                "Topaz" `
+        -ResourceManagerUrl                  $ResourceManagerUrl `
+        -ActiveDirectoryAuthority            "$ResourceManagerUrl/" `
+        -ActiveDirectoryServiceEndpointResourceId $ResourceManagerUrl `
+        -GraphEndpointResourceId             $ResourceManagerUrl `
+        -GraphUrl                            $ResourceManagerUrl `
+        -StorageEndpointSuffix               "storage.topaz.local.dev" `
+        -AzureKeyVaultDnsSuffix              "vault.topaz.local.dev" `
+        -AzureKeyVaultServiceEndpointResourceId $ResourceManagerUrl
+}
 
 # Authenticate using the username/password ROPC flow — the same grant that
 # `az login --username` uses. Unlike -ServicePrincipal, this does not trigger the
@@ -38,7 +40,14 @@ $cred = New-Object PSCredential("topazadmin@topaz.local.dev", $pw)
 Connect-AzAccount `
     -Environment          "Topaz" `
     -Credential           $cred `
-    -TenantId             $TenantId `
-    -SkipContextPopulation
+    -TenantId             $TenantId | Out-Null
+
+# Persist an explicit subscription context so new pwsh processes can reuse
+# the saved context without relying on implicit context population.
+$subscription = Get-AzSubscription | Select-Object -First 1
+if ($null -ne $subscription)
+{
+    Set-AzContext -Subscription $subscription.Id -Tenant $TenantId | Out-Null
+}
 
 Write-Host "Topaz PowerShell setup complete."

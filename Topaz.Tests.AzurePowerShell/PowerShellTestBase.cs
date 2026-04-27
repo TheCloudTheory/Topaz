@@ -23,9 +23,11 @@ public abstract class PowerShellTestBase
             await KeyVaultHostMapper.EnsureVaultHostsMapped(containerPs, containerTopaz, script);
         }
 
+        var wrappedScript = BuildAuthenticatedScript(script);
+
         var result = await containerPs!.ExecAsync(new List<string>
         {
-            "pwsh", "-NonInteractive", "-Command", script
+            "pwsh", "-NonInteractive", "-Command", wrappedScript
         });
 
         Console.WriteLine($"Script: {script}");
@@ -44,5 +46,21 @@ public abstract class PowerShellTestBase
             $"PowerShell script failed. STDOUT: {result.Stdout}, STDERR: {result.Stderr}");
 
         assertion?.Invoke(JsonNode.Parse(result.Stdout)!);
+    }
+
+    private static string BuildAuthenticatedScript(string script)
+    {
+        var escapedScript = script.Replace("'@", "'@@");
+
+        return string.Join('\n',
+            "$ErrorActionPreference = \"Stop\"",
+            "& /tmp/setup-az-environment.ps1",
+            "$ctx = Get-AzContext",
+            "if ($null -eq $ctx) { throw \"No Azure context after setup script.\" }",
+            "$PSDefaultParameterValues['*:DefaultProfile'] = $ctx",
+            "$scriptToRun = @'",
+            escapedScript,
+            "'@",
+            "Invoke-Expression $scriptToRun");
     }
 }

@@ -56,12 +56,24 @@ public class TopazPowerShellFixture
                 "topaz.key", "--log-level", "Debug", "--default-subscription",
                 Guid.NewGuid().ToString())
             .WithOutputConsumer(Consume.RedirectStdoutAndStderrToConsole())
+            // UntilPortIsAvailable probes the container's internal IP directly, which is
+            // unreachable from macOS (Docker Desktop runs containers inside a Linux VM).
+            // UntilHttpRequestIsSucceeded uses container.Hostname + GetMappedPublicPort,
+            // routing through Docker's host port mapping, which is reachable on all OSes.
+            // The self-signed certificate is accepted via UsingHttpMessageHandler.
+            .WithWaitStrategy(Wait.ForUnixContainer()
+                .UntilHttpRequestIsSucceeded(r => r
+                    .ForPath("/health")
+                    .ForPort(8899)
+                    .UsingTls()
+                    .UsingHttpMessageHandler(new System.Net.Http.HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback =
+                            System.Net.Http.HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    })))
             .Build();
 
         await ContainerTopaz.StartAsync().ConfigureAwait(false);
-
-        // Give Topaz a moment to initialise
-        await Task.Delay(TimeSpan.FromSeconds(3));
 
         ContainerPowerShell = new ContainerBuilder()
             .WithImage(PowerShellContainerImage)
@@ -74,6 +86,19 @@ public class TopazPowerShellFixture
             .WithEnvironment("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt")
             // Disable real AAD instance discovery for all child processes
             .WithEnvironment("AZURE_CORE_INSTANCE_DISCOVERY", "false")
+            // Explicit /etc/hosts entry: Docker's embedded DNS can fail to resolve
+            // dotted container names under .NET's resolver; WithExtraHost guarantees it.
+            .WithExtraHost("topaz.local.dev", ContainerTopaz.IpAddress)
+            // MSAL's background instance-discovery thread constructs a URL of the form
+            // https://login.microsoftonline.com:<custom-port>/common/discovery/instance
+            // (it inherits the port from our custom ActiveDirectoryAuthority, 8899).
+            // Routing that hostname to 127.0.0.1 makes the connection fail immediately
+            // with ECONNREFUSED instead of waiting through multiple TCP retransmit
+            // timeouts (~2 minutes each), which was causing the setup script to take
+            // 15+ minutes. The main auth flow (token grant) is unaffected because it
+            // talks directly to topaz.local.dev which /etc/hosts maps to Topaz.
+            .WithExtraHost("login.microsoftonline.com", "127.0.0.1")
+            .WithExtraHost("login.windows.net", "127.0.0.1")
             .Build();
 
         await ContainerPowerShell.StartAsync().ConfigureAwait(false);
