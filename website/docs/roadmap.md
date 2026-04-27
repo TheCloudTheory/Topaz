@@ -40,7 +40,7 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 |--|---------|-------------|
 | <span class="badge--stable">Stable</span> | Certificate trust script | `configure-azure-powershell-cert.ps1` — trust the Topaz certificate in the Az module |
 | <span class="badge--stable">Stable</span> | Cloud environment registration | `Add-AzEnvironment` + `Connect-AzAccount` setup script and example |
-| <span class="badge--preview">Preview</span> | Test suite | `Topaz.Tests.AzurePowerShell` project with a Testcontainers fixture and smoke tests |
+| <span class="badge--stable">Stable</span> | Test suite | `Topaz.Tests.AzurePowerShell` project with a Testcontainers fixture and smoke tests |
 
 ### Management Groups — basic CRUD
 
