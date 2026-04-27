@@ -12,7 +12,11 @@ namespace Topaz.Tests.AzurePowerShell;
 [SetUpFixture]
 public class TopazPowerShellFixture
 {
-    private const string PowerShellContainerImage = "mcr.microsoft.com/powershell:lts";
+    // Use the custom-built topaz/powershell image (ubuntu:22.04 + PowerShell 7 installed
+    // natively for the current platform via scripts/build-powershell-container.sh).
+    // This avoids the arm/v7 limitation of mcr.microsoft.com/powershell:lts and the
+    // Az module assembly-load-context failures that occur under x86_64 QEMU emulation.
+    private const string PowerShellContainerImage = "topaz/powershell";
 
     private static readonly string TopazContainerImage =
         Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "topaz/host";

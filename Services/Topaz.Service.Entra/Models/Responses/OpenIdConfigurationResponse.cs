@@ -4,28 +4,35 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Entra.Models.Responses;
 
-internal sealed class OpenIdConfigurationResponse
+internal sealed class OpenIdConfigurationResponse(string? tenantId = null)
 {
+    private const string BaseUrl = "https://topaz.local.dev:8899";
+
+    // MSAL validates that the issuer from OIDC discovery contains the tenant ID that was requested.
+    // Return a tenant-specific issuer when a tenant ID is provided; fall back to the /organizations
+    // path for requests that don't specify a concrete tenant.
     [JsonPropertyName("issuer")]
-    public string Issuer => "https://topaz.local.dev:8899/organizations/v2.0";
+    public string Issuer => tenantId is not null
+        ? $"{BaseUrl}/{tenantId}/v2.0"
+        : $"{BaseUrl}/organizations/v2.0";
 
     [JsonPropertyName("authorization_endpoint")]
-    public string AuthorizationEndpoint => "https://topaz.local.dev:8899/organizations/oauth2/v2.0/authorize";
+    public string AuthorizationEndpoint => $"{BaseUrl}/organizations/oauth2/v2.0/authorize";
 
     [JsonPropertyName("token_endpoint")]
-    public string TokenEndpoint => "https://topaz.local.dev:8899/organizations/oauth2/v2.0/token";
+    public string TokenEndpoint => $"{BaseUrl}/organizations/oauth2/v2.0/token";
 
     [JsonPropertyName("jwks_uri")]
-    public string JwksUri => "https://topaz.local.dev:8899/common/discovery/v2.0/keys";
+    public string JwksUri => $"{BaseUrl}/common/discovery/v2.0/keys";
 
     [JsonPropertyName("userinfo_endpoint")]
-    public string UserinfoEndpoint => "https://topaz.local.dev:8899/oidc/userinfo";
+    public string UserinfoEndpoint => $"{BaseUrl}/oidc/userinfo";
 
     [JsonPropertyName("end_session_endpoint")]
-    public string EndSessionEndpoint => "https://topaz.local.dev:8899/common/oauth2/v2.0/logout";
+    public string EndSessionEndpoint => $"{BaseUrl}/common/oauth2/v2.0/logout";
 
     [JsonPropertyName("device_authorization_endpoint")]
-    public string DeviceAuthorizationEndpoint => "https://topaz.local.dev:8899/organizations/oauth2/v2.0/devicecode";
+    public string DeviceAuthorizationEndpoint => $"{BaseUrl}/organizations/oauth2/v2.0/devicecode";
 
     [JsonPropertyName("response_types_supported")]
     public string[] ResponseTypesSupported => [

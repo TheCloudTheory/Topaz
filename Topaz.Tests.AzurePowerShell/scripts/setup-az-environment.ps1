@@ -5,19 +5,18 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# Ensure context is saved to disk so subsequent pwsh processes pick it up
-Enable-AzContextAutosave -Scope CurrentUser
+# Az modules are pre-installed in the Docker image (see Dockerfile.powershell).
+# Import Az.Accounts explicitly to warm up the assembly loader before any cmdlets are used.
+Import-Module Az.Accounts -Force
 
-# Configure PSGallery and install required Az modules
-Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-Install-Module -Name Az.Accounts  -Force -Scope CurrentUser -AllowClobber -Repository PSGallery
-Install-Module -Name Az.Resources -Force -Scope CurrentUser -AllowClobber -Repository PSGallery
-Install-Module -Name Az.KeyVault  -Force -Scope CurrentUser -AllowClobber -Repository PSGallery
+# Disable WAM (Windows Authentication Manager) — not available on Linux but safe to set;
+# also ensures legacy credential flows are used rather than interactive browser.
+Update-AzConfig -EnableLoginByWam $false | Out-Null
 
-# Disable instance discovery so Az doesn't try to reach real AAD endpoints
-$env:AZURE_CORE_INSTANCE_DISCOVERY = "false"
+# Ensure context is saved to disk so subsequent pwsh processes pick it up.
+Enable-AzContextAutosave -Scope CurrentUser | Out-Null
 
-# Register the Topaz cloud environment
+# Register the Topaz cloud environment.
 $null = Add-AzEnvironment `
     -Name                                "Topaz" `
     -ResourceManagerUrl                  $ResourceManagerUrl `
@@ -29,15 +28,17 @@ $null = Add-AzEnvironment `
     -AzureKeyVaultDnsSuffix              "vault.topaz.local.dev" `
     -AzureKeyVaultServiceEndpointResourceId $ResourceManagerUrl
 
-# Authenticate using the service-principal flow (client_credentials grant).
-# Topaz accepts any credentials and maps them to the global admin identity.
+# Authenticate using the username/password ROPC flow — the same grant that
+# `az login --username` uses. Unlike -ServicePrincipal, this does not trigger the
+# MSAL "combined flat storage" restriction that affects ClientSecretCredential.
+# The full UPN (topazadmin@topaz.local.dev) is required by Topaz's UserDataPlane lookup.
 $pw   = ConvertTo-SecureString "admin" -AsPlainText -Force
-$cred = New-Object PSCredential("topazadmin", $pw)
+$cred = New-Object PSCredential("topazadmin@topaz.local.dev", $pw)
 
 Connect-AzAccount `
-    -Environment     "Topaz" `
-    -ServicePrincipal `
-    -Credential      $cred `
-    -TenantId        $TenantId
+    -Environment          "Topaz" `
+    -Credential           $cred `
+    -TenantId             $TenantId `
+    -SkipContextPopulation
 
 Write-Host "Topaz PowerShell setup complete."

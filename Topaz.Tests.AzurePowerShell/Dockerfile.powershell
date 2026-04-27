@@ -1,0 +1,43 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install PowerShell 7 from the GitHub release tarball.
+# The Microsoft Ubuntu apt repository does not publish arm64 .deb packages for PowerShell,
+# so we download the architecture-appropriate tarball at build time.
+# To update: change PS_VERSION below and rebuild with scripts/build-powershell-container.sh.
+ARG PS_VERSION=7.4.7
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        libicu70 && \
+    ARCH=$(uname -m) && \
+    case "$ARCH" in \
+        aarch64) PSARCH="arm64" ;; \
+        x86_64)  PSARCH="x64"   ;; \
+        *) echo "Unsupported arch: $ARCH" && exit 1 ;; \
+    esac && \
+    curl -fsSLo /tmp/powershell.tar.gz \
+        "https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${PSARCH}.tar.gz" && \
+    mkdir -p /opt/microsoft/powershell/7 && \
+    tar -xzf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 && \
+    chmod +x /opt/microsoft/powershell/7/pwsh && \
+    ln -s /opt/microsoft/powershell/7/pwsh /usr/local/bin/pwsh && \
+    rm /tmp/powershell.tar.gz && \
+    rm -rf /var/lib/apt/lists/*
+
+# Pre-install Az modules so tests don't download from PSGallery at runtime.
+# This layer is cached; rebuild only when you need to update module versions.
+RUN pwsh -NonInteractive -Command " \
+    Set-PSRepository -Name PSGallery -InstallationPolicy Trusted; \
+    Install-Module -Name Az.Accounts          -Force -Scope AllUsers -AllowClobber -Repository PSGallery; \
+    Install-Module -Name Az.Resources         -Force -Scope AllUsers -AllowClobber -Repository PSGallery; \
+    Install-Module -Name Az.KeyVault          -Force -Scope AllUsers -AllowClobber -Repository PSGallery; \
+    Install-Module -Name Az.Storage           -Force -Scope AllUsers -AllowClobber -Repository PSGallery; \
+    Install-Module -Name Az.ContainerRegistry -Force -Scope AllUsers -AllowClobber -Repository PSGallery; \
+    Write-Host 'Az modules installed.' \
+    "
+
+CMD ["/bin/bash"]
