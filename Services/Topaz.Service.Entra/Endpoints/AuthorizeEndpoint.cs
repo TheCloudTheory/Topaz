@@ -11,6 +11,9 @@ public class AuthorizeEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     internal static readonly ConcurrentDictionary<string, string> Nonces = new();
 
+    /// <summary>Maps an authorization code to the login_hint (username/UPN) supplied during the authorize request.</summary>
+    internal static readonly ConcurrentDictionary<string, string> AuthCodes = new();
+
     public string[] Endpoints =>
     [
         "GET /organizations/oauth2/v2.0/authorize",
@@ -37,6 +40,13 @@ public class AuthorizeEndpoint(ITopazLogger logger) : IEndpointDefinition
         if (!string.IsNullOrEmpty(nonce))
         {
             Nonces[code] = nonce;
+        }
+
+        // Store login_hint so the token endpoint can resolve the correct user identity.
+        context.Request.QueryString.TryGetValueForKey("login_hint", out var loginHint);
+        if (!string.IsNullOrEmpty(loginHint))
+        {
+            AuthCodes[code] = loginHint;
         }
         
         logger.LogDebug(nameof(AuthorizeEndpoint), nameof(GetResponse), "Generated auth code: {0}", code);

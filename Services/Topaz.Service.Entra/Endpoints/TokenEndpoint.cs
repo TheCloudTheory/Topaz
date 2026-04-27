@@ -21,6 +21,8 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
     private static readonly ConcurrentDictionary<string, string> RefreshTokenUsernames = new();
 
     private readonly UserDataPlane _userDataPlane = UserDataPlane.New(logger);
+    private readonly ServicePrincipalDataPlane _servicePrincipalDataPlane = ServicePrincipalDataPlane.New(logger);
+    private readonly ApplicationsDataPlane _applicationsDataPlane = ApplicationsDataPlane.New(logger);
 
     public string[] Endpoints =>
     [
@@ -179,32 +181,74 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                 logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse),
                     "Extracting object ID from authorization code...");
 
-                // For now if authorization code is provided, we're authenticating the user as a global admin
-                objectId = Globals.GlobalAdminId;
-                
-                var userOperation = _userDataPlane.Get(UserIdentifier.From(objectId));
-                if (userOperation.Resource == null || userOperation.Result != OperationResult.Success)
+                // Retrieve the login_hint stored when the code was issued, then remove it.
+                if (AuthorizeEndpoint.AuthCodes.TryRemove(code ?? string.Empty, out var loginHint) &&
+                    !string.IsNullOrWhiteSpace(loginHint))
                 {
-                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse), "Could not find user.");
-                    response.CreateJsonContentResponse(
-                        ErrorResponse.Create(ErrorResponse.InvalidClient, "Could not find user."),
-                        HttpStatusCode.BadRequest);
-                    return;
+                    var userOperation = _userDataPlane.Get(UserIdentifier.From(loginHint));
+                    if (userOperation.Resource == null || userOperation.Result != OperationResult.Success)
+                    {
+                        logger.LogError(nameof(TokenEndpoint), nameof(GetResponse),
+                            "Could not find user for login_hint: {0}", loginHint);
+                        response.CreateJsonContentResponse(
+                            ErrorResponse.Create(ErrorResponse.InvalidClient, "Could not find user."),
+                            HttpStatusCode.BadRequest);
+                        return;
+                    }
+
+                    objectId = userOperation.Resource.Id;
+                    username = userOperation.Resource.UserPrincipalName;
                 }
-                
-                username = userOperation.Resource.UserPrincipalName;
-                
+                else
+                {
+                    // No login_hint was captured during authorize — fall back to global admin
+                    // so that browser-based flows that omit login_hint continue to work in the emulator.
+                    objectId = Globals.GlobalAdminId;
+                    var userOperation = _userDataPlane.Get(UserIdentifier.From(objectId));
+                    if (userOperation.Resource != null && userOperation.Result == OperationResult.Success)
+                    {
+                        username = userOperation.Resource.UserPrincipalName;
+                    }
+                }
+
                 break;
             }
             case "client_credentials":
             {
-                // For the emulator, any client_credentials request is accepted and mapped to the
-                // global admin identity so that all subsequent ARM/Graph API calls succeed without
-                // requiring the service principal to be pre-registered or have role assignments.
                 logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse),
-                    "client_credentials grant — accepting any credentials as global admin.");
+                    "client_credentials grant — validating service principal credentials.");
 
-                objectId = Globals.GlobalAdminId;
+                var clientSecret = ExtractValueForToken(context, form, "client_secret", null);
+
+                // Look up the service principal by appId (= client_id).
+                var spOperation = _servicePrincipalDataPlane.Get(ServicePrincipalIdentifier.From(clientId!));
+                if (spOperation.Resource == null || spOperation.Result != OperationResult.Success)
+                {
+                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse),
+                        "Service principal not found for client_id: {0}", clientId);
+                    response.CreateJsonContentResponse(
+                        ErrorResponse.Create(ErrorResponse.InvalidClient, "Invalid client credentials."),
+                        HttpStatusCode.Unauthorized);
+                    return;
+                }
+
+                // Validate the client_secret against the application's stored password credentials.
+                var appOperation = _applicationsDataPlane.Get(ApplicationIdentifier.From(clientId!));
+                var validSecret = appOperation.Resource?.PasswordCredentials
+                    ?.Any(pc => string.Equals(pc.SecretText, clientSecret, StringComparison.Ordinal)) == true;
+
+                if (!validSecret)
+                {
+                    logger.LogError(nameof(TokenEndpoint), nameof(GetResponse),
+                        "Invalid client_secret for client_id: {0}", clientId);
+                    response.CreateJsonContentResponse(
+                        ErrorResponse.Create(ErrorResponse.InvalidClient, "Invalid client credentials."),
+                        HttpStatusCode.Unauthorized);
+                    return;
+                }
+
+                objectId = spOperation.Resource.Id;
+                username = spOperation.Resource.AppId; // az account show reports user.name as the appId
                 break;
             }
         }
