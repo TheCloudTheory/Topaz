@@ -72,6 +72,7 @@ jobs:
             - 'Topaz.Dns/**'
             - 'Topaz.EventPipeline/**'
             - 'Services/**'
+            - 'Topaz.Tests.AzureCLI/**'
             - 'Topaz.Tests.AzurePowerShell/**'
           core:
             - 'Topaz.Host/**'
@@ -109,6 +110,8 @@ jobs:
             - 'Topaz.Tests.Terraform/**'
           azurepowershell:
             - 'Topaz.Tests.AzurePowerShell/**'
+          azurecli:
+            - 'Topaz.Tests.AzureCLI/**'
     - name: Build test filter
       id: test_filter
       shell: bash
@@ -119,6 +122,8 @@ jobs:
           echo "skip=false" >> "$GITHUB_OUTPUT"
           echo "ps_filter=" >> "$GITHUB_OUTPUT"
           echo "ps_skip=false" >> "$GITHUB_OUTPUT"
+          echo "cli_filter=" >> "$GITHUB_OUTPUT"
+          echo "cli_skip=false" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
@@ -128,6 +133,8 @@ jobs:
           echo "filter=" >> "$GITHUB_OUTPUT"
           echo "ps_skip=true" >> "$GITHUB_OUTPUT"
           echo "ps_filter=" >> "$GITHUB_OUTPUT"
+          echo "cli_skip=true" >> "$GITHUB_OUTPUT"
+          echo "cli_filter=" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
@@ -138,6 +145,8 @@ jobs:
           echo "filter=" >> "$GITHUB_OUTPUT"
           echo "ps_filter=" >> "$GITHUB_OUTPUT"
           echo "ps_skip=false" >> "$GITHUB_OUTPUT"
+          echo "cli_filter=" >> "$GITHUB_OUTPUT"
+          echo "cli_skip=false" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
@@ -185,11 +194,38 @@ jobs:
           PS_JOINED=$(IFS='|'; echo "${PS_PARTS[*]}")
           echo "ps_filter=$PS_JOINED" >> "$GITHUB_OUTPUT"
         fi
+
+        # Build AzureCLI test filter
+        CLI_PARTS=()
+        [[ "${{ steps.changes.outputs.keyvault }}"        == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.KeyVault")
+        [[ "${{ steps.changes.outputs.acr }}"             == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.ContainerRegistry")
+        [[ "${{ steps.changes.outputs.storage }}"         == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.Storage")
+        [[ "${{ steps.changes.outputs.servicebus }}"      == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.ServiceBus")
+        [[ "${{ steps.changes.outputs.authorization }}"   == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.Authorization")
+        [[ "${{ steps.changes.outputs.entra }}"           == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.Entra")
+        [[ "${{ steps.changes.outputs.managedidentity }}" == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.ManagedIdentity")
+        [[ "${{ steps.changes.outputs.resourcegroup }}"   == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.ResourceGroup")
+        [[ "${{ steps.changes.outputs.resourcemanager }}" == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.ResourceManager")
+        [[ "${{ steps.changes.outputs.virtualnetwork }}"  == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.VirtualNetwork")
+
+        if [[ "${{ steps.changes.outputs.azurecli }}" == "true" ]]; then
+          # CLI test files themselves changed: run all CLI tests
+          echo "cli_skip=false" >> "$GITHUB_OUTPUT"
+          echo "cli_filter=" >> "$GITHUB_OUTPUT"
+        elif [[ ${#CLI_PARTS[@]} -eq 0 ]]; then
+          # No CLI-related service or test files changed
+          echo "cli_skip=true" >> "$GITHUB_OUTPUT"
+          echo "cli_filter=" >> "$GITHUB_OUTPUT"
+        else
+          echo "cli_skip=false" >> "$GITHUB_OUTPUT"
+          CLI_JOINED=$(IFS='|'; echo "${CLI_PARTS[*]}")
+          echo "cli_filter=$CLI_JOINED" >> "$GITHUB_OUTPUT"
+        fi
     - name: Test
       if: steps.test_filter.outputs.skip != 'true'
       run: |
         FILTER="${{ steps.test_filter.outputs.filter }}"
-        EXCLUDE="FullyQualifiedName!~Topaz.Tests.Terraform&FullyQualifiedName!~Topaz.Tests.AzurePowerShell"
+        EXCLUDE="FullyQualifiedName!~Topaz.Tests.Terraform&FullyQualifiedName!~Topaz.Tests.AzurePowerShell&FullyQualifiedName!~Topaz.Tests.AzureCLI"
         if [[ -n "$FILTER" ]]; then
           FILTER="${FILTER}&${EXCLUDE}"
         else
@@ -215,6 +251,17 @@ jobs:
         FILTER="${{ steps.test_filter.outputs.ps_filter }}"
         if [[ -z "$FILTER" ]]; then
           FILTER="FullyQualifiedName~Topaz.Tests.AzurePowerShell"
+        fi
+        dotnet test -m:1 --no-build --verbosity normal --logger trx \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ${{ github.workspace }}/TestResults \
+          --filter "$FILTER"
+    - name: AzureCLI Tests
+      if: always() && steps.test_filter.outputs.cli_skip != 'true'
+      run: |
+        FILTER="${{ steps.test_filter.outputs.cli_filter }}"
+        if [[ -z "$FILTER" ]]; then
+          FILTER="FullyQualifiedName~Topaz.Tests.AzureCLI"
         fi
         dotnet test -m:1 --no-build --verbosity normal --logger trx \
           --collect:"XPlat Code Coverage" \
