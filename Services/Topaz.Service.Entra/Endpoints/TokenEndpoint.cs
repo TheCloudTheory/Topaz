@@ -157,6 +157,7 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                     response.CreateJsonContentResponse(
                         ErrorResponse.Create(ErrorResponse.InvalidRequest, "Refresh token expired"),
                         HttpStatusCode.BadRequest);
+                    return;
                 }
 
                 // Rehydrate username for MSAL/Az.Accounts token cache matching.
