@@ -817,18 +817,28 @@ public class KeyVaultTests : TopazFixture
     #region Random Bytes Tests
 
     [Test]
-    public async Task KeyVaultTests_WhenRandomBytesCommandIsCalledWithCount_ItShouldReturnBase64Value()
+    // az keyvault key random-bytes does not exist in any released Azure CLI version;
+    // the data-plane /rng endpoint is exercised directly via az rest instead.
+    public async Task KeyVaultTests_WhenRandomBytesEndpointIsCalledWithCount_ItShouldReturnBase64Value()
     {
         await RunAzureCliCommand("az group create -n test-rg -l westeurope");
         await RunAzureCliCommand("az keyvault create --location westeurope --name RngVault01 --resource-group test-rg");
-        await RunAzureCliCommand("az keyvault key random-bytes --vault-name RngVault01 --count 32",
+        // az keyvault create uses --name, not --vault-name, so KeyVaultHostMapper does not register the
+        // vault DNS entry. A subsequent --vault-name command is required to trigger the mapping before az rest.
+        await RunAzureCliCommand("az keyvault key list --vault-name RngVault01");
+        await RunAzureCliCommand(
+            "az rest --method post " +
+            "--url \"https://rngvault01.vault.topaz.local.dev:8898/rng?api-version=7.3\" " +
+            "--body \"{\\\"count\\\": 32}\" " +
+            "--resource \"https://topaz.local.dev:8899\" " +
+            "--only-show-errors -o json",
             (response) =>
             {
                 var value = response["value"]!.GetValue<string>();
                 Assert.Multiple(() =>
                 {
                     Assert.That(value, Is.Not.Null.And.Not.Empty);
-                    // base64url — no padding, only A-Z a-z 0-9 - _
+                    // Topaz returns base64url — no padding, only A-Z a-z 0-9 - _
                     Assert.That(value, Does.Match("^[A-Za-z0-9_-]+$"));
                 });
             });
