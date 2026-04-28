@@ -1083,6 +1083,272 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         }
     }
 
+    public DataPlaneOperationResult<KeyOperationResponse> SignKey(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName, string keyVersion,
+        KeyOperationRequest request)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(SignKey), "Executing {0}: {1}/{2} in {3}.", nameof(SignKey), keyName, keyVersion, vaultName);
+
+        if (string.IsNullOrEmpty(request.Algorithm))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Algorithm ('alg') is required.", "BadParameter");
+
+        if (string.IsNullOrEmpty(request.Value))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Value (digest) is required.", "BadParameter");
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (!File.Exists(entityPath))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.NotFound, null, $"Key '{keyName}' not found.", "KeyNotFound");
+
+        var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
+        var bundle = bundles.FirstOrDefault(b => b.Key.Kid.EndsWith($"/{keyVersion}", StringComparison.OrdinalIgnoreCase));
+        if (bundle == null)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.NotFound, null, $"Key version '{keyVersion}' not found.", "KeyNotFound");
+
+        if (!bundle.Attributes.Enabled)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key is disabled.", "Forbidden");
+
+        if (bundle.Key.KeyOps.Length > 0 && !bundle.Key.KeyOps.Contains("sign", StringComparer.OrdinalIgnoreCase))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key does not permit the 'sign' operation.", "Forbidden");
+
+        var digest = Base64UrlDecode(request.Value);
+        var alg = request.Algorithm.ToUpperInvariant();
+        var kty = bundle.Key.Kty?.ToUpperInvariant() ?? string.Empty;
+
+        try
+        {
+            string resultBase64Url;
+
+            if (kty is "RSA" or "RSA-HSM")
+            {
+                if (string.IsNullOrEmpty(bundle.Key.D))
+                    return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                        "Key does not contain private RSA material required for signing.", "BadParameter");
+
+                var (hashAlg, padding) = alg switch
+                {
+                    "RS256" => (HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1),
+                    "RS384" => (HashAlgorithmName.SHA384, RSASignaturePadding.Pkcs1),
+                    "RS512" => (HashAlgorithmName.SHA512, RSASignaturePadding.Pkcs1),
+                    "PS256" => (HashAlgorithmName.SHA256, RSASignaturePadding.Pss),
+                    "PS384" => (HashAlgorithmName.SHA384, RSASignaturePadding.Pss),
+                    "PS512" => (HashAlgorithmName.SHA512, RSASignaturePadding.Pss),
+                    _ => ((HashAlgorithmName?)null, (RSASignaturePadding?)null)
+                };
+
+                if (padding == null)
+                    return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                        $"Algorithm '{request.Algorithm}' is not supported for RSA keys. Supported: RS256, RS384, RS512, PS256, PS384, PS512.", "BadParameter");
+
+                if (string.IsNullOrEmpty(bundle.Key.N) || string.IsNullOrEmpty(bundle.Key.E) ||
+                    string.IsNullOrEmpty(bundle.Key.P) || string.IsNullOrEmpty(bundle.Key.Q) ||
+                    string.IsNullOrEmpty(bundle.Key.DP) || string.IsNullOrEmpty(bundle.Key.DQ) ||
+                    string.IsNullOrEmpty(bundle.Key.InverseQ))
+                    return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                        "Key does not contain complete private RSA material. Recreate the key to enable signing.", "BadParameter");
+
+                using var rsa = RSA.Create();
+                rsa.ImportParameters(new RSAParameters
+                {
+                    Modulus  = Base64UrlDecode(bundle.Key.N!),
+                    Exponent = Base64UrlDecode(bundle.Key.E!),
+                    D        = Base64UrlDecode(bundle.Key.D),
+                    P        = Base64UrlDecode(bundle.Key.P),
+                    Q        = Base64UrlDecode(bundle.Key.Q),
+                    DP       = Base64UrlDecode(bundle.Key.DP),
+                    DQ       = Base64UrlDecode(bundle.Key.DQ),
+                    InverseQ = Base64UrlDecode(bundle.Key.InverseQ)
+                });
+
+                var signature = rsa.SignHash(digest, hashAlg!.Value, padding!);
+                resultBase64Url = Convert.ToBase64String(signature).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+            }
+            else if (kty is "EC" or "EC-HSM")
+            {
+                if (string.IsNullOrEmpty(bundle.Key.D))
+                    return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                        "Key does not contain private EC material required for signing.", "BadParameter");
+
+                if (string.IsNullOrEmpty(bundle.Key.X) || string.IsNullOrEmpty(bundle.Key.Y))
+                    return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                        "EC key is missing public coordinates (x, y).", "BadParameter");
+
+                var (hashAlg, curve) = alg switch
+                {
+                    "ES256" => (HashAlgorithmName.SHA256, ECCurve.NamedCurves.nistP256),
+                    "ES384" => (HashAlgorithmName.SHA384, ECCurve.NamedCurves.nistP384),
+                    "ES512" => (HashAlgorithmName.SHA512, ECCurve.NamedCurves.nistP521),
+                    _ => ((HashAlgorithmName?)null, (ECCurve?)null)
+                };
+
+                if (hashAlg == null)
+                    return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                        $"Algorithm '{request.Algorithm}' is not supported for EC keys. Supported: ES256, ES384, ES512.", "BadParameter");
+
+                using var ec = ECDsa.Create();
+                ec.ImportParameters(new ECParameters
+                {
+                    Curve = curve!.Value,
+                    Q = new ECPoint
+                    {
+                        X = Base64UrlDecode(bundle.Key.X!),
+                        Y = Base64UrlDecode(bundle.Key.Y!)
+                    },
+                    D = Base64UrlDecode(bundle.Key.D)
+                });
+
+                var signature = ec.SignHash(digest, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+                resultBase64Url = Convert.ToBase64String(signature).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+            }
+            else
+            {
+                return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                    $"Sign is not supported for key type '{bundle.Key.Kty}'.", "BadParameter");
+            }
+
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(SignKey), "Signed digest with {0}.", request.Algorithm);
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Success,
+                KeyOperationResponse.New(bundle.Key.Kid, resultBase64Url), null, null);
+        }
+        catch (Exception ex) when (ex is FormatException or CryptographicException)
+        {
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Sign failed: {ex.Message}", "BadParameter");
+        }
+    }
+
+    public DataPlaneOperationResult<KeyVerifyResponse> VerifyKey(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName, string keyVersion,
+        VerifyKeyRequest request)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(VerifyKey), "Executing {0}: {1}/{2} in {3}.", nameof(VerifyKey), keyName, keyVersion, vaultName);
+
+        if (string.IsNullOrEmpty(request.Alg))
+            return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null, "Algorithm ('alg') is required.", "BadParameter");
+
+        if (string.IsNullOrEmpty(request.Value))
+            return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null, "Value (digest) is required.", "BadParameter");
+
+        if (string.IsNullOrEmpty(request.Signature))
+            return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null, "Signature is required.", "BadParameter");
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (!File.Exists(entityPath))
+            return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.NotFound, null, $"Key '{keyName}' not found.", "KeyNotFound");
+
+        var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
+        var bundle = bundles.FirstOrDefault(b => b.Key.Kid.EndsWith($"/{keyVersion}", StringComparison.OrdinalIgnoreCase));
+        if (bundle == null)
+            return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.NotFound, null, $"Key version '{keyVersion}' not found.", "KeyNotFound");
+
+        if (!bundle.Attributes.Enabled)
+            return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null, "Key is disabled.", "Forbidden");
+
+        if (bundle.Key.KeyOps.Length > 0 && !bundle.Key.KeyOps.Contains("verify", StringComparer.OrdinalIgnoreCase))
+            return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null, "Key does not permit the 'verify' operation.", "Forbidden");
+
+        var digest = Base64UrlDecode(request.Value);
+        var signature = Base64UrlDecode(request.Signature);
+        var alg = request.Alg.ToUpperInvariant();
+        var kty = bundle.Key.Kty?.ToUpperInvariant() ?? string.Empty;
+
+        try
+        {
+            bool valid;
+
+            if (kty is "RSA" or "RSA-HSM")
+            {
+                if (string.IsNullOrEmpty(bundle.Key.N) || string.IsNullOrEmpty(bundle.Key.E))
+                    return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null,
+                        "RSA public key material (n, e) is missing.", "BadParameter");
+
+                var (hashAlg, padding) = alg switch
+                {
+                    "RS256" => (HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1),
+                    "RS384" => (HashAlgorithmName.SHA384, RSASignaturePadding.Pkcs1),
+                    "RS512" => (HashAlgorithmName.SHA512, RSASignaturePadding.Pkcs1),
+                    "PS256" => (HashAlgorithmName.SHA256, RSASignaturePadding.Pss),
+                    "PS384" => (HashAlgorithmName.SHA384, RSASignaturePadding.Pss),
+                    "PS512" => (HashAlgorithmName.SHA512, RSASignaturePadding.Pss),
+                    _ => ((HashAlgorithmName?)null, (RSASignaturePadding?)null)
+                };
+
+                if (padding == null)
+                    return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null,
+                        $"Algorithm '{request.Alg}' is not supported for RSA keys. Supported: RS256, RS384, RS512, PS256, PS384, PS512.", "BadParameter");
+
+                using var rsa = RSA.Create();
+                rsa.ImportParameters(new RSAParameters
+                {
+                    Modulus  = Base64UrlDecode(bundle.Key.N!),
+                    Exponent = Base64UrlDecode(bundle.Key.E!)
+                });
+
+                valid = rsa.VerifyHash(digest, signature, hashAlg!.Value, padding!);
+            }
+            else if (kty is "EC" or "EC-HSM")
+            {
+                if (string.IsNullOrEmpty(bundle.Key.X) || string.IsNullOrEmpty(bundle.Key.Y))
+                    return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null,
+                        "EC key is missing public coordinates (x, y).", "BadParameter");
+
+                var (hashAlg, curve) = alg switch
+                {
+                    "ES256" => (HashAlgorithmName.SHA256, ECCurve.NamedCurves.nistP256),
+                    "ES384" => (HashAlgorithmName.SHA384, ECCurve.NamedCurves.nistP384),
+                    "ES512" => (HashAlgorithmName.SHA512, ECCurve.NamedCurves.nistP521),
+                    _ => ((HashAlgorithmName?)null, (ECCurve?)null)
+                };
+
+                if (hashAlg == null)
+                    return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null,
+                        $"Algorithm '{request.Alg}' is not supported for EC keys. Supported: ES256, ES384, ES512.", "BadParameter");
+
+                using var ec = ECDsa.Create();
+                ec.ImportParameters(new ECParameters
+                {
+                    Curve = curve!.Value,
+                    Q = new ECPoint
+                    {
+                        X = Base64UrlDecode(bundle.Key.X!),
+                        Y = Base64UrlDecode(bundle.Key.Y!)
+                    }
+                });
+
+                valid = ec.VerifyHash(digest, signature, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+            }
+            else
+            {
+                return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null,
+                    $"Verify is not supported for key type '{bundle.Key.Kty}'.", "BadParameter");
+            }
+
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(VerifyKey), "Verify result for {0}: {1}.", request.Alg, valid);
+            return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Success,
+                KeyVerifyResponse.New(valid), null, null);
+        }
+        catch (Exception ex) when (ex is FormatException or CryptographicException)
+        {
+            return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null,
+                $"Verify failed: {ex.Message}", "BadParameter");
+        }
+    }
+
     public DataPlaneOperationResult PurgeDeletedKey(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
@@ -1228,7 +1494,13 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
                 var x = Base64UrlDecode(jwk.X);
                 var y = Base64UrlDecode(jwk.Y);
-                keyBundle = new KeyBundle(keyName, vaultName, keyType, null, jwk.Crv ?? "P-256", keyOps, null, null, x, y);
+                var ecDBytes = string.IsNullOrEmpty(jwk.D) ? null : Base64UrlDecode(jwk.D);
+
+                // Without the private scalar, signing is not possible.
+                if (ecDBytes == null)
+                    keyOps = keyOps.Except(["sign"], StringComparer.OrdinalIgnoreCase).ToArray();
+
+                keyBundle = new KeyBundle(keyName, vaultName, keyType, null, jwk.Crv ?? "P-256", keyOps, null, null, x, y, ecD: ecDBytes);
                 break;
             }
             default:
@@ -1370,9 +1642,9 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
                     _       => ECCurve.NamedCurves.nistP256,
                 };
                 using var ec = ECDsa.Create(curve);
-                var parameters = ec.ExportParameters(false);
+                var parameters = ec.ExportParameters(true);
                 return new KeyBundle(keyName, vaultName, keyType, null, request.Curve ?? "P-256", keyOps,
-                    null, null, parameters.Q.X, parameters.Q.Y);
+                    null, null, parameters.Q.X, parameters.Q.Y, ecD: parameters.D);
             }
             default:
                 // Symmetric / oct keys — no public material exposed.

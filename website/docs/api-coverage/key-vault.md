@@ -115,8 +115,8 @@ The data plane covers operations served directly from the vault's own hostname (
 | Get Random Bytes | ✅ | `POST /rng` |
 | encrypt | ✅ | `POST /keys/{name}/{version}/encrypt` — RSA1_5, RSA-OAEP, RSA-OAEP-256 |
 | decrypt | ✅ |
-| sign | ❌ |
-| verify | ❌ |
+| sign | ✅ |
+| verify | ✅ |
 | wrap Key | ❌ |
 | unwrap Key | ❌ |
 | release | ❌ |

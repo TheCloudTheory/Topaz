@@ -18,7 +18,8 @@ public record class KeyBundle
         string? curve, string[] keyOperations, byte[]? rsaN, byte[]? rsaE,
         byte[]? ecX, byte[]? ecY,
         byte[]? rsaD = null, byte[]? rsaP = null, byte[]? rsaQ = null,
-        byte[]? rsaDP = null, byte[]? rsaDQ = null, byte[]? rsaInverseQ = null)
+        byte[]? rsaDP = null, byte[]? rsaDQ = null, byte[]? rsaInverseQ = null,
+        byte[]? ecD = null)
     {
         var version = Guid.NewGuid();
         Name = name;
@@ -31,8 +32,9 @@ public record class KeyBundle
             // RSA public components
             N = rsaN != null ? Base64UrlEncode(rsaN) : null,
             E = rsaE != null ? Base64UrlEncode(rsaE) : null,
-            // RSA private components
-            D         = rsaD        != null ? Base64UrlEncode(rsaD)        : null,
+            // RSA private components (D is also used for EC private scalar)
+            D         = rsaD        != null ? Base64UrlEncode(rsaD)        :
+                        ecD         != null ? Base64UrlEncode(ecD)         : null,
             P         = rsaP        != null ? Base64UrlEncode(rsaP)        : null,
             Q         = rsaQ        != null ? Base64UrlEncode(rsaQ)        : null,
             DP        = rsaDP       != null ? Base64UrlEncode(rsaDP)       : null,

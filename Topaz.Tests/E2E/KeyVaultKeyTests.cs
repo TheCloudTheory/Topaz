@@ -1318,4 +1318,135 @@ public class KeyVaultKeyTests
         // Assert
         Assert.That(decrypted.Plaintext, Is.EqualTo(original));
     }
+
+    [Test]
+    public void KeyVaultKeyTests_Sign_Rs256_RoundTrip_VerifyReturnsTrue()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateRsaKey(new CreateRsaKeyOptions("sign-rs256-key"));
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var data = Encoding.UTF8.GetBytes("hello topaz sign rs256");
+        var digest = SHA256.HashData(data);
+
+        // Act
+        var signResult = cryptoClient.SignData(SignatureAlgorithm.RS256, data);
+        var verifyResult = cryptoClient.VerifyData(SignatureAlgorithm.RS256, data, signResult.Signature);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(signResult.Signature, Is.Not.Null.And.Not.Empty);
+            Assert.That(signResult.KeyId, Is.Not.Null.And.Contains("sign-rs256-key"));
+            Assert.That(verifyResult.IsValid, Is.True);
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_Sign_Ps256_RoundTrip_VerifyReturnsTrue()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateRsaKey(new CreateRsaKeyOptions("sign-ps256-key"));
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var data = Encoding.UTF8.GetBytes("hello topaz sign ps256");
+
+        // Act
+        var signResult = cryptoClient.SignData(SignatureAlgorithm.PS256, data);
+        var verifyResult = cryptoClient.VerifyData(SignatureAlgorithm.PS256, data, signResult.Signature);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(signResult.Signature, Is.Not.Null.And.Not.Empty);
+            Assert.That(verifyResult.IsValid, Is.True);
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_Sign_Es256_RoundTrip_VerifyReturnsTrue()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateEcKey(new CreateEcKeyOptions("sign-es256-key") { CurveName = KeyCurveName.P256 });
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var data = Encoding.UTF8.GetBytes("hello topaz sign es256");
+
+        // Act
+        var signResult = cryptoClient.SignData(SignatureAlgorithm.ES256, data);
+        var verifyResult = cryptoClient.VerifyData(SignatureAlgorithm.ES256, data, signResult.Signature);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(signResult.Signature, Is.Not.Null.And.Not.Empty);
+            Assert.That(verifyResult.IsValid, Is.True);
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_Sign_Es384_RoundTrip_VerifyReturnsTrue()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateEcKey(new CreateEcKeyOptions("sign-es384-key") { CurveName = KeyCurveName.P384 });
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var data = Encoding.UTF8.GetBytes("hello topaz sign es384");
+
+        // Act
+        var signResult = cryptoClient.SignData(SignatureAlgorithm.ES384, data);
+        var verifyResult = cryptoClient.VerifyData(SignatureAlgorithm.ES384, data, signResult.Signature);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(signResult.Signature, Is.Not.Null.And.Not.Empty);
+            Assert.That(verifyResult.IsValid, Is.True);
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_Sign_Es512_RoundTrip_VerifyReturnsTrue()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateEcKey(new CreateEcKeyOptions("sign-es512-key") { CurveName = KeyCurveName.P521 });
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var data = Encoding.UTF8.GetBytes("hello topaz sign es512");
+
+        // Act
+        var signResult = cryptoClient.SignData(SignatureAlgorithm.ES512, data);
+        var verifyResult = cryptoClient.VerifyData(SignatureAlgorithm.ES512, data, signResult.Signature);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(signResult.Signature, Is.Not.Null.And.Not.Empty);
+            Assert.That(verifyResult.IsValid, Is.True);
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_Verify_WrongSignature_ReturnsFalse()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateRsaKey(new CreateRsaKeyOptions("verify-wrong-sig-key"));
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var data = Encoding.UTF8.GetBytes("hello topaz");
+        var wrongSignature = new byte[256]; // all zeros — not a valid RSA-2048 signature
+        Random.Shared.NextBytes(wrongSignature);
+
+        // Act
+        var verifyResult = cryptoClient.VerifyData(SignatureAlgorithm.RS256, data, wrongSignature);
+
+        // Assert
+        Assert.That(verifyResult.IsValid, Is.False);
+    }
 }

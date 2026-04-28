@@ -135,8 +135,6 @@ TODO: Key Vault Keys: Cryptographic operations
   Implement the data-plane crypto surface for keys:
   - POST {vaultBaseUrl}/keys/{name}/{version}/encrypt
   - POST {vaultBaseUrl}/keys/{name}/{version}/decrypt
-  - POST {vaultBaseUrl}/keys/{name}/{version}/sign
-  - POST {vaultBaseUrl}/keys/{name}/{version}/verify
   - POST {vaultBaseUrl}/keys/{name}/{version}/wrapkey
   - POST {vaultBaseUrl}/keys/{name}/{version}/unwrapkey
   milestone: v1.2-beta
