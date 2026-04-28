@@ -306,4 +306,134 @@ public class KeyVaultTests
         switch (s.Length % 4) { case 2: s += "=="; break; case 3: s += "="; break; }
         return Convert.FromBase64String(s);
     }
+
+    private static string Base64UrlEncodeLocal(byte[] data) =>
+        Convert.ToBase64String(data).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+    [Test]
+    public async Task KeyVaultTests_SignKey_ShouldReturnSignature()
+    {
+        // Arrange — create an RSA key via CLI
+        var createResult = await Program.RunAsync([
+            "keyvault", "key", "create",
+            "--vault-name", VaultName,
+            "--name", "cli-sign-key",
+            "--kty", "RSA",
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+        Assert.That(createResult, Is.EqualTo(0));
+
+        var keyFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "keys", "cli-sign-key.json");
+
+        Assert.That(File.Exists(keyFilePath), Is.True);
+
+        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(keyFilePath));
+        var keyEl = doc.RootElement[0].GetProperty("key");
+        var kid = keyEl.GetProperty("kid").GetString()!;
+        var version = kid.Split('/').Last();
+
+        // Build a SHA-256 digest of some data
+        var data = Encoding.UTF8.GetBytes("hello topaz cli sign");
+        var digest = SHA256.HashData(data);
+        var digestBase64Url = Base64UrlEncodeLocal(digest);
+
+        // Act — sign via CLI
+        var signResult = await Program.RunAsync([
+            "keyvault", "key", "sign",
+            "--vault-name", VaultName,
+            "--name", "cli-sign-key",
+            "--version", version,
+            "--algorithm", "RS256",
+            "--value", digestBase64Url,
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(signResult, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task KeyVaultTests_VerifyKey_ShouldReturnTrue()
+    {
+        // Arrange — create an RSA key via CLI
+        var createResult = await Program.RunAsync([
+            "keyvault", "key", "create",
+            "--vault-name", VaultName,
+            "--name", "cli-verify-key",
+            "--kty", "RSA",
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+        Assert.That(createResult, Is.EqualTo(0));
+
+        var keyFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "keys", "cli-verify-key.json");
+
+        Assert.That(File.Exists(keyFilePath), Is.True);
+
+        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(keyFilePath));
+        var keyEl = doc.RootElement[0].GetProperty("key");
+        var kid = keyEl.GetProperty("kid").GetString()!;
+        var version = kid.Split('/').Last();
+
+        // Build digest and sign using CLI
+        var data = Encoding.UTF8.GetBytes("hello topaz cli verify");
+        var digest = SHA256.HashData(data);
+        var digestBase64Url = Base64UrlEncodeLocal(digest);
+
+        // Sign first via CLI to obtain a valid signature
+        var signResult = await Program.RunAsync([
+            "keyvault", "key", "sign",
+            "--vault-name", VaultName,
+            "--name", "cli-verify-key",
+            "--version", version,
+            "--algorithm", "RS256",
+            "--value", digestBase64Url,
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+        Assert.That(signResult, Is.EqualTo(0));
+
+        // Read the signature from the key file output is via logger only; instead sign via data plane directly
+        var nBytes = Base64UrlDecodeLocal(keyEl.GetProperty("n").GetString()!);
+        var eBytes = Base64UrlDecodeLocal(keyEl.GetProperty("e").GetString()!);
+
+        // Produce the signature independently using the stored private key
+        var dBytes = Base64UrlDecodeLocal(keyEl.GetProperty("d").GetString()!);
+        var pBytes = Base64UrlDecodeLocal(keyEl.GetProperty("p").GetString()!);
+        var qBytes = Base64UrlDecodeLocal(keyEl.GetProperty("q").GetString()!);
+        var dpBytes = Base64UrlDecodeLocal(keyEl.GetProperty("dp").GetString()!);
+        var dqBytes = Base64UrlDecodeLocal(keyEl.GetProperty("dq").GetString()!);
+        var qiBytes = Base64UrlDecodeLocal(keyEl.GetProperty("qi").GetString()!);
+        using var rsa = RSA.Create();
+        rsa.ImportParameters(new RSAParameters
+        {
+            Modulus = nBytes, Exponent = eBytes,
+            D = dBytes, P = pBytes, Q = qBytes,
+            DP = dpBytes, DQ = dqBytes, InverseQ = qiBytes
+        });
+        var signature = rsa.SignHash(digest, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        var signatureBase64Url = Base64UrlEncodeLocal(signature);
+
+        // Act — verify via CLI
+        var verifyResult = await Program.RunAsync([
+            "keyvault", "key", "verify",
+            "--vault-name", VaultName,
+            "--name", "cli-verify-key",
+            "--version", version,
+            "--algorithm", "RS256",
+            "--value", digestBase64Url,
+            "--signature", signatureBase64Url,
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(verifyResult, Is.EqualTo(0));
+    }
 }
