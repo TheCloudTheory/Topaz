@@ -96,7 +96,7 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
         headers.TryGetValue("Content-Type", out var contentType);
         headers.TryGetValue("x-ms-date", out var date);
 
-        var canonicalizedResource = "/" + storageAccountName + Uri.UnescapeDataString(absolutePath);
+        var canonicalizedResource = "/" + storageAccountName + absolutePath;
         if (query.TryGetValueForKey("comp", out var comp))
             canonicalizedResource += "?comp=" + comp;
 
@@ -179,14 +179,15 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
         // To calculate `CanonicalizedResource` for Table Storage we need to do a bunch of additional steps:
         // 1. Beginning with an empty string (""), append a forward slash (/), followed by the name of the account
         //    that owns the resource being accessed.
-        // 2. URL-decode the resource URI path and append it. Per Azure docs the client must URL-decode the URI
-        //    before building the canonical resource string, so we do the same when verifying the signature.
+        // 2. Append the raw (percent-encoded) resource URI path as received. The go-azure-sdk used by the
+        //    Terraform azurerm provider computes its signature over the raw path (e.g. %20, not a literal space),
+        //    so we must use the same form for the HMAC to match.
         // 3. If the request URI addresses a component of the resource, append the appropriate query string.
         //    The query string should include the question mark and the comp parameter (for example, ?comp=metadata).
         //    No other parameters should be included on the query string.
         
         var canonicalizedResource = "/" + storageAccountName;
-        canonicalizedResource += Uri.UnescapeDataString(actualPath);
+        canonicalizedResource += actualPath;
         
         if (query.TryGetValueForKey("comp", out var comp))
         {
