@@ -44,6 +44,7 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
         new GetKeysEndpoint(eventPipeline, logger),
         new GetKeyVersionsEndpoint(eventPipeline, logger),
         new GetKeyEndpoint(eventPipeline, logger),
+        new GetKeyAttestationEndpoint(eventPipeline, logger),
         new UpdateKeyEndpoint(eventPipeline, logger),
         new DeleteKeyEndpoint(eventPipeline, logger),
         new GetRandomBytesEndpoint(eventPipeline, logger),

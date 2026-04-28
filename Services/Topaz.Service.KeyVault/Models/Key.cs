@@ -187,6 +187,21 @@ public record class KeyAttributes
     public string RecoveryLevel => "Recoverable+Purgeable";
 
     public bool Exportable { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public KeyAttestation? Attestation { get; init; }
+}
+
+public record class KeyAttestation
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? CertificatePemFile { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PrivateKeyAttestation { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PublicKeyAttestation { get; init; }
 }
 
 public record class KeyReleasePolicy

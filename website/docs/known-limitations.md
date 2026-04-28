@@ -81,3 +81,23 @@ Calling `az keyvault key encrypt --algorithm A256GCM` (or the SDK equivalent via
 ### Planned fix — v1.4-beta
 
 Extend `KeyBundle` / `JsonWebKey` with a `k` field to store raw symmetric key material, and implement AES-GCM and AES-CBC(PAD) encrypt/decrypt dispatch in the data plane.
+
+## Key Vault — `Get Key Attestation` returns no attestation blob
+
+**Affected services:** Key Vault data plane — `GET /keys/{name}/{version}/attestation`
+
+The `Get Key Attestation` endpoint (`GET …/attestation`, API version 2025-07-01) is implemented and returns a valid `KeyBundle`. However, the `attributes.attestation` field — which on real hardware-backed (HSM) keys contains a PEM certificate chain and opaque attestation blobs proving the key never left the HSM boundary — is always `null` in Topaz.
+
+This matches exactly how real Azure Key Vault behaves for **software-backed keys** (`kty=RSA`, `kty=EC` without the `-HSM` suffix): Azure also returns `null` for the `attestation` field on non-HSM keys. The difference is that real Azure HSM-backed key types (`RSA-HSM`, `EC-HSM`, Managed HSM) produce real attestation material; Topaz does not.
+
+### Impact
+
+Callers that create software-backed RSA or EC keys and call `GetKeyAttestation` receive the expected response — `key`, `attributes`, `tags` populated and `attributes.attestation = null` — which is identical to the real service response for the same key type. No code change is required for those scenarios.
+
+Callers that specifically test HSM key attestation (i.e. rely on `attributes.attestation` being non-null) cannot be fully validated against Topaz.
+
+**Workaround:** there is no workaround for HSM attestation testing within Topaz. Use a real Azure Managed HSM instance for any test logic that inspects `certificatePemFile`, `privateKeyAttestation`, or `publicKeyAttestation`.
+
+### No fix planned
+
+Replicating real HSM attestation behaviour requires generating hardware-backed key material and signing certificate chains with an HSM root, which is outside the scope of a software emulator. The `attestation` field will remain `null` for all Topaz-managed keys.

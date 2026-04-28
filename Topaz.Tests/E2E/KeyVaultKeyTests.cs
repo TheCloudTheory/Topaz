@@ -1543,5 +1543,59 @@ public class KeyVaultKeyTests
         Assert.Throws<Azure.RequestFailedException>(() =>
             keyClient.ReleaseKey("this-key-does-not-exist", "any-token"));
     }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKeyAttestation_ReturnsKeyBundle()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var created = keyClient.CreateRsaKey(new CreateRsaKeyOptions("attestation-key"));
+        var version = created.Value.Properties.Version;
+
+        // GetKeyAttestation is not in SDK 4.7.0; call the endpoint via raw HTTP
+        using var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+        };
+        using var http = new HttpClient(handler);
+
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var token = credential.GetToken(new Azure.Core.TokenRequestContext([]), default).Token;
+        http.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var url = $"{GlobalSettings.GetKeyVaultEndpoint(TestKeyVaultName)}/keys/attestation-key/{version}/attestation?api-version=7.5";
+        var resp = http.GetAsync(url).GetAwaiter().GetResult();
+
+        Assert.That(resp.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.OK));
+
+        var body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+        using var doc = System.Text.Json.JsonDocument.Parse(body);
+        Assert.That(doc.RootElement.TryGetProperty("key", out _), Is.True);
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetKeyAttestation_NonExistentKey_Returns404()
+    {
+        // Arrange
+        EnsureVault();
+
+        using var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+        };
+        using var http = new HttpClient(handler);
+
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var token = credential.GetToken(new Azure.Core.TokenRequestContext([]), default).Token;
+        http.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var url = $"{GlobalSettings.GetKeyVaultEndpoint(TestKeyVaultName)}/keys/no-such-key/00000000000000000000000000000000/attestation?api-version=7.5";
+        var resp = http.GetAsync(url).GetAwaiter().GetResult();
+
+        Assert.That(resp.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
+    }
 }
 

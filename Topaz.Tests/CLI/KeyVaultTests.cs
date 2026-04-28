@@ -572,5 +572,43 @@ public class KeyVaultTests
 
         Assert.That(releaseResult, Is.EqualTo(0));
     }
+
+    [Test]
+    public async Task KeyVaultTests_GetKeyAttestation_ShouldReturnKey()
+    {
+        // Arrange — create a key
+        var createResult = await Program.RunAsync([
+            "keyvault", "key", "create",
+            "--vault-name", VaultName,
+            "--name", "cli-attestation-key",
+            "--key-type", "RSA",
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+        Assert.That(createResult, Is.EqualTo(0));
+
+        var keyFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "keys", "cli-attestation-key.json");
+
+        Assert.That(File.Exists(keyFilePath), Is.True);
+
+        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(keyFilePath));
+        var kid = doc.RootElement[0].GetProperty("key").GetProperty("kid").GetString()!;
+        var version = kid.Split('/').Last();
+
+        // Act — get attestation via CLI
+        var attestResult = await Program.RunAsync([
+            "keyvault", "key", "get-attestation",
+            "--vault-name", VaultName,
+            "--name", "cli-attestation-key",
+            "--version", version,
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(attestResult, Is.EqualTo(0));
+    }
 }
 

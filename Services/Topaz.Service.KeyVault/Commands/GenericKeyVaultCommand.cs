@@ -35,6 +35,7 @@ public sealed class GenericKeyVaultCommand : IEmulatorCommand
                 key.AddCommand<CreateKeyCommand>("create");
                 key.AddCommand<ImportKeyCommand>("import");
                 key.AddCommand<GetKeyCommand>("get");
+                key.AddCommand<GetKeyAttestationCommand>("get-attestation");
                 key.AddCommand<GetDeletedKeyCommand>("get-deleted");
                 key.AddCommand<ListKeysCommand>("list");
                 key.AddCommand<ListKeyVersionsCommand>("list-versions");
