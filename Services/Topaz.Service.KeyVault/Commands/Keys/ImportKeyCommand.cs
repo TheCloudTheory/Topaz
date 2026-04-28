@@ -71,7 +71,7 @@ public class ImportKeyCommand(ITopazLogger logger) : Command<ImportKeyCommand.Im
         try
         {
             rsa.ImportFromPem(pem);
-            var parameters = rsa.ExportParameters(false);
+            var parameters = rsa.ExportParameters(true);
             return new ImportKeyRequest
             {
                 Key = new ImportKeyJwk
@@ -79,6 +79,12 @@ public class ImportKeyCommand(ITopazLogger logger) : Command<ImportKeyCommand.Im
                     KeyType = "RSA",
                     N = Base64UrlEncode(parameters.Modulus!),
                     E = Base64UrlEncode(parameters.Exponent!),
+                    D         = parameters.D        != null ? Base64UrlEncode(parameters.D)        : null,
+                    P         = parameters.P        != null ? Base64UrlEncode(parameters.P)        : null,
+                    Q         = parameters.Q        != null ? Base64UrlEncode(parameters.Q)        : null,
+                    DP        = parameters.DP       != null ? Base64UrlEncode(parameters.DP)       : null,
+                    DQ        = parameters.DQ       != null ? Base64UrlEncode(parameters.DQ)       : null,
+                    InverseQ  = parameters.InverseQ != null ? Base64UrlEncode(parameters.InverseQ) : null,
                     KeyOperations = ["encrypt", "decrypt", "sign", "verify", "wrapKey", "unwrapKey"]
                 }
             };

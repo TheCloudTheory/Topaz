@@ -36,6 +36,25 @@ public record class ImportKeyJwk
     [JsonPropertyName("e")]
     public string? E { get; init; }
 
+    // RSA private components
+    [JsonPropertyName("d")]
+    public string? D { get; init; }
+
+    [JsonPropertyName("p")]
+    public string? P { get; init; }
+
+    [JsonPropertyName("q")]
+    public string? Q { get; init; }
+
+    [JsonPropertyName("dp")]
+    public string? DP { get; init; }
+
+    [JsonPropertyName("dq")]
+    public string? DQ { get; init; }
+
+    [JsonPropertyName("qi")]
+    public string? InverseQ { get; init; }
+
     // EC
     [JsonPropertyName("crv")]
     public string? Crv { get; init; }

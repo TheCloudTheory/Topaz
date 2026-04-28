@@ -9,7 +9,7 @@ public class KeyOperationResponse
     [JsonPropertyName("kid")]
     public string? Kid { get; init; }
 
-    [JsonPropertyName("result")]
+    [JsonPropertyName("value")]
     public string? Result { get; init; }
 
     public static KeyOperationResponse New(string kid, string result) => new() { Kid = kid, Result = result };

@@ -1282,4 +1282,40 @@ public class KeyVaultKeyTests
             Assert.That(result.Ciphertext.Length, Is.GreaterThan(0));
         });
     }
+
+    [Test]
+    public void KeyVaultKeyTests_Decrypt_RsaOaep256_RoundTrip_PlaintextMatchesOriginal()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateRsaKey(new CreateRsaKeyOptions("decrypt-oaep256-key"));
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var original = Encoding.UTF8.GetBytes("hello topaz decrypt oaep256");
+
+        // Act — encrypt locally (SDK uses public key), then decrypt on server (requires private key)
+        var encrypted = cryptoClient.Encrypt(EncryptionAlgorithm.RsaOaep256, original);
+        var decrypted = cryptoClient.Decrypt(EncryptionAlgorithm.RsaOaep256, encrypted.Ciphertext);
+
+        // Assert
+        Assert.That(decrypted.Plaintext, Is.EqualTo(original));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_Decrypt_Rsa15_RoundTrip_PlaintextMatchesOriginal()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateRsaKey(new CreateRsaKeyOptions("decrypt-rsa15-key"));
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var original = Encoding.UTF8.GetBytes("hello topaz decrypt rsa15");
+
+        // Act
+        var encrypted = cryptoClient.Encrypt(EncryptionAlgorithm.Rsa15, original);
+        var decrypted = cryptoClient.Decrypt(EncryptionAlgorithm.Rsa15, encrypted.Ciphertext);
+
+        // Assert
+        Assert.That(decrypted.Plaintext, Is.EqualTo(original));
+    }
 }

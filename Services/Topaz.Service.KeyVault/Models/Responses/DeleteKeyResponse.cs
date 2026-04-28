@@ -17,7 +17,7 @@ internal class DeleteKeyResponse
         var bundle = record.Bundle!;
         return new DeleteKeyResponse
         {
-            Key = bundle.Key,
+            Key = bundle.Key.ToPublicJwk(),
             Attributes = bundle.Attributes,
             Tags = bundle.Tags,
             DeletedDate = record.DeletedDate,

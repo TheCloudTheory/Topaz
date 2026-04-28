@@ -18,7 +18,7 @@ internal class GetDeletedKeyResponse
         return new GetDeletedKeyResponse
         {
             Id = bundle.Key?.Kid,
-            Key = bundle.Key,
+            Key = bundle.Key.ToPublicJwk(),
             Attributes = bundle.Attributes,
             DeletedDate = record.DeletedDate,
             ScheduledPurgeDate = record.ScheduledPurgeDate,

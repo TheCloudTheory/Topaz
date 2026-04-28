@@ -879,4 +879,68 @@ public class KeyVaultTests : TopazFixture
     }
 
     #endregion
+
+    #region Decrypt Tests
+
+    [Test]
+    public async Task KeyVaultTests_WhenDecryptCommandIsCalledAfterEncrypt_ItShouldReturnOriginalValue()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name DecVault01 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault key create --vault-name DecVault01 --name dec-key --kty RSA");
+
+        string? ciphertext = null;
+        await RunAzureCliCommand(
+            "az keyvault key encrypt --vault-name DecVault01 --name dec-key --algorithm RSA-OAEP-256 --value \"aGVsbG8=\" --data-type base64",
+            (response) =>
+            {
+                ciphertext = response["result"]!.GetValue<string>();
+                Assert.That(ciphertext, Is.Not.Null.And.Not.Empty);
+            });
+
+        Assert.That(ciphertext, Is.Not.Null);
+
+        await RunAzureCliCommand(
+            $"az keyvault key decrypt --vault-name DecVault01 --name dec-key --algorithm RSA-OAEP-256 --value \"{ciphertext}\" --data-type base64",
+            (response) =>
+            {
+                var result = response["result"]!.GetValue<string>();
+                Assert.That(result, Is.Not.Null.And.Not.Empty);
+            });
+
+        await RunAzureCliCommand("az keyvault delete --name DecVault01 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    [Test]
+    public async Task KeyVaultTests_WhenDecryptCommandIsCalledWithRsa15_ItShouldReturnOriginalValue()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name DecVault02 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault key create --vault-name DecVault02 --name dec-key2 --kty RSA");
+
+        string? ciphertext = null;
+        await RunAzureCliCommand(
+            "az keyvault key encrypt --vault-name DecVault02 --name dec-key2 --algorithm RSA1_5 --value \"aGVsbG8=\" --data-type base64",
+            (response) =>
+            {
+                ciphertext = response["result"]!.GetValue<string>();
+                Assert.That(ciphertext, Is.Not.Null.And.Not.Empty);
+            });
+
+        Assert.That(ciphertext, Is.Not.Null);
+
+        await RunAzureCliCommand(
+            $"az keyvault key decrypt --vault-name DecVault02 --name dec-key2 --algorithm RSA1_5 --value \"{ciphertext}\" --data-type base64",
+            (response) =>
+            {
+                var result = response["result"]!.GetValue<string>();
+                Assert.That(result, Is.Not.Null.And.Not.Empty);
+            });
+
+        await RunAzureCliCommand("az keyvault delete --name DecVault02 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    #endregion
 }

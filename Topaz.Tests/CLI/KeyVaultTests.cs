@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Topaz.CLI;
 
 namespace Topaz.Tests.CLI;
@@ -245,5 +247,63 @@ public class KeyVaultTests
         ]);
 
         Assert.That(result, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task KeyVaultTests_DecryptKey_ShouldReturnPlaintext()
+    {
+        // Create a key via CLI
+        var createResult = await Program.RunAsync([
+            "keyvault", "key", "create",
+            "--vault-name", VaultName,
+            "--name", "cli-decrypt-key",
+            "--kty", "RSA",
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+        Assert.That(createResult, Is.EqualTo(0));
+
+        // GetServiceInstanceDataPath appends /data, so the keys directory is under <vault>/data/keys/
+        var keyFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "keys", "cli-decrypt-key.json");
+
+        Assert.That(File.Exists(keyFilePath), Is.True);
+
+        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(keyFilePath));
+        var key = doc.RootElement[0].GetProperty("key");
+        var kid = key.GetProperty("kid").GetString()!;
+        var version = kid.Split('/').Last();
+
+        // Encrypt using the stored RSA public key (avoid using internal types)
+        var nBytes = Base64UrlDecodeLocal(key.GetProperty("n").GetString()!);
+        var eBytes = Base64UrlDecodeLocal(key.GetProperty("e").GetString()!);
+        using var rsa = RSA.Create();
+        rsa.ImportParameters(new RSAParameters { Modulus = nBytes, Exponent = eBytes });
+        var plaintext = Encoding.UTF8.GetBytes("hello");
+        var cipher = rsa.Encrypt(plaintext, RSAEncryptionPadding.OaepSHA256);
+        var ciphertextBase64Url = Convert.ToBase64String(cipher).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+        // Act — decrypt via CLI using the real ciphertext
+        var result = await Program.RunAsync([
+            "keyvault", "key", "decrypt",
+            "--vault-name", VaultName,
+            "--name", "cli-decrypt-key",
+            "--version", version,
+            "--algorithm", "RSA-OAEP-256",
+            "--value", ciphertextBase64Url,
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(result, Is.EqualTo(0));
+    }
+
+    private static byte[] Base64UrlDecodeLocal(string s)
+    {
+        s = s.Replace('-', '+').Replace('_', '/');
+        switch (s.Length % 4) { case 2: s += "=="; break; case 3: s += "="; break; }
+        return Convert.FromBase64String(s);
     }
 }

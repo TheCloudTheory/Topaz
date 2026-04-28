@@ -16,7 +16,9 @@ public record class KeyBundle
 
     public KeyBundle(string name, string vaultName, string keyType, int? keySize,
         string? curve, string[] keyOperations, byte[]? rsaN, byte[]? rsaE,
-        byte[]? ecX, byte[]? ecY)
+        byte[]? ecX, byte[]? ecY,
+        byte[]? rsaD = null, byte[]? rsaP = null, byte[]? rsaQ = null,
+        byte[]? rsaDP = null, byte[]? rsaDQ = null, byte[]? rsaInverseQ = null)
     {
         var version = Guid.NewGuid();
         Name = name;
@@ -26,9 +28,16 @@ public record class KeyBundle
             Kid = $"https://{GlobalSettings.GetKeyVaultHost(vaultName)}/keys/{name}/{version:N}",
             Kty = keyType,
             KeyOps = keyOperations,
-            // RSA components
+            // RSA public components
             N = rsaN != null ? Base64UrlEncode(rsaN) : null,
             E = rsaE != null ? Base64UrlEncode(rsaE) : null,
+            // RSA private components
+            D         = rsaD        != null ? Base64UrlEncode(rsaD)        : null,
+            P         = rsaP        != null ? Base64UrlEncode(rsaP)        : null,
+            Q         = rsaQ        != null ? Base64UrlEncode(rsaQ)        : null,
+            DP        = rsaDP       != null ? Base64UrlEncode(rsaDP)       : null,
+            DQ        = rsaDQ       != null ? Base64UrlEncode(rsaDQ)       : null,
+            InverseQ  = rsaInverseQ != null ? Base64UrlEncode(rsaInverseQ) : null,
             // EC components
             Crv = curve,
             X = ecX != null ? Base64UrlEncode(ecX) : null,
@@ -54,8 +63,12 @@ public record class KeyBundle
     [JsonIgnore]
     public string Name { get; set; } = string.Empty;
 
-    public override string ToString() =>
-        JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
+    public override string ToString()
+    {
+        // Strip private key material so HTTP responses never leak it.
+        var publicBundle = this with { Key = Key.ToPublicJwk() };
+        return JsonSerializer.Serialize(publicBundle, GlobalSettings.JsonOptions);
+    }
 
     public void UpdateFromRequest(UpdateKeyRequest request)
     {
@@ -101,6 +114,31 @@ public record class JsonWebKey
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? E { get; set; }
 
+    // RSA private components — stored on disk, never sent in HTTP responses.
+    [JsonPropertyName("d")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? D { get; set; }
+
+    [JsonPropertyName("p")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? P { get; set; }
+
+    [JsonPropertyName("q")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Q { get; set; }
+
+    [JsonPropertyName("dp")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DP { get; set; }
+
+    [JsonPropertyName("dq")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DQ { get; set; }
+
+    [JsonPropertyName("qi")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? InverseQ { get; set; }
+
     // EC
     [JsonPropertyName("crv")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -113,6 +151,10 @@ public record class JsonWebKey
     [JsonPropertyName("y")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Y { get; set; }
+
+    /// <summary>Returns a copy of this JWK with all private RSA fields removed — safe to include in API responses.</summary>
+    public JsonWebKey ToPublicJwk() =>
+        this with { D = null, P = null, Q = null, DP = null, DQ = null, InverseQ = null };
 }
 
 public record class KeyAttributes

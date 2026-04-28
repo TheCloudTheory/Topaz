@@ -993,6 +993,96 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
             KeyOperationResponse.New(bundle.Key.Kid, resultBase64Url), null, null);
     }
 
+    public DataPlaneOperationResult<KeyOperationResponse> DecryptKey(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName, string keyVersion,
+        KeyOperationRequest request)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DecryptKey), "Executing {0}: {1}/{2} in {3}.", nameof(DecryptKey), keyName, keyVersion, vaultName);
+
+        if (string.IsNullOrEmpty(request.Algorithm))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Algorithm ('alg') is required.", "BadParameter");
+
+        if (string.IsNullOrEmpty(request.Value))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Value is required.", "BadParameter");
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (!File.Exists(entityPath))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.NotFound, null, $"Key '{keyName}' not found.", "KeyNotFound");
+
+        var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
+        var bundle = bundles.FirstOrDefault(b => b.Key.Kid.EndsWith($"/{keyVersion}", StringComparison.OrdinalIgnoreCase));
+        if (bundle == null)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.NotFound, null, $"Key version '{keyVersion}' not found.", "KeyNotFound");
+
+        if (!bundle.Attributes.Enabled)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key is disabled.", "Forbidden");
+
+        if (bundle.Key.KeyOps.Length > 0 && !bundle.Key.KeyOps.Contains("decrypt", StringComparer.OrdinalIgnoreCase))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key does not permit the 'decrypt' operation.", "Forbidden");
+
+        var kty = bundle.Key.Kty?.ToUpperInvariant() ?? string.Empty;
+        if (kty is not ("RSA" or "RSA-HSM"))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'. Only RSA keys support this algorithm.", "BadParameter");
+
+        // All six CRT fields are required — macOS (.NET 8) ImportParameters fails without them.
+        if (string.IsNullOrEmpty(bundle.Key.D)       || string.IsNullOrEmpty(bundle.Key.P)  ||
+            string.IsNullOrEmpty(bundle.Key.Q)       || string.IsNullOrEmpty(bundle.Key.DP) ||
+            string.IsNullOrEmpty(bundle.Key.DQ)      || string.IsNullOrEmpty(bundle.Key.InverseQ))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                "Key version does not contain complete private RSA material. Recreate the key to enable decryption.", "BadParameter");
+
+        var padding = request.Algorithm.ToUpperInvariant() switch
+        {
+            "RSA1_5"       => RSAEncryptionPadding.Pkcs1,
+            "RSA-OAEP"     => RSAEncryptionPadding.OaepSHA1,
+            "RSA-OAEP-256" => RSAEncryptionPadding.OaepSHA256,
+            _ => null
+        };
+
+        if (padding == null)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Algorithm '{request.Algorithm}' is not supported. Supported RSA algorithms: RSA1_5, RSA-OAEP, RSA-OAEP-256.", "BadParameter");
+
+        try
+        {
+            var ciphertext = Base64UrlDecode(request.Value);
+
+            using var rsa = RSA.Create();
+            rsa.ImportParameters(new RSAParameters
+            {
+                Modulus  = Base64UrlDecode(bundle.Key.N!),
+                Exponent = Base64UrlDecode(bundle.Key.E!),
+                D        = Base64UrlDecode(bundle.Key.D),
+                P        = Base64UrlDecode(bundle.Key.P),
+                Q        = Base64UrlDecode(bundle.Key.Q),
+                DP       = Base64UrlDecode(bundle.Key.DP),
+                DQ       = Base64UrlDecode(bundle.Key.DQ),
+                InverseQ = Base64UrlDecode(bundle.Key.InverseQ)
+            });
+
+            var plaintext = rsa.Decrypt(ciphertext, padding);
+            var resultBase64Url = Convert.ToBase64String(plaintext).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DecryptKey), "Decrypted {0} bytes with {1}.", ciphertext.Length, request.Algorithm);
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Success,
+                KeyOperationResponse.New(bundle.Key.Kid, resultBase64Url), null, null);
+        }
+        catch (Exception ex) when (ex is FormatException or CryptographicException)
+        {
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Decryption failed: {ex.Message}", "BadParameter");
+        }
+    }
+
     public DataPlaneOperationResult PurgeDeletedKey(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
@@ -1112,7 +1202,21 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
                 var n = Base64UrlDecode(jwk.N);
                 var e = Base64UrlDecode(jwk.E);
-                keyBundle = new KeyBundle(keyName, vaultName, keyType, null, null, keyOps, n, e, null, null);
+
+                // Decode private components when present; strip decrypt/sign/unwrapKey if absent.
+                var d         = string.IsNullOrEmpty(jwk.D)        ? null : Base64UrlDecode(jwk.D);
+                var p         = string.IsNullOrEmpty(jwk.P)        ? null : Base64UrlDecode(jwk.P);
+                var q         = string.IsNullOrEmpty(jwk.Q)        ? null : Base64UrlDecode(jwk.Q);
+                var dp        = string.IsNullOrEmpty(jwk.DP)       ? null : Base64UrlDecode(jwk.DP);
+                var dq        = string.IsNullOrEmpty(jwk.DQ)       ? null : Base64UrlDecode(jwk.DQ);
+                var inverseQ  = string.IsNullOrEmpty(jwk.InverseQ) ? null : Base64UrlDecode(jwk.InverseQ);
+
+                // If no private material, drop operations that require the private key.
+                if (d == null)
+                    keyOps = keyOps.Except(["decrypt", "sign", "unwrapKey"], StringComparer.OrdinalIgnoreCase).ToArray();
+
+                keyBundle = new KeyBundle(keyName, vaultName, keyType, null, null, keyOps, n, e, null, null,
+                    d, p, q, dp, dq, inverseQ);
                 break;
             }
             case "EC":
@@ -1249,9 +1353,12 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
             {
                 var keySize = request.KeySize ?? 2048;
                 using var rsa = RSA.Create(keySize);
-                var parameters = rsa.ExportParameters(false);
+                var parameters = rsa.ExportParameters(true);
                 return new KeyBundle(keyName, vaultName, keyType, keySize, null, keyOps,
-                    parameters.Modulus, parameters.Exponent, null, null);
+                    parameters.Modulus, parameters.Exponent,
+                    null, null,
+                    parameters.D, parameters.P, parameters.Q,
+                    parameters.DP, parameters.DQ, parameters.InverseQ);
             }
             case "EC":
             case "EC-HSM":
