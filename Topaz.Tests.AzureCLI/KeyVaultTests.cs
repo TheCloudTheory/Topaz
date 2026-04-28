@@ -998,20 +998,28 @@ public class KeyVaultTests : TopazFixture
     #region Release Tests
 
     [Test]
-    public async Task KeyVaultTests_WhenReleaseKeyCommandIsCalled_ItShouldReturnJws()
+    // az keyvault key release does not exist in any released Azure CLI version;
+    // the data-plane release endpoint is exercised directly via az rest instead.
+    public async Task KeyVaultTests_WhenReleaseKeyEndpointIsCalled_ItShouldReturnJws()
     {
         await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        // The vault-name commands below also cause KeyVaultHostMapper to register
+        // relvault01.vault.topaz.local.dev in /etc/hosts before the az rest call.
         await RunAzureCliCommand("az keyvault create --location westeurope --name RelVault01 --resource-group test-rg");
         await RunAzureCliCommand("az keyvault key create --vault-name RelVault01 --name rel-key --kty RSA");
         await RunAzureCliCommand(
-            "az keyvault key release --vault-name RelVault01 --name rel-key --target-attestation-token \"anytoken\"",
+            "az rest --method post " +
+            "--url \"https://relvault01.vault.topaz.local.dev:8898/keys/rel-key/release?api-version=7.3\" " +
+            "--body \"{\\\"target\\\": \\\"anytoken\\\"}\" " +
+            "--resource \"https://topaz.local.dev:8899\" " +
+            "--only-show-errors -o json",
             (response) =>
             {
                 var value = response["value"]!.GetValue<string>();
                 Assert.Multiple(() =>
                 {
                     Assert.That(value, Is.Not.Null.And.Not.Empty);
-                    // JWS compact serialization: header.payload. (three dot-separated parts)
+                    // JWS compact serialization: header.payload.signature (three dot-separated parts)
                     Assert.That(value.Split('.').Length, Is.EqualTo(3));
                 });
             });
