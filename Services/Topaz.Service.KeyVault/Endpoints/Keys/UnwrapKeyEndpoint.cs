@@ -15,7 +15,7 @@ public sealed class UnwrapKeyEndpoint(Pipeline eventPipeline, ITopazLogger logge
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
-    public string[] Endpoints => ["POST /keys/{keyName}/{keyVersion}/unwrapkey"];
+    public string[] Endpoints => ["POST /keys/{keyName}/{keyVersion}/unwrapkey", "POST /keys/{keyName}/unwrapkey"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/keys/unwrap/action"];
 
@@ -35,9 +35,13 @@ public sealed class UnwrapKeyEndpoint(Pipeline eventPipeline, ITopazLogger logge
 
             var vaultName = PathGuard.SanitizeName(hostSegments[0]);
             var keyName = context.Request.Path.Value.ExtractValueFromPath(2);
-            var keyVersion = context.Request.Path.Value.ExtractValueFromPath(3);
+            // Support both /keys/{name}/{version}/unwrapkey and /keys/{name}/unwrapkey
+            var segment3 = context.Request.Path.Value.ExtractValueFromPath(3);
+            var keyVersion = string.Equals(segment3, "unwrapkey", StringComparison.OrdinalIgnoreCase)
+                ? string.Empty
+                : segment3;
 
-            if (string.IsNullOrEmpty(keyName) || string.IsNullOrEmpty(keyVersion))
+            if (string.IsNullOrEmpty(keyName))
             {
                 response.StatusCode = HttpStatusCode.NotFound;
                 return;

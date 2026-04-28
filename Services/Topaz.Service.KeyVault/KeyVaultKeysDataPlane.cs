@@ -630,7 +630,9 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.NotFound, null, $"Key '{keyName}' not found.", "KeyNotFound");
 
         var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
-        var bundle = bundles.FirstOrDefault(b => b.Key.Kid.EndsWith($"/{keyVersion}", StringComparison.OrdinalIgnoreCase));
+        var bundle = string.IsNullOrEmpty(keyVersion)
+            ? bundles.Last()
+            : bundles.FirstOrDefault(b => b.Key.Kid.EndsWith($"/{keyVersion}", StringComparison.OrdinalIgnoreCase));
         if (bundle == null)
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.NotFound, null, $"Key version '{keyVersion}' not found.", "KeyNotFound");
 
@@ -702,7 +704,9 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.NotFound, null, $"Key '{keyName}' not found.", "KeyNotFound");
 
         var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
-        var bundle = bundles.FirstOrDefault(b => b.Key.Kid.EndsWith($"/{keyVersion}", StringComparison.OrdinalIgnoreCase));
+        var bundle = string.IsNullOrEmpty(keyVersion)
+            ? bundles.Last()
+            : bundles.FirstOrDefault(b => b.Key.Kid.EndsWith($"/{keyVersion}", StringComparison.OrdinalIgnoreCase));
         if (bundle == null)
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.NotFound, null, $"Key version '{keyVersion}' not found.", "KeyNotFound");
 

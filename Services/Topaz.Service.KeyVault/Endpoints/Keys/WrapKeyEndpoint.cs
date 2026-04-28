@@ -15,7 +15,7 @@ public sealed class WrapKeyEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
-    public string[] Endpoints => ["POST /keys/{keyName}/{keyVersion}/wrapkey"];
+    public string[] Endpoints => ["POST /keys/{keyName}/{keyVersion}/wrapkey", "POST /keys/{keyName}/wrapkey"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/keys/wrap/action"];
 
@@ -35,9 +35,13 @@ public sealed class WrapKeyEndpoint(Pipeline eventPipeline, ITopazLogger logger)
 
             var vaultName = PathGuard.SanitizeName(hostSegments[0]);
             var keyName = context.Request.Path.Value.ExtractValueFromPath(2);
-            var keyVersion = context.Request.Path.Value.ExtractValueFromPath(3);
+            // Support both /keys/{name}/{version}/wrapkey and /keys/{name}/wrapkey
+            var segment3 = context.Request.Path.Value.ExtractValueFromPath(3);
+            var keyVersion = string.Equals(segment3, "wrapkey", StringComparison.OrdinalIgnoreCase)
+                ? string.Empty
+                : segment3;
 
-            if (string.IsNullOrEmpty(keyName) || string.IsNullOrEmpty(keyVersion))
+            if (string.IsNullOrEmpty(keyName))
             {
                 response.StatusCode = HttpStatusCode.NotFound;
                 return;

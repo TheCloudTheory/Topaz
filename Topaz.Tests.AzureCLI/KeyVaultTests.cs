@@ -947,16 +947,22 @@ public class KeyVaultTests : TopazFixture
     #region Wrap / Unwrap Tests
 
     [Test]
-    public async Task KeyVaultTests_WhenWrapKeyCommandIsCalledWithRsaOaep256_ItShouldReturnWrappedKey()
+    // az keyvault key wrap-key does not exist in any released Azure CLI version;
+    // the data-plane wrapkey endpoint is exercised directly via az rest instead.
+    public async Task KeyVaultTests_WhenWrapKeyEndpointIsCalledWithRsaOaep256_ItShouldReturnWrappedKey()
     {
         await RunAzureCliCommand("az group create -n test-rg -l westeurope");
         await RunAzureCliCommand("az keyvault create --location westeurope --name WrapVault01 --resource-group test-rg");
         await RunAzureCliCommand("az keyvault key create --vault-name WrapVault01 --name wrap-key --kty RSA");
         await RunAzureCliCommand(
-            "az keyvault key wrap-key --vault-name WrapVault01 --name wrap-key --algorithm RSA-OAEP-256 --value \"aGVsbG8=\"",
+            "az rest --method post " +
+            "--url \"https://wrapvault01.vault.topaz.local.dev:8898/keys/wrap-key/wrapkey?api-version=7.3\" " +
+            "--body \"{\\\"alg\\\": \\\"RSA-OAEP-256\\\", \\\"value\\\": \\\"aGVsbG8=\\\"}\" " +
+            "--resource \"https://topaz.local.dev:8899\" " +
+            "--only-show-errors -o json",
             (response) =>
             {
-                var result = response["result"]!.GetValue<string>();
+                var result = response["value"]!.GetValue<string>();
                 Assert.That(result, Is.Not.Null.And.Not.Empty);
             });
         await RunAzureCliCommand("az keyvault delete --name WrapVault01 --only-show-errors");
@@ -964,7 +970,9 @@ public class KeyVaultTests : TopazFixture
     }
 
     [Test]
-    public async Task KeyVaultTests_WhenUnwrapKeyCommandIsCalledAfterWrap_ItShouldReturnOriginalValue()
+    // az keyvault key wrap-key / unwrap-key do not exist in any released Azure CLI version;
+    // the data-plane endpoints are exercised directly via az rest instead.
+    public async Task KeyVaultTests_WhenUnwrapKeyEndpointIsCalledAfterWrap_ItShouldReturnOriginalValue()
     {
         await RunAzureCliCommand("az group create -n test-rg -l westeurope");
         await RunAzureCliCommand("az keyvault create --location westeurope --name WrapVault02 --resource-group test-rg");
@@ -972,20 +980,28 @@ public class KeyVaultTests : TopazFixture
 
         string? wrapped = null;
         await RunAzureCliCommand(
-            "az keyvault key wrap-key --vault-name WrapVault02 --name wrap-key2 --algorithm RSA-OAEP-256 --value \"aGVsbG8=\"",
+            "az rest --method post " +
+            "--url \"https://wrapvault02.vault.topaz.local.dev:8898/keys/wrap-key2/wrapkey?api-version=7.3\" " +
+            "--body \"{\\\"alg\\\": \\\"RSA-OAEP-256\\\", \\\"value\\\": \\\"aGVsbG8=\\\"}\" " +
+            "--resource \"https://topaz.local.dev:8899\" " +
+            "--only-show-errors -o json",
             (response) =>
             {
-                wrapped = response["result"]!.GetValue<string>();
+                wrapped = response["value"]!.GetValue<string>();
                 Assert.That(wrapped, Is.Not.Null.And.Not.Empty);
             });
 
         Assert.That(wrapped, Is.Not.Null);
 
         await RunAzureCliCommand(
-            $"az keyvault key unwrap-key --vault-name WrapVault02 --name wrap-key2 --algorithm RSA-OAEP-256 --value \"{wrapped}\"",
+            $"az rest --method post " +
+            $"--url \"https://wrapvault02.vault.topaz.local.dev:8898/keys/wrap-key2/unwrapkey?api-version=7.3\" " +
+            $"--body \"{{\\\"alg\\\": \\\"RSA-OAEP-256\\\", \\\"value\\\": \\\"{wrapped}\\\"}}\" " +
+            $"--resource \"https://topaz.local.dev:8899\" " +
+            $"--only-show-errors -o json",
             (response) =>
             {
-                var result = response["result"]!.GetValue<string>();
+                var result = response["value"]!.GetValue<string>();
                 Assert.That(result, Is.Not.Null.And.Not.Empty);
             });
 
