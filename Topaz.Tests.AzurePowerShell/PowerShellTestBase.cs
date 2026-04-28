@@ -45,7 +45,16 @@ public abstract class PowerShellTestBase
         Assert.That(result.ExitCode, Is.EqualTo(exitCode),
             $"PowerShell script failed. STDOUT: {result.Stdout}, STDERR: {result.Stderr}");
 
-        assertion?.Invoke(JsonNode.Parse(result.Stdout)!);
+        if (assertion != null)
+        {
+            // Az cmdlets may emit WARNING:/VERBOSE: lines before the JSON output.
+            // Find the first JSON-starting character so the parser is not tripped up
+            // by any non-JSON preamble that slips through.
+            var stdout = result.Stdout ?? string.Empty;
+            var jsonStart = stdout.IndexOfAny(['{', '[']);
+            var jsonText = jsonStart >= 0 ? stdout[jsonStart..] : stdout;
+            assertion.Invoke(JsonNode.Parse(jsonText)!);
+        }
     }
 
     private static string BuildAuthenticatedScript(string script)
@@ -54,7 +63,9 @@ public abstract class PowerShellTestBase
 
         return string.Join('\n',
             "$PSStyle.OutputRendering = 'PlainText'",
-            "$ErrorActionPreference = \"Stop\"",
+            "$ErrorActionPreference     = \"Stop\"",
+            "$WarningPreference         = 'SilentlyContinue'",
+            "$InformationPreference     = 'SilentlyContinue'",
             "& /tmp/restore-az-context.ps1",
             "$ctx = Get-AzContext",
             "if ($null -eq $ctx) { throw \"No Azure context after restore script.\" }",
