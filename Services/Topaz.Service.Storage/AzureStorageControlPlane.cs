@@ -6,6 +6,8 @@ using Azure.Data.Tables.Models;
 using Azure.ResourceManager.Storage.Models;
 using Topaz.Dns;
 using Topaz.ResourceManager;
+using Topaz.Service.ResourceGroup;
+using Topaz.Service.ResourceGroup.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
@@ -19,11 +21,16 @@ using TableServiceProperties = Topaz.Service.Storage.Models.TableServiceProperti
 
 namespace Topaz.Service.Storage;
 
-internal sealed class AzureStorageControlPlane(StorageResourceProvider provider, ITopazLogger logger) : IControlPlane
+internal sealed class AzureStorageControlPlane(
+    StorageResourceProvider provider,
+    ITopazLogger logger,
+    ResourceGroupResourceProvider? resourceGroupProvider = null) : IControlPlane
 {
+    private const string ResourceGroupNotFoundCode = "ResourceGroupNotFound";
+
     public static AzureStorageControlPlane New(ITopazLogger logger)
     {
-        return new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
+        return new AzureStorageControlPlane(new StorageResourceProvider(logger), logger, new ResourceGroupResourceProvider(logger));
     }
     
     public ControlPlaneOperationResult<StorageAccountResource> Get(SubscriptionIdentifier subscriptionIdentifier,
@@ -181,6 +188,18 @@ internal sealed class AzureStorageControlPlane(StorageResourceProvider provider,
         string storageAccountName,
         CreateOrUpdateStorageAccountRequest request)
     {
+        if (resourceGroupProvider != null)
+        {
+            var rg = resourceGroupProvider.GetAs<ResourceGroupResource>(subscriptionIdentifier, resourceGroupIdentifier);
+            if (rg == null || !rg.IsInSubscription(subscriptionIdentifier))
+            {
+                return new ControlPlaneOperationResult<StorageAccountResource>(
+                    OperationResult.NotFound, null,
+                    $"Resource group '{resourceGroupIdentifier.Value}' could not be found.",
+                    ResourceGroupNotFoundCode);
+            }
+        }
+
         var existingAccount = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         var properties = (request.Properties ?? new StorageAccountResourceProperties()) with { PrimaryEndpoints = BuildPrimaryEndpoints(storageAccountName) };
         var existingKeys = existingAccount != null

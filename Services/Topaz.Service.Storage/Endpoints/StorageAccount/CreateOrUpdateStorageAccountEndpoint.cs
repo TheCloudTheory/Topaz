@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Endpoints.StorageAccount;
 
 internal sealed class CreateOrUpdateStorageAccountEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly AzureStorageControlPlane _controlPlane = new(new StorageResourceProvider(logger), logger);
+    private readonly AzureStorageControlPlane _controlPlane = AzureStorageControlPlane.New(logger);
 
     public string[] Endpoints =>
     [
@@ -49,6 +49,12 @@ internal sealed class CreateOrUpdateStorageAccountEndpoint(ITopazLogger logger) 
             }
 
             var result = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, request);
+            if (result.Result is OperationResult.NotFound or OperationResult.Failed || result.Resource == null)
+            {
+                response.CreateErrorResponse(result.Code ?? "OperationFailed", result.Reason ?? string.Empty, HttpStatusCode.NotFound);
+                return;
+            }
+
             response.CreateJsonContentResponse(result.Resource);
         }
         catch (Exception ex)
