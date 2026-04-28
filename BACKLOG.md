@@ -520,6 +520,24 @@ TODO: Topaz Portal: Edit existing tag values inline
   labels: enhancement, portal
 -->
 
+### Key Vault — AES symmetric key (oct) cryptographic operations
+
+<!--
+TODO: Key Vault Keys: AES symmetric (oct) encrypt/decrypt/wrapKey/unwrapKey support
+  The current encrypt/decrypt/wrapKey/unwrapKey implementation only supports RSA keys.
+  AES symmetric algorithms (A128GCM, A192GCM, A256GCM, A128CBC, A192CBC, A256CBC,
+  A128CBCPAD, A192CBCPAD, A256CBCPAD) require `oct` key type support.
+  To implement this:
+  - Extend KeyBundle / JsonWebKey to store and expose the `k` field (base64url-encoded
+    raw symmetric key material) for oct-type keys.
+  - Implement AES-GCM and AES-CBC(PAD) encrypt/decrypt in KeyVaultDataPlane.
+  - Wire up the EncryptKeyEndpoint and DecryptKeyEndpoint to dispatch to the AES path
+    when the key type is `oct` or `oct-HSM`.
+  - Add tests: E2E via CryptographyClient, Azure CLI via `az keyvault key encrypt --algorithm A256GCM`.
+  milestone: v1.4-beta
+  labels: enhancement, key-vault
+-->
+
 ### Key Vault — automated soft-delete purging
 
 <!--

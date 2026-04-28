@@ -204,4 +204,46 @@ public class KeyVaultTests
 
         Assert.That(result, Is.EqualTo(0));
     }
+
+    [Test]
+    public async Task KeyVaultTests_EncryptKey_ShouldReturnCiphertext()
+    {
+        // Create a key via CLI
+        var createResult = await Program.RunAsync([
+            "keyvault", "key", "create",
+            "--vault-name", VaultName,
+            "--name", "cli-encrypt-key",
+            "--kty", "RSA",
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+        Assert.That(createResult, Is.EqualTo(0));
+
+        // Read the key file from disk to extract the version from the kid
+        // GetServiceInstanceDataPath appends /data, so the keys directory is under <vault>/data/keys/
+        var keyFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "keys", "cli-encrypt-key.json");
+
+        Assert.That(File.Exists(keyFilePath), Is.True);
+
+        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(keyFilePath));
+        var kid = doc.RootElement[0].GetProperty("key").GetProperty("kid").GetString()!;
+        var version = kid.Split('/').Last();
+
+        // Act — encrypt via CLI
+        var result = await Program.RunAsync([
+            "keyvault", "key", "encrypt",
+            "--vault-name", VaultName,
+            "--name", "cli-encrypt-key",
+            "--version", version,
+            "--algorithm", "RSA-OAEP-256",
+            "--value", "aGVsbG8=",
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(result, Is.EqualTo(0));
+    }
 }

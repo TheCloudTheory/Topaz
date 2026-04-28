@@ -837,4 +837,46 @@ public class KeyVaultTests : TopazFixture
     }
 
     #endregion
+
+    #region Encrypt Tests
+
+    [Test]
+    public async Task KeyVaultTests_WhenEncryptCommandIsCalledWithRsaOaep256_ItShouldReturnCiphertext()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name EncVault01 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault key create --vault-name EncVault01 --name enc-key --kty RSA");
+        await RunAzureCliCommand(
+            "az keyvault key encrypt --vault-name EncVault01 --name enc-key --algorithm RSA-OAEP-256 --value \"aGVsbG8=\" --data-type base64",
+            (response) =>
+            {
+                var result = response["result"]!.GetValue<string>();
+                Assert.Multiple(() =>
+                {
+                    Assert.That(result, Is.Not.Null.And.Not.Empty);
+                    // base64url — no padding
+                    Assert.That(result, Does.Match("^[A-Za-z0-9_-]+$"));
+                });
+            });
+        await RunAzureCliCommand("az keyvault delete --name EncVault01 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    [Test]
+    public async Task KeyVaultTests_WhenEncryptCommandIsCalledWithRsa15_ItShouldReturnCiphertext()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name EncVault02 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault key create --vault-name EncVault02 --name enc-key2 --kty RSA");
+        await RunAzureCliCommand(
+            "az keyvault key encrypt --vault-name EncVault02 --name enc-key2 --algorithm RSA1_5 --value \"aGVsbG8=\" --data-type base64",
+            (response) =>
+            {
+                Assert.That(response["result"]!.GetValue<string>(), Is.Not.Null.And.Not.Empty);
+            });
+        await RunAzureCliCommand("az keyvault delete --name EncVault02 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    #endregion
 }

@@ -65,3 +65,19 @@ Constructing a `TableServiceClient` with only `DefaultEndpointsProtocol=https;Ac
 ### Planned fix — v1.6-beta
 
 Covered by the single-port HTTPS consolidation planned for Blob/Table/Queue/File storage (see above).
+
+## Key Vault — AES symmetric key (`oct`) cryptographic operations not supported
+
+**Affected services:** Key Vault data plane — `encrypt`, `decrypt`, `wrapKey`, `unwrapKey`
+
+The current implementation of Key Vault crypto operations (`encrypt`, `decrypt`, `wrapKey`, `unwrapKey`) only supports **RSA key types** (`RSA`, `RSA-HSM`). AES symmetric algorithms — `A128GCM`, `A192GCM`, `A256GCM`, `A128CBC`, `A192CBC`, `A256CBC`, `A128CBCPAD`, `A192CBCPAD`, `A256CBCPAD` — require `oct` key material which is not yet stored or modelled in `KeyBundle`.
+
+### Impact
+
+Calling `az keyvault key encrypt --algorithm A256GCM` (or the SDK equivalent via `CryptographyClient.Encrypt(EncryptionAlgorithm.A256Gcm, ...)`) against any key in Topaz returns `400 BadParameter`. Creating an `oct` key via `POST /keys/{name}/create` with `"kty": "oct"` succeeds but the key object carries no usable material.
+
+**Workaround:** use RSA key types (`RSA`, `RSA-HSM`) with algorithms `RSA1_5`, `RSA-OAEP`, or `RSA-OAEP-256` — these are fully supported.
+
+### Planned fix — v1.4-beta
+
+Extend `KeyBundle` / `JsonWebKey` with a `k` field to store raw symmetric key material, and implement AES-GCM and AES-CBC(PAD) encrypt/decrypt dispatch in the data plane.

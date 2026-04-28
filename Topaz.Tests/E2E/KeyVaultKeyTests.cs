@@ -4,10 +4,12 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.Security.KeyVault.Keys;
+using Azure.Security.KeyVault.Keys.Cryptography;
 using System.Security.Cryptography;
 using System.Text;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -1221,5 +1223,63 @@ public class KeyVaultKeyTests
 
         // Assert — it is astronomically unlikely for two 128-bit random values to be equal
         Assert.That(r1.Value.SequenceEqual(r2.Value), Is.False);
+    }
+
+    private CryptographyClient CreateCryptoClient(KeyVaultKey key)
+    {
+        // key.Id lacks the Topaz port (kid is stored without port number).
+        // Build the key URI explicitly using the vault endpoint with port so the
+        // CryptographyClient connects to port 8898 instead of the default 443.
+        var version = key.Id.ToString().Split('/').Last();
+        var keyUri = new Uri(
+            $"https://{GlobalSettings.GetKeyVaultHost(TestKeyVaultName)}:{GlobalSettings.DefaultKeyVaultPort}" +
+            $"/keys/{key.Name}/{version}");
+        return new CryptographyClient(
+            keyUri,
+            new AzureLocalCredential(Globals.GlobalAdminId),
+            new CryptographyClientOptions { DisableChallengeResourceVerification = true });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_Encrypt_RsaOaep256_ShouldReturnCiphertext()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateRsaKey(new CreateRsaKeyOptions("encrypt-test-key"));
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var plaintext = Encoding.UTF8.GetBytes("hello topaz");
+
+        // Act
+        var result = cryptoClient.Encrypt(EncryptionAlgorithm.RsaOaep256, plaintext);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Ciphertext, Is.Not.Null);
+            Assert.That(result.Ciphertext.Length, Is.GreaterThan(0));
+            Assert.That(result.KeyId, Is.Not.Null.And.Contains("encrypt-test-key"));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_Encrypt_Rsa15_ShouldReturnCiphertext()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateRsaKey(new CreateRsaKeyOptions("encrypt-rsa15-key"));
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var plaintext = Encoding.UTF8.GetBytes("hello rsa15");
+
+        // Act
+        var result = cryptoClient.Encrypt(EncryptionAlgorithm.Rsa15, plaintext);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Ciphertext, Is.Not.Null);
+            Assert.That(result.Ciphertext.Length, Is.GreaterThan(0));
+        });
     }
 }

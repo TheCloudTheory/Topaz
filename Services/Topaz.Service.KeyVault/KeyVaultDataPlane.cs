@@ -921,6 +921,78 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         return new DataPlaneOperationResult<GetRandomBytesResponse>(OperationResult.Success, GetRandomBytesResponse.New(base64Url), null, null);
     }
 
+    public DataPlaneOperationResult<KeyOperationResponse> EncryptKey(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName, string keyVersion,
+        KeyOperationRequest request)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(EncryptKey), "Executing {0}: {1}/{2} in {3}.", nameof(EncryptKey), keyName, keyVersion, vaultName);
+
+        if (string.IsNullOrEmpty(request.Algorithm))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Algorithm ('alg') is required.", "BadParameter");
+
+        if (string.IsNullOrEmpty(request.Value))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Value is required.", "BadParameter");
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (!File.Exists(entityPath))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.NotFound, null, $"Key '{keyName}' not found.", "KeyNotFound");
+
+        var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
+        var bundle = bundles.FirstOrDefault(b => b.Key.Kid.EndsWith($"/{keyVersion}", StringComparison.OrdinalIgnoreCase));
+        if (bundle == null)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.NotFound, null, $"Key version '{keyVersion}' not found.", "KeyNotFound");
+
+        if (!bundle.Attributes.Enabled)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key is disabled.", "Forbidden");
+
+        if (bundle.Key.KeyOps.Length > 0 && !bundle.Key.KeyOps.Contains("encrypt", StringComparer.OrdinalIgnoreCase))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key does not permit the 'encrypt' operation.", "Forbidden");
+
+        var kty = bundle.Key.Kty?.ToUpperInvariant() ?? string.Empty;
+        if (kty is not ("RSA" or "RSA-HSM"))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'. Only RSA keys support this algorithm.", "BadParameter");
+
+        var padding = request.Algorithm.ToUpperInvariant() switch
+        {
+            "RSA1_5"       => RSAEncryptionPadding.Pkcs1,
+            "RSA-OAEP"     => RSAEncryptionPadding.OaepSHA1,
+            "RSA-OAEP-256" => RSAEncryptionPadding.OaepSHA256,
+            _ => null
+        };
+
+        if (padding == null)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Algorithm '{request.Algorithm}' is not supported. Supported RSA algorithms: RSA1_5, RSA-OAEP, RSA-OAEP-256.", "BadParameter");
+
+        if (string.IsNullOrEmpty(bundle.Key.N) || string.IsNullOrEmpty(bundle.Key.E))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "RSA public key material (n, e) is missing.", "BadParameter");
+
+        var plaintext = Base64UrlDecode(request.Value);
+
+        using var rsa = RSA.Create();
+        rsa.ImportParameters(new RSAParameters
+        {
+            Modulus  = Base64UrlDecode(bundle.Key.N),
+            Exponent = Base64UrlDecode(bundle.Key.E)
+        });
+
+        var ciphertext = rsa.Encrypt(plaintext, padding);
+        var resultBase64Url = Convert.ToBase64String(ciphertext).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(EncryptKey), "Encrypted {0} bytes with {1}.", plaintext.Length, request.Algorithm);
+        return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Success,
+            KeyOperationResponse.New(bundle.Key.Kid, resultBase64Url), null, null);
+    }
+
     public DataPlaneOperationResult PurgeDeletedKey(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

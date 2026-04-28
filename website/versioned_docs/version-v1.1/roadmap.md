@@ -130,6 +130,12 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 |--|---------|-------------|
 | <span class="badge--preview">Preview</span> | Inline tag value editing in portal | Edit button per tag row in the Tags panel turns the value cell into an input field; supports all tag-capable resources |
 
+### Key Vault — AES symmetric key (oct) cryptographic operations
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | AES encrypt/decrypt/wrap/unwrap for `oct` keys | Extend `KeyBundle` with the `k` field for raw key material; implement AES-GCM and AES-CBC(PAD) in the data plane so `az keyvault key encrypt/decrypt --algorithm A256GCM` (and SDK equivalents) work against symmetric keys |
+
 ### Key Vault — automated soft-delete purging
 
 | | Feature | Description |
