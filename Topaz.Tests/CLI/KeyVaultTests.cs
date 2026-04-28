@@ -436,4 +436,102 @@ public class KeyVaultTests
 
         Assert.That(verifyResult, Is.EqualTo(0));
     }
+
+    [Test]
+    public async Task KeyVaultTests_WrapKey_ShouldReturnWrappedKey()
+    {
+        // Arrange — create an RSA key via CLI
+        var createResult = await Program.RunAsync([
+            "keyvault", "key", "create",
+            "--vault-name", VaultName,
+            "--name", "cli-wrap-key",
+            "--kty", "RSA",
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+        Assert.That(createResult, Is.EqualTo(0));
+
+        var keyFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "keys", "cli-wrap-key.json");
+
+        Assert.That(File.Exists(keyFilePath), Is.True);
+
+        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(keyFilePath));
+        var keyEl = doc.RootElement[0].GetProperty("key");
+        var kid = keyEl.GetProperty("kid").GetString()!;
+        var version = kid.Split('/').Last();
+
+        // A 32-byte key material to wrap, base64url-encoded
+        var keyMaterial = new byte[32];
+        Random.Shared.NextBytes(keyMaterial);
+        var keyMaterialBase64Url = Base64UrlEncodeLocal(keyMaterial);
+
+        // Act — wrap via CLI
+        var wrapResult = await Program.RunAsync([
+            "keyvault", "key", "wrap",
+            "--vault-name", VaultName,
+            "--name", "cli-wrap-key",
+            "--version", version,
+            "--algorithm", "RSA-OAEP-256",
+            "--value", keyMaterialBase64Url,
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(wrapResult, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task KeyVaultTests_UnwrapKey_ShouldReturnUnwrappedKey()
+    {
+        // Arrange — create an RSA key via CLI
+        var createResult = await Program.RunAsync([
+            "keyvault", "key", "create",
+            "--vault-name", VaultName,
+            "--name", "cli-unwrap-key",
+            "--kty", "RSA",
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+        Assert.That(createResult, Is.EqualTo(0));
+
+        var keyFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "keys", "cli-unwrap-key.json");
+
+        Assert.That(File.Exists(keyFilePath), Is.True);
+
+        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(keyFilePath));
+        var keyEl = doc.RootElement[0].GetProperty("key");
+        var kid = keyEl.GetProperty("kid").GetString()!;
+        var version = kid.Split('/').Last();
+
+        // Produce a wrapped key material using the stored public key
+        var nBytes = Base64UrlDecodeLocal(keyEl.GetProperty("n").GetString()!);
+        var eBytes = Base64UrlDecodeLocal(keyEl.GetProperty("e").GetString()!);
+        using var rsa = RSA.Create();
+        rsa.ImportParameters(new RSAParameters { Modulus = nBytes, Exponent = eBytes });
+        var keyMaterial = new byte[32];
+        Random.Shared.NextBytes(keyMaterial);
+        var wrapped = rsa.Encrypt(keyMaterial, RSAEncryptionPadding.OaepSHA256);
+        var wrappedBase64Url = Base64UrlEncodeLocal(wrapped);
+
+        // Act — unwrap via CLI
+        var unwrapResult = await Program.RunAsync([
+            "keyvault", "key", "unwrap",
+            "--vault-name", VaultName,
+            "--name", "cli-unwrap-key",
+            "--version", version,
+            "--algorithm", "RSA-OAEP-256",
+            "--value", wrappedBase64Url,
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(unwrapResult, Is.EqualTo(0));
+    }
 }
+

@@ -599,6 +599,168 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
         }
     }
 
+    public DataPlaneOperationResult<KeyOperationResponse> WrapKey(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName, string keyVersion,
+        KeyOperationRequest request)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(WrapKey), "Executing {0}: {1}/{2} in {3}.", nameof(WrapKey), keyName, keyVersion, vaultName);
+
+        if (string.IsNullOrEmpty(request.Algorithm))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Algorithm ('alg') is required.", "BadParameter");
+
+        if (string.IsNullOrEmpty(request.Value))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Value is required.", "BadParameter");
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (!File.Exists(entityPath))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.NotFound, null, $"Key '{keyName}' not found.", "KeyNotFound");
+
+        var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
+        var bundle = bundles.FirstOrDefault(b => b.Key.Kid.EndsWith($"/{keyVersion}", StringComparison.OrdinalIgnoreCase));
+        if (bundle == null)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.NotFound, null, $"Key version '{keyVersion}' not found.", "KeyNotFound");
+
+        if (!bundle.Attributes.Enabled)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key is disabled.", "Forbidden");
+
+        if (bundle.Key.KeyOps.Length > 0 && !bundle.Key.KeyOps.Contains("wrapKey", StringComparer.OrdinalIgnoreCase))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key does not permit the 'wrapKey' operation.", "Forbidden");
+
+        var kty = bundle.Key.Kty?.ToUpperInvariant() ?? string.Empty;
+        if (kty is not ("RSA" or "RSA-HSM"))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'. Only RSA keys support this algorithm.", "BadParameter");
+
+        var padding = request.Algorithm.ToUpperInvariant() switch
+        {
+            "RSA1_5"       => RSAEncryptionPadding.Pkcs1,
+            "RSA-OAEP"     => RSAEncryptionPadding.OaepSHA1,
+            "RSA-OAEP-256" => RSAEncryptionPadding.OaepSHA256,
+            _ => null
+        };
+
+        if (padding == null)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Algorithm '{request.Algorithm}' is not supported. Supported RSA algorithms: RSA1_5, RSA-OAEP, RSA-OAEP-256.", "BadParameter");
+
+        if (string.IsNullOrEmpty(bundle.Key.N) || string.IsNullOrEmpty(bundle.Key.E))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "RSA public key material (n, e) is missing.", "BadParameter");
+
+        var plaintext = Base64UrlDecode(request.Value);
+
+        using var rsa = RSA.Create();
+        rsa.ImportParameters(new RSAParameters
+        {
+            Modulus  = Base64UrlDecode(bundle.Key.N),
+            Exponent = Base64UrlDecode(bundle.Key.E)
+        });
+
+        var ciphertext = rsa.Encrypt(plaintext, padding);
+        var resultBase64Url = Convert.ToBase64String(ciphertext).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(WrapKey), "Wrapped {0} bytes with {1}.", plaintext.Length, request.Algorithm);
+        return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Success,
+            KeyOperationResponse.New(bundle.Key.Kid, resultBase64Url), null, null);
+    }
+
+    public DataPlaneOperationResult<KeyOperationResponse> UnwrapKey(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName, string keyVersion,
+        KeyOperationRequest request)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(UnwrapKey), "Executing {0}: {1}/{2} in {3}.", nameof(UnwrapKey), keyName, keyVersion, vaultName);
+
+        if (string.IsNullOrEmpty(request.Algorithm))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Algorithm ('alg') is required.", "BadParameter");
+
+        if (string.IsNullOrEmpty(request.Value))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Value is required.", "BadParameter");
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (!File.Exists(entityPath))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.NotFound, null, $"Key '{keyName}' not found.", "KeyNotFound");
+
+        var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
+        var bundle = bundles.FirstOrDefault(b => b.Key.Kid.EndsWith($"/{keyVersion}", StringComparison.OrdinalIgnoreCase));
+        if (bundle == null)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.NotFound, null, $"Key version '{keyVersion}' not found.", "KeyNotFound");
+
+        if (!bundle.Attributes.Enabled)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key is disabled.", "Forbidden");
+
+        if (bundle.Key.KeyOps.Length > 0 && !bundle.Key.KeyOps.Contains("unwrapKey", StringComparer.OrdinalIgnoreCase))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key does not permit the 'unwrapKey' operation.", "Forbidden");
+
+        var kty = bundle.Key.Kty?.ToUpperInvariant() ?? string.Empty;
+        if (kty is not ("RSA" or "RSA-HSM"))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'. Only RSA keys support this algorithm.", "BadParameter");
+
+        // All six CRT fields are required — macOS (.NET 8) ImportParameters fails without them.
+        if (string.IsNullOrEmpty(bundle.Key.D)       || string.IsNullOrEmpty(bundle.Key.P)  ||
+            string.IsNullOrEmpty(bundle.Key.Q)       || string.IsNullOrEmpty(bundle.Key.DP) ||
+            string.IsNullOrEmpty(bundle.Key.DQ)      || string.IsNullOrEmpty(bundle.Key.InverseQ))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                "Key version does not contain complete private RSA material. Recreate the key to enable unwrapping.", "BadParameter");
+
+        var padding = request.Algorithm.ToUpperInvariant() switch
+        {
+            "RSA1_5"       => RSAEncryptionPadding.Pkcs1,
+            "RSA-OAEP"     => RSAEncryptionPadding.OaepSHA1,
+            "RSA-OAEP-256" => RSAEncryptionPadding.OaepSHA256,
+            _ => null
+        };
+
+        if (padding == null)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Algorithm '{request.Algorithm}' is not supported. Supported RSA algorithms: RSA1_5, RSA-OAEP, RSA-OAEP-256.", "BadParameter");
+
+        try
+        {
+            var wrapped = Base64UrlDecode(request.Value);
+
+            using var rsa = RSA.Create();
+            rsa.ImportParameters(new RSAParameters
+            {
+                Modulus  = Base64UrlDecode(bundle.Key.N!),
+                Exponent = Base64UrlDecode(bundle.Key.E!),
+                D        = Base64UrlDecode(bundle.Key.D),
+                P        = Base64UrlDecode(bundle.Key.P),
+                Q        = Base64UrlDecode(bundle.Key.Q),
+                DP       = Base64UrlDecode(bundle.Key.DP),
+                DQ       = Base64UrlDecode(bundle.Key.DQ),
+                InverseQ = Base64UrlDecode(bundle.Key.InverseQ)
+            });
+
+            var unwrapped = rsa.Decrypt(wrapped, padding);
+            var resultBase64Url = Convert.ToBase64String(unwrapped).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(UnwrapKey), "Unwrapped {0} bytes with {1}.", wrapped.Length, request.Algorithm);
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Success,
+                KeyOperationResponse.New(bundle.Key.Kid, resultBase64Url), null, null);
+        }
+        catch (Exception ex) when (ex is FormatException or CryptographicException)
+        {
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Unwrap failed: {ex.Message}", "BadParameter");
+        }
+    }
+
     public DataPlaneOperationResult<KeyOperationResponse> SignKey(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

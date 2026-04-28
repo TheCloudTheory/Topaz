@@ -117,8 +117,8 @@ The data plane covers operations served directly from the vault's own hostname (
 | decrypt | ✅ |
 | sign | ✅ |
 | verify | ✅ |
-| wrap Key | ❌ |
-| unwrap Key | ❌ |
+| wrap Key | ✅ | `POST /keys/{name}/{version}/wrapkey` — RSA1_5, RSA-OAEP, RSA-OAEP-256 |
+| unwrap Key | ✅ |
 | release | ❌ |
 | Get Key Attestation | ❌ |
 

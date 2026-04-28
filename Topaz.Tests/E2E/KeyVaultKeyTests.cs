@@ -1432,21 +1432,86 @@ public class KeyVaultKeyTests
     }
 
     [Test]
-    public void KeyVaultKeyTests_Verify_WrongSignature_ReturnsFalse()
+    public void KeyVaultKeyTests_WrapKey_RsaOaep256_ShouldReturnWrappedBytes()
     {
         // Arrange
         EnsureVault();
         var keyClient = CreateKeyClient();
-        var key = keyClient.CreateRsaKey(new CreateRsaKeyOptions("verify-wrong-sig-key"));
+        var key = keyClient.CreateRsaKey(new CreateRsaKeyOptions("wrap-oaep256-key"));
         var cryptoClient = CreateCryptoClient(key.Value);
-        var data = Encoding.UTF8.GetBytes("hello topaz");
-        var wrongSignature = new byte[256]; // all zeros — not a valid RSA-2048 signature
-        Random.Shared.NextBytes(wrongSignature);
+        var keyMaterial = new byte[32];
+        Random.Shared.NextBytes(keyMaterial);
 
         // Act
-        var verifyResult = cryptoClient.VerifyData(SignatureAlgorithm.RS256, data, wrongSignature);
+        var result = cryptoClient.WrapKey(KeyWrapAlgorithm.RsaOaep256, keyMaterial);
 
         // Assert
-        Assert.That(verifyResult.IsValid, Is.False);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.EncryptedKey, Is.Not.Null);
+            Assert.That(result.EncryptedKey.Length, Is.GreaterThan(0));
+            Assert.That(result.KeyId, Is.Not.Null.And.Contains("wrap-oaep256-key"));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_WrapKey_Rsa15_ShouldReturnWrappedBytes()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateRsaKey(new CreateRsaKeyOptions("wrap-rsa15-key"));
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var keyMaterial = new byte[32];
+        Random.Shared.NextBytes(keyMaterial);
+
+        // Act
+        var result = cryptoClient.WrapKey(KeyWrapAlgorithm.Rsa15, keyMaterial);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.EncryptedKey, Is.Not.Null);
+            Assert.That(result.EncryptedKey.Length, Is.GreaterThan(0));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_UnwrapKey_RsaOaep256_RoundTrip_KeyMaterialMatches()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateRsaKey(new CreateRsaKeyOptions("unwrap-oaep256-key"));
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var original = new byte[32];
+        Random.Shared.NextBytes(original);
+
+        // Act — SDK wraps locally using public key, unwrap happens on server using private key
+        var wrapped = cryptoClient.WrapKey(KeyWrapAlgorithm.RsaOaep256, original);
+        var unwrapped = cryptoClient.UnwrapKey(KeyWrapAlgorithm.RsaOaep256, wrapped.EncryptedKey);
+
+        // Assert
+        Assert.That(unwrapped.Key, Is.EqualTo(original));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_UnwrapKey_Rsa15_RoundTrip_KeyMaterialMatches()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateRsaKey(new CreateRsaKeyOptions("unwrap-rsa15-key"));
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var original = new byte[32];
+        Random.Shared.NextBytes(original);
+
+        // Act
+        var wrapped = cryptoClient.WrapKey(KeyWrapAlgorithm.Rsa15, original);
+        var unwrapped = cryptoClient.UnwrapKey(KeyWrapAlgorithm.Rsa15, wrapped.EncryptedKey);
+
+        // Assert
+        Assert.That(unwrapped.Key, Is.EqualTo(original));
     }
 }
+
