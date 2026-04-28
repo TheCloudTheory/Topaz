@@ -53,6 +53,7 @@ public abstract class PowerShellTestBase
         var escapedScript = script.Replace("'@", "'@@");
 
         return string.Join('\n',
+            "$PSStyle.OutputRendering = 'PlainText'",
             "$ErrorActionPreference = \"Stop\"",
             "& /tmp/restore-az-context.ps1",
             "$ctx = Get-AzContext",
