@@ -854,8 +854,8 @@ public class KeyVaultTests : TopazFixture
                 Assert.Multiple(() =>
                 {
                     Assert.That(result, Is.Not.Null.And.Not.Empty);
-                    // base64url — no padding
-                    Assert.That(result, Does.Match("^[A-Za-z0-9_-]+$"));
+                    // The CLI transformer uses base64.b64encode (standard base64 with +, /, =)
+                    Assert.That(result, Does.Match("^[A-Za-z0-9+/=]+$"));
                 });
             });
         await RunAzureCliCommand("az keyvault delete --name EncVault01 --only-show-errors");
