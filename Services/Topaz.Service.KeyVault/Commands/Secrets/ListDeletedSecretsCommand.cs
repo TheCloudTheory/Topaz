@@ -20,7 +20,7 @@ public class ListDeletedSecretsCommand(ITopazLogger logger) : Command<ListDelete
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultDataPlane(logger, new KeyVaultResourceProvider(logger));
+        var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
 
         var operation = dataPlane.GetDeletedSecrets(subscriptionIdentifier, resourceGroupIdentifier, settings.VaultName!);
 

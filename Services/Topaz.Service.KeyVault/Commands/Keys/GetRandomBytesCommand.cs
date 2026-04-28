@@ -17,7 +17,7 @@ public class GetRandomBytesCommand(ITopazLogger logger) : Command<GetRandomBytes
     {
         logger.LogInformation($"Executing {nameof(GetRandomBytesCommand)}.{nameof(Execute)}.");
 
-        var dataPlane = new KeyVaultDataPlane(logger, new KeyVaultResourceProvider(logger));
+        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
 
         var operation = dataPlane.GetRandomBytes(settings.Count);
 

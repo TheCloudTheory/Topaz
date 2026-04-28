@@ -19,7 +19,7 @@ public class DeleteSecretCommand(ITopazLogger logger) : Command<DeleteSecretComm
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultDataPlane(logger, new KeyVaultResourceProvider(logger));
+        var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
 
         var operation = dataPlane.DeleteSecret(subscriptionIdentifier, resourceGroupIdentifier,
             settings.VaultName!, settings.Name!);

@@ -20,7 +20,7 @@ public class GetDeletedKeyCommand(ITopazLogger logger) : Command<GetDeletedKeyCo
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultDataPlane(logger, new KeyVaultResourceProvider(logger));
+        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
 
         var operation = dataPlane.GetDeletedKey(subscriptionIdentifier, resourceGroupIdentifier,
             settings.VaultName!, settings.Name!);

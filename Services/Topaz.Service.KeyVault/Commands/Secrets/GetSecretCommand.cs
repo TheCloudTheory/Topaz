@@ -19,7 +19,7 @@ public class GetSecretCommand(ITopazLogger logger) : Command<GetSecretCommand.Ge
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultDataPlane(logger, new KeyVaultResourceProvider(logger));
+        var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
 
         var operation = dataPlane.GetSecret(subscriptionIdentifier, resourceGroupIdentifier,
             settings.VaultName!, settings.Name!, settings.Version);

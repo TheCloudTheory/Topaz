@@ -22,7 +22,7 @@ public class SetSecretCommand(ITopazLogger logger) : Command<SetSecretCommand.Se
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultDataPlane(logger, new KeyVaultResourceProvider(logger));
+        var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
 
         var requestJson = JsonSerializer.Serialize(new SetSecretRequest(settings.Value!), GlobalSettings.JsonOptions);
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(requestJson));

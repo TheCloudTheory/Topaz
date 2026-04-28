@@ -20,7 +20,7 @@ public class ListSecretsCommand(ITopazLogger logger) : Command<ListSecretsComman
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultDataPlane(logger, new KeyVaultResourceProvider(logger));
+        var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
 
         var operation = dataPlane.GetSecrets(subscriptionIdentifier, resourceGroupIdentifier, settings.VaultName!);
 

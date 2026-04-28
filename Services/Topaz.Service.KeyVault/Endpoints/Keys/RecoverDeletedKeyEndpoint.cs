@@ -10,7 +10,7 @@ namespace Topaz.Service.KeyVault.Endpoints.Keys;
 
 public sealed class RecoverDeletedKeyEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly KeyVaultDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
+    private readonly KeyVaultKeysDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 

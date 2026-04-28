@@ -1,0 +1,437 @@
+using System.Net;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using Topaz.Service.KeyVault.Models;
+using Topaz.Service.KeyVault.Models.Requests;
+using Topaz.Service.KeyVault.Models.Responses;
+using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
+
+namespace Topaz.Service.KeyVault;
+
+internal sealed class KeyVaultSecretsDataPlane(ITopazLogger logger, KeyVaultResourceProvider provider)
+{
+    internal DataPlaneOperationResult<Secret> SetSecret(Stream input, SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
+    {
+        PathGuard.ValidateName(secretName);
+        secretName = PathGuard.SanitizeName(secretName);
+
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(SetSecret), "Executing {0}: {1} {2}", nameof(SetSecret), secretName, vaultName);
+
+        using var sr = new StreamReader(input);
+
+        var rawContent = sr.ReadToEnd();
+
+        if (string.IsNullOrEmpty(rawContent))
+        {
+            return new DataPlaneOperationResult<Secret>(OperationResult.Failed, null, "Empty request body.", "Unauthorized");
+        }
+
+        var data = JsonSerializer.Deserialize<SetSecretRequest>(rawContent, GlobalSettings.JsonOptions) ??
+                   throw new Exception();
+
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(SetSecret), "Executing {0}: Processing {1}.", nameof(SetSecret), rawContent);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var fileName = $"{secretName}.json";
+        var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
+
+        if (File.Exists(entityPath))
+        {
+            // When SetSecret is called for Key Vault, data plane checks if a secret already exists.
+            // If it does, it adds a new version instead of throwing an error or replacing it.
+            var newVersion = CreateNewSecretVersion(secretName, data.Value, entityPath, vaultName);
+
+            return new DataPlaneOperationResult<Secret>(OperationResult.Success, newVersion, null, null);
+        }
+
+        // Secret does not exists so we simply create it.
+        var secret = new Secret(secretName, data.Value, Guid.NewGuid(), vaultName);
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(new[] { secret }, GlobalSettings.JsonOptions));
+
+        return new DataPlaneOperationResult<Secret>(OperationResult.Created, secret, null, null);
+    }
+
+    private Secret CreateNewSecretVersion(string secretName, string value, string entityPath, string vaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(CreateNewSecretVersion), "Executing {0}: {1} {2}", nameof(CreateNewSecretVersion), secretName, value);
+        
+        var secret = new Secret(secretName, value, Guid.NewGuid(), vaultName);
+        var data = File.ReadAllText(entityPath);
+        var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions)!.ToList();
+        
+        secrets.Add(secret);
+        
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(secrets.ToArray(), GlobalSettings.JsonOptions));
+
+        return secret;
+    }
+
+    public DataPlaneOperationResult<Secret> GetSecret(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName, string? version)
+    {
+        PathGuard.ValidateName(secretName);
+        secretName = PathGuard.SanitizeName(secretName);
+
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(GetSecret), "Executing {0}: {1} {2}", nameof(GetSecret), secretName, vaultName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var fileName = $"{secretName}.json";
+        var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
+        
+        if (!File.Exists(entityPath))
+        {
+            logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(GetSecret), "Executing {0}: Secret {1} not found.", nameof(GetSecret), secretName);
+            
+            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
+        }
+        
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(GetSecret), "Executing {0}: Processing {1}.", nameof(GetSecret), secretName);
+        
+        var data = File.ReadAllText(entityPath);
+        var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
+
+        if (string.IsNullOrEmpty(version))
+        {
+            return new DataPlaneOperationResult<Secret>(OperationResult.Success, secrets!.Last(), null, null);
+        }
+        
+        var secret = secrets!.LastOrDefault(s => s.Name == secretName && s.Id.EndsWith(version!));
+
+        return secret == null
+            ? new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} version {version} not found.", "SecretNotFound")
+            : new DataPlaneOperationResult<Secret>(OperationResult.Success, secret, null, null);
+    }
+
+    public DataPlaneOperationResult<Secret[]> GetSecrets(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(GetSecrets), "Executing {0}: {1}", nameof(GetSecrets), vaultName);
+        
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var files = Directory.EnumerateFiles(path, "*.json");
+        var secrets = new List<Secret>();
+
+        foreach (var file in files)
+        {
+            logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(GetSecrets), "Executing {0}: {1}", nameof(GetSecrets), file);
+            
+            var data = File.ReadAllText(file);
+            var versions = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
+            var lastVersion = versions!.Last();
+            
+            secrets.Add(lastVersion);
+        }
+        
+        return new DataPlaneOperationResult<Secret[]>(OperationResult.Success, secrets.ToArray(), null, null);
+    }
+
+    public DataPlaneOperationResult<Secret[]> GetSecretVersions(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
+    {
+        PathGuard.ValidateName(secretName);
+        secretName = PathGuard.SanitizeName(secretName);
+
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(GetSecretVersions), "Executing {0}: {1} {2}", nameof(GetSecretVersions), secretName, vaultName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var fileName = $"{secretName}.json";
+        var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
+
+        if (!File.Exists(entityPath))
+        {
+            logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(GetSecretVersions), "Executing {0}: Secret {1} not found.", nameof(GetSecretVersions), secretName);
+            return new DataPlaneOperationResult<Secret[]>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
+        }
+
+        var data = File.ReadAllText(entityPath);
+        var versions = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
+
+        return new DataPlaneOperationResult<Secret[]>(OperationResult.Success, versions!, null, null);
+    }
+
+    public DataPlaneOperationResult<Secret> UpdateSecret(Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string secretName, string version)
+    {
+        PathGuard.ValidateName(secretName);
+        secretName = PathGuard.SanitizeName(secretName);
+
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(UpdateSecret), "Executing {0}: {1} {2}", nameof(UpdateSecret), secretName, vaultName);
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+
+        var request = string.IsNullOrEmpty(rawContent)
+            ? null
+            : JsonSerializer.Deserialize<UpdateSecretRequest>(rawContent, GlobalSettings.JsonOptions);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var fileName = $"{secretName}.json";
+        var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
+
+        if (!File.Exists(entityPath))
+        {
+            logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(UpdateSecret), "Executing {0}: Secret {1} not found.", nameof(UpdateSecret), secretName);
+            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
+        }
+
+        var data = File.ReadAllText(entityPath);
+        var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions)!.ToList();
+        var secret = secrets.LastOrDefault(s => s.Id.EndsWith(version));
+
+        if (secret == null)
+        {
+            logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(UpdateSecret), "Executing {0}: Secret version {1} not found.", nameof(UpdateSecret), version);
+            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} version {version} not found.", "SecretNotFound");
+        }
+
+        secret.UpdateFromRequest(request ?? new UpdateSecretRequest());
+
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(secrets.ToArray(), GlobalSettings.JsonOptions));
+
+        return new DataPlaneOperationResult<Secret>(OperationResult.Updated, secret, null, null);
+    }
+
+    public DataPlaneOperationResult<string> BackupSecret(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
+    {
+        PathGuard.ValidateName(secretName);
+        secretName = PathGuard.SanitizeName(secretName);
+
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(BackupSecret), "Executing {0}: {1} {2}", nameof(BackupSecret), secretName, vaultName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var fileName = $"{secretName}.json";
+        var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
+
+        if (!File.Exists(entityPath))
+        {
+            logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(BackupSecret), "Executing {0}: Secret {1} not found.", nameof(BackupSecret), secretName);
+            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
+        }
+
+        // Read all versions and serialize them as the backup payload.
+        var data = File.ReadAllText(entityPath);
+        var versions = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions)!;
+        var plaintext = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(versions, GlobalSettings.JsonOptions));
+
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(BackupSecret), "Executing {0}: Backing up {1} version(s) of secret {2}.", nameof(BackupSecret), versions.Length, secretName);
+
+        var encoded = KeyVaultBackupCipher.EncryptBackup(plaintext);
+        return new DataPlaneOperationResult<string>(OperationResult.Success, encoded, null, null);
+    }
+
+    public DataPlaneOperationResult<Secret> RestoreSecretBackup(Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(RestoreSecretBackup), "Executing {0}: {1}", nameof(RestoreSecretBackup), vaultName);
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+
+        if (string.IsNullOrEmpty(rawContent))
+            return new DataPlaneOperationResult<Secret>(OperationResult.Failed, null, "Empty request body.", "BadRequest");
+
+        var request = JsonSerializer.Deserialize<RestoreSecretRequest>(rawContent, GlobalSettings.JsonOptions)
+                      ?? throw new InvalidOperationException("Invalid request body.");
+
+        if (string.IsNullOrEmpty(request.Value))
+            return new DataPlaneOperationResult<Secret>(OperationResult.Failed, null, "Backup value is missing.", "BadRequest");
+
+        var plaintext = KeyVaultBackupCipher.DecryptBackup(request.Value);
+        var versions = JsonSerializer.Deserialize<Secret[]>(Encoding.UTF8.GetString(plaintext), GlobalSettings.JsonOptions);
+
+        if (versions == null || versions.Length == 0)
+            return new DataPlaneOperationResult<Secret>(OperationResult.Failed, null, "Backup contains no secret versions.", "BadRequest");
+
+        var secretName = PathGuard.SanitizeName(versions[0].Name);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(path, $"{secretName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, path);
+
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(RestoreSecretBackup), "Executing {0}: Restoring {1} version(s) of secret {2}.", nameof(RestoreSecretBackup), versions.Length, secretName);
+
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(versions, GlobalSettings.JsonOptions));
+
+        return new DataPlaneOperationResult<Secret>(OperationResult.Created, versions.Last(), null, null);
+    }
+
+    public DataPlaneOperationResult<Secret> DeleteSecret(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
+    {
+        PathGuard.ValidateName(secretName);
+        secretName = PathGuard.SanitizeName(secretName);
+
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(DeleteSecret), "Executing {0}: {1} {2}", nameof(DeleteSecret), secretName, vaultName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var fileName = $"{secretName}.json";
+        var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
+        
+        if (!File.Exists(entityPath))
+        {
+            logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(DeleteSecret), "Executing {0}: Secret {1} not found.", nameof(DeleteSecret), secretName);
+            
+            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
+        }
+        
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(DeleteSecret), "Executing {0}: Processing {1}.", nameof(DeleteSecret), secretName);
+        
+        var data = File.ReadAllText(entityPath);
+        var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
+        var secret = secrets!.Last();
+        
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(DeleteSecret), "Executing {0}: Deleting {1}.", nameof(DeleteSecret), secretName);
+
+        var deletedDir = Path.Combine(path, "deleted");
+        Directory.CreateDirectory(deletedDir);
+
+        var record = new DeletedSecretRecord
+        {
+            Secret = secret,
+            DeletedDate = DateTimeOffset.Now.ToUnixTimeSeconds(),
+            ScheduledPurgeDate = DateTimeOffset.Now.AddDays(90).ToUnixTimeSeconds()
+        };
+
+        File.WriteAllText(Path.Combine(deletedDir, fileName),
+            JsonSerializer.Serialize(record, GlobalSettings.JsonOptions));
+        File.Delete(entityPath);
+
+        return new DataPlaneOperationResult<Secret>(OperationResult.Deleted, secret, null, null);
+    }
+
+    public DataPlaneOperationResult<DeletedSecretRecord> GetDeletedSecret(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string secretName)
+    {
+        PathGuard.ValidateName(secretName);
+        secretName = PathGuard.SanitizeName(secretName);
+
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(GetDeletedSecret), "Executing {0}: {1} {2}", nameof(GetDeletedSecret), secretName, vaultName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var deletedPath = Path.Combine(path, "deleted", $"{secretName}.json");
+        PathGuard.EnsureWithinDirectory(deletedPath, path);
+
+        if (!File.Exists(deletedPath))
+        {
+            logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(GetDeletedSecret), "Executing {0}: Deleted secret {1} not found.", nameof(GetDeletedSecret), secretName);
+            return new DataPlaneOperationResult<DeletedSecretRecord>(OperationResult.NotFound, null, $"Deleted secret {secretName} not found.", "SecretNotFound");
+        }
+
+        var data = File.ReadAllText(deletedPath);
+        var record = JsonSerializer.Deserialize<DeletedSecretRecord>(data, GlobalSettings.JsonOptions);
+
+        return new DataPlaneOperationResult<DeletedSecretRecord>(OperationResult.Success, record!, null, null);
+    }
+
+    public DataPlaneOperationResult<IReadOnlyList<DeletedSecretRecord>> GetDeletedSecrets(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(GetDeletedSecrets), "Executing {0}: {1}", nameof(GetDeletedSecrets), vaultName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var deletedDir = Path.Combine(path, "deleted");
+
+        if (!Directory.Exists(deletedDir))
+            return new DataPlaneOperationResult<IReadOnlyList<DeletedSecretRecord>>(OperationResult.Success, [], null, null);
+
+        var records = Directory.GetFiles(deletedDir, "*.json")
+            .Select(file => JsonSerializer.Deserialize<DeletedSecretRecord>(File.ReadAllText(file), GlobalSettings.JsonOptions)!)
+            .ToList();
+
+        return new DataPlaneOperationResult<IReadOnlyList<DeletedSecretRecord>>(OperationResult.Success, records, null, null);
+    }
+
+    public DataPlaneOperationResult<Secret> RecoverDeletedSecret(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string secretName)
+    {
+        PathGuard.ValidateName(secretName);
+        secretName = PathGuard.SanitizeName(secretName);
+
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(RecoverDeletedSecret), "Executing {0}: {1} {2}", nameof(RecoverDeletedSecret), secretName, vaultName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var deletedDir = Path.Combine(path, "deleted");
+        var deletedPath = Directory.EnumerateFiles(deletedDir, "*.json")
+            .FirstOrDefault(file => string.Equals(
+                Path.GetFileNameWithoutExtension(file),
+                secretName,
+                StringComparison.Ordinal));
+
+        if (deletedPath == null)
+        {
+            logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(RecoverDeletedSecret), "Executing {0}: Deleted secret {1} not found.", nameof(RecoverDeletedSecret), secretName);
+            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Deleted secret {secretName} not found.", "SecretNotFound");
+        }
+
+        PathGuard.EnsureWithinDirectory(deletedPath, path);
+
+        var data = File.ReadAllText(deletedPath);
+        var record = JsonSerializer.Deserialize<DeletedSecretRecord>(data, GlobalSettings.JsonOptions)!;
+        var secret = record.Secret!;
+
+        var entityPath = Path.Combine(path, $"{secretName}.json");
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(new[] { secret }, GlobalSettings.JsonOptions));
+        File.Delete(deletedPath);
+
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(RecoverDeletedSecret), "Executing {0}: Recovered secret {1}.", nameof(RecoverDeletedSecret), secretName);
+        return new DataPlaneOperationResult<Secret>(OperationResult.Success, secret, null, null);
+    }
+
+    /// <summary>Permanently deletes a soft-deleted secret, making it unrecoverable.</summary>
+    /// <param name="subscriptionIdentifier">The subscription that owns the vault.</param>
+    /// <param name="resourceGroupIdentifier">The resource group that owns the vault.</param>
+    /// <param name="vaultName">The name of the vault.</param>
+    /// <param name="secretName">The name of the deleted secret to purge.</param>
+    /// <returns>A <see cref="DataPlaneOperationResult"/> indicating success or not-found.</returns>
+    public DataPlaneOperationResult PurgeDeletedSecret(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string secretName)
+    {
+        PathGuard.ValidateName(secretName);
+        secretName = PathGuard.SanitizeName(secretName);
+
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(PurgeDeletedSecret), "Executing {0}: {1} {2}", nameof(PurgeDeletedSecret), secretName, vaultName);
+
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var deletedDir = Path.Combine(path, "deleted");
+        var deletedPath = Directory.EnumerateFiles(deletedDir, "*.json")
+            .FirstOrDefault(file => string.Equals(
+                Path.GetFileNameWithoutExtension(file),
+                secretName,
+                StringComparison.Ordinal));
+
+        if (deletedPath == null)
+        {
+            logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(PurgeDeletedSecret), "Executing {0}: Deleted secret {1} not found.", nameof(PurgeDeletedSecret), secretName);
+            return new DataPlaneOperationResult(OperationResult.NotFound, $"Deleted secret {secretName} not found.", "SecretNotFound");
+        }
+
+        PathGuard.EnsureWithinDirectory(deletedPath, path);
+
+        File.Delete(deletedPath);
+
+        logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(PurgeDeletedSecret), "Executing {0}: Purged secret {1}.", nameof(PurgeDeletedSecret), secretName);
+        return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
+    }
+}

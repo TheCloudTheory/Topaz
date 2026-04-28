@@ -11,7 +11,7 @@ namespace Topaz.Service.KeyVault.Endpoints.Secrets;
 
 public sealed class GetDeletedSecretEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly KeyVaultDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
+    private readonly KeyVaultSecretsDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 

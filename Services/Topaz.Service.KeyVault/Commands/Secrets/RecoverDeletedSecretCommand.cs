@@ -19,7 +19,7 @@ public class RecoverDeletedSecretCommand(ITopazLogger logger) : Command<RecoverD
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultDataPlane(logger, new KeyVaultResourceProvider(logger));
+        var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
 
         var operation = dataPlane.RecoverDeletedSecret(subscriptionIdentifier, resourceGroupIdentifier,
             settings.VaultName!, settings.Name!);

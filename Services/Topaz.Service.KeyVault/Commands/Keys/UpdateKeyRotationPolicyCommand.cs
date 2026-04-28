@@ -23,7 +23,7 @@ public class UpdateKeyRotationPolicyCommand(ITopazLogger logger) : Command<Updat
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultDataPlane(logger, new KeyVaultResourceProvider(logger));
+        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
 
         var policy = new KeyRotationPolicy
         {

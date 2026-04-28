@@ -11,491 +11,8 @@ using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault;
 
-internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourceProvider provider)
+internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourceProvider provider)
 {
-    // AES-256-CBC key used to encrypt backup blobs. This is the emulator's vault-specific master key.
-    // Structure of an encrypted blob: [9 magic][1 version][16 IV][n ciphertext], then base64url-encoded.
-    private static readonly byte[] BackupEncryptionKey = Convert.FromHexString("546F70617A4B565F42434B5F56312E30546F70617A4B565F42434B5F56312E30");
-    private static readonly byte[] BackupMagic = Encoding.UTF8.GetBytes("TOPAZKVBK");
-    private const byte BackupVersion = 0x01;
-
-    private static string EncryptBackup(byte[] plaintext)
-    {
-        using var aes = Aes.Create();
-        aes.Key = BackupEncryptionKey;
-        aes.Mode = CipherMode.CBC;
-        aes.Padding = PaddingMode.PKCS7;
-        aes.GenerateIV();
-
-        using var encryptor = aes.CreateEncryptor();
-        var ciphertext = encryptor.TransformFinalBlock(plaintext, 0, plaintext.Length);
-
-        var blob = new byte[BackupMagic.Length + 1 + aes.IV.Length + ciphertext.Length];
-        BackupMagic.CopyTo(blob, 0);
-        blob[BackupMagic.Length] = BackupVersion;
-        aes.IV.CopyTo(blob, BackupMagic.Length + 1);
-        ciphertext.CopyTo(blob, BackupMagic.Length + 1 + aes.IV.Length);
-
-        return Convert.ToBase64String(blob).TrimEnd('=').Replace('+', '-').Replace('/', '_');
-    }
-
-    private static byte[] DecryptBackup(string encoded)
-    {
-        var padded = encoded.Replace('-', '+').Replace('_', '/');
-        var remainder = padded.Length % 4;
-        if (remainder == 2) padded += "==";
-        else if (remainder == 3) padded += "=";
-
-        var blob = Convert.FromBase64String(padded);
-        var headerLength = BackupMagic.Length + 1 + 16;
-
-        if (blob.Length < headerLength)
-            throw new InvalidOperationException("Invalid backup blob: too short.");
-
-        for (var i = 0; i < BackupMagic.Length; i++)
-            if (blob[i] != BackupMagic[i])
-                throw new InvalidOperationException("Invalid backup blob: magic header mismatch.");
-
-        if (blob[BackupMagic.Length] != BackupVersion)
-            throw new InvalidOperationException($"Unsupported backup version: {blob[BackupMagic.Length]}.");
-
-        var iv = new byte[16];
-        Array.Copy(blob, BackupMagic.Length + 1, iv, 0, 16);
-        var ciphertext = new byte[blob.Length - headerLength];
-        Array.Copy(blob, headerLength, ciphertext, 0, ciphertext.Length);
-
-        using var aes = Aes.Create();
-        aes.Key = BackupEncryptionKey;
-        aes.IV = iv;
-        aes.Mode = CipherMode.CBC;
-        aes.Padding = PaddingMode.PKCS7;
-
-        using var decryptor = aes.CreateDecryptor();
-        return decryptor.TransformFinalBlock(ciphertext, 0, ciphertext.Length);
-    }
-
-    internal DataPlaneOperationResult<Secret> SetSecret(Stream input, SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
-    {
-        PathGuard.ValidateName(secretName);
-        secretName = PathGuard.SanitizeName(secretName);
-
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(SetSecret), "Executing {0}: {1} {2}", nameof(SetSecret), secretName, vaultName);
-
-        using var sr = new StreamReader(input);
-
-        var rawContent = sr.ReadToEnd();
-
-        if (string.IsNullOrEmpty(rawContent))
-        {
-            return new DataPlaneOperationResult<Secret>(OperationResult.Failed, null, "Empty request body.", "Unauthorized");
-        }
-
-        var data = JsonSerializer.Deserialize<SetSecretRequest>(rawContent, GlobalSettings.JsonOptions) ??
-                   throw new Exception();
-
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(SetSecret), "Executing {0}: Processing {1}.", nameof(SetSecret), rawContent);
-
-        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
-        var fileName = $"{secretName}.json";
-        var entityPath = Path.Combine(path, fileName);
-        PathGuard.EnsureWithinDirectory(entityPath, path);
-
-        if (File.Exists(entityPath))
-        {
-            // When SetSecret is called for Key Vault, data plane checks if a secret already exists.
-            // If it does, it adds a new version instead of throwing an error or replacing it.
-            var newVersion = CreateNewSecretVersion(secretName, data.Value, entityPath, vaultName);
-
-            return new DataPlaneOperationResult<Secret>(OperationResult.Success, newVersion, null, null);
-        }
-
-        // Secret does not exists so we simply create it.
-        var secret = new Secret(secretName, data.Value, Guid.NewGuid(), vaultName);
-        File.WriteAllText(entityPath, JsonSerializer.Serialize(new[] { secret }, GlobalSettings.JsonOptions));
-
-        return new DataPlaneOperationResult<Secret>(OperationResult.Created, secret, null, null);
-    }
-
-    private Secret CreateNewSecretVersion(string secretName, string value, string entityPath, string vaultName)
-    {
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(CreateNewSecretVersion), "Executing {0}: {1} {2}", nameof(CreateNewSecretVersion), secretName, value);
-        
-        var secret = new Secret(secretName, value, Guid.NewGuid(), vaultName);
-        var data = File.ReadAllText(entityPath);
-        var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions)!.ToList();
-        
-        secrets.Add(secret);
-        
-        File.WriteAllText(entityPath, JsonSerializer.Serialize(secrets.ToArray(), GlobalSettings.JsonOptions));
-
-        return secret;
-    }
-
-    public DataPlaneOperationResult<Secret> GetSecret(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName, string? version)
-    {
-        PathGuard.ValidateName(secretName);
-        secretName = PathGuard.SanitizeName(secretName);
-
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecret), "Executing {0}: {1} {2}", nameof(GetSecret), secretName, vaultName);
-
-        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
-        var fileName = $"{secretName}.json";
-        var entityPath = Path.Combine(path, fileName);
-        PathGuard.EnsureWithinDirectory(entityPath, path);
-        
-        if (!File.Exists(entityPath))
-        {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecret), "Executing {0}: Secret {1} not found.", nameof(GetSecret), secretName);
-            
-            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
-        }
-        
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecret), "Executing {0}: Processing {1}.", nameof(GetSecret), secretName);
-        
-        var data = File.ReadAllText(entityPath);
-        var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
-
-        if (string.IsNullOrEmpty(version))
-        {
-            return new DataPlaneOperationResult<Secret>(OperationResult.Success, secrets!.Last(), null, null);
-        }
-        
-        var secret = secrets!.LastOrDefault(s => s.Name == secretName && s.Id.EndsWith(version!));
-
-        return secret == null
-            ? new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} version {version} not found.", "SecretNotFound")
-            : new DataPlaneOperationResult<Secret>(OperationResult.Success, secret, null, null);
-    }
-
-    public DataPlaneOperationResult<Secret[]> GetSecrets(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName)
-    {
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecrets), "Executing {0}: {1}", nameof(GetSecrets), vaultName);
-        
-        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
-        var files = Directory.EnumerateFiles(path, "*.json");
-        var secrets = new List<Secret>();
-
-        foreach (var file in files)
-        {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecrets), "Executing {0}: {1}", nameof(GetSecrets), file);
-            
-            var data = File.ReadAllText(file);
-            var versions = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
-            var lastVersion = versions!.Last();
-            
-            secrets.Add(lastVersion);
-        }
-        
-        return new DataPlaneOperationResult<Secret[]>(OperationResult.Success, secrets.ToArray(), null, null);
-    }
-
-    public DataPlaneOperationResult<Secret[]> GetSecretVersions(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
-    {
-        PathGuard.ValidateName(secretName);
-        secretName = PathGuard.SanitizeName(secretName);
-
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecretVersions), "Executing {0}: {1} {2}", nameof(GetSecretVersions), secretName, vaultName);
-
-        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
-        var fileName = $"{secretName}.json";
-        var entityPath = Path.Combine(path, fileName);
-        PathGuard.EnsureWithinDirectory(entityPath, path);
-
-        if (!File.Exists(entityPath))
-        {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetSecretVersions), "Executing {0}: Secret {1} not found.", nameof(GetSecretVersions), secretName);
-            return new DataPlaneOperationResult<Secret[]>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
-        }
-
-        var data = File.ReadAllText(entityPath);
-        var versions = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
-
-        return new DataPlaneOperationResult<Secret[]>(OperationResult.Success, versions!, null, null);
-    }
-
-    public DataPlaneOperationResult<Secret> UpdateSecret(Stream input,
-        SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier,
-        string vaultName, string secretName, string version)
-    {
-        PathGuard.ValidateName(secretName);
-        secretName = PathGuard.SanitizeName(secretName);
-
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateSecret), "Executing {0}: {1} {2}", nameof(UpdateSecret), secretName, vaultName);
-
-        using var sr = new StreamReader(input);
-        var rawContent = sr.ReadToEnd();
-
-        var request = string.IsNullOrEmpty(rawContent)
-            ? null
-            : JsonSerializer.Deserialize<UpdateSecretRequest>(rawContent, GlobalSettings.JsonOptions);
-
-        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
-        var fileName = $"{secretName}.json";
-        var entityPath = Path.Combine(path, fileName);
-        PathGuard.EnsureWithinDirectory(entityPath, path);
-
-        if (!File.Exists(entityPath))
-        {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateSecret), "Executing {0}: Secret {1} not found.", nameof(UpdateSecret), secretName);
-            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
-        }
-
-        var data = File.ReadAllText(entityPath);
-        var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions)!.ToList();
-        var secret = secrets.LastOrDefault(s => s.Id.EndsWith(version));
-
-        if (secret == null)
-        {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateSecret), "Executing {0}: Secret version {1} not found.", nameof(UpdateSecret), version);
-            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} version {version} not found.", "SecretNotFound");
-        }
-
-        secret.UpdateFromRequest(request ?? new UpdateSecretRequest());
-
-        File.WriteAllText(entityPath, JsonSerializer.Serialize(secrets.ToArray(), GlobalSettings.JsonOptions));
-
-        return new DataPlaneOperationResult<Secret>(OperationResult.Updated, secret, null, null);
-    }
-
-    public DataPlaneOperationResult<string> BackupSecret(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
-    {
-        PathGuard.ValidateName(secretName);
-        secretName = PathGuard.SanitizeName(secretName);
-
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(BackupSecret), "Executing {0}: {1} {2}", nameof(BackupSecret), secretName, vaultName);
-
-        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
-        var fileName = $"{secretName}.json";
-        var entityPath = Path.Combine(path, fileName);
-        PathGuard.EnsureWithinDirectory(entityPath, path);
-
-        if (!File.Exists(entityPath))
-        {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(BackupSecret), "Executing {0}: Secret {1} not found.", nameof(BackupSecret), secretName);
-            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
-        }
-
-        // Read all versions and serialize them as the backup payload.
-        var data = File.ReadAllText(entityPath);
-        var versions = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions)!;
-        var plaintext = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(versions, GlobalSettings.JsonOptions));
-
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(BackupSecret), "Executing {0}: Backing up {1} version(s) of secret {2}.", nameof(BackupSecret), versions.Length, secretName);
-
-        var encoded = EncryptBackup(plaintext);
-        return new DataPlaneOperationResult<string>(OperationResult.Success, encoded, null, null);
-    }
-
-    public DataPlaneOperationResult<Secret> RestoreSecretBackup(Stream input,
-        SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName)
-    {
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RestoreSecretBackup), "Executing {0}: {1}", nameof(RestoreSecretBackup), vaultName);
-
-        using var sr = new StreamReader(input);
-        var rawContent = sr.ReadToEnd();
-
-        if (string.IsNullOrEmpty(rawContent))
-            return new DataPlaneOperationResult<Secret>(OperationResult.Failed, null, "Empty request body.", "BadRequest");
-
-        var request = JsonSerializer.Deserialize<RestoreSecretRequest>(rawContent, GlobalSettings.JsonOptions)
-                      ?? throw new InvalidOperationException("Invalid request body.");
-
-        if (string.IsNullOrEmpty(request.Value))
-            return new DataPlaneOperationResult<Secret>(OperationResult.Failed, null, "Backup value is missing.", "BadRequest");
-
-        var plaintext = DecryptBackup(request.Value);
-        var versions = JsonSerializer.Deserialize<Secret[]>(Encoding.UTF8.GetString(plaintext), GlobalSettings.JsonOptions);
-
-        if (versions == null || versions.Length == 0)
-            return new DataPlaneOperationResult<Secret>(OperationResult.Failed, null, "Backup contains no secret versions.", "BadRequest");
-
-        var secretName = PathGuard.SanitizeName(versions[0].Name);
-
-        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
-        var entityPath = Path.Combine(path, $"{secretName}.json");
-        PathGuard.EnsureWithinDirectory(entityPath, path);
-
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RestoreSecretBackup), "Executing {0}: Restoring {1} version(s) of secret {2}.", nameof(RestoreSecretBackup), versions.Length, secretName);
-
-        File.WriteAllText(entityPath, JsonSerializer.Serialize(versions, GlobalSettings.JsonOptions));
-
-        return new DataPlaneOperationResult<Secret>(OperationResult.Created, versions.Last(), null, null);
-    }
-
-    public DataPlaneOperationResult<Secret> DeleteSecret(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string vaultName, string secretName)
-    {
-        PathGuard.ValidateName(secretName);
-        secretName = PathGuard.SanitizeName(secretName);
-
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteSecret), "Executing {0}: {1} {2}", nameof(DeleteSecret), secretName, vaultName);
-
-        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
-        var fileName = $"{secretName}.json";
-        var entityPath = Path.Combine(path, fileName);
-        PathGuard.EnsureWithinDirectory(entityPath, path);
-        
-        if (!File.Exists(entityPath))
-        {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteSecret), "Executing {0}: Secret {1} not found.", nameof(DeleteSecret), secretName);
-            
-            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} not found.", "SecretNotFound");
-        }
-        
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteSecret), "Executing {0}: Processing {1}.", nameof(DeleteSecret), secretName);
-        
-        var data = File.ReadAllText(entityPath);
-        var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions);
-        var secret = secrets!.Last();
-        
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteSecret), "Executing {0}: Deleting {1}.", nameof(DeleteSecret), secretName);
-
-        var deletedDir = Path.Combine(path, "deleted");
-        Directory.CreateDirectory(deletedDir);
-
-        var record = new DeletedSecretRecord
-        {
-            Secret = secret,
-            DeletedDate = DateTimeOffset.Now.ToUnixTimeSeconds(),
-            ScheduledPurgeDate = DateTimeOffset.Now.AddDays(90).ToUnixTimeSeconds()
-        };
-
-        File.WriteAllText(Path.Combine(deletedDir, fileName),
-            JsonSerializer.Serialize(record, GlobalSettings.JsonOptions));
-        File.Delete(entityPath);
-
-        return new DataPlaneOperationResult<Secret>(OperationResult.Deleted, secret, null, null);
-    }
-
-    public DataPlaneOperationResult<DeletedSecretRecord> GetDeletedSecret(
-        SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier,
-        string vaultName, string secretName)
-    {
-        PathGuard.ValidateName(secretName);
-        secretName = PathGuard.SanitizeName(secretName);
-
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetDeletedSecret), "Executing {0}: {1} {2}", nameof(GetDeletedSecret), secretName, vaultName);
-
-        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
-        var deletedPath = Path.Combine(path, "deleted", $"{secretName}.json");
-        PathGuard.EnsureWithinDirectory(deletedPath, path);
-
-        if (!File.Exists(deletedPath))
-        {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetDeletedSecret), "Executing {0}: Deleted secret {1} not found.", nameof(GetDeletedSecret), secretName);
-            return new DataPlaneOperationResult<DeletedSecretRecord>(OperationResult.NotFound, null, $"Deleted secret {secretName} not found.", "SecretNotFound");
-        }
-
-        var data = File.ReadAllText(deletedPath);
-        var record = JsonSerializer.Deserialize<DeletedSecretRecord>(data, GlobalSettings.JsonOptions);
-
-        return new DataPlaneOperationResult<DeletedSecretRecord>(OperationResult.Success, record!, null, null);
-    }
-
-    public DataPlaneOperationResult<IReadOnlyList<DeletedSecretRecord>> GetDeletedSecrets(
-        SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier,
-        string vaultName)
-    {
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetDeletedSecrets), "Executing {0}: {1}", nameof(GetDeletedSecrets), vaultName);
-
-        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
-        var deletedDir = Path.Combine(path, "deleted");
-
-        if (!Directory.Exists(deletedDir))
-            return new DataPlaneOperationResult<IReadOnlyList<DeletedSecretRecord>>(OperationResult.Success, [], null, null);
-
-        var records = Directory.GetFiles(deletedDir, "*.json")
-            .Select(file => JsonSerializer.Deserialize<DeletedSecretRecord>(File.ReadAllText(file), GlobalSettings.JsonOptions)!)
-            .ToList();
-
-        return new DataPlaneOperationResult<IReadOnlyList<DeletedSecretRecord>>(OperationResult.Success, records, null, null);
-    }
-
-    public DataPlaneOperationResult<Secret> RecoverDeletedSecret(
-        SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier,
-        string vaultName, string secretName)
-    {
-        PathGuard.ValidateName(secretName);
-        secretName = PathGuard.SanitizeName(secretName);
-
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RecoverDeletedSecret), "Executing {0}: {1} {2}", nameof(RecoverDeletedSecret), secretName, vaultName);
-
-        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
-        var deletedDir = Path.Combine(path, "deleted");
-        var deletedPath = Directory.EnumerateFiles(deletedDir, "*.json")
-            .FirstOrDefault(file => string.Equals(
-                Path.GetFileNameWithoutExtension(file),
-                secretName,
-                StringComparison.Ordinal));
-
-        if (deletedPath == null)
-        {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RecoverDeletedSecret), "Executing {0}: Deleted secret {1} not found.", nameof(RecoverDeletedSecret), secretName);
-            return new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Deleted secret {secretName} not found.", "SecretNotFound");
-        }
-
-        PathGuard.EnsureWithinDirectory(deletedPath, path);
-
-        var data = File.ReadAllText(deletedPath);
-        var record = JsonSerializer.Deserialize<DeletedSecretRecord>(data, GlobalSettings.JsonOptions)!;
-        var secret = record.Secret!;
-
-        var entityPath = Path.Combine(path, $"{secretName}.json");
-        File.WriteAllText(entityPath, JsonSerializer.Serialize(new[] { secret }, GlobalSettings.JsonOptions));
-        File.Delete(deletedPath);
-
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RecoverDeletedSecret), "Executing {0}: Recovered secret {1}.", nameof(RecoverDeletedSecret), secretName);
-        return new DataPlaneOperationResult<Secret>(OperationResult.Success, secret, null, null);
-    }
-
-    /// <summary>Permanently deletes a soft-deleted secret, making it unrecoverable.</summary>
-    /// <param name="subscriptionIdentifier">The subscription that owns the vault.</param>
-    /// <param name="resourceGroupIdentifier">The resource group that owns the vault.</param>
-    /// <param name="vaultName">The name of the vault.</param>
-    /// <param name="secretName">The name of the deleted secret to purge.</param>
-    /// <returns>A <see cref="DataPlaneOperationResult"/> indicating success or not-found.</returns>
-    public DataPlaneOperationResult PurgeDeletedSecret(
-        SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier,
-        string vaultName, string secretName)
-    {
-        PathGuard.ValidateName(secretName);
-        secretName = PathGuard.SanitizeName(secretName);
-
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedSecret), "Executing {0}: {1} {2}", nameof(PurgeDeletedSecret), secretName, vaultName);
-
-        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
-        var deletedDir = Path.Combine(path, "deleted");
-        var deletedPath = Directory.EnumerateFiles(deletedDir, "*.json")
-            .FirstOrDefault(file => string.Equals(
-                Path.GetFileNameWithoutExtension(file),
-                secretName,
-                StringComparison.Ordinal));
-
-        if (deletedPath == null)
-        {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedSecret), "Executing {0}: Deleted secret {1} not found.", nameof(PurgeDeletedSecret), secretName);
-            return new DataPlaneOperationResult(OperationResult.NotFound, $"Deleted secret {secretName} not found.", "SecretNotFound");
-        }
-
-        PathGuard.EnsureWithinDirectory(deletedPath, path);
-
-        File.Delete(deletedPath);
-
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedSecret), "Executing {0}: Purged secret {1}.", nameof(PurgeDeletedSecret), secretName);
-        return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
-    }
-
     public DataPlaneOperationResult<KeyBundle> CreateKey(Stream input,
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
@@ -504,7 +21,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(CreateKey), "Executing {0}: {1} {2}", nameof(CreateKey), keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(CreateKey), "Executing {0}: {1} {2}", nameof(CreateKey), keyName, vaultName);
 
         using var sr = new StreamReader(input);
         var rawContent = sr.ReadToEnd();
@@ -538,7 +55,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
             File.WriteAllText(entityPath, JsonSerializer.Serialize(new[] { keyBundle }, GlobalSettings.JsonOptions));
         }
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(CreateKey), "Key {0} created in vault {1}.", keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(CreateKey), "Key {0} created in vault {1}.", keyName, vaultName);
         return new DataPlaneOperationResult<KeyBundle>(OperationResult.Created, keyBundle, null, null);
     }
 
@@ -550,7 +67,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetKey), "Executing {0}: {1} {2}", nameof(GetKey), keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(GetKey), "Executing {0}: {1} {2}", nameof(GetKey), keyName, vaultName);
 
         var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
@@ -582,7 +99,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetKeyVersions), "Executing {0}: {1} {2}", nameof(GetKeyVersions), keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(GetKeyVersions), "Executing {0}: {1} {2}", nameof(GetKeyVersions), keyName, vaultName);
 
         var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
@@ -602,7 +119,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         ResourceGroupIdentifier resourceGroupIdentifier,
         string vaultName)
     {
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetKeys), "Executing {0}: {1}", nameof(GetKeys), vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(GetKeys), "Executing {0}: {1}", nameof(GetKeys), vaultName);
 
         var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var keysPath = Path.Combine(basePath, "keys");
@@ -613,7 +130,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         var keys = new List<KeyBundle>();
         foreach (var file in Directory.EnumerateFiles(keysPath, "*.json"))
         {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetKeys), "Reading key file: {0}", file);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(GetKeys), "Reading key file: {0}", file);
             var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(file), GlobalSettings.JsonOptions);
             if (bundles is { Length: > 0 })
                 keys.Add(bundles.Last());
@@ -630,7 +147,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateKey), "Executing {0}: {1} {2}", nameof(UpdateKey), keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(UpdateKey), "Executing {0}: {1} {2}", nameof(UpdateKey), keyName, vaultName);
 
         using var sr = new StreamReader(input);
         var rawContent = sr.ReadToEnd();
@@ -667,7 +184,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetDeletedKey), "Executing {0}: {1} {2}", nameof(GetDeletedKey), keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(GetDeletedKey), "Executing {0}: {1} {2}", nameof(GetDeletedKey), keyName, vaultName);
 
         var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var deletedPath = Path.Combine(basePath, "keys", "deleted", $"{keyName}.json");
@@ -675,7 +192,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         if (!File.Exists(deletedPath))
         {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetDeletedKey), "Executing {0}: Deleted key {1} not found.", nameof(GetDeletedKey), keyName);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(GetDeletedKey), "Executing {0}: Deleted key {1} not found.", nameof(GetDeletedKey), keyName);
             return new DataPlaneOperationResult<DeletedKeyRecord>(OperationResult.NotFound, null, $"Deleted key {keyName} not found.", "KeyNotFound");
         }
 
@@ -690,7 +207,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         ResourceGroupIdentifier resourceGroupIdentifier,
         string vaultName)
     {
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetDeletedKeys), "Executing {0}: {1}", nameof(GetDeletedKeys), vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(GetDeletedKeys), "Executing {0}: {1}", nameof(GetDeletedKeys), vaultName);
 
         var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var deletedDir = Path.Combine(basePath, "keys", "deleted");
@@ -713,7 +230,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RecoverDeletedKey), "Executing {0}: {1} {2}", nameof(RecoverDeletedKey), keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(RecoverDeletedKey), "Executing {0}: {1} {2}", nameof(RecoverDeletedKey), keyName, vaultName);
 
         var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var keysPath = Path.Combine(basePath, "keys");
@@ -721,7 +238,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         if (!Directory.Exists(deletedDir))
         {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RecoverDeletedKey), "Executing {0}: Deleted key {1} not found.", nameof(RecoverDeletedKey), keyName);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(RecoverDeletedKey), "Executing {0}: Deleted key {1} not found.", nameof(RecoverDeletedKey), keyName);
             return new DataPlaneOperationResult<KeyBundle>(OperationResult.NotFound, null, $"Deleted key {keyName} not found.", "KeyNotFound");
         }
 
@@ -733,7 +250,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         if (deletedPath == null)
         {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RecoverDeletedKey), "Executing {0}: Deleted key {1} not found.", nameof(RecoverDeletedKey), keyName);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(RecoverDeletedKey), "Executing {0}: Deleted key {1} not found.", nameof(RecoverDeletedKey), keyName);
             return new DataPlaneOperationResult<KeyBundle>(OperationResult.NotFound, null, $"Deleted key {keyName} not found.", "KeyNotFound");
         }
 
@@ -753,7 +270,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         File.Delete(deletedPath);
 
         var recovered = bundles.Last();
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RecoverDeletedKey), "Executing {0}: Recovered key {1}.", nameof(RecoverDeletedKey), keyName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(RecoverDeletedKey), "Executing {0}: Recovered key {1}.", nameof(RecoverDeletedKey), keyName);
         return new DataPlaneOperationResult<KeyBundle>(OperationResult.Success, recovered, null, null);
     }
 
@@ -765,7 +282,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetKeyRotationPolicy), "Executing {0}: {1} {2}", nameof(GetKeyRotationPolicy), keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(GetKeyRotationPolicy), "Executing {0}: {1} {2}", nameof(GetKeyRotationPolicy), keyName, vaultName);
 
         var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var keyPath = Path.Combine(basePath, "keys", $"{keyName}.json");
@@ -773,7 +290,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         if (!File.Exists(keyPath))
         {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetKeyRotationPolicy), "Key {0} not found.", keyName);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(GetKeyRotationPolicy), "Key {0} not found.", keyName);
             return new DataPlaneOperationResult<KeyRotationPolicy>(OperationResult.NotFound, null, $"Key {keyName} not found.", "KeyNotFound");
         }
 
@@ -782,7 +299,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         if (!File.Exists(policyPath))
         {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetKeyRotationPolicy), "No rotation policy set for key {0}, returning default.", keyName);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(GetKeyRotationPolicy), "No rotation policy set for key {0}, returning default.", keyName);
             return new DataPlaneOperationResult<KeyRotationPolicy>(OperationResult.Success, KeyRotationPolicy.Default(vaultName, keyName), null, null);
         }
 
@@ -798,7 +315,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateKeyRotationPolicy), "Executing {0}: {1} {2}", nameof(UpdateKeyRotationPolicy), keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(UpdateKeyRotationPolicy), "Executing {0}: {1} {2}", nameof(UpdateKeyRotationPolicy), keyName, vaultName);
 
         var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var keyPath = Path.Combine(basePath, "keys", $"{keyName}.json");
@@ -806,7 +323,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         if (!File.Exists(keyPath))
         {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateKeyRotationPolicy), "Key {0} not found.", keyName);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(UpdateKeyRotationPolicy), "Key {0} not found.", keyName);
             return new DataPlaneOperationResult<KeyRotationPolicy>(OperationResult.NotFound, null, $"Key {keyName} not found.", "KeyNotFound");
         }
 
@@ -853,7 +370,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         File.WriteAllText(policyPath, JsonSerializer.Serialize(policy, GlobalSettings.JsonOptions));
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(UpdateKeyRotationPolicy), "Rotation policy updated for key {0}.", keyName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(UpdateKeyRotationPolicy), "Rotation policy updated for key {0}.", keyName);
         return new DataPlaneOperationResult<KeyRotationPolicy>(OperationResult.Updated, policy, null, null);
     }
 
@@ -865,7 +382,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RotateKey), "Executing {0}: {1} {2}", nameof(RotateKey), keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(RotateKey), "Executing {0}: {1} {2}", nameof(RotateKey), keyName, vaultName);
 
         var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
@@ -873,7 +390,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         if (!File.Exists(entityPath))
         {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RotateKey), "Executing {0}: Key {1} not found.", nameof(RotateKey), keyName);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(RotateKey), "Executing {0}: Key {1} not found.", nameof(RotateKey), keyName);
             return new DataPlaneOperationResult<KeyBundle>(OperationResult.NotFound, null, $"Key {keyName} not found.", "KeyNotFound");
         }
 
@@ -902,7 +419,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         var updatedBundles = bundles.Append(newBundle).ToArray();
         File.WriteAllText(entityPath, JsonSerializer.Serialize(updatedBundles, GlobalSettings.JsonOptions));
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RotateKey), "Executing {0}: Rotated key {1} to new version.", nameof(RotateKey), keyName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(RotateKey), "Executing {0}: Rotated key {1} to new version.", nameof(RotateKey), keyName);
         return new DataPlaneOperationResult<KeyBundle>(OperationResult.Success, newBundle, null, null);
     }
 
@@ -910,14 +427,14 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
     {
         if (count < 1 || count > 128)
         {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetRandomBytes), "Invalid count {0}: must be between 1 and 128.", count);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(GetRandomBytes), "Invalid count {0}: must be between 1 and 128.", count);
             return new DataPlaneOperationResult<GetRandomBytesResponse>(OperationResult.Failed, null, "Count must be between 1 and 128.", "BadParameter");
         }
 
         var bytes = RandomNumberGenerator.GetBytes(count);
         var base64Url = Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetRandomBytes), "Generated {0} random bytes.", count);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(GetRandomBytes), "Generated {0} random bytes.", count);
         return new DataPlaneOperationResult<GetRandomBytesResponse>(OperationResult.Success, GetRandomBytesResponse.New(base64Url), null, null);
     }
 
@@ -930,7 +447,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(EncryptKey), "Executing {0}: {1}/{2} in {3}.", nameof(EncryptKey), keyName, keyVersion, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(EncryptKey), "Executing {0}: {1}/{2} in {3}.", nameof(EncryptKey), keyName, keyVersion, vaultName);
 
         if (string.IsNullOrEmpty(request.Algorithm))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Algorithm ('alg') is required.", "BadParameter");
@@ -988,7 +505,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         var ciphertext = rsa.Encrypt(plaintext, padding);
         var resultBase64Url = Convert.ToBase64String(ciphertext).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(EncryptKey), "Encrypted {0} bytes with {1}.", plaintext.Length, request.Algorithm);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(EncryptKey), "Encrypted {0} bytes with {1}.", plaintext.Length, request.Algorithm);
         return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Success,
             KeyOperationResponse.New(bundle.Key.Kid, resultBase64Url), null, null);
     }
@@ -1002,7 +519,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DecryptKey), "Executing {0}: {1}/{2} in {3}.", nameof(DecryptKey), keyName, keyVersion, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(DecryptKey), "Executing {0}: {1}/{2} in {3}.", nameof(DecryptKey), keyName, keyVersion, vaultName);
 
         if (string.IsNullOrEmpty(request.Algorithm))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Algorithm ('alg') is required.", "BadParameter");
@@ -1072,7 +589,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
             var plaintext = rsa.Decrypt(ciphertext, padding);
             var resultBase64Url = Convert.ToBase64String(plaintext).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DecryptKey), "Decrypted {0} bytes with {1}.", ciphertext.Length, request.Algorithm);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(DecryptKey), "Decrypted {0} bytes with {1}.", ciphertext.Length, request.Algorithm);
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Success,
                 KeyOperationResponse.New(bundle.Key.Kid, resultBase64Url), null, null);
         }
@@ -1092,7 +609,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(SignKey), "Executing {0}: {1}/{2} in {3}.", nameof(SignKey), keyName, keyVersion, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(SignKey), "Executing {0}: {1}/{2} in {3}.", nameof(SignKey), keyName, keyVersion, vaultName);
 
         if (string.IsNullOrEmpty(request.Algorithm))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Algorithm ('alg') is required.", "BadParameter");
@@ -1213,7 +730,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
                     $"Sign is not supported for key type '{bundle.Key.Kty}'.", "BadParameter");
             }
 
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(SignKey), "Signed digest with {0}.", request.Algorithm);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(SignKey), "Signed digest with {0}.", request.Algorithm);
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Success,
                 KeyOperationResponse.New(bundle.Key.Kid, resultBase64Url), null, null);
         }
@@ -1233,7 +750,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(VerifyKey), "Executing {0}: {1}/{2} in {3}.", nameof(VerifyKey), keyName, keyVersion, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(VerifyKey), "Executing {0}: {1}/{2} in {3}.", nameof(VerifyKey), keyName, keyVersion, vaultName);
 
         if (string.IsNullOrEmpty(request.Alg))
             return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null, "Algorithm ('alg') is required.", "BadParameter");
@@ -1338,7 +855,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
                     $"Verify is not supported for key type '{bundle.Key.Kty}'.", "BadParameter");
             }
 
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(VerifyKey), "Verify result for {0}: {1}.", request.Alg, valid);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(VerifyKey), "Verify result for {0}: {1}.", request.Alg, valid);
             return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Success,
                 KeyVerifyResponse.New(valid), null, null);
         }
@@ -1357,7 +874,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedKey), "Executing {0}: {1} {2}", nameof(PurgeDeletedKey), keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(PurgeDeletedKey), "Executing {0}: {1} {2}", nameof(PurgeDeletedKey), keyName, vaultName);
 
         var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var keysPath = Path.Combine(basePath, "keys");
@@ -1373,7 +890,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         if (deletedPath == null)
         {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedKey), "Executing {0}: Deleted key {1} not found.", nameof(PurgeDeletedKey), keyName);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(PurgeDeletedKey), "Executing {0}: Deleted key {1} not found.", nameof(PurgeDeletedKey), keyName);
             return new DataPlaneOperationResult(OperationResult.NotFound, $"Deleted key {keyName} not found.", "KeyNotFound");
         }
 
@@ -1381,7 +898,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         File.Delete(deletedPath);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(PurgeDeletedKey), "Executing {0}: Purged key {1}.", nameof(PurgeDeletedKey), keyName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(PurgeDeletedKey), "Executing {0}: Purged key {1}.", nameof(PurgeDeletedKey), keyName);
         return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
     }
 
@@ -1393,7 +910,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteKey), "Executing {0}: {1} {2}", nameof(DeleteKey), keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(DeleteKey), "Executing {0}: {1} {2}", nameof(DeleteKey), keyName, vaultName);
 
         var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var keysPath = Path.Combine(basePath, "keys");
@@ -1402,7 +919,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         if (!File.Exists(entityPath))
         {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteKey), "Executing {0}: Key {1} not found.", nameof(DeleteKey), keyName);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(DeleteKey), "Executing {0}: Key {1} not found.", nameof(DeleteKey), keyName);
             return new DataPlaneOperationResult<DeletedKeyRecord>(OperationResult.NotFound, null, $"Key {keyName} not found.", "KeyNotFound");
         }
 
@@ -1425,7 +942,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
             JsonSerializer.Serialize(record, GlobalSettings.JsonOptions));
         File.Delete(entityPath);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(DeleteKey), "Executing {0}: Key {1} soft-deleted.", nameof(DeleteKey), keyName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(DeleteKey), "Executing {0}: Key {1} soft-deleted.", nameof(DeleteKey), keyName);
         return new DataPlaneOperationResult<DeletedKeyRecord>(OperationResult.Deleted, record, null, null);
     }
 
@@ -1437,7 +954,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(ImportKey), "Executing {0}: {1} {2}", nameof(ImportKey), keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(ImportKey), "Executing {0}: {1} {2}", nameof(ImportKey), keyName, vaultName);
 
         using var sr = new StreamReader(input);
         var rawContent = sr.ReadToEnd();
@@ -1527,7 +1044,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
             File.WriteAllText(entityPath, JsonSerializer.Serialize(new[] { keyBundle }, GlobalSettings.JsonOptions));
         }
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(ImportKey), "Key {0} imported into vault {1}.", keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(ImportKey), "Key {0} imported into vault {1}.", keyName, vaultName);
         return new DataPlaneOperationResult<KeyBundle>(OperationResult.Created, keyBundle, null, null);
     }
 
@@ -1537,7 +1054,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         PathGuard.ValidateName(keyName);
         keyName = PathGuard.SanitizeName(keyName);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(BackupKey), "Executing {0}: {1} {2}", nameof(BackupKey), keyName, vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(BackupKey), "Executing {0}: {1} {2}", nameof(BackupKey), keyName, vaultName);
 
         var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
@@ -1545,7 +1062,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         if (!File.Exists(entityPath))
         {
-            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(BackupKey), "Executing {0}: Key {1} not found.", nameof(BackupKey), keyName);
+            logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(BackupKey), "Executing {0}: Key {1} not found.", nameof(BackupKey), keyName);
             return new DataPlaneOperationResult<string>(OperationResult.NotFound, null, $"Key {keyName} not found.", "KeyNotFound");
         }
 
@@ -1553,9 +1070,9 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         var versions = JsonSerializer.Deserialize<KeyBundle[]>(data, GlobalSettings.JsonOptions)!;
         var plaintext = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(versions, GlobalSettings.JsonOptions));
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(BackupKey), "Executing {0}: Backing up {1} version(s) of key {2}.", nameof(BackupKey), versions.Length, keyName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(BackupKey), "Executing {0}: Backing up {1} version(s) of key {2}.", nameof(BackupKey), versions.Length, keyName);
 
-        var encoded = EncryptBackup(plaintext);
+        var encoded = KeyVaultBackupCipher.EncryptBackup(plaintext);
         return new DataPlaneOperationResult<string>(OperationResult.Success, encoded, null, null);
     }
 
@@ -1563,7 +1080,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string vaultName)
     {
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RestoreKeyBackup), "Executing {0}: {1}", nameof(RestoreKeyBackup), vaultName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(RestoreKeyBackup), "Executing {0}: {1}", nameof(RestoreKeyBackup), vaultName);
 
         using var sr = new StreamReader(input);
         var rawContent = sr.ReadToEnd();
@@ -1577,7 +1094,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         if (string.IsNullOrEmpty(request.Value))
             return new DataPlaneOperationResult<KeyBundle>(OperationResult.Failed, null, "Backup value is missing.", "BadRequest");
 
-        var plaintext = DecryptBackup(request.Value);
+        var plaintext = KeyVaultBackupCipher.DecryptBackup(request.Value);
         var versions = JsonSerializer.Deserialize<KeyBundle[]>(Encoding.UTF8.GetString(plaintext), GlobalSettings.JsonOptions);
 
         if (versions == null || versions.Length == 0)
@@ -1596,7 +1113,7 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
         var entityPath = Path.Combine(keysPath, $"{keyName}.json");
         PathGuard.EnsureWithinDirectory(entityPath, basePath);
 
-        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RestoreKeyBackup), "Executing {0}: Restoring {1} version(s) of key {2}.", nameof(RestoreKeyBackup), versions.Length, keyName);
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(RestoreKeyBackup), "Executing {0}: Restoring {1} version(s) of key {2}.", nameof(RestoreKeyBackup), versions.Length, keyName);
 
         File.WriteAllText(entityPath, JsonSerializer.Serialize(versions, GlobalSettings.JsonOptions));
 

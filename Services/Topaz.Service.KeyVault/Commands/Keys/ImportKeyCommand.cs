@@ -24,7 +24,7 @@ public class ImportKeyCommand(ITopazLogger logger) : Command<ImportKeyCommand.Im
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultDataPlane(logger, new KeyVaultResourceProvider(logger));
+        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
 
         var importRequest = BuildImportRequest(settings.PemFile!);
         var requestJson = JsonSerializer.Serialize(importRequest, GlobalSettings.JsonOptions);

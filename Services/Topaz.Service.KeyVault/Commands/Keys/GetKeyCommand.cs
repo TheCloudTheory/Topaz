@@ -22,7 +22,7 @@ public class GetKeyCommand(ITopazLogger logger) : Command<GetKeyCommand.GetKeyCo
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultDataPlane(logger, new KeyVaultResourceProvider(logger));
+        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
 
         var operation = dataPlane.GetKey(subscriptionIdentifier, resourceGroupIdentifier,
             settings.VaultName!, settings.Name!, settings.Version);
