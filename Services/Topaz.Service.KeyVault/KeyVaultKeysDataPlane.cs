@@ -1,4 +1,3 @@
-using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -788,71 +787,68 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
         {
             bool valid;
 
-            if (kty is "RSA" or "RSA-HSM")
+            switch (kty)
             {
-                if (string.IsNullOrEmpty(bundle.Key.N) || string.IsNullOrEmpty(bundle.Key.E))
+                case "RSA" or "RSA-HSM" when string.IsNullOrEmpty(bundle.Key.N) || string.IsNullOrEmpty(bundle.Key.E):
                     return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null,
                         "RSA public key material (n, e) is missing.", "BadParameter");
-
-                var (hashAlg, padding) = alg switch
+                case "RSA" or "RSA-HSM":
                 {
-                    "RS256" => (HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1),
-                    "RS384" => (HashAlgorithmName.SHA384, RSASignaturePadding.Pkcs1),
-                    "RS512" => (HashAlgorithmName.SHA512, RSASignaturePadding.Pkcs1),
-                    "PS256" => (HashAlgorithmName.SHA256, RSASignaturePadding.Pss),
-                    "PS384" => (HashAlgorithmName.SHA384, RSASignaturePadding.Pss),
-                    "PS512" => (HashAlgorithmName.SHA512, RSASignaturePadding.Pss),
-                    _ => ((HashAlgorithmName?)null, (RSASignaturePadding?)null)
-                };
+                    var (hashAlg, padding) = alg switch
+                    {
+                        "RS256" => (HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1),
+                        "RS384" => (HashAlgorithmName.SHA384, RSASignaturePadding.Pkcs1),
+                        "RS512" => (HashAlgorithmName.SHA512, RSASignaturePadding.Pkcs1),
+                        "PS256" => (HashAlgorithmName.SHA256, RSASignaturePadding.Pss),
+                        "PS384" => (HashAlgorithmName.SHA384, RSASignaturePadding.Pss),
+                        "PS512" => (HashAlgorithmName.SHA512, RSASignaturePadding.Pss),
+                        _ => ((HashAlgorithmName?)null, (RSASignaturePadding?)null)
+                    };
 
-                if (padding == null)
-                    return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null,
-                        $"Algorithm '{request.Alg}' is not supported for RSA keys. Supported: RS256, RS384, RS512, PS256, PS384, PS512.", "BadParameter");
+                    if (padding == null)
+                        return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null,
+                            $"Algorithm '{request.Alg}' is not supported for RSA keys. Supported: RS256, RS384, RS512, PS256, PS384, PS512.", "BadParameter");
 
-                using var rsa = RSA.Create();
-                rsa.ImportParameters(new RSAParameters
-                {
-                    Modulus  = Base64UrlDecode(bundle.Key.N!),
-                    Exponent = Base64UrlDecode(bundle.Key.E!)
-                });
+                    using var rsa = RSA.Create();
+                    rsa.ImportParameters(new RSAParameters
+                    {
+                        Modulus  = Base64UrlDecode(bundle.Key.N!),
+                        Exponent = Base64UrlDecode(bundle.Key.E!)
+                    });
 
-                valid = rsa.VerifyHash(digest, signature, hashAlg!.Value, padding!);
-            }
-            else if (kty is "EC" or "EC-HSM")
-            {
-                if (string.IsNullOrEmpty(bundle.Key.X) || string.IsNullOrEmpty(bundle.Key.Y))
+                    valid = rsa.VerifyHash(digest, signature, hashAlg!.Value, padding!);
+                    break;
+                }
+                case "EC" or "EC-HSM" when string.IsNullOrEmpty(bundle.Key.X) || string.IsNullOrEmpty(bundle.Key.Y):
                     return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null,
                         "EC key is missing public coordinates (x, y).", "BadParameter");
-
-                var (hashAlg, curve) = alg switch
+                case "EC" or "EC-HSM":
                 {
-                    "ES256" => (HashAlgorithmName.SHA256, ECCurve.NamedCurves.nistP256),
-                    "ES384" => (HashAlgorithmName.SHA384, ECCurve.NamedCurves.nistP384),
-                    "ES512" => (HashAlgorithmName.SHA512, ECCurve.NamedCurves.nistP521),
-                    _ => ((HashAlgorithmName?)null, (ECCurve?)null)
-                };
-
-                if (hashAlg == null)
-                    return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null,
-                        $"Algorithm '{request.Alg}' is not supported for EC keys. Supported: ES256, ES384, ES512.", "BadParameter");
-
-                using var ec = ECDsa.Create();
-                ec.ImportParameters(new ECParameters
-                {
-                    Curve = curve!.Value,
-                    Q = new ECPoint
+                    var (hashAlg, curve) = alg switch
                     {
-                        X = Base64UrlDecode(bundle.Key.X!),
-                        Y = Base64UrlDecode(bundle.Key.Y!)
-                    }
-                });
+                        "ES256" => (HashAlgorithmName.SHA256, ECCurve.NamedCurves.nistP256),
+                        "ES384" => (HashAlgorithmName.SHA384, ECCurve.NamedCurves.nistP384),
+                        "ES512" => (HashAlgorithmName.SHA512, ECCurve.NamedCurves.nistP521),
+                        _ => ((HashAlgorithmName?)null, (ECCurve?)null)
+                    };
 
-                valid = ec.VerifyHash(digest, signature, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
-            }
-            else
-            {
-                return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null,
-                    $"Verify is not supported for key type '{bundle.Key.Kty}'.", "BadParameter");
+                    using var ec = ECDsa.Create();
+                    ec.ImportParameters(new ECParameters
+                    {
+                        Curve = curve!.Value,
+                        Q = new ECPoint
+                        {
+                            X = Base64UrlDecode(bundle.Key.X!),
+                            Y = Base64UrlDecode(bundle.Key.Y!)
+                        }
+                    });
+
+                    valid = ec.VerifyHash(digest, signature, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+                    break;
+                }
+                default:
+                    return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null,
+                        $"Verify is not supported for key type '{bundle.Key.Kty}'.", "BadParameter");
             }
 
             logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(VerifyKey), "Verify result for {0}: {1}.", request.Alg, valid);

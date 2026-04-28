@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Text;
 
 namespace Topaz.Service.KeyVault;
 
@@ -8,7 +7,7 @@ internal static class KeyVaultBackupCipher
     // AES-256-CBC key used to encrypt backup blobs. This is the emulator's vault-specific master key.
     // Structure of an encrypted blob: [9 magic][1 version][16 IV][n ciphertext], then base64url-encoded.
     private static readonly byte[] BackupEncryptionKey = Convert.FromHexString("546F70617A4B565F42434B5F56312E30546F70617A4B565F42434B5F56312E30");
-    private static readonly byte[] BackupMagic = Encoding.UTF8.GetBytes("TOPAZKVBK");
+    private static readonly byte[] BackupMagic = "TOPAZKVBK"u8.ToArray();
     private const byte BackupVersion = 0x01;
 
     internal static string EncryptBackup(byte[] plaintext)
@@ -35,8 +34,15 @@ internal static class KeyVaultBackupCipher
     {
         var padded = encoded.Replace('-', '+').Replace('_', '/');
         var remainder = padded.Length % 4;
-        if (remainder == 2) padded += "==";
-        else if (remainder == 3) padded += "=";
+        switch (remainder)
+        {
+            case 2:
+                padded += "==";
+                break;
+            case 3:
+                padded += "=";
+                break;
+        }
 
         var blob = Convert.FromBase64String(padded);
         var headerLength = BackupMagic.Length + 1 + 16;
@@ -44,9 +50,10 @@ internal static class KeyVaultBackupCipher
         if (blob.Length < headerLength)
             throw new InvalidOperationException("Invalid backup blob: too short.");
 
-        for (var i = 0; i < BackupMagic.Length; i++)
-            if (blob[i] != BackupMagic[i])
-                throw new InvalidOperationException("Invalid backup blob: magic header mismatch.");
+        if (BackupMagic.Where((t, i) => blob[i] != t).Any())
+        {
+            throw new InvalidOperationException("Invalid backup blob: magic header mismatch.");
+        }
 
         if (blob[BackupMagic.Length] != BackupVersion)
             throw new InvalidOperationException($"Unsupported backup version: {blob[BackupMagic.Length]}.");
