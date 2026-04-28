@@ -182,7 +182,7 @@ internal sealed class AzureStorageControlPlane(StorageResourceProvider provider,
         CreateOrUpdateStorageAccountRequest request)
     {
         var existingAccount = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
-        var properties = request.Properties! with { PrimaryEndpoints = BuildPrimaryEndpoints(storageAccountName) };
+        var properties = (request.Properties ?? new StorageAccountResourceProperties()) with { PrimaryEndpoints = BuildPrimaryEndpoints(storageAccountName) };
         var existingKeys = existingAccount != null
             ? JsonSerializer.Deserialize<StorageAccountResource>(existingAccount, GlobalSettings.JsonOptions)?.Keys
             : null;
