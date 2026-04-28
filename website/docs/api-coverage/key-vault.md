@@ -112,7 +112,7 @@ The data plane covers operations served directly from the vault's own hostname (
 | Rotate Key | ✅ |
 | Get Key Rotation Policy | ✅ |
 | Update Key Rotation Policy | ✅ |
-| Get Random Bytes | ❌ |
+| Get Random Bytes | ✅ | `POST /rng` |
 | encrypt | ❌ |
 | decrypt | ❌ |
 | sign | ❌ |

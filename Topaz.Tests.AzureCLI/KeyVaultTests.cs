@@ -813,4 +813,28 @@ public class KeyVaultTests : TopazFixture
     }
 
     #endregion
+
+    #region Random Bytes Tests
+
+    [Test]
+    public async Task KeyVaultTests_WhenRandomBytesCommandIsCalledWithCount_ItShouldReturnBase64Value()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name RngVault01 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault key random-bytes --vault-name RngVault01 --count 32",
+            (response) =>
+            {
+                var value = response["value"]!.GetValue<string>();
+                Assert.Multiple(() =>
+                {
+                    Assert.That(value, Is.Not.Null.And.Not.Empty);
+                    // base64url — no padding, only A-Z a-z 0-9 - _
+                    Assert.That(value, Does.Match("^[A-Za-z0-9_-]+$"));
+                });
+            });
+        await RunAzureCliCommand("az keyvault delete --name RngVault01 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    #endregion
 }

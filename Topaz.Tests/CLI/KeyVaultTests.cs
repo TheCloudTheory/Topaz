@@ -190,4 +190,18 @@ public class KeyVaultTests
         
         Assert.That(result, Is.EqualTo(1));
     }
+
+    [Test]
+    public async Task KeyVaultTests_GetRandomBytes_ShouldReturnBytesOfRequestedLength()
+    {
+        var result = await Program.RunAsync([
+            "keyvault",
+            "key",
+            "random-bytes",
+            "--count",
+            "32"
+        ]);
+
+        Assert.That(result, Is.EqualTo(0));
+    }
 }

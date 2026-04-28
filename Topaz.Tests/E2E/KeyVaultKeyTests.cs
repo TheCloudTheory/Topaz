@@ -1189,4 +1189,37 @@ public class KeyVaultKeyTests
         // Act & Assert
         Assert.Throws<RequestFailedException>(() => client.UpdateKeyRotationPolicy("update-rp-nonexistent-key", policy));
     }
+
+    [Test]
+    public void KeyVaultKeyTests_GetRandomBytes_ReturnsCorrectByteCount()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        // Act
+        var result = client.GetRandomBytes(32);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value, Is.Not.Null);
+            Assert.That(result.Value.Length, Is.EqualTo(32));
+        });
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_GetRandomBytes_ReturnsDistinctResultsOnConsecutiveCalls()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateKeyClient();
+
+        // Act
+        var r1 = client.GetRandomBytes(16);
+        var r2 = client.GetRandomBytes(16);
+
+        // Assert — it is astronomically unlikely for two 128-bit random values to be equal
+        Assert.That(r1.Value.SequenceEqual(r2.Value), Is.False);
+    }
 }

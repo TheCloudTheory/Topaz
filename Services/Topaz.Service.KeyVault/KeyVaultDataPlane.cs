@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Topaz.Service.KeyVault.Models;
 using Topaz.Service.KeyVault.Models.Requests;
+using Topaz.Service.KeyVault.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -903,6 +904,21 @@ internal sealed class KeyVaultDataPlane(ITopazLogger logger, KeyVaultResourcePro
 
         logger.LogDebug(nameof(KeyVaultDataPlane), nameof(RotateKey), "Executing {0}: Rotated key {1} to new version.", nameof(RotateKey), keyName);
         return new DataPlaneOperationResult<KeyBundle>(OperationResult.Success, newBundle, null, null);
+    }
+
+    public DataPlaneOperationResult<GetRandomBytesResponse> GetRandomBytes(int count)
+    {
+        if (count < 1 || count > 128)
+        {
+            logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetRandomBytes), "Invalid count {0}: must be between 1 and 128.", count);
+            return new DataPlaneOperationResult<GetRandomBytesResponse>(OperationResult.Failed, null, "Count must be between 1 and 128.", "BadParameter");
+        }
+
+        var bytes = RandomNumberGenerator.GetBytes(count);
+        var base64Url = Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+        logger.LogDebug(nameof(KeyVaultDataPlane), nameof(GetRandomBytes), "Generated {0} random bytes.", count);
+        return new DataPlaneOperationResult<GetRandomBytesResponse>(OperationResult.Success, GetRandomBytesResponse.New(base64Url), null, null);
     }
 
     public DataPlaneOperationResult PurgeDeletedKey(

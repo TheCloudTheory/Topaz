@@ -42,6 +42,7 @@ public sealed class GenericKeyVaultCommand : IEmulatorCommand
                 key.AddCommand<DeleteKeyCommand>("delete");
                 key.AddCommand<RecoverDeletedKeyCommand>("recover");
                 key.AddCommand<RotateKeyCommand>("rotate");
+                key.AddCommand<GetRandomBytesCommand>("random-bytes");
                 key.AddBranch("rotation-policy", rp =>
                 {
                     rp.AddCommand<GetKeyRotationPolicyCommand>("show");
