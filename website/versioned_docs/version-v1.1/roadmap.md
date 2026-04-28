@@ -31,7 +31,7 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 |--|---------|-------------|
 | <span class="badge--stable">Stable</span> | Core CRUD | Create, import, get, update, delete keys; list keys and versions |
 | <span class="badge--stable">Stable</span> | Backup & Restore | Export and restore opaque key backup blobs |
-| <span class="badge--stable">Stable</span> | Cryptographic operations | Encrypt, decrypt, sign, verify, wrap key, unwrap key |
+| <span class="badge--stable">Stable</span> | Cryptographic operations | Encrypt, decrypt, sign, verify, wrap key, unwrap key, release |
 | <span class="badge--preview">Preview</span> | Key rotation | Rotate key, get/update rotation policy |
 
 ### Azure PowerShell integration

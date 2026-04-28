@@ -36,6 +36,12 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
         var keyType = request.KeyType ?? "RSA";
         var keyBundle = GenerateKeyBundle(vaultName, keyName, keyType, request);
 
+        if (request.Attributes?.Exportable == true)
+            keyBundle.Attributes = keyBundle.Attributes with { Exportable = true };
+
+        if (request.ReleasePolicy != null)
+            keyBundle = keyBundle with { ReleasePolicy = request.ReleasePolicy };
+
         var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var keysPath = Path.Combine(basePath, "keys");
         Directory.CreateDirectory(keysPath);
@@ -1285,6 +1291,55 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
         if (padding == 2) s += "==";
         else if (padding == 3) s += "=";
         return Convert.FromBase64String(s);
+    }
+
+    private static string Base64UrlEncode(byte[] value)
+        => Convert.ToBase64String(value).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+    public DataPlaneOperationResult<KeyReleaseResponse> ReleaseKey(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string keyName, string keyVersion,
+        ReleaseKeyRequest request)
+    {
+        PathGuard.ValidateName(keyName);
+        keyName = PathGuard.SanitizeName(keyName);
+
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(ReleaseKey), "Executing {0}: {1}/{2} in {3}.", nameof(ReleaseKey), keyName, keyVersion, vaultName);
+
+        if (string.IsNullOrEmpty(request.Target))
+            return new DataPlaneOperationResult<KeyReleaseResponse>(OperationResult.Failed, null, "Target attestation assertion is required.", "BadParameter");
+
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(basePath, "keys", $"{keyName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (!File.Exists(entityPath))
+            return new DataPlaneOperationResult<KeyReleaseResponse>(OperationResult.NotFound, null, $"Key '{keyName}' not found.", "KeyNotFound");
+
+        var bundles = JsonSerializer.Deserialize<KeyBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
+        var bundle = string.IsNullOrEmpty(keyVersion)
+            ? bundles.Last()
+            : bundles.FirstOrDefault(b => b.Key.Kid.EndsWith($"/{keyVersion}", StringComparison.OrdinalIgnoreCase));
+
+        if (bundle == null)
+            return new DataPlaneOperationResult<KeyReleaseResponse>(OperationResult.NotFound, null, $"Key version '{keyVersion}' not found.", "KeyNotFound");
+
+        if (!bundle.Attributes.Enabled)
+            return new DataPlaneOperationResult<KeyReleaseResponse>(OperationResult.Failed, null, "Key is disabled.", "Forbidden");
+
+        // Emulator simplification: exportable attribute is stored for SDK compat but not enforced.
+
+        // Build compact JWS with alg:none — header.payload. (empty signature)
+        var headerJson = JsonSerializer.SerializeToUtf8Bytes(new { alg = "none" });
+        var payloadJson = JsonSerializer.SerializeToUtf8Bytes(bundle, GlobalSettings.JsonOptions);
+        var header  = Base64UrlEncode(headerJson);
+        var payload = Base64UrlEncode(payloadJson);
+        var jws = $"{header}.{payload}.";
+
+        logger.LogDebug(nameof(KeyVaultKeysDataPlane), nameof(ReleaseKey), "Key {0} released.", keyName);
+        return new DataPlaneOperationResult<KeyReleaseResponse>(OperationResult.Success,
+            KeyReleaseResponse.New(jws), null, null);
     }
 
     private static KeyBundle GenerateKeyBundle(string vaultName, string keyName, string keyType,

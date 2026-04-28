@@ -1513,5 +1513,35 @@ public class KeyVaultKeyTests
         // Assert
         Assert.That(unwrapped.Key, Is.EqualTo(original));
     }
+
+    [Test]
+    public void KeyVaultKeyTests_Release_ReturnsJws()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        keyClient.CreateRsaKey(new CreateRsaKeyOptions("release-key"));
+
+        // Act — any non-empty attestation token is accepted by the emulator
+        var result = keyClient.ReleaseKey("release-key", "any-attestation-token");
+
+        // Assert
+        Assert.That(result.Value.Value, Is.Not.Null.And.Not.Empty);
+        // JWS compact form is header.payload. (three parts separated by dots)
+        var parts = result.Value.Value.Split('.');
+        Assert.That(parts.Length, Is.EqualTo(3));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_Release_NonExistentKey_ThrowsException()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+
+        // Act & Assert — releasing a key that does not exist should throw
+        Assert.Throws<Azure.RequestFailedException>(() =>
+            keyClient.ReleaseKey("this-key-does-not-exist", "any-token"));
+    }
 }
 

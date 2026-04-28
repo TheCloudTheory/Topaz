@@ -47,6 +47,7 @@ public sealed class GenericKeyVaultCommand : IEmulatorCommand
                 key.AddCommand<DecryptKeyCommand>("decrypt");
                 key.AddCommand<WrapKeyCommand>("wrap");
                 key.AddCommand<UnwrapKeyCommand>("unwrap");
+                key.AddCommand<ReleaseKeyCommand>("release");
                 key.AddCommand<SignKeyCommand>("sign");
                 key.AddCommand<VerifyKeyCommand>("verify");
                 key.AddBranch("rotation-policy", rp =>

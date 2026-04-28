@@ -21,6 +21,8 @@ public record class CreateKeyRequest
 
     [JsonPropertyName("tags")]
     public Dictionary<string, string>? Tags { get; init; }
+
+    public KeyReleasePolicy? ReleasePolicy { get; init; }
 }
 
 public record class CreateKeyAttributes
@@ -33,4 +35,6 @@ public record class CreateKeyAttributes
 
     [JsonPropertyName("nbf")]
     public long? NotBefore { get; init; }
+
+    public bool? Exportable { get; init; }
 }

@@ -131,17 +131,6 @@ TODO: Key Vault Keys: Backup and Restore
 -->
 
 <!--
-TODO: Key Vault Keys: Cryptographic operations
-  Implement the data-plane crypto surface for keys:
-  - POST {vaultBaseUrl}/keys/{name}/{version}/encrypt
-  - POST {vaultBaseUrl}/keys/{name}/{version}/decrypt
-  - POST {vaultBaseUrl}/keys/{name}/{version}/wrapkey
-  - POST {vaultBaseUrl}/keys/{name}/{version}/unwrapkey
-  milestone: v1.2-beta
-  labels: enhancement, key-vault
--->
-
-<!--
 TODO: Key Vault Keys: Key rotation and policy operations
   Implement:
   - POST {vaultBaseUrl}/keys/{name}/rotate           – rotate key

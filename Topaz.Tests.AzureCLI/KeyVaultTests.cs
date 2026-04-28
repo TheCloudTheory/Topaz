@@ -943,4 +943,81 @@ public class KeyVaultTests : TopazFixture
     }
 
     #endregion
+
+    #region Wrap / Unwrap Tests
+
+    [Test]
+    public async Task KeyVaultTests_WhenWrapKeyCommandIsCalledWithRsaOaep256_ItShouldReturnWrappedKey()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name WrapVault01 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault key create --vault-name WrapVault01 --name wrap-key --kty RSA");
+        await RunAzureCliCommand(
+            "az keyvault key wrap-key --vault-name WrapVault01 --name wrap-key --algorithm RSA-OAEP-256 --value \"aGVsbG8=\"",
+            (response) =>
+            {
+                var result = response["result"]!.GetValue<string>();
+                Assert.That(result, Is.Not.Null.And.Not.Empty);
+            });
+        await RunAzureCliCommand("az keyvault delete --name WrapVault01 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    [Test]
+    public async Task KeyVaultTests_WhenUnwrapKeyCommandIsCalledAfterWrap_ItShouldReturnOriginalValue()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name WrapVault02 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault key create --vault-name WrapVault02 --name wrap-key2 --kty RSA");
+
+        string? wrapped = null;
+        await RunAzureCliCommand(
+            "az keyvault key wrap-key --vault-name WrapVault02 --name wrap-key2 --algorithm RSA-OAEP-256 --value \"aGVsbG8=\"",
+            (response) =>
+            {
+                wrapped = response["result"]!.GetValue<string>();
+                Assert.That(wrapped, Is.Not.Null.And.Not.Empty);
+            });
+
+        Assert.That(wrapped, Is.Not.Null);
+
+        await RunAzureCliCommand(
+            $"az keyvault key unwrap-key --vault-name WrapVault02 --name wrap-key2 --algorithm RSA-OAEP-256 --value \"{wrapped}\"",
+            (response) =>
+            {
+                var result = response["result"]!.GetValue<string>();
+                Assert.That(result, Is.Not.Null.And.Not.Empty);
+            });
+
+        await RunAzureCliCommand("az keyvault delete --name WrapVault02 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    #endregion
+
+    #region Release Tests
+
+    [Test]
+    public async Task KeyVaultTests_WhenReleaseKeyCommandIsCalled_ItShouldReturnJws()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name RelVault01 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault key create --vault-name RelVault01 --name rel-key --kty RSA");
+        await RunAzureCliCommand(
+            "az keyvault key release --vault-name RelVault01 --name rel-key --target-attestation-token \"anytoken\"",
+            (response) =>
+            {
+                var value = response["value"]!.GetValue<string>();
+                Assert.Multiple(() =>
+                {
+                    Assert.That(value, Is.Not.Null.And.Not.Empty);
+                    // JWS compact serialization: header.payload. (three dot-separated parts)
+                    Assert.That(value.Split('.').Length, Is.EqualTo(3));
+                });
+            });
+        await RunAzureCliCommand("az keyvault delete --name RelVault01 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    #endregion
 }

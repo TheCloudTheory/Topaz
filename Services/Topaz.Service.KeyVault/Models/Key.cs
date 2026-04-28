@@ -49,7 +49,8 @@ public record class KeyBundle
         Attributes = new KeyAttributes(
             Enabled: true,
             Created: DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Updated: DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            Updated: DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Exportable: false);
     }
 
     [JsonPropertyName("key")]
@@ -60,6 +61,8 @@ public record class KeyBundle
 
     [JsonPropertyName("tags")]
     public Dictionary<string, string>? Tags { get; set; }
+
+    public KeyReleasePolicy? ReleasePolicy { get; set; }
 
     // Stored internally – not serialized in the REST response.
     [JsonIgnore]
@@ -163,11 +166,12 @@ public record class KeyAttributes
 {
     public KeyAttributes() { }
 
-    public KeyAttributes(bool Enabled, long Created, long Updated)
+    public KeyAttributes(bool Enabled, long Created, long Updated, bool Exportable = false)
     {
         this.Enabled = Enabled;
         this.Created = Created;
         this.Updated = Updated;
+        this.Exportable = Exportable;
     }
 
     [JsonPropertyName("enabled")]
@@ -181,4 +185,12 @@ public record class KeyAttributes
 
     [JsonPropertyName("recoveryLevel")]
     public string RecoveryLevel => "Recoverable+Purgeable";
+
+    public bool Exportable { get; set; }
+}
+
+public record class KeyReleasePolicy
+{
+    public string? ContentType { get; init; }
+    public string? Data { get; init; }
 }
