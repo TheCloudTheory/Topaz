@@ -27,7 +27,7 @@ public class ContainerRegistryTests : PowerShellTestBase
             });
 
         await RunAzurePowerShellCommand(
-            "Remove-AzContainerRegistry -Name PsAcr01 -ResourceGroupName ps-acr-create-rg -Force");
+            "Remove-AzContainerRegistry -Name PsAcr01 -ResourceGroupName ps-acr-create-rg");
         await RunAzurePowerShellCommand("Remove-AzResourceGroup -Name ps-acr-create-rg -Force");
     }
 
@@ -49,7 +49,7 @@ public class ContainerRegistryTests : PowerShellTestBase
             });
 
         await RunAzurePowerShellCommand(
-            "Remove-AzContainerRegistry -Name PsAcr02 -ResourceGroupName ps-acr-get-rg -Force");
+            "Remove-AzContainerRegistry -Name PsAcr02 -ResourceGroupName ps-acr-get-rg");
         await RunAzurePowerShellCommand("Remove-AzResourceGroup -Name ps-acr-get-rg -Force");
     }
 
@@ -79,9 +79,9 @@ public class ContainerRegistryTests : PowerShellTestBase
             });
 
         await RunAzurePowerShellCommand(
-            "Remove-AzContainerRegistry -Name PsAcrListA -ResourceGroupName ps-acr-list-rg -Force");
+            "Remove-AzContainerRegistry -Name PsAcrListA -ResourceGroupName ps-acr-list-rg");
         await RunAzurePowerShellCommand(
-            "Remove-AzContainerRegistry -Name PsAcrListB -ResourceGroupName ps-acr-list-rg -Force");
+            "Remove-AzContainerRegistry -Name PsAcrListB -ResourceGroupName ps-acr-list-rg");
         await RunAzurePowerShellCommand("Remove-AzResourceGroup -Name ps-acr-list-rg -Force");
     }
 
@@ -103,7 +103,7 @@ public class ContainerRegistryTests : PowerShellTestBase
             });
 
         await RunAzurePowerShellCommand(
-            "Remove-AzContainerRegistry -Name PsAcr03 -ResourceGroupName ps-acr-admin-rg -Force");
+            "Remove-AzContainerRegistry -Name PsAcr03 -ResourceGroupName ps-acr-admin-rg");
         await RunAzurePowerShellCommand("Remove-AzResourceGroup -Name ps-acr-admin-rg -Force");
     }
 
