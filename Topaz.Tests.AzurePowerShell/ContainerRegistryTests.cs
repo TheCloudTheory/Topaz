@@ -6,11 +6,11 @@ public class ContainerRegistryTests : PowerShellTestBase
     public async Task ContainerRegistry_WhenCreateCommandIsCalled_RegistryShouldBeCreatedWithCorrectProperties()
     {
         await RunAzurePowerShellCommand(
-            "New-AzResourceGroup -Name ps-acr-create-rg -Location westeurope -Force");
-
-        await RunAzurePowerShellCommand(
-            "New-AzContainerRegistry -Name PsAcr01 -ResourceGroupName ps-acr-create-rg " +
-            "-Sku Basic -Location westeurope | ConvertTo-Json -Depth 5",
+            "New-AzResourceGroup -Name ps-acr-create-rg -Location westeurope -Force | Out-Null\n" +
+            "$result = New-AzContainerRegistry -Name PsAcr01 -ResourceGroupName ps-acr-create-rg -Sku Basic -Location westeurope | ConvertTo-Json -Depth 5\n" +
+            "Remove-AzContainerRegistry -Name PsAcr01 -ResourceGroupName ps-acr-create-rg | Out-Null\n" +
+            "Remove-AzResourceGroup -Name ps-acr-create-rg -Force | Out-Null\n" +
+            "$result",
             response =>
             {
                 Assert.Multiple(() =>
@@ -25,48 +25,36 @@ public class ContainerRegistryTests : PowerShellTestBase
                         Is.EqualTo("Succeeded").IgnoreCase);
                 });
             });
-
-        await RunAzurePowerShellCommand(
-            "Remove-AzContainerRegistry -Name PsAcr01 -ResourceGroupName ps-acr-create-rg");
-        await RunAzurePowerShellCommand("Remove-AzResourceGroup -Name ps-acr-create-rg -Force");
     }
 
     [Test]
     public async Task ContainerRegistry_WhenGetCommandIsCalled_RegistryShouldBeReturned()
     {
         await RunAzurePowerShellCommand(
-            "New-AzResourceGroup -Name ps-acr-get-rg -Location westeurope -Force");
-        await RunAzurePowerShellCommand(
-            "New-AzContainerRegistry -Name PsAcr02 -ResourceGroupName ps-acr-get-rg " +
-            "-Sku Standard -Location westeurope");
-
-        await RunAzurePowerShellCommand(
-            "Get-AzContainerRegistry -Name PsAcr02 -ResourceGroupName ps-acr-get-rg | " +
-            "ConvertTo-Json -Depth 5",
+            "New-AzResourceGroup -Name ps-acr-get-rg -Location westeurope -Force | Out-Null\n" +
+            "New-AzContainerRegistry -Name PsAcr02 -ResourceGroupName ps-acr-get-rg -Sku Standard -Location westeurope | Out-Null\n" +
+            "$result = Get-AzContainerRegistry -Name PsAcr02 -ResourceGroupName ps-acr-get-rg | ConvertTo-Json -Depth 5\n" +
+            "Remove-AzContainerRegistry -Name PsAcr02 -ResourceGroupName ps-acr-get-rg | Out-Null\n" +
+            "Remove-AzResourceGroup -Name ps-acr-get-rg -Force | Out-Null\n" +
+            "$result",
             response =>
             {
                 Assert.That(response["Name"]!.GetValue<string>(), Is.EqualTo("PsAcr02"));
             });
-
-        await RunAzurePowerShellCommand(
-            "Remove-AzContainerRegistry -Name PsAcr02 -ResourceGroupName ps-acr-get-rg");
-        await RunAzurePowerShellCommand("Remove-AzResourceGroup -Name ps-acr-get-rg -Force");
     }
 
     [Test]
     public async Task ContainerRegistry_WhenListCommandIsCalled_AllRegistriesShouldBeReturned()
     {
         await RunAzurePowerShellCommand(
-            "New-AzResourceGroup -Name ps-acr-list-rg -Location westeurope -Force");
-        await RunAzurePowerShellCommand(
-            "New-AzContainerRegistry -Name PsAcrListA -ResourceGroupName ps-acr-list-rg " +
-            "-Sku Basic -Location westeurope");
-        await RunAzurePowerShellCommand(
-            "New-AzContainerRegistry -Name PsAcrListB -ResourceGroupName ps-acr-list-rg " +
-            "-Sku Basic -Location westeurope");
-
-        await RunAzurePowerShellCommand(
-            "Get-AzContainerRegistry -ResourceGroupName ps-acr-list-rg | ConvertTo-Json -Depth 5",
+            "New-AzResourceGroup -Name ps-acr-list-rg -Location westeurope -Force | Out-Null\n" +
+            "New-AzContainerRegistry -Name PsAcrListA -ResourceGroupName ps-acr-list-rg -Sku Basic -Location westeurope | Out-Null\n" +
+            "New-AzContainerRegistry -Name PsAcrListB -ResourceGroupName ps-acr-list-rg -Sku Basic -Location westeurope | Out-Null\n" +
+            "$result = Get-AzContainerRegistry -ResourceGroupName ps-acr-list-rg | ConvertTo-Json -Depth 5\n" +
+            "Remove-AzContainerRegistry -Name PsAcrListA -ResourceGroupName ps-acr-list-rg | Out-Null\n" +
+            "Remove-AzContainerRegistry -Name PsAcrListB -ResourceGroupName ps-acr-list-rg | Out-Null\n" +
+            "Remove-AzResourceGroup -Name ps-acr-list-rg -Force | Out-Null\n" +
+            "$result",
             response =>
             {
                 var array = response.AsArray();
@@ -77,34 +65,22 @@ public class ContainerRegistryTests : PowerShellTestBase
                 Assert.That(names, Does.Contain("PsAcrListA"));
                 Assert.That(names, Does.Contain("PsAcrListB"));
             });
-
-        await RunAzurePowerShellCommand(
-            "Remove-AzContainerRegistry -Name PsAcrListA -ResourceGroupName ps-acr-list-rg");
-        await RunAzurePowerShellCommand(
-            "Remove-AzContainerRegistry -Name PsAcrListB -ResourceGroupName ps-acr-list-rg");
-        await RunAzurePowerShellCommand("Remove-AzResourceGroup -Name ps-acr-list-rg -Force");
     }
 
     [Test]
     public async Task ContainerRegistry_WhenAdminUserIsEnabled_AdminUserEnabledShouldBeTrue()
     {
         await RunAzurePowerShellCommand(
-            "New-AzResourceGroup -Name ps-acr-admin-rg -Location westeurope -Force");
-        await RunAzurePowerShellCommand(
-            "New-AzContainerRegistry -Name PsAcr03 -ResourceGroupName ps-acr-admin-rg " +
-            "-Sku Premium -Location westeurope");
-
-        await RunAzurePowerShellCommand(
-            "Update-AzContainerRegistry -Name PsAcr03 -ResourceGroupName ps-acr-admin-rg " +
-            "-EnableAdminUser | ConvertTo-Json -Depth 5",
+            "New-AzResourceGroup -Name ps-acr-admin-rg -Location westeurope -Force | Out-Null\n" +
+            "New-AzContainerRegistry -Name PsAcr03 -ResourceGroupName ps-acr-admin-rg -Sku Premium -Location westeurope | Out-Null\n" +
+            "$result = Update-AzContainerRegistry -Name PsAcr03 -ResourceGroupName ps-acr-admin-rg -EnableAdminUser | ConvertTo-Json -Depth 5\n" +
+            "Remove-AzContainerRegistry -Name PsAcr03 -ResourceGroupName ps-acr-admin-rg | Out-Null\n" +
+            "Remove-AzResourceGroup -Name ps-acr-admin-rg -Force | Out-Null\n" +
+            "$result",
             response =>
             {
                 Assert.That(response["AdminUserEnabled"]!.GetValue<bool>(), Is.True);
             });
-
-        await RunAzurePowerShellCommand(
-            "Remove-AzContainerRegistry -Name PsAcr03 -ResourceGroupName ps-acr-admin-rg");
-        await RunAzurePowerShellCommand("Remove-AzResourceGroup -Name ps-acr-admin-rg -Force");
     }
 
     [Test]

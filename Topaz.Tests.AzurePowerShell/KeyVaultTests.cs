@@ -6,11 +6,11 @@ public class KeyVaultTests : PowerShellTestBase
     public async Task KeyVaultTests_WhenCreateCommandIsCalled_KeyVaultShouldBeCreatedWithCorrectProperties()
     {
         await RunAzurePowerShellCommand(
-            "New-AzResourceGroup -Name ps-kv-rg -Location westeurope -Force");
-
-        await RunAzurePowerShellCommand(
-            "New-AzKeyVault -Name PsTestVault01 -ResourceGroupName ps-kv-rg -Location westeurope | " +
-            "ConvertTo-Json -Depth 5",
+            "New-AzResourceGroup -Name ps-kv-rg -Location westeurope -Force | Out-Null\n" +
+            "$result = New-AzKeyVault -Name PsTestVault01 -ResourceGroupName ps-kv-rg -Location westeurope | ConvertTo-Json -Depth 5\n" +
+            "Remove-AzKeyVault -VaultName PsTestVault01 -ResourceGroupName ps-kv-rg -Force | Out-Null\n" +
+            "Remove-AzResourceGroup -Name ps-kv-rg -Force | Out-Null\n" +
+            "$result",
             response =>
             {
                 Assert.Multiple(() =>
@@ -29,44 +29,36 @@ public class KeyVaultTests : PowerShellTestBase
                     Assert.That(response["EnableRbacAuthorization"]!.GetValue<bool>(), Is.True);
                 });
             });
-
-        await RunAzurePowerShellCommand(
-            "Remove-AzKeyVault -VaultName PsTestVault01 -ResourceGroupName ps-kv-rg -Force");
-        await RunAzurePowerShellCommand("Remove-AzResourceGroup -Name ps-kv-rg -Force");
     }
 
     [Test]
     public async Task KeyVaultTests_WhenGetCommandIsCalled_KeyVaultShouldBeReturned()
     {
         await RunAzurePowerShellCommand(
-            "New-AzResourceGroup -Name ps-kv-get-rg -Location westeurope -Force");
-        await RunAzurePowerShellCommand(
-            "New-AzKeyVault -Name PsGetVault02 -ResourceGroupName ps-kv-get-rg -Location westeurope");
-
-        await RunAzurePowerShellCommand(
-            "Get-AzKeyVault -VaultName PsGetVault02 | ConvertTo-Json -Depth 5",
+            "New-AzResourceGroup -Name ps-kv-get-rg -Location westeurope -Force | Out-Null\n" +
+            "New-AzKeyVault -Name PsGetVault02 -ResourceGroupName ps-kv-get-rg -Location westeurope | Out-Null\n" +
+            "$result = Get-AzKeyVault -VaultName PsGetVault02 | ConvertTo-Json -Depth 5\n" +
+            "Remove-AzKeyVault -VaultName PsGetVault02 -ResourceGroupName ps-kv-get-rg -Force | Out-Null\n" +
+            "Remove-AzResourceGroup -Name ps-kv-get-rg -Force | Out-Null\n" +
+            "$result",
             response =>
             {
                 Assert.That(response["VaultName"]!.GetValue<string>(), Is.EqualTo("PsGetVault02"));
             });
-
-        await RunAzurePowerShellCommand(
-            "Remove-AzKeyVault -VaultName PsGetVault02 -ResourceGroupName ps-kv-get-rg -Force");
-        await RunAzurePowerShellCommand("Remove-AzResourceGroup -Name ps-kv-get-rg -Force");
     }
 
     [Test]
     public async Task KeyVaultTests_WhenListCommandIsCalled_AllKeyVaultsShouldBeReturned()
     {
         await RunAzurePowerShellCommand(
-            "New-AzResourceGroup -Name ps-kv-list-rg -Location westeurope -Force");
-        await RunAzurePowerShellCommand(
-            "New-AzKeyVault -Name PsListVaultA -ResourceGroupName ps-kv-list-rg -Location westeurope");
-        await RunAzurePowerShellCommand(
-            "New-AzKeyVault -Name PsListVaultB -ResourceGroupName ps-kv-list-rg -Location westeurope");
-
-        await RunAzurePowerShellCommand(
-            "Get-AzKeyVault | ConvertTo-Json -Depth 5",
+            "New-AzResourceGroup -Name ps-kv-list-rg -Location westeurope -Force | Out-Null\n" +
+            "New-AzKeyVault -Name PsListVaultA -ResourceGroupName ps-kv-list-rg -Location westeurope | Out-Null\n" +
+            "New-AzKeyVault -Name PsListVaultB -ResourceGroupName ps-kv-list-rg -Location westeurope | Out-Null\n" +
+            "$result = Get-AzKeyVault | ConvertTo-Json -Depth 5\n" +
+            "Remove-AzKeyVault -VaultName PsListVaultA -ResourceGroupName ps-kv-list-rg -Force | Out-Null\n" +
+            "Remove-AzKeyVault -VaultName PsListVaultB -ResourceGroupName ps-kv-list-rg -Force | Out-Null\n" +
+            "Remove-AzResourceGroup -Name ps-kv-list-rg -Force | Out-Null\n" +
+            "$result",
             response =>
             {
                 // ConvertTo-Json wraps an array as a JSON array
@@ -78,32 +70,22 @@ public class KeyVaultTests : PowerShellTestBase
                 Assert.That(vaultNames, Does.Contain("PsListVaultA"));
                 Assert.That(vaultNames, Does.Contain("PsListVaultB"));
             });
-
-        await RunAzurePowerShellCommand(
-            "Remove-AzKeyVault -VaultName PsListVaultA -ResourceGroupName ps-kv-list-rg -Force");
-        await RunAzurePowerShellCommand(
-            "Remove-AzKeyVault -VaultName PsListVaultB -ResourceGroupName ps-kv-list-rg -Force");
-        await RunAzurePowerShellCommand("Remove-AzResourceGroup -Name ps-kv-list-rg -Force");
     }
 
     [Test]
     public async Task KeyVaultTests_WhenCreateCommandIsCalledWithPremiumSku_SkuShouldBeSet()
     {
         await RunAzurePowerShellCommand(
-            "New-AzResourceGroup -Name ps-kv-sku-rg -Location westeurope -Force");
-
-        await RunAzurePowerShellCommand(
-            "New-AzKeyVault -Name PsSkuVault03 -ResourceGroupName ps-kv-sku-rg " +
-            "-Location westeurope -Sku Premium | ConvertTo-Json -Depth 5",
+            "New-AzResourceGroup -Name ps-kv-sku-rg -Location westeurope -Force | Out-Null\n" +
+            "$result = New-AzKeyVault -Name PsSkuVault03 -ResourceGroupName ps-kv-sku-rg -Location westeurope -Sku Premium | ConvertTo-Json -Depth 5\n" +
+            "Remove-AzKeyVault -VaultName PsSkuVault03 -ResourceGroupName ps-kv-sku-rg -Force | Out-Null\n" +
+            "Remove-AzResourceGroup -Name ps-kv-sku-rg -Force | Out-Null\n" +
+            "$result",
             response =>
             {
                 Assert.That(response["Sku"]!.GetValue<string>(),
                     Is.EqualTo("Premium").IgnoreCase);
             });
-
-        await RunAzurePowerShellCommand(
-            "Remove-AzKeyVault -VaultName PsSkuVault03 -ResourceGroupName ps-kv-sku-rg -Force");
-        await RunAzurePowerShellCommand("Remove-AzResourceGroup -Name ps-kv-sku-rg -Force");
     }
 
     [Test]
