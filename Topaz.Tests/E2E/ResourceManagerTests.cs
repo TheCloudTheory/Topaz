@@ -833,4 +833,19 @@ public class ResourceManagerTests
             await topaz.ListDeploymentsAtManagementGroupScopeAsync(groupId));
         Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
     }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenListAtTenantScopeIsCalled_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+
+        // Act
+        var result = await topaz.ListDeploymentsAtTenantScopeAsync();
+
+        // Assert
+        var value = result["value"]!.AsArray();
+        Assert.That(value, Is.Empty);
+    }
 }

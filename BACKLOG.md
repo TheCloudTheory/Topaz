@@ -180,15 +180,7 @@ TODO: ARM Deployments: Export Template endpoint
   labels: enhancement, resource-manager
 -->
 
-<!--
-TODO: ARM Deployments: List at subscription, management-group, and tenant scope
-  Implement the remaining list-deployments endpoints:
-  - GET /subscriptions/{sub}/providers/Microsoft.Resources/deployments
-  - GET /providers/Microsoft.Management/managementGroups/{mgId}/providers/Microsoft.Resources/deployments
-  - GET /providers/Microsoft.Resources/deployments
-  milestone: v1.2-beta
-  labels: enhancement, resource-manager
--->
+<!-- List at subscription scope, management-group scope, and tenant scope all implemented. -->
 
 ### Packaging — CLI and Host split
 
@@ -581,6 +573,25 @@ TODO: Storage Account: Full geo-replicated (RA-GRS/RA-GZRS) semantics
 ---
 
 ## v1.5-beta
+
+### ARM Deployments — full tenant-scope surface
+
+<!--
+TODO: ARM Deployments: Full tenant-scope surface
+  Implement all remaining tenant-scope deployment operations:
+  - PUT    /providers/Microsoft.Resources/deployments/{name}                       – create or update
+  - GET    /providers/Microsoft.Resources/deployments/{name}                       – get
+  - DELETE /providers/Microsoft.Resources/deployments/{name}                       – delete
+  - POST   /providers/Microsoft.Resources/deployments/{name}/validate              – validate
+  - POST   /providers/Microsoft.Resources/deployments/{name}/cancel                – cancel
+  - HEAD   /providers/Microsoft.Resources/deployments/{name}                       – check existence
+  - POST   /providers/Microsoft.Resources/deployments/{name}/exportTemplate        – export template
+  - POST   /providers/Microsoft.Resources/deployments/{name}/whatif               – what-if
+  List at tenant scope is already implemented (v1.2). All other operations follow the
+  subscription-scope pattern but without a subscriptionId segment in the path.
+  milestone: v1.5-beta
+  labels: enhancement, resource-manager
+-->
 
 ### Container Registry — ACR Tasks
 

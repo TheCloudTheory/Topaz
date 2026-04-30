@@ -42,7 +42,15 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 | Cancel At Subscription Scope | ✅ | POST /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125;/cancel |
 | Delete At Subscription Scope | ✅ | DELETE /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125; |
 | List At Management Group Scope | ✅ | GET /providers/Microsoft.Management/managementGroups/&#123;groupId&#125;/providers/Microsoft.Resources/deployments |
-| List At Tenant Scope | ❌ | |
+| List At Tenant Scope | ✅ | GET /providers/Microsoft.Resources/deployments |
+| Create Or Update At Tenant Scope | ❌ | PUT /providers/Microsoft.Resources/deployments/&#123;name&#125; |
+| Get At Tenant Scope | ❌ | GET /providers/Microsoft.Resources/deployments/&#123;name&#125; |
+| Delete At Tenant Scope | ❌ | DELETE /providers/Microsoft.Resources/deployments/&#123;name&#125; |
+| Validate At Tenant Scope | ❌ | POST /providers/Microsoft.Resources/deployments/&#123;name&#125;/validate |
+| Cancel At Tenant Scope | ❌ | POST /providers/Microsoft.Resources/deployments/&#123;name&#125;/cancel |
+| Check Existence At Tenant Scope | ❌ | HEAD /providers/Microsoft.Resources/deployments/&#123;name&#125; |
+| Export Template At Tenant Scope | ❌ | POST /providers/Microsoft.Resources/deployments/&#123;name&#125;/exportTemplate |
+| What If At Tenant Scope | ❌ | POST /providers/Microsoft.Resources/deployments/&#123;name&#125;/whatif |
 
 ### Providers
 

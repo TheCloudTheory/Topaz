@@ -55,7 +55,7 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 | <span class="badge--stable">Stable</span> | Cancel | Mark an in-progress deployment as cancelled |
 | <span class="badge--stable">Stable</span> | Export Template | Return the ARM template used for a deployment |
 | <span class="badge--preview">Preview</span> | ~~What-If~~ | ~~Preview resource changes without applying them~~ |
-| <span class="badge--stable">Stable</span> | List at all scopes | List deployments at subscription, management-group, and tenant scope |
+| <span class="badge--stable">Stable</span> | List at all scopes | List deployments at subscription, management-group, and tenant scope ✅ |
 
 ### Packaging — CLI and Host split
 
@@ -161,6 +161,19 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 ---
 
 ## v1.5-beta
+
+### ARM Deployments — full tenant-scope surface
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Create Or Update At Tenant Scope | `PUT /providers/Microsoft.Resources/deployments/{name}` — deploy resources at tenant scope |
+| <span class="badge--preview">Preview</span> | Get At Tenant Scope | `GET /providers/Microsoft.Resources/deployments/{name}` |
+| <span class="badge--preview">Preview</span> | Delete At Tenant Scope | `DELETE /providers/Microsoft.Resources/deployments/{name}` |
+| <span class="badge--preview">Preview</span> | Validate At Tenant Scope | `POST /providers/Microsoft.Resources/deployments/{name}/validate` |
+| <span class="badge--preview">Preview</span> | Cancel At Tenant Scope | `POST /providers/Microsoft.Resources/deployments/{name}/cancel` |
+| <span class="badge--preview">Preview</span> | Check Existence At Tenant Scope | `HEAD /providers/Microsoft.Resources/deployments/{name}` |
+| <span class="badge--preview">Preview</span> | Export Template At Tenant Scope | `POST /providers/Microsoft.Resources/deployments/{name}/exportTemplate` |
+| <span class="badge--preview">Preview</span> | What If At Tenant Scope | `POST /providers/Microsoft.Resources/deployments/{name}/whatif` |
 
 ### Container Registry — ACR Tasks
 

@@ -240,4 +240,13 @@ public class ResourceManagerTests : TopazFixture
         await RunAzureCliCommand("az deployment sub delete --name sub-dep-cli-1");
         await RunAzureCliCommand("az deployment sub delete --name sub-dep-cli-2");
     }
+
+    [Test]
+    public async Task ResourceManagerTests_WhenListAtTenantScopeIsCalled_ShouldReturnEmptyList()
+    {
+        await RunAzureCliCommand("az deployment tenant list", response =>
+        {
+            Assert.That(response.AsArray(), Is.Empty);
+        });
+    }
 }

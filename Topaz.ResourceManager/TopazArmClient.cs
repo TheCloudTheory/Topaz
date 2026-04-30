@@ -186,6 +186,20 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task<JsonNode> ListDeploymentsAtTenantScopeAsync()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            "providers/Microsoft.Resources/deployments");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonNode.Parse(content)!;
+    }
+
     public async Task<JsonNode> ListDeploymentsAtManagementGroupScopeAsync(string groupId)
     {
         var request = new HttpRequestMessage(HttpMethod.Get,
