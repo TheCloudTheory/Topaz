@@ -850,9 +850,9 @@ namespace Topaz.Tests.E2E
             var tableClient = tableServiceClient.GetTableClient("gosdkentitytest");
             tableClient.AddEntity(new TestEntity { PartitionKey = "pk1", RowKey = "rk1", Name = "gosdk" });
 
-            // The Go SDK (Terraform AzureRM) sends the path with %20 in the URL but signs
-            // using the decoded path (per Azure docs: URL-decode the resource URI before building
-            // the canonical resource string). ComputeSharedKeyLiteSignature does the same decoding.
+            // The Go SDK sends the path with %20 on the wire. Topaz (via Kestrel) re-encodes the
+            // decoded path back to %20 when building the canonical resource for HMAC verification.
+            // The client must therefore sign over the %20-encoded path (not the decoded form).
             var path = "/gosdkentitytest(PartitionKey='pk1',%20RowKey='rk1')";
             var baseUrl = $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
             using var httpClient = new HttpClient();
@@ -869,17 +869,73 @@ namespace Topaz.Tests.E2E
             Assert.That((int)response.StatusCode, Is.EqualTo(200));
         }
 
+        [Test]
+        public async Task TableStorageTests_WhenEntityIsFetchedWithSharedKeyTableAuth_ItShouldReturn200()
+        {
+            // Arrange — replicate exactly what the Terraform AzureRM provider does via go-azure-sdk:
+            //   * Auth scheme: SharedKey (not SharedKeyLite)
+            //   * String-to-sign: VERB + "\n" + Content-MD5 + "\n" + Content-Type + "\n" + x-ms-date + "\n" + CanonicalizedResource
+            //   * GET entity has no body → Content-MD5 and Content-Type are both empty
+            //   * Path format (Giovanni): "/{table}(PartitionKey='{pk}', RowKey='{rk}')" — literal space after comma
+            //   * CanonicalizedResource: "/" + accountName + url.EscapedPath() = %20-encoded path
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            tableServiceClient.CreateTableIfNotExists("sharedkeytabletest");
+            var tableClient = tableServiceClient.GetTableClient("sharedkeytabletest");
+            tableClient.AddEntity(new TestEntity { PartitionKey = "pk1", RowKey = "rk1", Name = "sharedkey" });
+
+            // Giovanni builds the URL with a literal space after the comma (RowKey=' rk1').
+            // Go's url.URL.EscapedPath() encodes that space as %20, so the wire path and
+            // the canonicalized resource both use %20.
+            var pathWithLiteralSpace = "/sharedkeytabletest(PartitionKey='pk1', RowKey='rk1')";
+            var uriWithLiteralSpace = new Uri(
+                $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}{pathWithLiteralSpace}");
+            // AbsolutePath returns the %20-encoded form — same as Go's u.EscapedPath()
+            var encodedPath = uriWithLiteralSpace.AbsolutePath;
+
+            var date = DateTimeOffset.UtcNow.ToString("R");
+            var signature = ComputeSharedKeyTableSignature(_key, StorageAccountName, encodedPath, date);
+
+            using var httpClient = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, uriWithLiteralSpace);
+            request.Headers.Add("x-ms-date", date);
+            request.Headers.Add("Authorization", $"SharedKey {StorageAccountName}:{signature}");
+
+            // Act
+            var response = await httpClient.SendAsync(request);
+
+            // Assert
+            Assert.That((int)response.StatusCode, Is.EqualTo(200));
+        }
+
         /// <summary>
         /// Computes a SharedKeyLite HMAC-SHA256 signature matching the format expected by
         /// <c>TableStorageSecurityProvider.IsAuthorizedForSharedKeyLiteScheme</c>.
         /// StringToSign = Date + "\n" + CanonicalizedResource
-        /// CanonicalizedResource = "/" + accountName + absolutePath
+        /// CanonicalizedResource = "/" + accountName + absolutePath (percent-encoded)
         /// </summary>
         private static string ComputeSharedKeyLiteSignature(string accountKey, string accountName,
             string absolutePath, string date)
         {
-            var canonicalizedResource = "/" + accountName + Uri.UnescapeDataString(absolutePath);
+            var canonicalizedResource = "/" + accountName + absolutePath;
             var stringToSign = date + "\n" + canonicalizedResource;
+            using var hmac = new HMACSHA256(Convert.FromBase64String(accountKey));
+            return Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(stringToSign)));
+        }
+
+        /// <summary>
+        /// Computes a SharedKey (Table format) HMAC-SHA256 signature matching the format used by
+        /// go-azure-sdk's SharedKeyTable authorizer and expected by
+        /// <c>TableStorageSecurityProvider.IsAuthorizedForSharedKeyScheme</c>.
+        /// StringToSign = VERB + "\n" + ContentMD5 + "\n" + ContentType + "\n" + Date + "\n" + CanonicalizedResource
+        /// For GET entity: ContentMD5 and ContentType are empty (no request body).
+        /// Date is the value of the x-ms-date header.
+        /// CanonicalizedResource = "/" + accountName + absolutePath (percent-encoded)
+        /// </summary>
+        private static string ComputeSharedKeyTableSignature(string accountKey, string accountName,
+            string absolutePath, string date)
+        {
+            var canonicalizedResource = "/" + accountName + absolutePath;
+            var stringToSign = "GET\n\n\n" + date + "\n" + canonicalizedResource;
             using var hmac = new HMACSHA256(Convert.FromBase64String(accountKey));
             return Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(stringToSign)));
         }

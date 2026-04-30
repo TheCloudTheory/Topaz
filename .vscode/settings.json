@@ -2,6 +2,10 @@
     "chat.tools.terminal.autoApprove": {
         "dotnet test": true,
         "timeout": true,
-        "docker rm": true
+        "docker rm": true,
+        "dotnet build": true,
+        "./scripts/build-docker.sh": true,
+        "strings": true,
+        "mkdir": true
     }
 }

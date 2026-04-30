@@ -28,6 +28,9 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
         var parts = headerValue.Split(' ');
         var scheme = parts[0];
 
+        logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(RequestIsAuthorized),
+            "Scheme='{0}' Method='{1}' Path='{2}'", scheme, method, absolutePath);
+
         switch (scheme)
         {
             case "SharedKey":
@@ -70,11 +73,99 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
 
         var stringToSign = BuildStringToSignForSharedKey(storageAccountName, method, absolutePath, headers, query);
 
+        logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "Path='{0}' StringToSign='{1}'", absolutePath, stringToSign.Replace("\n", "\\n"));
+
         var hash1 = ComputeHashForKey(storageAccountResource.Resource.Keys[0].Value, stringToSign);
         var hash2 = ComputeHashForKey(storageAccountResource.Resource.Keys[1].Value, stringToSign);
 
+        logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "Match={0} hash1={1} received={2}", hash1 == signature, hash1[..10], signature[..10]);
+
         if (hash1 == signature) return true;
-        return hash2 == signature;
+        if (hash2 == signature) return true;
+
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "Signature mismatch for account '{0}'", storageAccountName);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  Method:            {0}", method);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  Path:              {0}", absolutePath);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  StringToSign:      {0}", stringToSign.Replace("\n", "\\n"));
+        headers.TryGetValue("x-ms-date", out var xmsdate);
+        headers.TryGetValue("Date", out var dateHdr);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  x-ms-date hdr:     {0}", xmsdate.ToString());
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  Date hdr:          {0}", dateHdr.ToString());
+        // Log full Authorization header — the truncated version was hiding useful detail
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  AuthHeaderFull:    {0}", headers["Authorization"].ToString());
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  ReceivedSignature: {0}", signature);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  ComputedHash(key1):{0}", hash1);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  ComputedHash(key2):{0}", hash2);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  StoredKey1Prefix:  {0}", storageAccountResource.Resource.Keys[0].Value[..16]);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  StoredKey1Full:    {0}", storageAccountResource.Resource.Keys[0].Value);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  StoredKey2Full:    {0}", storageAccountResource.Resource.Keys[1].Value);
+
+        // Log key bytes as hex to confirm base64 decoding yields the expected raw bytes
+        var key1Bytes = Convert.FromBase64String(storageAccountResource.Resource.Keys[0].Value);
+        var key2Bytes = Convert.FromBase64String(storageAccountResource.Resource.Keys[1].Value);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  Key1BytesHex:      {0}", Convert.ToHexString(key1Bytes));
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  Key2BytesHex:      {0}", Convert.ToHexString(key2Bytes));
+
+        // Dump ALL request headers (name + value + value-bytes-hex) for complete diagnostic context
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  AllRequestHeaders:");
+        foreach (var header in headers)
+        {
+            var headerValStr = header.Value.ToString();
+            var headerValHex = Convert.ToHexString(Encoding.UTF8.GetBytes(headerValStr));
+            logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+                "    {0}: '{1}' [hex:{2}]", header.Key, headerValStr, headerValHex);
+        }
+
+        // Log raw STS bytes to detect invisible characters (BOM, \r, etc.)
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  STS_hex:           {0}", Convert.ToHexString(Encoding.UTF8.GetBytes(stringToSign)));
+
+        // Try with URL-decoded path (space instead of %20) — tests whether the
+        // client signed with the decoded path while Topaz received the encoded form.
+        var decodedPath = Uri.UnescapeDataString(absolutePath);
+        if (decodedPath != absolutePath)
+        {
+            var stsDecoded = BuildStringToSignForSharedKey(storageAccountName, method, decodedPath, headers, query);
+            var hashDecoded1 = ComputeHashForKey(storageAccountResource.Resource.Keys[0].Value, stsDecoded);
+            var hashDecoded2 = ComputeHashForKey(storageAccountResource.Resource.Keys[1].Value, stsDecoded);
+            logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+                "  DecodedPathSTS:    {0}", stsDecoded.Replace("\n", "\\n"));
+            logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+                "  DecodedHash(k1):   {0}  match={1}", hashDecoded1, hashDecoded1 == signature);
+            logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+                "  DecodedHash(k2):   {0}  match={1}", hashDecoded2, hashDecoded2 == signature);
+        }
+
+        // Try the full 13-field SharedKey (Blob/Queue style) StringToSign to check whether
+        // the client might be using that format instead of the 4-field SharedKeyTable format.
+        var fullSts = BuildStringToSignForSharedKeyFull(storageAccountName, method, absolutePath, headers, query);
+        var fullHash1 = ComputeHashForKey(storageAccountResource.Resource.Keys[0].Value, fullSts);
+        var fullHash2 = ComputeHashForKey(storageAccountResource.Resource.Keys[1].Value, fullSts);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  FullSTS(13-field): {0}", fullSts.Replace("\n", "\\n"));
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  FullHash(key1):    {0}  match={1}", fullHash1, fullHash1 == signature);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyScheme),
+            "  FullHash(key2):    {0}  match={1}", fullHash2, fullHash2 == signature);
+        return false;
     }
 
     private bool IsAuthorizedForBearerScheme(string authHeader)
@@ -159,7 +250,21 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
             "Computed hash1: {0}, Received: {1}, Match: {2}", hash1, signature, hash1 == signature);
         
         if (hash1 == signature) return true;
-        return hash2 == signature;
+        if (hash2 == signature) return true;
+
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLiteScheme),
+            "Signature mismatch for account '{0}'", storageAccountName);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLiteScheme),
+            "  Path:              {0}", absolutePath);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLiteScheme),
+            "  StringToSign:      {0}", stringToSign.Replace("\n", "\\n"));
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLiteScheme),
+            "  ReceivedSignature: {0}", signature);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLiteScheme),
+            "  ComputedHash(key1):{0}", hash1);
+        logger.LogError(nameof(TableStorageSecurityProvider), nameof(IsAuthorizedForSharedKeyLiteScheme),
+            "  ComputedHash(key2):{0}", hash2);
+        return false;
     }
     
     private string BuildStringToSign(string storageAccountName, string absolutePath, IHeaderDictionary headers,
@@ -203,5 +308,67 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
         
         var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(canonicalizedResource));
         return Convert.ToBase64String(hash);
+    }
+
+    /// <summary>
+    /// Builds the full 13-field SharedKey StringToSign used for Blob/Queue service requests.
+    /// This is different from the 4-field SharedKeyTable format. Logged for diagnostic purposes only
+    /// to determine whether the client is inadvertently using the wrong format.
+    /// </summary>
+    private string BuildStringToSignForSharedKeyFull(string storageAccountName, string method, string absolutePath,
+        IHeaderDictionary headers, QueryString query)
+    {
+        headers.TryGetValue("Content-Encoding", out var contentEncoding);
+        headers.TryGetValue("Content-Language", out var contentLanguage);
+        headers.TryGetValue("Content-Length", out var contentLength);
+        headers.TryGetValue("Content-MD5", out var contentMd5);
+        headers.TryGetValue("Content-Type", out var contentType);
+        headers.TryGetValue("Date", out var date);
+        headers.TryGetValue("If-Modified-Since", out var ifModifiedSince);
+        headers.TryGetValue("If-Match", out var ifMatch);
+        headers.TryGetValue("If-None-Match", out var ifNoneMatch);
+        headers.TryGetValue("If-Unmodified-Since", out var ifUnmodifiedSince);
+        headers.TryGetValue("Range", out var range);
+
+        // When x-ms-date is present, the Date field in StringToSign must be empty
+        var dateValue = headers.ContainsKey("x-ms-date") ? "" : date.ToString();
+
+        // Canonicalized x-ms-* headers (sorted alphabetically)
+        var xmsHeaders = headers
+            .Where(h => h.Key.StartsWith("x-ms-", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(h => h.Key.ToLowerInvariant())
+            .Select(h => $"{h.Key.ToLowerInvariant()}:{h.Value}");
+        var canonicalizedHeaders = string.Join("\n", xmsHeaders);
+
+        var canonicalizedResource = "/" + storageAccountName + absolutePath;
+        // For full SharedKey, ALL query params are included (sorted)
+        if (query.HasValue)
+        {
+            var queryParams = query.Value!.TrimStart('?')
+                .Split('&', StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => p.Split('=', 2))
+                .Where(p => p.Length == 2)
+                .OrderBy(p => p[0])
+                .Select(p => $"\n{p[0]}:{Uri.UnescapeDataString(p[1])}");
+            canonicalizedResource += string.Concat(queryParams);
+        }
+
+        var contentLengthStr = contentLength.ToString() == "0" ? "" : contentLength.ToString();
+
+        return string.Join("\n",
+            method,
+            contentEncoding,
+            contentLanguage,
+            contentLengthStr,
+            contentMd5,
+            contentType,
+            dateValue,
+            ifModifiedSince,
+            ifMatch,
+            ifNoneMatch,
+            ifUnmodifiedSince,
+            range,
+            canonicalizedHeaders,
+            canonicalizedResource);
     }
 }

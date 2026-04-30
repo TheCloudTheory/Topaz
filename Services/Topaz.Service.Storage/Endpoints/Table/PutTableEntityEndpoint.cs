@@ -27,8 +27,7 @@ internal sealed class PutTableEntityEndpoint(ITopazLogger logger)
         var subscriptionIdentifier = storageAccount!.GetSubscription();
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
 
-        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name,
-                context.Request.Headers, context.Request.Method, context.Request.Path, context.Request.QueryString))
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context))
         {
             response.StatusCode = HttpStatusCode.Unauthorized;
             return;

@@ -9,7 +9,11 @@ namespace Topaz.Service.Storage.Endpoints.Table;
 internal sealed class InsertOrMergeTableEntityEndpoint(ITopazLogger logger)
     : TableDataPlaneEndpointBase(logger), IEndpointDefinition
 {
-    public string[] Endpoints => [@"POST /^.*?\(PartitionKey='.*?',(%20|\s)?RowKey='.*?'\)$"];
+    public string[] Endpoints =>
+    [
+        @"POST /^.*?\(PartitionKey='.*?',(%20|\s)?RowKey='.*?'\)$",
+        @"MERGE /^.*?\(PartitionKey='.*?',(%20|\s)?RowKey='.*?'\)$",
+    ];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/write"];
 
@@ -27,8 +31,7 @@ internal sealed class InsertOrMergeTableEntityEndpoint(ITopazLogger logger)
         var subscriptionIdentifier = storageAccount!.GetSubscription();
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
 
-        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name,
-                context.Request.Headers, context.Request.Method, context.Request.Path, context.Request.QueryString))
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context))
         {
             response.StatusCode = HttpStatusCode.Unauthorized;
             return;
@@ -38,6 +41,6 @@ internal sealed class InsertOrMergeTableEntityEndpoint(ITopazLogger logger)
             RegexOptions.IgnoreCase);
 
         HandleUpdateEntityRequest(context.Request.Body, context.Request.Headers, matches,
-            subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, response);
+            subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, response, upsert: true);
     }
 }

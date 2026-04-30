@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 using Azure.Core;
 using Azure.ResourceManager.Storage.Models;
@@ -24,7 +25,8 @@ internal sealed class StorageAccountResource
         string kind,
         StorageAccountResourceProperties resourceProperties)
     {
-        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{name}";
+        Id =
+            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{name}";
         Name = name;
         Location = location;
         Sku = sku;
@@ -32,8 +34,10 @@ internal sealed class StorageAccountResource
         Properties = resourceProperties;
         Keys =
         [
-            new TopazStorageAccountKey("key1", Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64)), nameof(StorageAccountKeyPermission.Full), DateTimeOffset.Now),
-            new TopazStorageAccountKey("key2", Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64)), nameof(StorageAccountKeyPermission.Full), DateTimeOffset.Now)
+            new TopazStorageAccountKey("key1", Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
+                nameof(StorageAccountKeyPermission.Full), DateTimeOffset.Now),
+            new TopazStorageAccountKey("key2", Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
+                nameof(StorageAccountKeyPermission.Full), DateTimeOffset.Now)
         ];
     }
 
@@ -46,7 +50,8 @@ internal sealed class StorageAccountResource
         StorageAccountResourceProperties resourceProperties,
         TopazStorageAccountKey[] existingKeys)
     {
-        Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{name}";
+        Id =
+            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{name}";
         Name = name;
         Location = location;
         Sku = sku;
@@ -54,7 +59,7 @@ internal sealed class StorageAccountResource
         Properties = resourceProperties;
         Keys = existingKeys;
     }
-    
+
     public override string Id { get; init; }
     public override string Name { get; init; }
     public override string Type { get; init; } = "Microsoft.Storage/storageAccounts";
@@ -64,4 +69,24 @@ internal sealed class StorageAccountResource
     public override string? Kind { get; init; }
     public override StorageAccountResourceProperties Properties { get; init; }
     public TopazStorageAccountKey[] Keys { get; init; }
+
+    /// <summary>
+    /// Serializes the storage account for HTTP responses. Keys are intentionally excluded
+    /// because the real Azure ARM API never returns keys in account GET/PUT/PATCH responses —
+    /// callers must use the listKeys action to obtain them.
+    /// </summary>
+    public override string ToString()
+    {
+        return System.Text.Json.JsonSerializer.Serialize(new
+        {
+            id = Id,
+            name = Name,
+            type = Type,
+            location = Location,
+            tags = Tags,
+            sku = Sku,
+            kind = Kind,
+            properties = Properties
+        }, Topaz.Shared.GlobalSettings.JsonOptions);
+    }
 }

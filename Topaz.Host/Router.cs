@@ -125,6 +125,9 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "[{0}] {1}{2}", method, path, query);
 
         var response = CallEndpoint(endpoint, context);
+        // Ensure Content is never null — a missing body returns empty string so downstream
+        // code can always call ReadAsByteArrayAsync() without a NullReferenceException.
+        response.Content ??= new StringContent(string.Empty);
         var responseBytes = await response.Content.ReadAsByteArrayAsync();
         var textResponse = System.Text.Encoding.UTF8.GetString(responseBytes);
 
@@ -208,6 +211,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
             if (!isAuthorized)
             {
                 response.StatusCode = HttpStatusCode.Unauthorized;
+                response.Content = new StringContent(string.Empty);
                 return response;
             }
 

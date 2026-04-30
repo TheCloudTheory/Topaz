@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Topaz.Dns;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -57,13 +58,16 @@ internal abstract class TableDataPlaneEndpointBase(ITopazLogger logger)
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
-        IHeaderDictionary headers,
-        string method,
-        string path,
-        QueryString query)
+        HttpContext context)
     {
+        var rawTarget = context.Features.Get<IHttpRequestFeature>()?.RawTarget
+                        ?? context.Request.Path.Value
+                        ?? string.Empty;
+        var queryIndex = rawTarget.IndexOf('?');
+        var rawPath = queryIndex >= 0 ? rawTarget[..queryIndex] : rawTarget;
         return _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
-            storageAccountName, headers, method, path, query);
+            storageAccountName, context.Request.Headers, context.Request.Method, rawPath,
+            context.Request.QueryString);
     }
 
     /// <summary>
@@ -145,7 +149,8 @@ internal abstract class TableDataPlaneEndpointBase(ITopazLogger logger)
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
-        HttpResponseMessage response)
+        HttpResponseMessage response,
+        bool upsert = false)
     {
         Logger.LogDebug(nameof(TableDataPlaneEndpointBase), nameof(HandleUpdateEntityRequest),
             "Matched the update operation.");
@@ -160,11 +165,30 @@ internal abstract class TableDataPlaneEndpointBase(ITopazLogger logger)
 
         var (tableName, partitionKey, rowKey) = GetOperationDataForUpdateOperation(matches);
 
+        // Buffer the body when upserting — UpdateEntity disposes the stream on failure,
+        // and we need a fresh stream to fall back to UpsertEntity.
+        MemoryStream? buffered = null;
+        if (upsert)
+        {
+            buffered = new MemoryStream();
+            input.CopyTo(buffered);
+            buffered.Position = 0;
+            input = buffered;
+        }
+
         try
         {
             DataPlane.UpdateEntity(input, subscriptionIdentifier, resourceGroupIdentifier, tableName,
                 storageAccountName, partitionKey, rowKey, headers);
 
+            response.StatusCode = HttpStatusCode.NoContent;
+        }
+        catch (EntityNotFoundException) when (upsert)
+        {
+            // Insert-or-Merge / Insert-or-Replace: entity does not exist yet — insert it.
+            buffered!.Position = 0;
+            DataPlane.UpsertEntity(buffered, subscriptionIdentifier, resourceGroupIdentifier, tableName,
+                storageAccountName, partitionKey, rowKey);
             response.StatusCode = HttpStatusCode.NoContent;
         }
         catch (EntityNotFoundException)

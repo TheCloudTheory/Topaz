@@ -134,6 +134,10 @@ public class TopazFixture
                 .WithEnvironment("TF_CLI_ARGS", "-no-color")
                 // Some CI/container environments start large providers slowly (azurerm schema load).
                 .WithEnvironment("TF_PLUGIN_TIMEOUT", "5m")
+                // Enable Terraform debug logging so we can see the exact HTTP requests/responses
+                // the provider sends (Authorization header, request path, etc.) on test failure.
+                .WithEnvironment("TF_LOG", "DEBUG")
+                .WithEnvironment("TF_LOG_PATH", "/tmp/tf-debug.log")
                 .WithExtraHost("topaz.local.dev", _containerTopaz.IpAddress)
                 // Key Vault data-plane: the azurerm provider pings the vault URI to verify availability.
                 .WithExtraHost("tfrm-kv-test.vault.topaz.local.dev", _containerTopaz.IpAddress)
@@ -145,6 +149,7 @@ public class TopazFixture
                 // Table Storage data-plane: azurerm_storage_table/azurerm_storage_table_entity need
                 // to connect to the table endpoint directly.
                 .WithExtraHost("tfrmstortableacct.table.storage.topaz.local.dev", _containerTopaz.IpAddress)
+                .WithExtraHost("tfisoentityacct.table.storage.topaz.local.dev", _containerTopaz.IpAddress)
                 // Bind-mount host cache: providers + terraform binary are downloaded once and reused
                 // across all 17 fixture setups rather than re-downloaded for every test class.
                 .WithBindMount(TerraformCacheDir, "/tf-cache")
@@ -283,10 +288,13 @@ public class TopazFixture
         try
         {
             using var process = new Process();
+            // Fetch the full container log output — the failure may have occurred early
+            // in the apply run, well outside a fixed --tail window. The filter below trims
+            // the result to only interesting lines, keeping the output size manageable.
             process.StartInfo = new ProcessStartInfo
             {
                 FileName = "docker",
-                Arguments = $"logs --tail {tailLines} {containerName}",
+                Arguments = $"logs {containerName}",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -295,22 +303,21 @@ public class TopazFixture
 
             process.Start();
             var stdout = process.StandardOutput.ReadToEnd();
-            _ = process.StandardError.ReadToEnd();
+            // docker writes its logs to stderr as well; merge both streams
+            var stderr = process.StandardError.ReadToEnd();
             process.WaitForExit(15_000);
 
             if (process.ExitCode != 0)
                 return string.Empty;
 
-            var interesting = stdout
-                .Split('\n')
+            var allLines = (stdout + "\n" + stderr).Split('\n');
+            var interesting = allLines
                 .Where(line =>
-                    line.Contains("Error", StringComparison.OrdinalIgnoreCase) ||
+                    line.Contains("[Error]", StringComparison.Ordinal) ||
                     line.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase) ||
-                    line.Contains("Request", StringComparison.OrdinalIgnoreCase) ||
-                    line.Contains("endpoint", StringComparison.OrdinalIgnoreCase) ||
-                    line.Contains("Invalid", StringComparison.OrdinalIgnoreCase) ||
+                    line.Contains("ListKeys for", StringComparison.OrdinalIgnoreCase) ||
                     line.Contains("timeout", StringComparison.OrdinalIgnoreCase))
-                .TakeLast(80);
+                .Take(400);
 
             return string.Join('\n', interesting);
         }
@@ -477,6 +484,15 @@ public class TopazFixture
             var topazLogs = ReadDockerLogs("topaz.local.dev", 400);
             if (!string.IsNullOrWhiteSpace(topazLogs))
                 await Console.Error.WriteLineAsync($"[docker logs topaz.local.dev]\n{topazLogs}");
+
+            // Extract relevant lines from the TF_LOG debug log (Authorization header, SharedKey, table/entity paths)
+            var tfLogResult = await _containerTerraform!.ExecAsync(new List<string>
+            {
+                "/bin/sh", "-c",
+                "grep -iE 'SharedKey|Authorization|table|entity|PartitionKey|RowKey|listKeys|table.storage|x-ms-date|content-type|content-md5|StringToSign|accountKey' /tmp/tf-debug.log 2>/dev/null | tail -200 || echo '[no tf-debug.log]'"
+            });
+            if (!string.IsNullOrWhiteSpace(tfLogResult.Stdout))
+                await Console.Error.WriteLineAsync($"[TF debug log (filtered)]\n{TruncateForOutput(tfLogResult.Stdout, 20_000)}");
 
             Assert.That(result.ExitCode, Is.EqualTo(0),
                 $"`{command}` failed.\nSTDOUT: {TruncateForOutput(result.Stdout)}\nSTDERR: {TruncateForOutput(result.Stderr)}" +

@@ -1,8 +1,6 @@
 using System.Text.Json;
 using System.Xml.Linq;
-using System.Xml.Serialization;
 using Azure.Core;
-using Azure.Data.Tables.Models;
 using Azure.ResourceManager.Storage.Models;
 using Topaz.Dns;
 using Topaz.ResourceManager;
@@ -15,9 +13,6 @@ using Topaz.Service.Storage.Models.Requests;
 using Topaz.Service.Storage.Models.Responses;
 using Topaz.Service.Storage.Services;
 using Topaz.Shared;
-using TableAnalyticsLoggingSettings = Topaz.Service.Storage.Models.TableAnalyticsLoggingSettings;
-using TableMetrics = Topaz.Service.Storage.Models.TableMetrics;
-using TableServiceProperties = Topaz.Service.Storage.Models.TableServiceProperties;
 
 namespace Topaz.Service.Storage;
 
@@ -205,6 +200,14 @@ internal sealed class AzureStorageControlPlane(
         var existingKeys = existingAccount != null
             ? JsonSerializer.Deserialize<StorageAccountResource>(existingAccount, GlobalSettings.JsonOptions)?.Keys
             : null;
+
+        if (existingAccount != null && existingKeys != null)
+            logger.LogInformation($"CreateOrUpdate '{storageAccountName}': UsingExistingKeys key1prefix={existingKeys[0].Value[..16]}");
+        else if (existingAccount != null)
+            logger.LogWarning($"CreateOrUpdate '{storageAccountName}': ExistingAccountFoundButKeyDeserializationFailed — generating NEW keys!");
+        else
+            logger.LogInformation($"CreateOrUpdate '{storageAccountName}': NewAccount — generating new keys");
+
         var resource = existingKeys != null
             ? new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
                 request.Location!, request.Sku!, request.Kind!, properties, existingKeys)

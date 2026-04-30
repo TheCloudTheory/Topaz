@@ -132,6 +132,33 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
         File.Delete(entityPath);
     }
 
+    internal void UpsertEntity(Stream input, SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName,
+        string partitionKey, string rowKey)
+    {
+        logger.LogDebug(nameof(TableServiceDataPlane), nameof(UpsertEntity), "Executing {0}: {1} {2}", nameof(UpsertEntity), tableName, storageAccountName);
+
+        PathGuard.ValidateName(partitionKey);
+        PathGuard.ValidateName(rowKey);
+
+        var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+
+        var fileName = $"{PathGuard.SanitizeName(partitionKey)}_{PathGuard.SanitizeName(rowKey)}.json";
+        var entityPath = Path.Combine(path, fileName);
+        PathGuard.EnsureWithinDirectory(entityPath, path);
+
+        var root = JsonNode.Parse(rawContent) ?? throw new Exception("Cannot parse entity body.");
+        root["PartitionKey"] = partitionKey;
+        root["RowKey"] = rowKey;
+        root["Timestamp"] = DateTimeOffset.Now.ToUniversalTime();
+        root["odata.etag"] = DateTimeOffset.Now.Ticks;
+
+        File.WriteAllText(entityPath, root.ToJsonString());
+    }
+
     internal void UpdateEntity(Stream input, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName, string partitionKey,
                                string rowKey, IHeaderDictionary headers)
@@ -144,7 +171,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
         var etag = headers["If-Match"];
         var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
 
-        using var sr = new StreamReader(input);
+        using var sr = new StreamReader(input, leaveOpen: true);
 
         var rawContent = sr.ReadToEnd();
 
@@ -154,7 +181,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
 
         if(File.Exists(entityPath) == false)
         {
-            // Not existing  entry
+            // Not existing entry — for upsert callers, the stream is left open so they can retry via UpsertEntity.
             logger.LogDebug(nameof(TableServiceDataPlane), nameof(UpdateEntity), "Executing {0}: Not existing entry.", nameof(UpdateEntity));
             throw new EntityNotFoundException();
         }
