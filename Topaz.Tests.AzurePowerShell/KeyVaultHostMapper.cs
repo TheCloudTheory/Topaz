@@ -9,10 +9,19 @@ internal static class KeyVaultHostMapper
         new(@"-VaultName\s+(?:""(?<name>[^""]+)""|'(?<name>[^']+)'|(?<name>\S+))",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    // Key format: "{containerId}::{hostname}" — scoped per container so that
+    // parallel fixtures with independent containers don't share stale mappings.
     private static readonly HashSet<string> _mappedHosts =
         new(StringComparer.OrdinalIgnoreCase);
 
-    internal static void ResetCache() { lock (_mappedHosts) { _mappedHosts.Clear(); } }
+    internal static void ResetCache(string containerId)
+    {
+        lock (_mappedHosts)
+        {
+            _mappedHosts.RemoveWhere(k =>
+                k.StartsWith(containerId + "::", StringComparison.OrdinalIgnoreCase));
+        }
+    }
 
     public static async Task EnsureVaultHostsMapped(
         IContainer powerShellContainer,
@@ -48,10 +57,12 @@ internal static class KeyVaultHostMapper
         IContainer topazContainer,
         string host)
     {
+        var cacheKey = $"{powerShellContainer.Id}::{host}";
+
         // Check the in-memory cache first to avoid redundant /etc/hosts reads
         lock (_mappedHosts)
         {
-            if (_mappedHosts.Contains(host))
+            if (_mappedHosts.Contains(cacheKey))
                 return;
         }
 
@@ -68,7 +79,7 @@ internal static class KeyVaultHostMapper
         // Only cache after the mapping was confirmed successful
         lock (_mappedHosts)
         {
-            _mappedHosts.Add(host);
+            _mappedHosts.Add(cacheKey);
         }
     }
 }

@@ -1,5 +1,6 @@
 namespace Topaz.Tests.AzurePowerShell;
 
+[Parallelizable(ParallelScope.Fixtures)]
 public class StorageTests : PowerShellTestBase
 {
     [Test]
