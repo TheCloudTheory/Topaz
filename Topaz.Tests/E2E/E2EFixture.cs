@@ -14,7 +14,8 @@ public class E2EFixture
     public async Task SetUp()
     {
         var logger = new PrettyTopazLogger();
-        logger.SetLoggingLevel(LogLevel.Debug);
+        var logLevel = Environment.GetEnvironmentVariable("CI") == "true" ? LogLevel.Information : LogLevel.Debug;
+        logger.SetLoggingLevel(logLevel);
         logger.EnableLoggingToFile(true);
 
         var host = new TopazHost(new GlobalOptions
