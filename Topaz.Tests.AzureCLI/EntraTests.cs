@@ -59,7 +59,9 @@ public class EntraTests : TopazFixture
 		finally
 		{
 			// Restore admin login for any subsequent tests in this fixture.
-			await RunAzureCliCommand("az logout");
+			// || true: az logout exits 1 when no account is active (e.g. if the login under test
+			// failed), which would abort the finally block before the restore login runs.
+			await RunAzureCliCommand("az logout || true");
 			await RunAzureCliCommand("az login --username topazadmin@topaz.local.dev --password admin");
 
 			if (!string.IsNullOrEmpty(createdId))
@@ -114,7 +116,9 @@ public class EntraTests : TopazFixture
 		finally
 		{
 			// Restore admin login for any subsequent tests in this fixture.
-			await RunAzureCliCommand("az logout");
+			// || true: az logout exits 1 when no account is active (e.g. if the SP login failed),
+			// which would abort the finally block before the restore login runs.
+			await RunAzureCliCommand("az logout || true");
 			await RunAzureCliCommand("az login --username topazadmin@topaz.local.dev --password admin");
 
 			// Cleanup the created application (also removes the linked service principal).
