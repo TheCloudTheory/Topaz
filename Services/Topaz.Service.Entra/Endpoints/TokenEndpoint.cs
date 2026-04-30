@@ -233,7 +233,7 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                 }
 
                 // Validate the client_secret against the application's stored password credentials.
-                var appOperation = _applicationsDataPlane.Get(ApplicationIdentifier.From(clientId!));
+                var appOperation = _applicationsDataPlane.Get(ApplicationIdentifier.From(clientId!), includePasswords: true);
                 var validSecret = appOperation.Resource?.PasswordCredentials
                     ?.Any(pc => string.Equals(pc.SecretText, clientSecret, StringComparison.Ordinal)) == true;
 
