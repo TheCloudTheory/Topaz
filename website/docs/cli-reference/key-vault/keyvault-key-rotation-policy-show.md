@@ -1,5 +1,5 @@
 ---
-sidebar_position: 21
+sidebar_position: 24
 ---
 
 # keyvault key rotation-policy show

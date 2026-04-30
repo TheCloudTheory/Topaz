@@ -1,5 +1,5 @@
 ---
-sidebar_position: 27
+sidebar_position: 32
 ---
 
 # keyvault key restore
