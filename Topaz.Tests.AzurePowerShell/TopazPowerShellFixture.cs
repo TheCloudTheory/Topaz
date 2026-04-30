@@ -55,8 +55,9 @@ public class TopazPowerShellFixture
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateKey),  "/app/topaz.key")
             .WithCommand("--certificate-file", "topaz.crt", "--certificate-key",
-                "topaz.key", "--log-level", "Debug", "--default-subscription",
-                Guid.NewGuid().ToString())
+                "topaz.key", "--log-level",
+                Environment.GetEnvironmentVariable("CI") == "true" ? "Information" : "Debug",
+                "--default-subscription", Guid.NewGuid().ToString())
             .WithOutputConsumer(Consume.RedirectStdoutAndStderrToConsole())
             // UntilPortIsAvailable probes the container's internal IP directly, which is
             // unreachable from macOS (Docker Desktop runs containers inside a Linux VM).
