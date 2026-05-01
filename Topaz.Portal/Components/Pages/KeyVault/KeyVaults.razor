@@ -3,6 +3,7 @@
 @using Topaz.Portal.Models.KeyVaults
 @using Topaz.Portal.Models.ResourceGroups
 @using Topaz.Portal.Models.Subscriptions
+@using Topaz.Portal.Components.Shared
 @inject ITopazClient TopazClient
 @inject NavigationManager Nav
 
@@ -191,13 +192,10 @@
                            disabled="@_creatingBusy" />
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Location</label>
-                    <input class="form-control"
-                           @bind="_createLocation"
-                           placeholder="e.g. westeurope"
-                           disabled="@_creatingBusy" />
-                </div>
+                <LocationDropdown 
+                    SelectedLocation="@_createLocation"
+                    OnLocationChanged="OnLocationChanged"
+                    Disabled="@_creatingBusy" />
 
                 <div class="mb-3">
                     <label class="form-label">SKU</label>
@@ -295,6 +293,8 @@
     {
         _selectedSubscriptionIds.Clear();
     }
+
+    private void OnLocationChanged(string location) => _createLocation = location;
 
     private void OnSubscriptionFilterChanged(string subscriptionId, ChangeEventArgs e)
     {
