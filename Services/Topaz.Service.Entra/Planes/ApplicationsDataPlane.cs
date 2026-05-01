@@ -92,12 +92,13 @@ internal sealed class ApplicationsDataPlane(EntraResourceProvider provider, ITop
                 "Didn't find an application `{0}` so will perform a full search.", applicationIdentifier);
 
             // Application entities are created using the generated appId, but they may
-            // be fetched using their object ID
+            // be fetched using their object ID or their AppId (client ID).
             var path = provider.GetServiceInstanceApplicationsDataPath();
             application = Directory.EnumerateFiles(path, "*.json")
                 .Select(file =>
                     JsonSerializer.Deserialize<Application>(File.ReadAllText(file), GlobalSettings.JsonOptions))
-                .SingleOrDefault(u => u?.Id == applicationIdentifier.Value);
+                .SingleOrDefault(u => u?.Id == applicationIdentifier.Value
+                                   || u?.AppId == applicationIdentifier.Value);
 
             if (application == null)
             {

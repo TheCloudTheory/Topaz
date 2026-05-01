@@ -100,8 +100,11 @@ public class EntraTests : TopazFixture
 			await RunAzureCliCommand("az logout");
 
 			// Login using the created service principal credentials.
+			// Single-quote the password so /bin/sh doesn't expand $ or other shell-special
+			// characters that Topaz's password generator includes.
+			var spPasswordShellSafe = "'" + password.Replace("'", "'\\''") + "'";
 			await RunAzureCliCommand(
-				$"az login --service-principal --username \"{appId}\" --password \"{password}\" --tenant \"{tenant}\" --allow-no-subscriptions -o json");
+				$"az login --service-principal --username \"{appId}\" --password {spPasswordShellSafe} --tenant \"{tenant}\" --allow-no-subscriptions -o json");
 
 			// Verify the signed-in identity is a service principal and matches the appId.
 			await RunAzureCliCommand(
