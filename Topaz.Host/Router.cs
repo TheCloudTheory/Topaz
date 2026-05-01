@@ -20,7 +20,10 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         var path = context.Request.Path.ToString();
         var method = context.Request.Method;
         var query = context.Request.QueryString;
-        var port = context.Request.Host.Port ?? context.Connection.LocalPort;
+        // Always use the actual Kestrel listening port for endpoint matching.
+        // Using the Host header port breaks routing when the client uses a different
+        // external port (e.g. a random Docker host-port mapping in tests).
+        var port = context.Connection.LocalPort;
 
         if (method == null)
         {
