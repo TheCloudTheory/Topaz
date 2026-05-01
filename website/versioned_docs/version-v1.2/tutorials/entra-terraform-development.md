@@ -39,7 +39,7 @@ All operations run locally against Topaz — no real Azure or Entra resources ar
 Start Topaz with a stable tenant and subscription ID:
 
 ```bash
-topaz start \
+topaz-host start \
   --tenant-id 50717675-3E5E-4A1E-8CB5-C62D8BE8CA48 \
   --default-subscription 00000000-0000-0000-0000-000000000001 \
   --log-level Information

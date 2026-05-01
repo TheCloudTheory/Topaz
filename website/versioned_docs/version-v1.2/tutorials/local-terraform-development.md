@@ -40,7 +40,7 @@ Before you start:
 Start Topaz with a stable subscription ID and your Entra tenant ID:
 
 ```bash
-topaz start \
+topaz-host start \
   --tenant-id <your-entra-tenant-id> \
   --default-subscription 00000000-0000-0000-0000-000000000001 \
   --log-level Information

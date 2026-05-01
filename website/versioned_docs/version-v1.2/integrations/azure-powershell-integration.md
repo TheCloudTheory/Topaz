@@ -20,7 +20,7 @@ Topaz exposes a custom Azure cloud environment that the Az PowerShell module can
 
 ## Step 1 — Trust the certificate
 
-Az PowerShell uses the .NET `HttpClient` stack, which on most platforms respects the OS certificate store. If the Topaz certificate is already trusted at the OS level (for example, you ran `topaz start` and accepted the certificate prompt), Az PowerShell will work without additional configuration.
+Az PowerShell uses the .NET `HttpClient` stack, which on most platforms respects the OS certificate store. If the Topaz certificate is already trusted at the OS level (for example, you ran `topaz-host start` and accepted the certificate prompt), Az PowerShell will work without additional configuration.
 
 If you see `The SSL connection could not be established` errors, run the configuration script from the Topaz repository:
 
@@ -62,7 +62,7 @@ The script is idempotent — safe to run multiple times.
 ## Step 2 — Start the emulator
 
 ```bash
-topaz start \
+topaz-host start \
   --default-subscription 00000000-0000-0000-0000-000000000001 \
   --log-level Information
 ```
@@ -231,5 +231,5 @@ Resources created in Topaz are unaffected — they remain available the next tim
 | `Connect-AzAccount` hangs indefinitely | Keyring daemon absent (Linux / container) | Run `Disable-AzContextAutosave \| Out-Null` before connecting |
 | `AuthenticationFailedException` | Wrong UPN or password | Ensure the UPN includes the full domain: `user@topaz.local.dev` |
 | `Get-AzResourceGroup` returns nothing | Wrong environment active | Run `(Get-AzContext).Environment.Name` — should be `Topaz` |
-| Subscription not found after login | No subscription created | Add `--default-subscription` to `topaz start` |
+| Subscription not found after login | No subscription created | Add `--default-subscription` to `topaz-host start` |
 | `InvalidOperation: the provided credentials...` | MSAL hitting real AAD for instance discovery | Ensure `-TenantId` matches Topaz's tenant (`50717675-3E5E-4A1E-8CB5-C62D8BE8CA48`) |

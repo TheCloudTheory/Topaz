@@ -25,7 +25,7 @@ This tutorial walks through a complete Azure Key Vault local development workflo
 ## Step 1: Start Topaz
 
 ```bash
-topaz start \
+topaz-host start \
   --default-subscription 00000000-0000-0000-0000-000000000001 \
   --log-level Information
 ```

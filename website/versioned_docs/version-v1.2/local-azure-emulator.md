@@ -15,7 +15,7 @@ Most local Azure setups involve stitching together multiple tools: Azurite for s
 Topaz replaces the entire stack with a single binary:
 
 ```bash
-topaz start --default-subscription 00000000-0000-0000-0000-000000000001
+topaz-host start --default-subscription 00000000-0000-0000-0000-000000000001
 ```
 
 That one command gives you a running Azure environment — ARM control plane, storage, secrets, messaging, container registry — all on localhost.

@@ -34,7 +34,7 @@ In practice, this means your Terraform workflow (`init`, `plan`, `apply`, `destr
 Use a deterministic subscription ID so your Terraform runs are repeatable:
 
 ```bash
-topaz start \
+topaz-host start \
   --default-subscription 00000000-0000-0000-0000-000000000001 \
   --log-level Information
 ```

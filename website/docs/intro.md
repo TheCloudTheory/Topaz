@@ -41,7 +41,7 @@ The recommended way to run Topaz on Windows is inside **WSL 2** (Windows Subsyst
 
 :::tip[macOS — install with Homebrew]
 
-On macOS you can skip Steps 1 and 3 by installing via Homebrew. DNS setup and the `topaz` binary are handled automatically:
+On macOS you can skip Steps 1 and 3 by installing via Homebrew. DNS setup and the `topaz-host` and `topaz` binaries are handled automatically:
 
 ```bash
 brew tap thecloudtheory/topaz
