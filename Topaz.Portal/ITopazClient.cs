@@ -4,6 +4,7 @@ using Topaz.Portal.Models.KeyVaults;
 using Topaz.Portal.Models.Rbac;
 using Topaz.Portal.Models.ResourceGroups;
 using Topaz.Portal.Models.ResourceManager;
+using Topaz.Portal.Models.Storage;
 using Topaz.Portal.Models.Subscriptions;
 using Topaz.Portal.Models.Tenant;
 
@@ -79,6 +80,45 @@ public interface ITopazClient
         Guid subscriptionId,
         string resourceGroupName,
         string location,
+        CancellationToken cancellationToken = default);
+
+    // Storage Accounts
+    Task<ListStorageAccountsResponse> ListStorageAccounts();
+
+    Task<StorageAccountDto?> GetStorageAccount(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string storageAccountName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateStorageAccount(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string storageAccountName,
+        string location,
+        string skuName = "Standard_LRS",
+        string kind = "StorageV2",
+        CancellationToken cancellationToken = default);
+
+    Task DeleteStorageAccount(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string storageAccountName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateOrUpdateStorageAccountTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string storageAccountName,
+        string tagName,
+        string tagValue,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteStorageAccountTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string storageAccountName,
+        string tagName,
         CancellationToken cancellationToken = default);
 
     // Key Vault

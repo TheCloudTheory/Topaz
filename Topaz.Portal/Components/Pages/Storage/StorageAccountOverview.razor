@@ -1,0 +1,156 @@
+@page "/portal/storage/{SubscriptionId:guid}/{ResourceGroupName}/{StorageAccountName}"
+@using System.Net
+@using Topaz.Portal.Models.Storage
+@inject ITopazClient TopazClient
+@inject NavigationManager Nav
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/storage">Storage accounts</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">@DecodedSa</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedSa</h1>
+
+<StorageAccountDetailsShell SubscriptionId="SubscriptionId"
+                             ResourceGroupName="@DecodedRg"
+                             StorageAccountName="@DecodedSa">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_error</div>
+    }
+    else if (_sa is null)
+    {
+        <p class="mb-0">Storage account not found.</p>
+    }
+    else
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between mb-3">
+                    <h5 class="card-title mb-0">Overview</h5>
+
+                    <button class="btn btn-sm btn-outline-danger"
+                            @onclick="() => _showDeleteConfirm = true"
+                            disabled="@_deletingBusy">
+                        Delete
+                    </button>
+                </div>
+
+                @if (_showDeleteConfirm)
+                {
+                    <div class="alert alert-warning d-flex align-items-center justify-content-between" role="alert">
+                        <span>Delete storage account <strong>@(_sa.Name)</strong>? This cannot be undone.</span>
+                        <div class="d-flex gap-2 ms-3">
+                            <button class="btn btn-sm btn-danger"
+                                    @onclick="DeleteStorageAccountAsync"
+                                    disabled="@_deletingBusy">
+                                Confirm delete
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    @onclick="() => _showDeleteConfirm = false"
+                                    disabled="@_deletingBusy">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_deleteError))
+                {
+                    <div class="alert alert-danger" role="alert">@_deleteError</div>
+                }
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Name</dt>
+                    <dd class="col-sm-9">@(_sa.Name ?? "-")</dd>
+
+                    <dt class="col-sm-3">Location</dt>
+                    <dd class="col-sm-9"><code>@(_sa.Location ?? "-")</code></dd>
+
+                    <dt class="col-sm-3">Resource group</dt>
+                    <dd class="col-sm-9">@(_sa.ResourceGroupName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Subscription</dt>
+                    <dd class="col-sm-9">@(_sa.SubscriptionName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Subscription ID</dt>
+                    <dd class="col-sm-9">@(_sa.SubscriptionId ?? "-")</dd>
+
+                    <dt class="col-sm-3">Kind</dt>
+                    <dd class="col-sm-9">@(_sa.Kind ?? "-")</dd>
+
+                    <dt class="col-sm-3">SKU</dt>
+                    <dd class="col-sm-9">@(_sa.SkuName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Blob endpoint</dt>
+                    <dd class="col-sm-9"><small class="text-muted">@(_sa.BlobEndpoint ?? "-")</small></dd>
+
+                    <dt class="col-sm-3">Resource ID</dt>
+                    <dd class="col-sm-9"><small class="text-muted">@(_sa.Id ?? "-")</small></dd>
+                </dl>
+            </div>
+        </div>
+    }
+</StorageAccountDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string StorageAccountName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _error;
+    private StorageAccountDto? _sa;
+
+    private bool _showDeleteConfirm;
+    private bool _deletingBusy;
+    private string? _deleteError;
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedSa => WebUtility.UrlDecode(StorageAccountName);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            _sa = await TopazClient.GetStorageAccount(SubscriptionId, DecodedRg, DecodedSa);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task DeleteStorageAccountAsync()
+    {
+        _deleteError = null;
+        _deletingBusy = true;
+
+        try
+        {
+            await TopazClient.DeleteStorageAccount(SubscriptionId, DecodedRg, DecodedSa);
+            Nav.NavigateTo("/portal/storage");
+        }
+        catch (Exception ex)
+        {
+            _deleteError = ex.Message;
+            _showDeleteConfirm = false;
+        }
+        finally
+        {
+            _deletingBusy = false;
+        }
+    }
+}

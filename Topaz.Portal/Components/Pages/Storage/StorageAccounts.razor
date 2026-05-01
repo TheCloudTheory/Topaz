@@ -1,0 +1,421 @@
+@page "/portal/storage"
+@using System.Net
+@using Topaz.Portal.Models.Storage
+@using Topaz.Portal.Models.ResourceGroups
+@using Topaz.Portal.Models.Subscriptions
+@using Topaz.Portal.Components.Shared
+@inject ITopazClient TopazClient
+@inject NavigationManager Nav
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="mb-0">Storage accounts</h1>
+
+    <button class="btn btn-primary btn-sm"
+            @onclick="ToggleCreate"
+            disabled="@(_loading || _creatingBusy)">
+        New storage account
+    </button>
+</div>
+
+<div class="row g-3">
+    <div class="@(_showCreate ? "col-12 col-lg-8" : "col-12")">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <strong>Filter</strong>
+                        <span class="text-muted small">
+                            @(_selectedSubscriptionIds.Count == 0 ? "All subscriptions" : $"{_selectedSubscriptionIds.Count} selected")
+                        </span>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="ToggleFilter"
+                                disabled="@_loading">
+                            @(_showFilter ? "Hide" : "Show")
+                        </button>
+
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="ClearFilter"
+                                disabled="@(_loading || _selectedSubscriptionIds.Count == 0)">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+
+                @if (_showFilter)
+                {
+                    <div class="border rounded p-2 mb-3" style="max-height: 180px; overflow:auto;">
+                        @if (_subscriptions.Length == 0)
+                        {
+                            <div class="text-muted small">No subscriptions loaded.</div>
+                        }
+                        else
+                        {
+                            @foreach (var s in _subscriptions)
+                            {
+                                var id = s.SubscriptionId ?? "";
+                                var isChecked = !string.IsNullOrWhiteSpace(id) && _selectedSubscriptionIds.Contains(id);
+
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="@($"sub-filter-{id}")"
+                                           checked="@isChecked"
+                                           @onchange="(e) => OnSubscriptionFilterChanged(id, e)" />
+                                    <label class="form-check-label" for="@($"sub-filter-{id}")">
+                                        @(s.DisplayName ?? "(no name)")
+                                        <span class="text-muted small">(@id)</span>
+                                    </label>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+
+                @if (_loading)
+                {
+                    <p>Loading…</p>
+                }
+                else if (_error is not null)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @_error
+                    </div>
+                }
+                else if (FilteredStorageAccounts.Length == 0)
+                {
+                    <p class="mb-0">No storage accounts found.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Resource group</th>
+                                    <th>Subscription</th>
+                                    <th>Location</th>
+                                    <th>Kind</th>
+                                    <th>SKU</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var sa in FilteredStorageAccounts)
+                                {
+                                    <tr>
+                                        <td>
+                                            @if (Guid.TryParse(sa.SubscriptionId, out var subId) &&
+                                                 !string.IsNullOrWhiteSpace(sa.ResourceGroupName) &&
+                                                 !string.IsNullOrWhiteSpace(sa.Name))
+                                            {
+                                                <a href="@GetStorageAccountHref(subId, sa.ResourceGroupName, sa.Name)">@sa.Name</a>
+                                            }
+                                            else
+                                            {
+                                                @(sa.Name ?? "(unknown)")
+                                            }
+                                        </td>
+                                        <td>@(sa.ResourceGroupName ?? "-")</td>
+                                        <td>@(sa.SubscriptionName ?? "(unknown)")</td>
+                                        <td><code>@(sa.Location ?? "-")</code></td>
+                                        <td>@(sa.Kind ?? "-")</td>
+                                        <td>@(sa.SkuName ?? "-")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (_showCreate)
+    {
+        <div class="col-12 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <h5 class="card-title mb-0">Create storage account</h5>
+
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="CloseCreate"
+                                disabled="@_creatingBusy">
+                            Close
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(_createError))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @_createError
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label">Subscription</label>
+                        <select class="form-select"
+                                @bind="_createSubscriptionId"
+                                @bind:after="OnCreateSubscriptionChangedAsync"
+                                disabled="@_creatingBusy">
+                            <option value="">Select a subscription…</option>
+                            @foreach (var s in _subscriptions)
+                            {
+                                <option value="@(s.SubscriptionId ?? "")">
+                                    @(s.DisplayName ?? "(no name)") (@(s.SubscriptionId ?? ""))
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Resource group</label>
+                        <select class="form-select"
+                                @bind="_createResourceGroupName"
+                                disabled="@(_creatingBusy || _rgLoading || string.IsNullOrWhiteSpace(_createSubscriptionId))">
+                            <option value="">@(_rgLoading ? "Loading…" : (string.IsNullOrWhiteSpace(_createSubscriptionId) ? "Select a subscription first" : "Select a resource group…"))</option>
+                            @foreach (var rg in _resourceGroupOptions)
+                            {
+                                <option value="@(rg.Name ?? "")">@(rg.Name ?? "")</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Storage account name</label>
+                        <input class="form-control"
+                               @bind="_createStorageAccountName"
+                               placeholder="e.g. mystorageaccount"
+                               disabled="@_creatingBusy" />
+                        <div class="form-text">3–24 lowercase letters and numbers only.</div>
+                    </div>
+
+                    <LocationDropdown
+                        SelectedLocation="@_createLocation"
+                        OnLocationChanged="OnLocationChanged"
+                        Disabled="@_creatingBusy" />
+
+                    <div class="mb-3">
+                        <label class="form-label">SKU</label>
+                        <select class="form-select" @bind="_createSkuName" disabled="@_creatingBusy">
+                            <option value="Standard_LRS">Standard LRS</option>
+                            <option value="Standard_GRS">Standard GRS</option>
+                            <option value="Standard_RAGRS">Standard RA-GRS</option>
+                            <option value="Standard_ZRS">Standard ZRS</option>
+                            <option value="Premium_LRS">Premium LRS</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Kind</label>
+                        <select class="form-select" @bind="_createKind" disabled="@_creatingBusy">
+                            <option value="StorageV2">StorageV2 (general purpose v2)</option>
+                            <option value="Storage">Storage (general purpose v1)</option>
+                            <option value="BlobStorage">BlobStorage</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success"
+                                @onclick="CreateStorageAccountAsync"
+                                disabled="@_creatingBusy">
+                            Create
+                        </button>
+
+                        <button class="btn btn-outline-secondary"
+                                @onclick="CloseCreate"
+                                disabled="@_creatingBusy">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code
+{
+    private bool _loading = true;
+    private string? _error;
+    private StorageAccountDto[] _storageAccounts = [];
+
+    private SubscriptionDto[] _subscriptions = [];
+    private bool _showFilter = true;
+    private readonly HashSet<string> _selectedSubscriptionIds = new(StringComparer.OrdinalIgnoreCase);
+
+    private bool _showCreate;
+    private bool _creatingBusy;
+    private string? _createError;
+    private string _createSubscriptionId = "";
+    private string _createResourceGroupName = "";
+    private string _createStorageAccountName = "";
+    private string _createLocation = "westeurope";
+    private string _createSkuName = "Standard_LRS";
+    private string _createKind = "StorageV2";
+    private bool _rgLoading;
+    private ResourceGroupDto[] _resourceGroupOptions = [];
+
+    private StorageAccountDto[] FilteredStorageAccounts =>
+        _selectedSubscriptionIds.Count == 0
+            ? _storageAccounts
+            : _storageAccounts.Where(sa =>
+                !string.IsNullOrWhiteSpace(sa.SubscriptionId) &&
+                _selectedSubscriptionIds.Contains(sa.SubscriptionId))
+            .ToArray();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            var subsTask = TopazClient.ListSubscriptions();
+            var saTask = TopazClient.ListStorageAccounts();
+
+            await Task.WhenAll(subsTask, saTask);
+
+            _subscriptions = subsTask.Result.Value;
+            _storageAccounts = saTask.Result.Value;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string GetStorageAccountHref(Guid subscriptionId, string resourceGroupName, string storageAccountName)
+        => $"/portal/storage/{subscriptionId:D}/{WebUtility.UrlEncode(resourceGroupName)}/{WebUtility.UrlEncode(storageAccountName)}";
+
+    private void ToggleFilter() => _showFilter = !_showFilter;
+
+    private void ClearFilter() => _selectedSubscriptionIds.Clear();
+
+    private void OnLocationChanged(string location) => _createLocation = location;
+
+    private void OnSubscriptionFilterChanged(string subscriptionId, ChangeEventArgs e)
+    {
+        var isChecked = e.Value is true;
+        if (isChecked)
+            _selectedSubscriptionIds.Add(subscriptionId);
+        else
+            _selectedSubscriptionIds.Remove(subscriptionId);
+    }
+
+    private void ToggleCreate()
+    {
+        _showCreate = !_showCreate;
+        _createError = null;
+    }
+
+    private void CloseCreate()
+    {
+        _showCreate = false;
+        _createError = null;
+        _createSubscriptionId = "";
+        _createResourceGroupName = "";
+        _createStorageAccountName = "";
+        _createLocation = "westeurope";
+        _createSkuName = "Standard_LRS";
+        _createKind = "StorageV2";
+        _resourceGroupOptions = [];
+    }
+
+    private async Task OnCreateSubscriptionChangedAsync()
+    {
+        _createResourceGroupName = "";
+        _resourceGroupOptions = [];
+
+        if (!Guid.TryParse(_createSubscriptionId, out var subId))
+            return;
+
+        _rgLoading = true;
+        try
+        {
+            var rgs = await TopazClient.ListResourceGroups(subId);
+            _resourceGroupOptions = rgs.Value;
+        }
+        catch
+        {
+            _resourceGroupOptions = [];
+        }
+        finally
+        {
+            _rgLoading = false;
+        }
+    }
+
+    private async Task CreateStorageAccountAsync()
+    {
+        _createError = null;
+
+        if (string.IsNullOrWhiteSpace(_createSubscriptionId))
+        {
+            _createError = "Please select a subscription.";
+            return;
+        }
+
+        if (!Guid.TryParse(_createSubscriptionId, out var subscriptionId))
+        {
+            _createError = "Subscription ID is invalid.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_createResourceGroupName))
+        {
+            _createError = "Please select a resource group.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_createStorageAccountName))
+        {
+            _createError = "Please enter a storage account name.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_createLocation))
+        {
+            _createError = "Please select a location.";
+            return;
+        }
+
+        _creatingBusy = true;
+        try
+        {
+            await TopazClient.CreateStorageAccount(
+                subscriptionId,
+                _createResourceGroupName,
+                _createStorageAccountName,
+                _createLocation,
+                _createSkuName,
+                _createKind);
+
+            _createStorageAccountName = "";
+            _createResourceGroupName = "";
+            _showCreate = false;
+
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _createError = ex.Message;
+        }
+        finally
+        {
+            _creatingBusy = false;
+        }
+    }
+}

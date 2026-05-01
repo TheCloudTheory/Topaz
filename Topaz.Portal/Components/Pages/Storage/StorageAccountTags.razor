@@ -1,0 +1,111 @@
+@page "/portal/storage/{SubscriptionId:guid}/{ResourceGroupName}/{StorageAccountName}/tags"
+@using System.Net
+@using Topaz.Portal.Models.Storage
+@inject ITopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/storage">Storage accounts</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/portal/storage/{SubscriptionId:D}/{ResourceGroupName}/{StorageAccountName}")">@DecodedSa</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Tags</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedSa</h1>
+
+<StorageAccountDetailsShell SubscriptionId="SubscriptionId"
+                             ResourceGroupName="@DecodedRg"
+                             StorageAccountName="@DecodedSa">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_loadError is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @_loadError
+        </div>
+    }
+    else
+    {
+        <TagsPanel Tags="_tags"
+                   OnAdd="AddTagAsync"
+                   OnRemove="RemoveTagAsync" />
+    }
+</StorageAccountDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string StorageAccountName { get; set; } = "";
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedSa => WebUtility.UrlDecode(StorageAccountName);
+
+    private bool _loading = true;
+    private string? _loadError;
+    private Dictionary<string, string> _tags = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadStorageAccountAsync();
+    }
+
+    private async Task LoadStorageAccountAsync()
+    {
+        _loading = true;
+        _loadError = null;
+
+        try
+        {
+            var sa = await TopazClient.GetStorageAccount(SubscriptionId, DecodedRg, DecodedSa);
+
+            if (sa is null)
+            {
+                _tags = [];
+                _loadError = "Storage account not found.";
+                return;
+            }
+
+            _tags = new Dictionary<string, string>(sa.Tags, StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            _tags = [];
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<string?> AddTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateStorageAccountTag(SubscriptionId, DecodedRg, DecodedSa, tag, value);
+            await LoadStorageAccountAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> RemoveTagAsync(string key)
+    {
+        try
+        {
+            await TopazClient.DeleteStorageAccountTag(SubscriptionId, DecodedRg, DecodedSa, key);
+            await LoadStorageAccountAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+}
