@@ -43,6 +43,8 @@ jobs:
         push: false
         tags: topaz/host
         platforms: linux/amd64
+    - name: Build PowerShell container
+      run: ./scripts/build-powershell-container.sh
     - name: Test
       run: dotnet test -m:1 --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults
     - name: Publish Test Results
