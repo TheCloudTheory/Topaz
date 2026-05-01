@@ -116,8 +116,8 @@ jobs:
           **/host-linux-x64/topaz-host-linux-x64
           **/host-win-x64/topaz-host-win-x64.exe
           **/host-linux-arm64/topaz-host-linux-arm64
-          **/win-x64/topaz.crt
-          **/win-x64/topaz.pfx
+          **/certificates/topaz.crt
+          **/certificates/topaz.pfx
     - name: Copy artifacts for Docker
       run: |
         mkdir publish

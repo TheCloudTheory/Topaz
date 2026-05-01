@@ -144,6 +144,13 @@ jobs:
       with:
         name: host-linux-arm64
         path: ./publish/host-linux-arm64
+    - name: Upload certificate artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: certificates
+        path: |
+          ./publish/topaz.crt
+          ./publish/topaz.pfx
     - name: Stamp pipeline run with a tag
       run: nbgv tag
     - name: Push a tag
