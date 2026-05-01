@@ -1,0 +1,8 @@
+{
+  "label": "API Coverage",
+  "position": 14,
+  "link": {
+    "type": "generated-index",
+    "description": "Detailed coverage of Azure REST API operations implemented in Topaz, per service. Use this section to quickly see which operations are available and which are still pending implementation."
+  }
+}

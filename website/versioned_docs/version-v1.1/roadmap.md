@@ -14,57 +14,6 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 ---
 
-## v1.2-beta
-
-### Queue Storage — preview
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--stable">Stable</span> | Queue CRUD | Create, delete, list queues ✅ |
-| <span class="badge--preview">Preview</span> | Service-level operations | List queues, get/set service properties, get stats |
-| <span class="badge--preview">Preview</span> | Queue metadata & ACL | Get/set metadata and ACL per queue |
-| <span class="badge--preview">Preview</span> | Message operations | Enqueue, dequeue, peek, update, delete, and clear messages |
-
-### Key Vault — keys support
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--stable">Stable</span> | Core CRUD | Create, import, get, update, delete keys; list keys and versions |
-| <span class="badge--stable">Stable</span> | Backup & Restore | Export and restore opaque key backup blobs |
-| <span class="badge--stable">Stable</span> | Cryptographic operations | Encrypt, decrypt, sign, verify, wrap key, unwrap key, release |
-| <span class="badge--preview">Preview</span> | Key rotation | Rotate key, get/update rotation policy |
-
-### Azure PowerShell integration
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--stable">Stable</span> | Certificate trust script | `configure-azure-powershell-cert.ps1` — trust the Topaz certificate in the Az module |
-| <span class="badge--stable">Stable</span> | Cloud environment registration | `Add-AzEnvironment` + `Connect-AzAccount` setup script and example |
-| <span class="badge--stable">Stable</span> | Test suite | `Topaz.Tests.AzurePowerShell` project with a Testcontainers fixture and smoke tests |
-
-### Management Groups — basic CRUD
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Core CRUD | Create, update, get, delete, and list management groups |
-
-### ARM Deployments — full support
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--stable">Stable</span> | Cancel | Mark an in-progress deployment as cancelled |
-| <span class="badge--stable">Stable</span> | Export Template | Return the ARM template used for a deployment |
-| <span class="badge--preview">Preview</span> | ~~What-If~~ | ~~Preview resource changes without applying them~~ |
-| <span class="badge--stable">Stable</span> | List at all scopes | List deployments at subscription, management-group, and tenant scope ✅ |
-
-### Packaging — CLI and Host split
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Separate CLI and Host artifacts | Split the monolithic binary into `topaz-host` (service process) and `topaz-cli` (thin client) — ⚠️ **Breaking change**: existing invocations and Docker image references must be updated |
-
----
-
 ## v1.3-beta
 
 ### Management Groups — extended operations
@@ -203,6 +152,55 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 ---
 
 ## ✅ Completed
+
+### v1.2
+
+#### Queue Storage
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Queue CRUD | Create, delete, list queues ✅ |
+| <span class="badge--stable">Stable</span> | Message operations | Enqueue, dequeue, peek, update, delete ✅ |
+| <span class="badge--stable">Stable</span> | Queue metadata & ACL | Get/set metadata and ACL per queue ✅ |
+| <span class="badge--stable">Stable</span> | Service-level operations | Get/set service properties, get stats ✅ |
+
+#### Key Vault — keys support
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Core CRUD | Create, import, get, update, delete keys; list keys and versions |
+| <span class="badge--stable">Stable</span> | Backup & Restore | Export and restore opaque key backup blobs |
+| <span class="badge--stable">Stable</span> | Cryptographic operations | Encrypt, decrypt, sign, verify, wrap key, unwrap key, release |
+| <span class="badge--preview">Preview</span> | Key rotation | Rotate key, get/update rotation policy |
+
+#### Azure PowerShell integration
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Certificate trust script | `configure-azure-powershell-cert.ps1` — trust the Topaz certificate in the Az module |
+| <span class="badge--stable">Stable</span> | Cloud environment registration | `Add-AzEnvironment` + `Connect-AzAccount` setup script and example |
+| <span class="badge--stable">Stable</span> | Test suite | `Topaz.Tests.AzurePowerShell` project with a Testcontainers fixture and smoke tests |
+
+#### Management Groups — basic CRUD
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Core CRUD | Create, update, get, delete, and list management groups |
+
+#### ARM Deployments — full support
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Cancel | Mark an in-progress deployment as cancelled |
+| <span class="badge--stable">Stable</span> | Export Template | Return the ARM template used for a deployment |
+| <span class="badge--preview">Preview</span> | ~~What-If~~ | ~~Preview resource changes without applying them~~ |
+| <span class="badge--stable">Stable</span> | List at all scopes | List deployments at subscription, management-group, and tenant scope ✅ |
+
+#### Packaging — CLI and Host split
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Separate CLI and Host artifacts | Split the monolithic binary into `topaz-host` (service process) and `topaz-cli` (thin client) — ⚠️ **Breaking change**: existing invocations and Docker image references must be updated |
 
 ### v1.1-beta
 
