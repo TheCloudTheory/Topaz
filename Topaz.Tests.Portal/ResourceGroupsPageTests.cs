@@ -74,9 +74,12 @@ public class ResourceGroupsPageTests : BunitTestContext
         // Select the subscription from the dropdown — re-query after re-render
         cut.Find("select.form-select").Change(subId.ToString("D"));
 
-        // Fill in name and location
+        // Fill in name
         cut.Find("input[placeholder='e.g. rg-dev']").Change(rgName);
-        cut.Find("input[placeholder='e.g. westeurope']").Change(rgLocation);
+
+        // Select location from LocationDropdown
+        var locationSelects = cut.FindAll("select.form-select");
+        locationSelects.Last().Change(rgLocation);
 
         // Submit
         cut.Find("button.btn-success").Click();

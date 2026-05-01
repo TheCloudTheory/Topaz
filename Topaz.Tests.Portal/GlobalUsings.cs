@@ -1,5 +1,6 @@
 global using global::Bunit;
 global using global::Microsoft.Extensions.DependencyInjection;
+global using global::Microsoft.AspNetCore.Components;
 global using global::NSubstitute;
 global using global::NUnit.Framework;
 global using global::Topaz.Portal;

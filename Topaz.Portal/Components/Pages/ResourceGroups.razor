@@ -2,6 +2,7 @@
 @using System.Net
 @using Topaz.Portal.Models.ResourceGroups
 @using Topaz.Portal.Models.Subscriptions
+@using Topaz.Portal.Components.Shared
 @inject ITopazClient TopazClient
 @inject NavigationManager Nav
 
@@ -172,16 +173,10 @@
                                disabled="@_creatingBusy" />
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Location</label>
-                        <input class="form-control"
-                               @bind="_newResourceGroupLocation"
-                               placeholder="e.g. westeurope"
-                               disabled="@_creatingBusy" />
-                        <div class="form-text">
-                            Use an Azure location name like <code>westeurope</code>, <code>eastus</code>.
-                        </div>
-                    </div>
+                    <LocationDropdown 
+                        SelectedLocation="@_newResourceGroupLocation"
+                        OnLocationChanged="OnLocationChanged"
+                        Disabled="@_creatingBusy" />
 
                     <div class="d-grid gap-2">
                         <button class="btn btn-success"
@@ -262,6 +257,8 @@
     private void ToggleFilter() => _showFilter = !_showFilter;
 
     private void ClearFilter() => _selectedSubscriptionIds.Clear();
+
+    private void OnLocationChanged(string location) => _newResourceGroupLocation = location;
 
     private void OnSubscriptionFilterChanged(string subscriptionId, ChangeEventArgs e)
     {
