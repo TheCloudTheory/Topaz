@@ -46,7 +46,9 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Publish Linux (interim)
-      run: dotnet publish ${{ github.workspace }}/Topaz.Host/Topaz.Host.csproj -c Release -r linux-x64 -o ./publish
+      run: |
+        dotnet publish ${{ github.workspace }}/Topaz.Host/Topaz.Host.csproj -c Release -r linux-x64 -o ./publish
+        mv ./publish/Topaz.Host ./publish/topaz-host-linux-x64
     - name: Build interim Docker image
       id: push
       uses: docker/build-push-action@v6.18.0
@@ -54,6 +56,7 @@ jobs:
         context: .
         file: ./Topaz.Host/Dockerfile
         push: false
+        load: true
         tags: topaz/host
         platforms: linux/amd64
     - name: Detect changed paths
