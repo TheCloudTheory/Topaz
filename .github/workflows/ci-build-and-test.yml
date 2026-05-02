@@ -50,15 +50,7 @@ jobs:
         dotnet publish ${{ github.workspace }}/Topaz.Host/Topaz.Host.csproj -c Release -r linux-x64 -o ./publish
         mv ./publish/Topaz.Host ./publish/topaz-host-linux-x64
     - name: Build interim Docker image
-      id: push
-      uses: docker/build-push-action@v6.18.0
-      with:
-        context: .
-        file: ./Topaz.Host/Dockerfile
-        push: false
-        load: true
-        tags: topaz/host
-        platforms: linux/amd64
+      run: docker build -t topaz/host -f ./Topaz.Host/Dockerfile .
     - name: Detect changed paths
       id: changes
       uses: dorny/paths-filter@v3
