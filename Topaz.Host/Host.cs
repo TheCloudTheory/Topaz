@@ -28,6 +28,7 @@ using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Services;
 using Topaz.Service.Subscription;
+using Topaz.Service.VirtualMachine;
 using Topaz.Service.VirtualNetwork;
 using Topaz.Shared;
 
@@ -94,6 +95,7 @@ public class Host
             new ServiceBusService(_eventPipeline, _logger),
             new ResourceManagerService(_eventPipeline, _logger, cancellationToken),
             new VirtualNetworkService(_eventPipeline, _logger),
+            new VirtualMachineService(_eventPipeline, _logger),
             new ManagedIdentityService(_eventPipeline, _logger),
             new ManagementGroupService(_logger),
             new ResourceAuthorizationService(_logger),

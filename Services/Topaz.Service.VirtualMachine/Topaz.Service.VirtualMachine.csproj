@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Topaz.EventPipeline\Topaz.EventPipeline.csproj" />
+      <ProjectReference Include="..\..\Topaz.ResourceManager\Topaz.ResourceManager.csproj" />
+      <ProjectReference Include="..\..\Topaz.Shared\Topaz.Shared.csproj" />
+      <ProjectReference Include="..\Topaz.Service.ResourceGroup\Topaz.Service.ResourceGroup.csproj" />
+      <ProjectReference Include="..\Topaz.Service.Shared\Topaz.Service.Shared.csproj" />
+      <ProjectReference Include="..\Topaz.Service.Subscription\Topaz.Service.Subscription.csproj" />
+    </ItemGroup>
+
+</Project>

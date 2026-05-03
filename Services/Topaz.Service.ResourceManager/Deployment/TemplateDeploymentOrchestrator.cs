@@ -15,6 +15,7 @@ using Topaz.Service.ServiceBus;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage;
+using Topaz.Service.VirtualMachine;
 using Topaz.Service.VirtualNetwork;
 using Topaz.Shared;
 using DeploymentResource = Topaz.Service.ResourceManager.Models.DeploymentResource;
@@ -180,6 +181,9 @@ public sealed class TemplateDeploymentOrchestrator(
                     break;
                 case "Microsoft.Network/virtualNetworks":
                     controlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
+                    break;
+                case "Microsoft.Compute/virtualMachines":
+                    controlPlane = VirtualMachineServiceControlPlane.New(eventPipeline, logger);
                     break;
                 case "Microsoft.ManagedIdentity/userAssignedIdentities":
                     controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
