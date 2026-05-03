@@ -1,4 +1,4 @@
-# Topaz ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/TheCloudTheory/Topaz/ci-build-and-test.yml) ![GitHub Release](https://img.shields.io/github/v/release/TheCloudTheory/Topaz?include_prereleases) [![Discord](https://img.shields.io/discord/1383721799736492032?logo=discord&label=Discord&color=5865F2)](https://discord.gg/eGTkS76w)
+# Topaz ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/TheCloudTheory/Topaz/ci-build-and-test.yml) ![GitHub Release](https://img.shields.io/github/v/release/TheCloudTheory/Topaz?include_prereleases) [![Discord](https://img.shields.io/discord/1383721799736492032?logo=discord&label=Discord&color=5865F2)](https://discord.gg/eGTkS76w) [![Docs](https://img.shields.io/badge/docs-topaz.thecloudtheory.com-blue)](https://topaz.thecloudtheory.com/)
 
 <div align="center">
   <img src="./static/topaz-logo.png" />
@@ -6,13 +6,24 @@
   <b>One binary. Multiple Azure services. No cloud required.</b>
 </div>
 
+```bash
+# macOS
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host
+
+# Linux
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash
+
+# Docker
+docker run -p 8891:8891 -p 8892:8892 -p 8898:8898 thecloudtheory/topaz-host
+```
+
+→ Full docs, quickstarts, and service guides at **[topaz.thecloudtheory.com](https://topaz.thecloudtheory.com/)**
+
 ## What is Topaz?
 
 Topaz is a single-binary Azure emulator. Instead of running Azurite for Storage, a separate emulator for Service Bus, and another for Key Vault — you run one tool.
 
 It supports both the control and data planes of Azure services, emulates ARM deployments with Bicep and ARM Templates, and implements Azure RBAC, all locally with no Azure subscription required. Teams use it to cut cloud costs, speed up CI pipelines, and develop entirely offline.
-
-Check the [documentation](https://topaz.thecloudtheory.com/) for guides, recipes, and a full list of supported services.
 
 ## Why Topaz?
 
@@ -46,25 +57,19 @@ See the [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/)
 
 ## Getting started
 
-```bash
-# Install with Homebrew (macOS)
-brew tap thecloudtheory/topaz
-brew install topaz
-
-# Run with Docker
-docker run -p 8891:8891 -p 8892:8892 -p 8898:8898 thecloudtheory/topaz-host
-
-# Or download the binary and run directly
-topaz-host
-```
-
-Point your Azure SDK at the relevant local port — no code changes required. To verify Topaz is running, try listing resource groups with the Azure CLI:
+Once Topaz is running, verify with the Topaz CLI:
 
 ```bash
-az group list --output table
+topaz health
 ```
 
-See the [documentation](https://topaz.thecloudtheory.com/) for connection strings, SDK setup, and service-specific quickstarts.
+Then connect your tooling — no code changes required:
+
+- **Azure CLI** — [Azure CLI integration guide](https://topaz.thecloudtheory.com/azure-cli-integration)
+- **Azure PowerShell** — [Azure PowerShell integration guide](https://topaz.thecloudtheory.com/azure-powershell-integration)
+- **Azure SDKs (.NET, Python, Java, JS)** — [Getting started](https://topaz.thecloudtheory.com/docs/intro)
+
+See the [documentation](https://topaz.thecloudtheory.com/) for connection strings, DNS setup, and service-specific quickstarts.
 
 ## CI/CD integration
 
