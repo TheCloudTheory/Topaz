@@ -15,7 +15,7 @@ public sealed class CreateStorageAccountCommand(ITopazLogger logger) : Command<C
 {
     public override int Execute(CommandContext context, CreateStorageAccountCommandSettings settings)
     {
-        logger.LogInformation("Creating storage account...");
+        AnsiConsole.WriteLine("Creating storage account...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -28,7 +28,7 @@ public sealed class CreateStorageAccountCommand(ITopazLogger logger) : Command<C
             return 1;
         }
 
-        logger.LogInformation(sa.Resource.ToString());
+        AnsiConsole.WriteLine(sa.Resource.ToString());
 
         return 0;
     }

@@ -17,7 +17,7 @@ public sealed class RegenerateStorageAccountKeyCommand(ITopazLogger logger)
 {
     public override int Execute(CommandContext context, RegenerateStorageAccountKeyCommandSettings settings)
     {
-        logger.LogInformation($"Regenerating storage account key '{settings.KeyName}'...");
+        AnsiConsole.WriteLine($"Regenerating storage account key '{settings.KeyName}'...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -27,18 +27,18 @@ public sealed class RegenerateStorageAccountKeyCommand(ITopazLogger logger)
 
         if (result.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Storage account '{settings.AccountName}' not found.");
+            Console.Error.WriteLine($"Storage account '{settings.AccountName}' not found.");
             return 1;
         }
 
         if (result.Result == OperationResult.Failed || result.Resource == null)
         {
-            logger.LogError("There was an error regenerating the storage account key.");
+            Console.Error.WriteLine("There was an error regenerating the storage account key.");
             return 1;
         }
 
         var keys = new ListKeysResponse(result.Resource.Keys);
-        logger.LogInformation(keys.ToString());
+        AnsiConsole.WriteLine(keys.ToString());
 
         return 0;
     }

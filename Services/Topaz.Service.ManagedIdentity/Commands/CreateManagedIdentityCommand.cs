@@ -17,8 +17,6 @@ public class CreateManagedIdentityCommand(Pipeline eventPipeline, ITopazLogger l
 {
     public override int Execute(CommandContext context, CreateManagedIdentityCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(CreateManagedIdentityCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var managedIdentityIdentifier = ManagedIdentityIdentifier.From(settings.Name!);
@@ -28,7 +26,7 @@ public class CreateManagedIdentityCommand(Pipeline eventPipeline, ITopazLogger l
             controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
         if (existingIdentity.Resource != null)
         {
-            logger.LogError($"The specified managed identity: {settings.Name} already exists.");
+            Console.Error.WriteLine($"The specified managed identity: {settings.Name} already exists.");
             return 1;
         }
 
@@ -45,11 +43,11 @@ public class CreateManagedIdentityCommand(Pipeline eventPipeline, ITopazLogger l
         var operation = controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier, request);
         if (operation.Result != OperationResult.Created)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!.ToString());
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
 
         return 0;
     }

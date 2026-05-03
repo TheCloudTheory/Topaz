@@ -19,8 +19,6 @@ public sealed class CreateContainerRegistryCommand(Pipeline eventPipeline, ITopa
 {
     public override int Execute(CommandContext context, CreateContainerRegistryCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(CreateContainerRegistryCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
@@ -39,11 +37,11 @@ public sealed class CreateContainerRegistryCommand(Pipeline eventPipeline, ITopa
         var operation = controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!, request);
         if (operation.Result is not (OperationResult.Created or OperationResult.Updated))
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!.ToString());
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
         return 0;
     }
 

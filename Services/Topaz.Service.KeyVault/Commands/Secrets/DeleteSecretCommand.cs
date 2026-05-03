@@ -15,8 +15,6 @@ public class DeleteSecretCommand(ITopazLogger logger) : Command<DeleteSecretComm
 {
     public override int Execute(CommandContext context, DeleteSecretCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(DeleteSecretCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -26,11 +24,11 @@ public class DeleteSecretCommand(ITopazLogger logger) : Command<DeleteSecretComm
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation($"Secret '{settings.Name}' deleted.");
+        AnsiConsole.WriteLine($"Secret '{settings.Name}' deleted.");
         return 0;
     }
 

@@ -18,8 +18,6 @@ public class CreateKeyVaultCommand(Pipeline eventPipeline, ITopazLogger logger) 
 {
     public override int Execute(CommandContext context, CreateKeyVaultCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(CreateKeyVaultCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
@@ -30,18 +28,18 @@ public class CreateKeyVaultCommand(Pipeline eventPipeline, ITopazLogger logger) 
 
         if (!existingKeyVault.response.NameAvailable)
         {
-            logger.LogError($"The specified vault: {settings.Name} already exists.");
+            Console.Error.WriteLine($"The specified vault: {settings.Name} already exists.");
             return 1;
         }
         
         var operation = controlPlane.Create(subscriptionIdentifier, resourceGroupIdentifier, settings.Location!, settings.Name!);
         if (operation.Result != OperationResult.Created)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!.ToString());
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
 
         return 0;
     }

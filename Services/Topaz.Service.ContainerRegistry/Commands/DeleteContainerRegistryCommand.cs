@@ -17,8 +17,6 @@ public sealed class DeleteContainerRegistryCommand(Pipeline eventPipeline, ITopa
 {
     public override int Execute(CommandContext context, DeleteContainerRegistryCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(DeleteContainerRegistryCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
@@ -26,11 +24,11 @@ public sealed class DeleteContainerRegistryCommand(Pipeline eventPipeline, ITopa
         var operation = controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation($"Registry '{settings.Name}' deleted.");
+        AnsiConsole.WriteLine($"Registry '{settings.Name}' deleted.");
         return 0;
     }
 

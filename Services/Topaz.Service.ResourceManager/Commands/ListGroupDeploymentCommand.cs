@@ -20,8 +20,6 @@ public class ListGroupDeploymentCommand(Pipeline eventPipeline, ITopazLogger log
 {
     public override int Execute(CommandContext context, ListGroupDeploymentCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(ListGroupDeploymentCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
@@ -29,7 +27,7 @@ public class ListGroupDeploymentCommand(Pipeline eventPipeline, ITopazLogger log
         var resourceGroupOperation = resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound || resourceGroupOperation.Resource == null)
         {
-            logger.LogError(resourceGroupOperation.ToString());
+            Console.Error.WriteLine(resourceGroupOperation.ToString());
             return 1;
         }
 
@@ -37,7 +35,7 @@ public class ListGroupDeploymentCommand(Pipeline eventPipeline, ITopazLogger log
         var controlPlane = new ResourceManagerControlPlane(provider, new TemplateDeploymentOrchestrator(eventPipeline, provider, new SubscriptionDeploymentResourceProvider(logger), logger), logger);
         var deployments = controlPlane.GetDeployments(subscriptionIdentifier, resourceGroupIdentifier);
         
-        logger.LogInformation(JsonSerializer.Serialize(deployments.resource));
+        AnsiConsole.WriteLine(JsonSerializer.Serialize(deployments.resource));
 
         return 0;
     }

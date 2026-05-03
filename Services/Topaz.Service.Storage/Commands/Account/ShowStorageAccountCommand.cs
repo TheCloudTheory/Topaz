@@ -16,7 +16,7 @@ public sealed class ShowStorageAccountCommand(ITopazLogger logger)
 {
     public override int Execute(CommandContext context, ShowStorageAccountCommandSettings settings)
     {
-        logger.LogInformation("Fetching storage account...");
+        AnsiConsole.WriteLine("Fetching storage account...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -25,17 +25,17 @@ public sealed class ShowStorageAccountCommand(ITopazLogger logger)
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Storage account '{settings.Name}' not found.");
+            Console.Error.WriteLine($"Storage account '{settings.Name}' not found.");
             return 1;
         }
 
         if (operation.Result == OperationResult.Failed || operation.Resource == null)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource.ToString());
+        AnsiConsole.WriteLine(operation.Resource.ToString());
         return 0;
     }
 

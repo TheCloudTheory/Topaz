@@ -18,8 +18,6 @@ public class RestoreKeyCommand(ITopazLogger logger) : Command<RestoreKeyCommand.
 {
     public override int Execute(CommandContext context, RestoreKeyCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(RestoreKeyCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -32,11 +30,11 @@ public class RestoreKeyCommand(ITopazLogger logger) : Command<RestoreKeyCommand.
 
         if (operation.Result == OperationResult.Failed || operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!.ToString());
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
         return 0;
     }
 

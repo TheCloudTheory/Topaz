@@ -15,7 +15,7 @@ public sealed class SetBlobPropertiesCommand(ITopazLogger logger) : Command<SetB
 {
     public override int Execute(CommandContext context, SetBlobPropertiesCommandSettings settings)
     {
-        logger.LogInformation("Setting blob properties...");
+        AnsiConsole.WriteLine("Setting blob properties...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -32,11 +32,11 @@ public sealed class SetBlobPropertiesCommand(ITopazLogger logger) : Command<SetB
 
         if (result.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Blob '{blobPath}' not found.");
+            Console.Error.WriteLine($"Blob '{blobPath}' not found.");
             return 1;
         }
 
-        logger.LogInformation($"Blob '{blobPath}' properties updated.");
+        AnsiConsole.WriteLine($"Blob '{blobPath}' properties updated.");
         return 0;
     }
 

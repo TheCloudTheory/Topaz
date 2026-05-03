@@ -17,8 +17,6 @@ public class GenerateContainerRegistryCredentialsCommand(Pipeline eventPipeline,
 {
     public override int Execute(CommandContext context, GenerateCredentialsCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(GenerateContainerRegistryCredentialsCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
 
@@ -27,7 +25,7 @@ public class GenerateContainerRegistryCredentialsCommand(Pipeline eventPipeline,
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 

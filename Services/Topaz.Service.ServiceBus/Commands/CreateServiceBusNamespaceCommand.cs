@@ -27,7 +27,7 @@ public sealed class CreateServiceBusNamespaceCommand(Pipeline eventPipeline, ITo
         var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
         if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {
-            logger.LogError($"ResourceGroup {resourceGroupIdentifier} not found.");
+            Console.Error.WriteLine($"ResourceGroup {resourceGroupIdentifier} not found.");
             return 1;
         }
 
@@ -38,11 +38,11 @@ public sealed class CreateServiceBusNamespaceCommand(Pipeline eventPipeline, ITo
 
         if (ns.Result == OperationResult.Failed || ns.Resource == null)
         {
-            logger.LogError($"There was a problem creating namespace '{namespaceIdentifier}'.");
+            Console.Error.WriteLine($"There was a problem creating namespace '{namespaceIdentifier}'.");
             return 1;
         }
         
-        logger.LogInformation(ns.Resource.ToString());
+        AnsiConsole.WriteLine(ns.Resource.ToString());
 
         return 0;
     }

@@ -15,8 +15,6 @@ public class PurgeDeletedSecretCommand(ITopazLogger logger) : Command<PurgeDelet
 {
     public override int Execute(CommandContext context, PurgeDeletedSecretCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(PurgeDeletedSecretCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -26,11 +24,11 @@ public class PurgeDeletedSecretCommand(ITopazLogger logger) : Command<PurgeDelet
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation($"Secret '{settings.Name}' purged successfully.");
+        AnsiConsole.WriteLine($"Secret '{settings.Name}' purged successfully.");
         return 0;
     }
 

@@ -17,7 +17,7 @@ public sealed class EnableSubscriptionCommand(Pipeline eventPipeline, ITopazLogg
 {
     public override int Execute(CommandContext context, EnableSubscriptionCommandSettings settings)
     {
-        logger.LogInformation("Enabling subscription...");
+        AnsiConsole.WriteLine("Enabling subscription...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
         var controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
@@ -25,11 +25,11 @@ public sealed class EnableSubscriptionCommand(Pipeline eventPipeline, ITopazLogg
 
         if (result.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Subscription '{settings.Id}' not found.");
+            Console.Error.WriteLine($"Subscription '{settings.Id}' not found.");
             return 1;
         }
 
-        logger.LogInformation($"Subscription '{settings.Id}' enabled successfully.");
+        AnsiConsole.WriteLine($"Subscription '{settings.Id}' enabled successfully.");
 
         return 0;
     }

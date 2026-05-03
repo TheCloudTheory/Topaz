@@ -18,8 +18,6 @@ public class UpdateSecretCommand(ITopazLogger logger) : Command<UpdateSecretComm
 {
     public override int Execute(CommandContext context, UpdateSecretCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(UpdateSecretCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -40,11 +38,11 @@ public class UpdateSecretCommand(ITopazLogger logger) : Command<UpdateSecretComm
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!.ToString());
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
         return 0;
     }
 

@@ -18,8 +18,6 @@ public sealed class RegenerateContainerRegistryCredentialCommand(Pipeline eventP
 {
     public override int Execute(CommandContext context, RegenerateCredentialCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(RegenerateContainerRegistryCredentialCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
@@ -32,20 +30,20 @@ public sealed class RegenerateContainerRegistryCredentialCommand(Pipeline eventP
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
         if (operation.Result == OperationResult.Failed)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
         var props = operation.Resource!.Properties;
-        logger.LogInformation($"Username:  {props.AdminUsername}");
-        logger.LogInformation($"Password:  {props.AdminPassword}");
-        logger.LogInformation($"Password2: {props.AdminPassword2 ?? props.AdminPassword}");
+        AnsiConsole.WriteLine($"Username:  {props.AdminUsername}");
+        AnsiConsole.WriteLine($"Password:  {props.AdminPassword}");
+        AnsiConsole.WriteLine($"Password2: {props.AdminPassword2 ?? props.AdminPassword}");
         return 0;
     }
 

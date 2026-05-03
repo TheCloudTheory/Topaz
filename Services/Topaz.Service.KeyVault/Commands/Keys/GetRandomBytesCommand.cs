@@ -15,19 +15,17 @@ public class GetRandomBytesCommand(ITopazLogger logger) : Command<GetRandomBytes
 {
     public override int Execute(CommandContext context, GetRandomBytesCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(GetRandomBytesCommand)}.{nameof(Execute)}.");
-
         var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
 
         var operation = dataPlane.GetRandomBytes(settings.Count);
 
         if (operation.Result == OperationResult.Failed)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!.ToString());
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
         return 0;
     }
 

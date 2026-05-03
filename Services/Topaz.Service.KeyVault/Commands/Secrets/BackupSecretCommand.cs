@@ -15,8 +15,6 @@ public class BackupSecretCommand(ITopazLogger logger) : Command<BackupSecretComm
 {
     public override int Execute(CommandContext context, BackupSecretCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(BackupSecretCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -26,11 +24,11 @@ public class BackupSecretCommand(ITopazLogger logger) : Command<BackupSecretComm
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!);
+        AnsiConsole.WriteLine(operation.Resource!);
         return 0;
     }
 

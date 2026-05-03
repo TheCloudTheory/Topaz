@@ -17,8 +17,6 @@ public class ListKeyVersionsCommand(ITopazLogger logger) : Command<ListKeyVersio
 {
     public override int Execute(CommandContext context, ListKeyVersionsCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(ListKeyVersionsCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -28,11 +26,11 @@ public class ListKeyVersionsCommand(ITopazLogger logger) : Command<ListKeyVersio
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
+        AnsiConsole.WriteLine(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
         return 0;
     }
 

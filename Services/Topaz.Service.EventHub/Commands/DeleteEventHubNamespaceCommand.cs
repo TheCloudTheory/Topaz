@@ -14,7 +14,7 @@ public class DeleteEventHubNamespaceCommand(ITopazLogger logger) : Command<Delet
 {
     public override int Execute(CommandContext context, DeleteEventHubNamespaceCommandSettings settings)
     {
-        logger.LogInformation("Deleting Azure Event Hub Namespace...");
+        AnsiConsole.WriteLine("Deleting Azure Event Hub Namespace...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -22,7 +22,7 @@ public class DeleteEventHubNamespaceCommand(ITopazLogger logger) : Command<Delet
         
         rp.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 
-        logger.LogInformation("Azure Event Hub Namespace deleted.");
+        AnsiConsole.WriteLine("Azure Event Hub Namespace deleted.");
 
         return 0;
     }

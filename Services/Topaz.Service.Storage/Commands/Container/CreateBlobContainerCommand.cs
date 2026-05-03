@@ -15,7 +15,7 @@ public sealed class CreateBlobContainerCommand(ITopazLogger logger) : Command<Cr
 {
     public override int Execute(CommandContext context, CreateBlobContainerCommandSettings settings)
     {
-        logger.LogInformation("Creating blob container...");
+        AnsiConsole.WriteLine("Creating blob container...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -25,7 +25,7 @@ public sealed class CreateBlobContainerCommand(ITopazLogger logger) : Command<Cr
         if (result.Result != OperationResult.Created)
             return 1;
 
-        logger.LogInformation("Container created.");
+        AnsiConsole.WriteLine("Container created.");
 
         return 0;
     }

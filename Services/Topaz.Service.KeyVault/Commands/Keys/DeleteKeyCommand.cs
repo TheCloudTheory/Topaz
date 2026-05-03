@@ -15,8 +15,6 @@ public class DeleteKeyCommand(ITopazLogger logger) : Command<DeleteKeyCommand.De
 {
     public override int Execute(CommandContext context, DeleteKeyCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(DeleteKeyCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -26,11 +24,11 @@ public class DeleteKeyCommand(ITopazLogger logger) : Command<DeleteKeyCommand.De
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation($"Key '{settings.Name}' deleted.");
+        AnsiConsole.WriteLine($"Key '{settings.Name}' deleted.");
         return 0;
     }
 

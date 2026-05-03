@@ -18,8 +18,6 @@ public class GetKeyAttestationCommand(ITopazLogger logger) : Command<GetKeyAttes
 {
     public override int Execute(CommandContext context, GetKeyAttestationCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(GetKeyAttestationCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -29,11 +27,11 @@ public class GetKeyAttestationCommand(ITopazLogger logger) : Command<GetKeyAttes
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Key '{settings.Name}' not found.");
+            Console.Error.WriteLine($"Key '{settings.Name}' not found.");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!.ToString());
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
         return 0;
     }
 

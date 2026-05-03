@@ -18,8 +18,6 @@ public sealed class ListContainerRegistriesCommand(Pipeline eventPipeline, ITopa
 {
     public override int Execute(CommandContext context, ListContainerRegistriesCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(ListContainerRegistriesCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
 
@@ -30,18 +28,18 @@ public sealed class ListContainerRegistriesCommand(Pipeline eventPipeline, ITopa
 
             if (operation.Result != OperationResult.Success)
             {
-                logger.LogError($"({operation.Code}) {operation.Reason}");
+                Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
                 return 1;
             }
 
             if (operation.Resource == null || operation.Resource.Length == 0)
             {
-                logger.LogInformation("No registries found in the resource group.");
+                AnsiConsole.WriteLine("No registries found in the resource group.");
                 return 0;
             }
 
             foreach (var registry in operation.Resource)
-                logger.LogInformation(registry.ToString());
+                AnsiConsole.WriteLine(registry.ToString());
         }
         else
         {
@@ -49,18 +47,18 @@ public sealed class ListContainerRegistriesCommand(Pipeline eventPipeline, ITopa
 
             if (operation.Result != OperationResult.Success)
             {
-                logger.LogError($"({operation.Code}) {operation.Reason}");
+                Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
                 return 1;
             }
 
             if (operation.Resource == null || operation.Resource.Length == 0)
             {
-                logger.LogInformation("No registries found in the subscription.");
+                AnsiConsole.WriteLine("No registries found in the subscription.");
                 return 0;
             }
 
             foreach (var registry in operation.Resource)
-                logger.LogInformation(registry.ToString());
+                AnsiConsole.WriteLine(registry.ToString());
         }
 
         return 0;

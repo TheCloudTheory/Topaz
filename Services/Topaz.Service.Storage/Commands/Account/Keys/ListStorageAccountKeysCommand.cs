@@ -16,7 +16,7 @@ public sealed class ListStorageAccountKeysCommand(ITopazLogger logger) : Command
 {
     public override int Execute(CommandContext context, ListStorageAccountKeysCommandSettings settings)
     {
-        logger.LogInformation("Fetching storage account keys...");
+        AnsiConsole.WriteLine("Fetching storage account keys...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -26,12 +26,12 @@ public sealed class ListStorageAccountKeysCommand(ITopazLogger logger) : Command
         if (storageAccount.Result == OperationResult.Failed || storageAccount.Result == OperationResult.Failed ||
             storageAccount.Resource == null)
         {
-            logger.LogError($"[{storageAccount.Result}] There was an error fetching storage account keys.");
+            Console.Error.WriteLine($"[{storageAccount.Result}] There was an error fetching storage account keys.");
             return 1;
         }
 
         var keys = new ListKeysResponse(storageAccount.Resource.Keys);
-        logger.LogInformation(keys.ToString());
+        AnsiConsole.WriteLine(keys.ToString());
 
         return 0;
     }

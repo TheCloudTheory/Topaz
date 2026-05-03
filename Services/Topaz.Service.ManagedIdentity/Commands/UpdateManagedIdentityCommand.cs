@@ -17,7 +17,7 @@ public sealed class UpdateManagedIdentityCommand(Pipeline eventPipeline, ITopazL
 {
     public override int Execute(CommandContext context, UpdateManagedIdentityCommandSettings settings)
     {
-        logger.LogInformation("Updating user-assigned managed identity...");
+        AnsiConsole.WriteLine("Updating user-assigned managed identity...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
@@ -27,7 +27,7 @@ public sealed class UpdateManagedIdentityCommand(Pipeline eventPipeline, ITopazL
         var existingIdentity = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
         if (existingIdentity.Resource == null)
         {
-            logger.LogError($"Managed identity '{settings.Name}' not found in resource group '{settings.ResourceGroup}'.");
+            Console.Error.WriteLine($"Managed identity '{settings.Name}' not found in resource group '{settings.ResourceGroup}'.");
             return 1;
         }
 
@@ -45,12 +45,12 @@ public sealed class UpdateManagedIdentityCommand(Pipeline eventPipeline, ITopazL
         
         if (operation.Result != OperationResult.Updated)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!.ToString());
-        logger.LogInformation("User-assigned managed identity updated.");
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        AnsiConsole.WriteLine("User-assigned managed identity updated.");
 
         return 0;
     }

@@ -17,8 +17,6 @@ public sealed class ListContainerRegistryUsagesCommand(Pipeline eventPipeline, I
 {
     public override int Execute(CommandContext context, ListUsagesCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(ListContainerRegistryUsagesCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
@@ -26,12 +24,12 @@ public sealed class ListContainerRegistryUsagesCommand(Pipeline eventPipeline, I
         var operation = controlPlane.ListUsages(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
         foreach (var usage in operation.Resource!)
-            logger.LogInformation($"{usage.Name}: {usage.CurrentValue} / {usage.Limit} {usage.Unit}");
+            AnsiConsole.WriteLine($"{usage.Name}: {usage.CurrentValue} / {usage.Limit} {usage.Unit}");
 
         return 0;
     }

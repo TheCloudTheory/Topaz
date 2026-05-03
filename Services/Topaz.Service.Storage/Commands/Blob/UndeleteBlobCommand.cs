@@ -15,7 +15,7 @@ public sealed class UndeleteBlobCommand(ITopazLogger logger) : Command<UndeleteB
 {
     public override int Execute(CommandContext context, UndeleteBlobCommandSettings settings)
     {
-        logger.LogInformation("Undeleting blob...");
+        AnsiConsole.WriteLine("Undeleting blob...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -28,11 +28,11 @@ public sealed class UndeleteBlobCommand(ITopazLogger logger) : Command<UndeleteB
 
         if (result.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Blob '{blobPath}' not found in soft-deleted state.");
+            Console.Error.WriteLine($"Blob '{blobPath}' not found in soft-deleted state.");
             return 1;
         }
 
-        logger.LogInformation("Blob undeleted successfully.");
+        AnsiConsole.WriteLine("Blob undeleted successfully.");
         return 0;
     }
 

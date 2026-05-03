@@ -20,15 +20,13 @@ public class CreateGroupDeploymentCommand(Pipeline eventPipeline, ITopazLogger l
 {
     public override int Execute(CommandContext context, CreateGroupDeploymentCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(CreateGroupDeploymentCommand)}.{nameof(Execute)}.");
-
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var resourceGroupControlPlane =
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
         var resourceGroupOperation = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
         if (resourceGroupOperation.Result == OperationResult.NotFound || resourceGroupOperation.Resource == null)
         {
-            logger.LogError(resourceGroupOperation.ToString());
+            Console.Error.WriteLine(resourceGroupOperation.ToString());
             return 1;
         }
 
@@ -40,7 +38,7 @@ public class CreateGroupDeploymentCommand(Pipeline eventPipeline, ITopazLogger l
             resourceGroupIdentifier, deploymentName, fakeRequest, null,
             resourceGroupOperation.Resource.Location!, settings.Mode.ToString());
 
-        logger.LogInformation(deployment.resource.ToString());
+        AnsiConsole.WriteLine(deployment.resource.ToString());
 
         return 0;
     }

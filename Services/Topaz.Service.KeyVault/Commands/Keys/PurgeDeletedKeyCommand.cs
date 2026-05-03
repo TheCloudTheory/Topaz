@@ -15,8 +15,6 @@ public class PurgeDeletedKeyCommand(ITopazLogger logger) : Command<PurgeDeletedK
 {
     public override int Execute(CommandContext context, PurgeDeletedKeyCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(PurgeDeletedKeyCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -26,11 +24,11 @@ public class PurgeDeletedKeyCommand(ITopazLogger logger) : Command<PurgeDeletedK
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation($"Key '{settings.Name}' purged successfully.");
+        AnsiConsole.WriteLine($"Key '{settings.Name}' purged successfully.");
         return 0;
     }
 

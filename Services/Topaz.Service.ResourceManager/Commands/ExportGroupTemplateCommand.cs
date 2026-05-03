@@ -37,7 +37,7 @@ public sealed class ExportGroupTemplateCommand(Pipeline eventPipeline, ITopazLog
         var rgOperation = rgControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
         if (rgOperation.Result == OperationResult.NotFound || rgOperation.Resource == null)
         {
-            logger.LogError($"Resource group '{settings.Name}' not found.");
+            Console.Error.WriteLine($"Resource group '{settings.Name}' not found.");
             return 1;
         }
 
@@ -54,7 +54,7 @@ public sealed class ExportGroupTemplateCommand(Pipeline eventPipeline, ITopazLog
         };
 
         var result = controlPlane.ExportTemplate(subscriptionIdentifier, resourceGroupIdentifier, request);
-        logger.LogInformation(result.ToString());
+        AnsiConsole.WriteLine(result.ToString());
 
         return 0;
     }

@@ -17,7 +17,7 @@ public sealed class CancelSubscriptionCommand(Pipeline eventPipeline, ITopazLogg
 {
     public override int Execute(CommandContext context, CancelSubscriptionCommandSettings settings)
     {
-        logger.LogInformation("Cancelling subscription...");
+        AnsiConsole.WriteLine("Cancelling subscription...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
         var controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
@@ -25,11 +25,11 @@ public sealed class CancelSubscriptionCommand(Pipeline eventPipeline, ITopazLogg
 
         if (result.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Subscription '{settings.Id}' not found.");
+            Console.Error.WriteLine($"Subscription '{settings.Id}' not found.");
             return 1;
         }
 
-        logger.LogInformation($"Subscription '{settings.Id}' cancelled successfully.");
+        AnsiConsole.WriteLine($"Subscription '{settings.Id}' cancelled successfully.");
 
         return 0;
     }

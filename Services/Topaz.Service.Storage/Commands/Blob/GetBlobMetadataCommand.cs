@@ -15,7 +15,7 @@ public sealed class GetBlobMetadataCommand(ITopazLogger logger) : Command<GetBlo
 {
     public override int Execute(CommandContext context, GetBlobMetadataCommandSettings settings)
     {
-        logger.LogInformation("Getting blob metadata...");
+        AnsiConsole.WriteLine("Getting blob metadata...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -27,7 +27,7 @@ public sealed class GetBlobMetadataCommand(ITopazLogger logger) : Command<GetBlo
 
         if (result.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Blob '{blobPath}' not found.");
+            Console.Error.WriteLine($"Blob '{blobPath}' not found.");
             return 1;
         }
 
@@ -35,12 +35,12 @@ public sealed class GetBlobMetadataCommand(ITopazLogger logger) : Command<GetBlo
 
         if (metadata.Count == 0)
         {
-            logger.LogInformation("No metadata set on this blob.");
+            AnsiConsole.WriteLine("No metadata set on this blob.");
             return 0;
         }
 
         foreach (var (key, value) in metadata)
-            logger.LogInformation($"{key}: {value}");
+            AnsiConsole.WriteLine($"{key}: {value}");
 
         return 0;
     }

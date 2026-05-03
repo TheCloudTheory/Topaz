@@ -23,7 +23,7 @@ public sealed class CheckExistenceResourceGroupCommand(Pipeline eventPipeline, I
         var operation = controlPlane.Get(new SubscriptionIdentifier(Guid.Parse(settings.SubscriptionId)), new ResourceGroupIdentifier(settings.Name!));
 
         var exists = operation.Result != OperationResult.NotFound;
-        logger.LogInformation(exists.ToString().ToLowerInvariant());
+        AnsiConsole.WriteLine(exists.ToString().ToLowerInvariant());
 
         return 0;
     }

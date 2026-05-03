@@ -16,7 +16,7 @@ public sealed class DeleteBlobContainerCommand(ITopazLogger logger)
 {
     public override int Execute(CommandContext context, DeleteBlobContainerCommandSettings settings)
     {
-        logger.LogInformation("Deleting blob container...");
+        AnsiConsole.WriteLine("Deleting blob container...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -27,7 +27,7 @@ public sealed class DeleteBlobContainerCommand(ITopazLogger logger)
         if (result.Result != OperationResult.Success)
             return 1;
 
-        logger.LogInformation($"Container '{settings.Name}' deleted.");
+        AnsiConsole.WriteLine($"Container '{settings.Name}' deleted.");
         return 0;
     }
 

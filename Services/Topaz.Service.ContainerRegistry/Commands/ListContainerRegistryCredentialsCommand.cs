@@ -17,8 +17,6 @@ public sealed class ListContainerRegistryCredentialsCommand(Pipeline eventPipeli
 {
     public override int Execute(CommandContext context, ListCredentialsCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(ListContainerRegistryCredentialsCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
@@ -26,20 +24,20 @@ public sealed class ListContainerRegistryCredentialsCommand(Pipeline eventPipeli
         var operation = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
         var props = operation.Resource!.Properties;
         if (!props.AdminUserEnabled)
         {
-            logger.LogError($"Admin user is disabled for registry '{settings.Name}'. Enable it first with 'acr update --admin-enabled'.");
+            Console.Error.WriteLine($"Admin user is disabled for registry '{settings.Name}'. Enable it first with 'acr update --admin-enabled'.");
             return 1;
         }
 
-        logger.LogInformation($"Username: {props.AdminUsername}");
-        logger.LogInformation($"Password:  {props.AdminPassword}");
-        logger.LogInformation($"Password2: {props.AdminPassword}");
+        AnsiConsole.WriteLine($"Username: {props.AdminUsername}");
+        AnsiConsole.WriteLine($"Password:  {props.AdminPassword}");
+        AnsiConsole.WriteLine($"Password2: {props.AdminPassword}");
         return 0;
     }
 

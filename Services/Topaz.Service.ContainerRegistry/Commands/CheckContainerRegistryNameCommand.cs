@@ -16,17 +16,15 @@ public sealed class CheckContainerRegistryNameCommand(Pipeline eventPipeline, IT
 {
     public override int Execute(CommandContext context, CheckNameCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(CheckContainerRegistryNameCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
 
         var isAvailable = controlPlane.IsNameAvailable(subscriptionIdentifier, null, settings.Name!);
 
         if (isAvailable)
-            logger.LogInformation($"Name '{settings.Name}' is available.");
+            AnsiConsole.WriteLine($"Name '{settings.Name}' is available.");
         else
-            logger.LogInformation($"Name '{settings.Name}' is not available.");
+            AnsiConsole.WriteLine($"Name '{settings.Name}' is not available.");
 
         return 0;
     }

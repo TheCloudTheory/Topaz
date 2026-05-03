@@ -27,7 +27,7 @@ public sealed class DeleteServiceBusNamespaceCommand(Pipeline eventPipeline, ITo
         _ = controlPlane.DeleteNamespace(subscriptionIdentifier, resourceGroupIdentifier,
             serviceBusNamespaceIdentifier);
 
-        logger.LogInformation("Service Bus namespace deleted.");
+        AnsiConsole.WriteLine("Service Bus namespace deleted.");
 
         return 0;
     }

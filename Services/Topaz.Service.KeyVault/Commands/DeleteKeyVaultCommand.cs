@@ -17,7 +17,7 @@ public sealed class DeleteKeyVaultCommand(Pipeline eventPipeline, ITopazLogger l
 {
     public override int Execute(CommandContext context, DeleteKeyVaultCommandSettings settings)
     {
-        logger.LogInformation("Deleting Azure Key Vault...");
+        AnsiConsole.WriteLine("Deleting Azure Key Vault...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
@@ -28,7 +28,7 @@ public sealed class DeleteKeyVaultCommand(Pipeline eventPipeline, ITopazLogger l
         
         controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 
-        logger.LogInformation("Azure Key Vault deleted.");
+        AnsiConsole.WriteLine("Azure Key Vault deleted.");
 
         return 0;
     }

@@ -17,15 +17,13 @@ public class ListKeysCommand(ITopazLogger logger) : Command<ListKeysCommand.List
 {
     public override int Execute(CommandContext context, ListKeysCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(ListKeysCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
 
         var operation = dataPlane.GetKeys(subscriptionIdentifier, resourceGroupIdentifier, settings.VaultName!);
 
-        logger.LogInformation(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
+        AnsiConsole.WriteLine(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
         return 0;
     }
 

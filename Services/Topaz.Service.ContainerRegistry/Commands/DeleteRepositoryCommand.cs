@@ -16,8 +16,6 @@ public sealed class DeleteRepositoryCommand(ITopazLogger logger)
 {
     public override int Execute(CommandContext context, DeleteRepositoryCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(DeleteRepositoryCommand)}.{nameof(Execute)}.");
-
         var dataPlane = AcrDataPlane();
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
@@ -30,11 +28,11 @@ public sealed class DeleteRepositoryCommand(ITopazLogger logger)
 
         if (!deleted)
         {
-            logger.LogError($"Repository '{settings.Name}' not found.");
+            Console.Error.WriteLine($"Repository '{settings.Name}' not found.");
             return 1;
         }
 
-        logger.LogInformation($"Repository '{settings.Name}' deleted.");
+        AnsiConsole.WriteLine($"Repository '{settings.Name}' deleted.");
         return 0;
     }
 

@@ -15,12 +15,12 @@ public class DeleteEventHubCommand(ITopazLogger logger) : Command<DeleteEventHub
     public override int Execute(CommandContext context, DeleteEventHubCommandSettings settings)
     {
         logger.LogDebug(nameof(DeleteEventHubCommand), nameof(Execute), "Executing {0}.{1}.", nameof(DeleteEventHubCommand), nameof(Execute));
-        logger.LogInformation($"Deleting {settings.Name} event hub...");
+        AnsiConsole.WriteLine($"Deleting {settings.Name} event hub...");
 
         var controlPlane = new EventHubServiceControlPlane(new EventHubResourceProvider(logger), logger);
         controlPlane.Delete(settings.Name!, EventHubNamespaceIdentifier.From(settings.NamespaceName!));
 
-        logger.LogInformation($"Event hub {settings.Name} deleted.");
+        AnsiConsole.WriteLine($"Event hub {settings.Name} deleted.");
 
         return 0;
     }

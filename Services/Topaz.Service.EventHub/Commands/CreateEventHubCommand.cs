@@ -28,7 +28,7 @@ public sealed class CreateEventHubCommand(Pipeline eventPipeline, ITopazLogger l
             resourceGroupIdentifier);
         if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {
-            logger.LogError($"Resource group {resourceGroupIdentifier} not found.");
+            Console.Error.WriteLine($"Resource group {resourceGroupIdentifier} not found.");
             return 1;
         }
         
@@ -37,7 +37,7 @@ public sealed class CreateEventHubCommand(Pipeline eventPipeline, ITopazLogger l
         var @namespace = controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
         if (@namespace.Result == OperationResult.NotFound || @namespace.Resource == null)
         {
-            logger.LogError($"Namespace {namespaceIdentifier} not found.");
+            Console.Error.WriteLine($"Namespace {namespaceIdentifier} not found.");
             return 1;
         }
 
@@ -45,11 +45,11 @@ public sealed class CreateEventHubCommand(Pipeline eventPipeline, ITopazLogger l
             resourceGroupIdentifier, namespaceIdentifier, settings.Name!, new CreateOrUpdateEventHubRequest());
         if (queue.Result == OperationResult.Failed || queue.Resource == null)
         {
-            logger.LogError($"There was a problem creating queue '{settings.Name!}'.");
+            Console.Error.WriteLine($"There was a problem creating queue '{settings.Name!}'.");
             return 1;
         }
         
-        logger.LogInformation(queue.Resource.ToString());
+        AnsiConsole.WriteLine(queue.Resource.ToString());
 
         return 0;
     }

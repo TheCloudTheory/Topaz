@@ -18,7 +18,7 @@ public sealed class DeleteResourceGroupCommand(Pipeline eventPipeline, ITopazLog
     public override int Execute(CommandContext context, DeleteResourceGroupCommandSettings settings)
     {
         logger.LogDebug(nameof(DeleteResourceGroupCommand), nameof(Execute), "Executing {0}.{1}.", nameof(DeleteResourceGroupCommand), nameof(Execute));
-        logger.LogInformation("Deleting resource group...");
+        AnsiConsole.WriteLine("Deleting resource group...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.Name!);
@@ -26,13 +26,13 @@ public sealed class DeleteResourceGroupCommand(Pipeline eventPipeline, ITopazLog
         var existingResource = controlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
         if (existingResource.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Resource group '{settings.Name}' could not be found.");
+            Console.Error.WriteLine($"Resource group '{settings.Name}' could not be found.");
             return 1;
         }
         
         _= controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier);
         
-        logger.LogInformation("Resource group deleted.");
+        AnsiConsole.WriteLine("Resource group deleted.");
 
         return 0;
     }

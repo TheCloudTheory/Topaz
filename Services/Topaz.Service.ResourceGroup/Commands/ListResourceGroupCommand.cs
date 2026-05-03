@@ -22,7 +22,7 @@ public sealed class ListResourceGroupCommand(Pipeline eventPipeline, ITopazLogge
         var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
         var operation = controlPlane.List(SubscriptionIdentifier.From(settings.SubscriptionId));
 
-        logger.LogInformation(JsonSerializer.Serialize(operation.resources, GlobalSettings.JsonOptionsCli));
+        AnsiConsole.WriteLine(JsonSerializer.Serialize(operation.resources, GlobalSettings.JsonOptionsCli));
 
         return 0;
     }

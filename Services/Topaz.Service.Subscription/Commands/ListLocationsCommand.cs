@@ -19,7 +19,7 @@ public sealed class ListLocationsCommand(Pipeline eventPipeline, ITopazLogger lo
 {
     public override int Execute(CommandContext context, ListLocationsCommandSettings settings)
     {
-        logger.LogInformation("Listing locations for subscription...");
+        AnsiConsole.WriteLine("Listing locations for subscription...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
         var controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
@@ -27,12 +27,12 @@ public sealed class ListLocationsCommand(Pipeline eventPipeline, ITopazLogger lo
 
         if (result.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Subscription '{settings.Id}' not found.");
+            Console.Error.WriteLine($"Subscription '{settings.Id}' not found.");
             return 1;
         }
 
         var response = new ListLocationsResponse(settings.Id!);
-        logger.LogInformation(JsonSerializer.Serialize(response, GlobalSettings.JsonOptionsCli));
+        AnsiConsole.WriteLine(JsonSerializer.Serialize(response, GlobalSettings.JsonOptionsCli));
 
         return 0;
     }

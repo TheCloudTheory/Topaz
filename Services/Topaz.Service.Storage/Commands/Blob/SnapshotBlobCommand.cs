@@ -15,7 +15,7 @@ public sealed class SnapshotBlobCommand(ITopazLogger logger) : Command<SnapshotB
 {
     public override int Execute(CommandContext context, SnapshotBlobCommandSettings settings)
     {
-        logger.LogInformation("Creating blob snapshot...");
+        AnsiConsole.WriteLine("Creating blob snapshot...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -28,17 +28,17 @@ public sealed class SnapshotBlobCommand(ITopazLogger logger) : Command<SnapshotB
 
         if (result.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Blob '{blobPath}' not found.");
+            Console.Error.WriteLine($"Blob '{blobPath}' not found.");
             return 1;
         }
 
         if (result.Result == OperationResult.PreconditionFailed)
         {
-            logger.LogError("Lease ID mismatch: the specified lease ID does not match the active lease.");
+            Console.Error.WriteLine("Lease ID mismatch: the specified lease ID does not match the active lease.");
             return 1;
         }
 
-        logger.LogInformation($"Snapshot created: {result.Resource}");
+        AnsiConsole.WriteLine($"Snapshot created: {result.Resource}");
         return 0;
     }
 

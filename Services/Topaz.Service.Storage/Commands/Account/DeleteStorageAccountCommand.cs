@@ -14,7 +14,7 @@ public class DeleteStorageAccountCommand(ITopazLogger logger) : Command<DeleteSt
 {
     public override int Execute(CommandContext context, DeleteStorageAccountCommandSettings settings)
     {
-        logger.LogInformation("Deleting storage account...");
+        AnsiConsole.WriteLine("Deleting storage account...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -22,7 +22,7 @@ public class DeleteStorageAccountCommand(ITopazLogger logger) : Command<DeleteSt
         
         rp.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
 
-        logger.LogInformation("Storage account deleted.");
+        AnsiConsole.WriteLine("Storage account deleted.");
 
         return 0;
     }

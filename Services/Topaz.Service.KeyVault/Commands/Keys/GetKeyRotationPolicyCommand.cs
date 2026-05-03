@@ -15,8 +15,6 @@ public class GetKeyRotationPolicyCommand(ITopazLogger logger) : Command<GetKeyRo
 {
     public override int Execute(CommandContext context, GetKeyRotationPolicyCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(GetKeyRotationPolicyCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -26,11 +24,11 @@ public class GetKeyRotationPolicyCommand(ITopazLogger logger) : Command<GetKeyRo
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!.ToString());
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
         return 0;
     }
 

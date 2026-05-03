@@ -16,7 +16,7 @@ public sealed class ShowStorageAccountConnectionStringCommand(ITopazLogger logge
 {
     public override int Execute(CommandContext context, ShowStorageAccountConnectionStringCommandSettings settings)
     {
-        logger.LogInformation("Listing storage account connection strings...");
+        AnsiConsole.WriteLine("Listing storage account connection strings...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -25,13 +25,13 @@ public sealed class ShowStorageAccountConnectionStringCommand(ITopazLogger logge
 
         if (operation.Result == OperationResult.Failed || operation.Resource == null)
         {
-            logger.LogError("Failed to get storage account connection string");
+            Console.Error.WriteLine("Failed to get storage account connection string");
             return 1;
         }
         
         var connectionString = new StorageAccountConnectionString(settings.Name!, operation.Resource.Keys[0].Value);
         
-        logger.LogInformation(connectionString.ToString());
+        AnsiConsole.WriteLine(connectionString.ToString());
 
         return 0;
     }

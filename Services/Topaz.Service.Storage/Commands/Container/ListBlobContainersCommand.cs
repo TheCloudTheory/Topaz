@@ -16,7 +16,7 @@ public sealed class ListBlobContainersCommand(ITopazLogger logger)
 {
     public override int Execute(CommandContext context, ListBlobContainersCommandSettings settings)
     {
-        logger.LogInformation("Listing blob containers...");
+        AnsiConsole.WriteLine("Listing blob containers...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -29,12 +29,12 @@ public sealed class ListBlobContainersCommand(ITopazLogger logger)
         var containers = result.Resource.GetContainers();
         if (containers.Length == 0)
         {
-            logger.LogInformation("No containers found.");
+            AnsiConsole.WriteLine("No containers found.");
             return 0;
         }
 
         foreach (var container in containers)
-            logger.LogInformation(container.Name ?? "(unnamed)");
+            AnsiConsole.WriteLine(container.Name ?? "(unnamed)");
 
         return 0;
     }

@@ -15,7 +15,7 @@ public sealed class ShowManagedIdentityCommand(Pipeline eventPipeline, ITopazLog
 {
     public override int Execute(CommandContext context, ShowManagedIdentityCommandSettings settings)
     {
-        logger.LogInformation("Retrieving user-assigned managed identity...");
+        AnsiConsole.WriteLine("Retrieving user-assigned managed identity...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
@@ -26,11 +26,11 @@ public sealed class ShowManagedIdentityCommand(Pipeline eventPipeline, ITopazLog
         
         if (operation.Resource == null)
         {
-            logger.LogError($"Managed identity '{settings.Name}' not found in resource group '{settings.ResourceGroup}'.");
+            Console.Error.WriteLine($"Managed identity '{settings.Name}' not found in resource group '{settings.ResourceGroup}'.");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource.ToString());
+        AnsiConsole.WriteLine(operation.Resource.ToString());
 
         return 0;
     }

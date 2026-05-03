@@ -18,8 +18,6 @@ public class GetKeyCommand(ITopazLogger logger) : Command<GetKeyCommand.GetKeyCo
 {
     public override int Execute(CommandContext context, GetKeyCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(GetKeyCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -29,11 +27,11 @@ public class GetKeyCommand(ITopazLogger logger) : Command<GetKeyCommand.GetKeyCo
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Key '{settings.Name}' not found.");
+            Console.Error.WriteLine($"Key '{settings.Name}' not found.");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!.ToString());
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
         return 0;
     }
 

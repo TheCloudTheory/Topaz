@@ -17,7 +17,7 @@ public sealed class ListStorageAccountsCommand(ITopazLogger logger)
 {
     public override int Execute(CommandContext context, ListStorageAccountsCommandSettings settings)
     {
-        logger.LogInformation("Listing storage accounts...");
+        AnsiConsole.WriteLine("Listing storage accounts...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var controlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
@@ -29,18 +29,18 @@ public sealed class ListStorageAccountsCommand(ITopazLogger logger)
 
             if (operation.Result != OperationResult.Success)
             {
-                logger.LogError($"({operation.Code}) {operation.Reason}");
+                Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
                 return 1;
             }
 
             if (operation.Resource == null || operation.Resource.Length == 0)
             {
-                logger.LogInformation("No storage accounts found in the resource group.");
+                AnsiConsole.WriteLine("No storage accounts found in the resource group.");
                 return 0;
             }
 
             foreach (var account in operation.Resource)
-                logger.LogInformation(account.ToString());
+                AnsiConsole.WriteLine(account.ToString());
         }
         else
         {
@@ -48,18 +48,18 @@ public sealed class ListStorageAccountsCommand(ITopazLogger logger)
 
             if (operation.Result != OperationResult.Success)
             {
-                logger.LogError($"({operation.Code}) {operation.Reason}");
+                Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
                 return 1;
             }
 
             if (operation.Resource == null || operation.Resource.Length == 0)
             {
-                logger.LogInformation("No storage accounts found in the subscription.");
+                AnsiConsole.WriteLine("No storage accounts found in the subscription.");
                 return 0;
             }
 
             foreach (var account in operation.Resource)
-                logger.LogInformation(account.ToString());
+                AnsiConsole.WriteLine(account.ToString());
         }
 
         return 0;

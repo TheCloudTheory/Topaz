@@ -17,7 +17,7 @@ public sealed class ListManagedIdentityCommand(Pipeline eventPipeline, ITopazLog
 {
     public override int Execute(CommandContext context, ListManagedIdentityCommandSettings settings)
     {
-        logger.LogInformation("Listing user-assigned managed identities...");
+        AnsiConsole.WriteLine("Listing user-assigned managed identities...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
@@ -29,19 +29,19 @@ public sealed class ListManagedIdentityCommand(Pipeline eventPipeline, ITopazLog
             
             if (operation.Result != OperationResult.Success)
             {
-                logger.LogError($"({operation.Code}) {operation.Reason}");
+                Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
                 return 1;
             }
 
             if (operation.Resource == null || operation.Resource.Length == 0)
             {
-                logger.LogInformation("No managed identities found in the resource group.");
+                AnsiConsole.WriteLine("No managed identities found in the resource group.");
                 return 0;
             }
 
             foreach (var identity in operation.Resource)
             {
-                logger.LogInformation(identity.ToString());
+                AnsiConsole.WriteLine(identity.ToString());
             }
         }
         else
@@ -50,19 +50,19 @@ public sealed class ListManagedIdentityCommand(Pipeline eventPipeline, ITopazLog
             
             if (operation.Result != OperationResult.Success)
             {
-                logger.LogError($"({operation.Code}) {operation.Reason}");
+                Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
                 return 1;
             }
 
             if (operation.Resource == null || operation.Resource.Length == 0)
             {
-                logger.LogInformation("No managed identities found in the subscription.");
+                AnsiConsole.WriteLine("No managed identities found in the subscription.");
                 return 0;
             }
 
             foreach (var identity in operation.Resource)
             {
-                logger.LogInformation(identity.ToString());
+                AnsiConsole.WriteLine(identity.ToString());
             }
         }
 

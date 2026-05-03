@@ -17,8 +17,6 @@ public class CheckKeyVaultNameCommand(Pipeline eventPipeline, ITopazLogger logge
 {
     public override int Execute(CommandContext context, CheckKeyVaultNameCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(CheckKeyVaultNameCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
             new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
@@ -26,7 +24,7 @@ public class CheckKeyVaultNameCommand(Pipeline eventPipeline, ITopazLogger logge
             SubscriptionControlPlane.New(eventPipeline, logger), logger);
         var kv = controlPlane.CheckName(subscriptionIdentifier, settings.Name!, settings.ResourceType);
 
-        logger.LogInformation(kv.response.ToString());
+        AnsiConsole.WriteLine(kv.response.ToString());
 
         return 0;
     }

@@ -16,8 +16,6 @@ public class GetDeletedKeyCommand(ITopazLogger logger) : Command<GetDeletedKeyCo
 {
     public override int Execute(CommandContext context, GetDeletedKeyCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(GetDeletedKeyCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -27,12 +25,12 @@ public class GetDeletedKeyCommand(ITopazLogger logger) : Command<GetDeletedKeyCo
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
         var content = GetDeletedKeyResponse.FromRecord(operation.Resource!, settings.VaultName!);
-        logger.LogInformation(content.ToString());
+        AnsiConsole.WriteLine(content.ToString());
         return 0;
     }
 

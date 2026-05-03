@@ -17,8 +17,6 @@ public class VerifyKeyCommand(ITopazLogger logger) : Command<VerifyKeyCommand.Ve
 {
     public override int Execute(CommandContext context, VerifyKeyCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(VerifyKeyCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -35,17 +33,17 @@ public class VerifyKeyCommand(ITopazLogger logger) : Command<VerifyKeyCommand.Ve
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
         if (operation.Result == OperationResult.Failed)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!.ToString());
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
         return 0;
     }
 

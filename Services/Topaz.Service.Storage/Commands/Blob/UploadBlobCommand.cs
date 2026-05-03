@@ -15,7 +15,7 @@ public sealed class UploadBlobCommand(ITopazLogger logger) : Command<UploadBlobC
 {
     public override int Execute(CommandContext context, UploadBlobCommandSettings settings)
     {
-        logger.LogInformation("Uploading blob...");
+        AnsiConsole.WriteLine("Uploading blob...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -28,9 +28,9 @@ public sealed class UploadBlobCommand(ITopazLogger logger) : Command<UploadBlobC
             blobPath, settings.BlobName ?? Path.GetFileName(settings.FilePath)!, stream);
 
         if (result.Result == OperationResult.Created)
-            logger.LogInformation($"Blob uploaded: {blobPath}");
+            AnsiConsole.WriteLine($"Blob uploaded: {blobPath}");
         else
-            logger.LogError($"Upload failed with status {result.Result}.");
+            Console.Error.WriteLine($"Upload failed with status {result.Result}.");
 
         return result.Result == OperationResult.Created ? 0 : 1;
     }

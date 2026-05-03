@@ -15,8 +15,6 @@ public class RecoverDeletedKeyCommand(ITopazLogger logger) : Command<RecoverDele
 {
     public override int Execute(CommandContext context, RecoverDeletedKeyCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(RecoverDeletedKeyCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -26,11 +24,11 @@ public class RecoverDeletedKeyCommand(ITopazLogger logger) : Command<RecoverDele
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation($"Key '{settings.Name}' recovered.");
+        AnsiConsole.WriteLine($"Key '{settings.Name}' recovered.");
         return 0;
     }
 

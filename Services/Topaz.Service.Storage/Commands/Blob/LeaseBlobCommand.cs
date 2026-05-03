@@ -15,7 +15,7 @@ public sealed class LeaseBlobCommand(ITopazLogger logger) : Command<LeaseBlobCom
 {
     public override int Execute(CommandContext context, LeaseBlobCommandSettings settings)
     {
-        logger.LogInformation($"Leasing blob (action: {settings.Action!})...");
+        AnsiConsole.WriteLine($"Leasing blob (action: {settings.Action!})...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -76,7 +76,7 @@ public sealed class LeaseBlobCommand(ITopazLogger logger) : Command<LeaseBlobCom
 
     private int LogLeaseId(string? leaseId)
     {
-        logger.LogInformation($"Lease ID: {leaseId}");
+        AnsiConsole.WriteLine($"Lease ID: {leaseId}");
         return 0;
     }
 
@@ -85,13 +85,13 @@ public sealed class LeaseBlobCommand(ITopazLogger logger) : Command<LeaseBlobCom
         var remaining = lease.BreakTime.HasValue
             ? (int)Math.Max(0, Math.Ceiling((lease.BreakTime.Value - DateTimeOffset.UtcNow).TotalSeconds))
             : 0;
-        logger.LogInformation($"Lease breaking — remaining seconds: {remaining}");
+        AnsiConsole.WriteLine($"Lease breaking — remaining seconds: {remaining}");
         return 0;
     }
 
     private int LogError(string message)
     {
-        logger.LogError(message);
+        Console.Error.WriteLine(message);
         return 1;
     }
 

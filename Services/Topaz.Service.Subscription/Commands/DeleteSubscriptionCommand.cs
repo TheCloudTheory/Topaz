@@ -15,13 +15,13 @@ public class DeleteSubscriptionCommand(Pipeline eventPipeline, ITopazLogger logg
 {
     public override int Execute(CommandContext context, DeleteSubscriptionCommandSettings settings)
     {
-        logger.LogInformation("Deleting subscription...");
+        AnsiConsole.WriteLine("Deleting subscription...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
         var controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
         controlPlane.Delete(subscriptionIdentifier);
 
-        logger.LogInformation("Subscription deleted.");
+        AnsiConsole.WriteLine("Subscription deleted.");
 
         return 0;
     }

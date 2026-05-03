@@ -15,7 +15,7 @@ public sealed class DeleteBlobCommand(ITopazLogger logger) : Command<DeleteBlobC
 {
     public override int Execute(CommandContext context, DeleteBlobCommandSettings settings)
     {
-        logger.LogInformation("Deleting blob...");
+        AnsiConsole.WriteLine("Deleting blob...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -27,11 +27,11 @@ public sealed class DeleteBlobCommand(ITopazLogger logger) : Command<DeleteBlobC
 
         if (result.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Blob '{blobPath}' not found.");
+            Console.Error.WriteLine($"Blob '{blobPath}' not found.");
             return 1;
         }
 
-        logger.LogInformation($"Blob '{blobPath}' deleted.");
+        AnsiConsole.WriteLine($"Blob '{blobPath}' deleted.");
         return 0;
     }
 

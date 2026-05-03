@@ -19,8 +19,6 @@ public sealed class UpdateContainerRegistryCommand(Pipeline eventPipeline, ITopa
 {
     public override int Execute(CommandContext context, UpdateContainerRegistryCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(UpdateContainerRegistryCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
@@ -28,7 +26,7 @@ public sealed class UpdateContainerRegistryCommand(Pipeline eventPipeline, ITopa
         var existing = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
         if (existing.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({existing.Code}) {existing.Reason}");
+            Console.Error.WriteLine($"({existing.Code}) {existing.Reason}");
             return 1;
         }
 
@@ -51,11 +49,11 @@ public sealed class UpdateContainerRegistryCommand(Pipeline eventPipeline, ITopa
         var operation = controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!, request);
         if (operation.Result is not (OperationResult.Created or OperationResult.Updated))
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!.ToString());
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
         return 0;
     }
 

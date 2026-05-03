@@ -15,7 +15,7 @@ public sealed class CopyBlobCommand(ITopazLogger logger) : Command<CopyBlobComma
 {
     public override int Execute(CommandContext context, CopyBlobCommandSettings settings)
     {
-        logger.LogInformation("Copying blob...");
+        AnsiConsole.WriteLine("Copying blob...");
 
         var srcSubscriptionId = SubscriptionIdentifier.From(settings.SourceSubscriptionId);
         var srcResourceGroupId = ResourceGroupIdentifier.From(settings.SourceResourceGroup);
@@ -34,17 +34,17 @@ public sealed class CopyBlobCommand(ITopazLogger logger) : Command<CopyBlobComma
 
         if (op.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Source blob '{srcBlobPath}' not found.");
+            Console.Error.WriteLine($"Source blob '{srcBlobPath}' not found.");
             return 1;
         }
 
         if (op.Result != OperationResult.Accepted)
         {
-            logger.LogError($"Copy failed with status {op.Result}.");
+            Console.Error.WriteLine($"Copy failed with status {op.Result}.");
             return 1;
         }
 
-        logger.LogInformation($"Blob copied: {srcBlobPath} -> {dstBlobPath} (copy-id: {op.Resource!.CopyId})");
+        AnsiConsole.WriteLine($"Blob copied: {srcBlobPath} -> {dstBlobPath} (copy-id: {op.Resource!.CopyId})");
         return 0;
     }
 

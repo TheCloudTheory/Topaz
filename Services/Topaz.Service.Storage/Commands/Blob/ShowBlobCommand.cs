@@ -15,7 +15,7 @@ public sealed class ShowBlobCommand(ITopazLogger logger) : Command<ShowBlobComma
 {
     public override int Execute(CommandContext context, ShowBlobCommandSettings settings)
     {
-        logger.LogInformation("Getting blob properties...");
+        AnsiConsole.WriteLine("Getting blob properties...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -27,25 +27,25 @@ public sealed class ShowBlobCommand(ITopazLogger logger) : Command<ShowBlobComma
 
         if (result.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Blob '{blobPath}' not found.");
+            Console.Error.WriteLine($"Blob '{blobPath}' not found.");
             return 1;
         }
 
         var props = result.Resource!;
-        logger.LogInformation($"Name:          {props.Name}");
-        logger.LogInformation($"ETag:          {props.ETag}");
-        logger.LogInformation($"Last Modified: {props.LastModified}");
-        logger.LogInformation($"Date Uploaded: {props.DateUploaded}");
-        logger.LogInformation($"Content Type:  {props.ContentType}");
-        logger.LogInformation($"Content Length:{props.ContentLength}");
+        AnsiConsole.WriteLine($"Name:          {props.Name}");
+        AnsiConsole.WriteLine($"ETag:          {props.ETag}");
+        AnsiConsole.WriteLine($"Last Modified: {props.LastModified}");
+        AnsiConsole.WriteLine($"Date Uploaded: {props.DateUploaded}");
+        AnsiConsole.WriteLine($"Content Type:  {props.ContentType}");
+        AnsiConsole.WriteLine($"Content Length:{props.ContentLength}");
         if (!string.IsNullOrEmpty(props.ContentEncoding))
-            logger.LogInformation($"Content Encoding:    {props.ContentEncoding}");
+            AnsiConsole.WriteLine($"Content Encoding:    {props.ContentEncoding}");
         if (!string.IsNullOrEmpty(props.ContentLanguage))
-            logger.LogInformation($"Content Language:    {props.ContentLanguage}");
+            AnsiConsole.WriteLine($"Content Language:    {props.ContentLanguage}");
         if (!string.IsNullOrEmpty(props.CacheControl))
-            logger.LogInformation($"Cache Control:       {props.CacheControl}");
+            AnsiConsole.WriteLine($"Cache Control:       {props.CacheControl}");
         if (!string.IsNullOrEmpty(props.ContentDisposition))
-            logger.LogInformation($"Content Disposition: {props.ContentDisposition}");
+            AnsiConsole.WriteLine($"Content Disposition: {props.ContentDisposition}");
 
         return 0;
     }

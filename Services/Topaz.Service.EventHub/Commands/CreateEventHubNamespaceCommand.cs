@@ -30,7 +30,7 @@ public sealed class CreateEventHubNamespaceCommand(Pipeline eventPipeline, ITopa
                 resourceGroupIdentifier);
         if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {
-            logger.LogError($"ResourceGroup {resourceGroupIdentifier} not found.");
+            Console.Error.WriteLine($"ResourceGroup {resourceGroupIdentifier} not found.");
             return 1;
         }
 
@@ -39,7 +39,7 @@ public sealed class CreateEventHubNamespaceCommand(Pipeline eventPipeline, ITopa
         var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.Resource.GetSubscription(), resourceGroupIdentifier,
             settings.Location!, EventHubNamespaceIdentifier.From(settings.Name!), request);
 
-        logger.LogInformation(ns.ToString());
+        AnsiConsole.WriteLine(ns.ToString());
 
         return 0;
     }

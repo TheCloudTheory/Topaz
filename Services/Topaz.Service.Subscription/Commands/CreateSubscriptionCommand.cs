@@ -16,13 +16,13 @@ public sealed class CreateSubscriptionCommand(Pipeline eventPipeline, ITopazLogg
 {
     public override int Execute(CommandContext context, CreateSubscriptionCommandSettings settings)
     {
-        logger.LogInformation("Creating subscription...");
+        AnsiConsole.WriteLine("Creating subscription...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
         var controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
         var sa = controlPlane.Create(subscriptionIdentifier, settings.Name!, settings.Tags);
 
-        logger.LogInformation(sa.ToString());
+        AnsiConsole.WriteLine(sa.ToString());
 
         return 0;
     }

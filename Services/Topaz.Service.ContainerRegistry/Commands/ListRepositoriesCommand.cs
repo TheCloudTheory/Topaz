@@ -16,8 +16,6 @@ public sealed class ListRepositoriesCommand(ITopazLogger logger)
 {
     public override int Execute(CommandContext context, ListRepositoriesCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(ListRepositoriesCommand)}.{nameof(Execute)}.");
-
         var dataPlane = AcrDataPlane();
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
@@ -26,12 +24,12 @@ public sealed class ListRepositoriesCommand(ITopazLogger logger)
 
         if (repositories.Count == 0)
         {
-            logger.LogInformation("No repositories found.");
+            AnsiConsole.WriteLine("No repositories found.");
             return 0;
         }
 
         foreach (var repository in repositories)
-            logger.LogInformation(repository);
+            AnsiConsole.WriteLine(repository);
 
         return 0;
     }

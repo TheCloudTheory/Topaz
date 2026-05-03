@@ -105,7 +105,7 @@ internal class Program
 
     private static void RegisterDependencies(ServiceCollection registrations)
     {
-        registrations.AddSingleton<ITopazLogger, PrettyTopazLogger>();
+        registrations.AddSingleton<ITopazLogger, SilentTopazLogger>();
         registrations.AddSingleton<Pipeline, Pipeline>();
 
         var handler = new HttpClientHandler

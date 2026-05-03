@@ -36,11 +36,11 @@ public sealed class UpdateResourceGroupCommand(Pipeline eventPipeline, ITopazLog
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError(operation.ToString());
+            Console.Error.WriteLine(operation.ToString());
             return 1;
         }
 
-        logger.LogInformation(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
+        AnsiConsole.WriteLine(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
 
         return 0;
     }

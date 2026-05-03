@@ -16,7 +16,7 @@ public sealed class CheckStorageAccountNameAvailabilityCommand(ITopazLogger logg
 {
     public override int Execute(CommandContext context, CheckStorageAccountNameAvailabilityCommandSettings settings)
     {
-        logger.LogInformation("Checking storage account name availability...");
+        AnsiConsole.WriteLine("Checking storage account name availability...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var controlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
@@ -24,11 +24,11 @@ public sealed class CheckStorageAccountNameAvailabilityCommand(ITopazLogger logg
 
         if (operation.Result == OperationResult.Failed || operation.Resource == null)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource.ToString());
+        AnsiConsole.WriteLine(operation.Resource.ToString());
         return 0;
     }
 

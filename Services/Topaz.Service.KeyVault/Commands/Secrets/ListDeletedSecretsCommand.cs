@@ -16,15 +16,13 @@ public class ListDeletedSecretsCommand(ITopazLogger logger) : Command<ListDelete
 {
     public override int Execute(CommandContext context, ListDeletedSecretsCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(ListDeletedSecretsCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
 
         var operation = dataPlane.GetDeletedSecrets(subscriptionIdentifier, resourceGroupIdentifier, settings.VaultName!);
 
-        logger.LogInformation(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
+        AnsiConsole.WriteLine(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
         return 0;
     }
 

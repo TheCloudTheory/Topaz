@@ -26,11 +26,11 @@ public sealed class CreateResourceGroupCommand(Pipeline eventPipeline, ITopazLog
 
         if (operation.Result != OperationResult.Created)
         {
-            logger.LogError(operation.ToString());
+            Console.Error.WriteLine(operation.ToString());
             return 1;
         }
         
-        logger.LogInformation(operation.Resource!.ToString());
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
 
         return 0;
     }

@@ -20,8 +20,6 @@ public class ImportKeyCommand(ITopazLogger logger) : Command<ImportKeyCommand.Im
 {
     public override int Execute(CommandContext context, ImportKeyCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(ImportKeyCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -35,11 +33,11 @@ public class ImportKeyCommand(ITopazLogger logger) : Command<ImportKeyCommand.Im
 
         if (operation.Result == OperationResult.Failed)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!.ToString());
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
         return 0;
     }
 

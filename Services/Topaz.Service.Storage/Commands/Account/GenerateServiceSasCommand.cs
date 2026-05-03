@@ -17,7 +17,7 @@ public sealed class GenerateServiceSasCommand(ITopazLogger logger)
 {
     public override int Execute(CommandContext context, GenerateServiceSasCommandSettings settings)
     {
-        logger.LogInformation("Generating service SAS token...");
+        AnsiConsole.WriteLine("Generating service SAS token...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -40,17 +40,17 @@ public sealed class GenerateServiceSasCommand(ITopazLogger logger)
 
         if (result.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Storage account '{settings.AccountName}' not found.");
+            Console.Error.WriteLine($"Storage account '{settings.AccountName}' not found.");
             return 1;
         }
 
         if (result.Result == OperationResult.Failed || result.Resource == null)
         {
-            logger.LogError("There was an error generating the service SAS token.");
+            Console.Error.WriteLine("There was an error generating the service SAS token.");
             return 1;
         }
 
-        logger.LogInformation(result.Resource.ToString());
+        AnsiConsole.WriteLine(result.Resource.ToString());
 
         return 0;
     }

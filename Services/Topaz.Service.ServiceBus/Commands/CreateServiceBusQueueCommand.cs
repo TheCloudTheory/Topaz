@@ -28,7 +28,7 @@ public class CreateServiceBusQueueCommand(Pipeline eventPipeline, ITopazLogger l
         var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
         if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {
-            logger.LogError($"Resource group {resourceGroupIdentifier} not found.");
+            Console.Error.WriteLine($"Resource group {resourceGroupIdentifier} not found.");
             return 1;
         }
 
@@ -37,18 +37,18 @@ public class CreateServiceBusQueueCommand(Pipeline eventPipeline, ITopazLogger l
         var @namespace = controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
         if (@namespace.Result == OperationResult.NotFound || @namespace.Resource == null)
         {
-            logger.LogError($"Namespace {namespaceIdentifier} not found.");
+            Console.Error.WriteLine($"Namespace {namespaceIdentifier} not found.");
             return 1;
         }
         
         var queue = controlPlane.CreateOrUpdateQueue(resourceGroup.Resource.GetSubscription(), resourceGroupIdentifier, namespaceIdentifier, settings.Name!, new CreateOrUpdateServiceBusQueueRequest());
         if (queue.Result == OperationResult.Failed || queue.Resource == null)
         {
-            logger.LogError($"There was a problem creating queue '{settings.Name!}'.");
+            Console.Error.WriteLine($"There was a problem creating queue '{settings.Name!}'.");
             return 1;
         }
         
-        logger.LogInformation(queue.Resource.ToString());
+        AnsiConsole.WriteLine(queue.Resource.ToString());
 
         return 0;
     }

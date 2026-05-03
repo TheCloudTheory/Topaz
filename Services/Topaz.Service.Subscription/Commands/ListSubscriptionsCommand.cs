@@ -1,5 +1,6 @@
 using System.Text.Json;
 using JetBrains.Annotations;
+using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
@@ -15,18 +16,16 @@ public sealed class ListSubscriptionsCommand(Pipeline eventPipeline, ITopazLogge
 {
     public override int Execute(CommandContext context)
     {
-        logger.LogInformation("Listing available subscriptions...");
-
         var controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
         var operation = controlPlane.List();
 
         if (operation.Result == OperationResult.Failed)
         {
-            logger.LogError("Failed to list subscriptions.");
+            AnsiConsole.MarkupLine("[red]Failed to list subscriptions.[/]");
             return 1;
         }
 
-        logger.LogInformation(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
+        AnsiConsole.WriteLine(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
 
         return 0;
     }

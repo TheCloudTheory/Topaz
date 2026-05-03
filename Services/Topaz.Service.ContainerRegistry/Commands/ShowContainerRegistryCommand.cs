@@ -17,8 +17,6 @@ public sealed class ShowContainerRegistryCommand(Pipeline eventPipeline, ITopazL
 {
     public override int Execute(CommandContext context, ShowContainerRegistryCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(ShowContainerRegistryCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
@@ -26,11 +24,11 @@ public sealed class ShowContainerRegistryCommand(Pipeline eventPipeline, ITopazL
         var operation = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation(operation.Resource!.ToString());
+        AnsiConsole.WriteLine(operation.Resource!.ToString());
         return 0;
     }
 

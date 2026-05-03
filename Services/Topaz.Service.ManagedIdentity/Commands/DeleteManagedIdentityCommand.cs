@@ -16,7 +16,7 @@ public sealed class DeleteManagedIdentityCommand(Pipeline eventPipeline, ITopazL
 {
     public override int Execute(CommandContext context, DeleteManagedIdentityCommandSettings settings)
     {
-        logger.LogInformation("Deleting user-assigned managed identity...");
+        AnsiConsole.WriteLine("Deleting user-assigned managed identity...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
@@ -27,11 +27,11 @@ public sealed class DeleteManagedIdentityCommand(Pipeline eventPipeline, ITopazL
         
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation("User-assigned managed identity deleted.");
+        AnsiConsole.WriteLine("User-assigned managed identity deleted.");
 
         return 0;
     }

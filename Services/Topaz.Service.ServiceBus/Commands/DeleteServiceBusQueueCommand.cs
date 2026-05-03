@@ -31,7 +31,7 @@ public sealed class DeleteServiceBusQueueCommand(Pipeline eventPipeline, ITopazL
             resourceGroupIdentifier);
         if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
         {
-            logger.LogError($"Resource group {resourceGroupIdentifier} not found.");
+            Console.Error.WriteLine($"Resource group {resourceGroupIdentifier} not found.");
             return 1;
         }
 
@@ -41,7 +41,7 @@ public sealed class DeleteServiceBusQueueCommand(Pipeline eventPipeline, ITopazL
             controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
         if (@namespace.Result == OperationResult.NotFound || @namespace.Resource == null)
         {
-            logger.LogError($"Namespace {namespaceIdentifier} not found.");
+            Console.Error.WriteLine($"Namespace {namespaceIdentifier} not found.");
             return 1;
         }
 
@@ -49,11 +49,11 @@ public sealed class DeleteServiceBusQueueCommand(Pipeline eventPipeline, ITopazL
             namespaceIdentifier, settings.Name!);
         if (deleteOperation.Result == OperationResult.Failed)
         {
-            logger.LogError($"There was a problem deleting queue '{settings.Name!}'.");
+            Console.Error.WriteLine($"There was a problem deleting queue '{settings.Name!}'.");
             return 1;
         }
 
-        logger.LogInformation($"Queue '{settings.Name}' deleted.");
+        AnsiConsole.WriteLine($"Queue '{settings.Name}' deleted.");
 
         return 0;
     }

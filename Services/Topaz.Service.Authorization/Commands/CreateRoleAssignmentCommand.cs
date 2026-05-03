@@ -56,12 +56,11 @@ public sealed class CreateRoleAssignmentCommand(Pipeline eventPipeline, ITopazLo
 
         if (operation.Result != OperationResult.Created)
         {
-            logger.LogError(nameof(CreateRoleAssignmentCommand), nameof(Execute),
-                $"Failed to create role assignment: {operation.Reason}");
+            Console.Error.WriteLine($"Failed to create role assignment: {operation.Reason}");
             return 1;
         }
         
-        logger.LogInformation(operation.Result.ToString());
+        AnsiConsole.WriteLine(operation.Result.ToString());
         return 0;
     }
     

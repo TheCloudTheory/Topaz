@@ -15,8 +15,6 @@ public class RecoverDeletedSecretCommand(ITopazLogger logger) : Command<RecoverD
 {
     public override int Execute(CommandContext context, RecoverDeletedSecretCommandSettings settings)
     {
-        logger.LogInformation($"Executing {nameof(RecoverDeletedSecretCommand)}.{nameof(Execute)}.");
-
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
         var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
@@ -26,11 +24,11 @@ public class RecoverDeletedSecretCommand(ITopazLogger logger) : Command<RecoverD
 
         if (operation.Result == OperationResult.NotFound)
         {
-            logger.LogError($"({operation.Code}) {operation.Reason}");
+            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
             return 1;
         }
 
-        logger.LogInformation($"Secret '{settings.Name}' recovered successfully.");
+        AnsiConsole.WriteLine($"Secret '{settings.Name}' recovered successfully.");
         return 0;
     }
 

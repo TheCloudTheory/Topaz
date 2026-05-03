@@ -15,7 +15,7 @@ public sealed class DownloadBlobCommand(ITopazLogger logger) : Command<DownloadB
 {
     public override int Execute(CommandContext context, DownloadBlobCommandSettings settings)
     {
-        logger.LogInformation("Downloading blob...");
+        AnsiConsole.WriteLine("Downloading blob...");
 
         var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
@@ -26,13 +26,13 @@ public sealed class DownloadBlobCommand(ITopazLogger logger) : Command<DownloadB
 
         if (result.Result == OperationResult.NotFound)
         {
-            logger.LogError($"Blob '{blobPath}' not found.");
+            Console.Error.WriteLine($"Blob '{blobPath}' not found.");
             return 1;
         }
 
         var destination = settings.Destination ?? settings.BlobName!;
         File.WriteAllText(destination, result.Resource);
-        logger.LogInformation($"Blob downloaded to: {destination}");
+        AnsiConsole.WriteLine($"Blob downloaded to: {destination}");
 
         return 0;
     }
