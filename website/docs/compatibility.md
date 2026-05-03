@@ -43,8 +43,8 @@ This page lists the tool and SDK versions that Topaz is tested against in CI. Us
 
 | Component | Requirement |
 |---|---|
-| .NET | 8.0 |
-| Docker base image | `mcr.microsoft.com/dotnet/runtime-deps:8.0-noble-chiseled` |
+| .NET | 10.0 |
+| Docker base image | `mcr.microsoft.com/dotnet/runtime-deps:10.0-noble-chiseled` |
 
 ## Azure CLI
 

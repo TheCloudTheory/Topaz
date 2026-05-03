@@ -3,7 +3,7 @@ WORKDIR /app
 
 COPY ./publish .
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-noble-chiseled AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled AS final
 WORKDIR /app
 
 ENV TOPAZ_CONTAINERIZED=true

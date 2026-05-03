@@ -32,7 +32,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           # Optional extension: replace with a matrix strategy to test multiple SDK versions.
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
       # 1) Map Azure SDK hostnames to localhost in CI.
       - name: Configure DNS

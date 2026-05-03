@@ -17,7 +17,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 10.0.x
     - name: Pack NuGet package
       run: dotnet pack ./Topaz.ResourceManager/Topaz.ResourceManager.csproj -c Release --include-symbols -o ./publish
     - name: Push NuGet package

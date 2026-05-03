@@ -8,7 +8,7 @@ RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then chmod +x topaz-mcp-linux-x64 
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then chmod +x topaz-mcp-linux-arm64 && mv topaz-mcp-linux-arm64 topaz-mcp && rm -f topaz-mcp-linux-x64; else echo "Not Arm64"; fi
 RUN mkdir -p .topaz && chmod -R 777 .topaz
 
-FROM mcr.microsoft.com/dotnet/runtime-deps:8.0-noble-chiseled AS final
+FROM mcr.microsoft.com/dotnet/runtime-deps:10.0-noble-chiseled AS final
 WORKDIR /app
 
 COPY --from=base /app .
