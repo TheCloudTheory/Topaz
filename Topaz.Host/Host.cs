@@ -30,6 +30,7 @@ using Topaz.Service.Storage.Services;
 using Topaz.Service.Subscription;
 using Topaz.Service.VirtualMachine;
 using Topaz.Service.VirtualNetwork;
+using Spectre.Console;
 using Topaz.Shared;
 
 namespace Topaz.Host;
@@ -71,12 +72,16 @@ public class Host
         Bootstrap();
         Console.Title = "--- Topaz.Host ---";
 
-        Console.WriteLine("");
-        Console.WriteLine("==============================");
-        Console.WriteLine("Topaz.Host - Welcome!");
-        Console.WriteLine($"Version: {ThisAssembly.AssemblyInformationalVersion}");
-        Console.WriteLine("==============================");
-        Console.WriteLine("");
+        Console.WriteLine();
+        Console.WriteLine("  ████████╗ ██████╗ ██████╗  █████╗ ███████╗");
+        Console.WriteLine("     ██╔══╝██╔═══██╗██╔══██╗██╔══██╗╚══███╔╝");
+        Console.WriteLine("     ██║   ██║   ██║██████╔╝███████║  ███╔╝ ");
+        Console.WriteLine("     ██║   ██║   ██║██╔═══╝ ██╔══██║ ███╔╝  ");
+        Console.WriteLine("     ██║   ╚██████╔╝██║     ██║  ██║███████╗");
+        Console.WriteLine("     ╚═╝    ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚══════╝");
+        Console.WriteLine();
+        Console.WriteLine($"  Azure emulator  •  v{ThisAssembly.AssemblyInformationalVersion}");
+        Console.WriteLine();
 
         GlobalDnsEntries.ConfigureLogger(_logger);
 
@@ -109,22 +114,12 @@ public class Host
 
         _logger.ConfigureIdFactory(idFactory);
 
-        Console.WriteLine("Bootstrapping services...");
         foreach (var service in services)
         {
             service.Bootstrap();
         }
 
-        Console.WriteLine();
-        Console.WriteLine("Enabled services:");
-
-        foreach (var service in services)
-        {
-            var uniqueEndpoints = service.Endpoints
-                .Select(e => $"{e.PortsAndProtocol.Protocol} -> {string.Join(", ", e.PortsAndProtocol.Ports)}")
-                .Distinct();
-            Console.WriteLine($"- {service.Name}: {string.Join(", ", uniqueEndpoints)}");
-        }
+        PrintServicesTable(services);
 
         if (_options.DefaultSubscription.HasValue)
         {
@@ -155,7 +150,7 @@ public class Host
         CreateAmqpListenersForAmpqEndpoints([.. amqpEndpoints]);
 
         Console.WriteLine();
-        Console.WriteLine("Topaz.Host listening to incoming requests...");
+        AnsiConsole.MarkupLine("  [green]✓[/] Topaz is ready — listening for requests");
         Console.WriteLine();
 
         // Wait for cancellation
@@ -245,7 +240,7 @@ public class Host
             try
             {
                 listener.Open();
-                _logger.LogInformation($"AMQP listener started: {listenerAddress}");
+                _logger.LogDebug(nameof(Host), nameof(CreateAmqpListener), $"AMQP listener started: {listenerAddress}");
             }
             catch (Exception ex)
             {
@@ -297,7 +292,7 @@ public class Host
                                     continue;
                                 }
 
-                                _logger.LogInformation(
+                                _logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),
                                     $"Topaz will listen to HTTP requests on: {_topazIpAddress}:{port}");
                                 hostOptions.Listen(IPAddress.Parse(_topazIpAddress), port);
 
@@ -308,7 +303,8 @@ public class Host
                         case Protocol.Https:
                             foreach (var port in httpEndpoint.PortsAndProtocol.Ports)
                             {
-                                _logger.LogInformation($"Starting HTTPS endpoint: {_topazIpAddress}:{port}");
+                                _logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),
+                                    $"Starting HTTPS endpoint: {_topazIpAddress}:{port}");
 
                                 if (usedPorts.Contains(port))
                                 {
@@ -333,12 +329,12 @@ public class Host
 
                                 hostOptions.Listen(IPAddress.Parse(_topazIpAddress), port, listenOptions =>
                                 {
-                                    _logger.LogInformation(
+                                    _logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),
                                         $"Topaz will listen to HTTPS requests on: {_topazIpAddress}:{port}");
 
                                     if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                                     {
-                                        _logger.LogInformation(
+                                        _logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),
                                             $"Using the provided PFX certificate for listening to requests on [{port}, {httpEndpoint.PortsAndProtocol.Protocol}].");
                                         listenOptions.UseHttps("topaz.pfx", "qwerty");
                                     }
@@ -393,7 +389,8 @@ public class Host
         if (!string.IsNullOrEmpty(_options.CertificateFile) &&
             !string.IsNullOrEmpty(_options.CertificateKey))
         {
-            _logger.LogInformation("Loading certificate for AMQP TLS from provided files.");
+            _logger.LogDebug(nameof(Host), nameof(LoadCertificate),
+                "Loading certificate for AMQP TLS from provided files.");
             certPem = File.ReadAllText(_options.CertificateFile);
             keyPem = File.ReadAllText(_options.CertificateKey);
         }
@@ -406,6 +403,32 @@ public class Host
         return X509Certificate2.CreateFromPem(certPem, keyPem);
     }
 
+    private static void PrintServicesTable(IServiceDefinition[] services)
+    {
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .AddColumn("[bold]Service[/]")
+            .AddColumn("[bold]Endpoints[/]");
+
+        foreach (var s in services)
+        {
+            var grouped = s.Endpoints
+                .GroupBy(e => e.PortsAndProtocol.Protocol)
+                .Select(g =>
+                {
+                    var ports = g.SelectMany(e => e.PortsAndProtocol.Ports)
+                        .Distinct()
+                        .OrderBy(p => p);
+                    return $"{g.Key}: {string.Join(", ", ports)}";
+                });
+            table.AddRow(s.Name, string.Join("  |  ", grouped));
+        }
+
+        AnsiConsole.WriteLine();
+        AnsiConsole.Write(table);
+        AnsiConsole.WriteLine();
+    }
+
     private void ConfigurePemCertificate(ListenOptions listenOptions)
     {
         string? certPem;
@@ -414,7 +437,8 @@ public class Host
         if (!string.IsNullOrEmpty(_options.CertificateFile) &&
             !string.IsNullOrEmpty(_options.CertificateKey))
         {
-            _logger.LogInformation("Using provided certificate file instead of the default one.");
+            _logger.LogDebug(nameof(Host), nameof(LoadCertificate),
+                "Using provided certificate file instead of the default one.");
 
             certPem = File.ReadAllText(_options.CertificateFile);
             keyPem = File.ReadAllText(_options.CertificateKey);
