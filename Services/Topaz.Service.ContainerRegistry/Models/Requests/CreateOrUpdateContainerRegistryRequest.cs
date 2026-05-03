@@ -11,6 +11,25 @@ internal sealed class CreateOrUpdateContainerRegistryRequest
     public ContainerRegistryProperties? Properties { get; init; }
     public ResourceIdentityRequest? Identity { get; init; }
 
+    internal static CreateOrUpdateContainerRegistryRequest FromResource(ContainerRegistryResource registry) =>
+        new()
+        {
+            Location = registry.Location,
+            Tags = registry.Tags,
+            Sku = new ContainerRegistrySku { Name = registry.Sku?.Name ?? "Basic" },
+            Properties = new ContainerRegistryProperties
+            {
+                AdminUserEnabled = registry.Properties.AdminUserEnabled,
+                DataEndpointEnabled = registry.Properties.DataEndpointEnabled,
+                PublicNetworkAccess = registry.Properties.PublicNetworkAccess,
+                ZoneRedundancy = registry.Properties.ZoneRedundancy,
+                NetworkRuleBypassOptions = registry.Properties.NetworkRuleBypassOptions
+            },
+            Identity = registry.Identity != null
+                ? new ResourceIdentityRequest { Type = registry.Identity.Type }
+                : null
+        };
+
     [UsedImplicitly]
     internal sealed class ContainerRegistrySku
     {

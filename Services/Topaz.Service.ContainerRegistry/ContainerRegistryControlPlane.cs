@@ -44,26 +44,7 @@ internal sealed class ContainerRegistryControlPlane(
         try
         {
             var result = CreateOrUpdate(registry.GetSubscription(), registry.GetResourceGroup(), registry.Name,
-                new CreateOrUpdateContainerRegistryRequest
-                {
-                    Location = registry.Location,
-                    Tags = registry.Tags,
-                    Sku = new CreateOrUpdateContainerRegistryRequest.ContainerRegistrySku
-                    {
-                        Name = registry.Sku?.Name ?? "Basic"
-                    },
-                    Properties = new CreateOrUpdateContainerRegistryRequest.ContainerRegistryProperties
-                    {
-                        AdminUserEnabled = registry.Properties.AdminUserEnabled,
-                        DataEndpointEnabled = registry.Properties.DataEndpointEnabled,
-                        PublicNetworkAccess = registry.Properties.PublicNetworkAccess,
-                        ZoneRedundancy = registry.Properties.ZoneRedundancy,
-                        NetworkRuleBypassOptions = registry.Properties.NetworkRuleBypassOptions
-                    },
-                    Identity = registry.Identity != null
-                        ? new CreateOrUpdateContainerRegistryRequest.ResourceIdentityRequest { Type = registry.Identity.Type }
-                        : null
-                });
+                CreateOrUpdateContainerRegistryRequest.FromResource(registry));
 
             return result.Result;
         }
