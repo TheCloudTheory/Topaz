@@ -25,6 +25,9 @@ internal sealed class ContainerRegistryControlPlane(
     private const string InvalidRegistryNameMessageTemplate =
         "The registry name '{0}' is invalid. A registry name must be between 5-50 alphanumeric characters.";
 
+    private const string MissingLocationCode = "LocationRequired";
+    private const string MissingLocationMessage = "The 'location' property is required when creating a container registry.";
+
     public static ContainerRegistryControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(
         new ContainerRegistryResourceProvider(logger),
         new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
@@ -94,6 +97,14 @@ internal sealed class ContainerRegistryControlPlane(
         ContainerRegistryResource resource;
         if (isCreate)
         {
+            if (string.IsNullOrWhiteSpace(request.Location))
+            {
+                return new ControlPlaneOperationResult<ContainerRegistryResource>(
+                    OperationResult.Failed, null,
+                    MissingLocationMessage,
+                    MissingLocationCode);
+            }
+
             var skuName = request.Sku?.Name ?? "Basic";
             var sku = new ResourceSku { Name = skuName };
             var properties = ContainerRegistryResourceProperties.FromRequest(registryName, request);
@@ -101,7 +112,7 @@ internal sealed class ContainerRegistryControlPlane(
                 subscriptionIdentifier,
                 resourceGroupIdentifier,
                 registryName,
-                new AzureLocation(request.Location ?? "eastus"),
+                new AzureLocation(request.Location),
                 request.Tags,
                 sku,
                 properties);
@@ -109,6 +120,15 @@ internal sealed class ContainerRegistryControlPlane(
         else
         {
             var existingResource = existing.Resource!;
+            var resolvedLocation = request.Location ?? existingResource.Location;
+            if (string.IsNullOrWhiteSpace(resolvedLocation))
+            {
+                return new ControlPlaneOperationResult<ContainerRegistryResource>(
+                    OperationResult.Failed, null,
+                    MissingLocationMessage,
+                    MissingLocationCode);
+            }
+
             var skuName = request.Sku?.Name ?? existingResource.Sku?.Name ?? "Basic";
             var sku = new ResourceSku { Name = skuName };
             ContainerRegistryResourceProperties.UpdateFromRequest(existingResource, request);
@@ -116,7 +136,7 @@ internal sealed class ContainerRegistryControlPlane(
                 subscriptionIdentifier,
                 resourceGroupIdentifier,
                 registryName,
-                new AzureLocation(request.Location ?? existingResource.Location ?? "eastus"),
+                new AzureLocation(resolvedLocation),
                 request.Tags ?? existingResource.Tags,
                 sku,
                 existingResource.Properties);
