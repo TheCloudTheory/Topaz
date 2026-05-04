@@ -17,6 +17,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Tags;
 /// </summary>
 internal sealed class GetTagEndpoint(AcrDataPlane dataPlane, ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints => ["GET /acr/v1/{name}/_tags/{tag}", "GET /acr/v1/{name}/_tags/{tag}/"];
 
     public string[] Permissions => [];

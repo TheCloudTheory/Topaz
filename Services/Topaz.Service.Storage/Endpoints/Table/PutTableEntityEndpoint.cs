@@ -9,6 +9,8 @@ namespace Topaz.Service.Storage.Endpoints.Table;
 internal sealed class PutTableEntityEndpoint(ITopazLogger logger)
     : TableDataPlaneEndpointBase(logger), IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => [@"PUT /^.*?\(PartitionKey='.*?',(%20|\s)?RowKey='.*?'\)$"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/write"];

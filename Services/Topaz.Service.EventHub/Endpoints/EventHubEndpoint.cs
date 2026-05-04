@@ -6,6 +6,8 @@ namespace Topaz.Service.EventHub.Endpoints;
 
 public sealed class EventHubEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.EventHub";
+
     public string[] Endpoints => ["/{eventHubPath}/messages"];
     public string[] Permissions => [];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultEventHubPort], Protocol.Http);

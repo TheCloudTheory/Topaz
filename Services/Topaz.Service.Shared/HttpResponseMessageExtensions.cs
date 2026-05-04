@@ -10,11 +10,14 @@ public static class HttpResponseMessageExtensions
     public const string ResourceGroupNotFoundCode = "ResourceGroupNotFound";
     public const string EndpointNotFoundCode = "EndpointNotFound";
     public const string InternalErrorCode = "InternalError";
-    
+    public const string MissingSubscriptionRegistrationCode = "MissingSubscriptionRegistration";
+
     private const string ResourceNotFoundMessage = "Resource '{0}' under resource group '{1}' was not found";
     private const string ResourceGroupNotFoundMessage = "Resource group '{0}' was not found";
     private const string EndpointNotFoundMessage = "Endpoint was not found for the request '{0}' '{1}'";
     private const string InternalErrorMessage = "Internal error: {0}";
+    private const string MissingSubscriptionRegistrationMessage =
+        "The subscription is not registered to use namespace '{0}'. See https://aka.ms/rps-not-found for how to register subscriptions.";
     
     public static void CreateErrorResponse(this HttpResponseMessage response, string code, params object[] args)
     {
@@ -42,6 +45,11 @@ public static class HttpResponseMessageExtensions
                 message = string.Format(InternalErrorMessage, args);
                 error = new GenericErrorResponse(InternalErrorCode, message);
                 response.StatusCode = HttpStatusCode.InternalServerError;
+                break;
+            case MissingSubscriptionRegistrationCode:
+                message = string.Format(MissingSubscriptionRegistrationMessage, args);
+                error = new GenericErrorResponse(MissingSubscriptionRegistrationCode, message);
+                response.StatusCode = HttpStatusCode.Conflict;
                 break;
             default:
                 error = new GenericErrorResponse(code, string.Format("{0}", args));

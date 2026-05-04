@@ -6,6 +6,8 @@ namespace Topaz.Service.Authorization.Endpoints;
 
 public sealed class ResourceAuthorizationEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.Authorization";
+
     public string[] Endpoints => [];
     public string[] Permissions => [];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);

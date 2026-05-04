@@ -11,6 +11,8 @@ public sealed class GetNamespaceNetworkRuleSetEndpoint(ITopazLogger logger) : IE
 {
     private readonly EventHubServiceControlPlane _controlPlane = new(new EventHubResourceProvider(logger), logger);
 
+    public string? ProviderNamespace => "Microsoft.EventHub";
+
     public string[] Endpoints =>
     [
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/networkRuleSets/default"

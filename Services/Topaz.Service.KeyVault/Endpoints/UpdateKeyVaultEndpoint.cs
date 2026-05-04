@@ -14,6 +14,8 @@ internal sealed class UpdateKeyVaultEndpoint(Pipeline eventPipeline, ITopazLogge
 {
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints =>
     [
         "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{keyVaultName}"

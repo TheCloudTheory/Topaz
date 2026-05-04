@@ -12,6 +12,8 @@ internal sealed class CreateOrUpdateArmTableEndpoint(ITopazLogger logger) : IEnd
 {
     private readonly TableServiceControlPlane _controlPlane = new(new TableResourceProvider(logger), logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints =>
     [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/tableServices/default/tables/{tableName}"

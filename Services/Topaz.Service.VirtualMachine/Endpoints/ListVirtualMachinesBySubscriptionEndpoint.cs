@@ -15,6 +15,8 @@ internal sealed class ListVirtualMachinesBySubscriptionEndpoint(Pipeline eventPi
     private readonly VirtualMachineServiceControlPlane _controlPlane =
         VirtualMachineServiceControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.Compute";
+
     public string[] Endpoints =>
     [
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Compute/virtualMachines"

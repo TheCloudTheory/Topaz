@@ -11,6 +11,8 @@ internal sealed class SetQueueServicePropertiesEndpoint(ITopazLogger logger)
 {
     private readonly QueueServiceControlPlane _controlPlane = QueueServiceControlPlane.New(logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => ["PUT /?restype=service&comp=properties"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/write"];

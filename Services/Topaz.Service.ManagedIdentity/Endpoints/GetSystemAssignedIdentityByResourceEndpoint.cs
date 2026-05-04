@@ -12,6 +12,8 @@ internal sealed class GetSystemAssignedIdentityByResourceEndpoint(ITopazLogger l
 
     private readonly SystemAssignedIdentityControlPlane _controlPlane = SystemAssignedIdentityControlPlane.New(logger);
 
+    public string? ProviderNamespace => "Microsoft.ManagedIdentity";
+
     public string[] Endpoints =>
     [
         "GET /.../providers/Microsoft.ManagedIdentity/identities/default"

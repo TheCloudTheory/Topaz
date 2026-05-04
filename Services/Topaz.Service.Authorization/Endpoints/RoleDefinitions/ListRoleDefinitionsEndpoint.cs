@@ -17,6 +17,8 @@ public class ListRoleDefinitionsEndpoint(Pipeline eventPipeline, ITopazLogger lo
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
     private const int DefaultPageSize = 10;
 
+    public string? ProviderNamespace => "Microsoft.Authorization";
+
     public string[] Endpoints =>
     [
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions",

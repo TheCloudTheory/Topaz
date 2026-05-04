@@ -10,6 +10,8 @@ internal sealed class CreateContainerEndpoint(ITopazLogger logger)
 {
     private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger));
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => ["PUT /{containerName}"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/write"];

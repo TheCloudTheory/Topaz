@@ -14,6 +14,8 @@ public sealed class GetDeletedSecretsEndpoint(Pipeline eventPipeline, ITopazLogg
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints => ["GET /deletedsecrets", "GET /deletedsecrets/"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/secrets/read"];

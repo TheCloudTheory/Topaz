@@ -11,6 +11,8 @@ namespace Topaz.Service.Storage.Endpoints.Queue;
 internal sealed class GetQueueServiceStatsEndpoint(ITopazLogger logger)
     : QueueDataPlaneEndpointBase(logger), IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => ["GET /?restype=service&comp=stats"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/read"];

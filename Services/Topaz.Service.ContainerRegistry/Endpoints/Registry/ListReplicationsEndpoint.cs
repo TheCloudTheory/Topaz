@@ -9,6 +9,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Registry;
 
 internal sealed class ListReplicationsEndpoint : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints =>
     [
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}/replications"

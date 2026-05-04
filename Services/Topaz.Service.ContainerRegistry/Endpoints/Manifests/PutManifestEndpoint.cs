@@ -17,6 +17,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Manifests;
 /// </summary>
 internal sealed class PutManifestEndpoint(AcrDataPlane dataPlane, ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints => ["PUT /v2/{name}/manifests/{reference}"];
 
     public string[] Permissions => [];

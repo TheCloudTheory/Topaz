@@ -57,9 +57,9 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 | Operation | Status | Notes |
 |-----------|--------|-------|
 | Get | ✅ | Provider namespace lookup |
-| List | ❌ | |
-| Register | ❌ | |
-| Unregister | ❌ | |
+| List | ✅ | Returns all known provider namespaces with persisted registration state |
+| Register | ✅ | Sets registration state to `Registered`; persisted per subscription |
+| Unregister | ✅ | Sets registration state to `Unregistered`; subsequent requests return 409 `MissingSubscriptionRegistration` |
 
 ### Resource Groups
 

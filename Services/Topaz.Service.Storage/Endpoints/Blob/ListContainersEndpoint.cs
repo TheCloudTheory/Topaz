@@ -13,6 +13,8 @@ internal sealed class ListContainersEndpoint(ITopazLogger logger)
 {
     private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger));
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => ["GET /"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/read"];

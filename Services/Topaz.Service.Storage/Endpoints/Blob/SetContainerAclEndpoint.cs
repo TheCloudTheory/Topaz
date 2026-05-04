@@ -12,6 +12,8 @@ internal sealed class SetContainerAclEndpoint(ITopazLogger logger)
     private readonly BlobServiceDataPlane _dataPlane =
         new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => ["PUT /{containerName}?restype=container&comp=acl"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/write"];

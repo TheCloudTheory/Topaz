@@ -13,6 +13,8 @@ internal sealed class GetFederatedIdentityCredentialEndpoint(ITopazLogger logger
     private readonly FederatedIdentityCredentialControlPlane _controlPlane =
         FederatedIdentityCredentialControlPlane.New(logger);
 
+    public string? ProviderNamespace => "Microsoft.ManagedIdentity";
+
     public string[] Endpoints =>
     [
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{resourceName}/federatedIdentityCredentials/{federatedIdentityCredentialResourceName}"

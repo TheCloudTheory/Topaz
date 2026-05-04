@@ -18,6 +18,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Manifests;
 /// </summary>
 internal sealed class HeadManifestEndpoint(AcrDataPlane dataPlane, ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints => ["HEAD /v2/{name}/manifests/{reference}"];
 
     public string[] Permissions => [];

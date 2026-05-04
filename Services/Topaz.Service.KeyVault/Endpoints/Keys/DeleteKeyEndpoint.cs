@@ -14,6 +14,8 @@ public sealed class DeleteKeyEndpoint(Pipeline eventPipeline, ITopazLogger logge
     private readonly KeyVaultKeysDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints => ["DELETE /keys/{keyName}"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/keys/delete"];

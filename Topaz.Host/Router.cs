@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using Topaz.EventPipeline;
 using Topaz.Service.Authorization;
+using Topaz.Service.ResourceManager;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -14,6 +15,7 @@ namespace Topaz.Host;
 internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITopazLogger logger)
 {
     private readonly AzureAuthorizationAdapter _authorizationAdapter = new(eventPipeline, logger);
+    private readonly ResourceManagerResourceProvider _resourceManagerResourceProvider = new(logger);
     
     internal async Task MatchAndExecuteEndpoint(IEndpointDefinition[] httpEndpoints, HttpContext context)
     {
@@ -226,6 +228,25 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
                 return response;
             }
 
+            // Provider registration gate — mirrors Azure's MissingSubscriptionRegistration behaviour.
+            // Endpoints that declare a ProviderNamespace are checked before GetResponse() is called.
+            if (endpoint.ProviderNamespace is { } providerNamespace)
+            {
+                var requestPath = context.Request.Path.Value ?? string.Empty;
+                var subscriptionSegment = ExtractSubscriptionIdFromPath(requestPath);
+                if (subscriptionSegment != null && Guid.TryParse(subscriptionSegment, out var subscriptionId))
+                {
+                    var state = _resourceManagerResourceProvider.GetProviderRegistrationState(subscriptionId, providerNamespace);
+                    if (string.Equals(state, "Unregistered", StringComparison.OrdinalIgnoreCase))
+                    {
+                        response.CreateErrorResponse(
+                            HttpResponseMessageExtensions.MissingSubscriptionRegistrationCode,
+                            providerNamespace);
+                        return response;
+                    }
+                }
+            }
+
             context.User = principal;
             endpoint.GetResponse(context, response, options);
         }
@@ -315,5 +336,21 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
 
         var matches = Regex.Match(pathSegment, endpointSegment, RegexOptions.IgnoreCase);
         return matches.Success;
+    }
+
+    /// <summary>
+    /// Extracts the subscription GUID from a path such as
+    /// "/subscriptions/{guid}/..." by returning the segment immediately
+    /// after "subscriptions", or null if not present.
+    /// </summary>
+    private static string? ExtractSubscriptionIdFromPath(string path)
+    {
+        var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        for (var i = 0; i < parts.Length - 1; i++)
+        {
+            if (string.Equals(parts[i], "subscriptions", StringComparison.OrdinalIgnoreCase))
+                return parts[i + 1];
+        }
+        return null;
     }
 }

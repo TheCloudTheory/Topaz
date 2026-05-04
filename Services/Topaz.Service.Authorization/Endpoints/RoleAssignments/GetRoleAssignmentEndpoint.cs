@@ -14,6 +14,8 @@ internal sealed class GetRoleAssignmentEndpoint(Pipeline eventPipeline, ITopazLo
 {
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.Authorization";
+
     public string[] Endpoints =>
     [
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}"

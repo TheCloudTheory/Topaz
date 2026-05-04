@@ -15,6 +15,8 @@ internal sealed class ListContainerRegistriesBySubscriptionEndpoint(Pipeline eve
 {
     private readonly ContainerRegistryControlPlane _controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints =>
     [
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.ContainerRegistry/registries"

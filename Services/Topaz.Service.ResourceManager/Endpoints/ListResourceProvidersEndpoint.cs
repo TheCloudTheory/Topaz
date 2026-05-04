@@ -15,6 +15,8 @@ public sealed class ListResourceProvidersEndpoint(Pipeline eventPipeline, ITopaz
     private readonly SubscriptionControlPlane _subscriptionControlPlane =
         SubscriptionControlPlane.New(eventPipeline, logger);
 
+    private readonly ResourceManagerResourceProvider _resourceProvider = new(logger);
+
     public string[] Endpoints =>
     [
         "GET /subscriptions/{subscriptionId}/providers"
@@ -56,8 +58,9 @@ public sealed class ListResourceProvidersEndpoint(Pipeline eventPipeline, ITopaz
             .Select(providerName => new ResourceProviderDataResponse(providerName)
             {
                 Id = $"/subscriptions/{subscriptionIdentifier}/providers/{providerName}",
-                RegistrationState = "Registered",
-                RegistrationPolicy = "RegistrationRequired"
+                RegistrationState = _resourceProvider.GetProviderRegistrationState(
+                    subscriptionIdentifier.Value, providerName),
+                RegistrationPolicy = "RegistrationRequired",
             })
             .ToArray();
 

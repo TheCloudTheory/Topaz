@@ -13,6 +13,8 @@ public sealed class GetSecretEndpoint(Pipeline eventPipeline, ITopazLogger logge
     private readonly KeyVaultSecretsDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints =>
     [
         "GET /secrets/{secretName}",

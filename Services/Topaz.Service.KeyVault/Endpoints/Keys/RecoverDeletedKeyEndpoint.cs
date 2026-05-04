@@ -14,6 +14,8 @@ public sealed class RecoverDeletedKeyEndpoint(Pipeline eventPipeline, ITopazLogg
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints => ["POST /deletedkeys/{keyName}/recover"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/keys/recover/action"];

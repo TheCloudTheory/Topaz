@@ -17,6 +17,8 @@ internal sealed class CreateUpdateRoleDefinitionEndpoint(Pipeline eventPipeline,
 {
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.Authorization";
+
     public string[] Endpoints =>
     [
         "PUT /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}"

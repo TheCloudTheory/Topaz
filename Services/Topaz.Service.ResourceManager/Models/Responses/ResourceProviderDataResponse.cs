@@ -6,6 +6,10 @@ namespace Topaz.Service.ResourceManager.Models.Responses;
 
 public sealed class ResourceProviderDataResponse(string providerName)
 {
+    public const string RegisteredState = "Registered";
+    public const string NotRegisteredState = "NotRegistered";
+    public const string UnregisteredState = "Unregistered";
+
     private static readonly Dictionary<string, string[]> KnownResourceTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         ["Microsoft.KeyVault"]          = ["vaults"],

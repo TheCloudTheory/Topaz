@@ -16,6 +16,8 @@ internal sealed class CreateOrUpdateVirtualMachineEndpoint(Pipeline eventPipelin
     private readonly VirtualMachineServiceControlPlane _controlPlane =
         VirtualMachineServiceControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.Compute";
+
     public string[] Endpoints =>
     [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{virtualMachineName}"

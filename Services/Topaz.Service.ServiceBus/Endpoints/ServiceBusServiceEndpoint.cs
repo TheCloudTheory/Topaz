@@ -14,6 +14,8 @@ public sealed class ServiceBusServiceEndpoint(Pipeline eventPipeline, ITopazLogg
 {
     private readonly ServiceBusServiceControlPlane _controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
     
+    public string? ProviderNamespace => "Microsoft.ServiceBus";
+
     public string[] Endpoints =>
     [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}",

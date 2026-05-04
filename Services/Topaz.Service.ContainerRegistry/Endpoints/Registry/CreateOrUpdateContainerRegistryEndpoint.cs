@@ -16,6 +16,8 @@ internal sealed class CreateOrUpdateContainerRegistryEndpoint(Pipeline eventPipe
 {
     private readonly ContainerRegistryControlPlane _controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints =>
     [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}"

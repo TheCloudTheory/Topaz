@@ -11,6 +11,8 @@ namespace Topaz.Service.Storage.Endpoints.Table;
 internal sealed class InsertTableEntityEndpoint(ITopazLogger logger)
     : TableDataPlaneEndpointBase(logger), IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => ["POST /{tableName}"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/write"];

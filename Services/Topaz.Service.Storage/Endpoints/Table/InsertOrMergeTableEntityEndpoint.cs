@@ -9,6 +9,8 @@ namespace Topaz.Service.Storage.Endpoints.Table;
 internal sealed class InsertOrMergeTableEntityEndpoint(ITopazLogger logger)
     : TableDataPlaneEndpointBase(logger), IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints =>
     [
         @"POST /^.*?\(PartitionKey='.*?',(%20|\s)?RowKey='.*?'\)$",

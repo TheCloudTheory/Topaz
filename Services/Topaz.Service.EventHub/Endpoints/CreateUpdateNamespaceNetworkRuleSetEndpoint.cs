@@ -14,6 +14,8 @@ public sealed class CreateUpdateNamespaceNetworkRuleSetEndpoint(ITopazLogger log
 {
     private readonly EventHubServiceControlPlane _controlPlane = new(new EventHubResourceProvider(logger), logger);
 
+    public string? ProviderNamespace => "Microsoft.EventHub";
+
     public string[] Endpoints =>
     [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}/networkRuleSets/{networkRuleSetName}"

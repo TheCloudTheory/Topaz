@@ -11,6 +11,8 @@ internal sealed class SetQueueAclEndpoint(ITopazLogger logger)
 {
     private readonly QueueServiceDataPlane _dataPlane = QueueServiceDataPlane.New(logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => ["PUT /{queue-name}?comp=acl"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/queues/write"];

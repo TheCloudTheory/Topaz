@@ -13,6 +13,8 @@ internal sealed class CreateOrUpdateStorageAccountEndpoint(ITopazLogger logger) 
 {
     private readonly AzureStorageControlPlane _controlPlane = AzureStorageControlPlane.New(logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints =>
     [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}"

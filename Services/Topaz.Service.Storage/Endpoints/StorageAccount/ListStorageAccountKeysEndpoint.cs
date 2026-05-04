@@ -12,6 +12,8 @@ internal sealed class ListStorageAccountKeysEndpoint(ITopazLogger logger) : IEnd
 {
     private readonly AzureStorageControlPlane _controlPlane = new(new StorageResourceProvider(logger), logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints =>
     [
         "POST /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/listKeys"

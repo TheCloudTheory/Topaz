@@ -260,15 +260,7 @@ TODO: Management Groups: Entities list
 
 ### Resource Providers — operations support
 
-<!--
-TODO: Resource Providers: List, Register, and Unregister operations
-  Extend the existing `GET /providers/{namespace}` (already implemented) with:
-  - GET  /subscriptions/{sub}/providers           – list all providers
-  - POST /subscriptions/{sub}/providers/{namespace}/register   – register provider
-  - POST /subscriptions/{sub}/providers/{namespace}/unregister – unregister provider
-  milestone: v1.3-beta
-  labels: enhancement, resource-manager
--->
+Implemented: `GET /subscriptions/{sub}/providers`, `POST .../register`, `POST .../unregister`. Registration state is persisted per subscription and enforced cross-cutting in the Router (returns 409 `MissingSubscriptionRegistration` for unregistered namespaces).
 
 ### Entra ID authentication for Azure Storage
 

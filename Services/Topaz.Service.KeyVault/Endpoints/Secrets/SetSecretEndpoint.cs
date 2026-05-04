@@ -13,6 +13,8 @@ public sealed class SetSecretEndpoint(Pipeline eventPipeline, ITopazLogger logge
     private readonly KeyVaultSecretsDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints => ["PUT /secrets/{secretName}"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/secrets/setSecret/action"];

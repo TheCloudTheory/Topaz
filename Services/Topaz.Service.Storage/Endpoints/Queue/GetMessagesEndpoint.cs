@@ -21,6 +21,8 @@ internal sealed class GetMessagesEndpoint(ITopazLogger logger)
     private readonly QueueServiceControlPlane _controlPlane = QueueServiceControlPlane.New(logger);
     private readonly QueueServiceDataPlane _dataPlane = QueueServiceDataPlane.New(logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => ["GET /{queue-name}/messages"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/queues/messages/read"];

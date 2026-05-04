@@ -11,6 +11,8 @@ internal sealed class ListStorageAccountsBySubscriptionEndpoint(ITopazLogger log
 {
     private readonly AzureStorageControlPlane _controlPlane = new(new StorageResourceProvider(logger), logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints =>
     [
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Storage/storageAccounts"

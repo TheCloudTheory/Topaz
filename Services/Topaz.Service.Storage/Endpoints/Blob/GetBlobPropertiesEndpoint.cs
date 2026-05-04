@@ -14,6 +14,8 @@ internal sealed class GetBlobPropertiesEndpoint(ITopazLogger logger)
     private readonly BlobServiceDataPlane _dataPlane =
         new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => ["HEAD /{containerName}/..."];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"];

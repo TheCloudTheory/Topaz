@@ -14,6 +14,8 @@ public class GetVirtualNetworkEndpoint(Pipeline eventPipeline, ITopazLogger logg
     private readonly VirtualNetworkControlPlane _controlPlane =
         new(eventPipeline, new VirtualNetworkResourceProvider(logger), logger);
 
+    public string? ProviderNamespace => "Microsoft.Network";
+
     public string[] Endpoints =>
     [
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}"

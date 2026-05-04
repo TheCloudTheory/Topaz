@@ -15,6 +15,8 @@ public sealed class ReleaseKeyEndpoint(Pipeline eventPipeline, ITopazLogger logg
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints => ["POST /keys/{keyName}/{keyVersion}/release", "POST /keys/{keyName}/release"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/keys/release/action"];

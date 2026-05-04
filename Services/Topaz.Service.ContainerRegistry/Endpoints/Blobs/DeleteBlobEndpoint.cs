@@ -17,6 +17,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Blobs;
 /// </summary>
 internal sealed class DeleteBlobEndpoint(AcrDataPlane dataPlane, ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints => ["DELETE /v2/{name}/blobs/{digest}"];
 
     public string[] Permissions => [];

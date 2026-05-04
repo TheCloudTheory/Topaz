@@ -19,6 +19,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Repositories;
 /// </summary>
 internal sealed class ListRepositoriesEndpoint(AcrDataPlane dataPlane, ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints => ["GET /v2/_catalog", "GET /acr/v1/_catalog"];
 
     public string[] Permissions => [];

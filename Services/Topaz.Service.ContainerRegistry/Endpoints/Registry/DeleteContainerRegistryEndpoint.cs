@@ -14,6 +14,8 @@ internal sealed class DeleteContainerRegistryEndpoint(Pipeline eventPipeline, IT
 {
     private readonly ContainerRegistryControlPlane _controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints =>
     [
         "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerRegistry/registries/{registryName}"

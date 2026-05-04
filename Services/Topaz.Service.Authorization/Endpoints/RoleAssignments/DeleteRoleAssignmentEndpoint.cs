@@ -14,6 +14,8 @@ public class DeleteRoleAssignmentEndpoint(Pipeline eventPipeline, ITopazLogger l
 {
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.Authorization";
+
     public string[] Endpoints =>
     [
         "DELETE /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}"

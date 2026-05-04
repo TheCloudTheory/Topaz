@@ -38,6 +38,8 @@ public sealed class ResourceManagerService : IServiceDefinition
         new GetMetadataEndpointsEndpoint(),
         new GetResourceProviderEndpoint(_eventPipeline, _logger),
         new ListResourceProvidersEndpoint(_eventPipeline, _logger),
+        new RegisterResourceProviderEndpoint(_eventPipeline, _logger),
+        new UnregisterResourceProviderEndpoint(_eventPipeline, _logger),
         new CreateOrUpdateDeploymentEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new ListDeploymentsEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new GetDeploymentEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),

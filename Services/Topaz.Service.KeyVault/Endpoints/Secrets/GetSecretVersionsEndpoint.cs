@@ -14,6 +14,8 @@ public sealed class GetSecretVersionsEndpoint(Pipeline eventPipeline, ITopazLogg
     private readonly KeyVaultSecretsDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints => ["GET /secrets/{secretName}/versions", "GET /secrets/{secretName}/versions/"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/secrets/getSecret/action"];

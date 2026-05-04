@@ -222,6 +222,48 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         return JsonNode.Parse(content)!;
     }
 
+    public async Task<HttpResponseMessage> RegisterProviderAsync(Guid subscriptionId, string providerNamespace)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post,
+            $"subscriptions/{subscriptionId}/providers/{providerNamespace}/register");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+        request.Content = new ByteArrayContent([]);
+        return await _httpClient.SendAsync(request);
+    }
+
+    public async Task<HttpResponseMessage> UnregisterProviderAsync(Guid subscriptionId, string providerNamespace)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post,
+            $"subscriptions/{subscriptionId}/providers/{providerNamespace}/unregister");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+        request.Content = new ByteArrayContent([]);
+        return await _httpClient.SendAsync(request);
+    }
+
+    public async Task<JsonNode> GetProviderAsync(Guid subscriptionId, string providerNamespace)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            $"subscriptions/{subscriptionId}/providers/{providerNamespace}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
+    }
+
+    public async Task<JsonNode> ListProvidersAsync(Guid subscriptionId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            $"subscriptions/{subscriptionId}/providers");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
+    }
+
     public void Dispose()
     {
         _httpClient.Dispose();

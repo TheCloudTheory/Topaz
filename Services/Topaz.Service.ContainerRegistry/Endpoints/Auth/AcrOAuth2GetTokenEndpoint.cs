@@ -22,6 +22,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Auth;
 /// </summary>
 internal sealed class AcrOAuth2GetTokenEndpoint(ContainerRegistryControlPlane controlPlane, ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints => ["GET /oauth2/token"];
 
     public string[] Permissions => [];

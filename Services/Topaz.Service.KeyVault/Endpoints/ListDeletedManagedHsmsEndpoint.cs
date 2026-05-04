@@ -13,6 +13,8 @@ internal sealed class ListDeletedManagedHsmsEndpoint(Pipeline eventPipeline, ITo
 {
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints =>
     [
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/deletedManagedHSMs"

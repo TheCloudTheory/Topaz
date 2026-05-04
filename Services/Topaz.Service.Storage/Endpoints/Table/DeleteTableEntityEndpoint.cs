@@ -11,6 +11,8 @@ namespace Topaz.Service.Storage.Endpoints.Table;
 internal sealed class DeleteTableEntityEndpoint(ITopazLogger logger)
     : TableDataPlaneEndpointBase(logger), IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => [@"DELETE /^.*?\(PartitionKey='.*?',(%20|\s)?RowKey='.*?'\)$"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/delete"];

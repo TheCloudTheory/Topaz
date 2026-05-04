@@ -16,6 +16,8 @@ internal sealed class CheckContainerRegistryNameAvailabilityEndpoint(Pipeline ev
 {
     private readonly ContainerRegistryControlPlane _controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints =>
     [
         "POST /subscriptions/{subscriptionId}/providers/Microsoft.ContainerRegistry/checkNameAvailability"

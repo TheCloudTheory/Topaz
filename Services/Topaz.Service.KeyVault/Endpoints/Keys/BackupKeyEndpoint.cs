@@ -14,6 +14,8 @@ public sealed class BackupKeyEndpoint(Pipeline eventPipeline, ITopazLogger logge
     private readonly KeyVaultKeysDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints => ["POST /keys/{keyName}/backup"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/keys/backup/action"];

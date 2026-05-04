@@ -14,6 +14,8 @@ internal sealed class DeleteVirtualMachineEndpoint(Pipeline eventPipeline, ITopa
     private readonly VirtualMachineServiceControlPlane _controlPlane =
         VirtualMachineServiceControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.Compute";
+
     public string[] Endpoints =>
     [
         "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{virtualMachineName}"

@@ -11,6 +11,8 @@ internal sealed class GetArmTableEndpoint(ITopazLogger logger) : IEndpointDefini
 {
     private readonly TableServiceControlPlane _controlPlane = new(new TableResourceProvider(logger), logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints =>
     [
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/tableServices/default/tables/{tableName}"

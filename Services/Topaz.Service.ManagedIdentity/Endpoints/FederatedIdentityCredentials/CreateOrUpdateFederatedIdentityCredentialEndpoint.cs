@@ -14,6 +14,8 @@ internal sealed class CreateOrUpdateFederatedIdentityCredentialEndpoint(ITopazLo
     private readonly FederatedIdentityCredentialControlPlane _controlPlane =
         FederatedIdentityCredentialControlPlane.New(logger);
 
+    public string? ProviderNamespace => "Microsoft.ManagedIdentity";
+
     public string[] Endpoints =>
     [
         "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{resourceName}/federatedIdentityCredentials/{federatedIdentityCredentialResourceName}"

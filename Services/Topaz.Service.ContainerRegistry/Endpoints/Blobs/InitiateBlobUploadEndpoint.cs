@@ -19,6 +19,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Blobs;
 /// </summary>
 internal sealed class InitiateBlobUploadEndpoint(AcrDataPlane dataPlane, ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints => ["POST /v2/{name}/blobs/uploads/"];
 
     public string[] Permissions => [];

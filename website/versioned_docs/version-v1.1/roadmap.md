@@ -29,7 +29,7 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 | | Feature | Description |
 |--|---------|-------------|
-| <span class="badge--stable">Stable</span> | List, Register, Unregister | Full provider lifecycle alongside the existing get-by-namespace operation |
+| ✅ | List, Register, Unregister | Full provider lifecycle alongside the existing get-by-namespace operation. Registration state persisted per subscription and enforced in the router. |
 
 ### Virtual Networks — full control plane
 

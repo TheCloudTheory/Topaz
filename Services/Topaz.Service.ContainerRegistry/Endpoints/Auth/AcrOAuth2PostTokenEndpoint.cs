@@ -21,6 +21,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Auth;
 /// </summary>
 internal sealed class AcrOAuth2PostTokenEndpoint(ContainerRegistryControlPlane controlPlane, ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints => ["POST /oauth2/token"];
 
     public string[] Permissions => [];

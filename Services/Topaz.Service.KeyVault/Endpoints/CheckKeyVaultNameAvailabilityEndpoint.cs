@@ -16,6 +16,8 @@ internal sealed class CheckKeyVaultNameAvailabilityEndpoint(Pipeline eventPipeli
 {
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints =>
     [
         "POST /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkNameAvailability"

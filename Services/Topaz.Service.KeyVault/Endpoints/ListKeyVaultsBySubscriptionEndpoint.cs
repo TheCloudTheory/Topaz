@@ -14,6 +14,8 @@ internal sealed class ListKeyVaultsBySubscriptionEndpoint(Pipeline eventPipeline
 {
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints =>
     [
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/vaults"

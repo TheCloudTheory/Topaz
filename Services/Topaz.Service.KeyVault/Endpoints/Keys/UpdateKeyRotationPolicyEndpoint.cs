@@ -14,6 +14,8 @@ public sealed class UpdateKeyRotationPolicyEndpoint(Pipeline eventPipeline, ITop
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints => ["PUT /keys/{keyName}/rotationpolicy"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/keys/write"];

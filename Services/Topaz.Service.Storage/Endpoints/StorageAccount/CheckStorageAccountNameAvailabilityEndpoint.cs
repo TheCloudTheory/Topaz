@@ -13,6 +13,8 @@ internal sealed class CheckStorageAccountNameAvailabilityEndpoint(ITopazLogger l
 {
     private readonly AzureStorageControlPlane _controlPlane = AzureStorageControlPlane.New(logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints =>
     [
         "POST /subscriptions/{subscriptionId}/providers/Microsoft.Storage/checkNameAvailability"

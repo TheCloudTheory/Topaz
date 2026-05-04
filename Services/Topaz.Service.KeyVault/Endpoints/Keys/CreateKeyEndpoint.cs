@@ -13,6 +13,8 @@ public sealed class CreateKeyEndpoint(Pipeline eventPipeline, ITopazLogger logge
     private readonly KeyVaultKeysDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints => ["POST /keys/{keyName}/create"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/keys/write"];

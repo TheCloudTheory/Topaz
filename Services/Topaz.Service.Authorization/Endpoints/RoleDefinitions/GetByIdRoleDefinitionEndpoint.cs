@@ -13,6 +13,8 @@ internal sealed class GetByIdRoleDefinitionEndpoint(Pipeline eventPipeline, ITop
 {
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.Authorization";
+
     public string[] Endpoints =>
     [
         "GET /providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId}"

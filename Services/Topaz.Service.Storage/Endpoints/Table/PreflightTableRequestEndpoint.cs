@@ -13,6 +13,8 @@ namespace Topaz.Service.Storage.Endpoints.Table;
 internal sealed class PreflightTableRequestEndpoint(ITopazLogger logger)
     : TableDataPlaneEndpointBase(logger), IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => ["OPTIONS /..."];
 
     public string[] Permissions => [];

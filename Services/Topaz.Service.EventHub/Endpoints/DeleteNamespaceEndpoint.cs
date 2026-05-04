@@ -11,6 +11,8 @@ public class DeleteNamespaceEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly EventHubServiceControlPlane _controlPlane = new(new EventHubResourceProvider(logger), logger);
 
+    public string? ProviderNamespace => "Microsoft.EventHub";
+
     public string[] Endpoints =>
     [
         "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.EventHub/namespaces/{namespaceName}",

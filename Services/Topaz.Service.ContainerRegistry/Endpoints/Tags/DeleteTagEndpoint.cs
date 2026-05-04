@@ -17,6 +17,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Tags;
 /// </summary>
 internal sealed class DeleteTagEndpoint(AcrDataPlane dataPlane, ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints => ["DELETE /acr/v1/{name}/_tags/{tag}", "DELETE /acr/v1/{name}/_tags/{tag}/"];
 
     public string[] Permissions => [];

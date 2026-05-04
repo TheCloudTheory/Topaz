@@ -13,6 +13,8 @@ internal sealed class DeleteFederatedIdentityCredentialEndpoint(ITopazLogger log
     private readonly FederatedIdentityCredentialControlPlane _controlPlane =
         FederatedIdentityCredentialControlPlane.New(logger);
 
+    public string? ProviderNamespace => "Microsoft.ManagedIdentity";
+
     public string[] Endpoints =>
     [
         "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{resourceName}/federatedIdentityCredentials/{federatedIdentityCredentialResourceName}"

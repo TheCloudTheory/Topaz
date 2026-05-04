@@ -6,6 +6,8 @@ namespace Topaz.Service.EventHub.Endpoints;
 
 public sealed class EventHubAmqpEndpoint : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.EventHub";
+
     public string[] Endpoints => [];
     public string[] Permissions => [];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol => ([GlobalSettings.DefaultEventHubAmqpPort], Protocol.Amqp);

@@ -13,6 +13,8 @@ public sealed class UpdateKeyEndpoint(Pipeline eventPipeline, ITopazLogger logge
     private readonly KeyVaultKeysDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints => ["PATCH /keys/{keyName}/{keyVersion}"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/keys/write"];

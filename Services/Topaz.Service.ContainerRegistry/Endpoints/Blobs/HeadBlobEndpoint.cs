@@ -19,6 +19,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Blobs;
 /// </summary>
 internal sealed class HeadBlobEndpoint(AcrDataPlane dataPlane, ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints => ["HEAD /v2/{name}/blobs/{digest}"];
 
     public string[] Permissions => [];

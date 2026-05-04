@@ -13,6 +13,8 @@ internal sealed class ListQueuesEndpoint(ITopazLogger logger)
 {
     private readonly QueueServiceControlPlane _controlPlane = new(new QueueResourceProvider(logger), logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => ["GET /?comp=list"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/queues/read"];

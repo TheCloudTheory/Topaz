@@ -11,6 +11,8 @@ internal sealed class ClearMessagesEndpoint(ITopazLogger logger)
 {
     private readonly QueueServiceDataPlane _dataPlane = QueueServiceDataPlane.New(logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => ["DELETE /{queue-name}/messages"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/queues/messages/delete"];

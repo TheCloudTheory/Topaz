@@ -18,6 +18,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Auth;
 /// </summary>
 internal sealed class AcrV2ChallengeEndpoint(ContainerRegistryControlPlane controlPlane, ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints => ["GET /v2/"];
 
     public string[] Permissions => [];

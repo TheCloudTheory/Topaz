@@ -15,6 +15,8 @@ internal sealed class PutPageEndpoint(ITopazLogger logger)
     private readonly BlobServiceDataPlane _dataPlane =
         new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => ["PUT /{containerName}/...?comp=page"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"];

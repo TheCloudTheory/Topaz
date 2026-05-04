@@ -17,6 +17,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Blobs;
 /// </summary>
 internal sealed class PatchBlobUploadEndpoint(AcrDataPlane dataPlane, ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints => ["PATCH /v2/{name}/blobs/uploads/{uuid}"];
 
     public string[] Permissions => [];

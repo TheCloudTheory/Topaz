@@ -14,6 +14,8 @@ public sealed class PurgeDeletedKeyEndpoint(Pipeline eventPipeline, ITopazLogger
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints => ["DELETE /deletedkeys/{keyName}"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/keys/purge/action"];

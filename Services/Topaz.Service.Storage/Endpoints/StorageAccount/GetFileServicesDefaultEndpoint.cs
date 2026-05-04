@@ -13,6 +13,8 @@ namespace Topaz.Service.Storage.Endpoints.StorageAccount;
 /// </summary>
 internal sealed class GetFileServicesDefaultEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints =>
     [
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/fileServices/default"

@@ -10,7 +10,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ResourceManager.Endpoints;
 
-public sealed class GetResourceProviderEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+public sealed class UnregisterResourceProviderEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly SubscriptionControlPlane _subscriptionControlPlane =
         SubscriptionControlPlane.New(eventPipeline, logger);
@@ -19,10 +19,10 @@ public sealed class GetResourceProviderEndpoint(Pipeline eventPipeline, ITopazLo
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/providers/{providerName}"
+        "POST /subscriptions/{subscriptionId}/providers/{providerNamespace}/unregister"
     ];
 
-    public string[] Permissions => ["Microsoft.Resources/providers/read"];
+    public string[] Permissions => ["*/unregister/action"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
@@ -31,7 +31,7 @@ public sealed class GetResourceProviderEndpoint(Pipeline eventPipeline, ITopazLo
     {
         var path = context.Request.Path.Value!;
         var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
-        var providerName = path.ExtractValueFromPath(4);
+        var providerNamespace = path.ExtractValueFromPath(4)!;
 
         var subscriptionOperation = _subscriptionControlPlane.Get(subscriptionIdentifier);
         if (subscriptionOperation.Result == OperationResult.NotFound)
@@ -41,13 +41,13 @@ public sealed class GetResourceProviderEndpoint(Pipeline eventPipeline, ITopazLo
             return;
         }
 
-        var registrationState = _resourceProvider.GetProviderRegistrationState(
-            subscriptionIdentifier.Value, providerName!);
+        _resourceProvider.SetProviderRegistrationState(
+            subscriptionIdentifier.Value, providerNamespace, ResourceProviderDataResponse.UnregisteredState);
 
-        var data = new ResourceProviderDataResponse(providerName!)
+        var data = new ResourceProviderDataResponse(providerNamespace)
         {
-            Id = $"/subscriptions/{subscriptionIdentifier}/providers/{providerName}",
-            RegistrationState = registrationState,
+            Id = $"/subscriptions/{subscriptionIdentifier}/providers/{providerNamespace}",
+            RegistrationState = ResourceProviderDataResponse.UnregisteredState,
             RegistrationPolicy = "RegistrationRequired",
         };
 

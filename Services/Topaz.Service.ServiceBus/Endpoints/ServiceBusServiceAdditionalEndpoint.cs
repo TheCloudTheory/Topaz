@@ -14,6 +14,8 @@ public sealed class ServiceBusServiceAdditionalEndpoint(Pipeline eventPipeline, 
 {
     private readonly ServiceBusServiceControlPlane _controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
     
+    public string? ProviderNamespace => "Microsoft.ServiceBus";
+
     public string[] Endpoints =>
     [
         // When using MassTransit, the actual endpoint used comes from the actual FQDN of the namespaces,

@@ -6,6 +6,8 @@ namespace Topaz.Service.ServiceBus.Endpoints;
 
 public sealed class ServiceBusEndpoint : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ServiceBus";
+
     public string[] Endpoints => ["*"];
     public string[] Permissions => [];
 

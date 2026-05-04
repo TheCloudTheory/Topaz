@@ -19,6 +19,8 @@ internal sealed class PutMessageEndpoint(ITopazLogger logger)
     private readonly QueueServiceControlPlane _controlPlane = QueueServiceControlPlane.New(logger);
     private readonly QueueServiceDataPlane _dataPlane = QueueServiceDataPlane.New(logger);
 
+    public string? ProviderNamespace => "Microsoft.Storage";
+
     public string[] Endpoints => ["PUT /{queue-name}/messages/{message-id}"];
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/queues/messages/write"];

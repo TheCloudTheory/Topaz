@@ -16,6 +16,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Repositories;
 /// </summary>
 internal sealed class DeleteRepositoryEndpoint(AcrDataPlane dataPlane, ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints => ["DELETE /acr/v1/{name}", "DELETE /acr/v1/{name}/"];
 
     public string[] Permissions => [];

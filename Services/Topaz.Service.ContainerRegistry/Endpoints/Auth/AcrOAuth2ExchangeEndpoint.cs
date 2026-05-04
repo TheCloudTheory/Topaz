@@ -15,6 +15,8 @@ namespace Topaz.Service.ContainerRegistry.Endpoints.Auth;
 /// </summary>
 internal sealed class AcrOAuth2ExchangeEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
+    public string? ProviderNamespace => "Microsoft.ContainerRegistry";
+
     public string[] Endpoints => ["POST /oauth2/exchange"];
 
     public string[] Permissions => [];

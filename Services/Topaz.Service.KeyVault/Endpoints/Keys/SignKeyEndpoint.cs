@@ -15,6 +15,8 @@ public sealed class SignKeyEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
+    public string? ProviderNamespace => "Microsoft.KeyVault";
+
     public string[] Endpoints => ["POST /keys/{keyName}/{keyVersion}/sign"];
 
     public string[] Permissions => ["Microsoft.KeyVault/vaults/keys/sign/action"];
