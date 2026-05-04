@@ -270,52 +270,6 @@ TODO: Resource Providers: List, Register, and Unregister operations
   labels: enhancement, resource-manager
 -->
 
-### Virtual Networks — full control plane
-
-<!--
-TODO: Virtual Networks: Delete, List, List All, and Update Tags operations
-  Complete the VNet control plane by adding the missing endpoints:
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks/{name}
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks
-  - GET    /subscriptions/{sub}/providers/Microsoft.Network/virtualNetworks
-  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks/{name} (update tags)
-  milestone: v1.3-beta
-  labels: enhancement, virtual-network
--->
-
-<!--
-TODO: Virtual Networks: Check IP Address Availability
-  Implement `GET .../virtualNetworks/{name}/CheckIPAddressAvailability?ipAddress={ip}`.
-  Should validate whether the given IP falls within any subnet and is not already allocated.
-  milestone: v1.3-beta
-  labels: enhancement, virtual-network
--->
-
-<!--
-TODO: Subnets: Full CRUD operations
-  Implement the subnet resource surface under Virtual Networks:
-  - PUT    .../virtualNetworks/{vnet}/subnets/{name}  – create or update
-  - GET    .../virtualNetworks/{vnet}/subnets/{name}  – get
-  - DELETE .../virtualNetworks/{vnet}/subnets/{name}  – delete
-  - GET    .../virtualNetworks/{vnet}/subnets          – list
-  Follow the resource provider pattern used by other Topaz.Service.VirtualNetwork resources.
-  milestone: v1.3-beta
-  labels: enhancement, virtual-network
--->
-
-<!--
-TODO: Network Security Groups: Full control plane
-  Add a new NSG resource under Topaz.Service.VirtualNetwork (new models, resource provider, and endpoints):
-  - PUT    .../networkSecurityGroups/{name}  – create or update
-  - GET    .../networkSecurityGroups/{name}  – get
-  - DELETE .../networkSecurityGroups/{name}  – delete
-  - GET    .../networkSecurityGroups          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.Network/networkSecurityGroups – list all
-  - PATCH  .../networkSecurityGroups/{name}  – update tags
-  milestone: v1.3-beta
-  labels: enhancement, virtual-network
--->
-
 ### Entra ID authentication for Azure Storage
 
 <!--
@@ -561,6 +515,52 @@ TODO: Storage Account: Full geo-replicated (RA-GRS/RA-GZRS) semantics
     POST) should return 403 WriteOperationNotSupportedOnSecondary
   milestone: v1.4-beta
   labels: enhancement, storage
+-->
+
+### Virtual Networks — full control plane
+
+<!--
+TODO: Virtual Networks: Delete, List, List All, and Update Tags operations
+  Complete the VNet control plane by adding the missing endpoints:
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks/{name}
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks
+  - GET    /subscriptions/{sub}/providers/Microsoft.Network/virtualNetworks
+  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks/{name} (update tags)
+  milestone: v1.3-beta
+  labels: enhancement, virtual-network
+-->
+
+<!--
+TODO: Virtual Networks: Check IP Address Availability
+  Implement `GET .../virtualNetworks/{name}/CheckIPAddressAvailability?ipAddress={ip}`.
+  Should validate whether the given IP falls within any subnet and is not already allocated.
+  milestone: v1.3-beta
+  labels: enhancement, virtual-network
+-->
+
+<!--
+TODO: Subnets: Full CRUD operations
+  Implement the subnet resource surface under Virtual Networks:
+  - PUT    .../virtualNetworks/{vnet}/subnets/{name}  – create or update
+  - GET    .../virtualNetworks/{vnet}/subnets/{name}  – get
+  - DELETE .../virtualNetworks/{vnet}/subnets/{name}  – delete
+  - GET    .../virtualNetworks/{vnet}/subnets          – list
+  Follow the resource provider pattern used by other Topaz.Service.VirtualNetwork resources.
+  milestone: v1.3-beta
+  labels: enhancement, virtual-network
+-->
+
+<!--
+TODO: Network Security Groups: Full control plane
+  Add a new NSG resource under Topaz.Service.VirtualNetwork (new models, resource provider, and endpoints):
+  - PUT    .../networkSecurityGroups/{name}  – create or update
+  - GET    .../networkSecurityGroups/{name}  – get
+  - DELETE .../networkSecurityGroups/{name}  – delete
+  - GET    .../networkSecurityGroups          – list by resource group
+  - GET    /subscriptions/{sub}/providers/Microsoft.Network/networkSecurityGroups – list all
+  - PATCH  .../networkSecurityGroups/{name}  – update tags
+  milestone: v1.3-beta
+  labels: enhancement, virtual-network
 -->
 
 ---
