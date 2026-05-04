@@ -9,6 +9,17 @@ Running the full test suite on every commit is simple to set up and expensive to
 
 {/* truncate */}
 
+:::tip[Add Topaz to your CI pipeline]
+Topaz runs as a service step in any pipeline — no Azure subscription, service principal, or network access required. Boot it in a single step, then run your tests against it.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
+:::
+
 ## Stage one: skip CI entirely for non-code changes
 
 The first filter sits at the workflow trigger level. The `push` event that starts a CI run explicitly ignores paths that cannot affect the emulated Azure services:

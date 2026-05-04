@@ -9,6 +9,17 @@ The [previous post on ACR authentication](/blog/acr-data-plane) covered everythi
 
 {/* truncate */}
 
+:::tip[Push images to a local registry]
+`docker push` to a local Topaz registry works today — no Azure subscription, no ACR quota, no network dependency.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
+:::
+
 ## What Docker actually sends
 
 A container image is not a single file. It is a set of layer tarballs — one per filesystem layer — plus a configuration object (a JSON document describing the image's environment, entrypoint, and other metadata), and a manifest that ties them together by digest. `docker push` sends each of these as a separate upload, in a specific order, before it sends the manifest that references them.

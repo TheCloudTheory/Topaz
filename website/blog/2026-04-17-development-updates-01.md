@@ -13,6 +13,17 @@ Each edition is a concise, case-by-case summary of what changed in Topaz during 
 
 {/* truncate */}
 
+:::tip[Try Topaz locally]
+Everything described in this edition is available in the current release — one binary, no Azure subscription required.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
+:::
+
 ## Case 1: CLI and Host are now properly split
 
 Topaz now runs as two separate binaries with a clear contract:

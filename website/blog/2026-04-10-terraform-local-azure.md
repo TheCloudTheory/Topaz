@@ -11,6 +11,17 @@ Topaz removes all of that. The same `terraform apply` that would create resource
 
 {/* truncate */}
 
+:::tip[Try it in 2 minutes]
+Run the full `terraform apply` workflow against a local emulator — no Azure subscription, no service principal, no cloud charges.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
+:::
+
 ## Why the standard AzureRM provider works at all
 
 The key insight is that the AzureRM provider does not have Azure's API endpoints hardcoded. When it initialises, it fetches a metadata document from a discovery endpoint that describes where each Azure API lives. In a normal setup, that discovery endpoint is the Azure Resource Manager metadata endpoint at `management.azure.com`. Once the provider has that document, it constructs every subsequent request URL from it.
@@ -134,9 +145,3 @@ The setup above works identically in a CI pipeline. Run Topaz as a service conta
 Topaz currently supports Terraform workflows for Azure Storage, Key Vault, Service Bus, Event Hubs, Container Registry, and Resource Manager operations including resource groups and ARM template deployments. The [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/) list which operations are implemented per service.
 
 Not every AzureRM resource type is emulated yet. If you hit a resource that Topaz does not support, the provider will return a `404` or an unsupported operation error. Check the API coverage page for current status, and open an issue if something you need is missing.
-
-:::tip[Try it in 5 minutes]
-Topaz installs as a single binary with no Azure subscription required. The getting-started guide walks through installation, DNS setup, and your first `terraform apply` against the local emulator.
-
-[Get started →](/docs/intro)
-:::

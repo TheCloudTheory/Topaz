@@ -11,6 +11,17 @@ This post walks through why the split was done, how the boundary between Host an
 
 {/* truncate */}
 
+:::tip[Try Topaz locally]
+Everything described in this post — the two-binary design, the health endpoint, the Docker Compose setup — ships in the current release.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
+:::
+
 ## The original design
 
 The original Topaz CLI was a single executable built on [Spectre.Console.Cli](https://spectreconsole.net/cli/). It loaded every command — resource management, subscriptions, Key Vault, Service Bus, Container Registry — alongside a `start` command that bootstrapped the Host process:

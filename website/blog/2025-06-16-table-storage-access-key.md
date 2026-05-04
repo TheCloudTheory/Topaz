@@ -9,6 +9,17 @@ Emulation of a service isn't complete if the authorization layer isn't emulated 
 
 {/* truncate */}
 
+:::tip[Try Table Storage access key auth locally]
+Table Storage access key authentication works in the current Topaz release — no Azure subscription required.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
+:::
+
 Table Storage is secured using one of the configured authorization mechanism:
 * access key
 * SAS token

@@ -9,6 +9,17 @@ tags: [general, keyvault, storage, arm]
 
 {/* truncate */}
 
+:::tip[Try Topaz locally]
+Everything described in this edition is available in the current release — one binary, no Azure subscription required.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
+:::
+
 ## Case 1: Key Vault cryptographic key operations are now fully covered
 
 Last week Key Vault had secrets. This week it gained a complete key management surface:

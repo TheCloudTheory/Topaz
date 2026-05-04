@@ -11,6 +11,17 @@ This post is an account of a two-day investigation into a persistent `401 Unauth
 
 {/* truncate */}
 
+:::tip[Run this locally — no Azure subscription needed]
+All four fixes described in this post are shipped. Run the full `azurerm_storage_table_entity` Terraform workflow against Topaz — no subscription, no credentials, no cloud charges.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
+:::
+
 ## The starting point
 
 Topaz already had table storage support: accounts, tables, entity insert and query. The `azurerm_storage_table` Terraform resource worked. What did not work was `azurerm_storage_table_entity`. Any Terraform run that tried to create a table entity failed immediately:

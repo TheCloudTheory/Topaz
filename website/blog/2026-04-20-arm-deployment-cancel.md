@@ -11,6 +11,17 @@ This post walks through how Topaz implements `POST .../deployments/{name}/cancel
 
 {/* truncate */}
 
+:::tip[Try ARM deployments locally with Topaz]
+All ARM deployment operations — including `cancel` — work against Topaz with no Azure subscription required.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
+:::
+
 ## How Topaz executes deployments
 
 Before looking at cancellation, it helps to understand how deployment execution works in Topaz.

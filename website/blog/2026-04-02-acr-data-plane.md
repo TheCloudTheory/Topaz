@@ -11,6 +11,17 @@ This post walks through how Topaz emulates the ACR data plane authentication lay
 
 {/* truncate */}
 
+:::tip[Try ACR locally with Topaz]
+`az acr login`, `docker push`, and the full OCI authentication flow work against Topaz with no real Azure subscription or Container Registry required.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
+:::
+
 ## The Docker Registry V2 authentication protocol
 
 When `docker pull` contacts a registry for the first time, it starts with a simple probe: `GET /v2/`. If the registry requires authentication — and ACR always does — it responds with a `401 Unauthorized` and a `Www-Authenticate` header that tells the client exactly where to go next:

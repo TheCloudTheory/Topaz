@@ -9,6 +9,17 @@ After months of alpha development, Topaz is moving to beta. The core emulation l
 
 {/* truncate */}
 
+:::tip[Try Topaz today]
+Everything listed in this post is available in the current release — install as a single binary and start emulating Azure services locally in minutes.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
+:::
+
 ## What "beta" means for Topaz
 
 The alpha label was a signal that APIs, file layouts, and internal protocols were still in flux. Breaking changes happened between releases without ceremony. Starting with this release we are committing to a few things:
