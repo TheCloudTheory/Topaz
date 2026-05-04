@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Identity;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -9,13 +10,14 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Storage.Security;
 
-internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
+internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopazLogger logger)
 {
     private readonly AzureStorageControlPlane _controlPlane = new(new StorageResourceProvider(logger), logger);
+    private readonly StorageDataPlaneAuthorizationChecker _bearerChecker = new(eventPipeline, logger);
 
     public bool RequestIsAuthorized(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, IHeaderDictionary headers,
-        string method, string absolutePath,
+        string[] requiredPermissions, string method, string absolutePath,
         QueryString query)
     {
         if (!headers.TryGetValue("Authorization", out var value))
@@ -40,7 +42,7 @@ internal sealed class TableStorageSecurityProvider(ITopazLogger logger)
                 return IsAuthorizedForSharedKeyLiteScheme(subscriptionIdentifier, resourceGroupIdentifier,
                     storageAccountName, parts[1], headers, absolutePath, query);
             case "Bearer":
-                return IsAuthorizedForBearerScheme(headerValue);
+                return _bearerChecker.IsAuthorizedForBearer(subscriptionIdentifier, requiredPermissions, headerValue);
             default:
                 logger.LogError($"Authentication failure for {scheme}. Scheme is not supported.");
                 return false;

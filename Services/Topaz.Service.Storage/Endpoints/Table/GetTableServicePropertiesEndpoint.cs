@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using System.Net;
 using System.Text;
 using System.Web;
@@ -9,8 +10,8 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Storage.Endpoints.Table;
 
-internal sealed class GetTableServicePropertiesEndpoint(ITopazLogger logger)
-    : TableDataPlaneEndpointBase(logger), IEndpointDefinition
+internal sealed class GetTableServicePropertiesEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : TableDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     public string? ProviderNamespace => "Microsoft.Storage";
 

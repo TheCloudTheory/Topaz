@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
@@ -10,8 +11,8 @@ namespace Topaz.Service.Storage.Endpoints.Table;
 /// Handles OPTIONS preflight requests for Table Storage CORS validation.
 /// See: https://learn.microsoft.com/en-us/rest/api/storageservices/preflight-table-request
 /// </summary>
-internal sealed class PreflightTableRequestEndpoint(ITopazLogger logger)
-    : TableDataPlaneEndpointBase(logger), IEndpointDefinition
+internal sealed class PreflightTableRequestEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : TableDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     public string? ProviderNamespace => "Microsoft.Storage";
 

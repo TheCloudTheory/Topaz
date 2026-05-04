@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using System.Net;
 using System.Text;
 using System.Xml.Serialization;
@@ -8,8 +9,8 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints.Blob;
 
-internal sealed class ListContainersEndpoint(ITopazLogger logger)
-    : BlobDataPlaneEndpointBase(logger), IEndpointDefinition
+internal sealed class ListContainersEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : BlobDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger));
 
@@ -32,6 +33,9 @@ internal sealed class ListContainersEndpoint(ITopazLogger logger)
 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, Permissions, context, response))
+            return;
 
         try
         {

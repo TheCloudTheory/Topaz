@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
@@ -6,8 +7,8 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints.Table;
 
-internal sealed class InsertOrMergeTableEntityEndpoint(ITopazLogger logger)
-    : TableDataPlaneEndpointBase(logger), IEndpointDefinition
+internal sealed class InsertOrMergeTableEntityEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : TableDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     public string? ProviderNamespace => "Microsoft.Storage";
 

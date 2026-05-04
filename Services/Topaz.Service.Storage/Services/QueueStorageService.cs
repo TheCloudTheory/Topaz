@@ -1,10 +1,11 @@
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Endpoints.Queue;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Services;
 
-public class QueueStorageService(ITopazLogger logger) : IServiceDefinition
+public class QueueStorageService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
     public static string UniqueName => "queuestorage";
     public string Name => "Queue Storage";
@@ -14,22 +15,22 @@ public class QueueStorageService(ITopazLogger logger) : IServiceDefinition
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new GetQueueServicePropertiesEndpoint(logger),
-        new SetQueueServicePropertiesEndpoint(logger),
-        new GetQueueServiceStatsEndpoint(logger),
-        new SetQueueMetadataEndpoint(logger),
-        new SetQueueAclEndpoint(logger),
-        new CreateQueueEndpoint(logger),
-        new DeleteQueueEndpoint(logger),
-        new ListQueuesEndpoint(logger),
-        new GetQueueAclEndpoint(logger),
-        new GetQueuePropertiesEndpoint(logger),
-        new SendMessageEndpoint(logger),
-        new PeekMessagesEndpoint(logger),
-        new GetMessagesEndpoint(logger),
-        new PutMessageEndpoint(logger),
-        new ClearMessagesEndpoint(logger),
-        new DeleteMessageEndpoint(logger),
+        new GetQueueServicePropertiesEndpoint(eventPipeline, logger),
+        new SetQueueServicePropertiesEndpoint(eventPipeline, logger),
+        new GetQueueServiceStatsEndpoint(eventPipeline, logger),
+        new SetQueueMetadataEndpoint(eventPipeline, logger),
+        new SetQueueAclEndpoint(eventPipeline, logger),
+        new CreateQueueEndpoint(eventPipeline, logger),
+        new DeleteQueueEndpoint(eventPipeline, logger),
+        new ListQueuesEndpoint(eventPipeline, logger),
+        new GetQueueAclEndpoint(eventPipeline, logger),
+        new GetQueuePropertiesEndpoint(eventPipeline, logger),
+        new SendMessageEndpoint(eventPipeline, logger),
+        new PeekMessagesEndpoint(eventPipeline, logger),
+        new GetMessagesEndpoint(eventPipeline, logger),
+        new PutMessageEndpoint(eventPipeline, logger),
+        new ClearMessagesEndpoint(eventPipeline, logger),
+        new DeleteMessageEndpoint(eventPipeline, logger),
     ];
 
     public void Bootstrap()

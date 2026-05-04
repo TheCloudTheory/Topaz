@@ -1,10 +1,11 @@
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Endpoints.Table;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Services;
 
-public sealed class TableStorageService(ITopazLogger logger) : IServiceDefinition
+public sealed class TableStorageService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
     public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => AzureStorageService.LocalDirectoryPath;
@@ -16,24 +17,24 @@ public sealed class TableStorageService(ITopazLogger logger) : IServiceDefinitio
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         // OPTIONS preflight must be first so it takes priority over all other routes
-        new PreflightTableRequestEndpoint(logger),
+        new PreflightTableRequestEndpoint(eventPipeline, logger),
         // Specific routes first so they take priority over wildcard routes
-        new GetTableServicePropertiesEndpoint(logger),
-        new SetTableServicePropertiesEndpoint(logger),
-        new ListTablesEndpoint(logger),
-        new CreateTableEndpoint(logger),
-        new GetTableEndpoint(logger),
-        new DeleteTableEndpoint(logger),
+        new GetTableServicePropertiesEndpoint(eventPipeline, logger),
+        new SetTableServicePropertiesEndpoint(eventPipeline, logger),
+        new ListTablesEndpoint(eventPipeline, logger),
+        new CreateTableEndpoint(eventPipeline, logger),
+        new GetTableEndpoint(eventPipeline, logger),
+        new DeleteTableEndpoint(eventPipeline, logger),
         // Regex entity-key routes before wildcard routes for the same method
-        new GetTableEntityEndpoint(logger),
-        new InsertOrMergeTableEntityEndpoint(logger),
-        new PutTableEntityEndpoint(logger),
-        new PatchTableEntityEndpoint(logger),
-        new DeleteTableEntityEndpoint(logger),
+        new GetTableEntityEndpoint(eventPipeline, logger),
+        new InsertOrMergeTableEntityEndpoint(eventPipeline, logger),
+        new PutTableEntityEndpoint(eventPipeline, logger),
+        new PatchTableEntityEndpoint(eventPipeline, logger),
+        new DeleteTableEntityEndpoint(eventPipeline, logger),
         // Wildcard routes last
-        new QueryTableEntitiesEndpoint(logger),
-        new InsertTableEntityEndpoint(logger),
-        new SetTableAclEndpoint(logger),
+        new QueryTableEntitiesEndpoint(eventPipeline, logger),
+        new InsertTableEntityEndpoint(eventPipeline, logger),
+        new SetTableAclEndpoint(eventPipeline, logger),
     ];
 
     public void Bootstrap()

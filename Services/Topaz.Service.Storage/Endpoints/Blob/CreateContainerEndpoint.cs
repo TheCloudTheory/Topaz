@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
@@ -5,8 +6,8 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints.Blob;
 
-internal sealed class CreateContainerEndpoint(ITopazLogger logger)
-    : BlobDataPlaneEndpointBase(logger), IEndpointDefinition
+internal sealed class CreateContainerEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : BlobDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     private readonly BlobServiceControlPlane _controlPlane = new(new BlobResourceProvider(logger));
 
@@ -29,6 +30,9 @@ internal sealed class CreateContainerEndpoint(ITopazLogger logger)
 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, Permissions, context, response))
+            return;
 
         try
         {

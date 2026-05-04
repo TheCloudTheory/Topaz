@@ -264,21 +264,7 @@ Implemented: `GET /subscriptions/{sub}/providers`, `POST .../register`, `POST ..
 
 ### Entra ID authentication for Azure Storage
 
-<!--
-TODO: Azure Storage: Entra ID bearer-token authentication for Blob and Table data plane
-  Allow the Blob Storage and Table Storage data-plane endpoints to accept requests
-  authenticated with an Entra ID bearer token (Authorization: Bearer <token>) in addition
-  to the existing shared-key mechanism.
-  Implementation steps:
-  - Validate incoming Bearer tokens against the Topaz Entra ID service (reuse the token
-    validation logic already used by other services).
-  - Map the token's `oid` claim to a storage account via the existing ResourceProvider.
-  - Return 401 with a `WWW-Authenticate: Bearer ...` challenge when no valid token or
-    shared key is present, matching the real Azure Storage OAuth error contract.
-  - Update BlobStorageService and TableStorageService to opt-in to the auth middleware.
-  milestone: v1.3-beta
-  labels: enhancement, storage, security
--->
+_Implemented: Bearer token (Entra ID) authentication added to Blob, Queue, and Table Storage data-plane endpoints alongside the existing SharedKey/SharedKeyLite mechanism. Full RBAC check via `AzureAuthorizationAdapter.PrincipalHasPermissions`. Returns `401 + WWW-Authenticate` challenge when no Authorization header is present. SharedKey HMAC validation for Blob/Queue now uses the 13-field Blob/Queue StringToSign format. `IEndpointDefinition.Authorize` override in storage base classes bypasses the Router's ARM RBAC check; auth is managed per-request in `IsRequestAuthorized`._
 
 ### Azure Virtual Machines — initial control plane
 

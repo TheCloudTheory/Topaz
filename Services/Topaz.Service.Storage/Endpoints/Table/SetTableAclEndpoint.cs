@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
@@ -6,8 +7,8 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Storage.Endpoints.Table;
 
-internal sealed class SetTableAclEndpoint(ITopazLogger logger)
-    : TableDataPlaneEndpointBase(logger), IEndpointDefinition
+internal sealed class SetTableAclEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : TableDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     public string? ProviderNamespace => "Microsoft.Storage";
 

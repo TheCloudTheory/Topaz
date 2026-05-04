@@ -9,11 +9,9 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.KeyVault.Endpoints.Keys;
 
-public sealed class GetDeletedKeyEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class GetDeletedKeyEndpoint(Pipeline eventPipeline, ITopazLogger logger) : KeyVaultDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     private readonly KeyVaultKeysDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
-    private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
-    private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
     public string? ProviderNamespace => "Microsoft.KeyVault";
 
@@ -24,18 +22,14 @@ public sealed class GetDeletedKeyEndpoint(Pipeline eventPipeline, ITopazLogger l
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultKeyVaultPort, GlobalSettings.HttpsPort], Protocol.Https);
 
+    protected override string? AccessPolicyPermission => "get";
+
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         try
         {
-            var hostSegments = context.Request.Host.Host.Split('.', StringSplitOptions.RemoveEmptyEntries);
-            if (hostSegments.Length == 0)
-            {
-                response.StatusCode = HttpStatusCode.NotFound;
-                return;
-            }
-
-            var vaultName = PathGuard.SanitizeName(hostSegments[0]);
+            var vault = GetVault(context);
+            var vaultName = vault.Name;
             var keyName = context.Request.Path.Value.ExtractValueFromPath(2);
 
             if (string.IsNullOrEmpty(keyName))
@@ -44,29 +38,9 @@ public sealed class GetDeletedKeyEndpoint(Pipeline eventPipeline, ITopazLogger l
                 return;
             }
 
-            var kvResult = _controlPlane.FindByName(vaultName!);
-            if (kvResult.Result == OperationResult.NotFound || kvResult.Resource == null)
-            {
-                response.StatusCode = HttpStatusCode.NotFound;
-                return;
-            }
 
-            var subscriptionIdentifier = kvResult.Resource.GetSubscription();
-            var resourceGroupIdentifier = kvResult.Resource.GetResourceGroup();
-
-            var authHeader = context.Request.Headers["Authorization"].ToString();
-            if (string.IsNullOrEmpty(authHeader))
-            {
-                response.StatusCode = HttpStatusCode.Unauthorized;
-                response.Headers.Add("WWW-Authenticate", KeyVaultAuthorizationChecker.WwwAuthenticateChallenge);
-                return;
-            }
-
-            if (!_authChecker.IsAuthorized(authHeader, kvResult.Resource, Permissions, "get"))
-            {
-                response.StatusCode = HttpStatusCode.Forbidden;
-                return;
-            }
+            var subscriptionIdentifier = vault.GetSubscription();
+            var resourceGroupIdentifier = vault.GetResourceGroup();
 
             var operation = _dataPlane.GetDeletedKey(subscriptionIdentifier, resourceGroupIdentifier,
                 vaultName!, keyName);

@@ -8,11 +8,9 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.KeyVault.Endpoints.Secrets;
 
-public sealed class BackupSecretEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class BackupSecretEndpoint(Pipeline eventPipeline, ITopazLogger logger) : KeyVaultDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
-    private readonly KeyVaultControlPlane _controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly KeyVaultSecretsDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
-    private readonly KeyVaultAuthorizationChecker _authChecker = new(eventPipeline, logger);
 
     public string? ProviderNamespace => "Microsoft.KeyVault";
 
@@ -23,43 +21,24 @@ public sealed class BackupSecretEndpoint(Pipeline eventPipeline, ITopazLogger lo
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultKeyVaultPort, GlobalSettings.HttpsPort], Protocol.Https);
 
+    protected override string? AccessPolicyPermission => "backup";
+
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         try
         {
-            var hostSegments = context.Request.Host.Host.Split('.', StringSplitOptions.RemoveEmptyEntries);
-            if (hostSegments.Length == 0)
-            {
-                response.StatusCode = HttpStatusCode.NotFound;
-                return;
-            }
-
-            var vaultName = PathGuard.SanitizeName(hostSegments[0]);
+            var vault = GetVault(context);
+            var vaultName = vault.Name;
             var secretName = context.Request.Path.Value.ExtractValueFromPath(2);
 
-            var vaultOperation = _controlPlane.FindByName(vaultName!);
-            if (vaultOperation.Result == OperationResult.NotFound || string.IsNullOrEmpty(secretName))
+            if (string.IsNullOrEmpty(secretName))
             {
                 response.StatusCode = HttpStatusCode.NotFound;
                 return;
             }
 
-            var subscriptionIdentifier = vaultOperation.Resource!.GetSubscription();
-            var resourceGroupIdentifier = vaultOperation.Resource!.GetResourceGroup();
-
-            var authHeader = context.Request.Headers["Authorization"].ToString();
-            if (string.IsNullOrEmpty(authHeader))
-            {
-                response.StatusCode = HttpStatusCode.Unauthorized;
-                response.Headers.Add("WWW-Authenticate", KeyVaultAuthorizationChecker.WwwAuthenticateChallenge);
-                return;
-            }
-
-            if (!_authChecker.IsAuthorized(authHeader, vaultOperation.Resource!, Permissions, "backup"))
-            {
-                response.StatusCode = HttpStatusCode.Forbidden;
-                return;
-            }
+            var subscriptionIdentifier = vault.GetSubscription();
+            var resourceGroupIdentifier = vault.GetResourceGroup();
 
             var operation = _dataPlane.BackupSecret(subscriptionIdentifier, resourceGroupIdentifier,
                 vaultName!, secretName);

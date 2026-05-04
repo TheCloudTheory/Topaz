@@ -89,13 +89,13 @@ public class Host
         var services = new IServiceDefinition[]
         {
             new AzureStorageService(_logger),
-            new TableStorageService(_logger),
-            new QueueStorageService(_logger),
+            new TableStorageService(_eventPipeline, _logger),
+            new QueueStorageService(_eventPipeline, _logger),
             new ResourceGroupService(_eventPipeline, _logger),
             new SubscriptionService(_eventPipeline, _logger),
             new KeyVaultService(_eventPipeline, _logger),
             new EventHubService(_logger),
-            new BlobStorageService(_logger),
+            new BlobStorageService(_eventPipeline, _logger),
             new TopazCloudEnvironmentService(),
             new ServiceBusService(_eventPipeline, _logger),
             new ResourceManagerService(_eventPipeline, _logger, cancellationToken),

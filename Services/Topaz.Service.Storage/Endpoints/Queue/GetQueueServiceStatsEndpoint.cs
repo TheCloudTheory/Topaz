@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using System.Net;
 using System.Text;
 using Azure.ResourceManager.Storage.Models;
@@ -8,8 +9,8 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints.Queue;
 
-internal sealed class GetQueueServiceStatsEndpoint(ITopazLogger logger)
-    : QueueDataPlaneEndpointBase(logger), IEndpointDefinition
+internal sealed class GetQueueServiceStatsEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : QueueDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     public string? ProviderNamespace => "Microsoft.Storage";
 
@@ -37,6 +38,11 @@ internal sealed class GetQueueServiceStatsEndpoint(ITopazLogger logger)
             response.Content = new StringContent(errorXml, Encoding.UTF8, "application/xml");
             return;
         }
+
+        var subscriptionIdentifier = storageAccount!.GetSubscription();
+        var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, Permissions, context, response))
+            return;
 
         var statsXml = QueueServiceControlPlane.GetQueueServiceStatsXml();
         response.Content = new StringContent(statsXml, Encoding.UTF8, "application/xml");

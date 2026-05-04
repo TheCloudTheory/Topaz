@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
@@ -15,8 +16,8 @@ namespace Topaz.Service.Storage.Endpoints.Queue;
 /// Retrieves one or more messages from the front of a queue.
 /// Messages are hidden during their visibility timeout and dequeue count is incremented.
 /// </summary>
-internal sealed class GetMessagesEndpoint(ITopazLogger logger)
-    : QueueDataPlaneEndpointBase(logger), IEndpointDefinition
+internal sealed class GetMessagesEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : QueueDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     private readonly QueueServiceControlPlane _controlPlane = QueueServiceControlPlane.New(logger);
     private readonly QueueServiceDataPlane _dataPlane = QueueServiceDataPlane.New(logger);
@@ -43,6 +44,9 @@ internal sealed class GetMessagesEndpoint(ITopazLogger logger)
 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, Permissions, context, response))
+            return;
 
         try
         {

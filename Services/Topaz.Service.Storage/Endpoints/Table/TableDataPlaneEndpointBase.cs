@@ -1,9 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Topaz.Dns;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Exceptions;
@@ -14,13 +16,22 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints.Table;
 
-internal abstract class TableDataPlaneEndpointBase(ITopazLogger logger)
+internal abstract class TableDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogger logger)
 {
     private readonly StorageResourceProvider _storageResourceProvider = new(logger);
-    private readonly TableStorageSecurityProvider _securityProvider = new(logger);
+    private readonly TableStorageSecurityProvider _securityProvider = new(eventPipeline, logger);
     protected readonly ITopazLogger Logger = logger;
     protected readonly TableServiceControlPlane ControlPlane = new(new TableResourceProvider(logger), logger);
     protected readonly TableServiceDataPlane DataPlane = new(new TableResourceProvider(logger), logger);
+
+    /// <summary>
+    /// Storage data-plane endpoints manage their own authentication via <see cref="IsRequestAuthorized"/>.
+    /// The router's default ARM RBAC check is bypassed here.
+    /// </summary>
+    public (bool isAuthorized, ClaimsPrincipal? principal) Authorize(
+        HttpContext context,
+        HttpResponseMessage response,
+        IArmAuthorizationChecker armAuthChecker) => (true, null);
 
     protected bool TryGetStorageAccount(IHeaderDictionary headers, out StorageAccountResource? storageAccount)
     {
@@ -65,8 +76,9 @@ internal abstract class TableDataPlaneEndpointBase(ITopazLogger logger)
                         ?? string.Empty;
         var queryIndex = rawTarget.IndexOf('?');
         var rawPath = queryIndex >= 0 ? rawTarget[..queryIndex] : rawTarget;
+        var permissions = (this as IEndpointDefinition)?.Permissions ?? [];
         return _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
-            storageAccountName, context.Request.Headers, context.Request.Method, rawPath,
+            storageAccountName, context.Request.Headers, permissions, context.Request.Method, rawPath,
             context.Request.QueryString);
     }
 

@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
@@ -6,8 +7,8 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints.Queue;
 
-internal sealed class ClearMessagesEndpoint(ITopazLogger logger)
-    : QueueDataPlaneEndpointBase(logger), IEndpointDefinition
+internal sealed class ClearMessagesEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : QueueDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     private readonly QueueServiceDataPlane _dataPlane = QueueServiceDataPlane.New(logger);
 
@@ -32,6 +33,9 @@ internal sealed class ClearMessagesEndpoint(ITopazLogger logger)
 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, Permissions, context, response))
+            return;
 
         try
         {

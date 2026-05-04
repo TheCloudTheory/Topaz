@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
@@ -9,8 +10,8 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Storage.Endpoints.Blob;
 
-internal sealed class PutBlockEndpoint(ITopazLogger logger)
-    : BlobDataPlaneEndpointBase(logger), IEndpointDefinition
+internal sealed class PutBlockEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : BlobDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     private readonly BlobServiceDataPlane _dataPlane =
         new(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
@@ -34,6 +35,9 @@ internal sealed class PutBlockEndpoint(ITopazLogger logger)
 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, Permissions, context, response))
+            return;
 
         try
         {

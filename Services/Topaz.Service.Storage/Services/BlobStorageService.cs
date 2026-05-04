@@ -1,10 +1,11 @@
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Storage.Endpoints.Blob;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Services;
 
-public class BlobStorageService(ITopazLogger logger) : IServiceDefinition
+public class BlobStorageService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
     public static string UniqueName => "blobstorage";
     public string Name => "Blob Storage";
@@ -14,29 +15,29 @@ public class BlobStorageService(ITopazLogger logger) : IServiceDefinition
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new ListBlobsEndpoint(logger),
-        new SetContainerMetadataEndpoint(logger),
-        new GetContainerMetadataEndpoint(logger),
-        new SetContainerAclEndpoint(logger),
-        new GetContainerAclEndpoint(logger),
-        new GetContainerPropertiesEndpoint(logger),
-        new LeaseContainerEndpoint(logger),
-        new CreateContainerEndpoint(logger),
-        new LeaseBlobEndpoint(logger),
-        new UndeleteBlobEndpoint(logger),
-        new SnapshotBlobEndpoint(logger),
-        new SetBlobPropertiesEndpoint(logger),
-        new GetBlockListEndpoint(logger),
-        new GetPageRangesEndpoint(logger),
-        new PutBlockListEndpoint(logger),
-        new PutBlockEndpoint(logger),
-        new PutPageEndpoint(logger),
-        new PutBlobEndpoint(logger),
-        new GetBlobMetadataEndpoint(logger),
-        new ListContainersEndpoint(logger),
-        new GetBlobEndpoint(logger),
-        new GetBlobPropertiesEndpoint(logger),
-        new DeleteBlobEndpoint(logger),
+        new ListBlobsEndpoint(eventPipeline, logger),
+        new SetContainerMetadataEndpoint(eventPipeline, logger),
+        new GetContainerMetadataEndpoint(eventPipeline, logger),
+        new SetContainerAclEndpoint(eventPipeline, logger),
+        new GetContainerAclEndpoint(eventPipeline, logger),
+        new GetContainerPropertiesEndpoint(eventPipeline, logger),
+        new LeaseContainerEndpoint(eventPipeline, logger),
+        new CreateContainerEndpoint(eventPipeline, logger),
+        new LeaseBlobEndpoint(eventPipeline, logger),
+        new UndeleteBlobEndpoint(eventPipeline, logger),
+        new SnapshotBlobEndpoint(eventPipeline, logger),
+        new SetBlobPropertiesEndpoint(eventPipeline, logger),
+        new GetBlockListEndpoint(eventPipeline, logger),
+        new GetPageRangesEndpoint(eventPipeline, logger),
+        new PutBlockListEndpoint(eventPipeline, logger),
+        new PutBlockEndpoint(eventPipeline, logger),
+        new PutPageEndpoint(eventPipeline, logger),
+        new PutBlobEndpoint(eventPipeline, logger),
+        new GetBlobMetadataEndpoint(eventPipeline, logger),
+        new ListContainersEndpoint(eventPipeline, logger),
+        new GetBlobEndpoint(eventPipeline, logger),
+        new GetBlobPropertiesEndpoint(eventPipeline, logger),
+        new DeleteBlobEndpoint(eventPipeline, logger),
     ];
 
     public void Bootstrap()

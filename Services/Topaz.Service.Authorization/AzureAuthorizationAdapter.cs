@@ -3,17 +3,18 @@ using System.Security.Claims;
 using Topaz.EventPipeline;
 using Topaz.Identity;
 using Topaz.Service.Authorization.Domain;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Authorization;
 
-public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogger logger)
+public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogger logger) : IArmAuthorizationChecker
 {
     private readonly AuthorizationControlPlane _controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
     
-    public (bool isAuthorized, ClaimsPrincipal? principal) IsAuthorized(string[] requiredPermissions, string token, string scope, bool canBypass = false)
+    public (bool isAuthorized, ClaimsPrincipal? principal) IsAuthorized(string[] requiredPermissions, string token, string? scope)
     {
         logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
             "Attempting to check authorization for {0} token against {1} permissions...", token,
@@ -23,12 +24,6 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
                 "No permissions defined for the endpoint. It's treated as a public endpoint.");
-            return (true, null);
-        }
-
-        if (canBypass)
-        {
-            logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized), "Bypassing authorization.");
             return (true, null);
         }
 
@@ -69,7 +64,7 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
             return (true, GetClaimsPrincipal(validatedToken)); 
         }
 
-        if (!scope.Contains("/subscriptions/"))
+        if (scope == null || !scope.Contains("/subscriptions/"))
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
                 "Scope does not contain `/subscriptions/` - skipping authorization.");

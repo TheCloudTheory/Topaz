@@ -1,3 +1,4 @@
+using Topaz.EventPipeline;
 using System.Net;
 using System.Text;
 using System.Xml.Serialization;
@@ -8,8 +9,8 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints.Queue;
 
-internal sealed class ListQueuesEndpoint(ITopazLogger logger)
-    : QueueDataPlaneEndpointBase(logger), IEndpointDefinition
+internal sealed class ListQueuesEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : QueueDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     private readonly QueueServiceControlPlane _controlPlane = new(new QueueResourceProvider(logger), logger);
 
@@ -32,6 +33,9 @@ internal sealed class ListQueuesEndpoint(ITopazLogger logger)
 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
+
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, Permissions, context, response))
+            return;
 
         try
         {

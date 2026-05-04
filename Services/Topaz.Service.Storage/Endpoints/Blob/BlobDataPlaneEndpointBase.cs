@@ -1,19 +1,58 @@
 using System.Globalization;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Topaz.Dns;
+using Topaz.EventPipeline;
+using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
+using Topaz.Service.Storage.Security;
 using Topaz.Service.Storage.Services;
 using Topaz.Shared;
 using BlobProperties = Topaz.Service.Storage.Models.BlobProperties;
 
 namespace Topaz.Service.Storage.Endpoints.Blob;
 
-internal abstract class BlobDataPlaneEndpointBase(ITopazLogger logger)
+internal abstract class BlobDataPlaneEndpointBase(Pipeline eventPipeline, ITopazLogger logger)
 {
     private readonly StorageResourceProvider _storageResourceProvider = new(logger);
+    private readonly BlobStorageSecurityProvider _securityProvider = new(eventPipeline, logger);
     protected readonly ITopazLogger Logger = logger;
+
+    /// <summary>
+    /// Blob storage data-plane endpoints manage their own auth via <see cref="IsRequestAuthorized"/>.
+    /// The router's default ARM RBAC check is bypassed here.
+    /// </summary>
+    public (bool isAuthorized, ClaimsPrincipal? principal) Authorize(
+        HttpContext context,
+        HttpResponseMessage response,
+        IArmAuthorizationChecker armAuthChecker) => (true, null);
+
+    protected bool IsRequestAuthorized(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string[] requiredPermissions,
+        HttpContext context,
+        HttpResponseMessage response)
+    {
+        if (!context.Request.Headers.TryGetValue("Authorization", out _))
+        {
+            response.StatusCode = System.Net.HttpStatusCode.Unauthorized;
+            response.Headers.TryAddWithoutValidation("WWW-Authenticate", StorageDataPlaneAuthorizationChecker.WwwAuthenticateChallenge);
+            return false;
+        }
+        var rawTarget = context.Features.Get<IHttpRequestFeature>()?.RawTarget
+                        ?? context.Request.Path.Value
+                        ?? string.Empty;
+        var queryIndex = rawTarget.IndexOf('?');
+        var rawPath = queryIndex >= 0 ? rawTarget[..queryIndex] : rawTarget;
+        return _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, context.Request.Headers, requiredPermissions, context.Request.Method,
+            rawPath, context.Request.QueryString);
+    }
 
     protected bool TryGetStorageAccount(IHeaderDictionary headers, out StorageAccountResource? storageAccount)
     {

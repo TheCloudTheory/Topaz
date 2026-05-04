@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 
 namespace Topaz.Service.Shared;
@@ -16,6 +17,31 @@ public interface IEndpointDefinition
     /// Leave null for infrastructure endpoints (Subscription, ResourceGroup, Deployment, etc.).
     /// </summary>
     public string? ProviderNamespace => null;
+
+    /// <summary>
+    /// Determines whether the incoming request is authorized to invoke this endpoint.
+    /// The default implementation delegates to the Router's ARM RBAC adapter via
+    /// <paramref name="armAuthCheck"/> using this endpoint's <see cref="Permissions"/>.
+    /// Data-plane endpoints (Key Vault, Storage) override this method to perform their own
+    /// authentication scheme (Bearer, SharedKey) inside <see cref="GetResponse"/> instead.
+    /// </summary>
+    /// <param name="context">The current HTTP request context.</param>
+    /// <param name="armAuthChecker">
+    /// The ARM RBAC checker supplied by the Router. The default implementation calls
+    /// <see cref="IArmAuthorizationChecker.IsAuthorized"/> with this endpoint's
+    /// <see cref="Permissions"/> and the request's Authorization header.
+    /// Data-plane overrides that handle auth themselves should ignore this parameter.
+    /// </param>
+    public (bool isAuthorized, ClaimsPrincipal? principal) Authorize(
+        HttpContext context,
+        HttpResponseMessage response,
+        IArmAuthorizationChecker armAuthChecker)
+    {
+        return armAuthChecker.IsAuthorized(
+            Permissions,
+            context.Request.Headers["Authorization"].ToString(),
+            context.Request.Path.Value);
+    }
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options);
 }
