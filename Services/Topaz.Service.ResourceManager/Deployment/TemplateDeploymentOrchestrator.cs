@@ -2,7 +2,6 @@ using System.Text.Json;
 using Azure.Deployments.Core.Definitions.Schema;
 using Azure.Deployments.Core.Entities;
 using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
-using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using Newtonsoft.Json.Linq;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;

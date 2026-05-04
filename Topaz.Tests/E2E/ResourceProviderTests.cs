@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json.Nodes;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
@@ -112,7 +111,7 @@ public class ResourceProviderTests
     [Test]
     public async Task ResourceProvider_ActionOnUnregisteredProvider_Returns409()
     {
-        // Arrange — set up a subscription and resource group, then unregister Microsoft.KeyVault
+        // Arrange — create a resource group, then unregister Microsoft.KeyVault
         var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         using var topaz = new TopazArmClient(credentials);
         var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
@@ -126,18 +125,21 @@ public class ResourceProviderTests
 
         await topaz.UnregisterProviderAsync(SubscriptionId, "Microsoft.KeyVault");
 
-        // Act — attempt to create a Key Vault while the provider is unregistered
+        // Act — attempt to create a Key Vault while the provider is unregistered.
+        // The enforcement gate in the Router should reject this before the endpoint runs.
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var rg = await subscription.GetResourceGroupAsync("rg-provider-gate");
 
         var ex = Assert.ThrowsAsync<RequestFailedException>(async () =>
         {
             await rg.Value.GetKeyVaults().CreateOrUpdateAsync(
-                WaitUntil.Completed,
+                WaitUntil.Started,
                 "kv-provider-gate-test",
                 new KeyVaultCreateOrUpdateContent(
                     AzureLocation.WestEurope,
-                    new KeyVaultProperties(Guid.Parse("00000000-0000-0000-0000-000000000001"), new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))));
+                    new KeyVaultProperties(
+                        Guid.Parse("00000000-0000-0000-0000-000000000001"),
+                        new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))));
         });
 
         // Assert — 409 Conflict with MissingSubscriptionRegistration

@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Topaz.Service.ResourceManager.Models;
 using Topaz.Service.ResourceManager.Models.Requests;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using Topaz.Service.ResourceManager.Models.Responses;
 
@@ -36,14 +35,14 @@ internal static class WhatIfEngine
         List<WhatIfPropertyChange> changes,
         bool isTopLevel = false)
     {
-        if (before is null && after is null)
-            return;
-
-        if (before is null)
+        switch (before)
         {
-            changes.Add(WhatIfPropertyChange.Create(path, WhatIfPropertyChangeType.Create, null,
-                after!.DeepClone()));
-            return;
+            case null when after is null:
+                return;
+            case null:
+                changes.Add(WhatIfPropertyChange.Create(path, WhatIfPropertyChangeType.Create, null,
+                    after!.DeepClone()));
+                return;
         }
 
         if (after is null)
@@ -54,30 +53,36 @@ internal static class WhatIfEngine
         }
 
         // Both present — compare by kind
-        if (before is JsonObject beforeObj && after is JsonObject afterObj)
+        switch (before)
         {
-            DiffObjects(beforeObj, afterObj, path, changes, isTopLevel);
-        }
-        else if (before is JsonArray beforeArr && after is JsonArray afterArr)
-        {
-            // Arrays are treated atomically
-            var beforeJson = beforeArr.ToJsonString();
-            var afterJson = afterArr.ToJsonString();
-            if (beforeJson != afterJson)
+            case JsonObject beforeObj when after is JsonObject afterObj:
+                DiffObjects(beforeObj, afterObj, path, changes, isTopLevel);
+                break;
+            case JsonArray beforeArr when after is JsonArray afterArr:
             {
-                changes.Add(WhatIfPropertyChange.Create(path, WhatIfPropertyChangeType.Array,
-                    before.DeepClone(), after.DeepClone()));
+                // Arrays are treated atomically
+                var beforeJson = beforeArr.ToJsonString();
+                var afterJson = afterArr.ToJsonString();
+                if (beforeJson != afterJson)
+                {
+                    changes.Add(WhatIfPropertyChange.Create(path, WhatIfPropertyChangeType.Array,
+                        before.DeepClone(), after.DeepClone()));
+                }
+
+                break;
             }
-        }
-        else
-        {
-            // Primitive or type mismatch
-            var beforeJson = before.ToJsonString();
-            var afterJson = after.ToJsonString();
-            if (beforeJson != afterJson)
+            default:
             {
-                changes.Add(WhatIfPropertyChange.Create(path, WhatIfPropertyChangeType.Modify,
-                    before.DeepClone(), after.DeepClone()));
+                // Primitive or type mismatch
+                var beforeJson = before.ToJsonString();
+                var afterJson = after.ToJsonString();
+                if (beforeJson != afterJson)
+                {
+                    changes.Add(WhatIfPropertyChange.Create(path, WhatIfPropertyChangeType.Modify,
+                        before.DeepClone(), after.DeepClone()));
+                }
+
+                break;
             }
         }
     }

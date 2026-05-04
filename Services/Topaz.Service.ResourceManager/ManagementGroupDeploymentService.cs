@@ -1,9 +1,11 @@
+using JetBrains.Annotations;
 using Topaz.Service.Shared;
 
 namespace Topaz.Service.ResourceManager;
 
 // Used only as a generic type parameter for ManagementGroupDeploymentResourceProvider.
 // Management-group-scope deployment endpoints are registered in ResourceManagerService.
+[UsedImplicitly]
 internal sealed class ManagementGroupDeploymentService : IServiceDefinition
 {
     public static string UniqueName => "management-group-deployment";

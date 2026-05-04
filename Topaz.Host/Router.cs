@@ -239,9 +239,13 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
                     var state = _resourceManagerResourceProvider.GetProviderRegistrationState(subscriptionId, providerNamespace);
                     if (string.Equals(state, "Unregistered", StringComparison.OrdinalIgnoreCase))
                     {
-                        response.CreateErrorResponse(
-                            HttpResponseMessageExtensions.MissingSubscriptionRegistrationCode,
-                            providerNamespace);
+                        var errorMessage = $"The subscription is not registered to use namespace '{providerNamespace}'. " +
+                                           "See https://aka.ms/rps-not-found for how to register subscriptions.";
+                        var errorJson = JsonSerializer.Serialize(
+                            new GenericErrorResponse(HttpResponseMessageExtensions.MissingSubscriptionRegistrationCode, errorMessage),
+                            GlobalSettings.JsonOptions);
+                        response.Content = new StringContent(errorJson, System.Text.Encoding.UTF8, "application/json");
+                        response.StatusCode = HttpStatusCode.Conflict;
                         return response;
                     }
                 }

@@ -141,7 +141,7 @@ internal sealed class ResourceManagerControlPlane(
             return new ControlPlaneOperationResult<ExportTemplateResult>(OperationResult.Success,
                 new ExportTemplateResult { Template = template }, null, null);
         }
-        catch (Exception ex) when (ex is FormatException or System.Text.Json.JsonException)
+        catch (Exception ex) when (ex is FormatException or JsonException)
         {
             logger.LogDebug(nameof(ResourceManagerControlPlane), nameof(ExportDeploymentTemplate),
                 "Failed to decode stored template for deployment '{0}': {1}", deploymentName, ex.Message);
@@ -366,13 +366,12 @@ internal sealed class ResourceManagerControlPlane(
         if (node is not JsonObject obj)
             return node;
 
-        if (obj["sku"] is null
-            && obj["properties"] is JsonObject props
-            && props["sku"] is JsonNode skuNode)
-        {
-            obj["sku"] = skuNode.DeepClone();
-            props.Remove("sku");
-        }
+        if (obj["sku"] is not null
+            || obj["properties"] is not JsonObject props
+            || props["sku"] is not { } skuNode) return obj;
+        
+        obj["sku"] = skuNode.DeepClone();
+        props.Remove("sku");
 
         return obj;
     }

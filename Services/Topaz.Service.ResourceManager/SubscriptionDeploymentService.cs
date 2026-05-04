@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Topaz.Service.Shared;
 using Topaz.Service.Subscription;
 
@@ -5,6 +6,7 @@ namespace Topaz.Service.ResourceManager;
 
 // Used only as a generic type parameter for SubscriptionDeploymentResourceProvider.
 // Subscription-scope deployment endpoints are registered in ResourceManagerService.
+[UsedImplicitly]
 public sealed class SubscriptionDeploymentService : IServiceDefinition
 {
     public static string UniqueName => "subscription-deployment";

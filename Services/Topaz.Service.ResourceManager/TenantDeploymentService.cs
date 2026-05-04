@@ -1,9 +1,11 @@
+using JetBrains.Annotations;
 using Topaz.Service.Shared;
 
 namespace Topaz.Service.ResourceManager;
 
 // Used only as a generic type parameter for TenantDeploymentResourceProvider.
 // Tenant-scope deployment endpoints are registered in ResourceManagerService.
+[UsedImplicitly]
 internal sealed class TenantDeploymentService : IServiceDefinition
 {
     public static string UniqueName => "tenant-deployment";

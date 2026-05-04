@@ -28,13 +28,15 @@ public sealed class ResourceManagerResourceProvider(ITopazLogger logger) : Resou
     public string GetProviderRegistrationState(Guid subscriptionId, string providerNamespace)
     {
         var path = GetRegistrationsFilePath(subscriptionId);
-        if (File.Exists(path))
-        {
-            var raw = File.ReadAllText(path);
-            var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(raw, GlobalSettings.JsonOptions);
-            if (dict != null && dict.TryGetValue(providerNamespace, out var state))
-                return state;
-        }
+        if (!File.Exists(path))
+            return DefaultRegisteredNamespaces.Contains(providerNamespace)
+                ? ResourceProviderDataResponse.RegisteredState
+                : ResourceProviderDataResponse.NotRegisteredState;
+        
+        var raw = File.ReadAllText(path);
+        var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(raw, GlobalSettings.JsonOptions);
+        if (dict != null && dict.TryGetValue(providerNamespace, out var state))
+            return state;
 
         return DefaultRegisteredNamespaces.Contains(providerNamespace)
             ? ResourceProviderDataResponse.RegisteredState

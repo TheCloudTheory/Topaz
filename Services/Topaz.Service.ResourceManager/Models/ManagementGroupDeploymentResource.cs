@@ -1,7 +1,6 @@
 using Azure.Core;
 using Azure.ResourceManager.Resources.Models;
 using Topaz.ResourceManager;
-using Topaz.Service.ResourceManager.Models;
 
 namespace Topaz.Service.ResourceManager.Models;
 

@@ -1,4 +1,3 @@
-using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
 using Newtonsoft.Json.Linq;
 
 namespace Topaz.Service.ResourceManager.Deployment;
