@@ -526,7 +526,7 @@ TODO: Virtual Networks: Delete, List, List All, and Update Tags operations
   - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks
   - GET    /subscriptions/{sub}/providers/Microsoft.Network/virtualNetworks
   - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks/{name} (update tags)
-  milestone: v1.3-beta
+  milestone: v1.4-beta
   labels: enhancement, virtual-network
 -->
 
@@ -534,7 +534,7 @@ TODO: Virtual Networks: Delete, List, List All, and Update Tags operations
 TODO: Virtual Networks: Check IP Address Availability
   Implement `GET .../virtualNetworks/{name}/CheckIPAddressAvailability?ipAddress={ip}`.
   Should validate whether the given IP falls within any subnet and is not already allocated.
-  milestone: v1.3-beta
+  milestone: v1.4-beta
   labels: enhancement, virtual-network
 -->
 
@@ -546,7 +546,7 @@ TODO: Subnets: Full CRUD operations
   - DELETE .../virtualNetworks/{vnet}/subnets/{name}  – delete
   - GET    .../virtualNetworks/{vnet}/subnets          – list
   Follow the resource provider pattern used by other Topaz.Service.VirtualNetwork resources.
-  milestone: v1.3-beta
+  milestone: v1.4-beta
   labels: enhancement, virtual-network
 -->
 
@@ -559,7 +559,7 @@ TODO: Network Security Groups: Full control plane
   - GET    .../networkSecurityGroups          – list by resource group
   - GET    /subscriptions/{sub}/providers/Microsoft.Network/networkSecurityGroups – list all
   - PATCH  .../networkSecurityGroups/{name}  – update tags
-  milestone: v1.3-beta
+  milestone: v1.4-beta
   labels: enhancement, virtual-network
 -->
 
