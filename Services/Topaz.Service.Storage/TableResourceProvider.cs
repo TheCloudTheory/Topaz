@@ -34,7 +34,8 @@ internal sealed class TableResourceProvider(ITopazLogger logger) : ResourceProvi
         var storageAccountPath =
             GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
-        return Path.Combine(storageAccountPath, ".table", tableName);
+        var safeName = PathGuard.SanitizeName(tableName);
+        return Path.Combine(storageAccountPath, ".table", safeName);
     }
 
     public void Create(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName, TableItem model)

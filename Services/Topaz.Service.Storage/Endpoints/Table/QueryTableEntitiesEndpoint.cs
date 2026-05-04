@@ -73,7 +73,7 @@ internal sealed class QueryTableEntitiesEndpoint(ITopazLogger logger)
         Logger.LogDebug(nameof(QueryTableEntitiesEndpoint), nameof(HandleGetAclRequest), "Executing {0}.",
             nameof(HandleGetAclRequest));
 
-        var tableName = path.Replace("/", string.Empty);
+        var tableName = PathGuard.SanitizeName(path.Replace("/", string.Empty));
         var aclsOp = ControlPlane.GetAcl(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName);
 
         using var sw = new EncodingAwareStringWriter();
