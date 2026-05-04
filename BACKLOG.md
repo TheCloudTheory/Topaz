@@ -9,6 +9,24 @@ converted to a GitHub Issue by CI when new lines are committed.
 
 ---
 
+<!--
+TODO: VirtualNetwork — Subnet CRUD
+  Implement PUT/GET/DELETE/LIST subnet endpoints under /virtualNetworks/{vnetName}/subnets/{subnetName}.
+  Required to support `az vm create` (which provisions a subnet before creating the VM).
+  milestone: v1.4-beta
+  labels: enhancement
+-->
+
+<!--
+TODO: VirtualNetwork — Network Interface (NIC) CRUD
+  Implement PUT/GET/DELETE/LIST NIC endpoints under /networkInterfaces/{nicName}.
+  Required to support `az vm create` (which creates a NIC and wires it into the VM payload).
+  milestone: v1.4-beta
+  labels: enhancement
+-->
+
+---
+
 ## Format reference
 
 ```

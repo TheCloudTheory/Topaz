@@ -6,6 +6,20 @@ namespace Topaz.Service.ResourceManager.Models.Responses;
 
 public sealed class ResourceProviderDataResponse(string providerName)
 {
+    private static readonly Dictionary<string, string[]> KnownResourceTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Microsoft.KeyVault"]          = ["vaults"],
+        ["Microsoft.Authorization"]     = ["roleDefinitions", "roleAssignments"],
+        ["Microsoft.ContainerRegistry"] = ["registries"],
+        ["Microsoft.Storage"]           = ["storageAccounts"],
+        ["Microsoft.ServiceBus"]        = ["namespaces"],
+        ["Microsoft.EventHub"]          = ["namespaces"],
+        ["Microsoft.Network"]           = ["virtualNetworks", "networkInterfaces"],
+        ["Microsoft.Compute"]           = ["virtualMachines"],
+        ["Microsoft.Resources"]         = ["resourceGroups", "deployments", "subscriptions"],
+        ["Microsoft.ManagedIdentity"]   = ["userAssignedIdentities"],
+    };
+
     public string? Id { get; init; }
     public string? Namespace { get; init; } = GetNamespaceFromProviderName(providerName);
 
@@ -17,12 +31,12 @@ public sealed class ResourceProviderDataResponse(string providerName)
     public string? RegistrationState { get; init; }
     public string? RegistrationPolicy { get; init; }
 
-    public IReadOnlyList<ResourceProviderResourceType>? ResourceTypes { get; init; }  =
-        new List<ResourceProviderResourceType>
-        {
-            new("vaults"),
-            new("roleDefinitions")
-        };
+    public IReadOnlyList<ResourceProviderResourceType>? ResourceTypes { get; init; } =
+        (KnownResourceTypes.TryGetValue(providerName.Split("/")[0], out var types)
+            ? types
+            : Array.Empty<string>())
+        .Select(t => new ResourceProviderResourceType(t))
+        .ToList();
 
     public string? ProviderAuthorizationConsentState { get; init; } =
         Azure.ResourceManager.Resources.Models.ProviderAuthorizationConsentState.Consented.ToString();

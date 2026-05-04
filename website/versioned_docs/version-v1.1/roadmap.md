@@ -101,6 +101,13 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 | <span class="badge--preview">Preview</span> | `FeatureNotSupported` for non-RA-GRS stats | Return 403 on stats requests for LRS/ZRS accounts across all storage services (Table already done; extend to Blob and Queue) |
 | <span class="badge--preview">Preview</span> | Read-only enforcement on secondary | Mutating operations (PUT, DELETE, POST) on secondary endpoints return 403 `WriteOperationNotSupportedOnSecondary` |
 
+### Virtual Network — subnets and NICs
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Subnet CRUD | PUT/GET/DELETE/LIST subnets within a VNet (`/virtualNetworks/{vnetName}/subnets/{subnetName}`) |
+| <span class="badge--preview">Preview</span> | Network Interface (NIC) CRUD | PUT/GET/DELETE/LIST network interfaces (`/networkInterfaces/{nicName}`) so `az vm create` can be used without manual ARM calls |
+
 ---
 
 ## v1.5-beta

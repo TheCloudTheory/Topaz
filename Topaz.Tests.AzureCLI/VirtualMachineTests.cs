@@ -12,7 +12,7 @@ public class VirtualMachineTests : TopazFixture
     {
         await RunAzureCliCommand($"az group create -l westeurope -n {ResourceGroup}", null, 0);
         await RunAzureCliCommand(
-            $"az resource create --resource-type Microsoft.Compute/virtualMachines " +
+            $"az resource create --resource-type Microsoft.Compute/virtualMachines --api-version 2024-07-01 " +
             $"--resource-group {ResourceGroup} --name {VmName} --location westeurope " +
             $"--properties '{{\"hardwareProfile\":{{\"vmSize\":\"Standard_D2s_v3\"}},\"osProfile\":{{\"computerName\":\"{VmName}\",\"adminUsername\":\"adminuser\"}}}}'",
             response =>
@@ -33,16 +33,16 @@ public class VirtualMachineTests : TopazFixture
     {
         await RunAzureCliCommand($"az group create -l westeurope -n {ResourceGroup}-del", null, 0);
         await RunAzureCliCommand(
-            $"az resource create --resource-type Microsoft.Compute/virtualMachines " +
+            $"az resource create --resource-type Microsoft.Compute/virtualMachines --api-version 2024-07-01 " +
             $"--resource-group {ResourceGroup}-del --name {VmName}-del --location westeurope " +
             $"--properties '{{\"hardwareProfile\":{{\"vmSize\":\"Standard_D2s_v3\"}}}}'",
             null, 0);
         await RunAzureCliCommand(
-            $"az resource delete --resource-type Microsoft.Compute/virtualMachines " +
+            $"az resource delete --resource-type Microsoft.Compute/virtualMachines --api-version 2024-07-01 " +
             $"--resource-group {ResourceGroup}-del --name {VmName}-del",
             null, 0);
         await RunAzureCliCommand(
-            $"az resource show --resource-type Microsoft.Compute/virtualMachines " +
+            $"az resource show --resource-type Microsoft.Compute/virtualMachines --api-version 2024-07-01 " +
             $"--resource-group {ResourceGroup}-del --name {VmName}-del",
             null, 3);
     }
@@ -52,12 +52,12 @@ public class VirtualMachineTests : TopazFixture
     {
         await RunAzureCliCommand($"az group create -l westeurope -n {ResourceGroup}-list", null, 0);
         await RunAzureCliCommand(
-            $"az resource create --resource-type Microsoft.Compute/virtualMachines " +
+            $"az resource create --resource-type Microsoft.Compute/virtualMachines --api-version 2024-07-01 " +
             $"--resource-group {ResourceGroup}-list --name {VmName}-list-a --location westeurope " +
             $"--properties '{{\"hardwareProfile\":{{\"vmSize\":\"Standard_D2s_v3\"}}}}'",
             null, 0);
         await RunAzureCliCommand(
-            $"az resource create --resource-type Microsoft.Compute/virtualMachines " +
+            $"az resource create --resource-type Microsoft.Compute/virtualMachines --api-version 2024-07-01 " +
             $"--resource-group {ResourceGroup}-list --name {VmName}-list-b --location westeurope " +
             $"--properties '{{\"hardwareProfile\":{{\"vmSize\":\"Standard_D2s_v3\"}}}}'",
             null, 0);

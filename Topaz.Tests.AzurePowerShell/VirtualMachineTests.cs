@@ -33,7 +33,7 @@ public class VirtualMachineTests : PowerShellTestBase
             "New-AzResourceGroup -Name ps-vm-get-rg -Location westeurope -Force | Out-Null\n" +
             "$props = @{ hardwareProfile = @{ vmSize = 'Standard_D2s_v3' } }\n" +
             "New-AzResource -ResourceType 'Microsoft.Compute/virtualMachines' -ResourceGroupName ps-vm-get-rg -Name PsGetVm02 -Location westeurope -Properties $props -ApiVersion '2024-07-01' -Force | Out-Null\n" +
-            "$result = Get-AzResource -ResourceType 'Microsoft.Compute/virtualMachines' -ResourceGroupName ps-vm-get-rg -Name PsGetVm02 | ConvertTo-Json -Depth 10\n" +
+            "$result = Get-AzResource -ResourceType 'Microsoft.Compute/virtualMachines' -ResourceGroupName ps-vm-get-rg -Name PsGetVm02 -ApiVersion '2024-07-01' | ConvertTo-Json -Depth 10\n" +
             "Remove-AzResource -ResourceType 'Microsoft.Compute/virtualMachines' -ResourceGroupName ps-vm-get-rg -Name PsGetVm02 -ApiVersion '2024-07-01' -Force | Out-Null\n" +
             "Remove-AzResourceGroup -Name ps-vm-get-rg -Force | Out-Null\n" +
             "$result",
@@ -51,7 +51,7 @@ public class VirtualMachineTests : PowerShellTestBase
             "$props = @{ hardwareProfile = @{ vmSize = 'Standard_D2s_v3' } }\n" +
             "New-AzResource -ResourceType 'Microsoft.Compute/virtualMachines' -ResourceGroupName ps-vm-del-rg -Name PsDelVm03 -Location westeurope -Properties $props -ApiVersion '2024-07-01' -Force | Out-Null\n" +
             "Remove-AzResource -ResourceType 'Microsoft.Compute/virtualMachines' -ResourceGroupName ps-vm-del-rg -Name PsDelVm03 -ApiVersion '2024-07-01' -Force | Out-Null\n" +
-            "$exists = (Get-AzResource -ResourceType 'Microsoft.Compute/virtualMachines' -ResourceGroupName ps-vm-del-rg -Name PsDelVm03 -ErrorAction SilentlyContinue) -ne $null\n" +
+            "$exists = (Get-AzResource -ResourceType 'Microsoft.Compute/virtualMachines' -ResourceGroupName ps-vm-del-rg -Name PsDelVm03 -ApiVersion '2024-07-01' -ErrorAction SilentlyContinue) -ne $null\n" +
             "Remove-AzResourceGroup -Name ps-vm-del-rg -Force | Out-Null\n" +
             "ConvertTo-Json @{ exists = $exists }",
             response =>

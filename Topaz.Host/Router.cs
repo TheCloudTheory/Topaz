@@ -35,6 +35,14 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
 
         logger.LogInformation($"[{method}][{context.Request.Host}{path}{query}][port:{port}]");
 
+        // Normalize consecutive slashes (some clients, e.g. `az resource`, emit
+        // paths like `/providers/Microsoft.Compute//virtualMachines/` with a double
+        // slash between the provider namespace and resource type).
+        // Also write back to context.Request.Path so endpoint handlers see clean segments.
+        while (path.Contains("//"))
+            path = path.Replace("//", "/");
+        context.Request.Path = path;
+
         IEndpointDefinition? endpoint = null;
         var pathParts = path.Split('/');
         
