@@ -32,7 +32,7 @@ public class ListRoleAssignmentsEndpoint(Pipeline eventPipeline, ITopazLogger lo
             "Attempting to list role assignments for subscription ID `{0}`.", subscriptionIdentifier);
 
         string? roleName = null;
-        if (context.Request.QueryString.TryGetValueForKey("$filter", out var filter))
+        if (context.Request.Query.TryGetValueForKey("$filter", out var filter))
         {
             // A filter is basically an expression looking like this: $filter=roleName eq 'Contributor'
             roleName = ExtractRoleNamerFromFilter(filter);

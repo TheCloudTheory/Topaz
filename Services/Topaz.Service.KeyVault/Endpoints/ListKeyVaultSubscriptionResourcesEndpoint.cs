@@ -26,7 +26,7 @@ internal sealed class ListKeyVaultSubscriptionResourcesEndpoint(Pipeline eventPi
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        context.Request.QueryString.TryGetValueForKey("$filter", out var filter);
+        context.Request.Query.TryGetValueForKey("$filter", out var filter);
         logger.LogDebug(nameof(ListKeyVaultSubscriptionResourcesEndpoint), nameof(GetResponse),
             "Executing {0}: filter `{1}`.", nameof(GetResponse), filter);
 

@@ -43,7 +43,7 @@ internal sealed class PutBlobEndpoint(ITopazLogger logger)
                 return;
             }
 
-            if (context.Request.QueryString.TryGetValueForKey("comp", out var comp) && comp == "metadata")
+            if (context.Request.Query.HasQueryKeyWithValue("comp", "metadata"))
             {
                 HandleSetBlobMetadataRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name,
                     context.Request.Path, blobName!, context.Request.Headers, response);

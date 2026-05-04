@@ -39,7 +39,7 @@ internal sealed class QueryTableEntitiesEndpoint(ITopazLogger logger)
             return;
         }
 
-        if (context.Request.QueryString.TryGetValueForKey("comp", out var comp) && comp == "acl")
+        if (context.Request.Query.HasQueryKeyWithValue("comp", "acl"))
         {
             HandleGetAclRequest(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name,
                 context.Request.Path, response);

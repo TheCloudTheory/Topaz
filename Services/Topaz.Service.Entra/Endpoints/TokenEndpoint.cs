@@ -287,7 +287,7 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                     EntraService.TenantId),
                 Scope = form.TryGetValue("scope", out var scope)
                     ? scope
-                    : context.Request.QueryString.TryGetValueForKey("scope", out var qscope)
+                    : context.Request.Query.TryGetValueForKey("scope", out var qscope)
                         ? qscope
                         : "openid profile offline_access"
             };
@@ -335,7 +335,7 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
         string? defaultValue)
     {
         return form.TryGetValue(key, out var cid) ? cid :
-            context.Request.QueryString.TryGetValueForKey(key, out var qcid) ? qcid :
+            context.Request.Query.TryGetValueForKey(key, out var qcid) ? qcid :
             defaultValue;
     }
 }

@@ -35,7 +35,7 @@ internal sealed class PutBlockEndpoint(ITopazLogger logger)
 
         try
         {
-            if (!context.Request.QueryString.TryGetValueForKey("blockid", out var blockId) ||
+            if (!context.Request.Query.TryGetValueForKey("blockid", out var blockId) ||
                 string.IsNullOrEmpty(blockId))
             {
                 response.StatusCode = HttpStatusCode.BadRequest;

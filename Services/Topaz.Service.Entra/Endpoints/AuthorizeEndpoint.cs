@@ -26,7 +26,7 @@ public class AuthorizeEndpoint(ITopazLogger logger) : IEndpointDefinition
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!context.Request.QueryString.TryGetValueForKey("state", out var state))
+        if (!context.Request.Query.TryGetValueForKey("state", out var state))
         {
             logger.LogWarning("Missing state parameter in authorize request.");
             
@@ -36,14 +36,14 @@ public class AuthorizeEndpoint(ITopazLogger logger) : IEndpointDefinition
 
         // Generate auth code and store nonce (if provided) so token exchange can include it.
         var code = $"Topaz{Guid.NewGuid():N}";
-        context.Request.QueryString.TryGetValueForKey("nonce", out var nonce);
+        context.Request.Query.TryGetValueForKey("nonce", out var nonce);
         if (!string.IsNullOrEmpty(nonce))
         {
             Nonces[code] = nonce;
         }
 
         // Store login_hint so the token endpoint can resolve the correct user identity.
-        context.Request.QueryString.TryGetValueForKey("login_hint", out var loginHint);
+        context.Request.Query.TryGetValueForKey("login_hint", out var loginHint);
         if (!string.IsNullOrEmpty(loginHint))
         {
             AuthCodes[code] = loginHint;
@@ -51,7 +51,7 @@ public class AuthorizeEndpoint(ITopazLogger logger) : IEndpointDefinition
         
         logger.LogDebug(nameof(AuthorizeEndpoint), nameof(GetResponse), "Generated auth code: {0}", code);
 
-        var uri = context.Request.QueryString.TryGetValueForKey("redirect_uri", out var redirectUri)
+        var uri = context.Request.Query.TryGetValueForKey("redirect_uri", out var redirectUri)
             ? new Uri(redirectUri! + $"?code={code}&state={state}")
             : null;
         

@@ -39,7 +39,7 @@ internal sealed class GetBlockListEndpoint(ITopazLogger logger)
         try
         {
             // Default is "committed" per Azure REST API spec
-            context.Request.QueryString.TryGetValueForKey("blocklisttype", out var blockListType);
+            context.Request.Query.TryGetValueForKey("blocklisttype", out var blockListType);
             blockListType = string.IsNullOrEmpty(blockListType) ? "committed" : blockListType.ToLowerInvariant();
 
             Logger.LogDebug(nameof(GetBlockListEndpoint), nameof(GetResponse),

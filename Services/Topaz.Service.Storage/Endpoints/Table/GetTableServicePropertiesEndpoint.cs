@@ -21,7 +21,7 @@ internal sealed class GetTableServicePropertiesEndpoint(ITopazLogger logger)
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (context.Request.QueryString.TryGetValueForKey("comp", out var comp) && comp == "stats")
+        if (context.Request.Query.HasQueryKeyWithValue("comp", "stats"))
         {
             HandleGetStats(context, response);
             return;
