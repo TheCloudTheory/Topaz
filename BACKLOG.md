@@ -318,32 +318,7 @@ TODO: Azure Storage: Entra ID bearer-token authentication for Blob and Table dat
 
 ### Azure Virtual Machines — initial control plane
 
-<!--
-TODO: Azure Virtual Machines: New service project scaffold
-  Create Topaz.Service.VirtualMachine following the existing service conventions:
-  - Project file with references to Topaz.ResourceManager and Topaz.Service.Shared
-  - VirtualMachineResourceProperties + VirtualMachineResource (ArmResource<T>)
-  - VirtualMachineResourceProvider (ResourceProviderBase<T>) for filesystem persistence
-  - VirtualMachineServiceControlPlane implementing IControlPlane with Deploy()
-  - IServiceDefinition registration and wiring in Topaz.Host
-  - ProjectReference in Topaz.Service.ResourceManager for template deployment routing
-  milestone: v1.3-beta
-  labels: enhancement, virtual-machines
--->
-
-<!--
-TODO: Azure Virtual Machines: Core control plane endpoints
-  Implement the initial VM control plane surface:
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/virtualMachines/{name} – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/virtualMachines/{name} – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/virtualMachines/{name} – delete
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/virtualMachines         – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.Compute/virtualMachines                             – list all
-  This is an emulation — VMs do not actually boot. The resource is persisted to disk and
-  reported as "Succeeded" with a stable provisioningState.
-  milestone: v1.3-beta
-  labels: enhancement, virtual-machines
--->
+_Implemented in v1.3-beta: service scaffold, five control-plane endpoints (create/update, get, delete, list by resource group, list by subscription), E2E SDK tests, Azure CLI tests, Azure PowerShell tests, and Terraform tests._
 
 ### Key Vault — full certificate operations support
 

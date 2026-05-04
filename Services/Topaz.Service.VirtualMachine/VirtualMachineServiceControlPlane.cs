@@ -151,7 +151,9 @@ internal sealed class VirtualMachineServiceControlPlane(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier)
     {
-        var resources = provider.ListAs<VirtualMachineResource>(subscriptionIdentifier, resourceGroupIdentifier)
+        var resources = provider.ListAs<VirtualMachineResource>(subscriptionIdentifier, resourceGroupIdentifier,
+                lookForNoOfSegments: 8)
+            .Where(r => r.IsInSubscription(subscriptionIdentifier) && r.IsInResourceGroup(resourceGroupIdentifier))
             .ToArray();
 
         return new ControlPlaneOperationResult<VirtualMachineResource[]>(OperationResult.Success, resources, null,
@@ -161,7 +163,10 @@ internal sealed class VirtualMachineServiceControlPlane(
     public ControlPlaneOperationResult<VirtualMachineResource[]> ListBySubscription(
         SubscriptionIdentifier subscriptionIdentifier)
     {
-        var resources = provider.ListAs<VirtualMachineResource>(subscriptionIdentifier, null).ToArray();
+        var resources = provider.ListAs<VirtualMachineResource>(subscriptionIdentifier, null,
+                lookForNoOfSegments: 8)
+            .Where(r => r.IsInSubscription(subscriptionIdentifier))
+            .ToArray();
 
         return new ControlPlaneOperationResult<VirtualMachineResource[]>(OperationResult.Success, resources, null,
             null);

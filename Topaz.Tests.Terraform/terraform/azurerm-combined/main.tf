@@ -329,3 +329,39 @@ output "vnet_dns_name"              { value = azurerm_virtual_network.vnet_dns.n
 output "acr_login_server"           { value = azurerm_container_registry.acr.login_server }
 output "acr_admin_enabled"          { value = azurerm_container_registry.acr.admin_enabled }
 output "acr_admin_registry_name"    { value = azurerm_container_registry.acr_admin.name }
+
+# ── Virtual Machine ────────────────────────────────────────────────────────────
+
+resource "azurerm_resource_group" "vm_rg" {
+  name     = "tf-rm-vm-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_linux_virtual_machine" "vm" {
+  name                            = "tf-rm-vm"
+  resource_group_name             = azurerm_resource_group.vm_rg.name
+  location                        = azurerm_resource_group.vm_rg.location
+  size                            = "Standard_D2s_v3"
+  admin_username                  = "adminuser"
+  admin_password                  = "Admin1234!@#"
+  disable_password_authentication = false
+
+  network_interface_ids = [
+    "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/tf-rm-vm-rg/providers/Microsoft.Network/networkInterfaces/fake-nic"
+  ]
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Premium_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts"
+    version   = "latest"
+  }
+}
+
+output "vm_name"     { value = azurerm_linux_virtual_machine.vm.name }
+output "vm_location" { value = azurerm_linux_virtual_machine.vm.location }
