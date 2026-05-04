@@ -70,19 +70,34 @@ public class ResourceProviderTests : TopazFixture
     }
 
     [Test]
-    public async Task ResourceProviderTests_WhenUnregisteredProviderIsUsed_OperationFails()
+    public async Task ResourceProviderTests_WhenUnregisteredProviderIsUsed_CliAutoRegistersAndSucceeds()
     {
         // Unregister Microsoft.KeyVault
         await RunAzureCliCommand("az provider unregister --namespace Microsoft.KeyVault --wait");
 
-        // Attempt to create a Key Vault — should fail with provider not registered error
+        await RunAzureCliCommand("az provider show --namespace Microsoft.KeyVault", result =>
+        {
+            Assert.That(result["registrationState"]!.GetValue<string>(), Is.EqualTo("Unregistered"));
+        });
+
+        // Attempt to create a Key Vault while the provider is unregistered.
+        // Azure CLI detects the 409 MissingSubscriptionRegistration response, automatically
+        // registers the provider, and retries — so the command should ultimately succeed (exit 0).
         await RunAzureCliCommand("az group create -n rg-provider-gate-cli -l westeurope");
         await RunAzureCliCommand(
             "az keyvault create --name kv-provider-gate --resource-group rg-provider-gate-cli --location westeurope --sku standard",
-            exitCode: 1);
+            result =>
+            {
+                Assert.That(result["name"]!.GetValue<string>(), Is.EqualTo("kv-provider-gate"));
+                Assert.That(result["properties"]!["vaultUri"]!.GetValue<string>(),
+                    Does.Contain("kv-provider-gate"));
+            });
 
-        // Re-register so other tests are not affected
-        await RunAzureCliCommand("az provider register --namespace Microsoft.KeyVault --wait");
+        // The provider should now be registered again after the CLI auto-registration
+        await RunAzureCliCommand("az provider show --namespace Microsoft.KeyVault", result =>
+        {
+            Assert.That(result["registrationState"]!.GetValue<string>(), Is.EqualTo("Registered"));
+        });
 
         // Cleanup
         await RunAzureCliCommand("az group delete -n rg-provider-gate-cli --yes");
