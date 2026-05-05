@@ -82,7 +82,7 @@ public sealed class CreateStorageTool
         var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupName).ConfigureAwait(false);
         var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(storageAccountName).ConfigureAwait(false);
 
-        await storageAccount.Value.GetBlobContainers()
+        await storageAccount.Value.GetBlobService().GetBlobContainers()
             .CreateOrUpdateAsync(WaitUntil.Completed, containerName, new BlobContainerData())
             .ConfigureAwait(false);
 

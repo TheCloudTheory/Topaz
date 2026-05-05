@@ -44,6 +44,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
+      id: build
       run: dotnet build --no-restore
     - name: Publish Linux (interim)
       run: |
@@ -220,7 +221,7 @@ jobs:
           echo "cli_filter=$CLI_JOINED" >> "$GITHUB_OUTPUT"
         fi
     - name: Test
-      if: steps.test_filter.outputs.skip != 'true'
+      if: steps.build.outcome == 'success' && steps.test_filter.outputs.skip != 'true'
       run: |
         FILTER="${{ steps.test_filter.outputs.filter }}"
         EXCLUDE="FullyQualifiedName!~Topaz.Tests.Terraform&FullyQualifiedName!~Topaz.Tests.AzurePowerShell&FullyQualifiedName!~Topaz.Tests.AzureCLI"
@@ -234,17 +235,17 @@ jobs:
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
     - name: Terraform Tests
-      if: always() && steps.test_filter.outputs.skip != 'true' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || steps.changes.outputs.terraform == 'true')
+      if: steps.build.outcome == 'success' && steps.test_filter.outputs.skip != 'true' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || steps.changes.outputs.terraform == 'true')
       run: |
         dotnet test -m:1 --no-build --verbosity normal --logger trx \
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "FullyQualifiedName~Topaz.Tests.Terraform"
     - name: Build PowerShell container
-      if: always() && steps.test_filter.outputs.ps_skip != 'true'
+      if: steps.build.outcome == 'success' && steps.test_filter.outputs.ps_skip != 'true'
       run: ./scripts/build-powershell-container.sh
     - name: AzurePowerShell Tests
-      if: always() && steps.test_filter.outputs.ps_skip != 'true'
+      if: steps.build.outcome == 'success' && steps.test_filter.outputs.ps_skip != 'true'
       run: |
         FILTER="${{ steps.test_filter.outputs.ps_filter }}"
         if [[ -z "$FILTER" ]]; then
@@ -255,7 +256,7 @@ jobs:
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
     - name: AzureCLI Tests
-      if: always() && steps.test_filter.outputs.cli_skip != 'true'
+      if: steps.build.outcome == 'success' && steps.test_filter.outputs.cli_skip != 'true'
       run: |
         FILTER="${{ steps.test_filter.outputs.cli_filter }}"
         if [[ -z "$FILTER" ]]; then
