@@ -182,6 +182,14 @@ _Implemented in v1.3-beta._
 |--|---------|-------------|
 | <span class="badge--preview">Preview</span> | Cancel running deployments | Introduce cooperative cancellation into the orchestrator so that a cancel request against a `Running` deployment stops provisioning further resources after the current one completes, matching real Azure mid-flight cancellation semantics |
 
+### ACE (Azure Cost Estimator) integration
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Cost estimation backend endpoint | `GET /subscriptions/{sub}/providers/Microsoft.CostManagement/estimatedCosts` — uses [ACE](https://github.com/TheCloudTheory/arm-estimator) to return monthly cost estimates for all provisioned resources in a subscription; supports 17 currencies |
+| <span class="badge--preview">Preview</span> | `topaz estimate` CLI command | New Topaz CLI sub-command that queries the Host's cost estimation endpoint and prints a formatted cost breakdown table; supports `--subscription`, `--currency`, and `--output` (table/json/csv) options |
+| <span class="badge--preview">Preview</span> | Cost Analysis portal page | Dedicated **Cost Analysis** page in Topaz Portal showing per-resource-type estimated costs for the selected subscription, with currency selector and auto-refresh |
+
 ---
 
 ## ✅ Completed
