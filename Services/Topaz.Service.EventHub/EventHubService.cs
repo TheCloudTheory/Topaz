@@ -23,7 +23,8 @@ public class EventHubService(ITopazLogger logger) : IServiceDefinition
         new CreateUpdateNamespaceNetworkRuleSetEndpoint(logger),
         new CreateUpdateHubEndpoint(logger),
         new CreateUpdateNamespaceEndpoint(logger),
-        new DeleteNamespaceEndpoint(logger)
+        new DeleteNamespaceEndpoint(logger),
+        new ListNamespacesEndpoint(logger)
     ];
 
     public void Bootstrap()

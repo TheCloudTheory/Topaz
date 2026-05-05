@@ -21,15 +21,21 @@ public class SetupTopazTool
         [Description("Configures log level to be used by Topaz")]
         LogLevel logLevel = LogLevel.Information,
         [Description("Image tag to use when running the emulator")]
-        string version = "v1.0.299-alpha")
+        string version = "v1.2.6-beta")
     {
         _container = new ContainerBuilder()
             .WithImage($"thecloudtheory/topaz-host:{version}")
-            .WithPortBinding(8890)
-            .WithPortBinding(8899)
-            .WithPortBinding(8898)
-            .WithPortBinding(8897)
-            .WithPortBinding(8891)
+            .WithPortBinding(GlobalSettings.DefaultEventHubAmqpPort)
+            .WithPortBinding(GlobalSettings.DefaultServiceBusAmqpPort)
+            .WithPortBinding(GlobalSettings.AdditionalServiceBusPort)
+            .WithPortBinding(GlobalSettings.DefaultTableStoragePort)
+            .WithPortBinding(GlobalSettings.DefaultBlobStoragePort)
+            .WithPortBinding(8893) // DefaultQueueStoragePort
+            .WithPortBinding(8894) // DefaultFileStoragePort
+            .WithPortBinding(GlobalSettings.DefaultEventHubPort)
+            .WithPortBinding(GlobalSettings.DefaultKeyVaultPort)
+            .WithPortBinding(GlobalSettings.DefaultResourceManagerPort)
+            .WithPortBinding(8892) // ContainerRegistryPort
             .WithName("topaz.local.dev")
             .WithCommand("--log-level", logLevel.ToString())
             .Build();

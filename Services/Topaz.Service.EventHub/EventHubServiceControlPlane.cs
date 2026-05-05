@@ -196,6 +196,20 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         };
     }
 
+    public ControlPlaneOperationResult<EventHubNamespaceResource[]> ListNamespaces(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
+    {
+        var resources = provider
+            .ListAs<EventHubNamespaceResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8)
+            .Where(r => r.IsInSubscription(subscriptionIdentifier))
+            .ToArray();
+
+        logger.LogDebug(nameof(EventHubServiceControlPlane), nameof(ListNamespaces),
+            "Found {0} namespaces.", resources.Length);
+
+        return new ControlPlaneOperationResult<EventHubNamespaceResource[]>(OperationResult.Success, resources, null, null);
+    }
+
     private OperationResult DeployEventHub(GenericResource resource)
     {
         var hub = resource.AsSubresource<EventHubResource, EventHubResourceProperties>();
@@ -245,7 +259,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
             EventHubNetworkRuleSetSubresourceProperties.Default());
     }
 
-    private OperationResult DeployEventHubNetworkRuleSet(GenericResource resource)
+        private OperationResult DeployEventHubNetworkRuleSet(GenericResource resource)
     {
         var networkRuleSet =
             resource.AsSubresource<EventHubNetworkRuleSetSubresource, EventHubNetworkRuleSetSubresourceProperties>();
