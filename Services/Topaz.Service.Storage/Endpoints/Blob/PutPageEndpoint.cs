@@ -23,7 +23,7 @@ internal sealed class PutPageEndpoint(Pipeline eventPipeline, ITopazLogger logge
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultBlobStoragePort], Protocol.Http);
+        ([GlobalSettings.DefaultBlobStoragePort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

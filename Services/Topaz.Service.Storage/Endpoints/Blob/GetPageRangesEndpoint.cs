@@ -26,7 +26,7 @@ internal sealed class GetPageRangesEndpoint(Pipeline eventPipeline, ITopazLogger
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultBlobStoragePort], Protocol.Http);
+        ([GlobalSettings.DefaultBlobStoragePort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

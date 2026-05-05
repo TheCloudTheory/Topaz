@@ -1,13 +1,9 @@
-using Azure;
-using Azure.ResourceManager;
-using Azure.ResourceManager.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Azure.Data.Tables;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
-using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -18,7 +14,6 @@ namespace Topaz.Tests.E2E;
 /// </summary>
 public class StorageBearerAuthTests
 {
-    private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
     private static readonly Guid SubscriptionId = Guid.Parse("B4F18FA2-1A6E-4E13-8B4A-9D3F5A7C2E01");
 
     private const string SubscriptionName = "sub-storage-bearer-auth";
@@ -50,7 +45,7 @@ public class StorageBearerAuthTests
     {
         // Arrange
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
-        var blobUri = new Uri($"http://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/");
+        var blobUri = new Uri(TopazResourceHelpers.GetBlobServiceUri(StorageAccountName));
         var blobClient = new BlobServiceClient(blobUri, credential);
 
         // Act
@@ -67,7 +62,7 @@ public class StorageBearerAuthTests
     {
         // Arrange
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
-        var queueUri = new Uri($"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/");
+        var queueUri = new Uri(TopazResourceHelpers.GetQueueServiceUri(StorageAccountName));
         var queueClient = new QueueServiceClient(queueUri, credential);
 
         // Act
@@ -84,7 +79,7 @@ public class StorageBearerAuthTests
     {
         // Arrange
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);
-        var tableUri = new Uri($"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/");
+        var tableUri = new Uri(TopazResourceHelpers.GetTableServiceUri(StorageAccountName));
         var tableClient = new TableServiceClient(tableUri, credential);
 
         // Act
@@ -102,16 +97,19 @@ public class StorageBearerAuthTests
         // Arrange — raw HttpClient with no auth header, bypassing the SDK credential
         var handler = new HttpClientHandler { ServerCertificateCustomValidationCallback = (_, _, _, _) => true };
         using var httpClient = new HttpClient(handler);
-        var url = $"http://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/?comp=list";
+        var url = $"{TopazResourceHelpers.GetBlobServiceUri(StorageAccountName)}?comp=list";
 
         // Act
         var response = await httpClient.GetAsync(url);
-
+        
         // Assert
-        Assert.That((int)response.StatusCode, Is.EqualTo(401),
-            "Expected 401 Unauthorized when Authorization header is missing.");
-        Assert.That(response.Headers.Contains("WWW-Authenticate"),
-            "Expected WWW-Authenticate challenge header in 401 response.");
+        Assert.Multiple(() =>
+        {
+            Assert.That((int)response.StatusCode, Is.EqualTo(401),
+                "Expected 401 Unauthorized when Authorization header is missing.");
+            Assert.That(response.Headers.Contains("WWW-Authenticate"),
+                "Expected WWW-Authenticate challenge header in 401 response.");
+        });
     }
 
     [Test]
@@ -120,15 +118,18 @@ public class StorageBearerAuthTests
         // Arrange
         var handler = new HttpClientHandler { ServerCertificateCustomValidationCallback = (_, _, _, _) => true };
         using var httpClient = new HttpClient(handler);
-        var url = $"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/?comp=list";
+        var url = $"{TopazResourceHelpers.GetQueueServiceUri(StorageAccountName)}?comp=list";
 
         // Act
         var response = await httpClient.GetAsync(url);
-
+        
         // Assert
-        Assert.That((int)response.StatusCode, Is.EqualTo(401),
-            "Expected 401 Unauthorized when Authorization header is missing.");
-        Assert.That(response.Headers.Contains("WWW-Authenticate"),
-            "Expected WWW-Authenticate challenge header in 401 response.");
+        Assert.Multiple(() =>
+        {
+            Assert.That((int)response.StatusCode, Is.EqualTo(401),
+                "Expected 401 Unauthorized when Authorization header is missing.");
+            Assert.That(response.Headers.Contains("WWW-Authenticate"),
+                "Expected WWW-Authenticate challenge header in 401 response.");
+        });
     }
 }

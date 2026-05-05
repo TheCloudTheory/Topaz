@@ -21,7 +21,7 @@ internal sealed class DeleteBlobEndpoint(Pipeline eventPipeline, ITopazLogger lo
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultBlobStoragePort], Protocol.Http);
+        ([GlobalSettings.DefaultBlobStoragePort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

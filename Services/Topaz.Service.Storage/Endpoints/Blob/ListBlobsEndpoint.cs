@@ -22,7 +22,7 @@ internal sealed class ListBlobsEndpoint(Pipeline eventPipeline, ITopazLogger log
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultBlobStoragePort], Protocol.Http);
+        ([GlobalSettings.DefaultBlobStoragePort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {

@@ -72,4 +72,25 @@ public static class TopazResourceHelpers
     /// <returns>A host:port string for the local Container Registry data-plane endpoint.</returns>
     public static string GetContainerRegistryLoginServer(string registryName) =>
         $"{registryName}.cr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}";
+    
+    /// <summary>
+    /// Gets the Blob service URI for a specified storage account.
+    /// </summary>
+    /// <param name="storageAccountName">The name of the storage account.</param>
+    /// <returns>A URI string for the local Blob service endpoint.</returns>
+    public static string GetBlobServiceUri(string storageAccountName) => $"https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/";
+    
+    /// <summary>
+    /// Gets the Queue service URI for a specified storage account.
+    /// </summary>
+    /// <param name="storageAccountName">The name of the storage account.</param>
+    /// <returns>A URI string for the local Queue service endpoint.</returns>
+    public static string GetQueueServiceUri(string storageAccountName) => $"https://{storageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/";
+    
+    /// <summary>
+    /// Gets the Table service URI for a specified storage account.
+    /// </summary>
+    /// <param name="storageAccountName">The name of the storage account.</param>
+    /// <returns>A URI string for the local Table service endpoint.</returns>
+    public static string GetTableServiceUri(string storageAccountName) => $"https://{storageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/";
 }
