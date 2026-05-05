@@ -94,12 +94,92 @@ public sealed class CreateStorageTool
         };
     }
 
+    [McpServerTool]
+    [Description("Creates a Storage Queue inside an existing Storage Account.")]
+    [UsedImplicitly]
+    public static async Task<StorageQueueResult> CreateStorageQueue(
+        [Description("ID of the subscription containing the resource group.")]
+        Guid subscriptionId,
+        [Description("Name of the resource group.")]
+        string resourceGroupName,
+        [Description("Name of the storage account.")]
+        string storageAccountName,
+        [Description("Name of the queue to create (lowercase, 3–63 characters).")]
+        string queueName,
+        [Description("Object ID of the user performing the operation. Use empty GUID for superadmin.")]
+        string objectId)
+    {
+        var credentials = new AzureLocalCredential(objectId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync().ConfigureAwait(false);
+        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupName).ConfigureAwait(false);
+        var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(storageAccountName).ConfigureAwait(false);
+
+        await storageAccount.Value.GetQueueService().GetStorageQueues()
+            .CreateOrUpdateAsync(WaitUntil.Completed, queueName, new StorageQueueData())
+            .ConfigureAwait(false);
+
+        return new StorageQueueResult
+        {
+            AccountName = storageAccountName,
+            QueueName = queueName,
+            QueueServiceUri = TopazResourceHelpers.GetQueueServiceUri(storageAccountName),
+        };
+    }
+
+    [McpServerTool]
+    [Description("Creates a Storage Table inside an existing Storage Account.")]
+    [UsedImplicitly]
+    public static async Task<StorageTableResult> CreateStorageTable(
+        [Description("ID of the subscription containing the resource group.")]
+        Guid subscriptionId,
+        [Description("Name of the resource group.")]
+        string resourceGroupName,
+        [Description("Name of the storage account.")]
+        string storageAccountName,
+        [Description("Name of the table to create.")]
+        string tableName,
+        [Description("Object ID of the user performing the operation. Use empty GUID for superadmin.")]
+        string objectId)
+    {
+        var credentials = new AzureLocalCredential(objectId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync().ConfigureAwait(false);
+        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupName).ConfigureAwait(false);
+        var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(storageAccountName).ConfigureAwait(false);
+
+        await storageAccount.Value.GetTableService().GetTables()
+            .CreateOrUpdateAsync(WaitUntil.Completed, tableName, new TableData())
+            .ConfigureAwait(false);
+
+        return new StorageTableResult
+        {
+            AccountName = storageAccountName,
+            TableName = tableName,
+            TableServiceUri = TopazResourceHelpers.GetTableServiceUri(storageAccountName),
+        };
+    }
+
     public sealed record StorageAccountResult
     {
         public required string AccountName { [UsedImplicitly] get; init; }
         public required string ConnectionString { [UsedImplicitly] get; init; }
         public required string BlobServiceUri { [UsedImplicitly] get; init; }
         public required string QueueServiceUri { [UsedImplicitly] get; init; }
+        public required string TableServiceUri { [UsedImplicitly] get; init; }
+    }
+
+    public sealed record StorageQueueResult
+    {
+        public required string AccountName { [UsedImplicitly] get; init; }
+        public required string QueueName { [UsedImplicitly] get; init; }
+        public required string QueueServiceUri { [UsedImplicitly] get; init; }
+    }
+
+    public sealed record StorageTableResult
+    {
+        public required string AccountName { [UsedImplicitly] get; init; }
+        public required string TableName { [UsedImplicitly] get; init; }
         public required string TableServiceUri { [UsedImplicitly] get; init; }
     }
 

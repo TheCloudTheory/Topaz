@@ -89,6 +89,46 @@ public sealed class CreateServiceBusTool
     }
 
     [McpServerTool]
+    [Description("Creates a subscription on an existing Service Bus topic.")]
+    [UsedImplicitly]
+    public static async Task<ServiceBusSubscriptionResult> CreateServiceBusSubscription(
+        [Description("ID of the subscription containing the resource group.")]
+        Guid subscriptionId,
+        [Description("Name of the resource group.")]
+        string resourceGroupName,
+        [Description("Name of the Service Bus namespace.")]
+        string namespaceName,
+        [Description("Name of the topic to subscribe to.")]
+        string topicName,
+        [Description("Name of the subscription to create.")]
+        string subscriptionName,
+        [Description("Object ID of the user performing the operation. Use empty GUID for superadmin.")]
+        string objectId,
+        [Description("Maximum delivery count before the message is dead-lettered (default: 10).")]
+        int maxDeliveryCount = 10)
+    {
+        var credentials = new AzureLocalCredential(objectId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync().ConfigureAwait(false);
+        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupName).ConfigureAwait(false);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaceAsync(namespaceName).ConfigureAwait(false);
+        var topic = await @namespace.Value.GetServiceBusTopicAsync(topicName).ConfigureAwait(false);
+
+        var subscriptionData = new ServiceBusSubscriptionData { MaxDeliveryCount = maxDeliveryCount };
+        await topic.Value.GetServiceBusSubscriptions()
+            .CreateOrUpdateAsync(WaitUntil.Completed, subscriptionName, subscriptionData)
+            .ConfigureAwait(false);
+
+        return new ServiceBusSubscriptionResult
+        {
+            NamespaceName = namespaceName,
+            TopicName = topicName,
+            SubscriptionName = subscriptionName,
+            ConnectionString = TopazResourceHelpers.GetServiceBusConnectionString(namespaceName),
+        };
+    }
+
+    [McpServerTool]
     [Description("Creates a topic inside an existing Service Bus namespace.")]
     [UsedImplicitly]
     public static async Task<ServiceBusEntityResult> CreateServiceBusTopic(
@@ -120,6 +160,14 @@ public sealed class CreateServiceBusTool
             EntityType = "Topic",
             ConnectionString = TopazResourceHelpers.GetServiceBusConnectionString(namespaceName),
         };
+    }
+
+    public sealed record ServiceBusSubscriptionResult
+    {
+        public required string NamespaceName { [UsedImplicitly] get; init; }
+        public required string TopicName { [UsedImplicitly] get; init; }
+        public required string SubscriptionName { [UsedImplicitly] get; init; }
+        public required string ConnectionString { [UsedImplicitly] get; init; }
     }
 
     public sealed record ServiceBusNamespaceResult
