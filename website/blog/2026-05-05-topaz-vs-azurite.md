@@ -11,7 +11,7 @@ If you have ever written a line of Azure code on a laptop, you have used Azurite
 
 The problem is that real applications stop at Azure Storage roughly never. The moment you reach for a secret in Key Vault, publish a message to Service Bus, push an image to a Container Registry, or want a `DefaultAzureCredential` chain that does not silently fall back to interactive browser auth, Azurite has nothing to offer. You are left bolting together a Service Bus emulator from a community Docker image, mocking the Key Vault SDK in tests, and hoping that the way your CI fakes Entra tokens does not drift away from how production behaves.
 
-Topaz is a single .NET 8 binary that emulates Azure Storage, Key Vault, Service Bus, Event Hubs, Container Registry, Managed Identity, RBAC, ARM, and a working Entra ID layer in one process. This post is an honest comparison between the two, focused on what developers who already know Azurite actually run into.
+Topaz is a single .NET 8 (and when 1.3 version is released - .NET 10) binary that emulates Azure Storage, Key Vault, Service Bus, Event Hubs, Container Registry, Managed Identity, RBAC, ARM, and a working Entra ID layer in one process. This post is an honest comparison between the two, focused on what developers who already know Azurite actually run into.
 
 {/* truncate */}
 
@@ -219,13 +219,13 @@ services:
     options: --health-cmd="curl -f http://localhost:8899/health || exit 1"
 ```
 
-Then `terraform apply` against `metadata_host = "topaz:8899"` from any step. No Azure credentials in the pipeline secrets, no rate-limited subscription, no per-run cost. The same image runs as a Testcontainer inside .NET integration tests via the Topaz Testcontainers helper. The [CI/CD integration guide](/docs/integrations/ecosystem/ci-cd) covers GitHub Actions and Azure DevOps.
+Then `terraform apply` against `metadata_host = "topaz:8899"` from any step. No Azure credentials in the pipeline secrets, no rate-limited subscription, no per-run cost. The same image runs as a Testcontainer inside .NET integration tests via the Topaz Testcontainers helper. The [CI/CD integration guide](/docs/ecosystem/ci-cd) covers GitHub Actions and Azure DevOps.
 
 Azurite has a Docker image too. The difference is what the image emulates — Topaz's image covers the same surface this post described (Storage + Key Vault + Service Bus + Event Hubs + ACR + Entra + ARM); Azurite's covers Storage. If your CI only needs Storage, that is fine. If it needs more, Azurite forces you back to the multi-emulator orchestration problem.
 
 ### ASP.NET Core integration
 
-`AddTopaz()` is an extension method on `IServiceCollection` that provisions local Azure infrastructure at application startup — declaratively, in the same `Program.cs` where you wire up DI. Spin up a resource group, a Service Bus namespace, a Key Vault with seed secrets, a Storage account, all in code, all conditional on environment so the same `Program.cs` runs unchanged in production. Detail in the [ASP.NET Core integration guide](/docs/integrations/ecosystem/aspnet-core).
+`AddTopaz()` is an extension method on `IServiceCollection` that provisions local Azure infrastructure at application startup — declaratively, in the same `Program.cs` where you wire up DI. Spin up a resource group, a Service Bus namespace, a Key Vault with seed secrets, a Storage account, all in code, all conditional on environment so the same `Program.cs` runs unchanged in production. Detail in the [ASP.NET Core integration guide](/docs/ecosystem/aspnet-core).
 
 ## When to keep Azurite
 
@@ -249,7 +249,7 @@ Azurite has a Docker image too. The difference is what the image emulates — To
 
 For Storage specifically, Topaz implements the same data-plane APIs Azurite does. Point your existing Azure SDK clients at Topaz's endpoints and they connect without code changes — only the endpoint hostname, port, and credentials change. The one item to check during migration is authentication: Topaz always enforces SharedKey signatures on Table and Queue requests, so any request that Azurite silently accepted with a missing or invalid signature will be rejected. This is intentional — it is the same behaviour real Azure has, and catching the divergence locally is the whole point.
 
-Beyond Storage, the [API coverage docs](/docs/api-coverage/) list which operations are implemented per service. If you hit something that is not yet supported, [open an issue](https://github.com/TheCloudTheory/Topaz/issues) — the backlog is publicly tracked and feedback shapes priorities.
+Beyond Storage, the [API coverage docs](/docs/api-coverage) list which operations are implemented per service. If you hit something that is not yet supported, [open an issue](https://github.com/TheCloudTheory/Topaz/issues) — the backlog is publicly tracked and feedback shapes priorities.
 
 ## Summary
 
