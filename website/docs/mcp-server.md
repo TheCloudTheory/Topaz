@@ -73,6 +73,41 @@ This tool is useful for debugging a setup that fails partway through — ask the
 
 ### Resource tools
 
+#### Provisioning
+
+| Tool | Description |
+|---|---|
+| `CreateResourceGroup` | Creates a resource group in the given subscription |
+| `CreateKeyVault` | Creates a Key Vault and optionally seeds it with an initial secret |
+| `CreateStorageAccount` | Creates a Storage Account and returns its connection strings and service URIs |
+| `CreateBlobContainer` | Creates a Blob container inside an existing Storage Account |
+| `CreateServiceBusNamespace` | Creates a Service Bus namespace and returns its connection strings |
+| `CreateServiceBusQueue` | Creates a queue inside an existing Service Bus namespace |
+| `CreateServiceBusTopic` | Creates a topic inside an existing Service Bus namespace |
+
+All provisioning tools share these common parameters:
+
+| Parameter | Description |
+|---|---|
+| `subscriptionId` | ID of the subscription to target |
+| `objectId` | Entra ID object ID of the acting user. Pass an empty GUID (`00000000-0000-0000-0000-000000000000`) for superadmin access |
+| `location` | Azure location string (e.g. `westeurope`, `eastus`) |
+
+`CreateKeyVault` also accepts two optional parameters to seed an initial secret:
+
+| Parameter | Description |
+|---|---|
+| `secretName` | Name of the secret to create |
+| `secretValue` | Value of the secret (required when `secretName` is provided) |
+
+`CreateServiceBusQueue` accepts one optional parameter:
+
+| Parameter | Default | Description |
+|---|---|---|
+| `maxDeliveryCount` | `10` | Maximum delivery attempts before a message is dead-lettered |
+
+#### Query
+
 | Tool | Description |
 |---|---|
 | `GetConnectionStrings` | Queries all provisioned resources in a subscription and returns ready-to-use connection strings and URIs |
@@ -142,17 +177,19 @@ Refer to your tool's documentation for how to register a `stdio`-based MCP serve
 
 ## Example workflow
 
-With the MCP server configured in VS Code, you can ask GitHub Copilot to set up your local environment:
+With the MCP server configured in VS Code, you can ask GitHub Copilot to set up your full local environment in a single conversation:
 
-> "Start Topaz locally using the latest alpha tag and create a subscription called `dev-local`."
+> "Start Topaz locally using the latest beta tag, create a subscription called `dev-local`, add a resource group `rg-dev` in `westeurope`, then provision a storage account, a Service Bus namespace with a queue named `orders`, and a Key Vault with a secret `db-password`."
 
 Copilot will:
 1. Call `RunTopazAsContainer` to pull and start the emulator
-2. Call `CreateSubscription` to provision the subscription inside it
+2. Call `CreateSubscription` to provision the subscription
+3. Call `CreateResourceGroup` to create `rg-dev`
+4. Call `CreateStorageAccount`, `CreateServiceBusNamespace`, `CreateServiceBusQueue`, and `CreateKeyVault` in sequence
 
 You can then continue using `az` commands or the Azure SDK against `localhost` as described in the [Azure CLI integration](./integrations/azure-cli-integration.md) guide.
 
-Once you have provisioned resources (storage accounts, Key Vaults, Service Bus namespaces, etc.) you can ask Copilot to retrieve all connection strings at once:
+Once you have provisioned resources, ask Copilot to retrieve all connection strings at once:
 
 > "Give me the connection strings for everything in my `dev-local` subscription."
 
