@@ -41,5 +41,7 @@ internal record StorageAccountResourceProperties
     public JsonElement? ImmutableStorageWithVersioning { get; set; }
     public string? DnsEndpointType { get; set; }
     public string ProvisioningState { get; set; } = "Succeeded";
+    public string StatusOfPrimary { get; set; } = "available";
+    public DateTimeOffset? CreationTime { get; set; }
     public StorageAccountPrimaryEndpoints? PrimaryEndpoints { get; set; }
 }

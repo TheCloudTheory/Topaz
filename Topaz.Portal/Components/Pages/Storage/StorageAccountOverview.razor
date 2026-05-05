@@ -32,8 +32,7 @@
         <div class="card mb-3">
             <div class="card-body">
                 <div class="d-flex align-items-start justify-content-between mb-3">
-                    <h5 class="card-title mb-0">Overview</h5>
-
+                    <h5 class="card-title mb-0">Essentials</h5>
                     <button class="btn btn-sm btn-outline-danger"
                             @onclick="() => _showDeleteConfirm = true"
                             disabled="@_deletingBusy">
@@ -65,34 +64,49 @@
                     <div class="alert alert-danger" role="alert">@_deleteError</div>
                 }
 
-                <dl class="row mb-0">
-                    <dt class="col-sm-3">Name</dt>
-                    <dd class="col-sm-9">@(_sa.Name ?? "-")</dd>
+                <div class="row g-0">
+                    <div class="col-12 col-xl-6">
+                        <dl class="row mb-0 essentials-grid">
+                            <dt class="col-5 text-muted fw-normal">Resource group</dt>
+                            <dd class="col-7">
+                                <a href="/resource-groups/@SubscriptionId:D/@WebUtility.UrlEncode(_sa.ResourceGroupName ?? "")">
+                                    @(_sa.ResourceGroupName ?? "-")
+                                </a>
+                            </dd>
 
-                    <dt class="col-sm-3">Location</dt>
-                    <dd class="col-sm-9"><code>@(_sa.Location ?? "-")</code></dd>
+                            <dt class="col-5 text-muted fw-normal">Location</dt>
+                            <dd class="col-7">@(_sa.Location ?? "-")</dd>
 
-                    <dt class="col-sm-3">Resource group</dt>
-                    <dd class="col-sm-9">@(_sa.ResourceGroupName ?? "-")</dd>
+                            <dt class="col-5 text-muted fw-normal">Subscription</dt>
+                            <dd class="col-7">@(_sa.SubscriptionName ?? "-")</dd>
 
-                    <dt class="col-sm-3">Subscription</dt>
-                    <dd class="col-sm-9">@(_sa.SubscriptionName ?? "-")</dd>
+                            <dt class="col-5 text-muted fw-normal">Subscription ID</dt>
+                            <dd class="col-7"><small class="font-monospace">@(_sa.SubscriptionId ?? "-")</small></dd>
+                        </dl>
+                    </div>
 
-                    <dt class="col-sm-3">Subscription ID</dt>
-                    <dd class="col-sm-9">@(_sa.SubscriptionId ?? "-")</dd>
+                    <div class="col-12 col-xl-6">
+                        <dl class="row mb-0 essentials-grid">
+                            <dt class="col-5 text-muted fw-normal">Disk state</dt>
+                            <dd class="col-7">@GetDiskState(_sa.StatusOfPrimary)</dd>
 
-                    <dt class="col-sm-3">Kind</dt>
-                    <dd class="col-sm-9">@(_sa.Kind ?? "-")</dd>
+                            <dt class="col-5 text-muted fw-normal">Performance</dt>
+                            <dd class="col-7">@GetPerformanceTier(_sa.SkuName)</dd>
 
-                    <dt class="col-sm-3">SKU</dt>
-                    <dd class="col-sm-9">@(_sa.SkuName ?? "-")</dd>
+                            <dt class="col-5 text-muted fw-normal">Replication</dt>
+                            <dd class="col-7">@GetReplicationDescription(_sa.SkuName)</dd>
 
-                    <dt class="col-sm-3">Blob endpoint</dt>
-                    <dd class="col-sm-9"><small class="text-muted">@(_sa.BlobEndpoint ?? "-")</small></dd>
+                            <dt class="col-5 text-muted fw-normal">Account kind</dt>
+                            <dd class="col-7">@GetKindDescription(_sa.Kind)</dd>
 
-                    <dt class="col-sm-3">Resource ID</dt>
-                    <dd class="col-sm-9"><small class="text-muted">@(_sa.Id ?? "-")</small></dd>
-                </dl>
+                            <dt class="col-5 text-muted fw-normal">Provisioning state</dt>
+                            <dd class="col-7">@(_sa.ProvisioningState ?? "-")</dd>
+
+                            <dt class="col-5 text-muted fw-normal">Created</dt>
+                            <dd class="col-7">@(_sa.CreatedOn?.LocalDateTime.ToString("g") ?? "-")</dd>
+                        </dl>
+                    </div>
+                </div>
             </div>
         </div>
     }
@@ -153,4 +167,39 @@
             _deletingBusy = false;
         }
     }
+
+    private static string GetDiskState(string? status) => status?.ToLowerInvariant() switch
+    {
+        "available"   => "Available",
+        "unavailable" => "Unavailable",
+        _             => status ?? "-"
+    };
+
+    private static string GetPerformanceTier(string? skuName) =>
+        skuName?.StartsWith("Premium", StringComparison.OrdinalIgnoreCase) == true ? "Premium" :
+        skuName?.StartsWith("Standard", StringComparison.OrdinalIgnoreCase) == true ? "Standard" :
+        skuName ?? "-";
+
+    private static string GetReplicationDescription(string? skuName) => skuName?.ToUpperInvariant() switch
+    {
+        "STANDARD_LRS"    => "Locally-redundant storage (LRS)",
+        "STANDARD_GRS"    => "Geo-redundant storage (GRS)",
+        "STANDARD_RAGRS"  => "Read-access geo-redundant storage (RA-GRS)",
+        "STANDARD_ZRS"    => "Zone-redundant storage (ZRS)",
+        "STANDARD_GZRS"   => "Geo-zone-redundant storage (GZRS)",
+        "STANDARD_RAGZRS" => "Read-access geo-zone-redundant storage (RA-GZRS)",
+        "PREMIUM_LRS"     => "Locally-redundant storage (LRS)",
+        "PREMIUM_ZRS"     => "Zone-redundant storage (ZRS)",
+        _                 => skuName ?? "-"
+    };
+
+    private static string GetKindDescription(string? kind) => kind switch
+    {
+        "StorageV2"        => "StorageV2 (general purpose v2)",
+        "Storage"          => "Storage (general purpose v1)",
+        "BlobStorage"      => "BlobStorage",
+        "BlockBlobStorage" => "BlockBlobStorage",
+        "FileStorage"      => "FileStorage",
+        _                  => kind ?? "-"
+    };
 }

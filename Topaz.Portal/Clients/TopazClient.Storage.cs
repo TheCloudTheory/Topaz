@@ -223,6 +223,9 @@ internal sealed partial class TopazClient
             Kind = sa.Data.Kind?.ToString(),
             SkuName = sa.Data.Sku?.Name.ToString(),
             BlobEndpoint = sa.Data.PrimaryEndpoints?.BlobUri?.ToString(),
+            ProvisioningState = sa.Data.ProvisioningState?.ToString(),
+            StatusOfPrimary = sa.Data.StatusOfPrimary?.ToString() ?? "Available",
+            CreatedOn = sa.Data.CreatedOn,
             Tags = sa.Data.Tags is null
                 ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                 : new Dictionary<string, string>(sa.Data.Tags, StringComparer.OrdinalIgnoreCase)

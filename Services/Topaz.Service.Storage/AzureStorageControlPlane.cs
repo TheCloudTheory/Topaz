@@ -61,7 +61,9 @@ internal sealed class AzureStorageControlPlane(
         };
         var properties = new StorageAccountResourceProperties
         {
-            PrimaryEndpoints = BuildPrimaryEndpoints(storageAccountName)
+            PrimaryEndpoints = BuildPrimaryEndpoints(storageAccountName),
+            StatusOfPrimary = "available",
+            CreationTime = DateTimeOffset.UtcNow
         };
         var resource = new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
             location, sku, StorageKind.StorageV2.ToString(), properties);
@@ -196,10 +198,18 @@ internal sealed class AzureStorageControlPlane(
         }
 
         var existingAccount = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
-        var properties = (request.Properties ?? new StorageAccountResourceProperties()) with { PrimaryEndpoints = BuildPrimaryEndpoints(storageAccountName) };
-        var existingKeys = existingAccount != null
-            ? JsonSerializer.Deserialize<StorageAccountResource>(existingAccount, GlobalSettings.JsonOptions)?.Keys
+        var existingDeserialized = existingAccount != null
+            ? JsonSerializer.Deserialize<StorageAccountResource>(existingAccount, GlobalSettings.JsonOptions)
             : null;
+        var existingKeys = existingDeserialized?.Keys;
+        var existingCreationTime = existingDeserialized?.Properties?.CreationTime;
+
+        var properties = (request.Properties ?? new StorageAccountResourceProperties()) with
+        {
+            PrimaryEndpoints = BuildPrimaryEndpoints(storageAccountName),
+            StatusOfPrimary = "available",
+            CreationTime = existingCreationTime ?? DateTimeOffset.UtcNow
+        };
 
         if (existingAccount != null && existingKeys != null)
             logger.LogInformation($"CreateOrUpdate '{storageAccountName}': UsingExistingKeys key1prefix={existingKeys[0].Value[..16]}");

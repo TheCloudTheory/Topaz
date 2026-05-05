@@ -11,6 +11,9 @@ public sealed class StorageAccountDto
     public string? Kind { get; init; }
     public string? SkuName { get; init; }
     public string? BlobEndpoint { get; init; }
+    public string? ProvisioningState { get; init; }
+    public string? StatusOfPrimary { get; init; }
+    public DateTimeOffset? CreatedOn { get; init; }
     public Dictionary<string, string> Tags { get; init; } = new(StringComparer.OrdinalIgnoreCase);
 }
 

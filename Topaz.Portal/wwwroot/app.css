@@ -131,3 +131,17 @@ h1:focus {
     color: var(--topaz-blue-600);
     text-decoration: underline;
 }
+
+/* Azure Portal-style essentials property grid */
+.essentials-grid dt,
+.essentials-grid dd {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--topaz-border, #e5e7eb);
+    margin-bottom: 0;
+    font-size: 0.875rem;
+}
+
+.essentials-grid dt {
+    font-weight: 400;
+}
