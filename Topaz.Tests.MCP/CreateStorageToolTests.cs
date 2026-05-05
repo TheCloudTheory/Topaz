@@ -1,4 +1,5 @@
 using Azure.ResourceManager;
+using Azure.ResourceManager.Storage;
 using NUnit.Framework;
 using Topaz.CLI;
 using Topaz.Identity;
@@ -131,7 +132,7 @@ public class CreateStorageToolTests
         var subscription = await armClient.GetDefaultSubscriptionAsync();
         var rg = await subscription.GetResourceGroupAsync(McpTestFixture.ResourceGroupName);
         var storageAccount = await rg.Value.GetStorageAccountAsync(AccountName);
-        var container = await storageAccount.Value.GetBlobContainerAsync(ContainerName);
+        var container = await storageAccount.Value.GetBlobService().GetBlobContainerAsync(ContainerName);
 
         Assert.That(container.Value.Data.Name, Is.EqualTo(ContainerName));
     }
