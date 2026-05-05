@@ -81,9 +81,15 @@ This tool is useful for debugging a setup that fails partway through — ask the
 | `CreateKeyVault` | Creates a Key Vault and optionally seeds it with an initial secret |
 | `CreateStorageAccount` | Creates a Storage Account and returns its connection strings and service URIs |
 | `CreateBlobContainer` | Creates a Blob container inside an existing Storage Account |
+| `CreateStorageQueue` | Creates a Storage Queue inside an existing Storage Account |
+| `CreateStorageTable` | Creates a Storage Table inside an existing Storage Account |
 | `CreateServiceBusNamespace` | Creates a Service Bus namespace and returns its connection strings |
 | `CreateServiceBusQueue` | Creates a queue inside an existing Service Bus namespace |
 | `CreateServiceBusTopic` | Creates a topic inside an existing Service Bus namespace |
+| `CreateServiceBusSubscription` | Creates a subscription on an existing Service Bus topic |
+| `CreateEventHubNamespace` | Creates an Event Hub namespace and returns its connection string |
+| `CreateEventHub` | Creates an Event Hub inside an existing namespace |
+| `CreateContainerRegistry` | Creates a Container Registry and returns its login server and admin credentials |
 
 All provisioning tools share these common parameters:
 
@@ -100,11 +106,31 @@ All provisioning tools share these common parameters:
 | `secretName` | Name of the secret to create |
 | `secretValue` | Value of the secret (required when `secretName` is provided) |
 
-`CreateServiceBusQueue` accepts one optional parameter:
+`CreateServiceBusQueue` and `CreateServiceBusSubscription` each accept one optional parameter:
 
 | Parameter | Default | Description |
 |---|---|---|
 | `maxDeliveryCount` | `10` | Maximum delivery attempts before a message is dead-lettered |
+
+`CreateEventHub` accepts two optional parameters:
+
+| Parameter | Default | Description |
+|---|---|---|
+| `partitionCount` | `4` | Number of partitions (1–32) |
+| `messageRetentionInDays` | `1` | Retention period in days (1–7) |
+
+`CreateContainerRegistry` accepts two optional parameters:
+
+| Parameter | Default | Description |
+|---|---|---|
+| `sku` | `Basic` | Registry SKU: `Basic`, `Standard`, or `Premium` |
+| `adminUserEnabled` | `true` | When `true`, admin credentials are returned alongside the login server |
+
+#### Delete
+
+| Tool | Description |
+|---|---|
+| `DeleteResourceGroup` | Deletes a resource group and all resources it contains |
 
 #### Query
 

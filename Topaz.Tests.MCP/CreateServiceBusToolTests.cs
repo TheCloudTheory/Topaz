@@ -15,6 +15,7 @@ public class CreateServiceBusToolTests
     private const string NamespaceName = "sb-mcp-create-test";
     private const string QueueName = "mcp-test-queue";
     private const string TopicName = "mcp-test-topic";
+    private const string SubscriptionName = "mcp-test-subscription";
 
     [OneTimeSetUp]
     public async Task CreateNamespace()
@@ -109,6 +110,63 @@ public class CreateServiceBusToolTests
             Assert.That(result.EntityType, Is.EqualTo("Topic"));
             Assert.That(result.NamespaceName, Is.EqualTo(NamespaceName));
         });
+    }
+
+    [Test]
+    public async Task CreateServiceBusSubscription_ReturnsSubscriptionDetails()
+    {
+        await CreateServiceBusTool.CreateServiceBusTopic(
+            McpTestFixture.SubscriptionId,
+            McpTestFixture.ResourceGroupName,
+            NamespaceName,
+            TopicName,
+            McpTestFixture.ObjectId);
+
+        var result = await CreateServiceBusTool.CreateServiceBusSubscription(
+            McpTestFixture.SubscriptionId,
+            McpTestFixture.ResourceGroupName,
+            NamespaceName,
+            TopicName,
+            SubscriptionName,
+            McpTestFixture.ObjectId);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.NamespaceName, Is.EqualTo(NamespaceName));
+            Assert.That(result.TopicName, Is.EqualTo(TopicName));
+            Assert.That(result.SubscriptionName, Is.EqualTo(SubscriptionName));
+        });
+    }
+
+    [Test]
+    public async Task CreateServiceBusSubscription_SubscriptionExistsViaArmSdk()
+    {
+        await CreateServiceBusTool.CreateServiceBusTopic(
+            McpTestFixture.SubscriptionId,
+            McpTestFixture.ResourceGroupName,
+            NamespaceName,
+            TopicName,
+            McpTestFixture.ObjectId);
+
+        await CreateServiceBusTool.CreateServiceBusSubscription(
+            McpTestFixture.SubscriptionId,
+            McpTestFixture.ResourceGroupName,
+            NamespaceName,
+            TopicName,
+            SubscriptionName,
+            McpTestFixture.ObjectId);
+
+        var armClient = new ArmClient(
+            new AzureLocalCredential(McpTestFixture.ObjectId),
+            McpTestFixture.SubscriptionId.ToString(),
+            McpTestFixture.ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(McpTestFixture.ResourceGroupName);
+        var @namespace = await resourceGroup.Value.GetServiceBusNamespaceAsync(NamespaceName);
+        var topic = await @namespace.Value.GetServiceBusTopicAsync(TopicName);
+        var sbSubscription = await topic.Value.GetServiceBusSubscriptionAsync(SubscriptionName);
+
+        Assert.That(sbSubscription.Value.Data.Name, Is.EqualTo(SubscriptionName));
     }
 
     [Test]

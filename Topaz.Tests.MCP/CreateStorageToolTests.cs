@@ -13,6 +13,8 @@ public class CreateStorageToolTests
 {
     private const string AccountName = "mcpcreatestorage";
     private const string ContainerName = "mcp-test-container";
+    private const string QueueName = "mcp-test-queue";
+    private const string TableName = "mcptesttable";
 
     [OneTimeSetUp]
     public async Task CreateStorageAccount()
@@ -112,6 +114,104 @@ public class CreateStorageToolTests
             McpTestFixture.ObjectId);
 
         Assert.That(result.ContainerName, Is.EqualTo(ContainerName));
+    }
+
+    [Test]
+    public async Task CreateStorageQueue_ReturnsQueueName()
+    {
+        var result = await CreateStorageTool.CreateStorageQueue(
+            McpTestFixture.SubscriptionId,
+            McpTestFixture.ResourceGroupName,
+            AccountName,
+            QueueName,
+            McpTestFixture.ObjectId);
+
+        Assert.That(result.QueueName, Is.EqualTo(QueueName));
+    }
+
+    [Test]
+    public async Task CreateStorageQueue_ReturnsQueueServiceUri()
+    {
+        var result = await CreateStorageTool.CreateStorageQueue(
+            McpTestFixture.SubscriptionId,
+            McpTestFixture.ResourceGroupName,
+            AccountName,
+            QueueName,
+            McpTestFixture.ObjectId);
+
+        Assert.That(result.QueueServiceUri,
+            Does.Contain($"{AccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}"));
+    }
+
+    [Test]
+    public async Task CreateStorageQueue_QueueExistsViaArmSdk()
+    {
+        await CreateStorageTool.CreateStorageQueue(
+            McpTestFixture.SubscriptionId,
+            McpTestFixture.ResourceGroupName,
+            AccountName,
+            QueueName,
+            McpTestFixture.ObjectId);
+
+        var armClient = new ArmClient(
+            new AzureLocalCredential(McpTestFixture.ObjectId),
+            McpTestFixture.SubscriptionId.ToString(),
+            McpTestFixture.ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroupAsync(McpTestFixture.ResourceGroupName);
+        var storageAccount = await rg.Value.GetStorageAccountAsync(AccountName);
+        var queue = await storageAccount.Value.GetQueueService().GetStorageQueueAsync(QueueName);
+
+        Assert.That(queue.Value.Data.Name, Is.EqualTo(QueueName));
+    }
+
+    [Test]
+    public async Task CreateStorageTable_ReturnsTableName()
+    {
+        var result = await CreateStorageTool.CreateStorageTable(
+            McpTestFixture.SubscriptionId,
+            McpTestFixture.ResourceGroupName,
+            AccountName,
+            TableName,
+            McpTestFixture.ObjectId);
+
+        Assert.That(result.TableName, Is.EqualTo(TableName));
+    }
+
+    [Test]
+    public async Task CreateStorageTable_ReturnsTableServiceUri()
+    {
+        var result = await CreateStorageTool.CreateStorageTable(
+            McpTestFixture.SubscriptionId,
+            McpTestFixture.ResourceGroupName,
+            AccountName,
+            TableName,
+            McpTestFixture.ObjectId);
+
+        Assert.That(result.TableServiceUri,
+            Does.Contain($"{AccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}"));
+    }
+
+    [Test]
+    public async Task CreateStorageTable_TableExistsViaArmSdk()
+    {
+        await CreateStorageTool.CreateStorageTable(
+            McpTestFixture.SubscriptionId,
+            McpTestFixture.ResourceGroupName,
+            AccountName,
+            TableName,
+            McpTestFixture.ObjectId);
+
+        var armClient = new ArmClient(
+            new AzureLocalCredential(McpTestFixture.ObjectId),
+            McpTestFixture.SubscriptionId.ToString(),
+            McpTestFixture.ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroupAsync(McpTestFixture.ResourceGroupName);
+        var storageAccount = await rg.Value.GetStorageAccountAsync(AccountName);
+        var table = await storageAccount.Value.GetTableService().GetTableAsync(TableName);
+
+        Assert.That(table.Value.Data.Name, Is.EqualTo(TableName));
     }
 
     [Test]
