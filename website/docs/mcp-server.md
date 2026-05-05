@@ -47,6 +47,30 @@ The following ports are bound automatically when the container starts:
 
 Both tools accept an `objectId` parameter — the Entra ID object ID of the acting user. Pass an empty GUID (`00000000-0000-0000-0000-000000000000`) to act as a superadmin with no permission restrictions.
 
+### Diagnostics tools
+
+| Tool | Description |
+|---|---|
+| `GetTopazStatus` | Calls the Topaz health-check endpoint and probes all known service ports. Returns the running version, overall status, working directory, and which services are up |
+
+`GetTopazStatus` takes no parameters. It probes the following ports and reports whether each service is reachable:
+
+| Port | Service |
+|---|---|
+| 8899 | Resource Manager |
+| 8898 | Key Vault |
+| 8891 | Blob Storage |
+| 8893 | Queue Storage |
+| 8890 | Table Storage |
+| 8894 | File Storage |
+| 8892 | Container Registry |
+| 8897 | Event Hub (HTTP) |
+| 8888 | Event Hub (AMQP) |
+| 8889 | Service Bus (AMQP) |
+| 8887 | Service Bus (Extra) |
+
+This tool is useful for debugging a setup that fails partway through — ask the assistant to check status before investigating further.
+
 ### Resource tools
 
 | Tool | Description |
@@ -133,3 +157,9 @@ Once you have provisioned resources (storage accounts, Key Vaults, Service Bus n
 > "Give me the connection strings for everything in my `dev-local` subscription."
 
 Copilot will call `GetConnectionStrings` and return a structured list of URIs and connection strings ready to paste into your application configuration.
+
+If something isn't working as expected, ask the assistant to run a health check:
+
+> "Check whether Topaz is running and which services are up."
+
+Copilot will call `GetTopazStatus`, which hits the health endpoint and probes every service port, so you can immediately see which services are reachable without leaving your editor.
