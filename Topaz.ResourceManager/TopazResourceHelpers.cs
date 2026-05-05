@@ -24,7 +24,7 @@ public static class TopazResourceHelpers
     /// Blob endpoint uses plain HTTP. Queue and Table Storage endpoints use HTTPS (the Topaz certificate covers *.queue.storage.topaz.local.dev and *.table.storage.topaz.local.dev).
     /// </remarks>
     public static string GetAzureStorageConnectionString(string storageAccountName, string accountKey) =>
-        $"DefaultEndpointsProtocol=http;AccountName={storageAccountName};AccountKey={accountKey};BlobEndpoint=http://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;TableEndpoint=https://{storageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort};";
+        $"DefaultEndpointsProtocol=http;AccountName={storageAccountName};AccountKey={accountKey};BlobEndpoint=https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;TableEndpoint=https://{storageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort};";
 
     /// <summary>
     /// Gets the Service Bus connection string for the local development emulator.
@@ -50,7 +50,11 @@ public static class TopazResourceHelpers
     /// </remarks>
     public static string GetServiceBusConnectionStringWithTls(string serviceBusNamespaceName) => $"Endpoint=sb://{serviceBusNamespaceName}.servicebus.topaz.local.dev:{GlobalSettings.AmqpTlsConnectionPort};SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;";
 
-    
+    /// <summary>
+    /// Gets the Service Bus connection string for management operations.
+    /// </summary>
+    /// <param name="serviceBusNamespaceName">The name of the Service Bus namespace.</param>
+    /// <returns>A connection string configured for management operations.</returns>
     public static string GetServiceBusConnectionStringForManagement(string serviceBusNamespaceName) => $"Endpoint=sb://{serviceBusNamespaceName}.servicebus.topaz.local.dev:{GlobalSettings.AdditionalServiceBusPort};SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;";
     
     /// <summary>

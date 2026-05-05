@@ -11,6 +11,9 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
     public ControlPlaneOperationResult<Container> CreateContainer(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string containerName, string storageAccountName)
     {
+        if (provider.ContainerExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName))
+            return new ControlPlaneOperationResult<Container>(OperationResult.Conflict, null, null, null);
+
         var container = new Container
         {
             Name = containerName

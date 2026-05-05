@@ -1,7 +1,9 @@
 using Topaz.EventPipeline;
 using System.Net;
+using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
+using Topaz.Service.Storage.Utils;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Endpoints.Blob;
@@ -44,9 +46,12 @@ internal sealed class CreateContainerEndpoint(Pipeline eventPipeline, ITopazLogg
             var op = _controlPlane.CreateContainer(subscriptionIdentifier, resourceGroupIdentifier, containerName,
                 storageAccount!.Name);
 
-            response.StatusCode = op.Result == OperationResult.Created
-                ? HttpStatusCode.Created
-                : HttpStatusCode.BadRequest;
+            response.StatusCode = op.Result switch
+            {
+                OperationResult.Created => HttpStatusCode.Created,
+                OperationResult.Conflict => SetConflict(response),
+                _ => HttpStatusCode.BadRequest
+            };
         }
         catch (Exception ex)
         {
@@ -55,5 +60,12 @@ internal sealed class CreateContainerEndpoint(Pipeline eventPipeline, ITopazLogg
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }
+    }
+
+    private static HttpStatusCode SetConflict(HttpResponseMessage response)
+    {
+        response.CreateBlobErrorResponse(BlobErrorCode.ContainerAlreadyExists,
+            "The specified container already exists.", HttpStatusCode.Conflict);
+        return HttpStatusCode.Conflict;
     }
 }
