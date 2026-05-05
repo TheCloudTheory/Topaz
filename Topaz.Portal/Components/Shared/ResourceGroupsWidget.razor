@@ -1,0 +1,89 @@
+@using Topaz.Portal.Models.ResourceGroups
+@using System.Net
+@inject ITopazClient TopazClient
+
+<div class="card h-100">
+    <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="card-title mb-0">
+                <span class="bi bi-folder2-open me-2 text-primary" aria-hidden="true"></span>Resource groups
+            </h5>
+            @if (!_loading && _error is null)
+            {
+                <span class="badge bg-primary rounded-pill">@_resourceGroups.Length</span>
+            }
+        </div>
+
+        @if (_loading)
+        {
+            <p class="text-muted small mb-0">Loading…</p>
+        }
+        else if (_error is not null)
+        {
+            <div class="alert alert-danger alert-sm py-1 px-2 mb-0 small" role="alert">@_error</div>
+        }
+        else if (_resourceGroups.Length == 0)
+        {
+            <p class="text-muted small mb-0">No resource groups found.</p>
+        }
+        else
+        {
+            <ul class="list-unstyled mb-0">
+                @foreach (var rg in _resourceGroups.Take(5))
+                {
+                    <li class="d-flex align-items-center justify-content-between py-1 border-bottom">
+                        <div>
+                            @if (Guid.TryParse(rg.SubscriptionId, out var subId) && !string.IsNullOrWhiteSpace(rg.Name))
+                            {
+                                <a href="/resource-groups/@subId:D/@WebUtility.UrlEncode(rg.Name)" class="fw-medium text-decoration-none">
+                                    @rg.Name
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="fw-medium">@(rg.Name ?? "(unknown)")</span>
+                            }
+                            <div class="text-muted small">@(rg.SubscriptionName ?? "")</div>
+                        </div>
+                        <code class="small text-muted">@(rg.Location ?? "-")</code>
+                    </li>
+                }
+            </ul>
+            @if (_resourceGroups.Length > 5)
+            {
+                <div class="text-end mt-2">
+                    <a href="/resource-groups" class="small">View all @_resourceGroups.Length →</a>
+                </div>
+            }
+            else
+            {
+                <div class="text-end mt-2">
+                    <a href="/resource-groups" class="small">Manage resource groups →</a>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private ResourceGroupDto[] _resourceGroups = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var resp = await TopazClient.ListResourceGroups();
+            _resourceGroups = resp?.Value ?? [];
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

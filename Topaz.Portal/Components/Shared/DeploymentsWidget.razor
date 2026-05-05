@@ -1,0 +1,161 @@
+@using System.Net
+@using Topaz.Portal.Models.ResourceGroups
+@using Topaz.Portal.Models.ResourceManager
+@using Topaz.Portal.Models.Subscriptions
+@inject ITopazClient TopazClient
+
+<div class="card h-100">
+    <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="card-title mb-0">
+                <span class="bi bi-diagram-3 me-2 text-primary" aria-hidden="true"></span>Recent deployments
+            </h5>
+            <div class="d-flex align-items-center gap-2">
+                @if (!_loading && _error is null)
+                {
+                    <span class="badge bg-primary rounded-pill">@_deployments.Length</span>
+                }
+                <button class="btn btn-outline-secondary btn-sm"
+                        @onclick="LoadAsync"
+                        disabled="@_loading"
+                        title="Refresh">
+                    ↺
+                </button>
+            </div>
+        </div>
+
+        @if (_loading)
+        {
+            <p class="text-muted small mb-0">Loading…</p>
+        }
+        else if (_error is not null)
+        {
+            <div class="alert alert-danger alert-sm py-1 px-2 mb-0 small" role="alert">@_error</div>
+        }
+        else if (_deployments.Length == 0)
+        {
+            <p class="text-muted small mb-0">No deployments found.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Resource group</th>
+                        <th>State</th>
+                        <th>Timestamp</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in _deployments.Take(10))
+                    {
+                        <tr>
+                            <td>
+                                <a href="@GetDeploymentHref(item)"
+                                   class="text-decoration-none fw-medium">
+                                    @(item.Deployment.Name ?? "(unknown)")
+                                </a>
+                            </td>
+                            <td class="text-muted small">@item.ResourceGroupName</td>
+                            <td>
+                                <span class="badge @GetStateBadgeClass(item.Deployment.Properties?.ProvisioningState)">
+                                    @(item.Deployment.Properties?.ProvisioningState ?? "-")
+                                </span>
+                            </td>
+                            <td class="text-muted small text-nowrap">
+                                @(item.Deployment.Properties?.Timestamp?.ToString("dd MMM HH:mm") ?? "-")
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-end mt-2">
+                <a href="/resource-manager" class="small">View all in Resource Manager →</a>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private DeploymentEntry[] _deployments = [];
+
+    private sealed record DeploymentEntry(
+        DeploymentDto Deployment,
+        string SubscriptionId,
+        string ResourceGroupName);
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            var subsResp = await TopazClient.ListSubscriptions();
+            var subs = subsResp?.Value ?? [];
+
+            var rgsResp = await TopazClient.ListResourceGroups();
+            var rgs = rgsResp?.Value ?? [];
+
+            // Fan out: one ListDeployments call per RG that has a valid subscription ID
+            var tasks = rgs
+                .Where(rg => Guid.TryParse(rg.SubscriptionId, out _) && !string.IsNullOrWhiteSpace(rg.Name))
+                .Select(async rg =>
+                {
+                    var subscriptionId = Guid.Parse(rg.SubscriptionId!);
+                    try
+                    {
+                        var resp = await TopazClient.ListDeployments(subscriptionId, rg.Name!);
+                        return (resp?.Value ?? [])
+                            .Select(d => new DeploymentEntry(d, rg.SubscriptionId!, rg.Name!))
+                            .ToArray();
+                    }
+                    catch
+                    {
+                        return [];
+                    }
+                });
+
+            var results = await Task.WhenAll(tasks);
+
+            _deployments = results
+                .SelectMany(x => x)
+                .OrderByDescending(x => x.Deployment.Properties?.Timestamp ?? DateTimeOffset.MinValue)
+                .ToArray();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string GetDeploymentHref(DeploymentEntry item)
+    {
+        var deploymentName = item.Deployment.Name;
+        if (string.IsNullOrWhiteSpace(deploymentName))
+            return "/resource-manager";
+
+        return $"/deployments/{item.SubscriptionId}/{WebUtility.UrlEncode(item.ResourceGroupName)}/{WebUtility.UrlEncode(deploymentName)}";
+    }
+
+    private static string GetStateBadgeClass(string? state) => state?.ToLowerInvariant() switch
+    {
+        "succeeded"             => "bg-success",
+        "failed"                => "bg-danger",
+        "running" or "accepted" => "bg-warning text-dark",
+        "canceled"              => "bg-secondary",
+        _                       => "bg-secondary"
+    };
+}

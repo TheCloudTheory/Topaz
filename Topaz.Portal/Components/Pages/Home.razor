@@ -1,7 +1,35 @@
 ﻿@page "/"
+@using Topaz.Portal.Components.Shared
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Dashboard — Topaz Portal</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="d-flex align-items-center mb-4">
+    <h1 class="mb-0">Dashboard</h1>
+</div>
 
-Welcome to your new app.
+<div class="row g-3 mb-3">
+    <div class="col-12 col-lg-4">
+        <ClockWidget />
+    </div>
+    <div class="col-12 col-lg-8">
+        <ResourceSummaryWidget />
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-12 col-lg-6">
+        <SubscriptionsWidget />
+    </div>
+    <div class="col-12 col-lg-6">
+        <ResourceGroupsWidget />
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-12 col-lg-8">
+        <DeploymentsWidget />
+    </div>
+    <div class="col-12 col-lg-4">
+        <QuickActionsWidget />
+    </div>
+</div>

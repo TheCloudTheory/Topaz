@@ -1,0 +1,88 @@
+@using Topaz.Portal.Models.Storage
+@using Topaz.Portal.Models.KeyVaults
+@inject ITopazClient TopazClient
+
+<div class="card h-100">
+    <div class="card-body">
+        <h5 class="card-title mb-3">
+            <span class="bi bi-bar-chart-line me-2 text-primary" aria-hidden="true"></span>Resource summary
+        </h5>
+
+        @if (_loading)
+        {
+            <p class="text-muted small mb-0">Loading…</p>
+        }
+        else if (_error is not null)
+        {
+            <div class="alert alert-danger alert-sm py-1 px-2 mb-0 small" role="alert">@_error</div>
+        }
+        else
+        {
+            <div class="row g-3">
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 text-center h-100">
+                        <div class="display-6 fw-bold text-primary">@_storageCount</div>
+                        <div class="small text-muted mt-1">Storage accounts</div>
+                        <a href="/portal/storage" class="small stretched-link text-decoration-none">View →</a>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 text-center h-100">
+                        <div class="display-6 fw-bold text-primary">@_keyVaultCount</div>
+                        <div class="small text-muted mt-1">Key vaults</div>
+                        <a href="/key-vault" class="small stretched-link text-decoration-none">View →</a>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 text-center h-100">
+                        <div class="display-6 fw-bold text-primary">@_subscriptionCount</div>
+                        <div class="small text-muted mt-1">Subscriptions</div>
+                        <a href="/subscriptions" class="small stretched-link text-decoration-none">View →</a>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 text-center h-100">
+                        <div class="display-6 fw-bold text-primary">@_resourceGroupCount</div>
+                        <div class="small text-muted mt-1">Resource groups</div>
+                        <a href="/resource-groups" class="small stretched-link text-decoration-none">View →</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private int _storageCount;
+    private int _keyVaultCount;
+    private int _subscriptionCount;
+    private int _resourceGroupCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var storageTask = TopazClient.ListStorageAccounts();
+            var keyVaultTask = TopazClient.ListKeyVaults();
+            var subsTask = TopazClient.ListSubscriptions();
+            var rgsTask = TopazClient.ListResourceGroups();
+
+            await Task.WhenAll(storageTask, keyVaultTask, subsTask, rgsTask);
+
+            _storageCount = (await storageTask).Value?.Length ?? 0;
+            _keyVaultCount = (await keyVaultTask).Value?.Length ?? 0;
+            _subscriptionCount = (await subsTask).Value?.Length ?? 0;
+            _resourceGroupCount = (await rgsTask).Value?.Length ?? 0;
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

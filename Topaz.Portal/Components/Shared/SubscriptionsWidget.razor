@@ -1,0 +1,87 @@
+@using Topaz.Portal.Models.Subscriptions
+@inject ITopazClient TopazClient
+
+<div class="card h-100">
+    <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="card-title mb-0">
+                <span class="bi bi-collection me-2 text-primary" aria-hidden="true"></span>Subscriptions
+            </h5>
+            @if (!_loading && _error is null)
+            {
+                <span class="badge bg-primary rounded-pill">@_subscriptions.Length</span>
+            }
+        </div>
+
+        @if (_loading)
+        {
+            <p class="text-muted small mb-0">Loading…</p>
+        }
+        else if (_error is not null)
+        {
+            <div class="alert alert-danger alert-sm py-1 px-2 mb-0 small" role="alert">@_error</div>
+        }
+        else if (_subscriptions.Length == 0)
+        {
+            <p class="text-muted small mb-0">No subscriptions found.</p>
+        }
+        else
+        {
+            <ul class="list-unstyled mb-0">
+                @foreach (var s in _subscriptions.Take(5))
+                {
+                    <li class="d-flex align-items-center justify-content-between py-1 border-bottom">
+                        <div>
+                            @if (Guid.TryParse(s.SubscriptionId, out var subId))
+                            {
+                                <a href="/subscriptions/@subId:D" class="fw-medium text-decoration-none">
+                                    @(s.DisplayName ?? "(no name)")
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="fw-medium">@(s.DisplayName ?? "(no name)")</span>
+                            }
+                        </div>
+                        <code class="small text-muted">@(s.SubscriptionId?.Length >= 8 ? s.SubscriptionId[..8] + "…" : s.SubscriptionId)</code>
+                    </li>
+                }
+            </ul>
+            @if (_subscriptions.Length > 5)
+            {
+                <div class="text-end mt-2">
+                    <a href="/subscriptions" class="small">View all @_subscriptions.Length →</a>
+                </div>
+            }
+            else
+            {
+                <div class="text-end mt-2">
+                    <a href="/subscriptions" class="small">Manage subscriptions →</a>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private SubscriptionDto[] _subscriptions = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var resp = await TopazClient.ListSubscriptions();
+            _subscriptions = resp?.Value ?? [];
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

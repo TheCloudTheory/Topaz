@@ -1,0 +1,44 @@
+@using System.Timers
+@implements IDisposable
+
+<div class="card h-100">
+    <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+        <div class="mb-1">
+            <span class="bi bi-clock fs-2 text-primary" aria-hidden="true"></span>
+        </div>
+        <div class="display-6 fw-semibold text-primary lh-1 mb-1">@_utcNow.ToString("HH:mm:ss")</div>
+        <div class="text-muted small mb-2">UTC</div>
+
+        <div class="fs-5 fw-medium">@_localNow.ToString("HH:mm:ss")</div>
+        <div class="text-muted small mb-3">Local (@TimeZoneInfo.Local.Id)</div>
+
+        <div class="text-muted small">@_utcNow.ToString("dddd, dd MMM yyyy")</div>
+    </div>
+</div>
+
+@code {
+    private DateTime _utcNow = DateTime.UtcNow;
+    private DateTime _localNow = DateTime.Now;
+    private Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new Timer(1000);
+        _timer.Elapsed += OnTick;
+        _timer.AutoReset = true;
+        _timer.Start();
+    }
+
+    private void OnTick(object? sender, ElapsedEventArgs e)
+    {
+        _utcNow = DateTime.UtcNow;
+        _localNow = DateTime.Now;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        _timer?.Stop();
+        _timer?.Dispose();
+    }
+}
