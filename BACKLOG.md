@@ -411,6 +411,89 @@ TODO: MCP: Pre-defined prompts for common setup scenarios
 
 ## v1.4-beta
 
+### Azure Storage — SAS (Shared Access Signature) validation
+
+<!--
+TODO: Storage: Account SAS query-string validation for Blob, Queue, and Table
+  The ARM `ListAccountSas` and `ListServiceSas` endpoints already generate and return SAS
+  token strings. However the data-plane security providers (BlobStorageSecurityProvider,
+  QueueStorageSecurityProvider, TableStorageSecurityProvider) only recognise the
+  `Authorization:` request header — they ignore query-string SAS parameters entirely.
+  A request carrying `?sv=…&sig=…` but no Authorization header hits the missing-header
+  fast-path and returns 401.
+
+  Implement Account SAS validation in all three security providers:
+  - Detect SAS parameters (sv, ss, srt, sp, se, st, spr, sip, sig) in the query string.
+  - Build the StringToSign from the canonical Account SAS format:
+    `accountName + permissions + services + resourceTypes + start + expiry + ip + protocol + version`
+    (all newline-separated), then HMAC-SHA256 with the account key.
+  - Validate that the computed signature matches `sig=`, the expiry (`se=`) has not passed,
+    the requested service letter appears in `ss=` (b/q/t/f), the resource type letter
+    appears in `srt=` (s/c/o), and the HTTP method is covered by `sp=`.
+  - A valid SAS may be used in place of an Authorization header; the request is then
+    treated as authorized for the subset of operations the SAS permits.
+  milestone: v1.4-beta
+  labels: enhancement, storage, security
+-->
+
+<!--
+TODO: Storage: Service SAS query-string validation for Blob, Queue, and Table
+  Service SAS tokens are scoped to a single service and resource (container, blob, queue,
+  or table). Implement Service SAS validation:
+  - Detect Service SAS parameters (sv, sr, sp, se, st, spr, sip, si, sig, and the
+    response-header overrides rscc/rscd/rsce/rscl/rsct) in the query string.
+  - Build the StringToSign per service:
+    Blob:  `permissions + start + expiry + canonicalizedResource + signedIdentifier +
+            signedIP + signedProtocol + signedVersion + signedDirectoryDepth +
+            signedEncryptionScope + rscc + rscd + rsce + rscl + rsct`
+    Queue: `permissions + start + expiry + canonicalizedResource + signedIdentifier +
+            signedIP + signedProtocol + signedVersion`
+    Table: `permissions + start + expiry + canonicalizedResource + signedIdentifier +
+            signedIP + signedProtocol + signedVersion + startPk + startRk + endPk + endRk`
+  - When `si=<policyId>` is present, look up the named policy from the stored
+    `<SignedIdentifiers>` XML for the resource (container ACL / queue ACL / table ACL),
+    merge the policy's permissions/start/expiry into the validation, and skip those
+    fields from the wire token.
+  - Validate signature, expiry, IP restrictions, and HTTP method as for Account SAS.
+  milestone: v1.4-beta
+  labels: enhancement, storage, security
+-->
+
+<!--
+TODO: Storage: Stored Access Policy enforcement at request time
+  The GET/SET Container ACL, Queue ACL, and Table ACL endpoints already persist
+  `<SignedIdentifiers>` XML to disk. This data is currently only round-tripped —
+  it is never consulted when a Service SAS arrives with `si=<policyId>`.
+  As part of the Service SAS implementation, add a lookup path in each security
+  provider that:
+  - Reads the stored policy XML for the targeted resource.
+  - Finds the `<SignedIdentifier>` whose `<Id>` matches `si=`.
+  - Merges the policy's `<Start>`, `<Expiry>`, and `<Permission>` values into the
+    SAS validation, overriding the corresponding (absent) query parameters.
+  - Returns 403 `AuthorizationFailure` if the policy no longer exists (revocation).
+  milestone: v1.4-beta
+  labels: enhancement, storage, security
+-->
+
+<!--
+TODO: Storage: Anonymous / public-access reads for Blob containers
+  Real Azure allows Blob containers to permit unauthenticated reads when created
+  with `x-ms-blob-public-access: container` (list + read) or `blob` (read only).
+  Currently any request that reaches a Blob endpoint without an Authorization header
+  or SAS token receives 401 unconditionally.
+  Implement anonymous read support:
+  - Store the public-access level when a container is created or updated
+    (`x-ms-blob-public-access` header on PUT /{containerName}?restype=container).
+  - In BlobStorageSecurityProvider.RequestIsAuthorized, if no Authorization header
+    and no SAS query parameters are present, look up the container's public-access
+    level. Allow the request if the access level permits the operation
+    (container-level: list blobs + get blob; blob-level: get blob only).
+  - Return the public-access level in the `x-ms-blob-public-access` response header
+    on GetContainerProperties and GetContainerAcl.
+  milestone: v1.4-beta
+  labels: enhancement, storage, security
+-->
+
 ### Topaz Portal — tag editing
 
 <!--
@@ -544,6 +627,37 @@ TODO: Network Security Groups: Full control plane
 ---
 
 ## v1.5-beta
+
+### Azure Storage — User Delegation SAS for Blob
+
+<!--
+TODO: Storage: User Delegation SAS for Blob data-plane
+  User Delegation SAS tokens are signed with a time-bounded user delegation key derived
+  from an Entra ID identity rather than the storage account key. They are scoped to Blob
+  only. Implementation requires two coordinated pieces:
+
+  1. ARM endpoint — POST generateUserDelegationKey:
+     Add `POST /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Storage/
+     storageAccounts/{name}/providers/Microsoft.Storage/userDelegationKey` (or the
+     direct ARM route used by the SDK) that accepts a JSON body with `keyInfo.start`
+     and `keyInfo.expiry` and returns a `StorageServiceProperties`-style response
+     with the fields `signedOid`, `signedTid`, `signedStart`, `signedExpiry`,
+     `signedService` ("b"), `signedVersion`, and `value` (base64 key bytes). Topaz
+     can derive the key bytes deterministically from the account key + signed fields
+     via HMAC-SHA256.
+
+  2. Blob data-plane validation:
+     Detect User Delegation SAS query parameters (sv, sr, sp, se, st, spr, sip,
+     skoid, sktid, skt, ske, sks, skv, sig) and validate them in
+     BlobStorageSecurityProvider:
+     - Recompute the user delegation key from the stored account key + (skoid, sktid,
+       skt, ske, sks, skv) fields using the same HMAC chain used during issuance.
+     - Build the StringToSign (identical to Service SAS but uses the user delegation
+       key bytes rather than the raw account key).
+     - Validate signature, expiry, IP/protocol restrictions, and scope (sr=b/c/d).
+  milestone: v1.5-beta
+  labels: enhancement, storage, security
+-->
 
 ### ARM Deployments — full tenant-scope surface
 

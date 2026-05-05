@@ -83,6 +83,15 @@ _Implemented in v1.3-beta._
 
 ## v1.4-beta
 
+### Azure Storage — SAS validation and public access
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Account SAS query-string validation | Validate `?sv=…&sig=…` Account SAS tokens in Blob, Queue, and Table security providers; checks signature, expiry, service/resource-type/permission letters |
+| <span class="badge--preview">Preview</span> | Service SAS query-string validation | Validate per-service SAS tokens (with per-service StringToSign for Blob, Queue, Table); includes `si=` stored-policy reference resolution |
+| <span class="badge--preview">Preview</span> | Stored Access Policy enforcement | Look up named `<SignedIdentifier>` from Container/Queue/Table ACL XML at request time when `si=` is present; support policy revocation (403 when policy removed) |
+| <span class="badge--preview">Preview</span> | Anonymous / public-access Blob reads | Allow unauthenticated GET/HEAD requests against containers created with `x-ms-blob-public-access: container` or `blob`; return the level in container property responses |
+
 ### Topaz Portal — tag editing
 
 | | Feature | Description |
@@ -121,6 +130,13 @@ _Implemented in v1.3-beta._
 ---
 
 ## v1.5-beta
+
+### Azure Storage — User Delegation SAS for Blob
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | `generateUserDelegationKey` ARM endpoint | `POST .../storageAccounts/{name}/providers/Microsoft.Storage/userDelegationKey` — returns a time-bounded user delegation key signed with Topaz's account-key HMAC chain |
+| <span class="badge--preview">Preview</span> | User Delegation SAS validation on Blob | Validate `skoid/sktid/skt/ske/sks/skv/sig` SAS query parameters on Blob endpoints; recompute the delegation key and verify signature, expiry, and scope |
 
 ### ARM Deployments — full tenant-scope surface
 

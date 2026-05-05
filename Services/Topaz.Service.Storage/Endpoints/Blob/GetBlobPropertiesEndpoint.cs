@@ -105,11 +105,9 @@ internal sealed class GetBlobPropertiesEndpoint(Pipeline eventPipeline, ITopazLo
             var metaOp = _dataPlane.GetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier,
                 storageAccount!.Name, context.Request.Path.Value!);
 
-            if (metaOp.Resource != null)
-            {
-                foreach (var (key, value) in metaOp.Resource)
-                    response.Headers.TryAddWithoutValidation(key, value);
-            }
+            if (metaOp.Resource == null) return;
+            foreach (var (key, value) in metaOp.Resource)
+                response.Headers.TryAddWithoutValidation(key, value);
         }
         catch (Exception ex)
         {
