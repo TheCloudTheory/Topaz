@@ -249,7 +249,7 @@ Azurite has a Docker image too. The difference is what the image emulates — To
 
 For Storage specifically, Topaz implements the same data-plane APIs Azurite does. Point your existing Azure SDK clients at Topaz's endpoints and they connect without code changes — only the endpoint hostname, port, and credentials change. The one item to check during migration is authentication: Topaz always enforces SharedKey signatures on Table and Queue requests, so any request that Azurite silently accepted with a missing or invalid signature will be rejected. This is intentional — it is the same behaviour real Azure has, and catching the divergence locally is the whole point.
 
-Beyond Storage, the [API coverage docs](/docs/api-coverage) list which operations are implemented per service. If you hit something that is not yet supported, [open an issue](https://github.com/TheCloudTheory/Topaz/issues) — the backlog is publicly tracked and feedback shapes priorities.
+Beyond Storage, the [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/) list which operations are implemented per service. If you hit something that is not yet supported, [open an issue](https://github.com/TheCloudTheory/Topaz/issues) — the backlog is publicly tracked and feedback shapes priorities.
 
 ## Summary
 
