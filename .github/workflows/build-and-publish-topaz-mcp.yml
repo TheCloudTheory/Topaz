@@ -21,6 +21,13 @@ jobs:
         dotnet-version: 10.0.x
     - name: Install nbgv
       run: dotnet tool install -g nbgv
+    - name: Install certificate
+      run: |
+        cd certificate
+        ./ubuntu-install.sh
+    - name: Configure DNS resolution
+      run: |
+        sudo ./install/install-linux.sh
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
