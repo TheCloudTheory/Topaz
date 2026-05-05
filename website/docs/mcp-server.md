@@ -47,6 +47,29 @@ The following ports are bound automatically when the container starts:
 
 Both tools accept an `objectId` parameter — the Entra ID object ID of the acting user. Pass an empty GUID (`00000000-0000-0000-0000-000000000000`) to act as a superadmin with no permission restrictions.
 
+### Resource tools
+
+| Tool | Description |
+|---|---|
+| `GetConnectionStrings` | Queries all provisioned resources in a subscription and returns ready-to-use connection strings and URIs |
+
+`GetConnectionStrings` accepts the following parameters:
+
+| Parameter | Description |
+|---|---|
+| `subscriptionId` | ID of the subscription to query |
+| `objectId` | Entra ID object ID of the acting user. Pass an empty GUID (`00000000-0000-0000-0000-000000000000`) for superadmin access |
+
+The tool scans every resource group in the subscription and returns connection information for the following resource types:
+
+| Resource type | Returned fields |
+|---|---|
+| Storage accounts | `connectionString`, `blobServiceUri`, `queueServiceUri`, `tableServiceUri` |
+| Service Bus namespaces | `connectionString`, `connectionStringWithTls` |
+| Key Vaults | `vaultUri` |
+| Event Hub namespaces | `connectionString` |
+| Container Registries | `loginServer` |
+
 ## Configuration
 
 The MCP server is distributed as a Docker image (`thecloudtheory/topaz-mcp`). Add it to your editor's MCP configuration to make it available to the AI assistant.
@@ -104,3 +127,9 @@ Copilot will:
 2. Call `CreateSubscription` to provision the subscription inside it
 
 You can then continue using `az` commands or the Azure SDK against `localhost` as described in the [Azure CLI integration](./integrations/azure-cli-integration.md) guide.
+
+Once you have provisioned resources (storage accounts, Key Vaults, Service Bus namespaces, etc.) you can ask Copilot to retrieve all connection strings at once:
+
+> "Give me the connection strings for everything in my `dev-local` subscription."
+
+Copilot will call `GetConnectionStrings` and return a structured list of URIs and connection strings ready to paste into your application configuration.
