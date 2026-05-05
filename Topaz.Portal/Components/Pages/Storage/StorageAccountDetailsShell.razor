@@ -15,6 +15,26 @@
                              href="@TagsHref">
                         Tags
                     </NavLink>
+
+                    <div class="list-group-item list-group-item-action disabled text-muted small py-1 px-3 mt-2"
+                         style="font-size:0.7rem;letter-spacing:.06em;text-transform:uppercase;cursor:default;background:transparent;border:none;">
+                        Data storage
+                    </div>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@ContainersHref">
+                        Containers
+                    </NavLink>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@QueuesHref">
+                        Queues
+                    </NavLink>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@TablesHref">
+                        Tables
+                    </NavLink>
                 </div>
             </div>
         </div>
@@ -38,4 +58,7 @@
 
     private string OverviewHref => Base;
     private string TagsHref => $"{Base}/tags";
+    private string ContainersHref => $"{Base}/containers";
+    private string QueuesHref => $"{Base}/queues";
+    private string TablesHref => $"{Base}/tables";
 }

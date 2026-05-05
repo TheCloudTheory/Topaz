@@ -1,0 +1,28 @@
+@page "/portal/storage/{SubscriptionId:guid}/{ResourceGroupName}/{StorageAccountName}/queues"
+@using System.Net
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/storage">Storage accounts</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/portal/storage/{SubscriptionId:D}/{ResourceGroupName}/{StorageAccountName}")">@DecodedSa</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Queues</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedSa</h1>
+
+<StorageAccountDetailsShell SubscriptionId="SubscriptionId"
+                             ResourceGroupName="@DecodedRg"
+                             StorageAccountName="@DecodedSa">
+    <div class="alert alert-info">
+        Queue management is not yet implemented in Topaz Portal.
+    </div>
+</StorageAccountDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string StorageAccountName { get; set; } = "";
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedSa => WebUtility.UrlDecode(StorageAccountName);
+}
