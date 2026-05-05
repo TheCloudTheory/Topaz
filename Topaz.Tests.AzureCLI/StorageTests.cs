@@ -283,13 +283,13 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"printf 'hello blob show' >/tmp/blob-show.txt && az storage blob upload --container-name {containerName} --name show.txt --file /tmp/blob-show.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"printf 'hello blob show' >/tmp/blob-show.txt && az storage blob upload --container-name {containerName} --name show.txt --file /tmp/blob-show.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob show --container-name {containerName} --name show.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage blob show --container-name {containerName} --name show.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 Assert.Multiple(() =>
@@ -325,16 +325,16 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"printf 'hello metadata' >/tmp/blob-meta.txt && az storage blob upload --container-name {containerName} --name meta.txt --file /tmp/blob-meta.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"printf 'hello metadata' >/tmp/blob-meta.txt && az storage blob upload --container-name {containerName} --name meta.txt --file /tmp/blob-meta.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob metadata update --container-name {containerName} --name meta.txt --metadata env=staging version=2 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage blob metadata update --container-name {containerName} --name meta.txt --metadata env=staging version=2 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob metadata show --container-name {containerName} --name meta.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage blob metadata show --container-name {containerName} --name meta.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 Assert.Multiple(() =>
@@ -369,10 +369,10 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"printf 'hello update' >/tmp/blob-update.txt && az storage blob upload --container-name {containerName} --name update.txt --file /tmp/blob-update.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"printf 'hello update' >/tmp/blob-update.txt && az storage blob upload --container-name {containerName} --name update.txt --file /tmp/blob-update.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         // Use --connection-string with explicit BlobEndpoint so the Azure CLI content-settings
         // validator (get_content_setting_validator in _validators.py) passes the full endpoint URL
@@ -380,10 +380,10 @@ public class StorageTests : TopazFixture
         // without account_url, causing get_account_url() to construct an https:// URL to the wrong
         // port (8890) which produces an SSL record-layer failure.
         await RunAzureCliCommand(
-            $"az storage blob update --container-name {containerName} --name update.txt --content-type text/plain --content-encoding utf-8 --connection-string \"AccountName={storageAccountName};AccountKey={accountKey};BlobEndpoint=http://{storageAccountName}.blob.storage.topaz.local.dev:8891\"");
+            $"az storage blob update --container-name {containerName} --name update.txt --content-type text/plain --content-encoding utf-8 --connection-string \"AccountName={storageAccountName};AccountKey={accountKey};BlobEndpoint=https://{storageAccountName}.blob.storage.topaz.local.dev:8891\"");
 
         await RunAzureCliCommand(
-            $"az storage blob show --container-name {containerName} --name update.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage blob show --container-name {containerName} --name update.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 Assert.Multiple(() =>
@@ -419,10 +419,10 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage container metadata update --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --metadata env=prod owner=team-a --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container metadata update --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --metadata env=prod owner=team-a --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
@@ -449,13 +449,13 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"printf 'hello world' >/tmp/blob-list-upload.txt && az storage blob upload --container-name {containerName} --name test.txt --file /tmp/blob-list-upload.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"printf 'hello world' >/tmp/blob-list-upload.txt && az storage blob upload --container-name {containerName} --name test.txt --file /tmp/blob-list-upload.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob list --container-name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage blob list --container-name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 var blobs = resp.AsArray();
@@ -487,10 +487,10 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage container show-permission --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage container show-permission --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 // az storage container show-permission only returns publicAccess (its CLI transform strips signed_identifiers)
@@ -524,18 +524,18 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         var start = DateTime.UtcNow.AddMinutes(-1).ToString("yyyy-MM-ddTHH:mm:ssZ");
         var expiry = DateTime.UtcNow.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ");
 
         await RunAzureCliCommand(
-            $"az storage container policy create --container-name {containerName} --name {policyId} --permissions r --start \"{start}\" --expiry \"{expiry}\" --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container policy create --container-name {containerName} --name {policyId} --permissions r --start \"{start}\" --expiry \"{expiry}\" --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         // az storage container show-permission strips signed_identifiers via its transform function;
         // use policy list which returns the stored access policies as a JSON object keyed by policy id.
         await RunAzureCliCommand(
-            $"az storage container policy list --container-name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage container policy list --container-name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 var policies = resp.AsObject();
@@ -568,10 +568,10 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage container lease acquire --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage container lease acquire --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 var leaseId = resp.GetValue<string>();
@@ -602,15 +602,15 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         string? leaseId = null;
         await RunAzureCliCommand(
-            $"az storage container lease acquire --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage container lease acquire --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) => { leaseId = resp.GetValue<string>(); });
 
         await RunAzureCliCommand(
-            $"az storage container lease release --container-name {containerName} --lease-id \"{leaseId}\" --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container lease release --container-name {containerName} --lease-id \"{leaseId}\" --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
@@ -636,13 +636,13 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage container lease acquire --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container lease acquire --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage container lease break --container-name {containerName} --lease-break-period 0 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage container lease break --container-name {containerName} --lease-break-period 0 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 // break returns the remaining lease time in seconds
@@ -674,14 +674,14 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         // Generate 512 bytes of data and upload as a page blob
         await RunAzureCliCommand(
-            $"bash -c \"python3 -c \\\"import sys; sys.stdout.buffer.write(b'\\\\x41' * 512)\\\" > /tmp/topaz_page.bin && az storage blob upload --account-name {storageAccountName} --account-key \\\"{accountKey}\\\" --container-name {containerName} --name {blobName} --file /tmp/topaz_page.bin --type page --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891\"");
+            $"bash -c \"python3 -c \\\"import sys; sys.stdout.buffer.write(b'\\\\x41' * 512)\\\" > /tmp/topaz_page.bin && az storage blob upload --account-name {storageAccountName} --account-key \\\"{accountKey}\\\" --container-name {containerName} --name {blobName} --file /tmp/topaz_page.bin --type page --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891\"");
 
         await RunAzureCliCommand(
-            $"az storage blob show --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage blob show --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 Assert.That(resp["properties"]!["blobType"]!.GetValue<string>(), Is.EqualTo("PageBlob"));
@@ -713,14 +713,14 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"bash -c \"python3 -c \\\"import sys; sys.stdout.buffer.write(b'\\\\x42' * 512)\\\" > /tmp/topaz_page2.bin && az storage blob upload --account-name {storageAccountName} --account-key \\\"{accountKey}\\\" --container-name {containerName} --name {blobName} --file /tmp/topaz_page2.bin --type page --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891\"");
+            $"bash -c \"python3 -c \\\"import sys; sys.stdout.buffer.write(b'\\\\x42' * 512)\\\" > /tmp/topaz_page2.bin && az storage blob upload --account-name {storageAccountName} --account-key \\\"{accountKey}\\\" --container-name {containerName} --name {blobName} --file /tmp/topaz_page2.bin --type page --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891\"");
 
         // Download and verify content size
         await RunAzureCliCommand(
-            $"bash -c \"az storage blob download --account-name {storageAccountName} --account-key \\\"{accountKey}\\\" --container-name {containerName} --name {blobName} --file /tmp/topaz_page_dl.bin --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891 -o none && wc -c < /tmp/topaz_page_dl.bin\"",
+            $"bash -c \"az storage blob download --account-name {storageAccountName} --account-key \\\"{accountKey}\\\" --container-name {containerName} --name {blobName} --file /tmp/topaz_page_dl.bin --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891 -o none && wc -c < /tmp/topaz_page_dl.bin\"",
             (resp) =>
             {
                 Assert.That(resp.GetValue<int>(), Is.EqualTo(512));
@@ -751,13 +751,13 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"bash -c \"python3 -c \\\"import sys; sys.stdout.buffer.write(b'\\\\x43' * 1024)\\\" > /tmp/topaz_page3.bin && az storage blob upload --account-name {storageAccountName} --account-key \\\"{accountKey}\\\" --container-name {containerName} --name {blobName} --file /tmp/topaz_page3.bin --type page --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891\"");
+            $"bash -c \"python3 -c \\\"import sys; sys.stdout.buffer.write(b'\\\\x43' * 1024)\\\" > /tmp/topaz_page3.bin && az storage blob upload --account-name {storageAccountName} --account-key \\\"{accountKey}\\\" --container-name {containerName} --name {blobName} --file /tmp/topaz_page3.bin --type page --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891\"");
 
         await RunAzureCliCommand(
-            $"az storage blob show --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage blob show --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 Assert.That(resp["properties"]!["pageRanges"]!.AsArray(), Has.Count.EqualTo(1));
@@ -790,13 +790,13 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"hello\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"hello\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob lease acquire --blob-name {blobName} --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage blob lease acquire --blob-name {blobName} --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 var leaseId = resp.GetValue<string>();
@@ -828,18 +828,18 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"hello\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"hello\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         string? leaseId = null;
         await RunAzureCliCommand(
-            $"az storage blob lease acquire --blob-name {blobName} --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage blob lease acquire --blob-name {blobName} --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) => { leaseId = resp.GetValue<string>(); });
 
         await RunAzureCliCommand(
-            $"az storage blob lease release --blob-name {blobName} --container-name {containerName} --lease-id \"{leaseId}\" --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage blob lease release --blob-name {blobName} --container-name {containerName} --lease-id \"{leaseId}\" --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
@@ -866,16 +866,16 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"hello\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"hello\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob lease acquire --blob-name {blobName} --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage blob lease acquire --blob-name {blobName} --container-name {containerName} --lease-duration 30 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob lease break --blob-name {blobName} --container-name {containerName} --lease-break-period 0 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage blob lease break --blob-name {blobName} --container-name {containerName} --lease-break-period 0 --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 Assert.That(resp.GetValue<int>(), Is.GreaterThanOrEqualTo(0));
@@ -908,15 +908,15 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {srcContainer} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {srcContainer} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
         await RunAzureCliCommand(
-            $"az storage container create --name {dstContainer} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {dstContainer} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {srcContainer} --name {srcBlobName} --data \"hello copy\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {srcContainer} --name {srcBlobName} --data \"hello copy\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob copy start --source-uri http://{storageAccountName}.blob.storage.topaz.local.dev:8891/{srcContainer}/{srcBlobName} --destination-blob {dstBlobName} --destination-container {dstContainer} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage blob copy start --source-uri http://{storageAccountName}.blob.storage.topaz.local.dev:8891/{srcContainer}/{srcBlobName} --destination-blob {dstBlobName} --destination-container {dstContainer} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 Assert.That(resp["copy_status"]?.GetValue<string>(), Is.EqualTo("success"));
@@ -947,16 +947,16 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"to be deleted\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"to be deleted\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob delete --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage blob delete --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob exists --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage blob exists --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 Assert.That(resp["exists"]!.GetValue<bool>(), Is.False);
@@ -987,13 +987,13 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"snapshot me\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"snapshot me\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob snapshot --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage blob snapshot --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 var snapshot = resp["snapshot"]?.GetValue<string>();
@@ -1025,26 +1025,26 @@ public class StorageTests : TopazFixture
             });
 
         await RunAzureCliCommand(
-            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"restore me\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage blob upload --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --data \"restore me\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob delete --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage blob delete --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob exists --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage blob exists --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 Assert.That(resp["exists"]!.GetValue<bool>(), Is.False);
             });
 
         await RunAzureCliCommand(
-            $"az storage blob undelete --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891");
+            $"az storage blob undelete --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891");
 
         await RunAzureCliCommand(
-            $"az storage blob exists --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint http://{storageAccountName}.blob.storage.topaz.local.dev:8891",
+            $"az storage blob exists --container-name {containerName} --name {blobName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:8891",
             (resp) =>
             {
                 Assert.That(resp["exists"]!.GetValue<bool>(), Is.True);
