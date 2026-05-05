@@ -314,4 +314,97 @@ public class AzureStorageServiceTests
         Assert.That(sasToken, Does.Contain("se="));
         Assert.That(sasToken, Does.Contain("sig="));
     }
+
+    [Test]
+    public void BlobContainer_CreateOrUpdate_ReturnsContainerName()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var sku = new StorageSku(StorageSkuName.StandardLrs);
+        var createContent = new StorageAccountCreateOrUpdateContent(sku,
+            StorageKind.StorageV2, AzureLocation.WestEurope);
+        var storageAccount = resourceGroup.Value.GetStorageAccounts()
+            .CreateOrUpdate(WaitUntil.Completed, StorageAccountName, createContent).Value;
+
+        // Act
+        var container = storageAccount.GetBlobService().GetBlobContainers()
+            .CreateOrUpdate(WaitUntil.Completed, "arm-test-container", new BlobContainerData()).Value;
+
+        // Assert
+        Assert.That(container.Data.Name, Is.EqualTo("arm-test-container"));
+    }
+
+    [Test]
+    public void BlobContainer_CreateOrUpdate_IdempotentOnSecondCall()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var sku = new StorageSku(StorageSkuName.StandardLrs);
+        var createContent = new StorageAccountCreateOrUpdateContent(sku,
+            StorageKind.StorageV2, AzureLocation.WestEurope);
+        var storageAccount = resourceGroup.Value.GetStorageAccounts()
+            .CreateOrUpdate(WaitUntil.Completed, StorageAccountName, createContent).Value;
+        storageAccount.GetBlobService().GetBlobContainers()
+            .CreateOrUpdate(WaitUntil.Completed, "arm-idempotent-container", new BlobContainerData());
+
+        // Act — second call must not throw
+        var container = storageAccount.GetBlobService().GetBlobContainers()
+            .CreateOrUpdate(WaitUntil.Completed, "arm-idempotent-container", new BlobContainerData()).Value;
+
+        // Assert
+        Assert.That(container.Data.Name, Is.EqualTo("arm-idempotent-container"));
+    }
+
+    [Test]
+    public void BlobContainer_Get_ReturnsCreatedContainer()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var sku = new StorageSku(StorageSkuName.StandardLrs);
+        var createContent = new StorageAccountCreateOrUpdateContent(sku,
+            StorageKind.StorageV2, AzureLocation.WestEurope);
+        var storageAccount = resourceGroup.Value.GetStorageAccounts()
+            .CreateOrUpdate(WaitUntil.Completed, StorageAccountName, createContent).Value;
+        storageAccount.GetBlobService().GetBlobContainers()
+            .CreateOrUpdate(WaitUntil.Completed, "arm-get-container", new BlobContainerData());
+
+        // Act
+        var container = storageAccount.GetBlobService().GetBlobContainer("arm-get-container").Value;
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(container.Data.Name, Is.EqualTo("arm-get-container"));
+            Assert.That(container.Data.ResourceType.ToString(),
+                Is.EqualTo("Microsoft.Storage/storageAccounts/blobServices/containers"));
+        });
+    }
+
+    [Test]
+    public void BlobContainer_Get_ThrowsWhenContainerDoesNotExist()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var sku = new StorageSku(StorageSkuName.StandardLrs);
+        var createContent = new StorageAccountCreateOrUpdateContent(sku,
+            StorageKind.StorageV2, AzureLocation.WestEurope);
+        var storageAccount = resourceGroup.Value.GetStorageAccounts()
+            .CreateOrUpdate(WaitUntil.Completed, StorageAccountName, createContent).Value;
+
+        // Act & Assert
+        Assert.Throws<RequestFailedException>(() =>
+            storageAccount.GetBlobService().GetBlobContainer("nonexistent-container").GetIfExists());
+    }
 }
