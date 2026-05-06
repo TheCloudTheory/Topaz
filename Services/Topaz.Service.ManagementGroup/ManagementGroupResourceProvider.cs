@@ -66,6 +66,36 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
         return true;
     }
 
+    public Models.ManagementGroupSubscription? GetSubscriptionAssociation(string groupId, string subscriptionId)
+    {
+        var id = ValidateGroupId(groupId);
+        var path = ResolveSubscriptionPath(id, subscriptionId);
+        if (!File.Exists(path)) return null;
+
+        var content = File.ReadAllText(path);
+        return JsonSerializer.Deserialize<Models.ManagementGroupSubscription>(content, GlobalSettings.JsonOptions);
+    }
+
+    public void SaveSubscriptionAssociation(string groupId, string subscriptionId,
+        Models.ManagementGroupSubscription model)
+    {
+        var id = ValidateGroupId(groupId);
+        var dir = Path.Combine(BasePath, id, "subscriptions");
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, $"{subscriptionId}.json"),
+            JsonSerializer.Serialize(model, GlobalSettings.JsonOptions));
+    }
+
+    public bool DeleteSubscriptionAssociation(string groupId, string subscriptionId)
+    {
+        var id = ValidateGroupId(groupId);
+        var path = ResolveSubscriptionPath(id, subscriptionId);
+        if (!File.Exists(path)) return false;
+
+        File.Delete(path);
+        return true;
+    }
+
     /// <summary>Returns true if any persisted management group references this group as its parent.</summary>
     public bool HasChildren(string groupId)
     {
@@ -73,6 +103,11 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
             mg.Properties.Details.Parent != null &&
             string.Equals(mg.Name, groupId, StringComparison.OrdinalIgnoreCase) is false &&
             mg.Properties.Details.Parent.Id.EndsWith($"/{groupId}", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string ResolveSubscriptionPath(string groupId, string subscriptionId)
+    {
+        return Path.Combine(BasePath, groupId, "subscriptions", $"{subscriptionId}.json");
     }
 
     private static string ResolveMetadataPath(string groupId)

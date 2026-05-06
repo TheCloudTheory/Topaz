@@ -169,6 +169,61 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         return JsonNode.Parse(content)!;
     }
 
+    public async Task<JsonNode> AssociateSubscriptionWithManagementGroupAsync(string groupId, string subscriptionId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put,
+            $"providers/Microsoft.Management/managementGroups/{groupId}/subscriptions/{subscriptionId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+        request.Content = new ByteArrayContent([]);
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(message, null, response.StatusCode);
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonNode.Parse(content)!;
+    }
+
+    public async Task DisassociateSubscriptionFromManagementGroupAsync(string groupId, string subscriptionId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete,
+            $"providers/Microsoft.Management/managementGroups/{groupId}/subscriptions/{subscriptionId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(message, null, response.StatusCode);
+        }
+    }
+
+    public async Task<JsonNode> GetSubscriptionUnderManagementGroupAsync(string groupId, string subscriptionId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            $"providers/Microsoft.Management/managementGroups/{groupId}/subscriptions/{subscriptionId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(message, null, response.StatusCode);
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonNode.Parse(content)!;
+    }
+
     public async Task CreateManagementGroupAsync(string groupId, string displayName)
     {
         var request = new HttpRequestMessage(HttpMethod.Put,

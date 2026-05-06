@@ -50,9 +50,9 @@ This page tracks which Azure Management Groups REST API operations are implement
 
 | Operation | Status |
 |-----------|--------|
-| Create | ❌ |
-| Delete | ❌ |
-| Get Subscriptions Under Management Group | ❌ |
+| Create | ✅ |
+| Delete | ✅ |
+| Get Subscriptions Under Management Group | ✅ |
 
 ---
 

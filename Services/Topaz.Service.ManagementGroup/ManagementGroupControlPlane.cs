@@ -127,6 +127,55 @@ internal sealed class ManagementGroupControlPlane(ManagementGroupResourceProvide
         return new ControlPlaneOperationResult<Models.ManagementGroup[]>(OperationResult.Success, groups, null, null);
     }
 
+    public ControlPlaneOperationResult<Models.ManagementGroupSubscription> AssociateSubscription(
+        string groupId, string subscriptionId)
+    {
+        if (provider.GetManagementGroup(groupId) == null)
+            return new ControlPlaneOperationResult<Models.ManagementGroupSubscription>(OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, groupId), NotFoundCode);
+
+        var displayName = subscriptionId;
+        var model = Models.ManagementGroupSubscription.Create(groupId, subscriptionId, displayName);
+        provider.SaveSubscriptionAssociation(groupId, subscriptionId, model);
+
+        logger.LogDebug(nameof(ManagementGroupControlPlane), nameof(AssociateSubscription),
+            "Associated subscription '{0}' with management group '{1}'.", subscriptionId, groupId);
+
+        return new ControlPlaneOperationResult<Models.ManagementGroupSubscription>(
+            OperationResult.Updated, model, null, null);
+    }
+
+    public ControlPlaneOperationResult DisassociateSubscription(string groupId, string subscriptionId)
+    {
+        if (provider.GetManagementGroup(groupId) == null)
+            return new ControlPlaneOperationResult(OperationResult.NotFound,
+                string.Format(NotFoundMessageTemplate, groupId), NotFoundCode);
+
+        provider.DeleteSubscriptionAssociation(groupId, subscriptionId);
+
+        logger.LogDebug(nameof(ManagementGroupControlPlane), nameof(DisassociateSubscription),
+            "Disassociated subscription '{0}' from management group '{1}'.", subscriptionId, groupId);
+
+        return new ControlPlaneOperationResult(OperationResult.Deleted, null, null);
+    }
+
+    public ControlPlaneOperationResult<Models.ManagementGroupSubscription> GetSubscriptionUnderManagementGroup(
+        string groupId, string subscriptionId)
+    {
+        if (provider.GetManagementGroup(groupId) == null)
+            return new ControlPlaneOperationResult<Models.ManagementGroupSubscription>(OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, groupId), NotFoundCode);
+
+        var association = provider.GetSubscriptionAssociation(groupId, subscriptionId);
+        if (association == null)
+            return new ControlPlaneOperationResult<Models.ManagementGroupSubscription>(OperationResult.NotFound, null,
+                $"Subscription '{subscriptionId}' is not associated with management group '{groupId}'.",
+                "SubscriptionNotFound");
+
+        return new ControlPlaneOperationResult<Models.ManagementGroupSubscription>(
+            OperationResult.Success, association, null, null);
+    }
+
     private static string ExtractGroupIdFromArmId(string armId)
     {
         // Expect /providers/Microsoft.Management/managementGroups/{groupId}

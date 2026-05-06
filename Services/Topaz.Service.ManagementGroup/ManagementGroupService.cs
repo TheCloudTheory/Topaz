@@ -20,6 +20,9 @@ public sealed class ManagementGroupService(ITopazLogger logger) : IServiceDefini
         new DeleteManagementGroupEndpoint(logger),
         new ListManagementGroupsEndpoint(logger),
         new UpdateManagementGroupEndpoint(logger),
+        new AssociateSubscriptionEndpoint(logger),
+        new DisassociateSubscriptionEndpoint(logger),
+        new GetSubscriptionUnderManagementGroupEndpoint(logger),
     ];
 
     public void Bootstrap()
