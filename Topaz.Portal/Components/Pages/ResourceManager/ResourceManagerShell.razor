@@ -1,0 +1,41 @@
+@* Topaz.Portal/Components/Pages/ResourceManager/ResourceManagerShell.razor *@
+
+<h1 class="mb-3">Resource Manager</h1>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-3">
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="/resource-manager"
+                             Match="NavLinkMatch.All">
+                        All resources
+                    </NavLink>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="/resource-manager/deployments">
+                        Deployments
+                    </NavLink>
+
+                    <div class="list-group-item list-group-item-light py-1 px-3">
+                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.7rem; letter-spacing: 0.05em;">Organization</small>
+                    </div>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="/resource-manager/management-groups">
+                        Management Groups
+                    </NavLink>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-9">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter] public RenderFragment ChildContent { get; set; } = null!;
+}

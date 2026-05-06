@@ -1,0 +1,154 @@
+@page "/resource-manager"
+@using Topaz.Portal.Models.KeyVaults
+@using Topaz.Portal.Models.ResourceGroups
+@using Topaz.Portal.Models.Storage
+@using Topaz.Portal.Models.Subscriptions
+@inject ITopazClient TopazClient
+
+<ResourceManagerShell>
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="card-title mb-0">All resources</h5>
+
+                <button class="btn btn-outline-secondary btn-sm"
+                        @onclick="LoadAsync"
+                        disabled="@_loading">
+                    Refresh
+                </button>
+            </div>
+            @if (_loading)
+            {
+                <p class="mb-0">Loading…</p>
+            }
+            else if (_error is not null)
+            {
+                <div class="alert alert-danger" role="alert">
+                    @_error
+                </div>
+            }
+            else if (_resources.Count == 0)
+            {
+                <p class="mb-0">No resources found.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Resource group</th>
+                            <th>Subscription</th>
+                            <th>Location</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var r in _resources)
+                        {
+                            <tr>
+                                <td>
+                                    @if (r.Href is not null)
+                                    {
+                                        <a href="@r.Href">@r.Name</a>
+                                    }
+                                    else
+                                    {
+                                        @r.Name
+                                    }
+                                </td>
+                                <td><code class="small">@r.Type</code></td>
+                                <td class="text-muted small">@(r.ResourceGroup ?? "-")</td>
+                                <td class="text-muted small">@(r.Subscription ?? "-")</td>
+                                <td><code class="small">@(r.Location ?? "-")</code></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</ResourceManagerShell>
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private List<ResourceRow> _resources = [];
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        _resources = [];
+
+        try
+        {
+            var storageTask = TopazClient.ListStorageAccounts();
+            var kvTask = TopazClient.ListKeyVaults();
+            var rgTask = TopazClient.ListResourceGroups();
+
+            await Task.WhenAll(storageTask, kvTask, rgTask);
+
+            var rows = new List<ResourceRow>();
+
+            foreach (var sa in (await storageTask).Value ?? [])
+            {
+                rows.Add(new ResourceRow(
+                    sa.Name ?? "(unknown)",
+                    "Microsoft.Storage/storageAccounts",
+                    sa.ResourceGroupName,
+                    sa.SubscriptionName,
+                    sa.Location,
+                    sa.Name is not null ? $"/portal/storage/{sa.SubscriptionId}/{sa.ResourceGroupName}/{sa.Name}" : null));
+            }
+
+            foreach (var kv in (await kvTask).Value ?? [])
+            {
+                rows.Add(new ResourceRow(
+                    kv.Name ?? "(unknown)",
+                    "Microsoft.KeyVault/vaults",
+                    kv.ResourceGroupName,
+                    kv.SubscriptionName,
+                    kv.Location,
+                    kv.Name is not null ? $"/key-vault/{kv.SubscriptionId}/{kv.ResourceGroupName}/{kv.Name}" : null));
+            }
+
+            foreach (var rg in (await rgTask).Value ?? [])
+            {
+                var rgHref = Guid.TryParse(rg.SubscriptionId, out var rgSubId) && !string.IsNullOrWhiteSpace(rg.Name)
+                    ? $"/resource-groups/{rgSubId:D}/{System.Net.WebUtility.UrlEncode(rg.Name)}"
+                    : null;
+
+                rows.Add(new ResourceRow(
+                    rg.Name ?? "(unknown)",
+                    "Microsoft.Resources/resourceGroups",
+                    null,
+                    rg.SubscriptionName,
+                    rg.Location,
+                    rgHref));
+            }
+
+            _resources = [.. rows.OrderBy(r => r.Name)];
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load resources: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private sealed record ResourceRow(
+        string Name,
+        string Type,
+        string? ResourceGroup,
+        string? Subscription,
+        string? Location,
+        string? Href);
+}
