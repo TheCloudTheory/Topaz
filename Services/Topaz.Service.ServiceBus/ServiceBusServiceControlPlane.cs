@@ -276,7 +276,7 @@ internal sealed class ServiceBusServiceControlPlane(
     {
         var existingTopic = provider.GetSubresourceAs<ServiceBusTopicResource>(subscriptionIdentifier,
             resourceGroupIdentifier, topicName, namespaceIdentifier.Value,
-            nameof(Subresource.Queues).ToLowerInvariant());
+            nameof(Subresource.Topics).ToLowerInvariant());
 
         if (existingTopic == null)
         {
@@ -300,8 +300,8 @@ internal sealed class ServiceBusServiceControlPlane(
 
         ServiceBusTopicResourceProperties.UpdateFromRequest(existingTopic, request);
 
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier.Value,
-            existingTopic);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, topicName,
+            namespaceIdentifier.Value, nameof(Subresource.Topics).ToLowerInvariant(), existingTopic);
 
         return new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Updated, existingTopic, null,
             null);
@@ -350,8 +350,8 @@ internal sealed class ServiceBusServiceControlPlane(
 
         ServiceBusSubscriptionResourceProperties.UpdateFromRequest(existingSubscription, request);
 
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier.Value,
-            existingSubscription);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, subscriptionName,
+            namespaceIdentifier.Value, nameof(Subresource.Subscriptions).ToLowerInvariant(), existingSubscription);
 
         return new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.Updated,
             existingSubscription, null, null);
