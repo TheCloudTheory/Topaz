@@ -1,5 +1,6 @@
 using Topaz.Service.ManagementGroup.Models;
 using Topaz.Service.ManagementGroup.Models.Requests;
+using Topaz.Service.ManagementGroup.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -125,6 +126,77 @@ internal sealed class ManagementGroupControlPlane(ManagementGroupResourceProvide
     {
         var groups = provider.ListManagementGroups().ToArray();
         return new ControlPlaneOperationResult<Models.ManagementGroup[]>(OperationResult.Success, groups, null, null);
+    }
+
+    public ControlPlaneOperationResult<EntityInfo[]> GetEntities()
+    {
+        var groups = provider.ListManagementGroups().ToArray();
+        var subscriptions = provider.ListAllSubscriptionAssociations().ToArray();
+
+        var entities = new List<EntityInfo>(groups.Length + subscriptions.Length);
+
+        foreach (var mg in groups)
+        {
+            EntityParentInfo? parent = mg.Properties.Details.Parent != null
+                ? new EntityParentInfo { Id = mg.Properties.Details.Parent.Id }
+                : null;
+
+            var children = groups.Count(g =>
+                g.Properties.Details.Parent != null &&
+                g.Properties.Details.Parent.Id == mg.Id);
+
+            var subsForGroup = subscriptions.Count(s =>
+                s.Properties.Parent?.Id == mg.Id);
+
+            entities.Add(new EntityInfo
+            {
+                Id = mg.Id,
+                Type = "Microsoft.Management/managementGroups",
+                Name = mg.Name,
+                Properties = new EntityInfoProperties
+                {
+                    DisplayName = mg.Properties.DisplayName,
+                    Parent = parent,
+                    NumberOfChildGroups = children,
+                    NumberOfChildren = children + subsForGroup,
+                    NumberOfDescendants = children + subsForGroup,
+                    ParentNameChain = parent != null
+                        ? [ExtractGroupIdFromArmId(parent.Id)]
+                        : [],
+                    ParentDisplayNameChain = parent != null && mg.Properties.Details.Parent != null
+                        ? [mg.Properties.Details.Parent.DisplayName]
+                        : []
+                }
+            });
+        }
+
+        foreach (var sub in subscriptions)
+        {
+            var hasParent = !string.IsNullOrEmpty(sub.Properties.Parent.Id);
+            EntityParentInfo? parent = hasParent
+                ? new EntityParentInfo { Id = sub.Properties.Parent.Id }
+                : null;
+
+            entities.Add(new EntityInfo
+            {
+                Id = $"/subscriptions/{sub.Name}",
+                Type = "/subscriptions",
+                Name = sub.Name,
+                Properties = new EntityInfoProperties
+                {
+                    DisplayName = sub.Properties.DisplayName,
+                    Parent = parent,
+                    ParentNameChain = hasParent
+                        ? [sub.Properties.Parent.Name]
+                        : [],
+                    ParentDisplayNameChain = hasParent
+                        ? [groups.FirstOrDefault(g => g.Name == sub.Properties.Parent.Name)?.Properties.DisplayName ?? sub.Properties.Parent.Name]
+                        : []
+                }
+            });
+        }
+
+        return new ControlPlaneOperationResult<EntityInfo[]>(OperationResult.Success, [.. entities], null, null);
     }
 
     public ControlPlaneOperationResult<Models.ManagementGroupSubscription> AssociateSubscription(

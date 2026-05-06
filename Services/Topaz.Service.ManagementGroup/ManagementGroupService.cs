@@ -23,6 +23,7 @@ public sealed class ManagementGroupService(ITopazLogger logger) : IServiceDefini
         new AssociateSubscriptionEndpoint(logger),
         new DisassociateSubscriptionEndpoint(logger),
         new GetSubscriptionUnderManagementGroupEndpoint(logger),
+        new GetEntitiesEndpoint(logger),
     ];
 
     public void Bootstrap()

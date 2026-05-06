@@ -40,7 +40,7 @@ This page tracks which Azure Management Groups REST API operations are implement
 
 | Operation | Status |
 |-----------|--------|
-| List | ❌ |
+| List | ✅ |
 
 ---
 

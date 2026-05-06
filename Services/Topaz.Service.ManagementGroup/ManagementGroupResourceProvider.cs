@@ -52,32 +52,30 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
             .Select(dir => Path.Combine(dir, "metadata.json"))
             .Where(File.Exists)
             .Select(path => JsonSerializer.Deserialize<Models.ManagementGroup>(
-                File.ReadAllText(path), GlobalSettings.JsonOptions)!)
-            .Where(mg => mg != null);
+                File.ReadAllText(path), GlobalSettings.JsonOptions)!);
     }
 
-    public bool DeleteManagementGroup(string groupId)
+    public void DeleteManagementGroup(string groupId)
     {
         var id = ValidateGroupId(groupId);
         var dir = Path.Combine(BasePath, id);
-        if (!Directory.Exists(dir)) return false;
+        if (!Directory.Exists(dir)) return;
 
         Directory.Delete(dir, recursive: true);
-        return true;
     }
 
-    public Models.ManagementGroupSubscription? GetSubscriptionAssociation(string groupId, string subscriptionId)
+    public ManagementGroupSubscription? GetSubscriptionAssociation(string groupId, string subscriptionId)
     {
         var id = ValidateGroupId(groupId);
         var path = ResolveSubscriptionPath(id, subscriptionId);
         if (!File.Exists(path)) return null;
 
         var content = File.ReadAllText(path);
-        return JsonSerializer.Deserialize<Models.ManagementGroupSubscription>(content, GlobalSettings.JsonOptions);
+        return JsonSerializer.Deserialize<ManagementGroupSubscription>(content, GlobalSettings.JsonOptions);
     }
 
     public void SaveSubscriptionAssociation(string groupId, string subscriptionId,
-        Models.ManagementGroupSubscription model)
+        ManagementGroupSubscription model)
     {
         var id = ValidateGroupId(groupId);
         var dir = Path.Combine(BasePath, id, "subscriptions");
@@ -86,14 +84,38 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
             JsonSerializer.Serialize(model, GlobalSettings.JsonOptions));
     }
 
-    public bool DeleteSubscriptionAssociation(string groupId, string subscriptionId)
+    public void DeleteSubscriptionAssociation(string groupId, string subscriptionId)
     {
         var id = ValidateGroupId(groupId);
         var path = ResolveSubscriptionPath(id, subscriptionId);
-        if (!File.Exists(path)) return false;
+        if (!File.Exists(path)) return;
 
         File.Delete(path);
-        return true;
+    }
+
+    /// <summary>Returns all subscription associations across every management group, deduplicated by subscription ID.</summary>
+    public IEnumerable<Models.ManagementGroupSubscription> ListAllSubscriptionAssociations()
+    {
+        if (!Directory.Exists(BasePath)) return [];
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var result = new List<Models.ManagementGroupSubscription>();
+
+        foreach (var groupDir in Directory.EnumerateDirectories(BasePath))
+        {
+            var subsDir = Path.Combine(groupDir, "subscriptions");
+            if (!Directory.Exists(subsDir)) continue;
+
+            foreach (var file in Directory.EnumerateFiles(subsDir, "*.json"))
+            {
+                var sub = JsonSerializer.Deserialize<Models.ManagementGroupSubscription>(
+                    File.ReadAllText(file), GlobalSettings.JsonOptions);
+                if (sub != null && seen.Add(sub.Name))
+                    result.Add(sub);
+            }
+        }
+
+        return result;
     }
 
     /// <summary>Returns true if any persisted management group references this group as its parent.</summary>
@@ -113,17 +135,17 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
     private static string ResolveMetadataPath(string groupId)
     {
         var dir = Path.Combine(BasePath, groupId);
-        if (!Directory.Exists(dir))
-        {
-            // Case-insensitive fallback for case-sensitive file systems.
-            var match = Directory.Exists(BasePath)
-                ? Directory.EnumerateDirectories(BasePath)
-                    .FirstOrDefault(d => string.Equals(
-                        Path.GetFileName(d), groupId, StringComparison.OrdinalIgnoreCase))
-                : null;
-            if (match != null)
-                dir = match;
-        }
+        if (Directory.Exists(dir)) return Path.Combine(dir, "metadata.json");
+        
+        // Case-insensitive fallback for case-sensitive file systems.
+        var match = Directory.Exists(BasePath)
+            ? Directory.EnumerateDirectories(BasePath)
+                .FirstOrDefault(d => string.Equals(
+                    Path.GetFileName(d), groupId, StringComparison.OrdinalIgnoreCase))
+            : null;
+        
+        if (match != null)
+            dir = match;
 
         return Path.Combine(dir, "metadata.json");
     }
