@@ -85,6 +85,7 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
     {
         var containerPath = GetContainerPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccountName, containerName);
+        blobSubpathKey = PathGuard.SanitizeName(blobSubpathKey);
         return Path.Combine(containerPath, ".blocks", blobSubpathKey);
     }
 
@@ -94,6 +95,7 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
         var storageAccountPath =
             GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
+        containerName = PathGuard.SanitizeName(containerName);
         return Path.Combine(storageAccountPath, ".blob", containerName);
     }
 }

@@ -447,7 +447,7 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     private static string GetBlobSubpathKey(string blobPath)
     {
         var segments = blobPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        return string.Join("_", segments.Skip(1));
+        return string.Join("_", segments.Skip(1).Select(PathGuard.SanitizeName));
     }
 
     public DataPlaneOperationResult<BlobProperties> GetBlobProperties(
@@ -481,8 +481,13 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         
         // We will skip two initial elements being /<container-name> so a blob
         // path doesn't contain a duplicated value
-        var segments = blobPath.Split('/');
-        var virtualPath = segments.Length > 2 ? segments.Skip(2).Aggregate(Path.Combine) : segments.Aggregate(Path.Combine);
+        var segments = blobPath.Split('/', StringSplitOptions.RemoveEmptyEntries)
+            .Skip(1)
+            .Select(PathGuard.SanitizeName)
+            .ToArray();
+        if (segments.Length == 0)
+            return path;
+        var virtualPath = Path.Combine(segments);
         var fullPath = Path.Combine(path, virtualPath);
 
         return fullPath;
@@ -493,17 +498,18 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var segments = blobPath.Split('/');
         if (segments.Length == 1 && !blobPath.StartsWith($"/"))
         {
-            return blobPath;
+            return PathGuard.SanitizeName(blobPath);
         }
         
         var containerName = segments[1] == ".blob" ?  segments[2] : segments[1];
-        return containerName;
+        return PathGuard.SanitizeName(containerName);
     }
 
     private string GetBlobPropertiesPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
     {
         var containerName = GetContainerNameFromBlobPath(blobPath);
-        var metadataFileName = blobPath.Replace("/.blob", string.Empty).Replace("/", "_");
+        var segments = blobPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var metadataFileName = string.Join("_", segments.Select(PathGuard.SanitizeName));
         var path = Path.Combine(controlPlane.GetContainerBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
             $"{metadataFileName}.properties.json");
 
@@ -513,7 +519,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     private string GetCommittedBlocksPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
     {
         var containerName = GetContainerNameFromBlobPath(blobPath);
-        var metadataFileName = blobPath.Replace("/.blob", string.Empty).Replace("/", "_");
+        var segments = blobPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var metadataFileName = string.Join("_", segments.Select(PathGuard.SanitizeName));
         return Path.Combine(
             controlPlane.GetContainerBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
             $"{metadataFileName}.committed-blocks.json");
@@ -838,7 +845,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     private string GetBlobMetadataPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
     {
         var containerName = GetContainerNameFromBlobPath(blobPath);
-        var metadataFileName = blobPath.Replace("/", "_");
+        var segments = blobPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var metadataFileName = string.Join("_", segments.Select(PathGuard.SanitizeName));
         var path = Path.Combine(controlPlane.GetContainerBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
             $"{metadataFileName}.metadata.json");
 

@@ -94,6 +94,7 @@ internal sealed class QueueResourceProvider(ITopazLogger logger) : ResourceProvi
         var storageAccountPath =
             GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
+        queueName = PathGuard.SanitizeName(queueName);
         return Path.Combine(storageAccountPath, ".queue", queueName);
     }
 
