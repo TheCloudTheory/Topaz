@@ -34,7 +34,9 @@ public sealed class AzureStorageService(ITopazLogger logger) : IServiceDefinitio
         new GetArmTableEndpoint(logger),
         new DeleteArmTableEndpoint(logger),
         new CreateOrUpdateArmBlobContainerEndpoint(logger),
-        new GetArmBlobContainerEndpoint(logger)
+        new GetArmBlobContainerEndpoint(logger),
+        new CreateOrUpdateArmQueueEndpoint(logger),
+        new GetArmQueueEndpoint(logger)
     ];
 
     public void Bootstrap()

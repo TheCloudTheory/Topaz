@@ -39,19 +39,17 @@ internal sealed class CreateOrUpdateArmBlobContainerEndpoint(ITopazLogger logger
 
         var statusCode = result.Result == OperationResult.Conflict ? HttpStatusCode.OK : HttpStatusCode.Created;
 
-        var id =
-            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/blobServices/default/containers/{containerName}";
-
-        var armResponse = new ArmBlobContainerResponse(id, containerName);
+        var armResponse = new ArmBlobContainerResponse(subscriptionId!, resourceGroupName!, storageAccountName!, containerName!);
         response.StatusCode = statusCode;
         response.CreateJsonContentResponse(armResponse);
     }
 }
 
-internal sealed class ArmBlobContainerResponse(string id, string name)
+internal sealed class ArmBlobContainerResponse(string subscriptionId, string resourceGroupName, string storageAccountName, string containerName)
 {
-    public string Id { get; } = id;
-    public string Name { get; } = name;
+    public string Id { get; } =
+        $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/blobServices/default/containers/{containerName}";
+    public string Name { get; } = containerName;
     public string Type { get; } = "Microsoft.Storage/storageAccounts/blobServices/containers";
     public ArmBlobContainerProperties Properties { get; } = new();
 

@@ -149,9 +149,10 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
             return new ControlPlaneOperationResult<EventHubResource>(OperationResult.Created, resource, null, null);
         }
         
-        properties.UpdatedOn = DateTime.UtcNow;
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, properties);
-        
+        existingHub.UpdateProperties(properties);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, hubName,
+            @namespace.Value, nameof(Subresource.Hubs).ToLowerInvariant(), existingHub);
+
         return new ControlPlaneOperationResult<EventHubResource>(OperationResult.Updated, existingHub, null, null);
     }
 
