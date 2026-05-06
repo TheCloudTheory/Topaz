@@ -36,6 +36,21 @@ Services live under `Services/Topaz.Service.*`. Each service has:
 | Backlog | `BACKLOG.md` (root) + `website/docs/roadmap.md` |
 | MCP server | `Topaz.MCP/` |
 
+## Where to look first
+
+- [Topaz.Host/Host.cs](Topaz.Host/Host.cs) — host composition, service list, endpoint wiring.
+- [Topaz.MCP/](Topaz.MCP/) — MCP server exposing Topaz management tools to AI assistants (GitHub Copilot, Claude, etc.).
+- [Topaz.CLI/Program.cs](Topaz.CLI/Program.cs) and [Topaz.CLI/Commands/StartCommand.cs](Topaz.CLI/Commands/StartCommand.cs) — how commands bootstrap the host.
+- [Topaz.ResourceManager/ArmResource.cs](Topaz.ResourceManager/ArmResource.cs) — resource model base and ID parsing.
+- [Topaz.Shared/GlobalSettings.cs](Topaz.Shared/GlobalSettings.cs) — JSON and default ports.
+- Example service: [Services/Topaz.Service.KeyVault/](Services/Topaz.Service.KeyVault/) and its endpoints/control plane.
+
+## Build, run and env notes
+
+- Ports and emulator directory: defaults are in `Topaz.Shared/GlobalSettings.cs` (e.g., `MainEmulatorDirectory = .topaz`). The host will create `.topaz` and `global-dns.json` on first run.
+- TLS and certificates: host expects PEM files `topaz.crt`/`topaz.key` or accepts `--certificate-file`/`--certificate-key` CLI options (`Topaz.CLI/Commands/StartCommand.cs`).
+- Containerization: `Topaz.CLI/Dockerfile` and `Topaz.MCP/Dockerfile` exist; CI scripts and `publish/` contain packaging helpers. See `scripts/` and `install/` for platform-specific helpers.
+
 ## Mandatory steps
 
 ### Every endpoint change
@@ -58,6 +73,14 @@ Services live under `Services/Topaz.Service.*`. Each service has:
 - Completed work → remove/strikethrough from both files.
 - Badges: `<span class="badge--stable">Stable</span>` or `<span class="badge--preview">Preview</span>` — use CSS classes, never inline styles.
 - **Versioned docs** — always mirror roadmap changes in `website/versioned_docs/version-v1.1/roadmap.md` as well. Both files must stay in sync.
+- Badge CSS lives in `website/src/css/custom.css` (`.badge--stable` and `.badge--preview`). Do not add inline styles; always use these classes.
+
+## API Coverage docs
+
+- The `website/docs/api-coverage/` directory contains one Markdown file per service. Each file tracks which Azure REST API operations are implemented in Topaz, mapped to the official Microsoft REST API reference.
+- **Always consult** the relevant `api-coverage/<service>.md` file before adding or removing endpoints for a service so you know what is already tracked.
+- **Always update** the relevant `api-coverage/<service>.md` file after adding or removing endpoint implementations: flip ❌ → ✅ (or vice-versa) for the affected operations. If the service page is still a stub, fill in the full operation table (use the Azure REST API reference link in the file header as a guide).
+- The [Container Registry coverage](website/docs/api-coverage/container-registry.md) page is the canonical example of the completed format.
 
 ## Coding conventions
 
@@ -141,13 +164,19 @@ Both suites are required for every endpoint or control-plane change.
 ### Debugging failing tests — mandatory process
 
 **Before reasoning about a test failure, always:**
-1. Run the test locally: `dotnet test <project>.csproj --filter "<TestName>" -v normal`
+1. Run the test locally: `dotnet test <project>.csproj --filter "<TestName>" --logger "console;verbosity=detailed"`
 2. Read the Topaz host logs emitted to the test console — the router, endpoint selection, request body, and response body are all logged at Debug/Information level.
 3. Only form hypotheses after seeing the actual log output.
 
 **Checking the Docker image timestamp:** verify `docker images topaz/host` shows a build time *after* your last file edit. If not, rebuild.
 
 **Adding `--debug` to an `az` command** (inside a `RunAzureCliCommand`) prints the full HTTP request and response including headers — useful when the SDK appears to ignore a valid Topaz response.
+
+**Terraform CI failure diagnosis:** The CI log only shows the last *successful* HTTP requests before the exit-code-1 failure. Identify what resource is being created (e.g. `azurerm_storage_table_entity`), enumerate the API calls the Terraform provider makes (create + read-back), and check if ALL those endpoint patterns are implemented. Missing GET-by-key endpoints are a common cause (e.g. `GET /{tableName}(PartitionKey='…',RowKey='…')` vs. generic `GET /{tableName}`).
+
+**Table Storage endpoint ordering:** Regex key-based routes (e.g. `GET /^.*?\(PartitionKey=…\)$`) must be registered BEFORE the wildcard `GET /{tableName}` route in `TableStorageService.Endpoints`. Otherwise the wildcard matches first and returns 404 for key lookups.
+
+**Storage data plane account resolution:** `TryGetStorageAccount` in `TableDataPlaneEndpointBase` and `BlobDataPlaneEndpointBase` resolves the account name from the Host subdomain first, then falls back to the `Authorization: SharedKeyLite/SharedKey accountname:...` header. This is needed when Azure CLI uses a plain `--table-endpoint`/`--blob-endpoint` URL instead of the account-specific subdomain URL.
 
 ### Investigating Azure CLI / SDK response-parsing issues
 
