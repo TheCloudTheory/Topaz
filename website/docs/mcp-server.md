@@ -391,7 +391,7 @@ Create or update `.vscode/mcp.json` in your workspace:
 }
 ```
 
-Replace `<version>` with the image tag matching your Topaz release (e.g. `v1.0.299-alpha`). Tags follow the same versioning scheme as the `topaz-host` image.
+Replace `<version>` with the image tag matching your Topaz release (e.g. `v1.0.299-alpha`). All available tags are listed on the [topaz-mcp Docker Hub page](https://hub.docker.com/r/thecloudtheory/topaz-mcp/tags). Tags follow the same versioning scheme as the `topaz-host` image.
 
 :::tip[`--network host`]
 
