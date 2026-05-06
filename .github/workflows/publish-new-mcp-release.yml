@@ -13,7 +13,6 @@ on:
 
 permissions:
   packages: write
-  contents: write
   actions: read
   id-token: write
   attestations: write
@@ -38,23 +37,13 @@ jobs:
       with:
         github-token: ${{ github.token }}
         run-id: ${{ steps.set-run-id.outputs.RUN_ID }}
-        pattern: "!*.dockerbuild"
+        pattern: "{linux-x64,linux-arm64,tag-info}"
     - name: Read tag info
       id: read-tag
       run: |
         TAG=$(cat tag-info/tag-info.txt)
         echo "tag=$TAG" >> $GITHUB_OUTPUT
         echo "Using release tag: $TAG"
-    - uses: softprops/action-gh-release@v2
-      with:
-        tag_name: ${{ steps.read-tag.outputs.tag }}
-        name: ${{ steps.read-tag.outputs.tag }}
-        prerelease: true
-        files: |
-          **/osx-x64/topaz-osx-x64
-          **/linux-x64/topaz-linux-x64
-          **/win-x64/topaz-win-x64.exe
-          **/linux-arm64/topaz-linux-arm64
     - name: Copy artifact for Docker
       run: |
         mkdir publish
