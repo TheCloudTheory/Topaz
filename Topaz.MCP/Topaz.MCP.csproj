@@ -21,7 +21,6 @@
       <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
       <PackageReference Include="ModelContextProtocol" Version="1.2.0" />
-      <PackageReference Include="Testcontainers" Version="4.8.1" />
       <PackageReference Include="TheCloudTheory.Topaz.AspNetCore.Extensions" Version="1.3.7-beta" />
       <PackageReference Include="TheCloudTheory.Topaz.ResourceManager" Version="1.3.22-beta" />
     </ItemGroup>

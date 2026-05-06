@@ -17,6 +17,17 @@
         "-i",
         "topaz/mcp"
       ]
+    },
+    "Topaz": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "--network", "host",
+        "thecloudtheory/topaz-mcp:v1.3.51-beta"
+      ]
     }
   }
 }

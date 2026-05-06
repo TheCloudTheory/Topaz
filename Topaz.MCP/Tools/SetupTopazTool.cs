@@ -1,7 +1,5 @@
 using System.ComponentModel;
-using DotNet.Testcontainers.Builders;
 using JetBrains.Annotations;
-using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Topaz.Shared;
 
@@ -12,48 +10,48 @@ namespace Topaz.MCP.Tools;
 [UsedImplicitly]
 public class SetupTopazTool
 {
-    private static DotNet.Testcontainers.Containers.IContainer? _container;
-    
+    private const string ContainerName = "topaz.local.dev";
+
     [McpServerTool]
-    [Description("Runs and configures Topaz locally as a container")]
+    [Description(
+        "Returns a Docker CLI command that downloads and starts the Topaz emulator container. " +
+        "Run the returned command in a terminal that has Docker available.")]
     [UsedImplicitly]
-    public static async Task RunTopazAsContainer(
-        [Description("Configures log level to be used by Topaz")]
+    public static string RunTopazAsContainer(
+        [Description("Log level to be used by Topaz (e.g. Information, Debug, Warning)")]
         LogLevel logLevel = LogLevel.Information,
         [Description("Image tag to use when running the emulator")]
         string version = "v1.2.6-beta")
     {
-        _container = new ContainerBuilder()
-            .WithImage($"thecloudtheory/topaz-host:{version}")
-            .WithPortBinding(GlobalSettings.DefaultEventHubAmqpPort)
-            .WithPortBinding(GlobalSettings.DefaultServiceBusAmqpPort)
-            .WithPortBinding(GlobalSettings.AdditionalServiceBusPort)
-            .WithPortBinding(GlobalSettings.DefaultTableStoragePort)
-            .WithPortBinding(GlobalSettings.DefaultBlobStoragePort)
-            .WithPortBinding(8893) // DefaultQueueStoragePort
-            .WithPortBinding(8894) // DefaultFileStoragePort
-            .WithPortBinding(GlobalSettings.DefaultEventHubPort)
-            .WithPortBinding(GlobalSettings.DefaultKeyVaultPort)
-            .WithPortBinding(GlobalSettings.DefaultResourceManagerPort)
-            .WithPortBinding(8892) // ContainerRegistryPort
-            .WithName("topaz.local.dev")
-            .WithCommand("--log-level", logLevel.ToString())
-            .Build();
+        ushort[] ports =
+        [
+            GlobalSettings.DefaultEventHubAmqpPort,
+            GlobalSettings.DefaultServiceBusAmqpPort,
+            GlobalSettings.AdditionalServiceBusPort,
+            GlobalSettings.DefaultTableStoragePort,
+            GlobalSettings.DefaultBlobStoragePort,
+            GlobalSettings.DefaultQueueStoragePort,
+            GlobalSettings.DefaultFileStoragePort,
+            GlobalSettings.DefaultEventHubPort,
+            GlobalSettings.DefaultKeyVaultPort,
+            GlobalSettings.DefaultResourceManagerPort,
+            GlobalSettings.ContainerRegistryPort,
+        ];
 
-        await _container.StartAsync()
-            .ConfigureAwait(false);
+        var portArgs = string.Join(" ", Array.ConvertAll(ports, p => $"-p {p}:{p}"));
+
+        return $"docker run -d --name {ContainerName} {portArgs} " +
+               $"thecloudtheory/topaz-host:{version} " +
+               $"--log-level {logLevel}";
     }
-    
-    [McpServerTool]
-    [Description("Stops Topaz which was previously run as container.")]
-    [UsedImplicitly]
-    public static async Task StopTopazContainer()
-    {
-        if (_container == null) throw new McpException("Can't stop Topaz if it wasn't started.");
-        
-        await _container.StopAsync()
-            .ConfigureAwait(false);
 
-        await _container.DisposeAsync().ConfigureAwait(false);
+    [McpServerTool]
+    [Description(
+        "Returns a Docker CLI command that stops and removes the Topaz emulator container. " +
+        "Run the returned command in a terminal that has Docker available.")]
+    [UsedImplicitly]
+    public static string StopTopazContainer()
+    {
+        return $"docker stop {ContainerName} && docker rm {ContainerName}";
     }
 }
