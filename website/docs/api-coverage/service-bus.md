@@ -78,9 +78,9 @@ The control plane covers ARM operations available under `management.azure.com` �
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create Or Update | ✅ | Via data-plane AMQP endpoint |
+| Create Or Update | ✅ | ARM endpoint + data-plane AMQP endpoint |
 | Delete | ✅ | Via data-plane AMQP endpoint |
-| Get | ✅ | Via data-plane AMQP endpoint |
+| Get | ✅ | ARM endpoint + data-plane AMQP endpoint |
 | List By Topic | ❌ | |
 
 ### Rules

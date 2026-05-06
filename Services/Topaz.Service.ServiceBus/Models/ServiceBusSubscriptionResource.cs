@@ -20,16 +20,19 @@ internal sealed class ServiceBusSubscriptionResource
         ResourceGroupIdentifier resourceGroup,
         ServiceBusNamespaceIdentifier namespaceIdentifier,
         string name,
-        ServiceBusSubscriptionResourceProperties properties)
+        ServiceBusSubscriptionResourceProperties properties,
+        string? topicName = null)
     {
-        Id = $"/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.ServiceBus/namespaces/{namespaceIdentifier}/subscriptions/{name}";
+        Id = topicName != null
+            ? $"/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.ServiceBus/namespaces/{namespaceIdentifier}/topics/{topicName}/subscriptions/{name}"
+            : $"/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.ServiceBus/namespaces/{namespaceIdentifier}/subscriptions/{name}";
         Name = name;
         Properties = properties;
     }
     
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.ServiceBus/namespaces/subscriptions";
+    public override string Type => "Microsoft.ServiceBus/namespaces/topics/subscriptions";
     public override ServiceBusSubscriptionResourceProperties Properties { get; init; }
 
     /// <summary>

@@ -321,7 +321,8 @@ internal sealed class ServiceBusServiceControlPlane(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         ServiceBusNamespaceIdentifier namespaceIdentifier, string subscriptionName,
-        CreateOrUpdateServiceBusSubscriptionRequest request)
+        CreateOrUpdateServiceBusSubscriptionRequest request,
+        string? topicName = null)
     {
         var existingSubscription = provider.GetSubresourceAs<ServiceBusSubscriptionResource>(subscriptionIdentifier,
             resourceGroupIdentifier, subscriptionName, namespaceIdentifier.Value,
@@ -331,7 +332,7 @@ internal sealed class ServiceBusServiceControlPlane(
         {
             var properties = ServiceBusSubscriptionResourceProperties.From(request);
             var resource = new ServiceBusSubscriptionResource(subscriptionIdentifier, resourceGroupIdentifier,
-                namespaceIdentifier, subscriptionName, properties)
+                namespaceIdentifier, subscriptionName, properties, topicName)
             {
                 Properties =
                 {
