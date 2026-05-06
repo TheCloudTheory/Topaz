@@ -405,6 +405,6 @@ public class AzureStorageServiceTests
 
         // Act & Assert
         Assert.Throws<RequestFailedException>(() =>
-            storageAccount.GetBlobService().GetBlobContainer("nonexistent-container").GetIfExists());
+            storageAccount.GetBlobService().GetBlobContainer("nonexistent-container"));
     }
 }
