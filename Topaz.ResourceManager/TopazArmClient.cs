@@ -241,6 +241,55 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task CreateManagementGroupWithParentAsync(string groupId, string displayName, string parentGroupId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put,
+            $"providers/Microsoft.Management/managementGroups/{groupId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var payload = new
+        {
+            properties = new
+            {
+                displayName,
+                details = new
+                {
+                    parent = new
+                    {
+                        id = $"/providers/Microsoft.Management/managementGroups/{parentGroupId}"
+                    }
+                }
+            }
+        };
+        request.Content = new StringContent(
+            JsonSerializer.Serialize(payload, GlobalSettings.JsonOptions),
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<JsonNode> GetDescendantsAsync(string groupId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            $"providers/Microsoft.Management/managementGroups/{groupId}/descendants");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(message, null, response.StatusCode);
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonNode.Parse(content)!;
+    }
+
     public async Task<JsonNode> GetEntitiesAsync()
     {
         var request = new HttpRequestMessage(HttpMethod.Get,

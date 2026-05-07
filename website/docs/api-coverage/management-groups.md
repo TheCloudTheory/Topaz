@@ -28,7 +28,7 @@ This page tracks which Azure Management Groups REST API operations are implement
 | Create Or Update | ✅ |
 | Delete | ✅ |
 | Get | ✅ |
-| Get Descendants | ❌ |
+| Get Descendants | ✅ |
 | List | ✅ |
 | Update | ✅ |
 

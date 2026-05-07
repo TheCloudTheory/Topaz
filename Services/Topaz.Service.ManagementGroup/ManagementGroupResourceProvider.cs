@@ -93,6 +93,19 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
         File.Delete(path);
     }
 
+    /// <summary>Returns all subscription associations for a specific management group.</summary>
+    public IEnumerable<Models.ManagementGroupSubscription> ListSubscriptionAssociationsForGroup(string groupId)
+    {
+        var id = ValidateGroupId(groupId);
+        var subsDir = Path.Combine(BasePath, id, "subscriptions");
+        if (!Directory.Exists(subsDir)) return [];
+
+        return Directory.EnumerateFiles(subsDir, "*.json")
+            .Select(file => JsonSerializer.Deserialize<ManagementGroupSubscription>(
+                File.ReadAllText(file), GlobalSettings.JsonOptions)!)
+            .Where(s => s != null);
+    }
+
     /// <summary>Returns all subscription associations across every management group, deduplicated by subscription ID.</summary>
     public IEnumerable<Models.ManagementGroupSubscription> ListAllSubscriptionAssociations()
     {

@@ -140,6 +140,7 @@ Always use `GlobalSettings.*Port` constants:
 
 - Classes: `*Resource` / `*ResourceProperties`
 - Use `FromRequest(...)` factory methods and `UpdateFromRequest(...)` mutators; mirror null-checks and `GetValueOrDefault()` idioms from `KeyVaultResourceProperties`.
+- **All object construction belongs in the model.** Resource type strings (e.g. `"Microsoft.Management/managementGroups"`), ID formatting, and property wiring must live in static factory methods on the model class (e.g. `DescendantInfo.FromManagementGroup(...)`, `DescendantInfo.FromSubscription(...)`). Endpoints and control planes must never build model objects inline — call the factory method instead.
 
 ## Tests
 

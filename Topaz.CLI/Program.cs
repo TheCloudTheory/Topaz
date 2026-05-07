@@ -11,6 +11,7 @@ using Topaz.Service.ContainerRegistry.Commands;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
 using Topaz.Service.ManagedIdentity.Commands;
+using Topaz.Service.ManagementGroup.Commands;
 using Topaz.Service.ResourceGroup.Commands;
 using Topaz.Service.ResourceManager.Commands;
 using Topaz.Service.ServiceBus.Commands;
@@ -132,6 +133,7 @@ internal class Program
             typeof(GenericResourceGroupCommand),
             typeof(GenericEventHubCommand),
             typeof(GenericKeyVaultCommand),
+            typeof(GenericManagementGroupCommand),
             typeof(GenericResourceManagerCommand),
             typeof(GenericServiceBusCommand),
             typeof(GenericStorageCommand),

@@ -128,6 +128,41 @@ internal sealed class ManagementGroupControlPlane(ManagementGroupResourceProvide
         return new ControlPlaneOperationResult<Models.ManagementGroup[]>(OperationResult.Success, groups, null, null);
     }
 
+    public ControlPlaneOperationResult<DescendantInfo[]> GetDescendants(string groupId)
+    {
+        if (provider.GetManagementGroup(groupId) == null)
+            return new ControlPlaneOperationResult<DescendantInfo[]>(OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, groupId), NotFoundCode);
+
+        var allGroups = provider.ListManagementGroups().ToArray();
+        var result = new List<DescendantInfo>();
+        CollectDescendants(groupId, allGroups, result);
+
+        return new ControlPlaneOperationResult<DescendantInfo[]>(OperationResult.Success, [.. result], null, null);
+    }
+
+    private void CollectDescendants(string groupId, Models.ManagementGroup[] allGroups, List<DescendantInfo> result)
+    {
+        var parentArmId = $"/providers/Microsoft.Management/managementGroups/{groupId}";
+
+        // Direct child management groups
+        var childGroups = allGroups.Where(g =>
+            g.Properties.Details.Parent != null &&
+            string.Equals(g.Properties.Details.Parent.Id, parentArmId, StringComparison.OrdinalIgnoreCase));
+
+        foreach (var child in childGroups)
+        {
+            result.Add(DescendantInfo.FromManagementGroup(child, parentArmId));
+            CollectDescendants(child.Name, allGroups, result);
+        }
+
+        // Direct subscriptions under this group
+        foreach (var sub in provider.ListSubscriptionAssociationsForGroup(groupId))
+        {
+            result.Add(DescendantInfo.FromSubscription(sub, parentArmId));
+        }
+    }
+
     public ControlPlaneOperationResult<EntityInfo[]> GetEntities()
     {
         var groups = provider.ListManagementGroups().ToArray();

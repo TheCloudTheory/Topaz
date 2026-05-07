@@ -14,6 +14,7 @@
     <ProjectReference Include="../Services/Topaz.Service.Authorization/Topaz.Service.Authorization.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.ContainerRegistry/Topaz.Service.ContainerRegistry.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.KeyVault/Topaz.Service.KeyVault.csproj" />
+    <ProjectReference Include="../Services/Topaz.Service.ManagementGroup/Topaz.Service.ManagementGroup.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.ResourceGroup/Topaz.Service.ResourceGroup.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.Storage/Topaz.Service.Storage.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.ResourceManager/Topaz.Service.ResourceManager.csproj" />
