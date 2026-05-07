@@ -1,10 +1,13 @@
+using Topaz.EventPipeline;
+using Topaz.EventPipeline.Events;
 using Topaz.Service.ManagementGroup.Endpoints;
+using Topaz.Service.ManagementGroup.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup;
 
-public sealed class ManagementGroupService(ITopazLogger logger) : IServiceDefinition
+public sealed class ManagementGroupService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
     public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => ".management-group";
@@ -34,5 +37,27 @@ public sealed class ManagementGroupService(ITopazLogger logger) : IServiceDefini
 
     public void Bootstrap()
     {
+        var controlPlane = ManagementGroupControlPlane.New(logger);
+
+        eventPipeline.RegisterHandler<TenantInitializedEventData>(
+            TenantInitializedEvent.EventName,
+            data =>
+            {
+                if (data == null) return;
+                var existing = controlPlane.Get(data.TenantId);
+                if (existing.Result != OperationResult.NotFound) return;
+
+                controlPlane.CreateOrUpdate(data.TenantId,
+                    new CreateOrUpdateManagementGroupRequest
+                    {
+                        Properties = new CreateManagementGroupProperties
+                        {
+                            DisplayName = "Tenant Root Group"
+                        }
+                    });
+
+                logger.LogDebug(nameof(ManagementGroupService), nameof(Bootstrap),
+                    "Root management group '{0}' created.", data.TenantId);
+            });
     }
 }

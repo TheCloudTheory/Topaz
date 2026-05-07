@@ -1,4 +1,6 @@
-﻿using Topaz.Service.Entra.Endpoints;
+using Topaz.EventPipeline;
+using Topaz.EventPipeline.Events;
+using Topaz.Service.Entra.Endpoints;
 using Topaz.Service.Entra.Endpoints.Applications;
 using Topaz.Service.Entra.Endpoints.Directory;
 using Topaz.Service.Entra.Endpoints.Groups;
@@ -12,7 +14,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Entra;
 
-public class EntraService(ITopazLogger logger) : IServiceDefinition 
+public class EntraService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition 
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => ".entra";
@@ -95,6 +97,9 @@ public class EntraService(ITopazLogger logger) : IServiceDefinition
         logger.LogDebug(nameof(EntraService), nameof(Bootstrap),$"Entra service directory directory initialized.");
         
         CreateSuperAdminUser();
+
+        eventPipeline.TriggerEvent<TenantInitializedEventData, TenantInitializedEvent>(
+            new TenantInitializedEvent { Data = new TenantInitializedEventData { TenantId = TenantId } });
     }
 
     private void CreateSuperAdminUser()

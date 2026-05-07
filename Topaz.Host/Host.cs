@@ -102,13 +102,13 @@ public class Host
             new VirtualNetworkService(_eventPipeline, _logger),
             new VirtualMachineService(_eventPipeline, _logger),
             new ManagedIdentityService(_eventPipeline, _logger),
-            new ManagementGroupService(_logger),
+            new ManagementGroupService(_eventPipeline, _logger),
             new ResourceAuthorizationService(_logger),
             new ResourceGroupAuthorizationService(_logger),
             new RoleDefinitionService(_eventPipeline, _logger),
             new RoleAssignmentService(_eventPipeline, _logger),
             new InsightsService(_logger),
-            new EntraService(_logger),
+            new EntraService(_eventPipeline, _logger),
             new ContainerRegistryService(_eventPipeline, _logger)
         };
 
@@ -169,7 +169,7 @@ public class Host
             Console.WriteLine("Emulator directory created.");
         }
 
-        new EntraService(_logger).Bootstrap();
+        new EntraService(_eventPipeline, _logger).Bootstrap();
         new RoleAssignmentService(_eventPipeline, _logger).Bootstrap();
 
         if (File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))
