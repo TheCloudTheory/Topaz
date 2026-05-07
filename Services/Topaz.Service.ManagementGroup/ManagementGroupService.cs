@@ -1,8 +1,10 @@
+using System.Text.Json.Nodes;
 using Topaz.EventPipeline;
 using Topaz.EventPipeline.Events;
 using Topaz.Service.ManagementGroup.Endpoints;
 using Topaz.Service.ManagementGroup.Models.Requests;
 using Topaz.Service.Shared;
+using Topaz.Service.Subscription;
 using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup;
@@ -37,27 +39,68 @@ public sealed class ManagementGroupService(Pipeline eventPipeline, ITopazLogger 
 
     public void Bootstrap()
     {
-        var controlPlane = ManagementGroupControlPlane.New(logger);
+        var mgControlPlane = ManagementGroupControlPlane.New(logger);
+        var mgProvider = new ManagementGroupResourceProvider(logger);
+        var subProvider = new SubscriptionResourceProvider(logger);
 
         eventPipeline.RegisterHandler<TenantInitializedEventData>(
             TenantInitializedEvent.EventName,
             data =>
             {
                 if (data == null) return;
-                var existing = controlPlane.Get(data.TenantId);
-                if (existing.Result != OperationResult.NotFound) return;
 
-                controlPlane.CreateOrUpdate(data.TenantId,
-                    new CreateOrUpdateManagementGroupRequest
-                    {
-                        Properties = new CreateManagementGroupProperties
+                // Idempotently create the root management group.
+                if (mgControlPlane.Get(data.TenantId).Result == OperationResult.NotFound)
+                {
+                    mgControlPlane.CreateOrUpdate(data.TenantId,
+                        new CreateOrUpdateManagementGroupRequest
                         {
-                            DisplayName = "Tenant Root Group"
-                        }
-                    });
+                            Properties = new CreateManagementGroupProperties
+                            {
+                                DisplayName = "Tenant Root Group"
+                            }
+                        });
 
+                    logger.LogDebug(nameof(ManagementGroupService), nameof(Bootstrap),
+                        "Root management group '{0}' created.", data.TenantId);
+                }
+
+                // Associate any existing subscriptions not yet placed in any management group.
+                var assignedSubscriptionIds = mgProvider
+                    .ListAllSubscriptionAssociations()
+                    .Select(s => s.Name)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var json in subProvider.List(null, null))
+                {
+                    var subId = JsonNode.Parse(json)?["subscriptionId"]?.GetValue<string>();
+                    if (subId == null || assignedSubscriptionIds.Contains(subId)) continue;
+
+                    mgControlPlane.AssociateSubscription(data.TenantId, subId);
+                    logger.LogDebug(nameof(ManagementGroupService), nameof(Bootstrap),
+                        "Associated existing subscription '{0}' with root management group.", subId);
+                }
+            });
+
+        // Auto-place new subscriptions under the root management group.
+        eventPipeline.RegisterHandler<SubscriptionCreatedEventData>(
+            SubscriptionCreatedEvent.EventName,
+            data =>
+            {
+                if (data == null) return;
+
+                var alreadyAssigned = mgProvider
+                    .ListAllSubscriptionAssociations()
+                    .Any(s => string.Equals(s.Name, data.SubscriptionId, StringComparison.OrdinalIgnoreCase));
+
+                if (alreadyAssigned) return;
+
+                var rootGroupId = GlobalSettings.DefaultTenantId;
+                if (mgControlPlane.Get(rootGroupId).Result == OperationResult.NotFound) return;
+
+                mgControlPlane.AssociateSubscription(rootGroupId, data.SubscriptionId);
                 logger.LogDebug(nameof(ManagementGroupService), nameof(Bootstrap),
-                    "Root management group '{0}' created.", data.TenantId);
+                    "Associated new subscription '{0}' with root management group.", data.SubscriptionId);
             });
     }
 }

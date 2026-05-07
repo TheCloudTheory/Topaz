@@ -1,5 +1,6 @@
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -103,5 +104,48 @@ public class ManagementGroupSubscriptionTests
         var ex = Assert.ThrowsAsync<HttpRequestException>(async () =>
             await topaz.GetSubscriptionUnderManagementGroupAsync(groupId, subscriptionId));
         Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
+    }
+
+    [Test]
+    public async Task NewSubscription_ShouldBeAutoPlacedInRootManagementGroup()
+    {
+        // Arrange — create a real subscription (not just an ID) so SubscriptionCreatedEvent fires
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, "Auto-placed subscription");
+
+        // Act — the root MG should now contain the subscription
+        var result = await topaz.GetSubscriptionUnderManagementGroupAsync(
+            GlobalSettings.DefaultTenantId, subscriptionId.ToString());
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result["name"]!.GetValue<string>(), Is.EqualTo(subscriptionId.ToString()));
+            Assert.That(result["properties"]!["parent"]!["name"]!.GetValue<string>(),
+                Is.EqualTo(GlobalSettings.DefaultTenantId));
+        });
+    }
+
+    [Test]
+    public async Task RootManagementGroup_ShouldContainSubscriptionInDescendants()
+    {
+        // Arrange — create a subscription so it gets auto-associated
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, "Descendant subscription");
+
+        // Act
+        var result = await topaz.GetDescendantsAsync(GlobalSettings.DefaultTenantId);
+        var values = result["value"]!.AsArray();
+
+        // Assert — subscription appears under root MG descendants
+        var found = values.Any(v =>
+            v!["type"]!.GetValue<string>() == "/subscriptions" &&
+            v["name"]!.GetValue<string>() == subscriptionId.ToString());
+
+        Assert.That(found, Is.True, "Subscription should appear as a descendant of the root management group.");
     }
 }
