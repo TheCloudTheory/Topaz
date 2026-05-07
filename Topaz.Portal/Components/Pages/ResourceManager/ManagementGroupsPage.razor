@@ -1,10 +1,496 @@
 @page "/resource-manager/management-groups"
+@using Topaz.Portal.Models.ManagementGroups
+@using Topaz.Portal.Models.Subscriptions
+@inject ITopazClient TopazClient
+@inject NavigationManager Nav
 
 <ResourceManagerShell>
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title mb-3">Management Groups</h5>
-            <p class="text-muted mb-0">Management Groups are not yet implemented.</p>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h5 class="mb-0">Management Groups</h5>
+            @if (_currentGroupId is not null)
+            {
+                <nav aria-label="breadcrumb" class="mt-1">
+                    <ol class="breadcrumb mb-0 small">
+                        <li class="breadcrumb-item">
+                            <a href="/resource-manager/management-groups">Root</a>
+                        </li>
+                        @foreach (var crumb in _breadcrumbs)
+                        {
+                            @if (crumb.GroupId == _currentGroupId)
+                            {
+                                <li class="breadcrumb-item active" aria-current="page">@crumb.DisplayName</li>
+                            }
+                            else
+                            {
+                                <li class="breadcrumb-item">
+                                    <a href="/resource-manager/management-groups?group=@crumb.GroupId">@crumb.DisplayName</a>
+                                </li>
+                            }
+                        }
+                    </ol>
+                </nav>
+            }
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm"
+                    @onclick="ToggleCreateGroup"
+                    disabled="@(_loading || _createGroupBusy || _createSubBusy)">
+                New management group
+            </button>
+            <button class="btn btn-outline-secondary btn-sm"
+                    @onclick="ToggleCreateSubscription"
+                    disabled="@(_loading || _createGroupBusy || _createSubBusy)">
+                New subscription
+            </button>
         </div>
     </div>
+
+    <div class="row g-3">
+        <div class="@(_showCreateGroup || _showCreateSub ? "col-12 col-lg-8" : "col-12")">
+            <div class="card h-100">
+                <div class="card-body p-0">
+                    @if (_loading)
+                    {
+                        <div class="p-3"><p class="mb-0">Loading…</p></div>
+                    }
+                    else if (_error is not null)
+                    {
+                        <div class="p-3">
+                            <div class="alert alert-danger mb-0" role="alert">@_error</div>
+                        </div>
+                    }
+                    else if (_visibleNodes.Count == 0)
+                    {
+                        <div class="p-3">
+                            <p class="text-muted mb-0">No management groups found. Create one using the button above.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var node in _visibleNodes)
+                            {
+                                <div class="list-group-item list-group-item-action px-3 py-2"
+                                     style="padding-left: calc(0.75rem + @(node.Depth * 1.5)rem) !important; cursor: pointer;"
+                                     @onclick="() => NavigateToNode(node)">
+                                    <span class="me-2 text-muted" style="font-size: 0.85rem;">
+                                        @if (node.Entity.IsManagementGroup)
+                                        {
+                                            <span title="Management group">⊞</span>
+                                        }
+                                        else
+                                        {
+                                            <span title="Subscription">🔑</span>
+                                        }
+                                    </span>
+                                    <span>@node.Entity.DisplayName</span>
+                                    <small class="text-muted ms-2">@node.Entity.Name</small>
+                                    @if (node.Entity.IsManagementGroup)
+                                    {
+                                        <span class="ms-1 text-muted small">›</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @if (_showCreateGroup)
+        {
+            <div class="col-12 col-lg-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between mb-3">
+                            <h6 class="card-title mb-0">New management group</h6>
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    @onclick="CloseCreateGroup"
+                                    disabled="@_createGroupBusy">
+                                Close
+                            </button>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(_createGroupError))
+                        {
+                            <div class="alert alert-danger" role="alert">@_createGroupError</div>
+                        }
+
+                        <div class="mb-3">
+                            <label class="form-label">Group ID</label>
+                            <input class="form-control"
+                                   @bind="_newGroupId"
+                                   placeholder="e.g. my-group"
+                                   disabled="@_createGroupBusy" />
+                            <div class="form-text">Unique identifier (letters, numbers, hyphens).</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Display name</label>
+                            <input class="form-control"
+                                   @bind="_newGroupDisplayName"
+                                   placeholder="e.g. My Group"
+                                   disabled="@_createGroupBusy" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Parent group (optional)</label>
+                            <input class="form-control"
+                                   @bind="_newGroupParentId"
+                                   placeholder="leave empty for root"
+                                   disabled="@_createGroupBusy" />
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary"
+                                    @onclick="CreateManagementGroupAsync"
+                                    disabled="@_createGroupBusy">
+                                Create
+                            </button>
+                            <button class="btn btn-outline-secondary"
+                                    @onclick="CloseCreateGroup"
+                                    disabled="@_createGroupBusy">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (_showCreateSub)
+        {
+            <div class="col-12 col-lg-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between mb-3">
+                            <h6 class="card-title mb-0">New subscription</h6>
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    @onclick="CloseCreateSubscription"
+                                    disabled="@_createSubBusy">
+                                Close
+                            </button>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(_createSubError))
+                        {
+                            <div class="alert alert-danger" role="alert">@_createSubError</div>
+                        }
+
+                        <div class="mb-3">
+                            <label class="form-label">Display name</label>
+                            <input class="form-control"
+                                   @bind="_newSubName"
+                                   placeholder="e.g. Dev Subscription"
+                                   disabled="@_createSubBusy" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Subscription ID (optional)</label>
+                            <input class="form-control"
+                                   @bind="_newSubIdText"
+                                   placeholder="leave empty to auto-generate"
+                                   disabled="@_createSubBusy" />
+                        </div>
+
+                        @if (_currentGroupId is not null)
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Associate with group</label>
+                                <input class="form-control"
+                                       value="@_currentGroupId"
+                                       disabled="true"
+                                       readonly />
+                            </div>
+                        }
+
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary"
+                                    @onclick="CreateSubscriptionAsync"
+                                    disabled="@_createSubBusy">
+                                Create
+                            </button>
+                            <button class="btn btn-outline-secondary"
+                                    @onclick="CloseCreateSubscription"
+                                    disabled="@_createSubBusy">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
 </ResourceManagerShell>
+
+@code {
+    [SupplyParameterFromQuery(Name = "group")]
+    public string? GroupQueryParam { get; set; }
+
+    private bool _loading = true;
+    private string? _error;
+
+    // Tree state
+    private string? _currentGroupId;
+    private List<TreeNode> _visibleNodes = [];
+    private List<BreadcrumbEntry> _breadcrumbs = [];
+    private ManagementGroupEntityDto[] _allEntities = [];
+
+    // Create management group panel
+    private bool _showCreateGroup;
+    private bool _createGroupBusy;
+    private string? _createGroupError;
+    private string _newGroupId = "";
+    private string _newGroupDisplayName = "";
+    private string _newGroupParentId = "";
+
+    // Create subscription panel
+    private bool _showCreateSub;
+    private bool _createSubBusy;
+    private string? _createSubError;
+    private string _newSubName = "";
+    private string _newSubIdText = "";
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var incoming = string.IsNullOrWhiteSpace(GroupQueryParam) ? null : GroupQueryParam;
+        if (incoming != _currentGroupId)
+        {
+            _currentGroupId = incoming;
+            BuildView();
+        }
+        await Task.CompletedTask;
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            var result = await TopazClient.GetManagementGroupEntities();
+            _allEntities = result.Value;
+            _currentGroupId = string.IsNullOrWhiteSpace(GroupQueryParam) ? null : GroupQueryParam;
+            BuildView();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load management groups: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void BuildView()
+    {
+        _visibleNodes = [];
+        _breadcrumbs = [];
+
+        if (_currentGroupId is null)
+        {
+            // Show root management groups (no parent) at depth 0
+            var roots = _allEntities
+                .Where(e => e.IsManagementGroup && e.ParentId is null)
+                .OrderBy(e => e.DisplayName);
+
+            foreach (var root in roots)
+            {
+                _visibleNodes.Add(new TreeNode(root, 0));
+                AddChildren(root.Id, 1);
+            }
+        }
+        else
+        {
+            // Scoped view: show direct children of the current group
+            var currentArmId = $"/providers/Microsoft.Management/managementGroups/{_currentGroupId}";
+
+            var children = _allEntities
+                .Where(e => string.Equals(e.ParentId, currentArmId, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(e => e.IsSubscription)
+                .ThenBy(e => e.DisplayName);
+
+            foreach (var child in children)
+            {
+                _visibleNodes.Add(new TreeNode(child, 0));
+                if (child.IsManagementGroup)
+                    AddChildren(child.Id, 1);
+            }
+
+            BuildBreadcrumbs(_currentGroupId);
+        }
+    }
+
+    private void AddChildren(string parentArmId, int depth)
+    {
+        var children = _allEntities
+            .Where(e => string.Equals(e.ParentId, parentArmId, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(e => e.IsSubscription)
+            .ThenBy(e => e.DisplayName);
+
+        foreach (var child in children)
+        {
+            _visibleNodes.Add(new TreeNode(child, depth));
+            if (child.IsManagementGroup)
+                AddChildren(child.Id, depth + 1);
+        }
+    }
+
+    private void BuildBreadcrumbs(string groupId)
+    {
+        // Walk up the parent chain, then reverse for display
+        var chain = new List<BreadcrumbEntry>();
+        var current = groupId;
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        while (current is not null && visited.Add(current))
+        {
+            var entity = _allEntities.FirstOrDefault(
+                e => e.IsManagementGroup &&
+                     string.Equals(e.Name, current, StringComparison.OrdinalIgnoreCase));
+            if (entity is null) break;
+
+            chain.Add(new BreadcrumbEntry(entity.Name, entity.DisplayName));
+
+            // Extract parent group ID from ARM ID
+            var parentArmId = entity.ParentId;
+            if (parentArmId is null) break;
+            var segments = parentArmId.TrimStart('/').Split('/');
+            current = segments.Length >= 4 ? segments[3] : null;
+        }
+
+        chain.Reverse();
+        _breadcrumbs = chain;
+    }
+
+    private void NavigateToNode(TreeNode node)
+    {
+        if (node.Entity.IsManagementGroup)
+            Nav.NavigateTo($"/resource-manager/management-groups?group={Uri.EscapeDataString(node.Entity.Name)}");
+        else
+            Nav.NavigateTo($"/subscriptions/{node.Entity.Name}");
+    }
+
+    // --- Create management group ---
+
+    private void ToggleCreateGroup()
+    {
+        _showCreateGroup = !_showCreateGroup;
+        _showCreateSub = false;
+        _createGroupError = null;
+        _newGroupParentId = _currentGroupId ?? "";
+    }
+
+    private void CloseCreateGroup()
+    {
+        _showCreateGroup = false;
+        _createGroupError = null;
+    }
+
+    private async Task CreateManagementGroupAsync()
+    {
+        _createGroupError = null;
+
+        if (string.IsNullOrWhiteSpace(_newGroupId))
+        {
+            _createGroupError = "Please enter a group ID.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_newGroupDisplayName))
+        {
+            _createGroupError = "Please enter a display name.";
+            return;
+        }
+
+        _createGroupBusy = true;
+        try
+        {
+            var parentId = string.IsNullOrWhiteSpace(_newGroupParentId) ? null : _newGroupParentId;
+            await TopazClient.CreateManagementGroup(_newGroupId, _newGroupDisplayName, parentId);
+
+            _newGroupId = "";
+            _newGroupDisplayName = "";
+            _newGroupParentId = _currentGroupId ?? "";
+            _showCreateGroup = false;
+
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _createGroupError = ex.Message;
+        }
+        finally
+        {
+            _createGroupBusy = false;
+        }
+    }
+
+    // --- Create subscription ---
+
+    private void ToggleCreateSubscription()
+    {
+        _showCreateSub = !_showCreateSub;
+        _showCreateGroup = false;
+        _createSubError = null;
+    }
+
+    private void CloseCreateSubscription()
+    {
+        _showCreateSub = false;
+        _createSubError = null;
+    }
+
+    private async Task CreateSubscriptionAsync()
+    {
+        _createSubError = null;
+
+        if (string.IsNullOrWhiteSpace(_newSubName))
+        {
+            _createSubError = "Please enter a display name.";
+            return;
+        }
+
+        Guid subscriptionId;
+        if (string.IsNullOrWhiteSpace(_newSubIdText))
+        {
+            subscriptionId = Guid.NewGuid();
+        }
+        else if (!Guid.TryParse(_newSubIdText, out subscriptionId))
+        {
+            _createSubError = "Subscription ID must be a valid GUID (or leave it empty).";
+            return;
+        }
+
+        _createSubBusy = true;
+        try
+        {
+            await TopazClient.CreateSubscription(subscriptionId, _newSubName);
+
+            if (_currentGroupId is not null)
+                await TopazClient.AssociateSubscriptionWithManagementGroup(_currentGroupId, subscriptionId.ToString("D"));
+
+            _newSubName = "";
+            _newSubIdText = "";
+            _showCreateSub = false;
+
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _createSubError = ex.Message;
+        }
+        finally
+        {
+            _createSubBusy = false;
+        }
+    }
+
+    private sealed record TreeNode(ManagementGroupEntityDto Entity, int Depth);
+    private sealed record BreadcrumbEntry(string GroupId, string DisplayName);
+}

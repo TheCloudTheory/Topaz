@@ -87,7 +87,7 @@ public class AllResourcesPage_ShowsError_WhenLoadFails : BunitTestContext
 }
 
 [TestFixture]
-public class ManagementGroupsPage_ShowsPlaceholder : BunitTestContext
+public class ManagementGroupsPage_ShowsEmptyState_WhenNoGroups : BunitTestContext
 {
     [Test]
     public void Test()
@@ -95,9 +95,14 @@ public class ManagementGroupsPage_ShowsPlaceholder : BunitTestContext
         var client = Substitute.For<ITopazClient>();
         Services.AddSingleton(client);
 
+        client.GetManagementGroupEntities(CancellationToken.None)
+            .ReturnsForAnyArgs(Task.FromResult(
+                new Topaz.Portal.Models.ManagementGroups.GetManagementGroupEntitiesResponse { Value = [] }));
+
         var cut = RenderComponent<ManagementGroupsPage>();
 
-        Assert.That(cut.Markup, Does.Contain("not yet implemented"));
+        cut.WaitForAssertion(() =>
+            Assert.That(cut.Markup, Does.Contain("No management groups found")));
     }
 }
 

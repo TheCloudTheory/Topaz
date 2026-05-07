@@ -1,6 +1,7 @@
 using Azure.ResourceManager.Resources;
 using Microsoft.Graph.Models;
 using Topaz.Portal.Models.KeyVaults;
+using Topaz.Portal.Models.ManagementGroups;
 using Topaz.Portal.Models.Rbac;
 using Topaz.Portal.Models.ResourceGroups;
 using Topaz.Portal.Models.ResourceManager;
@@ -12,6 +13,21 @@ namespace Topaz.Portal;
 
 public interface ITopazClient
 {
+    // Management Groups
+    Task<GetManagementGroupEntitiesResponse> GetManagementGroupEntities(
+        CancellationToken cancellationToken = default);
+
+    Task CreateManagementGroup(
+        string groupId,
+        string displayName,
+        string? parentGroupId = null,
+        CancellationToken cancellationToken = default);
+
+    Task AssociateSubscriptionWithManagementGroup(
+        string groupId,
+        string subscriptionId,
+        CancellationToken cancellationToken = default);
+
     // Subscriptions
     Task<ListSubscriptionsResponse> ListSubscriptions();
 
