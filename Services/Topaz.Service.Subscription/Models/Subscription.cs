@@ -6,7 +6,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Subscription.Models;
 
-internal sealed class Subscription
+public sealed class Subscription
 {
     public string Id
     {

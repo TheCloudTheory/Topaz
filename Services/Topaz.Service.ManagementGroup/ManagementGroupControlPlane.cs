@@ -235,14 +235,13 @@ internal sealed class ManagementGroupControlPlane(ManagementGroupResourceProvide
     }
 
     public ControlPlaneOperationResult<Models.ManagementGroupSubscription> AssociateSubscription(
-        string groupId, string subscriptionId)
+        string groupId, string subscriptionId, string? displayName = null)
     {
         if (provider.GetManagementGroup(groupId) == null)
             return new ControlPlaneOperationResult<Models.ManagementGroupSubscription>(OperationResult.NotFound, null,
                 string.Format(NotFoundMessageTemplate, groupId), NotFoundCode);
 
-        var displayName = subscriptionId;
-        var model = Models.ManagementGroupSubscription.Create(groupId, subscriptionId, displayName);
+        var model = Models.ManagementGroupSubscription.Create(groupId, subscriptionId, displayName ?? subscriptionId);
         provider.SaveSubscriptionAssociation(groupId, subscriptionId, model);
 
         logger.LogDebug(nameof(ManagementGroupControlPlane), nameof(AssociateSubscription),

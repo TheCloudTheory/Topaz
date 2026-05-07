@@ -1,14 +1,18 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ManagementGroup.Endpoints;
 
-internal sealed class AssociateSubscriptionEndpoint(ITopazLogger logger) : IEndpointDefinition
+internal sealed class AssociateSubscriptionEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly ManagementGroupControlPlane _controlPlane = ManagementGroupControlPlane.New(logger);
+    private readonly SubscriptionControlPlane _subControlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
 
     public string[] Endpoints =>
         ["PUT /providers/Microsoft.Management/managementGroups/{groupId}/subscriptions/{subscriptionId}"];
@@ -29,7 +33,8 @@ internal sealed class AssociateSubscriptionEndpoint(ITopazLogger logger) : IEndp
             return;
         }
 
-        var operation = _controlPlane.AssociateSubscription(groupId, subscriptionId);
+        var displayName = ResolveSubscriptionDisplayName(subscriptionId);
+        var operation = _controlPlane.AssociateSubscription(groupId, subscriptionId, displayName);
 
         if (operation.Result == OperationResult.NotFound)
         {
@@ -39,5 +44,11 @@ internal sealed class AssociateSubscriptionEndpoint(ITopazLogger logger) : IEndp
 
         response.StatusCode = HttpStatusCode.OK;
         response.CreateJsonContentResponse(operation.Resource!);
+    }
+
+    private string? ResolveSubscriptionDisplayName(string subscriptionId)
+    {
+        var result = _subControlPlane.Get(SubscriptionIdentifier.From(subscriptionId));
+        return result.Result == OperationResult.Success ? result.Resource?.DisplayName : null;
     }
 }

@@ -8,7 +8,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Subscription;
 
-internal sealed class SubscriptionControlPlane(Pipeline eventPipeline, SubscriptionResourceProvider provider, ITopazLogger logger)
+public sealed class SubscriptionControlPlane(Pipeline eventPipeline, SubscriptionResourceProvider provider, ITopazLogger logger)
 {
     private const string SubscriptionNotFoundMessageTemplate = "Subscription {0} not found";
     private const string SubscriptionNotFoundCode = "SubscriptionNotFound";
@@ -55,7 +55,7 @@ internal sealed class SubscriptionControlPlane(Pipeline eventPipeline, Subscript
         provider.Delete(subscriptionIdentifier, null, null);
     }
 
-    internal ControlPlaneOperationResult<Models.Subscription[]> List()
+    public ControlPlaneOperationResult<Models.Subscription[]> List()
     {
         var rawSubscriptions = provider.List(null, null);
         var subscriptions = rawSubscriptions

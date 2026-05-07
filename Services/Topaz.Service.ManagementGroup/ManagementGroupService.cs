@@ -1,9 +1,9 @@
-using System.Text.Json.Nodes;
 using Topaz.EventPipeline;
 using Topaz.EventPipeline.Events;
 using Topaz.Service.ManagementGroup.Endpoints;
 using Topaz.Service.ManagementGroup.Models.Requests;
 using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
 
@@ -25,7 +25,7 @@ public sealed class ManagementGroupService(Pipeline eventPipeline, ITopazLogger 
         new DeleteManagementGroupEndpoint(logger),
         new ListManagementGroupsEndpoint(logger),
         new UpdateManagementGroupEndpoint(logger),
-        new AssociateSubscriptionEndpoint(logger),
+        new AssociateSubscriptionEndpoint(eventPipeline, logger),
         new DisassociateSubscriptionEndpoint(logger),
         new GetSubscriptionUnderManagementGroupEndpoint(logger),
         new GetEntitiesEndpoint(logger),
@@ -41,7 +41,7 @@ public sealed class ManagementGroupService(Pipeline eventPipeline, ITopazLogger 
     {
         var mgControlPlane = ManagementGroupControlPlane.New(logger);
         var mgProvider = new ManagementGroupResourceProvider(logger);
-        var subProvider = new SubscriptionResourceProvider(logger);
+        var subControlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
 
         eventPipeline.RegisterHandler<TenantInitializedEventData>(
             TenantInitializedEvent.EventName,
@@ -71,14 +71,15 @@ public sealed class ManagementGroupService(Pipeline eventPipeline, ITopazLogger 
                     .Select(s => s.Name)
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-                foreach (var json in subProvider.List(null, null))
-                {
-                    var subId = JsonNode.Parse(json)?["subscriptionId"]?.GetValue<string>();
-                    if (subId == null || assignedSubscriptionIds.Contains(subId)) continue;
+                var allSubs = subControlPlane.List();
+                if (allSubs.Resource == null) return;
 
-                    mgControlPlane.AssociateSubscription(data.TenantId, subId);
+                foreach (var sub in allSubs.Resource)
+                {
+                    if (sub.SubscriptionId == null || assignedSubscriptionIds.Contains(sub.SubscriptionId)) continue;
+                    mgControlPlane.AssociateSubscription(data.TenantId, sub.SubscriptionId, sub.DisplayName);
                     logger.LogDebug(nameof(ManagementGroupService), nameof(Bootstrap),
-                        "Associated existing subscription '{0}' with root management group.", subId);
+                        "Associated existing subscription '{0}' with root management group.", sub.SubscriptionId);
                 }
             });
 
@@ -98,7 +99,10 @@ public sealed class ManagementGroupService(Pipeline eventPipeline, ITopazLogger 
                 var rootGroupId = GlobalSettings.DefaultTenantId;
                 if (mgControlPlane.Get(rootGroupId).Result == OperationResult.NotFound) return;
 
-                mgControlPlane.AssociateSubscription(rootGroupId, data.SubscriptionId);
+                var subResult = subControlPlane.Get(SubscriptionIdentifier.From(data.SubscriptionId));
+                var displayName = subResult.Result == OperationResult.Success ? subResult.Resource?.DisplayName : null;
+
+                mgControlPlane.AssociateSubscription(rootGroupId, data.SubscriptionId, displayName);
                 logger.LogDebug(nameof(ManagementGroupService), nameof(Bootstrap),
                     "Associated new subscription '{0}' with root management group.", data.SubscriptionId);
             });
