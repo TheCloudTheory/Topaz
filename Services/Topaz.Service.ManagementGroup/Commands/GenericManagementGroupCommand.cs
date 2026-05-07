@@ -26,6 +26,15 @@ public sealed class GenericManagementGroupCommand : IEmulatorCommand
             {
                 descendants.AddCommand<ListManagementGroupDescendantsCommand>("list");
             });
+
+            mg.AddBranch("hierarchy-settings", hs =>
+            {
+                hs.AddCommand<CreateOrUpdateHierarchySettingsCommand>("create-or-update");
+                hs.AddCommand<ShowHierarchySettingsCommand>("show");
+                hs.AddCommand<ListHierarchySettingsCommand>("list");
+                hs.AddCommand<UpdateHierarchySettingsCommand>("update");
+                hs.AddCommand<DeleteHierarchySettingsCommand>("delete");
+            });
         });
     }
 }

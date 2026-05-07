@@ -131,6 +131,35 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
         return result;
     }
 
+    public HierarchySettings? GetHierarchySettings(string groupId)
+    {
+        var id = ValidateGroupId(groupId);
+        var path = ResolveHierarchySettingsPath(id);
+        if (!File.Exists(path)) return null;
+
+        return JsonSerializer.Deserialize<HierarchySettings>(File.ReadAllText(path), GlobalSettings.JsonOptions);
+    }
+
+    public void SaveHierarchySettings(string groupId, HierarchySettings settings)
+    {
+        var id = ValidateGroupId(groupId);
+        var dir = Path.Combine(BasePath, id);
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, "settings.json"),
+            JsonSerializer.Serialize(settings, GlobalSettings.JsonOptions));
+    }
+
+    public void DeleteHierarchySettings(string groupId)
+    {
+        var id = ValidateGroupId(groupId);
+        var path = ResolveHierarchySettingsPath(id);
+        if (File.Exists(path))
+            File.Delete(path);
+    }
+
+    private static string ResolveHierarchySettingsPath(string groupId) =>
+        Path.Combine(BasePath, groupId, "settings.json");
+
     /// <summary>Returns true if any persisted management group references this group as its parent.</summary>
     public bool HasChildren(string groupId)
     {

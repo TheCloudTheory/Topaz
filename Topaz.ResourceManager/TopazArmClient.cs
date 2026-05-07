@@ -382,6 +382,120 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
     }
 
+    public async Task<JsonNode> CreateOrUpdateHierarchySettingsAsync(
+        string groupId, bool? requireAuthorizationForGroupCreation = null, string? defaultManagementGroup = null)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put,
+            $"providers/Microsoft.Management/managementGroups/{groupId}/settings/default");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var props = new Dictionary<string, object?>();
+        if (requireAuthorizationForGroupCreation.HasValue)
+            props["requireAuthorizationForGroupCreation"] = requireAuthorizationForGroupCreation.Value;
+        if (defaultManagementGroup != null)
+            props["defaultManagementGroup"] = defaultManagementGroup;
+
+        var payload = new { properties = props };
+        request.Content = new StringContent(
+            JsonSerializer.Serialize(payload, GlobalSettings.JsonOptions),
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var msg = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(msg, null, response.StatusCode);
+        }
+
+        return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
+    }
+
+    public async Task<JsonNode> GetHierarchySettingsAsync(string groupId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            $"providers/Microsoft.Management/managementGroups/{groupId}/settings/default");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var msg = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(msg, null, response.StatusCode);
+        }
+
+        return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
+    }
+
+    public async Task<JsonNode> ListHierarchySettingsAsync(string groupId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            $"providers/Microsoft.Management/managementGroups/{groupId}/settings");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var msg = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(msg, null, response.StatusCode);
+        }
+
+        return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
+    }
+
+    public async Task DeleteHierarchySettingsAsync(string groupId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete,
+            $"providers/Microsoft.Management/managementGroups/{groupId}/settings/default");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var msg = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(msg, null, response.StatusCode);
+        }
+    }
+
+    public async Task<JsonNode> UpdateHierarchySettingsAsync(
+        string groupId, bool? requireAuthorizationForGroupCreation = null, string? defaultManagementGroup = null)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch,
+            $"providers/Microsoft.Management/managementGroups/{groupId}/settings/default");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var props = new Dictionary<string, object?>();
+        if (requireAuthorizationForGroupCreation.HasValue)
+            props["requireAuthorizationForGroupCreation"] = requireAuthorizationForGroupCreation.Value;
+        if (defaultManagementGroup != null)
+            props["defaultManagementGroup"] = defaultManagementGroup;
+
+        var payload = new { properties = props };
+        request.Content = new StringContent(
+            JsonSerializer.Serialize(payload, GlobalSettings.JsonOptions),
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var msg = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(msg, null, response.StatusCode);
+        }
+
+        return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
+    }
+
     public void Dispose()
     {
         _httpClient.Dispose();

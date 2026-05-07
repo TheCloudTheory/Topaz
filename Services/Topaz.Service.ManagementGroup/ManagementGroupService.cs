@@ -25,6 +25,11 @@ public sealed class ManagementGroupService(ITopazLogger logger) : IServiceDefini
         new GetSubscriptionUnderManagementGroupEndpoint(logger),
         new GetEntitiesEndpoint(logger),
         new GetDescendantsEndpoint(logger),
+        new CreateOrUpdateHierarchySettingsEndpoint(logger),
+        new GetHierarchySettingsEndpoint(logger),
+        new ListHierarchySettingsEndpoint(logger),
+        new DeleteHierarchySettingsEndpoint(logger),
+        new UpdateHierarchySettingsEndpoint(logger),
     ];
 
     public void Bootstrap()

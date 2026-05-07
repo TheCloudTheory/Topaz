@@ -62,11 +62,11 @@ This page tracks which Azure Management Groups REST API operations are implement
 
 | Operation | Status |
 |-----------|--------|
-| Create Or Update | ❌ |
-| Delete | ❌ |
-| Get | ❌ |
-| List | ❌ |
-| Update | ❌ |
+| Create Or Update | ✅ |
+| Delete | ✅ |
+| Get | ✅ |
+| List | ✅ |
+| Update | ✅ |
 
 ---
 

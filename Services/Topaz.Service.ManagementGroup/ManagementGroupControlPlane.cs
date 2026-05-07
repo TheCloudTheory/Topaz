@@ -289,4 +289,90 @@ internal sealed class ManagementGroupControlPlane(ManagementGroupResourceProvide
         var segments = armId.TrimStart('/').Split('/');
         return segments.Length >= 4 ? segments[3] : armId;
     }
+
+    public ControlPlaneOperationResult<HierarchySettings> GetHierarchySettings(string groupId)
+    {
+        if (provider.GetManagementGroup(groupId) == null)
+            return new ControlPlaneOperationResult<HierarchySettings>(OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, groupId), NotFoundCode);
+
+        var settings = provider.GetHierarchySettings(groupId);
+        if (settings == null)
+            return new ControlPlaneOperationResult<HierarchySettings>(OperationResult.NotFound, null,
+                $"Hierarchy settings not found for management group '{groupId}'.", "HierarchySettingsNotFound");
+
+        return new ControlPlaneOperationResult<HierarchySettings>(OperationResult.Success, settings, null, null);
+    }
+
+    public ControlPlaneOperationResult<HierarchySettings[]> ListHierarchySettings(string groupId)
+    {
+        if (provider.GetManagementGroup(groupId) == null)
+            return new ControlPlaneOperationResult<HierarchySettings[]>(OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, groupId), NotFoundCode);
+
+        var settings = provider.GetHierarchySettings(groupId);
+        var result = settings != null ? [settings] : Array.Empty<HierarchySettings>();
+
+        return new ControlPlaneOperationResult<HierarchySettings[]>(OperationResult.Success, result, null, null);
+    }
+
+    public ControlPlaneOperationResult<HierarchySettings> CreateOrUpdateHierarchySettings(
+        string groupId, CreateOrUpdateHierarchySettingsRequest request)
+    {
+        if (provider.GetManagementGroup(groupId) == null)
+            return new ControlPlaneOperationResult<HierarchySettings>(OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, groupId), NotFoundCode);
+
+        var settings = provider.GetHierarchySettings(groupId) ?? HierarchySettings.Create(groupId);
+        if (request.Properties != null)
+        {
+            settings.Properties.RequireAuthorizationForGroupCreation =
+                request.Properties.RequireAuthorizationForGroupCreation ?? settings.Properties.RequireAuthorizationForGroupCreation;
+            settings.Properties.DefaultManagementGroup =
+                request.Properties.DefaultManagementGroup ?? settings.Properties.DefaultManagementGroup;
+        }
+
+        provider.SaveHierarchySettings(groupId, settings);
+
+        return new ControlPlaneOperationResult<HierarchySettings>(OperationResult.Success, settings, null, null);
+    }
+
+    public ControlPlaneOperationResult<HierarchySettings> UpdateHierarchySettings(
+        string groupId, UpdateHierarchySettingsRequest request)
+    {
+        if (provider.GetManagementGroup(groupId) == null)
+            return new ControlPlaneOperationResult<HierarchySettings>(OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, groupId), NotFoundCode);
+
+        var settings = provider.GetHierarchySettings(groupId);
+        if (settings == null)
+            return new ControlPlaneOperationResult<HierarchySettings>(OperationResult.NotFound, null,
+                $"Hierarchy settings not found for management group '{groupId}'.", "HierarchySettingsNotFound");
+
+        if (request.Properties != null)
+        {
+            if (request.Properties.RequireAuthorizationForGroupCreation.HasValue)
+                settings.Properties.RequireAuthorizationForGroupCreation =
+                    request.Properties.RequireAuthorizationForGroupCreation.Value;
+            if (request.Properties.DefaultManagementGroup != null)
+                settings.Properties.DefaultManagementGroup = request.Properties.DefaultManagementGroup;
+        }
+
+        provider.SaveHierarchySettings(groupId, settings);
+
+        return new ControlPlaneOperationResult<HierarchySettings>(OperationResult.Updated, settings, null, null);
+    }
+
+    public ControlPlaneOperationResult DeleteHierarchySettings(string groupId)
+    {
+        if (provider.GetManagementGroup(groupId) == null)
+            return new ControlPlaneOperationResult(OperationResult.NotFound,
+                string.Format(NotFoundMessageTemplate, groupId), NotFoundCode);
+
+        provider.DeleteHierarchySettings(groupId);
+        logger.LogDebug(nameof(ManagementGroupControlPlane), nameof(DeleteHierarchySettings),
+            "Deleted hierarchy settings for management group '{0}'.", groupId);
+
+        return new ControlPlaneOperationResult(OperationResult.Deleted, null, null);
+    }
 }
