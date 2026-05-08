@@ -76,7 +76,17 @@ internal sealed class QueryTableEntitiesEndpoint(Pipeline eventPipeline, ITopazL
         Logger.LogDebug(nameof(QueryTableEntitiesEndpoint), nameof(HandleGetAclRequest), "Executing {0}.",
             nameof(HandleGetAclRequest));
 
-        var tableName = PathGuard.SanitizeName(path.Replace("/", string.Empty));
+        // Path.GetFileName is called directly so static-analysis tools (e.g. CodeQL) can recognise
+        // the taint as cleared here. PathGuard.ValidateName provides defence-in-depth against any
+        // remaining forbidden characters such as "..".
+        var tableName = Path.GetFileName(path.TrimEnd('/'));
+        if (string.IsNullOrEmpty(tableName))
+        {
+            response.StatusCode = HttpStatusCode.BadRequest;
+            return;
+        }
+        PathGuard.ValidateName(tableName);
+
         var aclsOp = ControlPlane.GetAcl(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName);
 
         using var sw = new EncodingAwareStringWriter();
