@@ -1,0 +1,168 @@
+/* ── Hero ───────────────────────────────────────────────────────── */
+.hero {
+  background: linear-gradient(150deg,
+    var(--topaz-hero-bg-start) 0%,
+    var(--topaz-hero-bg-mid) 55%,
+    var(--topaz-hero-bg-end) 100%);
+  padding: 5.5rem 0 4.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 75% 50% at 50% 110%,
+    rgba(77, 133, 240, 0.3) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.heroTitle {
+  font-size: 2.75rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.025em;
+  color: #fff !important;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.heroSubtitle {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.78);
+  max-width: 520px;
+  margin: 0 auto;
+  line-height: 1.65;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Email card ─────────────────────────────────────────────────── */
+.section {
+  padding: 4.5rem 0;
+}
+
+.sectionAlt {
+  background: var(--ifm-color-emphasis-100);
+}
+
+.emailCardWrapper {
+  max-width: 560px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.emailCard {
+  background: linear-gradient(135deg,
+    rgba(27, 99, 235, 0.08) 0%,
+    rgba(77, 133, 240, 0.04) 100%);
+  border: 2px solid var(--ifm-color-primary);
+  border-radius: 20px;
+  padding: 2.75rem 2.5rem;
+}
+
+.emailIcon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.emailLabel {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ifm-color-secondary-darkest);
+  margin-bottom: 0.6rem;
+}
+
+.emailLink {
+  display: inline-block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ifm-color-primary) !important;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.emailLink:hover {
+  text-decoration: underline;
+}
+
+.emailNote {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--ifm-color-secondary-darkest);
+  line-height: 1.6;
+}
+
+/* ── Topics grid ────────────────────────────────────────────────── */
+.sectionTitle {
+  font-size: 1.9rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.015em;
+  margin-bottom: 0.4rem;
+  text-align: center;
+}
+
+.sectionSubtitle {
+  font-size: 1rem;
+  color: var(--ifm-color-secondary-darkest);
+  margin-bottom: 2.75rem;
+  text-align: center;
+}
+
+.topicsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+  .topicsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .heroTitle {
+    font-size: 2rem !important;
+  }
+
+  .emailLink {
+    font-size: 1.2rem;
+  }
+}
+
+.topicCard {
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 16px;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.topicEmoji {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.topicTitle {
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+}
+
+.topicDesc {
+  font-size: 0.9rem;
+  color: var(--ifm-color-secondary-darkest);
+  line-height: 1.6;
+  margin: 0;
+}

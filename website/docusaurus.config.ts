@@ -133,6 +133,7 @@ const config: Config = {
         { to: '/pricing', label: 'Pricing', position: 'left' },
         { to: '/demo', label: 'Demo', position: 'left' },
         { to: '/blog', label: 'Blog', position: 'left' },
+        { to: '/contact', label: 'Contact', position: 'left' },
         {
           type: 'docsVersionDropdown',
           position: 'right',
