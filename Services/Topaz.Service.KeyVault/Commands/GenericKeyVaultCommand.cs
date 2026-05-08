@@ -1,5 +1,6 @@
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
+using Topaz.Service.KeyVault.Commands.Certificates;
 using Topaz.Service.KeyVault.Commands.Keys;
 using Topaz.Service.KeyVault.Commands.Secrets;
 
@@ -13,6 +14,16 @@ public sealed class GenericKeyVaultCommand : IEmulatorCommand
             keyVault.AddCommand<CreateKeyVaultCommand>("create");
             keyVault.AddCommand<DeleteKeyVaultCommand>("delete");
             keyVault.AddCommand<CheckKeyVaultNameCommand>("check-name");
+            keyVault.AddBranch("certificate", certificate =>
+            {
+                certificate.AddCommand<CreateCertificateCommand>("create");
+                certificate.AddCommand<ImportCertificateCommand>("import");
+                certificate.AddCommand<GetCertificateCommand>("get");
+                certificate.AddCommand<ListCertificatesCommand>("list");
+                certificate.AddCommand<ListCertificateVersionsCommand>("list-versions");
+                certificate.AddCommand<UpdateCertificateCommand>("update");
+                certificate.AddCommand<DeleteCertificateCommand>("delete");
+            });
             keyVault.AddBranch("secret", secret =>
             {
                 secret.AddCommand<SetSecretCommand>("set");
