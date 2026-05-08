@@ -1,7 +1,7 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
-using Topaz.Service.KeyVault.Models.Responses;
+using Topaz.Service.KeyVault.Models.Responses.Keys;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;

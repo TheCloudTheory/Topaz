@@ -1,5 +1,5 @@
 using JetBrains.Annotations;
-using Topaz.Service.KeyVault.Models.Requests;
+using Topaz.Service.KeyVault.Models.Requests.Vault;
 using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Models;

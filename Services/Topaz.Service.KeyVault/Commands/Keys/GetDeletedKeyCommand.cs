@@ -2,7 +2,7 @@ using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Responses;
+using Topaz.Service.KeyVault.Models.Responses.Keys;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;

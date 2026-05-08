@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Requests;
+using Topaz.Service.KeyVault.Models.Requests.Keys;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;

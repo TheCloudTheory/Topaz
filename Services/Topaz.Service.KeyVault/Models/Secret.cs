@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
-using Topaz.Service.KeyVault.Models.Requests;
+using Topaz.Service.KeyVault.Models.Requests.Secrets;
 using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Models;
