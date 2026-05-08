@@ -22,3 +22,33 @@ terraform:
   label: Terraform
   permalink: /terraform
   description: Terraform integration posts
+
+keyvault:
+  label: Azure Key Vault
+  permalink: /keyvault
+  description: Azure Key Vault related posts
+
+arm:
+  label: ARM
+  permalink: /arm
+  description: Azure Resource Manager related posts
+
+managementgroups:
+  label: Management Groups
+  permalink: /managementgroups
+  description: Azure Management Groups related posts
+
+mcp:
+  label: MCP
+  permalink: /mcp
+  description: Model Context Protocol related posts
+
+portal:
+  label: Portal
+  permalink: /portal
+  description: Topaz Portal related posts
+
+resource-manager:
+  label: Resource Manager
+  permalink: /resource-manager
+  description: Resource Manager related posts
