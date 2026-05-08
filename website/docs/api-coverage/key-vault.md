@@ -141,8 +141,8 @@ The data plane covers operations served directly from the vault's own hostname (
 | Update Certificate Operation | ❌ |
 | Delete Certificate Operation | ❌ |
 | Merge Certificate | ❌ |
-| Backup Certificate | ❌ |
-| Restore Certificate | ❌ |
+| Backup Certificate | ✅ | `POST /certificates/{name}/backup` |
+| Restore Certificate | ✅ | `POST /certificates/restore` |
 | Get Deleted Certificate | ❌ |
 | Get Deleted Certificates | ❌ |
 | Recover Deleted Certificate | ❌ |

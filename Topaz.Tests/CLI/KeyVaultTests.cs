@@ -820,5 +820,91 @@ public class KeyVaultTests
             Assert.That(File.Exists(certFilePath), Is.False);
         });
     }
+
+    [Test]
+    public async Task KeyVaultTests_Certificate_Backup_ShouldReturnNonEmptyBlob()
+    {
+        await Program.RunAsync([
+            "keyvault", "certificate", "create",
+            "--vault-name", VaultName, "--name", "cli-cert-backup",
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        var output = new System.IO.StringWriter();
+        var originalOut = Console.Out;
+        Console.SetOut(output);
+
+        var result = await Program.RunAsync([
+            "keyvault", "certificate", "backup",
+            "--vault-name", VaultName, "--name", "cli-cert-backup",
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        Console.SetOut(originalOut);
+        var blob = output.ToString()
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Last();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.EqualTo(0));
+            Assert.That(blob, Is.Not.Empty, "Backup blob should not be empty.");
+        });
+    }
+
+    [Test]
+    public async Task KeyVaultTests_Certificate_Restore_ShouldRecreateFile()
+    {
+        const string certName = "cli-cert-restore";
+        var certFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "certificates", $"{certName}.json");
+
+        // Create and back up
+        await Program.RunAsync([
+            "keyvault", "certificate", "create",
+            "--vault-name", VaultName, "--name", certName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        var backupOutput = new System.IO.StringWriter();
+        var savedOut = Console.Out;
+        Console.SetOut(backupOutput);
+
+        await Program.RunAsync([
+            "keyvault", "certificate", "backup",
+            "--vault-name", VaultName, "--name", certName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        Console.SetOut(savedOut);
+        // The CLI also prints "Searching and configuring commands..." before the blob;
+        // extract the last non-empty line which is the actual backup value.
+        var blob = backupOutput.ToString()
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Last();
+
+        // Delete the cert
+        await Program.RunAsync([
+            "keyvault", "certificate", "delete",
+            "--vault-name", VaultName, "--name", certName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+        Assert.That(File.Exists(certFilePath), Is.False);
+
+        // Restore from backup
+        var result = await Program.RunAsync([
+            "keyvault", "certificate", "restore",
+            "--vault-name", VaultName, "--backup-value", blob,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.EqualTo(0));
+            Assert.That(File.Exists(certFilePath), Is.True, "Certificate file should be restored.");
+        });
+    }
 }
 

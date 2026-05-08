@@ -329,6 +329,88 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
         return new DataPlaneOperationResult<CertificateOperationResponse>(OperationResult.Success, syntheticOp, null, null);
     }
 
+    public DataPlaneOperationResult<string> BackupCertificate(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string certName)
+    {
+        PathGuard.ValidateName(certName);
+        certName = PathGuard.SanitizeName(certName);
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(BackupCertificate),
+            "Backing up certificate {0} in vault {1}.", certName, vaultName);
+
+        var basePath = GetCertificatesPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(basePath, $"{certName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        if (!File.Exists(entityPath))
+            return new DataPlaneOperationResult<string>(OperationResult.NotFound, null,
+                $"Certificate {certName} not found.", "CertificateNotFound");
+
+        var bundles = JsonSerializer.Deserialize<CertificateBundle[]>(
+            File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
+        var plaintext = System.Text.Encoding.UTF8.GetBytes(
+            JsonSerializer.Serialize(bundles, GlobalSettings.JsonOptions));
+
+        var encoded = KeyVaultBackupCipher.EncryptBackup(plaintext);
+        return new DataPlaneOperationResult<string>(OperationResult.Success, encoded, null, null);
+    }
+
+    public DataPlaneOperationResult<CertificateBundle> RestoreCertificateBackup(
+        Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(RestoreCertificateBackup),
+            "Restoring certificate backup into vault {0}.", vaultName);
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+
+        if (string.IsNullOrEmpty(rawContent))
+            return new DataPlaneOperationResult<CertificateBundle>(OperationResult.Failed, null,
+                "Empty request body.", "BadRequest");
+
+        var request = JsonSerializer.Deserialize<Models.Requests.Certificates.RestoreCertificateRequest>(
+            rawContent, GlobalSettings.JsonOptions)
+                      ?? throw new InvalidOperationException("Invalid request body.");
+
+        if (string.IsNullOrEmpty(request.Value))
+            return new DataPlaneOperationResult<CertificateBundle>(OperationResult.Failed, null,
+                "Backup value is missing.", "BadRequest");
+
+        var plaintext = KeyVaultBackupCipher.DecryptBackup(request.Value);
+        var bundles = JsonSerializer.Deserialize<CertificateBundle[]>(
+            System.Text.Encoding.UTF8.GetString(plaintext), GlobalSettings.JsonOptions);
+
+        if (bundles == null || bundles.Length == 0)
+            return new DataPlaneOperationResult<CertificateBundle>(OperationResult.Failed, null,
+                "Backup contains no certificate versions.", "BadRequest");
+
+        // Name has [JsonIgnore] — extract from the Id: https://.../certificates/{name}/{version}
+        var idParts = (bundles[0].Id ?? string.Empty).Split('/');
+        var certName = idParts.Length >= 2
+            ? PathGuard.SanitizeName(idParts[^2])
+            : string.Empty;
+
+        if (string.IsNullOrEmpty(certName))
+            return new DataPlaneOperationResult<CertificateBundle>(OperationResult.Failed, null,
+                "Could not determine certificate name from backup.", "BadRequest");
+
+        var basePath = GetCertificatesPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var entityPath = Path.Combine(basePath, $"{certName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(bundles, GlobalSettings.JsonOptions));
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(RestoreCertificateBackup),
+            "Restored {0} version(s) of certificate {1} into vault {2}.", bundles.Length, certName, vaultName);
+
+        return new DataPlaneOperationResult<CertificateBundle>(OperationResult.Created, bundles.Last(), null, null);
+    }
+
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------

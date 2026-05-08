@@ -208,4 +208,49 @@ public class KeyVaultCertificateTests
         var active = client.GetPropertiesOfCertificates().ToList();
         Assert.That(active.Any(c => c.Name == "delete-cert"), Is.False);
     }
+
+    [Test]
+    public void Certificate_Backup_ShouldReturnNonEmptyBlob()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+        var policy = new CertificatePolicy("Self", "CN=backup-test");
+        client.StartCreateCertificate("backup-cert", policy).WaitForCompletion();
+
+        // Act
+        var backupResult = client.BackupCertificate("backup-cert");
+
+        // Assert
+        Assert.That(backupResult.Value, Is.Not.Empty);
+    }
+
+    [Test]
+    public void Certificate_Restore_ShouldRecreateFromBackup()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+        var policy = new CertificatePolicy("Self", "CN=restore-test");
+        client.StartCreateCertificate("restore-cert", policy).WaitForCompletion();
+
+        // Back up
+        var backupBlob = client.BackupCertificate("restore-cert").Value;
+        Assert.That(backupBlob, Is.Not.Empty);
+
+        // Delete (no wait)
+        client.StartDeleteCertificate("restore-cert");
+        var activeAfterDelete = client.GetPropertiesOfCertificates().ToList();
+        Assert.That(activeAfterDelete.Any(c => c.Name == "restore-cert"), Is.False);
+
+        // Restore
+        var restored = client.RestoreCertificateBackup(backupBlob).Value;
+
+        // Assert restored certificate is accessible
+        Assert.Multiple(() =>
+        {
+            Assert.That(restored.Name, Is.EqualTo("restore-cert"));
+            Assert.That(restored.Id.ToString(), Does.Contain("/certificates/restore-cert/"));
+        });
+    }
 }
