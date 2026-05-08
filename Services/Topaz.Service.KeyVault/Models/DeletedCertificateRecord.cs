@@ -5,7 +5,8 @@ namespace Topaz.Service.KeyVault.Models;
 
 internal record DeletedCertificateRecord
 {
-    public CertificateBundle? Bundle { get; init; }
+    public string CertName { get; init; } = string.Empty;
+    public CertificateBundle[] Bundles { get; init; } = [];
     public long DeletedDate { get; init; }
     public long ScheduledPurgeDate { get; init; }
 

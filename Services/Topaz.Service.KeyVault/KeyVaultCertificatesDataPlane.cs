@@ -265,14 +265,14 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
             return new DataPlaneOperationResult<DeletedCertificateRecord>(OperationResult.NotFound, null, $"Certificate {certName} not found.", "CertificateNotFound");
 
         var bundles = JsonSerializer.Deserialize<CertificateBundle[]>(File.ReadAllText(entityPath), GlobalSettings.JsonOptions)!;
-        var latest = bundles.Last();
 
         var deletedDir = Path.Combine(basePath, DeletedSubDir);
         Directory.CreateDirectory(deletedDir);
 
         var record = new DeletedCertificateRecord
         {
-            Bundle = latest,
+            CertName = certName,
+            Bundles = bundles,
             DeletedDate = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             ScheduledPurgeDate = DateTimeOffset.UtcNow.AddDays(90).ToUnixTimeSeconds()
         };
@@ -409,6 +409,137 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
             "Restored {0} version(s) of certificate {1} into vault {2}.", bundles.Length, certName, vaultName);
 
         return new DataPlaneOperationResult<CertificateBundle>(OperationResult.Created, bundles.Last(), null, null);
+    }
+
+    public DataPlaneOperationResult<DeletedCertificateRecord> GetDeletedCertificate(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string certName)
+    {
+        PathGuard.ValidateName(certName);
+        certName = PathGuard.SanitizeName(certName);
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(GetDeletedCertificate),
+            "Getting deleted certificate {0} from vault {1}.", certName, vaultName);
+
+        var basePath = GetCertificatesPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var deletedPath = Path.Combine(basePath, DeletedSubDir, $"{certName}.json");
+        PathGuard.EnsureWithinDirectory(deletedPath, basePath);
+
+        if (!File.Exists(deletedPath))
+        {
+            logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(GetDeletedCertificate),
+                "Deleted certificate {0} not found.", certName);
+            return new DataPlaneOperationResult<DeletedCertificateRecord>(OperationResult.NotFound, null,
+                $"Deleted certificate {certName} not found.", "CertificateNotFound");
+        }
+
+        var record = JsonSerializer.Deserialize<DeletedCertificateRecord>(
+            File.ReadAllText(deletedPath), GlobalSettings.JsonOptions)!;
+        return new DataPlaneOperationResult<DeletedCertificateRecord>(OperationResult.Success, record, null, null);
+    }
+
+    public DataPlaneOperationResult<IReadOnlyList<DeletedCertificateRecord>> GetDeletedCertificates(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(GetDeletedCertificates),
+            "Listing deleted certificates in vault {0}.", vaultName);
+
+        var basePath = GetCertificatesPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var deletedDir = Path.Combine(basePath, DeletedSubDir);
+
+        if (!Directory.Exists(deletedDir))
+            return new DataPlaneOperationResult<IReadOnlyList<DeletedCertificateRecord>>(
+                OperationResult.Success, [], null, null);
+
+        var records = Directory.GetFiles(deletedDir, "*.json")
+            .Select(file => JsonSerializer.Deserialize<DeletedCertificateRecord>(
+                File.ReadAllText(file), GlobalSettings.JsonOptions)!)
+            .ToList();
+
+        return new DataPlaneOperationResult<IReadOnlyList<DeletedCertificateRecord>>(
+            OperationResult.Success, records, null, null);
+    }
+
+    public DataPlaneOperationResult<CertificateBundle> RecoverDeletedCertificate(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string certName)
+    {
+        PathGuard.ValidateName(certName);
+        certName = PathGuard.SanitizeName(certName);
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(RecoverDeletedCertificate),
+            "Recovering deleted certificate {0} in vault {1}.", certName, vaultName);
+
+        var basePath = GetCertificatesPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var deletedDir = Path.Combine(basePath, DeletedSubDir);
+        var deletedPath = Directory.Exists(deletedDir)
+            ? Directory.EnumerateFiles(deletedDir, "*.json")
+                .FirstOrDefault(f => string.Equals(
+                    Path.GetFileNameWithoutExtension(f), certName, StringComparison.Ordinal))
+            : null;
+
+        if (deletedPath == null)
+        {
+            logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(RecoverDeletedCertificate),
+                "Deleted certificate {0} not found.", certName);
+            return new DataPlaneOperationResult<CertificateBundle>(OperationResult.NotFound, null,
+                $"Deleted certificate {certName} not found.", "CertificateNotFound");
+        }
+
+        PathGuard.EnsureWithinDirectory(deletedPath, basePath);
+
+        var record = JsonSerializer.Deserialize<DeletedCertificateRecord>(
+            File.ReadAllText(deletedPath), GlobalSettings.JsonOptions)!;
+
+        var entityPath = Path.Combine(basePath, $"{certName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+
+        File.WriteAllText(entityPath, JsonSerializer.Serialize(record.Bundles, GlobalSettings.JsonOptions));
+        File.Delete(deletedPath);
+
+        var recovered = record.Bundles.Last();
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(RecoverDeletedCertificate),
+            "Recovered certificate {0} in vault {1}.", certName, vaultName);
+        return new DataPlaneOperationResult<CertificateBundle>(OperationResult.Success, recovered, null, null);
+    }
+
+    public DataPlaneOperationResult PurgeDeletedCertificate(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string certName)
+    {
+        PathGuard.ValidateName(certName);
+        certName = PathGuard.SanitizeName(certName);
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(PurgeDeletedCertificate),
+            "Purging deleted certificate {0} from vault {1}.", certName, vaultName);
+
+        var basePath = GetCertificatesPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var deletedDir = Path.Combine(basePath, DeletedSubDir);
+        var deletedPath = Directory.Exists(deletedDir)
+            ? Directory.EnumerateFiles(deletedDir, "*.json")
+                .FirstOrDefault(f => string.Equals(
+                    Path.GetFileNameWithoutExtension(f), certName, StringComparison.Ordinal))
+            : null;
+
+        if (deletedPath == null)
+        {
+            logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(PurgeDeletedCertificate),
+                "Deleted certificate {0} not found.", certName);
+            return new DataPlaneOperationResult(OperationResult.NotFound,
+                $"Deleted certificate {certName} not found.", "CertificateNotFound");
+        }
+
+        PathGuard.EnsureWithinDirectory(deletedPath, basePath);
+        File.Delete(deletedPath);
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(PurgeDeletedCertificate),
+            "Purged certificate {0} from vault {1}.", certName, vaultName);
+        return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
     }
 
     // -------------------------------------------------------------------------

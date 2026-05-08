@@ -906,5 +906,122 @@ public class KeyVaultTests
             Assert.That(File.Exists(certFilePath), Is.True, "Certificate file should be restored.");
         });
     }
+
+    [Test]
+    public async Task KeyVaultTests_Certificate_GetDeleted_ShouldReturnDeletedCert()
+    {
+        const string certName = "cli-cert-get-deleted";
+        // Create and delete
+        await Program.RunAsync([
+            "keyvault", "certificate", "create",
+            "--vault-name", VaultName, "--name", certName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+        await Program.RunAsync([
+            "keyvault", "certificate", "delete",
+            "--vault-name", VaultName, "--name", certName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        var result = await Program.RunAsync([
+            "keyvault", "certificate", "get-deleted",
+            "--vault-name", VaultName, "--name", certName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(result, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task KeyVaultTests_Certificate_ListDeleted_ShouldReturnDeletedCerts()
+    {
+        const string certName = "cli-cert-list-deleted";
+        await Program.RunAsync([
+            "keyvault", "certificate", "create",
+            "--vault-name", VaultName, "--name", certName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+        await Program.RunAsync([
+            "keyvault", "certificate", "delete",
+            "--vault-name", VaultName, "--name", certName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        var result = await Program.RunAsync([
+            "keyvault", "certificate", "list-deleted",
+            "--vault-name", VaultName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(result, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task KeyVaultTests_Certificate_Recover_ShouldRestoreFile()
+    {
+        const string certName = "cli-cert-recover";
+        var certFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "certificates", $"{certName}.json");
+
+        await Program.RunAsync([
+            "keyvault", "certificate", "create",
+            "--vault-name", VaultName, "--name", certName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+        await Program.RunAsync([
+            "keyvault", "certificate", "delete",
+            "--vault-name", VaultName, "--name", certName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+        Assert.That(File.Exists(certFilePath), Is.False, "File should be absent after delete.");
+
+        var result = await Program.RunAsync([
+            "keyvault", "certificate", "recover",
+            "--vault-name", VaultName, "--name", certName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.EqualTo(0));
+            Assert.That(File.Exists(certFilePath), Is.True, "Certificate file should be restored after recover.");
+        });
+    }
+
+    [Test]
+    public async Task KeyVaultTests_Certificate_Purge_ShouldPermanentlyRemoveDeletedFile()
+    {
+        const string certName = "cli-cert-purge";
+        var deletedFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "certificates", "deleted", $"{certName}.json");
+
+        await Program.RunAsync([
+            "keyvault", "certificate", "create",
+            "--vault-name", VaultName, "--name", certName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+        await Program.RunAsync([
+            "keyvault", "certificate", "delete",
+            "--vault-name", VaultName, "--name", certName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+        Assert.That(File.Exists(deletedFilePath), Is.True, "Deleted record should exist after soft-delete.");
+
+        var result = await Program.RunAsync([
+            "keyvault", "certificate", "purge",
+            "--vault-name", VaultName, "--name", certName,
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.EqualTo(0));
+            Assert.That(File.Exists(deletedFilePath), Is.False, "Deleted record should be gone after purge.");
+        });
+    }
 }
 

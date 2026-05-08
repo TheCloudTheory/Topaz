@@ -25,6 +25,10 @@ public sealed class GenericKeyVaultCommand : IEmulatorCommand
                 certificate.AddCommand<DeleteCertificateCommand>("delete");
                 certificate.AddCommand<BackupCertificateCommand>("backup");
                 certificate.AddCommand<RestoreCertificateCommand>("restore");
+                certificate.AddCommand<GetDeletedCertificateCommand>("get-deleted");
+                certificate.AddCommand<ListDeletedCertificatesCommand>("list-deleted");
+                certificate.AddCommand<RecoverDeletedCertificateCommand>("recover");
+                certificate.AddCommand<PurgeDeletedCertificateCommand>("purge");
             });
             keyVault.AddBranch("secret", secret =>
             {

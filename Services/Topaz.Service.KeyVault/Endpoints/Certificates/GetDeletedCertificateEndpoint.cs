@@ -3,24 +3,23 @@ using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.KeyVault.Models.Responses.Certificates;
 using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.KeyVault.Endpoints.Certificates;
 
-internal sealed class DeleteCertificateEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class GetDeletedCertificateEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : KeyVaultDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     private readonly KeyVaultCertificatesDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
 
     public string? ProviderNamespace => "Microsoft.KeyVault";
-    public string[] Endpoints => ["DELETE /certificates/{certName}"];
-    public string[] Permissions => ["Microsoft.KeyVault/vaults/certificates/delete"];
+    public string[] Endpoints => ["GET /deletedcertificates/{certName}"];
+    public string[] Permissions => ["Microsoft.KeyVault/vaults/certificates/read"];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultKeyVaultPort, GlobalSettings.HttpsPort], Protocol.Https);
 
-    protected override string? AccessPolicyPermission => "delete";
+    protected override string? AccessPolicyPermission => "get";
     protected override string AccessPolicyScope => "certificates";
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
@@ -36,7 +35,7 @@ internal sealed class DeleteCertificateEndpoint(Pipeline eventPipeline, ITopazLo
                 return;
             }
 
-            var operation = _dataPlane.DeleteCertificate(
+            var operation = _dataPlane.GetDeletedCertificate(
                 vault.GetSubscription(), vault.GetResourceGroup(), vault.Name!, certName);
 
             if (operation.Result == OperationResult.NotFound || operation.Resource == null)
@@ -45,8 +44,8 @@ internal sealed class DeleteCertificateEndpoint(Pipeline eventPipeline, ITopazLo
                 return;
             }
 
-            var content = DeleteCertificateResponse.New(operation.Resource.Bundles.Last(), vault.Name!, certName);
-            response.CreateJsonContentResponse(content);
+            response.CreateJsonContentResponse(
+                GetDeletedCertificateResponse.FromRecord(operation.Resource, vault.Name!));
         }
         catch (Exception ex)
         {

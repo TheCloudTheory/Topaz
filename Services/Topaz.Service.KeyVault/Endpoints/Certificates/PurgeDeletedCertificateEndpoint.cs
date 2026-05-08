@@ -1,26 +1,24 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
-using Topaz.Service.KeyVault.Models.Responses.Certificates;
 using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.KeyVault.Endpoints.Certificates;
 
-internal sealed class DeleteCertificateEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class PurgeDeletedCertificateEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : KeyVaultDataPlaneEndpointBase(eventPipeline, logger), IEndpointDefinition
 {
     private readonly KeyVaultCertificatesDataPlane _dataPlane = new(logger, new KeyVaultResourceProvider(logger));
 
     public string? ProviderNamespace => "Microsoft.KeyVault";
-    public string[] Endpoints => ["DELETE /certificates/{certName}"];
-    public string[] Permissions => ["Microsoft.KeyVault/vaults/certificates/delete"];
+    public string[] Endpoints => ["DELETE /deletedcertificates/{certName}"];
+    public string[] Permissions => ["Microsoft.KeyVault/vaults/certificates/purge/action"];
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultKeyVaultPort, GlobalSettings.HttpsPort], Protocol.Https);
 
-    protected override string? AccessPolicyPermission => "delete";
+    protected override string? AccessPolicyPermission => "purge";
     protected override string AccessPolicyScope => "certificates";
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
@@ -36,17 +34,17 @@ internal sealed class DeleteCertificateEndpoint(Pipeline eventPipeline, ITopazLo
                 return;
             }
 
-            var operation = _dataPlane.DeleteCertificate(
+            var operation = _dataPlane.PurgeDeletedCertificate(
                 vault.GetSubscription(), vault.GetResourceGroup(), vault.Name!, certName);
 
-            if (operation.Result == OperationResult.NotFound || operation.Resource == null)
+            if (operation.Result == OperationResult.NotFound)
             {
-                response.StatusCode = HttpStatusCode.NotFound;
+                response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode,
+                    $"Deleted certificate {certName} not found.", HttpStatusCode.NotFound);
                 return;
             }
 
-            var content = DeleteCertificateResponse.New(operation.Resource.Bundles.Last(), vault.Name!, certName);
-            response.CreateJsonContentResponse(content);
+            response.StatusCode = HttpStatusCode.NoContent;
         }
         catch (Exception ex)
         {

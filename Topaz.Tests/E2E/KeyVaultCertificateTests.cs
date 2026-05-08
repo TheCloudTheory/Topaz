@@ -200,13 +200,89 @@ public class KeyVaultCertificateTests
         var policy = new CertificatePolicy("Self", "CN=delete-test");
         client.StartCreateCertificate("delete-cert", policy).WaitForCompletion();
 
-        // Act — delete is synchronous; WaitForCompletion would poll GET /deletedcertificates/{name}
-        // which is out of scope, so just fire the DELETE request without waiting for the LRO poll.
-        client.StartDeleteCertificate("delete-cert");
+        // Act — WaitForCompletion polls GET /deletedcertificates/{name}, now implemented.
+        client.StartDeleteCertificate("delete-cert").WaitForCompletion();
 
         // Assert — certificate no longer in active list
         var active = client.GetPropertiesOfCertificates().ToList();
         Assert.That(active.Any(c => c.Name == "delete-cert"), Is.False);
+    }
+
+    [Test]
+    public void Certificate_GetDeleted_ShouldReturnDeletedBundle()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+        var policy = new CertificatePolicy("Self", "CN=get-deleted-test");
+        client.StartCreateCertificate("get-deleted-cert", policy).WaitForCompletion();
+        client.StartDeleteCertificate("get-deleted-cert").WaitForCompletion();
+
+        // Act
+        var deleted = client.GetDeletedCertificate("get-deleted-cert").Value;
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(deleted.Name, Is.EqualTo("get-deleted-cert"));
+            Assert.That(deleted.RecoveryId.ToString(), Does.Contain("/deletedcertificates/get-deleted-cert"));
+        });
+    }
+
+    [Test]
+    public void Certificate_GetDeletedCertificates_ShouldListDeleted()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+        var policy = new CertificatePolicy("Self", "CN=list-deleted-test");
+        client.StartCreateCertificate("list-deleted-cert", policy).WaitForCompletion();
+        client.StartDeleteCertificate("list-deleted-cert").WaitForCompletion();
+
+        // Act
+        var deleted = client.GetDeletedCertificates().ToList();
+
+        // Assert
+        Assert.That(deleted.Any(c => c.Name == "list-deleted-cert"), Is.True);
+    }
+
+    [Test]
+    public void Certificate_RecoverDeleted_ShouldRestoreToActiveList()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+        var policy = new CertificatePolicy("Self", "CN=recover-test");
+        client.StartCreateCertificate("recover-cert", policy).WaitForCompletion();
+        client.StartDeleteCertificate("recover-cert").WaitForCompletion();
+
+        var activeBeforeRecover = client.GetPropertiesOfCertificates().ToList();
+        Assert.That(activeBeforeRecover.Any(c => c.Name == "recover-cert"), Is.False);
+
+        // Act
+        client.StartRecoverDeletedCertificate("recover-cert").WaitForCompletion();
+
+        // Assert
+        var active = client.GetPropertiesOfCertificates().ToList();
+        Assert.That(active.Any(c => c.Name == "recover-cert"), Is.True);
+    }
+
+    [Test]
+    public void Certificate_PurgeDeleted_ShouldPermanentlyRemove()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+        var policy = new CertificatePolicy("Self", "CN=purge-test");
+        client.StartCreateCertificate("purge-cert", policy).WaitForCompletion();
+        client.StartDeleteCertificate("purge-cert").WaitForCompletion();
+
+        // Act
+        client.PurgeDeletedCertificate("purge-cert");
+
+        // Assert — certificate is no longer in the deleted list
+        var deletedAfterPurge = client.GetDeletedCertificates().ToList();
+        Assert.That(deletedAfterPurge.Any(c => c.Name == "purge-cert"), Is.False);
     }
 
     [Test]

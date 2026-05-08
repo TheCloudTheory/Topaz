@@ -32,6 +32,11 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
         new DeleteCertificateEndpoint(eventPipeline, logger),
         new RestoreCertificateEndpoint(eventPipeline, logger),
         new BackupCertificateEndpoint(eventPipeline, logger),
+        // Deleted certificates — list before single-GET to prevent routing collision
+        new GetDeletedCertificatesEndpoint(eventPipeline, logger),
+        new GetDeletedCertificateEndpoint(eventPipeline, logger),
+        new RecoverDeletedCertificateEndpoint(eventPipeline, logger),
+        new PurgeDeletedCertificateEndpoint(eventPipeline, logger),
         new SetSecretEndpoint(eventPipeline, logger),
         new BackupSecretEndpoint(eventPipeline, logger),
         new RestoreSecretEndpoint(eventPipeline, logger),
