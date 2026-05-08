@@ -128,16 +128,16 @@ The data plane covers operations served directly from the vault's own hostname (
 
 | Operation | Status |
 |-----------|--------|
-| Create Certificate | ❌ |
-| Import Certificate | ❌ |
-| Get Certificate | ❌ |
-| Get Certificates | ❌ |
-| Get Certificate Versions | ❌ |
+| Create Certificate | ✅ | `POST /certificates/{name}/create` — self-signed, synchronous |
+| Import Certificate | ✅ | `POST /certificates/{name}/import` — PFX (PKCS#12) |
+| Get Certificate | ✅ | `GET /certificates/{name}/{version}` |
+| Get Certificates | ✅ | `GET /certificates` |
+| Get Certificate Versions | ✅ | `GET /certificates/{name}/versions` |
 | Get Certificate Policy | ❌ |
-| Update Certificate | ❌ |
+| Update Certificate | ✅ | `PATCH /certificates/{name}/{version}` |
 | Update Certificate Policy | ❌ |
-| Delete Certificate | ❌ |
-| Get Certificate Operation | ❌ |
+| Delete Certificate | ✅ | `DELETE /certificates/{name}` — soft-delete |
+| Get Certificate Operation | ✅ | `GET /certificates/{name}/pending` |
 | Update Certificate Operation | ❌ |
 | Delete Certificate Operation | ❌ |
 | Merge Certificate | ❌ |

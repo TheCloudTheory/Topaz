@@ -1,6 +1,7 @@
 ﻿using Topaz.EventPipeline;
 using Topaz.Service.KeyVault.Endpoints;
 using Topaz.Service.KeyVault.Endpoints.AccessPolicies;
+using Topaz.Service.KeyVault.Endpoints.Certificates;
 using Topaz.Service.KeyVault.Endpoints.Keys;
 using Topaz.Service.KeyVault.Endpoints.Secrets;
 using Topaz.Service.ResourceGroup;
@@ -18,6 +19,17 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
     public string Name => "Azure Key Vault";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
+        // Certificates — list endpoint must come before the single-GET to prevent GET /certificates/{empty}
+        // matching before GET /certificates (trailing-slash path has same segment count as /{certName}).
+        // Operation endpoint before versioned GET to avoid /pending being matched as a version.
+        new GetCertificatesEndpoint(eventPipeline, logger),
+        new GetCertificateOperationEndpoint(eventPipeline, logger),
+        new GetCertificateVersionsEndpoint(eventPipeline, logger),
+        new GetCertificateEndpoint(eventPipeline, logger),
+        new CreateCertificateEndpoint(eventPipeline, logger),
+        new ImportCertificateEndpoint(eventPipeline, logger),
+        new UpdateCertificateEndpoint(eventPipeline, logger),
+        new DeleteCertificateEndpoint(eventPipeline, logger),
         new SetSecretEndpoint(eventPipeline, logger),
         new BackupSecretEndpoint(eventPipeline, logger),
         new RestoreSecretEndpoint(eventPipeline, logger),
