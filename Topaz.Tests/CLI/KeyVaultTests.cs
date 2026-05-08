@@ -610,5 +610,215 @@ public class KeyVaultTests
 
         Assert.That(attestResult, Is.EqualTo(0));
     }
+
+    // -------------------------------------------------------------------------
+    // Certificate commands
+    // -------------------------------------------------------------------------
+
+    [Test]
+    public async Task KeyVaultTests_Certificate_Create_ShouldPersistCertificateFile()
+    {
+        var result = await Program.RunAsync([
+            "keyvault", "certificate", "create",
+            "--vault-name", VaultName,
+            "--name", "cli-cert-create",
+            "--subject", "CN=cli-cert-create",
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        var certFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "certificates", "cli-cert-create.json");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.EqualTo(0));
+            Assert.That(File.Exists(certFilePath), Is.True);
+        });
+    }
+
+    [Test]
+    public async Task KeyVaultTests_Certificate_Import_ShouldPersistCertificateFile()
+    {
+        // Generate an in-memory PFX
+        using var rsa = RSA.Create(2048);
+        var req = new System.Security.Cryptography.X509Certificates.CertificateRequest(
+            "CN=cli-cert-import", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        var cert = req.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddYears(1));
+        var pfxBase64 = Convert.ToBase64String(cert.Export(
+            System.Security.Cryptography.X509Certificates.X509ContentType.Pfx));
+
+        var result = await Program.RunAsync([
+            "keyvault", "certificate", "import",
+            "--vault-name", VaultName,
+            "--name", "cli-cert-import",
+            "--value", pfxBase64,
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        var certFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "certificates", "cli-cert-import.json");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.EqualTo(0));
+            Assert.That(File.Exists(certFilePath), Is.True);
+        });
+    }
+
+    [Test]
+    public async Task KeyVaultTests_Certificate_Get_ShouldReturnCertificate()
+    {
+        await Program.RunAsync([
+            "keyvault", "certificate", "create",
+            "--vault-name", VaultName,
+            "--name", "cli-cert-get",
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        var result = await Program.RunAsync([
+            "keyvault", "certificate", "get",
+            "--vault-name", VaultName,
+            "--name", "cli-cert-get",
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(result, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task KeyVaultTests_Certificate_List_ShouldReturnCreatedCertificates()
+    {
+        await Program.RunAsync([
+            "keyvault", "certificate", "create",
+            "--vault-name", VaultName, "--name", "cli-cert-list-a",
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+        await Program.RunAsync([
+            "keyvault", "certificate", "create",
+            "--vault-name", VaultName, "--name", "cli-cert-list-b",
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        var result = await Program.RunAsync([
+            "keyvault", "certificate", "list",
+            "--vault-name", VaultName,
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(result, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task KeyVaultTests_Certificate_ListVersions_ShouldReturnAllVersions()
+    {
+        // Create the same cert name twice to produce two versions
+        await Program.RunAsync([
+            "keyvault", "certificate", "create",
+            "--vault-name", VaultName, "--name", "cli-cert-versions",
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+        await Program.RunAsync([
+            "keyvault", "certificate", "create",
+            "--vault-name", VaultName, "--name", "cli-cert-versions",
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        var result = await Program.RunAsync([
+            "keyvault", "certificate", "list-versions",
+            "--vault-name", VaultName,
+            "--name", "cli-cert-versions",
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        var certFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "certificates", "cli-cert-versions.json");
+
+        var bundles = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement[]>(
+            File.ReadAllText(certFilePath))!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.EqualTo(0));
+            Assert.That(bundles.Length, Is.EqualTo(2));
+        });
+    }
+
+    [Test]
+    public async Task KeyVaultTests_Certificate_Update_ShouldDisableCertificate()
+    {
+        await Program.RunAsync([
+            "keyvault", "certificate", "create",
+            "--vault-name", VaultName, "--name", "cli-cert-update",
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        var certFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "certificates", "cli-cert-update.json");
+
+        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(certFilePath));
+        var id = doc.RootElement[0].GetProperty("id").GetString()!;
+        var version = id.Split('/').Last();
+
+        var result = await Program.RunAsync([
+            "keyvault", "certificate", "update",
+            "--vault-name", VaultName,
+            "--name", "cli-cert-update",
+            "--version", version,
+            "--enabled", "false",
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(result, Is.EqualTo(0));
+
+        using var updated = System.Text.Json.JsonDocument.Parse(File.ReadAllText(certFilePath));
+        var enabled = updated.RootElement[0].GetProperty("attributes").GetProperty("enabled").GetBoolean();
+        Assert.That(enabled, Is.False);
+    }
+
+    [Test]
+    public async Task KeyVaultTests_Certificate_Delete_ShouldRemoveCertificateFile()
+    {
+        await Program.RunAsync([
+            "keyvault", "certificate", "create",
+            "--vault-name", VaultName, "--name", "cli-cert-delete",
+            "-g", ResourceGroupName, "-s", SubscriptionId.ToString()
+        ]);
+
+        var certFilePath = Path.Combine(
+            Directory.GetCurrentDirectory(), ".topaz", ".subscription",
+            SubscriptionId.ToString(), ".resource-group", ResourceGroupName,
+            ".azure-key-vault", VaultName, "data", "certificates", "cli-cert-delete.json");
+
+        Assert.That(File.Exists(certFilePath), Is.True);
+
+        var result = await Program.RunAsync([
+            "keyvault", "certificate", "delete",
+            "--vault-name", VaultName,
+            "--name", "cli-cert-delete",
+            "-g", ResourceGroupName,
+            "-s", SubscriptionId.ToString()
+        ]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.EqualTo(0));
+            Assert.That(File.Exists(certFilePath), Is.False);
+        });
+    }
 }
 
