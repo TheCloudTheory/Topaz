@@ -1,7 +1,10 @@
 using Topaz.Portal.Components.Shared;
+using Topaz.Portal.Models.EventHubs;
 using Topaz.Portal.Models.KeyVaults;
+using Topaz.Portal.Models.ManagedIdentities;
 using Topaz.Portal.Models.ResourceGroups;
 using Topaz.Portal.Models.ResourceManager;
+using Topaz.Portal.Models.ServiceBus;
 using Topaz.Portal.Models.Storage;
 using Topaz.Portal.Models.Subscriptions;
 
@@ -153,6 +156,9 @@ public class ResourceSummaryWidget_ShowsStorageAndKeyVaultCounts : BunitTestCont
         }));
         client.ListSubscriptions().Returns(Task.FromResult(new ListSubscriptionsResponse { Value = [] }));
         client.ListResourceGroups().Returns(Task.FromResult(new ListResourceGroupsResponse { Value = [] }));
+        client.ListManagedIdentities().Returns(Task.FromResult(new ListManagedIdentitiesResponse { Value = [] }));
+        client.ListEventHubNamespaces().Returns(Task.FromResult(new ListEventHubNamespacesResponse { Value = [] }));
+        client.ListServiceBusNamespaces().Returns(Task.FromResult(new ListServiceBusNamespacesResponse { Value = [] }));
 
         var cut = RenderComponent<ResourceSummaryWidget>();
 
@@ -178,6 +184,9 @@ public class ResourceSummaryWidget_ShowsError_WhenLoadFails : BunitTestContext
         client.ListKeyVaults().Returns(Task.FromResult(new ListKeyVaultsResponse { Value = [] }));
         client.ListSubscriptions().Returns(Task.FromResult(new ListSubscriptionsResponse { Value = [] }));
         client.ListResourceGroups().Returns(Task.FromResult(new ListResourceGroupsResponse { Value = [] }));
+        client.ListManagedIdentities().Returns(Task.FromResult(new ListManagedIdentitiesResponse { Value = [] }));
+        client.ListEventHubNamespaces().Returns(Task.FromResult(new ListEventHubNamespacesResponse { Value = [] }));
+        client.ListServiceBusNamespaces().Returns(Task.FromResult(new ListServiceBusNamespacesResponse { Value = [] }));
 
         var cut = RenderComponent<ResourceSummaryWidget>();
 
