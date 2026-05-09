@@ -79,7 +79,10 @@ internal sealed class QueryTableEntitiesEndpoint(Pipeline eventPipeline, ITopazL
         // Path.GetFileName is called directly so static-analysis tools (e.g. CodeQL) can recognise
         // the taint as cleared here. PathGuard.ValidateName provides defence-in-depth against any
         // remaining forbidden characters such as "..".
-        var tableName = Path.GetFileName(path.TrimEnd('/'));
+        // TrimEnd is called on a separate variable so GetFileName receives a plain tainted identifier,
+        // not a method-call expression — this helps pattern-based SAST tools match the sanitizer.
+        var trimmedPath = path.TrimEnd('/');
+        var tableName = Path.GetFileName(trimmedPath);
         if (string.IsNullOrEmpty(tableName))
         {
             response.StatusCode = HttpStatusCode.BadRequest;
