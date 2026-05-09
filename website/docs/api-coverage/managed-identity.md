@@ -48,3 +48,16 @@ This page tracks which Azure Managed Identity REST API operations are implemente
 | Operation | Status |
 |-----------|--------|
 | Get By Resource | ✅ |
+
+---
+
+## Portal
+
+| View | Status | Notes |
+|------|--------|-------|
+| List managed identities | ✅ | Subscription filter, create panel |
+| Overview (essentials + delete) | ✅ | |
+| Settings > Properties | ✅ | ClientId, PrincipalId, TenantId |
+| Settings > Federated credentials | ✅ | List, add, delete |
+| IAM | ✅ | Stub (consistent with other services) |
+| Tags | ✅ | Add / remove via TagsPanel |

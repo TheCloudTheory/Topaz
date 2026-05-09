@@ -1,0 +1,34 @@
+@page "/managed-identities/{SubscriptionId:guid}/{ResourceGroupName}/{IdentityName}/iam"
+@using System.Net
+@inject ITopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/managed-identities">Managed identities</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/managed-identities/{SubscriptionId:D}/{ResourceGroupName}/{IdentityName}")">@DecodedName</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">IAM</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedName</h1>
+
+<ManagedIdentityDetailsShell SubscriptionId="SubscriptionId"
+                              ResourceGroupName="@DecodedRg"
+                              IdentityName="@DecodedName">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title mb-3">IAM</h5>
+            <p class="mb-0 text-muted">
+                IAM view goes here (role assignments, role definitions, principals, etc.).
+            </p>
+        </div>
+    </div>
+</ManagedIdentityDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string IdentityName { get; set; } = "";
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedName => WebUtility.UrlDecode(IdentityName);
+}

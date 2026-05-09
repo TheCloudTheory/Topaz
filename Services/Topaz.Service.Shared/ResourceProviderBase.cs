@@ -153,14 +153,23 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             servicePathSegments.Length +
             2; // Local path will contain two additional segments: root directory and metadata filename 
 
+        // Derive a service-specific directory discriminator (e.g. ".managed-identity") from the local
+        // directory path template. This is the last path segment that is not a {placeholder}. It prevents
+        // files from other services that happen to sit at the same depth from being included in results.
+        var sep = Path.DirectorySeparatorChar.ToString();
+        var serviceDiscriminator = TService.LocalDirectoryPath
+            .Split(['/', Path.DirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries)
+            .LastOrDefault(s => !s.StartsWith('{'));
+
         _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(List),
-            $"If lookForNoOfSegments parameter wasn't provided (was {lookForNoOfSegments}) will default to {defaultLookForNoOfSegments} segments lookup.");
+            $"If lookForNoOfSegments parameter wasn't provided (was {lookForNoOfSegments}) will default to {defaultLookForNoOfSegments} segments lookup. Service discriminator: '{serviceDiscriminator}'.");
 
         return metadataFiles
             .Where(file =>
                 file.Split("/").Length ==
                 (lookForNoOfSegments.HasValue ? lookForNoOfSegments.Value : defaultLookForNoOfSegments)
-                && (filter == null || file.Contains(filter)))
+                && (filter == null || file.Contains(filter))
+                && (serviceDiscriminator == null || file.Contains(sep + serviceDiscriminator + sep)))
             .Select(File.ReadAllText);
     }
 
@@ -481,6 +490,14 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var subresourcePath = Path.Combine(BaseEmulatorPath,
             GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), parentId,
             subresource);
+
+        if (!Directory.Exists(subresourcePath))
+        {
+            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(ListSubresourcesAs),
+                $"Subresource directory '{subresourcePath}' does not exist, returning empty list.");
+            return [];
+        }
+
         var metadataFiles = Directory.GetFiles(subresourcePath, "*.json", SearchOption.AllDirectories);
 
         return metadataFiles.Length == 0

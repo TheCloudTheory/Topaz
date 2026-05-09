@@ -1,6 +1,7 @@
 using Azure.ResourceManager.Resources;
 using Microsoft.Graph.Models;
 using Topaz.Portal.Models.KeyVaults;
+using Topaz.Portal.Models.ManagedIdentities;
 using Topaz.Portal.Models.ManagementGroups;
 using Topaz.Portal.Models.Rbac;
 using Topaz.Portal.Models.ResourceGroups;
@@ -135,6 +136,67 @@ public interface ITopazClient
         string resourceGroupName,
         string storageAccountName,
         string tagName,
+        CancellationToken cancellationToken = default);
+
+    // Managed Identities
+    Task<ListManagedIdentitiesResponse> ListManagedIdentities(
+        CancellationToken cancellationToken = default);
+
+    Task<ManagedIdentityDto?> GetManagedIdentity(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string identityName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateManagedIdentity(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string identityName,
+        string location,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteManagedIdentity(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string identityName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateOrUpdateManagedIdentityTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string identityName,
+        string tagName,
+        string tagValue,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteManagedIdentityTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string identityName,
+        string tagName,
+        CancellationToken cancellationToken = default);
+
+    Task<ListFederatedCredentialsResponse> ListFederatedCredentials(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string identityName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateFederatedCredential(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string identityName,
+        string credentialName,
+        string issuer,
+        string subject,
+        IList<string> audiences,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteFederatedCredential(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string identityName,
+        string credentialName,
         CancellationToken cancellationToken = default);
 
     // Key Vault
