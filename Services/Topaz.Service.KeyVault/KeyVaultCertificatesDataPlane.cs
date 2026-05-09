@@ -16,6 +16,7 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
     private const string DeletedSubDir = "deleted";
     private const string PendingSuffix = ".pending.json";
     private const string ContactsFileName = "contacts.json";
+    private const string IssuersSubDir = "issuers";
 
     public DataPlaneOperationResult<(CertificateBundle Bundle, CertificateOperationResponse Operation)> CreateCertificate(
         Stream input,
@@ -606,6 +607,183 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
     }
 
     // -------------------------------------------------------------------------
+    // Issuers
+    // -------------------------------------------------------------------------
+
+    public DataPlaneOperationResult<CertificateIssuerResponse> SetIssuer(
+        Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string issuerName)
+    {
+        PathGuard.ValidateName(issuerName);
+        issuerName = PathGuard.SanitizeName(issuerName);
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(SetIssuer),
+            "Setting certificate issuer {0} in vault {1}.", issuerName, vaultName);
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+        var request = string.IsNullOrEmpty(rawContent)
+            ? new SetCertificateIssuerRequest()
+            : JsonSerializer.Deserialize<SetCertificateIssuerRequest>(rawContent, GlobalSettings.JsonOptions)
+              ?? new SetCertificateIssuerRequest();
+
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var issuersPath = GetIssuersPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var issuerFilePath = Path.Combine(issuersPath, $"{issuerName}.json");
+        PathGuard.EnsureWithinDirectory(issuerFilePath, issuersPath);
+
+        long created = now;
+        if (File.Exists(issuerFilePath))
+        {
+            var existing = JsonSerializer.Deserialize<CertificateIssuerResponse>(
+                File.ReadAllText(issuerFilePath), GlobalSettings.JsonOptions);
+            created = existing?.Attributes?.Created ?? now;
+        }
+
+        var response = CertificateIssuerResponse.ForVault(
+            vaultName, issuerName,
+            request.Provider ?? string.Empty,
+            request.Credentials != null ? new CertificateIssuerResponse.IssuerCredentials { AccountId = request.Credentials.AccountId } : null,
+            MapOrgDetails(request.OrgDetails),
+            new CertificateIssuerResponse.IssuerAttributes
+            {
+                Enabled = request.Attributes?.Enabled ?? true,
+                Created = created,
+                Updated = now
+            });
+
+        File.WriteAllText(issuerFilePath, JsonSerializer.Serialize(response, GlobalSettings.JsonOptions));
+        return new DataPlaneOperationResult<CertificateIssuerResponse>(OperationResult.Success, response, null, null);
+    }
+
+    public DataPlaneOperationResult<CertificateIssuerResponse> GetIssuer(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string issuerName)
+    {
+        PathGuard.ValidateName(issuerName);
+        issuerName = PathGuard.SanitizeName(issuerName);
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(GetIssuer),
+            "Getting certificate issuer {0} from vault {1}.", issuerName, vaultName);
+
+        var issuersPath = GetIssuersPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var issuerFilePath = Path.Combine(issuersPath, $"{issuerName}.json");
+        PathGuard.EnsureWithinDirectory(issuerFilePath, issuersPath);
+
+        if (!File.Exists(issuerFilePath))
+            return new DataPlaneOperationResult<CertificateIssuerResponse>(OperationResult.NotFound, null,
+                $"Issuer {issuerName} not found.", "IssuerNotFound");
+
+        var response = JsonSerializer.Deserialize<CertificateIssuerResponse>(
+            File.ReadAllText(issuerFilePath), GlobalSettings.JsonOptions)!;
+        return new DataPlaneOperationResult<CertificateIssuerResponse>(OperationResult.Success, response, null, null);
+    }
+
+    public DataPlaneOperationResult<CertificateIssuerResponse> UpdateIssuer(
+        Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string issuerName)
+    {
+        PathGuard.ValidateName(issuerName);
+        issuerName = PathGuard.SanitizeName(issuerName);
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(UpdateIssuer),
+            "Updating certificate issuer {0} in vault {1}.", issuerName, vaultName);
+
+        var issuersPath = GetIssuersPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var issuerFilePath = Path.Combine(issuersPath, $"{issuerName}.json");
+        PathGuard.EnsureWithinDirectory(issuerFilePath, issuersPath);
+
+        if (!File.Exists(issuerFilePath))
+            return new DataPlaneOperationResult<CertificateIssuerResponse>(OperationResult.NotFound, null,
+                $"Issuer {issuerName} not found.", "IssuerNotFound");
+
+        var existing = JsonSerializer.Deserialize<CertificateIssuerResponse>(
+            File.ReadAllText(issuerFilePath), GlobalSettings.JsonOptions)!;
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+        var request = string.IsNullOrEmpty(rawContent)
+            ? new UpdateCertificateIssuerRequest()
+            : JsonSerializer.Deserialize<UpdateCertificateIssuerRequest>(rawContent, GlobalSettings.JsonOptions)
+              ?? new UpdateCertificateIssuerRequest();
+
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var merged = CertificateIssuerResponse.ForVault(
+            vaultName, issuerName,
+            request.Provider ?? existing.Provider ?? string.Empty,
+            request.Credentials != null
+                ? new CertificateIssuerResponse.IssuerCredentials { AccountId = request.Credentials.AccountId ?? existing.Credentials?.AccountId }
+                : existing.Credentials,
+            request.OrgDetails != null ? MapOrgDetails(request.OrgDetails) : existing.OrgDetails,
+            new CertificateIssuerResponse.IssuerAttributes
+            {
+                Enabled = request.Attributes?.Enabled ?? existing.Attributes?.Enabled ?? true,
+                Created = existing.Attributes?.Created ?? now,
+                Updated = now
+            });
+
+        File.WriteAllText(issuerFilePath, JsonSerializer.Serialize(merged, GlobalSettings.JsonOptions));
+        return new DataPlaneOperationResult<CertificateIssuerResponse>(OperationResult.Success, merged, null, null);
+    }
+
+    public DataPlaneOperationResult<CertificateIssuerResponse> DeleteIssuer(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string issuerName)
+    {
+        PathGuard.ValidateName(issuerName);
+        issuerName = PathGuard.SanitizeName(issuerName);
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(DeleteIssuer),
+            "Deleting certificate issuer {0} from vault {1}.", issuerName, vaultName);
+
+        var issuersPath = GetIssuersPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var issuerFilePath = Path.Combine(issuersPath, $"{issuerName}.json");
+        PathGuard.EnsureWithinDirectory(issuerFilePath, issuersPath);
+
+        if (!File.Exists(issuerFilePath))
+            return new DataPlaneOperationResult<CertificateIssuerResponse>(OperationResult.NotFound, null,
+                $"Issuer {issuerName} not found.", "IssuerNotFound");
+
+        var response = JsonSerializer.Deserialize<CertificateIssuerResponse>(
+            File.ReadAllText(issuerFilePath), GlobalSettings.JsonOptions)!;
+        File.Delete(issuerFilePath);
+        return new DataPlaneOperationResult<CertificateIssuerResponse>(OperationResult.Deleted, response, null, null);
+    }
+
+    public DataPlaneOperationResult<CertificateIssuersResponse> GetIssuers(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(GetIssuers),
+            "Listing certificate issuers in vault {0}.", vaultName);
+
+        var issuersPath = GetIssuersPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+
+        if (!Directory.Exists(issuersPath))
+            return new DataPlaneOperationResult<CertificateIssuersResponse>(
+                OperationResult.Success,
+                CertificateIssuersResponse.ForVault(vaultName, []),
+                null, null);
+
+        var issuers = Directory.GetFiles(issuersPath, "*.json")
+            .Select(f => JsonSerializer.Deserialize<CertificateIssuerResponse>(
+                File.ReadAllText(f), GlobalSettings.JsonOptions)!)
+            .ToList();
+
+        return new DataPlaneOperationResult<CertificateIssuersResponse>(
+            OperationResult.Success,
+            CertificateIssuersResponse.ForVault(vaultName, issuers),
+            null, null);
+    }
+
+    // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
 
@@ -699,5 +877,50 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
             .TrimEnd('=')
             .Replace('+', '-')
             .Replace('/', '_');
+    }
+
+    private string GetIssuersPath(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName)
+    {
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var issuersPath = Path.Combine(basePath, IssuersSubDir);
+        Directory.CreateDirectory(issuersPath);
+        return issuersPath;
+    }
+
+    private static CertificateIssuerResponse.OrganizationDetails? MapOrgDetails(
+        SetCertificateIssuerRequest.OrganizationDetails? details)
+    {
+        if (details == null) return null;
+        return new CertificateIssuerResponse.OrganizationDetails
+        {
+            Id = details.Id,
+            AdminDetailsList = details.AdminDetailsList?.Select(a => new CertificateIssuerResponse.AdminDetails
+            {
+                FirstName = a.FirstName,
+                LastName = a.LastName,
+                Email = a.Email,
+                Phone = a.Phone
+            }).ToArray()
+        };
+    }
+
+    private static CertificateIssuerResponse.OrganizationDetails? MapOrgDetails(
+        UpdateCertificateIssuerRequest.OrganizationDetails? details)
+    {
+        if (details == null) return null;
+        return new CertificateIssuerResponse.OrganizationDetails
+        {
+            Id = details.Id,
+            AdminDetailsList = details.AdminDetailsList?.Select(a => new CertificateIssuerResponse.AdminDetails
+            {
+                FirstName = a.FirstName,
+                LastName = a.LastName,
+                Email = a.Email,
+                Phone = a.Phone
+            }).ToArray()
+        };
     }
 }

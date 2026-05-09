@@ -24,6 +24,13 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
         new SetCertificateContactsEndpoint(eventPipeline, logger),
         new GetCertificateContactsEndpoint(eventPipeline, logger),
         new DeleteCertificateContactsEndpoint(eventPipeline, logger),
+        // Certificate issuers — list before single to avoid "/issuers" matched as issuer name.
+        // Both must come before the generic /certificates/{name} routes.
+        new GetCertificateIssuersEndpoint(eventPipeline, logger),
+        new SetCertificateIssuerEndpoint(eventPipeline, logger),
+        new GetCertificateIssuerEndpoint(eventPipeline, logger),
+        new UpdateCertificateIssuerEndpoint(eventPipeline, logger),
+        new DeleteCertificateIssuerEndpoint(eventPipeline, logger),
         // Certificates — list endpoint must come before the single-GET to prevent GET /certificates/{empty}
         // matching before GET /certificates (trailing-slash path has same segment count as /{certName}).
         // Operation endpoint before versioned GET to avoid /pending being matched as a version.

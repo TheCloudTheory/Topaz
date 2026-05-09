@@ -11,7 +11,7 @@ namespace Topaz.Service.KeyVault.Models;
 /// </summary>
 public record class KeyBundle
 {
-    [System.Text.Json.Serialization.JsonConstructor]
+    [JsonConstructor]
     public KeyBundle() { }
 
     public KeyBundle(string name, string vaultName, string keyType, int? keySize,

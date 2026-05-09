@@ -150,8 +150,8 @@ The data plane covers operations served directly from the vault's own hostname (
 | Get Certificate Contacts | ✅ | `GET /certificates/contacts` |
 | Set Certificate Contacts | ✅ | `PUT /certificates/contacts` |
 | Delete Certificate Contacts | ✅ | `DELETE /certificates/contacts` |
-| Get Certificate Issuer | ❌ |
-| Get Certificate Issuers | ❌ |
-| Set Certificate Issuer | ❌ |
-| Update Certificate Issuer | ❌ |
-| Delete Certificate Issuer | ❌ |
+| Get Certificate Issuer | ✅ | `GET /certificates/issuers/{issuer-name}` |
+| Get Certificate Issuers | ✅ | `GET /certificates/issuers` |
+| Set Certificate Issuer | ✅ | `PUT /certificates/issuers/{issuer-name}` |
+| Update Certificate Issuer | ✅ | `PATCH /certificates/issuers/{issuer-name}` |
+| Delete Certificate Issuer | ✅ | `DELETE /certificates/issuers/{issuer-name}` |

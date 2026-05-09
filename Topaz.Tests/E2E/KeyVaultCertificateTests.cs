@@ -393,4 +393,103 @@ public class KeyVaultCertificateTests
         Assert.That(deleted.Value, Is.Not.Null);
         Assert.That(deleted.Value, Is.Empty);
     }
+
+    [Test]
+    public void Issuer_Set_ShouldReturnIssuerBundle()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+        var issuer = new CertificateIssuer("test-issuer", "Test");
+
+        // Act
+        var result = client.CreateIssuer(issuer);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value, Is.Not.Null);
+            Assert.That(result.Value.Name, Is.EqualTo("test-issuer"));
+            Assert.That(result.Value.Provider, Is.EqualTo("Test"));
+            Assert.That(result.Value.Id, Is.Not.Null);
+        });
+    }
+
+    [Test]
+    public void Issuer_Get_ShouldReturnIssuerBundle()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+        client.CreateIssuer(new CertificateIssuer("get-issuer", "Test"));
+
+        // Act
+        var result = client.GetIssuer("get-issuer");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value, Is.Not.Null);
+            Assert.That(result.Value.Name, Is.EqualTo("get-issuer"));
+            Assert.That(result.Value.Provider, Is.EqualTo("Test"));
+        });
+    }
+
+    [Test]
+    public void Issuer_Update_ShouldReturnUpdatedBundle()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+        client.CreateIssuer(new CertificateIssuer("update-issuer", "Test"));
+
+        var updated = new CertificateIssuer("update-issuer", "DigiCert");
+
+        // Act
+        var result = client.UpdateIssuer(updated);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value, Is.Not.Null);
+            Assert.That(result.Value.Provider, Is.EqualTo("DigiCert"));
+        });
+    }
+
+    [Test]
+    public void Issuer_Delete_ShouldReturnDeletedBundle()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+        client.CreateIssuer(new CertificateIssuer("delete-issuer", "Test"));
+
+        // Act
+        var result = client.DeleteIssuer("delete-issuer");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value, Is.Not.Null);
+            Assert.That(result.Value.Name, Is.EqualTo("delete-issuer"));
+        });
+    }
+
+    [Test]
+    public void Issuer_List_ShouldReturnAllIssuers()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+        client.CreateIssuer(new CertificateIssuer("list-issuer-a", "Test"));
+        client.CreateIssuer(new CertificateIssuer("list-issuer-b", "Test"));
+
+        // Act
+        var issuers = client.GetPropertiesOfIssuers().ToList();
+
+        // Assert
+        Assert.That(issuers, Has.Count.GreaterThanOrEqualTo(2));
+        Assert.That(issuers.Select(i => i.Name), Does.Contain("list-issuer-a"));
+        Assert.That(issuers.Select(i => i.Name), Does.Contain("list-issuer-b"));
+    }
 }
