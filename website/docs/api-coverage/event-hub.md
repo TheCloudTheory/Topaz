@@ -33,8 +33,8 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Create Or Update | ✅ | |
 | Delete | ✅ | |
 | Get | ✅ | |
-| List | ❌ | Subscription-level listing not implemented |
-| List By Resource Group | ❌ | |
+| List | ✅ | Subscription-level listing |
+| List By Resource Group | ✅ | |
 | Update | ❌ | |
 | Check Name Availability | ❌ | |
 | List Keys | ❌ | |
@@ -61,9 +61,9 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Operation | Status | Notes |
 |-----------|--------|-------|
 | Create Or Update | ✅ | |
-| Delete | ❌ | |
+| Delete | ✅ | |
 | Get | ✅ | |
-| List By Namespace | ❌ | |
+| List By Namespace | ✅ | `GET .../eventhubs` |
 | List Keys | ❌ | |
 | Regenerate Keys | ❌ | |
 | Get Authorization Rule | ❌ | |
@@ -110,6 +110,25 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Delete | ❌ |
 | Get | ❌ |
 | List | ❌ |
+
+---
+
+## Portal
+
+The Topaz Portal provides a web-based UI for managing Event Hub namespaces and their hubs, mirroring the Azure Portal experience.
+
+| Feature | Status | Route |
+|---------|--------|-------|
+| List namespaces (all subscriptions) | ✅ | `/portal/event-hubs` |
+| Create namespace | ✅ | `/portal/event-hubs` (side panel) |
+| Delete namespace | ✅ | Overview page |
+| Namespace overview (essentials) | ✅ | `/portal/event-hubs/{sub}/{rg}/{name}` |
+| Namespace properties | ✅ | `.../properties` |
+| Namespace tags (add/remove) | ✅ | `.../tags` |
+| IAM (stub) | ✅ | `.../iam` |
+| List event hubs | ✅ | `.../hubs` |
+| Create event hub | ✅ | `.../hubs` (inline form) |
+| Delete event hub | ✅ | `.../hubs` |
 
 ---
 

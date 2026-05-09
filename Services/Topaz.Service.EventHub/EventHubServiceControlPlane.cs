@@ -74,6 +74,27 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
             : new ControlPlaneOperationResult<EventHubResource>(OperationResult.Success, existingHub, null, null);
     }
 
+    public ControlPlaneOperationResult<EventHubResource[]> ListEventHubs(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        EventHubNamespaceIdentifier namespaceIdentifier)
+    {
+        var existingNamespace = GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
+        if (existingNamespace.Result == OperationResult.NotFound || existingNamespace.Resource == null)
+        {
+            return new ControlPlaneOperationResult<EventHubResource[]>(OperationResult.NotFound, null,
+                string.Format(EventHubNamespaceNotFoundMessageTemplate, namespaceIdentifier),
+                EventHubNamespaceNotFoundCode);
+        }
+
+        var hubs = provider.ListSubresourcesAs<EventHubResource>(subscriptionIdentifier, resourceGroupIdentifier,
+            namespaceIdentifier.Value, nameof(Subresource.Hubs).ToLowerInvariant());
+
+        logger.LogDebug(nameof(EventHubServiceControlPlane), nameof(ListEventHubs),
+            "Found {0} event hubs in namespace '{1}'.", hubs.Length, namespaceIdentifier);
+
+        return new ControlPlaneOperationResult<EventHubResource[]>(OperationResult.Success, hubs, null, null);
+    }
+
     public ControlPlaneOperationResult<EventHubNetworkRuleSetSubresource> GetNetworkRuleSet(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
         EventHubNamespaceIdentifier namespaceIdentifier, string networkRuleSetName)
@@ -195,6 +216,20 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
             "Microsoft.EventHub/namespaces/networkRuleSets" => DeployEventHubNetworkRuleSet(resource),
             _ => DeployEventHub(resource)
         };
+    }
+
+    public ControlPlaneOperationResult<EventHubNamespaceResource[]> ListNamespacesBySubscription(
+        SubscriptionIdentifier subscriptionIdentifier)
+    {
+        var resources = provider
+            .ListAs<EventHubNamespaceResource>(subscriptionIdentifier, null, null, 8)
+            .Where(r => r.IsInSubscription(subscriptionIdentifier))
+            .ToArray();
+
+        logger.LogDebug(nameof(EventHubServiceControlPlane), nameof(ListNamespacesBySubscription),
+            "Found {0} namespaces in subscription {1}.", resources.Length, subscriptionIdentifier);
+
+        return new ControlPlaneOperationResult<EventHubNamespaceResource[]>(OperationResult.Success, resources, null, null);
     }
 
     public ControlPlaneOperationResult<EventHubNamespaceResource[]> ListNamespaces(

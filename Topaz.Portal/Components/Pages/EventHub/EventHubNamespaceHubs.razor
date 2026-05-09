@@ -1,0 +1,257 @@
+@page "/portal/event-hubs/{SubscriptionId:guid}/{ResourceGroupName}/{NamespaceName}/hubs"
+@using System.Net
+@using Topaz.Portal.Models.EventHubs
+@inject ITopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/event-hubs">Event Hubs</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/portal/event-hubs/{SubscriptionId:D}/{ResourceGroupName}/{NamespaceName}")">@DecodedName</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Event Hubs</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedName</h1>
+
+<EventHubNamespaceDetailsShell SubscriptionId="SubscriptionId"
+                                ResourceGroupName="@DecodedRg"
+                                NamespaceName="@DecodedName">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="card-title mb-0">Event Hubs</h5>
+                <button class="btn btn-primary btn-sm"
+                        @onclick="ToggleCreate"
+                        disabled="@(_loading || _creatingBusy)">
+                    New event hub
+                </button>
+            </div>
+
+            @if (_showCreate)
+            {
+                <div class="border rounded p-3 mb-3">
+                    @if (!string.IsNullOrWhiteSpace(_createError))
+                    {
+                        <div class="alert alert-danger" role="alert">@_createError</div>
+                    }
+
+                    <div class="row g-2 align-items-end">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label mb-1">Name</label>
+                            <input class="form-control form-control-sm"
+                                   @bind="_createHubName"
+                                   placeholder="e.g. my-eventhub"
+                                   disabled="@_creatingBusy" />
+                        </div>
+
+                        <div class="col-12 col-md-3">
+                            <label class="form-label mb-1">Partition count</label>
+                            <input class="form-control form-control-sm"
+                                   type="number"
+                                   min="1"
+                                   max="32"
+                                   @bind="_createPartitionCount"
+                                   disabled="@_creatingBusy" />
+                        </div>
+
+                        <div class="col-12 col-md-3">
+                            <label class="form-label mb-1">Retention (days)</label>
+                            <input class="form-control form-control-sm"
+                                   type="number"
+                                   min="1"
+                                   max="7"
+                                   @bind="_createRetentionDays"
+                                   disabled="@_creatingBusy" />
+                        </div>
+
+                        <div class="col-12 col-md-2 d-flex gap-2">
+                            <button class="btn btn-success btn-sm flex-fill"
+                                    @onclick="CreateHubAsync"
+                                    disabled="@_creatingBusy">
+                                Create
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm"
+                                    @onclick="CloseCreate"
+                                    disabled="@_creatingBusy">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (_loading)
+            {
+                <p>Loading…</p>
+            }
+            else if (_error is not null)
+            {
+                <div class="alert alert-danger" role="alert">@_error</div>
+            }
+            else if (_hubs.Length == 0)
+            {
+                <p class="mb-0 text-muted">No event hubs found in this namespace.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Partitions</th>
+                                <th>Retention (days)</th>
+                                <th>Partition IDs</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var hub in _hubs)
+                            {
+                                <tr>
+                                    <td>@(hub.Name ?? "-")</td>
+                                    <td>@(hub.Status ?? "-")</td>
+                                    <td>@hub.PartitionCount</td>
+                                    <td>@hub.MessageRetentionInDays</td>
+                                    <td><small class="text-muted">@string.Join(", ", hub.PartitionIds)</small></td>
+                                    <td class="text-end">
+                                        @if (_deletingHub == hub.Name)
+                                        {
+                                            <span class="text-muted small">Deleting…</span>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => DeleteHubAsync(hub.Name!)"
+                                                    disabled="@(!string.IsNullOrWhiteSpace(_deletingHub))">
+                                                Delete
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_deleteError))
+            {
+                <div class="alert alert-danger mt-2 mb-0" role="alert">@_deleteError</div>
+            }
+        </div>
+    </div>
+</EventHubNamespaceDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string NamespaceName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _error;
+    private EventHubDto[] _hubs = [];
+
+    private bool _showCreate;
+    private bool _creatingBusy;
+    private string? _createError;
+    private string _createHubName = "";
+    private int _createPartitionCount = 4;
+    private int _createRetentionDays = 1;
+
+    private string? _deletingHub;
+    private string? _deleteError;
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedName => WebUtility.UrlDecode(NamespaceName);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            var result = await TopazClient.ListEventHubs(SubscriptionId, DecodedRg, DecodedName);
+            _hubs = result.Value;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleCreate()
+    {
+        _showCreate = !_showCreate;
+        _createError = null;
+    }
+
+    private void CloseCreate()
+    {
+        _showCreate = false;
+        _createError = null;
+        _createHubName = "";
+        _createPartitionCount = 4;
+        _createRetentionDays = 1;
+    }
+
+    private async Task CreateHubAsync()
+    {
+        _createError = null;
+
+        if (string.IsNullOrWhiteSpace(_createHubName))
+        {
+            _createError = "Please enter a name.";
+            return;
+        }
+
+        _creatingBusy = true;
+        try
+        {
+            await TopazClient.CreateEventHub(
+                SubscriptionId, DecodedRg, DecodedName,
+                _createHubName, _createPartitionCount, _createRetentionDays);
+
+            CloseCreate();
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _createError = ex.Message;
+        }
+        finally
+        {
+            _creatingBusy = false;
+        }
+    }
+
+    private async Task DeleteHubAsync(string hubName)
+    {
+        _deleteError = null;
+        _deletingHub = hubName;
+
+        try
+        {
+            await TopazClient.DeleteEventHub(SubscriptionId, DecodedRg, DecodedName, hubName);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _deleteError = ex.Message;
+        }
+        finally
+        {
+            _deletingHub = null;
+        }
+    }
+}

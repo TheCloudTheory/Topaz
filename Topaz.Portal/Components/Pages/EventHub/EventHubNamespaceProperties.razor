@@ -1,0 +1,117 @@
+@page "/portal/event-hubs/{SubscriptionId:guid}/{ResourceGroupName}/{NamespaceName}/properties"
+@using System.Net
+@using Topaz.Portal.Models.EventHubs
+@inject ITopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/event-hubs">Event Hubs</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/portal/event-hubs/{SubscriptionId:D}/{ResourceGroupName}/{NamespaceName}")">@DecodedName</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Properties</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedName</h1>
+
+<EventHubNamespaceDetailsShell SubscriptionId="SubscriptionId"
+                                ResourceGroupName="@DecodedRg"
+                                NamespaceName="@DecodedName">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_error</div>
+    }
+    else if (_namespace is null)
+    {
+        <p class="mb-0">Namespace not found.</p>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-4">Properties</h5>
+
+                <dl class="row">
+                    <dt class="col-sm-4 text-muted fw-normal">Name</dt>
+                    <dd class="col-sm-8">@(_namespace.Name ?? "-")</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Location</dt>
+                    <dd class="col-sm-8">@(_namespace.Location ?? "-")</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Resource group</dt>
+                    <dd class="col-sm-8">@(_namespace.ResourceGroupName ?? "-")</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Subscription ID</dt>
+                    <dd class="col-sm-8"><code>@(_namespace.SubscriptionId ?? "-")</code></dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">SKU name</dt>
+                    <dd class="col-sm-8">@(_namespace.SkuName ?? "-")</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">SKU tier</dt>
+                    <dd class="col-sm-8">@(_namespace.SkuTier ?? "-")</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Throughput units</dt>
+                    <dd class="col-sm-8">@(_namespace.SkuCapacity?.ToString() ?? "-")</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Provisioning state</dt>
+                    <dd class="col-sm-8">@(_namespace.ProvisioningState ?? "-")</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Status</dt>
+                    <dd class="col-sm-8">@(_namespace.Status ?? "-")</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Kafka enabled</dt>
+                    <dd class="col-sm-8">@(_namespace.KafkaEnabled?.ToString() ?? "-")</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Auto-inflate enabled</dt>
+                    <dd class="col-sm-8">@(_namespace.IsAutoInflateEnabled?.ToString() ?? "-")</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Max throughput units</dt>
+                    <dd class="col-sm-8">@(_namespace.MaximumThroughputUnits?.ToString() ?? "-")</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Zone redundant</dt>
+                    <dd class="col-sm-8">@(_namespace.ZoneRedundant?.ToString() ?? "-")</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Min TLS version</dt>
+                    <dd class="col-sm-8">@(_namespace.MinimumTlsVersion ?? "-")</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Service Bus endpoint</dt>
+                    <dd class="col-sm-8"><code>@(_namespace.ServiceBusEndpoint ?? "-")</code></dd>
+                </dl>
+            </div>
+        </div>
+    }
+</EventHubNamespaceDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string NamespaceName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _error;
+    private EventHubNamespaceDto? _namespace;
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedName => WebUtility.UrlDecode(NamespaceName);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            _namespace = await TopazClient.GetEventHubNamespace(SubscriptionId, DecodedRg, DecodedName);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

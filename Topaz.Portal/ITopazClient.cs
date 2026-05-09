@@ -1,5 +1,6 @@
 using Azure.ResourceManager.Resources;
 using Microsoft.Graph.Models;
+using Topaz.Portal.Models.EventHubs;
 using Topaz.Portal.Models.KeyVaults;
 using Topaz.Portal.Models.ManagedIdentities;
 using Topaz.Portal.Models.ManagementGroups;
@@ -197,6 +198,66 @@ public interface ITopazClient
         string resourceGroupName,
         string identityName,
         string credentialName,
+        CancellationToken cancellationToken = default);
+
+    // Event Hubs
+    Task<ListEventHubNamespacesResponse> ListEventHubNamespaces(
+        CancellationToken cancellationToken = default);
+
+    Task<EventHubNamespaceDto?> GetEventHubNamespace(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateEventHubNamespace(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        string location,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteEventHubNamespace(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateOrUpdateEventHubNamespaceTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        string tagName,
+        string tagValue,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteEventHubNamespaceTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        string tagName,
+        CancellationToken cancellationToken = default);
+
+    Task<ListEventHubsResponse> ListEventHubs(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateEventHub(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        string eventHubName,
+        int partitionCount = 4,
+        int messageRetentionInDays = 1,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteEventHub(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        string eventHubName,
         CancellationToken cancellationToken = default);
 
     // Key Vault
