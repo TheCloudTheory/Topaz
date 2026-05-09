@@ -50,6 +50,64 @@ resource "azurerm_key_vault" "kv_sd" {
   enable_rbac_authorization  = true
 }
 
+resource "azurerm_resource_group" "kv_certs_rg" {
+  name     = "tf-rm-kv-certs-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_key_vault" "kv_certs" {
+  name                      = "tfrm-kv-certs"
+  location                  = azurerm_resource_group.kv_certs_rg.location
+  resource_group_name       = azurerm_resource_group.kv_certs_rg.name
+  tenant_id                 = data.azurerm_client_config.current.tenant_id
+  sku_name                  = "standard"
+  enable_rbac_authorization = true
+}
+
+resource "azurerm_key_vault_certificate" "kv_cert" {
+  name         = "tfrm-kv-cert"
+  key_vault_id = azurerm_key_vault.kv_certs.id
+
+  certificate_policy {
+    issuer_parameters {
+      name = "Self"
+    }
+
+    key_properties {
+      exportable = true
+      key_size   = 2048
+      key_type   = "RSA"
+      reuse_key  = true
+    }
+
+    lifetime_action {
+      action {
+        action_type = "AutoRenew"
+      }
+      trigger {
+        days_before_expiry = 30
+      }
+    }
+
+    secret_properties {
+      content_type = "application/x-pkcs12"
+    }
+
+    x509_certificate_properties {
+      subject            = "CN=tfrm-kv-cert"
+      validity_in_months = 12
+      key_usage = [
+        "cRLSign",
+        "dataEncipherment",
+        "digitalSignature",
+        "keyAgreement",
+        "keyEncipherment",
+        "keyCertSign",
+      ]
+    }
+  }
+}
+
 resource "azurerm_resource_group" "kv_keys_rg" {
   name     = "tf-rm-kv-keys-rg"
   location = "westeurope"
@@ -302,6 +360,10 @@ output "kv_basic_vault_uri"         { value = azurerm_key_vault.kv_basic.vault_u
 output "kv_sd_vault_name"           { value = azurerm_key_vault.kv_sd.name }
 output "kv_rsa_key_name"            { value = azurerm_key_vault_key.kv_rsa_key.name }
 output "kv_rsa_key_id"              { value = azurerm_key_vault_key.kv_rsa_key.id }
+output "kv_cert_name"               { value = azurerm_key_vault_certificate.kv_cert.name }
+output "kv_cert_secret_id"          { value = azurerm_key_vault_certificate.kv_cert.secret_id }
+output "kv_cert_thumbprint"         { value = azurerm_key_vault_certificate.kv_cert.thumbprint }
+output "kv_cert_version"            { value = azurerm_key_vault_certificate.kv_cert.version }
 
 output "eh_ns_namespace_name"       { value = azurerm_eventhub_namespace.eh_ns.name }
 output "ehub_name"                  { value = azurerm_eventhub.ehub.name }

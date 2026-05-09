@@ -146,6 +146,8 @@ public class TopazFixture
                 .WithExtraHost("tfrm-kv-test.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
                 .WithExtraHost("tfrm-kv-sd.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
                 .WithExtraHost("tfrm-kv-keys.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
+                .WithExtraHost("tfrm-kv-certs.vault.topaz.local.dev", _containerTopaz.IpAddress)
+                .WithExtraHost("tfrm-kv-certs.keyvault.topaz.local.dev", _containerTopaz.IpAddress)
                 // Table Storage data-plane: azurerm_storage_table/azurerm_storage_table_entity need
                 // to connect to the table endpoint directly.
                 .WithExtraHost("tfrmstortableacct.table.storage.topaz.local.dev", _containerTopaz.IpAddress)
