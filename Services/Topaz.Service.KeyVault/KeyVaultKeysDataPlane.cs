@@ -478,7 +478,7 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
         if (bundle.Key.KeyOps.Length > 0 && !bundle.Key.KeyOps.Contains("encrypt", StringComparer.OrdinalIgnoreCase))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key does not permit the 'encrypt' operation.", "Forbidden");
 
-        var kty = bundle.Key.Kty?.ToUpperInvariant() ?? string.Empty;
+        var kty = bundle.Key.Kty.ToUpperInvariant();
         if (kty is not ("RSA" or "RSA-HSM"))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
                 $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'. Only RSA keys support this algorithm.", "BadParameter");
@@ -550,7 +550,7 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
         if (bundle.Key.KeyOps.Length > 0 && !bundle.Key.KeyOps.Contains("decrypt", StringComparer.OrdinalIgnoreCase))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key does not permit the 'decrypt' operation.", "Forbidden");
 
-        var kty = bundle.Key.Kty?.ToUpperInvariant() ?? string.Empty;
+        var kty = bundle.Key.Kty.ToUpperInvariant();
         if (kty is not ("RSA" or "RSA-HSM"))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
                 $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'. Only RSA keys support this algorithm.", "BadParameter");
@@ -642,7 +642,7 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
         if (bundle.Key.KeyOps.Length > 0 && !bundle.Key.KeyOps.Contains("wrapKey", StringComparer.OrdinalIgnoreCase))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key does not permit the 'wrapKey' operation.", "Forbidden");
 
-        var kty = bundle.Key.Kty?.ToUpperInvariant() ?? string.Empty;
+        var kty = bundle.Key.Kty.ToUpperInvariant();
         if (kty is not ("RSA" or "RSA-HSM"))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
                 $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'. Only RSA keys support this algorithm.", "BadParameter");
@@ -716,7 +716,7 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
         if (bundle.Key.KeyOps.Length > 0 && !bundle.Key.KeyOps.Contains("unwrapKey", StringComparer.OrdinalIgnoreCase))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key does not permit the 'unwrapKey' operation.", "Forbidden");
 
-        var kty = bundle.Key.Kty?.ToUpperInvariant() ?? string.Empty;
+        var kty = bundle.Key.Kty.ToUpperInvariant();
         if (kty is not ("RSA" or "RSA-HSM"))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
                 $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'. Only RSA keys support this algorithm.", "BadParameter");
@@ -808,7 +808,7 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
 
         var digest = Base64UrlDecode(request.Value);
         var alg = request.Algorithm.ToUpperInvariant();
-        var kty = bundle.Key.Kty?.ToUpperInvariant() ?? string.Empty;
+        var kty = bundle.Key.Kty.ToUpperInvariant();
 
         try
         {
@@ -855,7 +855,7 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
                     InverseQ = Base64UrlDecode(bundle.Key.InverseQ)
                 });
 
-                var signature = rsa.SignHash(digest, hashAlg!.Value, padding!);
+                var signature = rsa.SignHash(digest, hashAlg!.Value, padding);
                 resultBase64Url = Convert.ToBase64String(signature).TrimEnd('=').Replace('+', '-').Replace('/', '_');
             }
             else if (kty is "EC" or "EC-HSM")
@@ -868,7 +868,7 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
                     return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
                         "EC key is missing public coordinates (x, y).", "BadParameter");
 
-                var (hashAlg, curve) = alg switch
+                var (_, curve) = alg switch
                 {
                     "ES256" => (HashAlgorithmName.SHA256, ECCurve.NamedCurves.nistP256),
                     "ES384" => (HashAlgorithmName.SHA384, ECCurve.NamedCurves.nistP384),
@@ -876,14 +876,10 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
                     _ => ((HashAlgorithmName?)null, (ECCurve?)null)
                 };
 
-                if (hashAlg == null)
-                    return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
-                        $"Algorithm '{request.Algorithm}' is not supported for EC keys. Supported: ES256, ES384, ES512.", "BadParameter");
-
                 using var ec = ECDsa.Create();
                 ec.ImportParameters(new ECParameters
                 {
-                    Curve = curve!.Value,
+                    Curve = curve.Value,
                     Q = new ECPoint
                     {
                         X = Base64UrlDecode(bundle.Key.X!),
@@ -953,7 +949,7 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
         var digest = Base64UrlDecode(request.Value);
         var signature = Base64UrlDecode(request.Signature);
         var alg = request.Alg.ToUpperInvariant();
-        var kty = bundle.Key.Kty?.ToUpperInvariant() ?? string.Empty;
+        var kty = bundle.Key.Kty.ToUpperInvariant();
 
         try
         {
@@ -988,7 +984,7 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
                         Exponent = Base64UrlDecode(bundle.Key.E!)
                     });
 
-                    valid = rsa.VerifyHash(digest, signature, hashAlg!.Value, padding!);
+                    valid = rsa.VerifyHash(digest, signature, hashAlg!.Value, padding);
                     break;
                 }
                 case "EC" or "EC-HSM" when string.IsNullOrEmpty(bundle.Key.X) || string.IsNullOrEmpty(bundle.Key.Y):
@@ -996,7 +992,7 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
                         "EC key is missing public coordinates (x, y).", "BadParameter");
                 case "EC" or "EC-HSM":
                 {
-                    var (hashAlg, curve) = alg switch
+                    var (_, curve) = alg switch
                     {
                         "ES256" => (HashAlgorithmName.SHA256, ECCurve.NamedCurves.nistP256),
                         "ES384" => (HashAlgorithmName.SHA384, ECCurve.NamedCurves.nistP384),
@@ -1007,7 +1003,7 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
                     using var ec = ECDsa.Create();
                     ec.ImportParameters(new ECParameters
                     {
-                        Curve = curve!.Value,
+                        Curve = curve.Value,
                         Q = new ECPoint
                         {
                             X = Base64UrlDecode(bundle.Key.X!),
@@ -1270,7 +1266,7 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
 
         // Name is [JsonIgnore] on KeyBundle, so extract it from the Kid URL:
         // "https://{host}/keys/{keyName}/{version}" → second-to-last path segment.
-        var kid = versions[0].Key?.Kid ?? string.Empty;
+        var kid = versions[0].Key.Kid;
         var kidParts = kid.Split('/');
         var rawKeyName = kidParts.Length >= 2 ? kidParts[^2] : string.Empty;
         var keyName = PathGuard.SanitizeName(rawKeyName);
@@ -1292,8 +1288,15 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
     {
         var s = value.Replace('-', '+').Replace('_', '/');
         var padding = s.Length % 4;
-        if (padding == 2) s += "==";
-        else if (padding == 3) s += "=";
+        switch (padding)
+        {
+            case 2:
+                s += "==";
+                break;
+            case 3:
+                s += "=";
+                break;
+        }
         return Convert.FromBase64String(s);
     }
 

@@ -198,29 +198,28 @@ internal sealed class KeyVaultControlPlane(
     {
         var keyVaults = ListBySubscription(subscriptionIdentifier);
         var filteredResources = keyVaults.Resource!.Where(keyVault =>
-            GlobalDnsEntries.IsSoftDeleted(KeyVaultService.UniqueName, keyVault!.Name));
+            GlobalDnsEntries.IsSoftDeleted(KeyVaultService.UniqueName, keyVault.Name));
         
         return (OperationResult.Success, filteredResources.ToArray());
     }
 
-    public ControlPlaneOperationResult Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string keyVaultName)
+    public void Delete(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string keyVaultName)
     {
         var resource = provider.GetAs<KeyVaultFullResource>(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName);
         if (resource == null || !resource.IsInSubscription(subscriptionIdentifier) || !resource.IsInResourceGroup(resourceGroupIdentifier))
         {
-            return new ControlPlaneOperationResult(OperationResult.NotFound, string.Format(KeyVaultNotFoundMessageTemplate, keyVaultName), KeyVaultNotFoundCode);
+            return;
         }
 
         resource.DeletionDate = DateTimeOffset.Now;
         resource.ScheduledPurgeDate = DateTimeOffset.Now.AddDays(resource.Properties.SoftDeleteRetentionInDays);
         
-        // First Key Vault needs to be updated with the additional properties we added
+        // First, Key Vault needs to be updated with the additional properties we added
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, resource);
         
         // Note that Azure Key Vault is soft deleted
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, keyVaultName, true);
-        
-        return new ControlPlaneOperationResult(OperationResult.Success, null, null);
     }
 
     public OperationResult Deploy(GenericResource resource)
@@ -303,7 +302,7 @@ internal sealed class KeyVaultControlPlane(
         
         var keyVaults = ListBySubscription(subscriptionIdentifier);
         var keyVault = (keyVaults.Resource ?? [])
-            .SingleOrDefault(kv => kv!.Name == keyVaultName &&
+            .SingleOrDefault(kv => kv.Name == keyVaultName &&
                                    GlobalDnsEntries.IsSoftDeleted(KeyVaultService.UniqueName, kv.Name));
 
         return keyVault == null ? (OperationResult.NotFound, null) : (OperationResult.Success, keyVault);
@@ -412,7 +411,6 @@ internal sealed class KeyVaultControlPlane(
                 var idsToRemove = incoming.Select(p => p.ObjectId).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 resource.Properties.AccessPolicies.RemoveAll(p => idsToRemove.Contains(p.ObjectId));
                 break;
-            case "add":
             default:
                 foreach (var incomingPolicy in incoming)
                 {

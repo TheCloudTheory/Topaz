@@ -15,6 +15,7 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
     private const string CertificatesSubDir = "certificates";
     private const string DeletedSubDir = "deleted";
     private const string PendingSuffix = ".pending.json";
+    private const string ContactsFileName = "contacts.json";
 
     public DataPlaneOperationResult<(CertificateBundle Bundle, CertificateOperationResponse Operation)> CreateCertificate(
         Stream input,
@@ -113,8 +114,8 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
         try
         {
             cert = string.IsNullOrEmpty(request.Password)
-                ? new X509Certificate2(certBytes)
-                : new X509Certificate2(certBytes, request.Password);
+                ? X509CertificateLoader.LoadPkcs12(certBytes, null)
+                : X509CertificateLoader.LoadPkcs12(certBytes, request.Password);
         }
         catch (Exception ex)
         {
@@ -373,7 +374,7 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
             return new DataPlaneOperationResult<CertificateBundle>(OperationResult.Failed, null,
                 "Empty request body.", "BadRequest");
 
-        var request = JsonSerializer.Deserialize<Models.Requests.Certificates.RestoreCertificateRequest>(
+        var request = JsonSerializer.Deserialize<RestoreCertificateRequest>(
             rawContent, GlobalSettings.JsonOptions)
                       ?? throw new InvalidOperationException("Invalid request body.");
 
@@ -543,6 +544,68 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
     }
 
     // -------------------------------------------------------------------------
+    // Certificate Contacts
+    // -------------------------------------------------------------------------
+
+    public DataPlaneOperationResult<CertificateContactsResponse> SetContacts(
+        Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(SetContacts),
+            "Setting certificate contacts for vault {0}.", vaultName);
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+        var request = string.IsNullOrEmpty(rawContent)
+            ? new SetCertificateContactsRequest()
+            : JsonSerializer.Deserialize<SetCertificateContactsRequest>(rawContent, GlobalSettings.JsonOptions)
+              ?? new SetCertificateContactsRequest();
+
+        var contactsPath = GetContactsPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var responseContacts = MapContacts(request.ContactList);
+        var response = CertificateContactsResponse.ForVault(vaultName, responseContacts);
+        File.WriteAllText(contactsPath, JsonSerializer.Serialize(response, GlobalSettings.JsonOptions));
+
+        return new DataPlaneOperationResult<CertificateContactsResponse>(OperationResult.Success, response, null, null);
+    }
+
+    public DataPlaneOperationResult<CertificateContactsResponse> GetContacts(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(GetContacts),
+            "Getting certificate contacts for vault {0}.", vaultName);
+
+        var contactsPath = GetContactsPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        if (!File.Exists(contactsPath))
+            return new DataPlaneOperationResult<CertificateContactsResponse>(
+                OperationResult.NotFound, null, "Certificate contacts not found.", "ContactsNotFound");
+
+        var response = JsonSerializer.Deserialize<CertificateContactsResponse>(
+            File.ReadAllText(contactsPath), GlobalSettings.JsonOptions)!;
+        return new DataPlaneOperationResult<CertificateContactsResponse>(OperationResult.Success, response, null, null);
+    }
+
+    public DataPlaneOperationResult<CertificateContactsResponse> DeleteContacts(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName)
+    {
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(DeleteContacts),
+            "Deleting certificate contacts for vault {0}.", vaultName);
+
+        var contactsPath = GetContactsPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        if (File.Exists(contactsPath))
+            File.Delete(contactsPath);
+
+        var response = CertificateContactsResponse.ForVault(vaultName, []);
+        return new DataPlaneOperationResult<CertificateContactsResponse>(OperationResult.Success, response, null, null);
+    }
+
+    // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
 
@@ -586,13 +649,13 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
         var thumbprintBytes = cert.GetCertHashString(HashAlgorithmName.SHA1);
         // Convert hex thumbprint to raw bytes then base64url-encode
         var hashBytes = Convert.FromHexString(thumbprintBytes);
-        var x5t = Base64UrlEncode(hashBytes);
+        var x5T = Base64UrlEncode(hashBytes);
 
         return new CertificateBundle
         {
             Id = $"https://{kvHost}/certificates/{certName}/{version}",
             Cer = Convert.ToBase64String(cert.RawData),
-            X5t = x5t,
+            X5t = x5T,
             Kid = $"https://{kvHost}/keys/{certName}/{version}",
             Sid = $"https://{kvHost}/secrets/{certName}/{version}",
             Name = certName,
@@ -607,6 +670,27 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
             Policy = policy,
             Tags = tags
         };
+    }
+
+    private string GetContactsPath(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName)
+    {
+        var basePath = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        Directory.CreateDirectory(basePath);
+        return Path.Combine(basePath, ContactsFileName);
+    }
+
+    private static CertificateContactsResponse.ContactEntry[]? MapContacts(
+        SetCertificateContactsRequest.ContactEntry[]? entries)
+    {
+        return entries?.Select(e => new CertificateContactsResponse.ContactEntry
+        {
+            EmailAddress = e.EmailAddress,
+            Name = e.Name,
+            Phone = e.Phone
+        }).ToArray();
     }
 
     private static string Base64UrlEncode(byte[] bytes)

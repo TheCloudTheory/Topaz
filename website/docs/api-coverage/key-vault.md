@@ -147,9 +147,9 @@ The data plane covers operations served directly from the vault's own hostname (
 | Get Deleted Certificates | ✅ | `GET /deletedcertificates` |
 | Recover Deleted Certificate | ✅ | `POST /deletedcertificates/{name}/recover` |
 | Purge Deleted Certificate | ✅ | `DELETE /deletedcertificates/{name}` |
-| Get Certificate Contacts | ❌ |
-| Set Certificate Contacts | ❌ |
-| Delete Certificate Contacts | ❌ |
+| Get Certificate Contacts | ✅ | `GET /certificates/contacts` |
+| Set Certificate Contacts | ✅ | `PUT /certificates/contacts` |
+| Delete Certificate Contacts | ✅ | `DELETE /certificates/contacts` |
 | Get Certificate Issuer | ❌ |
 | Get Certificate Issuers | ❌ |
 | Set Certificate Issuer | ❌ |

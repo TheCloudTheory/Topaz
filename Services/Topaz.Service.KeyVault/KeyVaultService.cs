@@ -19,6 +19,11 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
     public string Name => "Azure Key Vault";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
+        // Certificate contacts — must come before single-cert endpoints to prevent
+        // "contacts" being matched as a certificate name.
+        new SetCertificateContactsEndpoint(eventPipeline, logger),
+        new GetCertificateContactsEndpoint(eventPipeline, logger),
+        new DeleteCertificateContactsEndpoint(eventPipeline, logger),
         // Certificates — list endpoint must come before the single-GET to prevent GET /certificates/{empty}
         // matching before GET /certificates (trailing-slash path has same segment count as /{certName}).
         // Operation endpoint before versioned GET to avoid /pending being matched as a version.

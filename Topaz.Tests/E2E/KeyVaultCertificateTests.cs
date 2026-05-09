@@ -329,4 +329,68 @@ public class KeyVaultCertificateTests
             Assert.That(restored.Id.ToString(), Does.Contain("/certificates/restore-cert/"));
         });
     }
+
+    [Test]
+    public void CertificateContacts_Set_ShouldReturnContacts()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+
+        // Act
+        var contacts = client.SetContacts(new[]
+        {
+            new CertificateContact { Email = "admin@example.com", Name = "Admin", Phone = "555-0100" }
+        });
+
+        // Assert — Value is IList<CertificateContact>
+        Assert.Multiple(() =>
+        {
+            Assert.That(contacts.Value, Is.Not.Null);
+            Assert.That(contacts.Value, Has.Count.EqualTo(1));
+            Assert.That(contacts.Value[0].Email, Is.EqualTo("admin@example.com"));
+        });
+    }
+
+    [Test]
+    public void CertificateContacts_Get_ShouldReturnStoredContacts()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+        client.SetContacts(new[]
+        {
+            new CertificateContact { Email = "get@example.com", Name = "GetUser" }
+        });
+
+        // Act
+        var contacts = client.GetContacts();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(contacts.Value, Is.Not.Null);
+            Assert.That(contacts.Value, Has.Count.EqualTo(1));
+            Assert.That(contacts.Value[0].Email, Is.EqualTo("get@example.com"));
+        });
+    }
+
+    [Test]
+    public void CertificateContacts_Delete_ShouldClearContacts()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+        client.SetContacts(new[]
+        {
+            new CertificateContact { Email = "delete@example.com", Name = "DeleteUser" }
+        });
+
+        // Act
+        var deleted = client.DeleteContacts();
+
+        // Assert — delete returns the now-empty list
+        Assert.That(deleted.Value, Is.Not.Null);
+        Assert.That(deleted.Value, Is.Empty);
+    }
 }
