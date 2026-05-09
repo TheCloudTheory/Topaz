@@ -1090,5 +1090,28 @@ public class KeyVaultTests : TopazFixture
         await RunAzureCliCommand("az group delete -n test-rg --yes");
     }
 
+    [Test]
+    public async Task KeyVaultTests_WhenCertificatePendingMergeIsCalled_ItShouldReturnMergedBundle()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name CertMergeVault1 --resource-group test-rg");
+        // Create the pending operation
+        await RunAzureCliCommand("az keyvault certificate create --vault-name CertMergeVault1 --name merge-cert --policy \"{\\\"issuerParameters\\\":{\\\"name\\\":\\\"Self\\\"},\\\"x509CertificateProperties\\\":{\\\"subject\\\":\\\"CN=merge-cert\\\"}}\"");
+        // Generate a self-signed leaf cert inside the container and merge it
+        await RunAzureCliCommand(
+            "openssl req -x509 -newkey rsa:2048 -keyout /tmp/merge-key.pem -out /tmp/merge-cert.pem -days 365 -nodes -subj '/CN=merge-cert' " +
+            "&& az keyvault certificate pending merge --vault-name CertMergeVault1 --name merge-cert --file /tmp/merge-cert.pem",
+            (response) =>
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(response["id"]!.GetValue<string>(), Does.Contain("/certificates/merge-cert/"));
+                    Assert.That(response["cer"]!.GetValue<string>(), Is.Not.Null.And.Not.Empty);
+                });
+            });
+        await RunAzureCliCommand("az keyvault delete --name CertMergeVault1 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
     #endregion
 }

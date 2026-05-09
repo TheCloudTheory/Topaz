@@ -35,6 +35,7 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
         // matching before GET /certificates (trailing-slash path has same segment count as /{certName}).
         // Operation endpoint before versioned GET to avoid /pending being matched as a version.
         new GetCertificatesEndpoint(eventPipeline, logger),
+        new MergeCertificateEndpoint(eventPipeline, logger),
         new GetCertificateOperationEndpoint(eventPipeline, logger),
         new UpdateCertificateOperationEndpoint(eventPipeline, logger),
         new DeleteCertificateOperationEndpoint(eventPipeline, logger),

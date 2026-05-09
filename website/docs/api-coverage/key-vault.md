@@ -140,7 +140,7 @@ The data plane covers operations served directly from the vault's own hostname (
 | Get Certificate Operation | ✅ | `GET /certificates/{name}/pending` |
 | Update Certificate Operation | ✅ | `PATCH /certificates/{name}/pending` |
 | Delete Certificate Operation | ✅ | `DELETE /certificates/{name}/pending` |
-| Merge Certificate | ❌ |
+| Merge Certificate | ✅ | `POST /certificates/{name}/pending/merge` |
 | Backup Certificate | ✅ | `POST /certificates/{name}/backup` |
 | Restore Certificate | ✅ | `POST /certificates/restore` |
 | Get Deleted Certificate | ✅ | `GET /deletedcertificates/{name}` |

@@ -413,6 +413,101 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
         return new DataPlaneOperationResult<CertificateOperationResponse>(OperationResult.Deleted, operation, null, null);
     }
 
+    public DataPlaneOperationResult<CertificateBundle> MergeCertificate(
+        Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string certName)
+    {
+        PathGuard.ValidateName(certName);
+        certName = PathGuard.SanitizeName(certName);
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(MergeCertificate),
+            "Merging certificate {0} in vault {1}.", certName, vaultName);
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+        if (string.IsNullOrEmpty(rawContent))
+            return new DataPlaneOperationResult<CertificateBundle>(OperationResult.Failed, null,
+                "Empty request body.", "BadRequest");
+
+        var request = JsonSerializer.Deserialize<Models.Requests.Certificates.MergeCertificateRequest>(
+            rawContent, GlobalSettings.JsonOptions)
+            ?? new Models.Requests.Certificates.MergeCertificateRequest();
+
+        if (request.X5c.Length == 0)
+            return new DataPlaneOperationResult<CertificateBundle>(OperationResult.Failed, null,
+                "x5c must contain at least one certificate.", "BadParameter");
+
+        var basePath = GetCertificatesPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var pendingPath = Path.Combine(basePath, $"{certName}{PendingSuffix}");
+        PathGuard.EnsureWithinDirectory(pendingPath, basePath);
+
+        if (!File.Exists(pendingPath))
+            return new DataPlaneOperationResult<CertificateBundle>(OperationResult.NotFound, null,
+                $"Certificate operation for {certName} not found.", "CertificateOperationNotFound");
+
+        var pendingOp = JsonSerializer.Deserialize<CertificateOperationResponse>(
+            File.ReadAllText(pendingPath), GlobalSettings.JsonOptions)!;
+
+        // Parse the signed leaf certificate (first element of x5c)
+        X509Certificate2 cert;
+        try
+        {
+            var derBytes = Convert.FromBase64String(request.X5c[0]);
+            cert = X509CertificateLoader.LoadCertificate(derBytes);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex);
+            return new DataPlaneOperationResult<CertificateBundle>(OperationResult.Failed, null,
+                "Failed to parse certificate from x5c[0].", "BadParameter");
+        }
+
+        var version = Guid.NewGuid().ToString("N");
+        // Reuse the policy stored in the pending operation's issuer, or fall back to defaults
+        var policy = new CertificatePolicy
+        {
+            Issuer = pendingOp.Issuer != null
+                ? new CertificatePolicy.IssuerParameters { Name = pendingOp.Issuer.Name }
+                : null
+        };
+
+        var bundle = BuildBundle(cert, certName, version, vaultName, policy, request.Tags);
+
+        if (request.Attributes != null)
+        {
+            bundle.Attributes = new CertificateAttributes
+            {
+                Enabled = request.Attributes.Enabled,
+                NotBefore = request.Attributes.NotBefore ?? bundle.Attributes?.NotBefore,
+                Expires = request.Attributes.Expires ?? bundle.Attributes?.Expires,
+                Created = bundle.Attributes?.Created ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                Updated = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            };
+        }
+
+        var entityPath = Path.Combine(basePath, $"{certName}.json");
+        PathGuard.EnsureWithinDirectory(entityPath, basePath);
+        AppendVersion(entityPath, bundle);
+
+        // Mark the pending operation as completed and persist it
+        var completedOp = new CertificateOperationResponse
+        {
+            Id = pendingOp.Id,
+            Status = "completed",
+            StatusDetails = "Certificate has been merged.",
+            Target = $"https://{GlobalSettings.GetKeyVaultHost(vaultName)}/certificates/{certName}",
+            Issuer = pendingOp.Issuer
+        };
+        File.WriteAllText(pendingPath, JsonSerializer.Serialize(completedOp, GlobalSettings.JsonOptions));
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(MergeCertificate),
+            "Certificate {0} merged in vault {1}.", certName, vaultName);
+
+        return new DataPlaneOperationResult<CertificateBundle>(OperationResult.Created, bundle, null, null);
+    }
+
     public DataPlaneOperationResult<string> BackupCertificate(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

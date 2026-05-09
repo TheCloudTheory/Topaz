@@ -550,4 +550,35 @@ public class KeyVaultCertificateTests
         // Act — DELETE /certificates/{name}/pending; Delete() returns void on success
         Assert.DoesNotThrow(() => operation.Delete());
     }
+
+    [Test]
+    public void Certificate_Merge_ShouldCompleteFromExternalChain()
+    {
+        // Arrange — create a cert with a Self issuer so a .pending.json exists.
+        // Then simulate an external CA by generating a separate self-signed leaf and
+        // merging its DER bytes as the "CA response".
+        EnsureVault();
+        var client = CreateCertificateClient();
+        var policy = new CertificatePolicy("Self", "CN=merge-test");
+        client.StartCreateCertificate("merge-cert", policy).WaitForCompletion();
+
+        // Build the "externally-signed" leaf certificate to be merged
+        using var rsa = RSA.Create(2048);
+        var certReq = new CertificateRequest("CN=merge-test-ext", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        var externalCert = certReq.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddYears(1));
+        var derBytes = externalCert.RawData;
+
+        // Act — POST /certificates/{name}/pending/merge
+        var mergeOptions = new MergeCertificateOptions("merge-cert", new[] { derBytes });
+        var merged = client.MergeCertificate(mergeOptions);
+
+        // Assert — the returned bundle represents the merged certificate
+        Assert.Multiple(() =>
+        {
+            Assert.That(merged.Value, Is.Not.Null);
+            Assert.That(merged.Value.Name, Is.EqualTo("merge-cert"));
+            Assert.That(merged.Value.Cer, Is.Not.Null.And.Not.Empty);
+            Assert.That(merged.Value.Id.ToString(), Does.Contain("/certificates/merge-cert/"));
+        });
+    }
 }
