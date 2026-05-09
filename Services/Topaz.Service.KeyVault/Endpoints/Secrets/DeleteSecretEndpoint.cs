@@ -50,14 +50,14 @@ internal sealed class DeleteSecretEndpoint(Pipeline eventPipeline, ITopazLogger 
                 return;
             }
 
-            var content = DeleteSecretResponse.New(operation.Resource.Id, vaultName!, secretName,
-                operation.Resource.Attributes);
+            var content = DeleteSecretResponse.New(operation.Resource.Id!, vaultName!, secretName,
+                operation.Resource.Attributes!);
 
             response.CreateJsonContentResponse(content);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            Logger.LogError(ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

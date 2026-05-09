@@ -42,7 +42,7 @@ internal sealed class GetSecretsEndpoint(Pipeline eventPipeline, ITopazLogger lo
                     Id = s.Id,
                     Attributes = new GetSecretsResponse.Secret.SecretAttributes
                     {
-                        Created = s.Attributes.Created,
+                        Created = s.Attributes!.Created,
                         Enabled = s.Attributes.Enabled,
                         Updated = s.Attributes.Updated
                     },
@@ -54,7 +54,7 @@ internal sealed class GetSecretsEndpoint(Pipeline eventPipeline, ITopazLogger lo
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            Logger.LogError(ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

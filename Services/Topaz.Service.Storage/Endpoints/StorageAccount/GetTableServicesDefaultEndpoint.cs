@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Endpoints.StorageAccount;
 /// Returns a stub response for GET tableServices/default so that the azurerm Terraform provider
 /// does not fail with 404 when reading table service properties after creating a storage account.
 /// </summary>
-internal sealed class GetTableServicesDefaultEndpoint(ITopazLogger logger) : IEndpointDefinition
+internal sealed class GetTableServicesDefaultEndpoint : IEndpointDefinition
 {
     public string? ProviderNamespace => "Microsoft.Storage";
 

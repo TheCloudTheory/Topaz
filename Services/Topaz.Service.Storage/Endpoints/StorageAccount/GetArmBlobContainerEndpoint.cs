@@ -34,7 +34,7 @@ internal sealed class GetArmBlobContainerEndpoint(ITopazLogger logger) : IEndpoi
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(resourceGroupName);
 
         var (exists, _) = _controlPlane.GetContainerMetadataState(subscriptionIdentifier, resourceGroupIdentifier,
-            storageAccountName, containerName);
+            storageAccountName!, containerName!);
 
         if (!exists)
         {

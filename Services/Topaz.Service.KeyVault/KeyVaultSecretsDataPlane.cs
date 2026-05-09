@@ -101,7 +101,7 @@ internal sealed class KeyVaultSecretsDataPlane(ITopazLogger logger, KeyVaultReso
             return new DataPlaneOperationResult<Secret>(OperationResult.Success, secrets!.Last(), null, null);
         }
         
-        var secret = secrets!.LastOrDefault(s => s.Name == secretName && s.Id.EndsWith(version!));
+        var secret = secrets!.LastOrDefault(s => s.Name == secretName && s.Id?.EndsWith(version!) == true);
 
         return secret == null
             ? new DataPlaneOperationResult<Secret>(OperationResult.NotFound, null, $"Secret {secretName} version {version} not found.", "SecretNotFound")
@@ -186,7 +186,7 @@ internal sealed class KeyVaultSecretsDataPlane(ITopazLogger logger, KeyVaultReso
 
         var data = File.ReadAllText(entityPath);
         var secrets = JsonSerializer.Deserialize<Secret[]>(data, GlobalSettings.JsonOptions)!.ToList();
-        var secret = secrets.LastOrDefault(s => s.Id.EndsWith(version));
+        var secret = secrets.LastOrDefault(s => s.Id!.EndsWith(version));
 
         if (secret == null)
         {
@@ -255,7 +255,7 @@ internal sealed class KeyVaultSecretsDataPlane(ITopazLogger logger, KeyVaultReso
         if (versions == null || versions.Length == 0)
             return new DataPlaneOperationResult<Secret>(OperationResult.Failed, null, "Backup contains no secret versions.", "BadRequest");
 
-        var secretName = PathGuard.SanitizeName(versions[0].Name);
+        var secretName = PathGuard.SanitizeName(versions[0].Name!);
 
         var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
         var entityPath = Path.Combine(path, $"{secretName}.json");

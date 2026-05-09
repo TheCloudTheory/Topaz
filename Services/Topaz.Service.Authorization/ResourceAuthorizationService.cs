@@ -4,7 +4,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Authorization;
 
-public sealed class ResourceAuthorizationService(ITopazLogger logger) : IServiceDefinition
+public sealed class ResourceAuthorizationService : IServiceDefinition
 {
     public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => Path.Combine("{resource}", ".authorization");
@@ -13,7 +13,7 @@ public sealed class ResourceAuthorizationService(ITopazLogger logger) : IService
     public string Name => "Resource Authorization";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-        new ResourceAuthorizationEndpoint(logger)
+        new ResourceAuthorizationEndpoint()
     ];
 
     public void Bootstrap()

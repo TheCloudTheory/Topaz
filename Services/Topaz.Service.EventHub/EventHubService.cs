@@ -15,7 +15,7 @@ public class EventHubService(ITopazLogger logger) : IServiceDefinition
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new EventHubEndpoint(logger),
+        new EventHubEndpoint(),
         new EventHubAmqpEndpoint(),
         new GetNamespaceEndpoint(logger),
         new GetNamespaceNetworkRuleSetEndpoint(logger),

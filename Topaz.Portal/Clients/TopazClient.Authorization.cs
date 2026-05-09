@@ -21,7 +21,7 @@ internal sealed partial class TopazClient
         if (pageSize <= 0)
             throw new ArgumentOutOfRangeException(nameof(pageSize), "Page size must be greater than zero.");
 
-        var subscription = _armClient.GetSubscriptionResource(
+        var subscription = _armClient!.GetSubscriptionResource(
             new ResourceIdentifier($"/subscriptions/{subscriptionId:D}"));
 
         var filter = string.IsNullOrWhiteSpace(roleNameFilter)
@@ -76,7 +76,7 @@ internal sealed partial class TopazClient
         if (pageSize <= 0)
             throw new ArgumentOutOfRangeException(nameof(pageSize), "Page size must be greater than zero.");
 
-        var subscription = _armClient.GetSubscriptionResource(
+        var subscription = _armClient!.GetSubscriptionResource(
             new ResourceIdentifier($"/subscriptions/{subscriptionId:D}"));
 
         var filter = string.IsNullOrWhiteSpace(roleNameFilter)

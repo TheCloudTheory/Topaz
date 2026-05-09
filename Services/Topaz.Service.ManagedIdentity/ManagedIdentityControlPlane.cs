@@ -100,7 +100,7 @@ internal sealed class ManagedIdentityControlPlane(
         var result = CreateOrUpdate(identity.GetSubscription(), identity.GetResourceGroup(), ManagedIdentityIdentifier.From(identity.Name),
             new CreateUpdateManagedIdentityRequest
             {
-                Location = identity.Location,
+                Location = identity.Location!,
                 Tags = identity.Tags,
                 Properties = new CreateUpdateManagedIdentityRequest.ManagedIdentityProperties
                 {

@@ -33,7 +33,7 @@ public sealed class UpdateManagedIdentityCommand(Pipeline eventPipeline, ITopazL
 
         var request = new CreateUpdateManagedIdentityRequest
         {
-            Location = existingIdentity.Resource.Location,
+            Location = existingIdentity.Resource.Location!,
             Tags = settings.Tags?.ToDictionary(t => t.Split('=')[0], t => t.Split('=')[1]),
             Properties = new CreateUpdateManagedIdentityRequest.ManagedIdentityProperties
             {

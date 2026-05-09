@@ -32,11 +32,14 @@ public record Secret
 
     public void UpdateFromRequest(UpdateSecretRequest request)
     {
-        Attributes = Attributes with
+        if (Attributes is not null)
         {
-            Enabled = request.Attributes?.Enabled ?? Attributes.Enabled,
-            Updated = DateTimeOffset.Now.ToUnixTimeSeconds()
-        };
+            Attributes = Attributes with
+            {
+                Enabled = request.Attributes?.Enabled ?? Attributes.Enabled,
+                Updated = DateTimeOffset.Now.ToUnixTimeSeconds()
+            };
+        }
 
         if (request.ContentType != null)
         {

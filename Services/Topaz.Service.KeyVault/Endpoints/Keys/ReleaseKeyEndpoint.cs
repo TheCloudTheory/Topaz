@@ -36,7 +36,7 @@ internal sealed class ReleaseKeyEndpoint(Pipeline eventPipeline, ITopazLogger lo
             var segment3 = context.Request.Path.Value.ExtractValueFromPath(3);
             var keyVersion = string.Equals(segment3, "release", StringComparison.OrdinalIgnoreCase)
                 ? string.Empty
-                : segment3;
+                : segment3 ?? string.Empty;
 
             if (string.IsNullOrEmpty(keyName))
             {
@@ -86,7 +86,7 @@ internal sealed class ReleaseKeyEndpoint(Pipeline eventPipeline, ITopazLogger lo
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            Logger.LogError(ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

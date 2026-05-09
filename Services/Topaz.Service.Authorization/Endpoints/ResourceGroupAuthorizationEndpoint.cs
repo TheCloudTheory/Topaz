@@ -4,7 +4,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Authorization.Endpoints;
 
-public sealed class ResourceGroupAuthorizationEndpoint(ITopazLogger logger) : IEndpointDefinition
+public sealed class ResourceGroupAuthorizationEndpoint : IEndpointDefinition
 {
     public string? ProviderNamespace => "Microsoft.Authorization";
 

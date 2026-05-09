@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Endpoints.StorageAccount;
 /// Returns a stub response for GET fileServices/default so that the azurerm Terraform provider
 /// does not enter an infinite polling loop waiting for this ARM sub-resource to become available.
 /// </summary>
-internal sealed class GetFileServicesDefaultEndpoint(ITopazLogger logger) : IEndpointDefinition
+internal sealed class GetFileServicesDefaultEndpoint : IEndpointDefinition
 {
     public string? ProviderNamespace => "Microsoft.Storage";
 
@@ -34,12 +34,12 @@ internal sealed class GetFileServicesDefaultEndpoint(ITopazLogger logger) : IEnd
         var id =
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/fileServices/default";
 
-        var result = new FileServicesDefaultResponse(id, storageAccountName);
+        var result = new FileServicesDefaultResponse(id);
         response.CreateJsonContentResponse(result);
     }
 }
 
-internal sealed class FileServicesDefaultResponse(string id, string storageAccountName)
+internal sealed class FileServicesDefaultResponse(string id)
 {
     public string Id { get; } = id;
     public string Name { get; } = "default";

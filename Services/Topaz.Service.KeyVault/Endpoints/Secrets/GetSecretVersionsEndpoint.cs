@@ -51,7 +51,7 @@ internal sealed class GetSecretVersionsEndpoint(Pipeline eventPipeline, ITopazLo
                     ContentType = s.ContentType,
                     Attributes = new GetSecretVersionsResponse.SecretVersionItem.SecretVersionAttributes
                     {
-                        Enabled = s.Attributes.Enabled,
+                        Enabled = s.Attributes!.Enabled,
                         Created = s.Attributes.Created,
                         Updated = s.Attributes.Updated
                     }
@@ -62,7 +62,7 @@ internal sealed class GetSecretVersionsEndpoint(Pipeline eventPipeline, ITopazLo
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            Logger.LogError(ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

@@ -34,8 +34,8 @@ internal sealed class CreateOrUpdateArmBlobContainerEndpoint(ITopazLogger logger
         var subscriptionIdentifier = SubscriptionIdentifier.From(subscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(resourceGroupName);
 
-        var result = _controlPlane.CreateContainer(subscriptionIdentifier, resourceGroupIdentifier, containerName,
-            storageAccountName);
+        var result = _controlPlane.CreateContainer(subscriptionIdentifier, resourceGroupIdentifier, containerName!,
+            storageAccountName!);
 
         var statusCode = result.Result == OperationResult.Conflict ? HttpStatusCode.OK : HttpStatusCode.Created;
 

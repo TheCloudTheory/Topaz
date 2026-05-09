@@ -33,7 +33,7 @@ internal sealed class DeleteArmTableEndpoint(ITopazLogger logger) : IEndpointDef
         var subscriptionIdentifier = SubscriptionIdentifier.From(subscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(resourceGroupName);
 
-        _controlPlane.DeleteTable(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
+        _controlPlane.DeleteTable(subscriptionIdentifier, resourceGroupIdentifier, tableName!, storageAccountName!);
 
         response.StatusCode = HttpStatusCode.NoContent;
     }

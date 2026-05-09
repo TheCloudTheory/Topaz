@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Endpoints.StorageAccount;
 /// Returns a stub response for GET queueServices/default so that the azurerm Terraform provider
 /// does not fail with 404 when reading queue service properties after creating a storage account.
 /// </summary>
-internal sealed class GetQueueServicesDefaultEndpoint(ITopazLogger logger) : IEndpointDefinition
+internal sealed class GetQueueServicesDefaultEndpoint : IEndpointDefinition
 {
     public string? ProviderNamespace => "Microsoft.Storage";
 

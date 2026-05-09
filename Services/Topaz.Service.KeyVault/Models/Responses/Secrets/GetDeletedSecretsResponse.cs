@@ -37,9 +37,9 @@ internal sealed class GetDeletedSecretsResponse
                 ContentType = secret.ContentType,
                 Attributes = new DeletedSecretItem.DeletedSecretAttributes
                 {
-                    Enabled = secret.Attributes.Enabled,
-                    Created = secret.Attributes.Created,
-                    Updated = secret.Attributes.Updated
+                    Enabled = secret.Attributes?.Enabled ?? true,
+                    Created = secret.Attributes?.Created ?? 0,
+                    Updated = secret.Attributes?.Updated ?? 0
                 },
                 DeletedDate = record.DeletedDate,
                 ScheduledPurgeDate = record.ScheduledPurgeDate,

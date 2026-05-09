@@ -876,6 +876,10 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
                     _ => ((HashAlgorithmName?)null, (ECCurve?)null)
                 };
 
+                if (!curve.HasValue)
+                    return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                        $"Unsupported EC signing algorithm: {alg}.", "BadParameter");
+
                 using var ec = ECDsa.Create();
                 ec.ImportParameters(new ECParameters
                 {
@@ -999,6 +1003,10 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
                         "ES512" => (HashAlgorithmName.SHA512, ECCurve.NamedCurves.nistP521),
                         _ => ((HashAlgorithmName?)null, (ECCurve?)null)
                     };
+
+                    if (!curve.HasValue)
+                        return new DataPlaneOperationResult<KeyVerifyResponse>(OperationResult.Failed, null,
+                            $"Unsupported EC verification algorithm: {alg}.", "BadParameter");
 
                     using var ec = ECDsa.Create();
                     ec.ImportParameters(new ECParameters

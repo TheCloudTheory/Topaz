@@ -237,7 +237,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
             return OperationResult.Failed;
         }
 
-        var result = CreateOrUpdateNamespace(@namespace.GetSubscription(), @namespace.GetResourceGroup(), @namespace.Location,
+        var result = CreateOrUpdateNamespace(@namespace.GetSubscription(), @namespace.GetResourceGroup(), @namespace.Location!,
             EventHubNamespaceIdentifier.From(@namespace.Name),
             new CreateOrUpdateEventHubNamespaceRequest());
 

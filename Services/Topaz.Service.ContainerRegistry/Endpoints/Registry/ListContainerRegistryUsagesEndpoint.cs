@@ -38,7 +38,7 @@ internal sealed class ListContainerRegistryUsagesEndpoint(Pipeline eventPipeline
 
         if (operation.Result == OperationResult.NotFound)
         {
-            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode, registryName, resourceGroupName);
+            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode, registryName ?? "", resourceGroupName ?? "");
             return;
         }
 

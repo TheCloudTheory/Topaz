@@ -12,8 +12,6 @@ namespace Topaz.Service.Authorization;
 
 internal sealed class AuthorizationControlPlane(
     SubscriptionControlPlane subscriptionControlPlane,
-    ResourceAuthorizationResourceProvider resourceAuthorizationProvider,
-    ResourceGroupAuthorizationResourceProvider resourceGroupAuthorizationProvider,
     RoleDefinitionResourceProvider roleDefinitionProvider,
     RoleAssignmentResourceProvider roleAssignmentResourceProvider,
     ITopazLogger logger
@@ -31,8 +29,6 @@ internal sealed class AuthorizationControlPlane(
 
     public static AuthorizationControlPlane New(Pipeline eventPipeline, ITopazLogger logger) => new(
         SubscriptionControlPlane.New(eventPipeline, logger),
-        new ResourceAuthorizationResourceProvider(logger),
-        new ResourceGroupAuthorizationResourceProvider(logger),
         new RoleDefinitionResourceProvider(logger),
         new RoleAssignmentResourceProvider(logger),
         logger

@@ -34,7 +34,7 @@ internal sealed class GetArmTableEndpoint(ITopazLogger logger) : IEndpointDefini
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(resourceGroupName);
 
         var tableExists = _controlPlane.CheckIfTableExists(subscriptionIdentifier, resourceGroupIdentifier,
-            storageAccountName, tableName);
+            storageAccountName!, tableName!);
 
         if (!tableExists)
         {
@@ -46,7 +46,7 @@ internal sealed class GetArmTableEndpoint(ITopazLogger logger) : IEndpointDefini
         var id =
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/tableServices/default/tables/{tableName}";
 
-        var result = new ArmTableResponse(id, tableName);
+        var result = new ArmTableResponse(id, tableName!);
         response.StatusCode = HttpStatusCode.OK;
         response.CreateJsonContentResponse(result);
     }

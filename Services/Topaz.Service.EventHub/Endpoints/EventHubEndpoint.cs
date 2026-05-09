@@ -4,7 +4,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Endpoints;
 
-public sealed class EventHubEndpoint(ITopazLogger logger) : IEndpointDefinition
+public sealed class EventHubEndpoint : IEndpointDefinition
 {
     public string? ProviderNamespace => "Microsoft.EventHub";
 

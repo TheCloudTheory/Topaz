@@ -35,11 +35,11 @@ internal sealed class CreateOrUpdateArmQueueEndpoint(ITopazLogger logger) : IEnd
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(resourceGroupName);
 
         var alreadyExists = _controlPlane.QueueExists(subscriptionIdentifier, resourceGroupIdentifier,
-            storageAccountName, queueName);
+            storageAccountName!, queueName!);
 
         if (!alreadyExists)
         {
-            _controlPlane.CreateQueue(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName);
+            _controlPlane.CreateQueue(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName!, queueName!);
         }
 
         var statusCode = alreadyExists ? HttpStatusCode.OK : HttpStatusCode.Created;

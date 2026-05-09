@@ -58,7 +58,7 @@ internal sealed class UpdateStorageAccountEndpoint(ITopazLogger logger) : IEndpo
                 return;
             }
 
-            response.CreateJsonContentResponse(result.Resource);
+            response.CreateJsonContentResponse(result.Resource!);
         }
         catch (Exception ex)
         {

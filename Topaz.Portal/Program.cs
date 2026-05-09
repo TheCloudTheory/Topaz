@@ -17,7 +17,7 @@ builder.WebHost.ConfigureKestrel(options =>
             // On macOS, use the PFX certificate
             if (File.Exists("topaz.pfx"))
             {
-                listenOptions.ServerCertificate = new X509Certificate2("topaz.pfx", "qwerty");
+                listenOptions.ServerCertificate = X509CertificateLoader.LoadPkcs12FromFile("topaz.pfx", "qwerty");
             }
         }
         else

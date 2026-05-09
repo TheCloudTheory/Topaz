@@ -34,7 +34,7 @@ public sealed class CreateServiceBusNamespaceCommand(Pipeline eventPipeline, ITo
         var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(settings.Name!);
         var controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
         var request = new CreateOrUpdateServiceBusNamespaceRequest();
-        var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.Resource.GetSubscription(), resourceGroupIdentifier, resourceGroup.Resource.Location, namespaceIdentifier, request);
+        var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.Resource.GetSubscription(), resourceGroupIdentifier, resourceGroup.Resource.Location!, namespaceIdentifier, request);
 
         if (ns.Result == OperationResult.Failed || ns.Resource == null)
         {

@@ -103,11 +103,11 @@ public class Host
             new VirtualMachineService(_eventPipeline, _logger),
             new ManagedIdentityService(_eventPipeline, _logger),
             new ManagementGroupService(_eventPipeline, _logger),
-            new ResourceAuthorizationService(_logger),
-            new ResourceGroupAuthorizationService(_logger),
+            new ResourceAuthorizationService(),
+            new ResourceGroupAuthorizationService(),
             new RoleDefinitionService(_eventPipeline, _logger),
             new RoleAssignmentService(_eventPipeline, _logger),
-            new InsightsService(_logger),
+            new InsightsService(),
             new EntraService(_eventPipeline, _logger),
             new ContainerRegistryService(_eventPipeline, _logger)
         };

@@ -40,7 +40,7 @@ internal sealed class GetContainerRegistryEndpoint(Pipeline eventPipeline, ITopa
 
         if (operation.Result == OperationResult.NotFound)
         {
-            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode, registryName, resourceGroupName);
+            response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode, registryName ?? "", resourceGroupName ?? "");
             return;
         }
 

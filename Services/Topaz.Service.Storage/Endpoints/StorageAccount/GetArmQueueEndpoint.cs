@@ -33,7 +33,7 @@ internal sealed class GetArmQueueEndpoint(ITopazLogger logger) : IEndpointDefini
         var subscriptionIdentifier = SubscriptionIdentifier.From(subscriptionId);
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(resourceGroupName);
 
-        if (!_controlPlane.QueueExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName))
+        if (!_controlPlane.QueueExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName!, queueName!))
         {
             response.CreateErrorResponse(HttpResponseMessageExtensions.ResourceNotFoundCode,
                 $"Microsoft.Storage/storageAccounts/queueServices/queues/{queueName}", resourceGroupIdentifier);

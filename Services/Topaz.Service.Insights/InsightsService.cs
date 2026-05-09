@@ -4,7 +4,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Insights;
 
-public sealed class InsightsService(ITopazLogger logger) : IServiceDefinition
+public sealed class InsightsService : IServiceDefinition
 {
     public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".insights");

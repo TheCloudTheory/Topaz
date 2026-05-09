@@ -35,18 +35,18 @@ internal sealed class CreateOrUpdateArmTableEndpoint(ITopazLogger logger) : IEnd
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(resourceGroupName);
 
         var tableExists = _controlPlane.CheckIfTableExists(subscriptionIdentifier, resourceGroupIdentifier,
-            storageAccountName, tableName);
+            storageAccountName!, tableName!);
 
         if (!tableExists)
         {
-            _controlPlane.CreateTable(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
+            _controlPlane.CreateTable(subscriptionIdentifier, resourceGroupIdentifier, tableName!, storageAccountName!);
             // Result discarded intentionally — existence check above handles the create/skip logic
         }
 
         var id =
             $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/tableServices/default/tables/{tableName}";
 
-        var result = new ArmTableResponse(id, tableName);
+        var result = new ArmTableResponse(id, tableName!);
         response.StatusCode = HttpStatusCode.OK;
         response.CreateJsonContentResponse(result);
     }

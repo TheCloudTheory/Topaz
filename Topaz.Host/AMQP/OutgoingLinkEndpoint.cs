@@ -8,7 +8,7 @@ public class OutgoingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
 {
     public override void OnFlow(FlowContext flowContext)
     {
-        logger.LogDebug($"Executing {nameof(OutgoingLinkEndpoint)}.{nameof(OnFlow)}: There will be a maximum of {flowContext.Messages} to process with {IncomingLinkEndpoint.Messages.Count} messages available.");
+        logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "There will be a maximum of {0} to process with {1} messages available.", flowContext.Messages, IncomingLinkEndpoint.Messages.Count);
         if (flowContext.Link.Role) return;
         
         var messagesToSend = IncomingLinkEndpoint.Messages.Take(flowContext.Messages);
@@ -22,12 +22,12 @@ public class OutgoingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
 
         if (flowContext.Link.IsDraining)
         {
-            logger.LogDebug($"Executing {nameof(OutgoingLinkEndpoint)}.{nameof(OnFlow)}: Completing draining.");
+            logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "Completing draining.");
             flowContext.Link.CompleteDrain();
-            logger.LogDebug($"Executing {nameof(OutgoingLinkEndpoint)}.{nameof(OnFlow)}: Draining complete.");
+            logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "Draining complete.");
         }
         
-        logger.LogDebug($"Executing {nameof(OutgoingLinkEndpoint)}.{nameof(OnFlow)}: Finished processing messages.");
+        logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "Finished processing messages.");
     }
 
     public override void OnDisposition(DispositionContext dispositionContext)

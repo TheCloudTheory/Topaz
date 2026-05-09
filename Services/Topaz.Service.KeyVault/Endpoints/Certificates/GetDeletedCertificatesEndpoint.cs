@@ -34,7 +34,7 @@ internal sealed class GetDeletedCertificatesEndpoint(Pipeline eventPipeline, ITo
         }
         catch (Exception ex)
         {
-            logger.LogError(ex);
+            Logger.LogError(ex);
             response.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }

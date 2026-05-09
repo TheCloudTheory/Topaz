@@ -26,8 +26,8 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
 
         logger.LogDebug(nameof(TableServiceDataPlane), nameof(InsertEntity), "Executing {0}: Inserting {1}.", nameof(InsertEntity), rawContent);
 
-        var safePartitionKey = PathGuard.SanitizeName(metadata.PartitionKey);
-        var safeRowKey = PathGuard.SanitizeName(metadata.RowKey);
+        var safePartitionKey = PathGuard.SanitizeName(metadata.PartitionKey!);
+        var safeRowKey = PathGuard.SanitizeName(metadata.RowKey!);
 
         var etag = new ETag(DateTimeOffset.Now.Ticks.ToString());
         var timestamp = DateTimeOffset.Now.ToUniversalTime();
