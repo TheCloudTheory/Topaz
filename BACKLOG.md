@@ -857,6 +857,190 @@ TODO: ACE Integration: Cost Analysis page in Topaz Portal
   labels: enhancement, ace, finops, portal
 -->
 
+### Azure Cosmos DB — initial control plane
+
+<!--
+TODO: Azure Cosmos DB: New service project scaffold
+  Create Topaz.Service.CosmosDb following existing service conventions:
+  - Project file with references to Topaz.ResourceManager and Topaz.Service.Shared
+  - DatabaseAccountResourceProperties + DatabaseAccountResource (ArmResource<T>) capturing
+    the full ARM body: kind, consistencyPolicy, locations, databaseAccountOfferType,
+    ipRules, isVirtualNetworkFilterEnabled, enableAutomaticFailover, capabilities,
+    publicNetworkAccess, enableFreeTier, enableAnalyticalStorage, apiProperties.
+  - DatabaseAccountResourceProvider (ResourceProviderBase<T>) for filesystem persistence
+    under .topaz/cosmos-db/{subscriptionId}/{resourceGroup}/{accountName}/.
+  - CosmosDbServiceControlPlane implementing IControlPlane with a working Deploy()
+    that maps GenericResource → DatabaseAccountResource via resource.As<T,TProps>().
+  - IServiceDefinition registration and wiring in Topaz.Host.
+  - ProjectReference in Topaz.Service.ResourceManager.csproj and a
+    case "Microsoft.DocumentDB/databaseAccounts": entry in TemplateDeploymentOrchestrator.RouteDeployment().
+  milestone: v1.6-beta
+  labels: enhancement, cosmos-db
+-->
+
+<!--
+TODO: Azure Cosmos DB: DatabaseAccount control plane endpoints
+  Implement the ARM-level DatabaseAccount resource surface (Microsoft.DocumentDB/databaseAccounts):
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}  – create or update
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}  – get
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}  – delete
+  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}  – update (tags, consistencyPolicy)
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts          – list by resource group
+  - GET    /subscriptions/{sub}/providers/Microsoft.DocumentDB/databaseAccounts                              – list all
+  The emulated account does not run a real Cosmos DB engine. provisioningState is reported
+  as Succeeded immediately. documentEndpoint follows the pattern
+  https://{name}.documents.topaz.local.dev:<CosmosDbPort>/.
+  AccountKind defaults to GlobalDocumentDB (SQL API). Generate and persist 2 read-write
+  and 2 read-only master keys (base64url-encoded random 64-byte blobs) on first creation.
+  milestone: v1.6-beta
+  labels: enhancement, cosmos-db
+-->
+
+<!--
+TODO: Azure Cosmos DB: Key and connection string management endpoints
+  Implement the ARM-level key/connection-string surface:
+  - POST   .../databaseAccounts/{name}/listKeys               – return primaryMasterKey, secondaryMasterKey, primaryReadonlyMasterKey, secondaryReadonlyMasterKey
+  - POST   .../databaseAccounts/{name}/readonlykeys           – return read-only keys only
+  - POST   .../databaseAccounts/{name}/regenerateKey          – regenerate one of the four keys by keyKind (primary|secondary|primaryReadonly|secondaryReadonly)
+  - POST   .../databaseAccounts/{name}/listConnectionStrings  – return AccountEndpoint=...;AccountKey=... connection strings for both primary and secondary keys
+  Keys are persisted in the DatabaseAccountResourceProperties and updated by regenerateKey.
+  milestone: v1.6-beta
+  labels: enhancement, cosmos-db
+-->
+
+<!--
+TODO: Azure Cosmos DB: SQL API — Database control plane endpoints
+  Implement the ARM-level SQL database resource surface:
+  - PUT    .../databaseAccounts/{name}/sqlDatabases/{database}                           – create or update (body: resource.id, options.throughput / options.autoscaleSettings)
+  - GET    .../databaseAccounts/{name}/sqlDatabases/{database}                           – get (returns resource including _rid, _self, _etag, _colls, _users)
+  - DELETE .../databaseAccounts/{name}/sqlDatabases/{database}                           – delete
+  - GET    .../databaseAccounts/{name}/sqlDatabases                                      – list
+  - GET    .../databaseAccounts/{name}/sqlDatabases/{database}/throughputSettings/default – get throughput (RU/s or autoscale)
+  - PUT    .../databaseAccounts/{name}/sqlDatabases/{database}/throughputSettings/default – update throughput
+  Persist SQL databases as subresources under the account directory.
+  milestone: v1.6-beta
+  labels: enhancement, cosmos-db
+-->
+
+<!--
+TODO: Azure Cosmos DB: SQL API — Container control plane endpoints
+  Implement the ARM-level SQL container resource surface:
+  - PUT    .../sqlDatabases/{database}/containers/{container}                            – create or update (body: resource.id, resource.partitionKey, resource.indexingPolicy, resource.uniqueKeyPolicy, resource.defaultTtl, options.throughput)
+  - GET    .../sqlDatabases/{database}/containers/{container}                            – get
+  - DELETE .../sqlDatabases/{database}/containers/{container}                            – delete
+  - GET    .../sqlDatabases/{database}/containers                                        – list
+  - GET    .../sqlDatabases/{database}/containers/{container}/throughputSettings/default – get throughput
+  - PUT    .../sqlDatabases/{database}/containers/{container}/throughputSettings/default – update throughput
+  Persist containers as child subresources of their SQL database.
+  Store the partitionKey path, indexingPolicy, uniqueKeyPolicy, and defaultTtl.
+  milestone: v1.6-beta
+  labels: enhancement, cosmos-db
+-->
+
+---
+
+## v1.7-beta
+
+### Azure Cosmos DB — SQL API data plane
+
+<!--
+TODO: Azure Cosmos DB: Data plane service scaffold and authentication
+  Add a CosmosDbDataPlane service (analogous to AcrDataPlane) that handles the
+  Cosmos DB REST API (https://learn.microsoft.com/en-us/rest/api/cosmos-db/) on a
+  dedicated port (GlobalSettings.DefaultCosmosDbPort, 8894).
+  Authentication:
+  - Implement master-key HMAC-SHA256 signature validation.
+    StringToSign format: verb.toLowerCase() + "\n" + resourceType.toLowerCase() + "\n"
+      + resourceLink + "\n" + date.toLowerCase() + "\n" + "" + "\n"
+    (all values lowercased; trailing newlines are significant.)
+  - Parse the Authorization header: type=master&ver=1.0&sig=<base64>
+  - Derive the signing key from the stored primaryMasterKey bytes (base64-decode first).
+  - Validate that the computed HMAC matches sig=, and that x-ms-date is within 15 minutes
+    of the server clock (replay-attack window matching real Azure).
+  - Return 401 with a structured JSON error body on auth failure.
+  All data-plane endpoints must inherit from a CosmosDataPlaneEndpointBase that
+  calls IsRequestAuthorized and returns 401 before processing.
+  milestone: v1.7-beta
+  labels: enhancement, cosmos-db
+-->
+
+<!--
+TODO: Azure Cosmos DB: Data plane — Database operations
+  Implement the Cosmos DB REST API database resource endpoints:
+  - POST   /{dbs}                    – create database (body: {"id": "<name>"}, optional x-ms-offer-throughput header)
+  - GET    /{dbs}/{db}               – get database (returns _rid, _self, _etag, _colls, _users, _ts)
+  - DELETE /{dbs}/{db}               – delete database
+  - GET    /{dbs}                    – list databases (returns {"_rid":"","Databases":[...],"_count":N})
+  Resource links follow the pattern: dbs/{db}.
+  All responses must include the x-ms-request-charge header (set to "1" for emulation).
+  milestone: v1.7-beta
+  labels: enhancement, cosmos-db
+-->
+
+<!--
+TODO: Azure Cosmos DB: Data plane — Collection (Container) operations
+  Implement the Cosmos DB REST API collection resource endpoints:
+  - POST   /{dbs}/{db}/colls                   – create collection (body includes id, partitionKey, indexingPolicy, defaultTtl; optional x-ms-offer-throughput header)
+  - GET    /{dbs}/{db}/colls/{coll}             – get collection
+  - DELETE /{dbs}/{db}/colls/{coll}             – delete collection
+  - PUT    /{dbs}/{db}/colls/{coll}             – replace collection (update indexingPolicy, defaultTtl)
+  - GET    /{dbs}/{db}/colls                    – list collections
+  Resource links follow the pattern: dbs/{db}/colls/{coll}.
+  Persist collection definitions as JSON files on disk via the resource provider;
+  they mirror the ARM-side container created through the control plane.
+  milestone: v1.7-beta
+  labels: enhancement, cosmos-db
+-->
+
+<!--
+TODO: Azure Cosmos DB: Data plane — Document (Item) CRUD operations
+  Implement the Cosmos DB REST API document resource endpoints:
+  - POST   /{dbs}/{db}/colls/{coll}/docs                      – create document (assigns _rid, _self, _etag, _ts; validates partition key presence)
+  - GET    /{dbs}/{db}/colls/{coll}/docs/{docId}              – get document (requires x-ms-documentdb-partitionkey header matching stored partition key value)
+  - PUT    /{dbs}/{db}/colls/{coll}/docs/{docId}              – replace document (full replace; update _etag, _ts; respect If-Match for optimistic concurrency)
+  - PATCH  /{dbs}/{db}/colls/{coll}/docs/{docId}              – partial update via JSON Patch operations array (add, set, replace, remove, increment)
+  - DELETE /{dbs}/{db}/colls/{coll}/docs/{docId}              – delete document (requires x-ms-documentdb-partitionkey header)
+  - GET    /{dbs}/{db}/colls/{coll}/docs                      – list documents in a collection (returns {"_rid":"...","Documents":[...],"_count":N})
+  Documents are stored as individual JSON files under .topaz/cosmos-db/.../colls/{coll}/docs/.
+  Filename: {docId}.json (URL-encoded if the id contains special characters).
+  Implement If-Match / If-None-Match ETag concurrency checks; return 412 on mismatch.
+  milestone: v1.7-beta
+  labels: enhancement, cosmos-db
+-->
+
+<!--
+TODO: Azure Cosmos DB: Data plane — SQL query execution
+  Implement the document query endpoint:
+  - POST /{dbs}/{db}/colls/{coll}/docs  with header x-ms-documentdb-isquery: true
+    and Content-Type: application/query+json
+    Body: {"query": "SELECT * FROM c WHERE c.field = @val", "parameters": [{"name": "@val", "value": 42}]}
+  Implement a minimal SQL subset sufficient for the .NET SDK and Azure CLI:
+  - SELECT with scalar and wildcard projections (SELECT *, SELECT c.field, SELECT VALUE c.field)
+  - FROM with a single collection alias (FROM c)
+  - WHERE with equality (=), inequality (<, >, <=, >=, !=), IN, BETWEEN, IS_NULL, IS_DEFINED, IS_STRING, IS_NUMBER, IS_BOOL operators on top-level and nested properties
+  - ORDER BY on a single property (ASC/DESC)
+  - OFFSET/LIMIT
+  - COUNT, SUM, MIN, MAX, AVG aggregate functions
+  - Parameterised queries (@name substitution)
+  Pagination: honour x-ms-max-item-count; return x-ms-continuation token when more
+  results exist; accept x-ms-continuation on follow-up requests.
+  Return: {"_rid":"...","Documents":[...],"_count":N} with x-ms-request-charge header.
+  milestone: v1.7-beta
+  labels: enhancement, cosmos-db
+-->
+
+<!--
+TODO: Azure Cosmos DB: MCP Server provisioning tools for Cosmos DB
+  Extend Topaz.MCP with Cosmos DB provisioning tools:
+  - CreateCosmosDbAccount — create a DatabaseAccount with SQL API in a resource group
+  - CreateCosmosDbDatabase — create a SQL database under an existing account
+  - CreateCosmosDbContainer — create a SQL container with a specified partitionKey path
+  Extend GetConnectionStrings to include the Cosmos DB AccountEndpoint and AccountKey
+  for provisioned accounts.
+  milestone: v1.7-beta
+  labels: enhancement, cosmos-db, mcp
+-->
+
 ---
 
 ## Unplanned / Ideas

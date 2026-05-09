@@ -29,7 +29,7 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 | | Feature | Description |
 |--|---------|-------------|
-| <span class="badge--stable">Stable</span> | List, Register, Unregister | Full provider lifecycle alongside the existing get-by-namespace operation |
+| ✅ | List, Register, Unregister | Full provider lifecycle alongside the existing get-by-namespace operation. Registration state persisted per subscription and enforced in the router. |
 
 ### Virtual Networks — full control plane
 
@@ -42,9 +42,13 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 ### Entra ID authentication for Azure Storage
 
+_Implemented in v1.3-beta._
+
 | | Feature | Description |
 |--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Entra ID bearer-token auth on Blob & Table data plane | Accept `Authorization: Bearer` tokens validated against the Topaz Entra ID service; returns a proper `WWW-Authenticate` challenge when credentials are absent or invalid |
+| ✅ | Entra ID bearer-token auth on Blob, Queue & Table data plane | Accept `Authorization: Bearer` tokens with full RBAC check; returns `401 + WWW-Authenticate` challenge when no Authorization header is present |
+| ✅ | SharedKey HMAC for Blob & Queue (13-field format) | Blob and Queue now validate SharedKey signatures using the full 13-field Blob/Queue StringToSign (same algorithm as real Azure Storage) |
+| ✅ | Consistent `Authorize` override pattern | Storage base classes override `IEndpointDefinition.Authorize` to bypass the Router's ARM RBAC check; per-request auth is handled in `IsRequestAuthorized` |
 
 ### Azure Virtual Machines — initial control plane
 
@@ -79,6 +83,15 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 ## v1.4-beta
 
+### Azure Storage — SAS validation and public access
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Account SAS query-string validation | Validate `?sv=…&sig=…` Account SAS tokens in Blob, Queue, and Table security providers; checks signature, expiry, service/resource-type/permission letters |
+| <span class="badge--preview">Preview</span> | Service SAS query-string validation | Validate per-service SAS tokens (with per-service StringToSign for Blob, Queue, Table); includes `si=` stored-policy reference resolution |
+| <span class="badge--preview">Preview</span> | Stored Access Policy enforcement | Look up named `<SignedIdentifier>` from Container/Queue/Table ACL XML at request time when `si=` is present; support policy revocation (403 when policy removed) |
+| <span class="badge--preview">Preview</span> | Anonymous / public-access Blob reads | Allow unauthenticated GET/HEAD requests against containers created with `x-ms-blob-public-access: container` or `blob`; return the level in container property responses |
+
 ### Topaz Portal — tag editing
 
 | | Feature | Description |
@@ -107,9 +120,23 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 | <span class="badge--preview">Preview</span> | `FeatureNotSupported` for non-RA-GRS stats | Return 403 on stats requests for LRS/ZRS accounts across all storage services (Table already done; extend to Blob and Queue) |
 | <span class="badge--preview">Preview</span> | Read-only enforcement on secondary | Mutating operations (PUT, DELETE, POST) on secondary endpoints return 403 `WriteOperationNotSupportedOnSecondary` |
 
+### Virtual Network — subnets and NICs
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Subnet CRUD | PUT/GET/DELETE/LIST subnets within a VNet (`/virtualNetworks/{vnetName}/subnets/{subnetName}`) |
+| <span class="badge--preview">Preview</span> | Network Interface (NIC) CRUD | PUT/GET/DELETE/LIST network interfaces (`/networkInterfaces/{nicName}`) so `az vm create` can be used without manual ARM calls |
+
 ---
 
 ## v1.5-beta
+
+### Azure Storage — User Delegation SAS for Blob
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | `generateUserDelegationKey` ARM endpoint | `POST .../storageAccounts/{name}/providers/Microsoft.Storage/userDelegationKey` — returns a time-bounded user delegation key signed with Topaz's account-key HMAC chain |
+| <span class="badge--preview">Preview</span> | User Delegation SAS validation on Blob | Validate `skoid/sktid/skt/ske/sks/skv/sig` SAS query parameters on Blob endpoints; recompute the delegation key and verify signature, expiry, and scope |
 
 ### ARM Deployments — full tenant-scope surface
 
@@ -162,6 +189,31 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 | <span class="badge--preview">Preview</span> | Cost estimation backend endpoint | `GET /subscriptions/{sub}/providers/Microsoft.CostManagement/estimatedCosts` — uses [ACE](https://github.com/TheCloudTheory/arm-estimator) to return monthly cost estimates for all provisioned resources in a subscription; supports 17 currencies |
 | <span class="badge--preview">Preview</span> | `topaz estimate` CLI command | New Topaz CLI sub-command that queries the Host's cost estimation endpoint and prints a formatted cost breakdown table; supports `--subscription`, `--currency`, and `--output` (table/json/csv) options |
 | <span class="badge--preview">Preview</span> | Cost Analysis portal page | Dedicated **Cost Analysis** page in Topaz Portal showing per-resource-type estimated costs for the selected subscription, with currency selector and auto-refresh |
+
+### Azure Cosmos DB — initial control plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.CosmosDb` project with models, resource provider, control plane, and host registration |
+| <span class="badge--preview">Preview</span> | DatabaseAccount CRUD | Create, get, update, delete, list `Microsoft.DocumentDB/databaseAccounts`; emitted `documentEndpoint` follows `https://{name}.documents.topaz.local.dev:<port>/` |
+| <span class="badge--preview">Preview</span> | Keys and connection strings | `listKeys`, `readonlykeys`, `regenerateKey`, and `listConnectionStrings` ARM actions; keys persisted and regeneratable |
+| <span class="badge--preview">Preview</span> | SQL API — Database CRUD | Create, get, delete, list SQL databases and their throughput settings via `databaseAccounts/{name}/sqlDatabases` |
+| <span class="badge--preview">Preview</span> | SQL API — Container CRUD | Create, get, update, delete, list SQL containers (with partitionKey, indexingPolicy, defaultTtl) and throughput settings via `sqlDatabases/{db}/containers` |
+
+---
+
+## v1.7-beta
+
+### Azure Cosmos DB — SQL API data plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Data plane scaffold and master-key auth | Dedicated port; HMAC-SHA256 master-key signature validation (verb/resourceType/resourceLink/date StringToSign); 401 on invalid or expired signatures |
+| <span class="badge--preview">Preview</span> | Database operations | `POST /dbs`, `GET /dbs/{db}`, `DELETE /dbs/{db}`, `GET /dbs` — full resource lifecycle with `_rid`, `_self`, `_etag`, `_ts` and `x-ms-request-charge` header |
+| <span class="badge--preview">Preview</span> | Collection operations | `POST/GET/PUT/DELETE /dbs/{db}/colls/{coll}`, `GET /dbs/{db}/colls` — create, replace, and delete collections including indexingPolicy and partitionKey |
+| <span class="badge--preview">Preview</span> | Document CRUD | `POST/GET/PUT/PATCH/DELETE /dbs/{db}/colls/{coll}/docs/{id}` — full item lifecycle with partition key enforcement, ETag optimistic concurrency (If-Match / 412), and JSON Patch partial updates |
+| <span class="badge--preview">Preview</span> | SQL query execution | `POST /dbs/{db}/colls/{coll}/docs` with `x-ms-documentdb-isquery: true` — parameterised SQL subset: `SELECT`, `FROM`, `WHERE`, `ORDER BY`, `OFFSET/LIMIT`, aggregates (`COUNT`, `SUM`, `MIN`, `MAX`, `AVG`); continuation-token pagination |
+| <span class="badge--preview">Preview</span> | MCP Server tools | `CreateCosmosDbAccount`, `CreateCosmosDbDatabase`, `CreateCosmosDbContainer`; `GetConnectionStrings` extended with Cosmos DB endpoint and key |
 
 ---
 

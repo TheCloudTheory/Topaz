@@ -180,6 +180,31 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 | <span class="badge--preview">Preview</span> | `topaz estimate` CLI command | New Topaz CLI sub-command that queries the Host's cost estimation endpoint and prints a formatted cost breakdown table; supports `--subscription`, `--currency`, and `--output` (table/json/csv) options |
 | <span class="badge--preview">Preview</span> | Cost Analysis portal page | Dedicated **Cost Analysis** page in Topaz Portal showing per-resource-type estimated costs for the selected subscription, with currency selector and auto-refresh |
 
+### Azure Cosmos DB — initial control plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.CosmosDb` project with models, resource provider, control plane, and host registration |
+| <span class="badge--preview">Preview</span> | DatabaseAccount CRUD | Create, get, update, delete, list `Microsoft.DocumentDB/databaseAccounts`; emitted `documentEndpoint` follows `https://{name}.documents.topaz.local.dev:<port>/` |
+| <span class="badge--preview">Preview</span> | Keys and connection strings | `listKeys`, `readonlykeys`, `regenerateKey`, and `listConnectionStrings` ARM actions; keys persisted and regeneratable |
+| <span class="badge--preview">Preview</span> | SQL API — Database CRUD | Create, get, delete, list SQL databases and their throughput settings via `databaseAccounts/{name}/sqlDatabases` |
+| <span class="badge--preview">Preview</span> | SQL API — Container CRUD | Create, get, update, delete, list SQL containers (with partitionKey, indexingPolicy, defaultTtl) and throughput settings via `sqlDatabases/{db}/containers` |
+
+---
+
+## v1.7-beta
+
+### Azure Cosmos DB — SQL API data plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Data plane scaffold and master-key auth | Dedicated port; HMAC-SHA256 master-key signature validation (verb/resourceType/resourceLink/date StringToSign); 401 on invalid or expired signatures |
+| <span class="badge--preview">Preview</span> | Database operations | `POST /dbs`, `GET /dbs/{db}`, `DELETE /dbs/{db}`, `GET /dbs` — full resource lifecycle with `_rid`, `_self`, `_etag`, `_ts` and `x-ms-request-charge` header |
+| <span class="badge--preview">Preview</span> | Collection operations | `POST/GET/PUT/DELETE /dbs/{db}/colls/{coll}`, `GET /dbs/{db}/colls` — create, replace, and delete collections including indexingPolicy and partitionKey |
+| <span class="badge--preview">Preview</span> | Document CRUD | `POST/GET/PUT/PATCH/DELETE /dbs/{db}/colls/{coll}/docs/{id}` — full item lifecycle with partition key enforcement, ETag optimistic concurrency (If-Match / 412), and JSON Patch partial updates |
+| <span class="badge--preview">Preview</span> | SQL query execution | `POST /dbs/{db}/colls/{coll}/docs` with `x-ms-documentdb-isquery: true` — parameterised SQL subset: `SELECT`, `FROM`, `WHERE`, `ORDER BY`, `OFFSET/LIMIT`, aggregates (`COUNT`, `SUM`, `MIN`, `MAX`, `AVG`); continuation-token pagination |
+| <span class="badge--preview">Preview</span> | MCP Server tools | `CreateCosmosDbAccount`, `CreateCosmosDbDatabase`, `CreateCosmosDbContainer`; `GetConnectionStrings` extended with Cosmos DB endpoint and key |
+
 ---
 
 ## ✅ Completed
