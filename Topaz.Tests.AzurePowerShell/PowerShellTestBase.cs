@@ -6,7 +6,7 @@ using DotNet.Testcontainers.Networks;
 
 // Run all test fixtures concurrently. Each fixture owns its own container pair so
 // there are no shared-state conflicts. 4 workers covers the number of test classes.
-[assembly: NUnit.Framework.LevelOfParallelism(4)]
+[assembly: LevelOfParallelism(4)]
 
 namespace Topaz.Tests.AzurePowerShell;
 

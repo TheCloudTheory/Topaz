@@ -49,8 +49,7 @@ internal sealed class CreateCertificateEndpoint(Pipeline eventPipeline, ITopazLo
 
             // Azure SDK's StartCreateCertificate polls the operation endpoint;
             // return the operation response so the SDK knows it's already completed.
-            response.StatusCode = HttpStatusCode.Accepted;
-            response.CreateJsonContentResponse(certOperation);
+            response.CreateJsonContentResponse(certOperation, HttpStatusCode.Accepted);
         }
         catch (Exception ex)
         {
