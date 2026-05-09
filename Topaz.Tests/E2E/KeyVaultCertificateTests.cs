@@ -492,4 +492,62 @@ public class KeyVaultCertificateTests
         Assert.That(issuers.Select(i => i.Name), Does.Contain("list-issuer-a"));
         Assert.That(issuers.Select(i => i.Name), Does.Contain("list-issuer-b"));
     }
+
+    [Test]
+    public void CertificateOperation_GetPending_ShouldReturnOperation()
+    {
+        // Arrange
+        EnsureVault();
+        var client = CreateCertificateClient();
+        var policy = new CertificatePolicy("Self", "CN=pending-get-test");
+        client.StartCreateCertificate("pending-get-cert", policy).WaitForCompletion();
+
+        // Act — GET /certificates/{name}/pending
+        var operation = client.GetCertificateOperation("pending-get-cert");
+        operation.UpdateStatus();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(operation.Properties, Is.Not.Null);
+            Assert.That(operation.Properties.Name, Is.EqualTo("pending-get-cert"));
+            Assert.That(operation.Properties.Status, Is.EqualTo("completed"));
+        });
+    }
+
+    [Test]
+    public void CertificateOperation_UpdatePending_ShouldSetCancellationRequested()
+    {
+        // Arrange — create a cert so a .pending.json file exists
+        EnsureVault();
+        var client = CreateCertificateClient();
+        var policy = new CertificatePolicy("Self", "CN=pending-update-test");
+        client.StartCreateCertificate("pending-update-cert", policy).WaitForCompletion();
+
+        // Act — PATCH /certificates/{name}/pending with cancellation_requested=true
+        // Cancel() issues the PATCH and updates Properties in place from the response.
+        var operation = client.GetCertificateOperation("pending-update-cert");
+        operation.Cancel();
+
+        // Assert
+        Assert.That(operation.Properties.CancellationRequested, Is.True);
+    }
+
+    [Test]
+    public void CertificateOperation_DeletePending_ShouldRemoveOperation()
+    {
+        // Arrange — create a cert so a .pending.json file exists
+        EnsureVault();
+        var client = CreateCertificateClient();
+        var policy = new CertificatePolicy("Self", "CN=pending-delete-test");
+        client.StartCreateCertificate("pending-delete-cert", policy).WaitForCompletion();
+
+        // Verify the operation exists first
+        var operation = client.GetCertificateOperation("pending-delete-cert");
+        operation.UpdateStatus();
+        Assert.That(operation.Properties, Is.Not.Null);
+
+        // Act — DELETE /certificates/{name}/pending; Delete() returns void on success
+        Assert.DoesNotThrow(() => operation.Delete());
+    }
 }

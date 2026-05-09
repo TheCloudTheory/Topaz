@@ -23,6 +23,9 @@ public class CertificateOperationResponse
     [JsonPropertyName("csr")]
     public string? Csr { get; init; }
 
+    [JsonPropertyName("cancellation_requested")]
+    public bool? CancellationRequested { get; init; }
+
     [JsonPropertyName("target")]
     public string? Target { get; init; }
 

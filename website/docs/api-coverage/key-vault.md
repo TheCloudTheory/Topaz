@@ -138,8 +138,8 @@ The data plane covers operations served directly from the vault's own hostname (
 | Update Certificate Policy | ❌ |
 | Delete Certificate | ✅ | `DELETE /certificates/{name}` — soft-delete |
 | Get Certificate Operation | ✅ | `GET /certificates/{name}/pending` |
-| Update Certificate Operation | ❌ |
-| Delete Certificate Operation | ❌ |
+| Update Certificate Operation | ✅ | `PATCH /certificates/{name}/pending` |
+| Delete Certificate Operation | ✅ | `DELETE /certificates/{name}/pending` |
 | Merge Certificate | ❌ |
 | Backup Certificate | ✅ | `POST /certificates/{name}/backup` |
 | Restore Certificate | ✅ | `POST /certificates/restore` |

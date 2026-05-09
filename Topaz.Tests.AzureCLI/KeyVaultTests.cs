@@ -1054,4 +1054,41 @@ public class KeyVaultTests : TopazFixture
     }
 
     #endregion
+
+    #region Certificate Pending Operation Tests
+
+    [Test]
+    public async Task KeyVaultTests_WhenCertificatePendingShowIsCalled_ItShouldReturnPendingOperation()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name CertPendVault1 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault certificate create --vault-name CertPendVault1 --name pending-show-cert --policy \"{\\\"issuerParameters\\\":{\\\"name\\\":\\\"Self\\\"},\\\"x509CertificateProperties\\\":{\\\"subject\\\":\\\"CN=pending-show-cert\\\"}}\"");
+        await RunAzureCliCommand("az keyvault certificate pending show --vault-name CertPendVault1 --name pending-show-cert", (response) =>
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(response["status"]!.GetValue<string>(), Is.EqualTo("completed"));
+                Assert.That(response["id"]!.GetValue<string>(), Does.Contain("/certificates/pending-show-cert/pending"));
+            });
+        });
+        await RunAzureCliCommand("az keyvault delete --name CertPendVault1 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    [Test]
+    public async Task KeyVaultTests_WhenCertificatePendingDeleteIsCalled_ItShouldRemovePendingOperation()
+    {
+        await RunAzureCliCommand("az group create -n test-rg -l westeurope");
+        await RunAzureCliCommand("az keyvault create --location westeurope --name CertPendVault2 --resource-group test-rg");
+        await RunAzureCliCommand("az keyvault certificate create --vault-name CertPendVault2 --name pending-del-cert --policy \"{\\\"issuerParameters\\\":{\\\"name\\\":\\\"Self\\\"},\\\"x509CertificateProperties\\\":{\\\"subject\\\":\\\"CN=pending-del-cert\\\"}}\"");
+        // DELETE returns the deleted operation object
+        await RunAzureCliCommand("az keyvault certificate pending delete --vault-name CertPendVault2 --name pending-del-cert", (response) =>
+        {
+            Assert.That(response["id"]!.GetValue<string>(), Does.Contain("/certificates/pending-del-cert/pending"));
+        });
+        await RunAzureCliCommand("az keyvault delete --name CertPendVault2 --only-show-errors");
+        await RunAzureCliCommand("az group delete -n test-rg --yes");
+    }
+
+    #endregion
 }

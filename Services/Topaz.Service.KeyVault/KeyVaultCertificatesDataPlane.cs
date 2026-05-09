@@ -331,6 +331,88 @@ internal sealed class KeyVaultCertificatesDataPlane(ITopazLogger logger, KeyVaul
         return new DataPlaneOperationResult<CertificateOperationResponse>(OperationResult.Success, syntheticOp, null, null);
     }
 
+    public DataPlaneOperationResult<CertificateOperationResponse> UpdateCertificateOperation(
+        Stream input,
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string certName)
+    {
+        PathGuard.ValidateName(certName);
+        certName = PathGuard.SanitizeName(certName);
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(UpdateCertificateOperation),
+            "Updating pending operation for certificate {0} in vault {1}.", certName, vaultName);
+
+        var basePath = GetCertificatesPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var pendingPath = Path.Combine(basePath, $"{certName}{PendingSuffix}");
+        PathGuard.EnsureWithinDirectory(pendingPath, basePath);
+
+        if (!File.Exists(pendingPath))
+            return new DataPlaneOperationResult<CertificateOperationResponse>(
+                OperationResult.NotFound, null,
+                $"Certificate operation for {certName} not found.", "CertificateOperationNotFound");
+
+        using var sr = new StreamReader(input);
+        var rawContent = sr.ReadToEnd();
+        var request = string.IsNullOrEmpty(rawContent)
+            ? new Models.Requests.Certificates.UpdateCertificateOperationRequest()
+            : JsonSerializer.Deserialize<Models.Requests.Certificates.UpdateCertificateOperationRequest>(
+                rawContent, GlobalSettings.JsonOptions)
+              ?? new Models.Requests.Certificates.UpdateCertificateOperationRequest();
+
+        var existing = JsonSerializer.Deserialize<CertificateOperationResponse>(
+            File.ReadAllText(pendingPath), GlobalSettings.JsonOptions)!;
+
+        var updated = new CertificateOperationResponse
+        {
+            Id = existing.Id,
+            Status = existing.Status,
+            StatusDetails = existing.StatusDetails,
+            Csr = existing.Csr,
+            CancellationRequested = request.CancellationRequested,
+            Target = existing.Target,
+            Issuer = existing.Issuer
+        };
+
+        File.WriteAllText(pendingPath, JsonSerializer.Serialize(updated, GlobalSettings.JsonOptions));
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(UpdateCertificateOperation),
+            "Updated pending operation for certificate {0} in vault {1}.", certName, vaultName);
+
+        return new DataPlaneOperationResult<CertificateOperationResponse>(OperationResult.Success, updated, null, null);
+    }
+
+    public DataPlaneOperationResult<CertificateOperationResponse> DeleteCertificateOperation(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string certName)
+    {
+        PathGuard.ValidateName(certName);
+        certName = PathGuard.SanitizeName(certName);
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(DeleteCertificateOperation),
+            "Deleting pending operation for certificate {0} in vault {1}.", certName, vaultName);
+
+        var basePath = GetCertificatesPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var pendingPath = Path.Combine(basePath, $"{certName}{PendingSuffix}");
+        PathGuard.EnsureWithinDirectory(pendingPath, basePath);
+
+        if (!File.Exists(pendingPath))
+            return new DataPlaneOperationResult<CertificateOperationResponse>(
+                OperationResult.NotFound, null,
+                $"Certificate operation for {certName} not found.", "CertificateOperationNotFound");
+
+        var operation = JsonSerializer.Deserialize<CertificateOperationResponse>(
+            File.ReadAllText(pendingPath), GlobalSettings.JsonOptions)!;
+
+        File.Delete(pendingPath);
+
+        logger.LogDebug(nameof(KeyVaultCertificatesDataPlane), nameof(DeleteCertificateOperation),
+            "Deleted pending operation for certificate {0} in vault {1}.", certName, vaultName);
+
+        return new DataPlaneOperationResult<CertificateOperationResponse>(OperationResult.Deleted, operation, null, null);
+    }
+
     public DataPlaneOperationResult<string> BackupCertificate(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

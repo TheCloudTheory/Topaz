@@ -36,6 +36,8 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
         // Operation endpoint before versioned GET to avoid /pending being matched as a version.
         new GetCertificatesEndpoint(eventPipeline, logger),
         new GetCertificateOperationEndpoint(eventPipeline, logger),
+        new UpdateCertificateOperationEndpoint(eventPipeline, logger),
+        new DeleteCertificateOperationEndpoint(eventPipeline, logger),
         new GetCertificateVersionsEndpoint(eventPipeline, logger),
         new GetCertificateEndpoint(eventPipeline, logger),
         new CreateCertificateEndpoint(eventPipeline, logger),
