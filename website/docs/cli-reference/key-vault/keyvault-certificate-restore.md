@@ -1,5 +1,5 @@
 ---
-sidebar_position: 51
+sidebar_position: 54
 ---
 
 # keyvault certificate restore

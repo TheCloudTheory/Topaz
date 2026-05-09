@@ -1,5 +1,5 @@
 ---
-sidebar_position: 44
+sidebar_position: 47
 ---
 
 # keyvault certificate get-deleted
