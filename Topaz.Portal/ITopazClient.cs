@@ -7,6 +7,7 @@ using Topaz.Portal.Models.ManagementGroups;
 using Topaz.Portal.Models.Rbac;
 using Topaz.Portal.Models.ResourceGroups;
 using Topaz.Portal.Models.ResourceManager;
+using Topaz.Portal.Models.ServiceBus;
 using Topaz.Portal.Models.Storage;
 using Topaz.Portal.Models.Subscriptions;
 using Topaz.Portal.Models.Tenant;
@@ -258,6 +259,84 @@ public interface ITopazClient
         string resourceGroupName,
         string namespaceName,
         string eventHubName,
+        CancellationToken cancellationToken = default);
+
+    // Service Bus
+    Task<ListServiceBusNamespacesResponse> ListServiceBusNamespaces(
+        CancellationToken cancellationToken = default);
+
+    Task<ServiceBusNamespaceDto?> GetServiceBusNamespace(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateServiceBusNamespace(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        string location,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteServiceBusNamespace(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateOrUpdateServiceBusNamespaceTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        string tagName,
+        string tagValue,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteServiceBusNamespaceTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        string tagName,
+        CancellationToken cancellationToken = default);
+
+    Task<ListServiceBusQueuesResponse> ListServiceBusQueues(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateServiceBusQueue(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        string queueName,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteServiceBusQueue(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        string queueName,
+        CancellationToken cancellationToken = default);
+
+    Task<ListServiceBusTopicsResponse> ListServiceBusTopics(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateServiceBusTopic(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        string topicName,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteServiceBusTopic(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string namespaceName,
+        string topicName,
         CancellationToken cancellationToken = default);
 
     // Key Vault

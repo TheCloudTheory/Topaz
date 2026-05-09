@@ -1,0 +1,230 @@
+@page "/portal/service-bus/{SubscriptionId:guid}/{ResourceGroupName}/{NamespaceName}/topics"
+@using System.Net
+@using Topaz.Portal.Models.ServiceBus
+@inject ITopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/service-bus">Service Bus</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/portal/service-bus/{SubscriptionId:D}/{ResourceGroupName}/{NamespaceName}")">@DecodedName</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Topics</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedName</h1>
+
+<ServiceBusNamespaceDetailsShell SubscriptionId="SubscriptionId"
+                                  ResourceGroupName="@DecodedRg"
+                                  NamespaceName="@DecodedName">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="card-title mb-0">Topics</h5>
+                <button class="btn btn-primary btn-sm"
+                        @onclick="ToggleCreate"
+                        disabled="@(_loading || _creatingBusy)">
+                    New topic
+                </button>
+            </div>
+
+            @if (_showCreate)
+            {
+                <div class="border rounded p-3 mb-3">
+                    @if (!string.IsNullOrWhiteSpace(_createError))
+                    {
+                        <div class="alert alert-danger" role="alert">@_createError</div>
+                    }
+
+                    <div class="row g-2 align-items-end">
+                        <div class="col-12 col-md-8">
+                            <label class="form-label mb-1">Topic name</label>
+                            <input class="form-control form-control-sm"
+                                   @bind="_createTopicName"
+                                   placeholder="e.g. my-topic"
+                                   disabled="@_creatingBusy" />
+                        </div>
+
+                        <div class="col-12 col-md-4 d-flex gap-2">
+                            <button class="btn btn-success btn-sm flex-fill"
+                                    @onclick="CreateTopicAsync"
+                                    disabled="@_creatingBusy">
+                                Create
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm"
+                                    @onclick="CloseCreate"
+                                    disabled="@_creatingBusy">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (_loading)
+            {
+                <p>Loading…</p>
+            }
+            else if (_error is not null)
+            {
+                <div class="alert alert-danger" role="alert">@_error</div>
+            }
+            else if (_topics.Length == 0)
+            {
+                <p class="mb-0 text-muted">No topics found in this namespace.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Subscriptions</th>
+                                <th>Size (bytes)</th>
+                                <th>Max size (MB)</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var t in _topics)
+                            {
+                                <tr>
+                                    <td>@(t.Name ?? "-")</td>
+                                    <td>@(t.Status ?? "-")</td>
+                                    <td>@t.SubscriptionCount</td>
+                                    <td>@t.SizeInBytes</td>
+                                    <td>@t.MaxSizeInMegabytes</td>
+                                    <td class="text-end">
+                                        @if (_deletingTopic == t.Name)
+                                        {
+                                            <span class="text-muted small">Deleting…</span>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => DeleteTopicAsync(t.Name!)"
+                                                    disabled="@(!string.IsNullOrWhiteSpace(_deletingTopic))">
+                                                Delete
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_deleteError))
+            {
+                <div class="alert alert-danger mt-2 mb-0" role="alert">@_deleteError</div>
+            }
+        </div>
+    </div>
+</ServiceBusNamespaceDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string NamespaceName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _error;
+    private ServiceBusTopicDto[] _topics = [];
+
+    private bool _showCreate;
+    private bool _creatingBusy;
+    private string? _createError;
+    private string _createTopicName = "";
+
+    private string? _deletingTopic;
+    private string? _deleteError;
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedName => WebUtility.UrlDecode(NamespaceName);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            var result = await TopazClient.ListServiceBusTopics(SubscriptionId, DecodedRg, DecodedName);
+            _topics = result.Value;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleCreate()
+    {
+        _showCreate = !_showCreate;
+        _createError = null;
+    }
+
+    private void CloseCreate()
+    {
+        _showCreate = false;
+        _createError = null;
+        _createTopicName = "";
+    }
+
+    private async Task CreateTopicAsync()
+    {
+        _createError = null;
+
+        if (string.IsNullOrWhiteSpace(_createTopicName))
+        {
+            _createError = "Please enter a topic name.";
+            return;
+        }
+
+        _creatingBusy = true;
+        try
+        {
+            await TopazClient.CreateServiceBusTopic(SubscriptionId, DecodedRg, DecodedName, _createTopicName);
+            CloseCreate();
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _createError = ex.Message;
+        }
+        finally
+        {
+            _creatingBusy = false;
+        }
+    }
+
+    private async Task DeleteTopicAsync(string topicName)
+    {
+        _deleteError = null;
+        _deletingTopic = topicName;
+
+        try
+        {
+            await TopazClient.DeleteServiceBusTopic(SubscriptionId, DecodedRg, DecodedName, topicName);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _deleteError = ex.Message;
+        }
+        finally
+        {
+            _deletingTopic = null;
+        }
+    }
+}

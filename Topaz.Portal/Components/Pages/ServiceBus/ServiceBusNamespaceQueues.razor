@@ -1,0 +1,230 @@
+@page "/portal/service-bus/{SubscriptionId:guid}/{ResourceGroupName}/{NamespaceName}/queues"
+@using System.Net
+@using Topaz.Portal.Models.ServiceBus
+@inject ITopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/service-bus">Service Bus</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/portal/service-bus/{SubscriptionId:D}/{ResourceGroupName}/{NamespaceName}")">@DecodedName</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Queues</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedName</h1>
+
+<ServiceBusNamespaceDetailsShell SubscriptionId="SubscriptionId"
+                                  ResourceGroupName="@DecodedRg"
+                                  NamespaceName="@DecodedName">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="card-title mb-0">Queues</h5>
+                <button class="btn btn-primary btn-sm"
+                        @onclick="ToggleCreate"
+                        disabled="@(_loading || _creatingBusy)">
+                    New queue
+                </button>
+            </div>
+
+            @if (_showCreate)
+            {
+                <div class="border rounded p-3 mb-3">
+                    @if (!string.IsNullOrWhiteSpace(_createError))
+                    {
+                        <div class="alert alert-danger" role="alert">@_createError</div>
+                    }
+
+                    <div class="row g-2 align-items-end">
+                        <div class="col-12 col-md-8">
+                            <label class="form-label mb-1">Queue name</label>
+                            <input class="form-control form-control-sm"
+                                   @bind="_createQueueName"
+                                   placeholder="e.g. my-queue"
+                                   disabled="@_creatingBusy" />
+                        </div>
+
+                        <div class="col-12 col-md-4 d-flex gap-2">
+                            <button class="btn btn-success btn-sm flex-fill"
+                                    @onclick="CreateQueueAsync"
+                                    disabled="@_creatingBusy">
+                                Create
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm"
+                                    @onclick="CloseCreate"
+                                    disabled="@_creatingBusy">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (_loading)
+            {
+                <p>Loading…</p>
+            }
+            else if (_error is not null)
+            {
+                <div class="alert alert-danger" role="alert">@_error</div>
+            }
+            else if (_queues.Length == 0)
+            {
+                <p class="mb-0 text-muted">No queues found in this namespace.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Message count</th>
+                                <th>Max size (MB)</th>
+                                <th>Sessions</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var q in _queues)
+                            {
+                                <tr>
+                                    <td>@(q.Name ?? "-")</td>
+                                    <td>@(q.Status ?? "-")</td>
+                                    <td>@q.MessageCount</td>
+                                    <td>@q.MaxSizeInMegabytes</td>
+                                    <td>@(q.RequiresSession is true ? "Yes" : "No")</td>
+                                    <td class="text-end">
+                                        @if (_deletingQueue == q.Name)
+                                        {
+                                            <span class="text-muted small">Deleting…</span>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => DeleteQueueAsync(q.Name!)"
+                                                    disabled="@(!string.IsNullOrWhiteSpace(_deletingQueue))">
+                                                Delete
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_deleteError))
+            {
+                <div class="alert alert-danger mt-2 mb-0" role="alert">@_deleteError</div>
+            }
+        </div>
+    </div>
+</ServiceBusNamespaceDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string NamespaceName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _error;
+    private ServiceBusQueueDto[] _queues = [];
+
+    private bool _showCreate;
+    private bool _creatingBusy;
+    private string? _createError;
+    private string _createQueueName = "";
+
+    private string? _deletingQueue;
+    private string? _deleteError;
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedName => WebUtility.UrlDecode(NamespaceName);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            var result = await TopazClient.ListServiceBusQueues(SubscriptionId, DecodedRg, DecodedName);
+            _queues = result.Value;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleCreate()
+    {
+        _showCreate = !_showCreate;
+        _createError = null;
+    }
+
+    private void CloseCreate()
+    {
+        _showCreate = false;
+        _createError = null;
+        _createQueueName = "";
+    }
+
+    private async Task CreateQueueAsync()
+    {
+        _createError = null;
+
+        if (string.IsNullOrWhiteSpace(_createQueueName))
+        {
+            _createError = "Please enter a queue name.";
+            return;
+        }
+
+        _creatingBusy = true;
+        try
+        {
+            await TopazClient.CreateServiceBusQueue(SubscriptionId, DecodedRg, DecodedName, _createQueueName);
+            CloseCreate();
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _createError = ex.Message;
+        }
+        finally
+        {
+            _creatingBusy = false;
+        }
+    }
+
+    private async Task DeleteQueueAsync(string queueName)
+    {
+        _deleteError = null;
+        _deletingQueue = queueName;
+
+        try
+        {
+            await TopazClient.DeleteServiceBusQueue(SubscriptionId, DecodedRg, DecodedName, queueName);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _deleteError = ex.Message;
+        }
+        finally
+        {
+            _deletingQueue = null;
+        }
+    }
+}

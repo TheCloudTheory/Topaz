@@ -34,7 +34,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Create Or Update | ✅ | `PUT .../namespaces/{namespaceName}` |
 | Delete | ✅ | |
 | Get | ✅ | |
-| List | ❌ | Subscription-level listing not implemented |
+| List | ✅ | Subscription-level listing |
 | List By Resource Group | ✅ | |
 | Update | ❌ | |
 | List Keys | ❌ | |
@@ -152,3 +152,25 @@ The data plane covers AMQP 1.0 messaging operations served on port **8889** (AMQ
 | Delete queue | ✅ | |
 | Delete topic | ✅ | |
 | Delete subscription | ✅ | |
+
+---
+
+## Portal
+
+The Topaz Portal provides a web-based UI for managing Service Bus namespaces, queues, and topics, mirroring the Azure Portal experience.
+
+| Feature | Status | Route |
+|---------|--------|-------|
+| List namespaces (all subscriptions) | ✅ | `/portal/service-bus` |
+| Create namespace | ✅ | `/portal/service-bus` (side panel) |
+| Delete namespace | ✅ | Overview page |
+| Namespace overview (essentials) | ✅ | `/portal/service-bus/{sub}/{rg}/{name}` |
+| Namespace properties | ✅ | `.../properties` |
+| Namespace tags (add/remove) | ✅ | `.../tags` |
+| IAM (stub) | ✅ | `.../iam` |
+| List queues | ✅ | `.../queues` |
+| Create queue | ✅ | `.../queues` (inline form) |
+| Delete queue | ✅ | `.../queues` |
+| List topics | ✅ | `.../topics` |
+| Create topic | ✅ | `.../topics` (inline form) |
+| Delete topic | ✅ | `.../topics` |

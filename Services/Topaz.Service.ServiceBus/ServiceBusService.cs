@@ -28,6 +28,7 @@ public sealed class ServiceBusService(Pipeline eventPipeline, ITopazLogger logge
         new ServiceBusServiceEndpoint(eventPipeline, logger),
         new ServiceBusServiceAdditionalEndpoint(eventPipeline, logger),
         new ListServiceBusNamespacesEndpoint(eventPipeline, logger),
+        new ListServiceBusNamespacesBySubscriptionEndpoint(eventPipeline, logger),
         new DeleteServiceBusNamespaceEndpoint(eventPipeline, logger),
         new GetServiceBusNamespaceNetworkRuleSetEndpoint(eventPipeline, logger),
         new ListServiceBusQueuesEndpoint(eventPipeline, logger),

@@ -450,6 +450,20 @@ internal sealed class ServiceBusServiceControlPlane(
         return OperationResult.Deleted;
     }
 
+    public ControlPlaneOperationResult<ServiceBusNamespaceResource[]> ListNamespacesBySubscription(
+        SubscriptionIdentifier subscriptionIdentifier)
+    {
+        var resources = provider
+            .ListAs<ServiceBusNamespaceResource>(subscriptionIdentifier, null, null, 8)
+            .Where(r => r.IsInSubscription(subscriptionIdentifier))
+            .ToArray();
+
+        logger.LogDebug(nameof(ServiceBusServiceControlPlane), nameof(ListNamespacesBySubscription),
+            "Found {0} namespaces in subscription {1}.", resources.Length, subscriptionIdentifier);
+
+        return new ControlPlaneOperationResult<ServiceBusNamespaceResource[]>(OperationResult.Success, resources, null, null);
+    }
+
     public ControlPlaneOperationResult<ServiceBusNamespaceResource[]> ListNamespaces(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier)
     {
