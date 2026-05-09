@@ -19,27 +19,31 @@ type Service = {
 };
 
 const SERVICES: Service[] = [
-  { abbr: 'ST',   bg: '#0078D4', name: 'Azure Storage',       description: 'Blob and Table storage' },
-  { abbr: 'KV',   bg: '#1B63EB', name: 'Azure Key Vault',     description: 'Secrets management' },
-  { abbr: 'KV',   bg: '#1B63EB', name: 'Key Vault Keys',      description: 'Cryptographic key operations', comingSoon: true },
-  { abbr: 'KV',   bg: '#1B63EB', name: 'Key Vault Certificates', description: 'Certificate lifecycle management', comingSoon: true },
-  { abbr: 'SB',   bg: '#8661C5', name: 'Azure Service Bus',   description: 'Queues and topics via AMQP' },
-  { abbr: 'EH',   bg: '#C0392B', name: 'Azure Event Hub',     description: 'Real-time event streaming' },
-  { abbr: 'CR',   bg: '#0078D4', name: 'Container Registry',  description: 'Image push & pull operations', preview: true },
-  { abbr: 'ARM',  bg: '#E8751A', name: 'Resource Manager',    description: 'ARM templates & Bicep deployments' },
-  { abbr: 'AAD',  bg: '#0078D4', name: 'Microsoft Entra ID',  description: 'Identity & token issuance' },
-  { abbr: 'RBAC', bg: '#07A560', name: 'Azure RBAC',          description: 'Role-based access control' },
-  { abbr: 'MI',   bg: '#8661C5', name: 'Managed Identity',    description: 'System & user-assigned identities' },
-  { abbr: 'VNet', bg: '#1B63EB', name: 'Virtual Network',     description: 'VNet and subnet emulation' },
-  { abbr: 'QS',   bg: '#0078D4', name: 'Queue Storage',       description: 'Message queues via Azure Queue Service', comingSoon: true },
-  { abbr: 'VM',   bg: '#1B63EB', name: 'Virtual Machines',    description: 'VM lifecycle management (no-op emulation)', comingSoon: true },
-  { abbr: 'NSG',  bg: '#07A560', name: 'Network Security Groups', description: 'NSG rules and associations', comingSoon: true },
+  { abbr: 'ST',   bg: '#0078D4', name: 'Azure Storage',           description: 'Blob, Table, and Queue storage' },
+  { abbr: 'KV',   bg: '#1B63EB', name: 'Azure Key Vault',         description: 'Secrets management' },
+  { abbr: 'KV',   bg: '#1B63EB', name: 'Key Vault Keys',          description: 'Cryptographic key operations' },
+  { abbr: 'KV',   bg: '#1B63EB', name: 'Key Vault Certificates',  description: 'Certificate lifecycle management', preview: true },
+  { abbr: 'SB',   bg: '#8661C5', name: 'Azure Service Bus',       description: 'Queues and topics via AMQP' },
+  { abbr: 'EH',   bg: '#C0392B', name: 'Azure Event Hub',         description: 'Real-time event streaming' },
+  { abbr: 'CR',   bg: '#0078D4', name: 'Container Registry',      description: 'Image push & pull operations', preview: true },
+  { abbr: 'ARM',  bg: '#E8751A', name: 'Resource Manager',        description: 'ARM templates & Bicep deployments' },
+  { abbr: 'MG',   bg: '#E8751A', name: 'Management Groups',       description: 'Management group hierarchy and subscriptions', preview: true },
+  { abbr: 'AAD',  bg: '#0078D4', name: 'Microsoft Entra ID',      description: 'Identity & token issuance' },
+  { abbr: 'RBAC', bg: '#07A560', name: 'Azure RBAC',              description: 'Role-based access control' },
+  { abbr: 'MI',   bg: '#8661C5', name: 'Managed Identity',        description: 'System & user-assigned identities' },
+  { abbr: 'VNet', bg: '#1B63EB', name: 'Virtual Network',         description: 'VNet and subnet emulation' },
+  { abbr: 'VM',   bg: '#1B63EB', name: 'Virtual Machines',        description: 'VM lifecycle management (no-op emulation)', preview: true },
+  { abbr: 'NSG',  bg: '#07A560', name: 'Network Security Groups', description: 'NSG rules and associations', preview: true },
+  { abbr: 'SQL',  bg: '#CC2927', name: 'Azure SQL',               description: 'SQL Server and Database emulation', comingSoon: true },
+  { abbr: 'CDB',  bg: '#0078D4', name: 'Azure Cosmos DB',         description: 'NoSQL multi-model database emulation', comingSoon: true },
 ];
 
 const TOOLING: Service[] = [
   { abbr: 'CLI',  bg: '#0078D4', name: 'Azure CLI',              description: 'Full az command support via cloud environment' },
-  { abbr: 'PS',   bg: '#2671BE', name: 'Azure PowerShell',       description: 'Az module support via cloud environment', comingSoon: true },
+  { abbr: 'PS',   bg: '#2671BE', name: 'Azure PowerShell',       description: 'Az module support via cloud environment' },
   { abbr: '.NET', bg: '#512BD4', name: '.NET SDK',               description: 'Azure SDK for .NET — first-class support' },
+  { abbr: 'TF',   bg: '#7B42BC', name: 'Terraform',              description: 'AzureRM, AzAPI, and Entra ID provider support', preview: true },
+  { abbr: 'MCP',  bg: '#8661C5', name: 'MCP Server',             description: 'AI assistant integration via Model Context Protocol', preview: true },
   { abbr: 'PY',   bg: '#3776AB', name: 'Python SDK',             description: 'Azure SDK for Python', comingSoon: true },
   { abbr: 'JS',   bg: '#F7DF1E', name: 'JavaScript / TS SDK',    description: 'Azure SDK for JavaScript and TypeScript', comingSoon: true },
   { abbr: 'JV',   bg: '#E76F00', name: 'Java SDK',               description: 'Azure SDK for Java', comingSoon: true },
@@ -81,6 +85,11 @@ const CAPABILITIES: Capability[] = [
     icon: '🔗',
     title: 'Azure resource hierarchy',
     body: 'Subscriptions, resource groups and resources mirror the real ARM hierarchy so SDK and Azure CLI commands feel identical.',
+  },
+  {
+    icon: '🤖',
+    title: 'AI-native management',
+    body: 'The built-in MCP server lets GitHub Copilot, Claude, and other AI assistants provision and inspect Topaz resources through natural language — no CLI or REST calls needed.',
   },
 ];
 
@@ -154,6 +163,7 @@ services:
       - "8898:8898"   # Azure Key Vault
       - "8891:8891"   # Azure Blob Storage
       - "8890:8890"   # Azure Table Storage
+      - "8893:8893"   # Azure Queue Storage
       - "8889:8889"   # Azure Service Bus (AMQP)
       - "8888:8888"   # Azure Event Hub (AMQP)
       - "8897:8897"   # Azure Event Hub (HTTP)
