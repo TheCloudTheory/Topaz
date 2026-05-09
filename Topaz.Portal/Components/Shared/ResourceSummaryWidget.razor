@@ -1,5 +1,8 @@
 @using Topaz.Portal.Models.Storage
 @using Topaz.Portal.Models.KeyVaults
+@using Topaz.Portal.Models.ManagedIdentities
+@using Topaz.Portal.Models.EventHubs
+@using Topaz.Portal.Models.ServiceBus
 @inject ITopazClient TopazClient
 
 <div class="card h-100">
@@ -20,31 +23,52 @@
         {
             <div class="row g-3">
                 <div class="col-6 col-md-3">
-                    <div class="border rounded p-3 text-center h-100">
-                        <div class="display-6 fw-bold text-primary">@_storageCount</div>
-                        <div class="small text-muted mt-1">Storage accounts</div>
-                        <a href="/portal/storage" class="small stretched-link text-decoration-none">View →</a>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="border rounded p-3 text-center h-100">
-                        <div class="display-6 fw-bold text-primary">@_keyVaultCount</div>
-                        <div class="small text-muted mt-1">Key vaults</div>
-                        <a href="/key-vault" class="small stretched-link text-decoration-none">View →</a>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="border rounded p-3 text-center h-100">
+                    <div class="border rounded p-3 text-center h-100 position-relative">
                         <div class="display-6 fw-bold text-primary">@_subscriptionCount</div>
                         <div class="small text-muted mt-1">Subscriptions</div>
                         <a href="/subscriptions" class="small stretched-link text-decoration-none">View →</a>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <div class="border rounded p-3 text-center h-100">
+                    <div class="border rounded p-3 text-center h-100 position-relative">
                         <div class="display-6 fw-bold text-primary">@_resourceGroupCount</div>
                         <div class="small text-muted mt-1">Resource groups</div>
                         <a href="/resource-groups" class="small stretched-link text-decoration-none">View →</a>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 text-center h-100 position-relative">
+                        <div class="display-6 fw-bold text-primary">@_storageCount</div>
+                        <div class="small text-muted mt-1">Storage accounts</div>
+                        <a href="/portal/storage" class="small stretched-link text-decoration-none">View →</a>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 text-center h-100 position-relative">
+                        <div class="display-6 fw-bold text-primary">@_keyVaultCount</div>
+                        <div class="small text-muted mt-1">Key vaults</div>
+                        <a href="/key-vault" class="small stretched-link text-decoration-none">View →</a>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 text-center h-100 position-relative">
+                        <div class="display-6 fw-bold text-primary">@_managedIdentityCount</div>
+                        <div class="small text-muted mt-1">Managed identities</div>
+                        <a href="/managed-identities" class="small stretched-link text-decoration-none">View →</a>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 text-center h-100 position-relative">
+                        <div class="display-6 fw-bold text-primary">@_eventHubNamespaceCount</div>
+                        <div class="small text-muted mt-1">Event Hub namespaces</div>
+                        <a href="/portal/event-hubs" class="small stretched-link text-decoration-none">View →</a>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 text-center h-100 position-relative">
+                        <div class="display-6 fw-bold text-primary">@_serviceBusNamespaceCount</div>
+                        <div class="small text-muted mt-1">Service Bus namespaces</div>
+                        <a href="/portal/service-bus" class="small stretched-link text-decoration-none">View →</a>
                     </div>
                 </div>
             </div>
@@ -59,6 +83,9 @@
     private int _keyVaultCount;
     private int _subscriptionCount;
     private int _resourceGroupCount;
+    private int _managedIdentityCount;
+    private int _eventHubNamespaceCount;
+    private int _serviceBusNamespaceCount;
 
     protected override async Task OnInitializedAsync()
     {
@@ -68,13 +95,19 @@
             var keyVaultTask = TopazClient.ListKeyVaults();
             var subsTask = TopazClient.ListSubscriptions();
             var rgsTask = TopazClient.ListResourceGroups();
+            var miTask = TopazClient.ListManagedIdentities();
+            var ehTask = TopazClient.ListEventHubNamespaces();
+            var sbTask = TopazClient.ListServiceBusNamespaces();
 
-            await Task.WhenAll(storageTask, keyVaultTask, subsTask, rgsTask);
+            await Task.WhenAll(storageTask, keyVaultTask, subsTask, rgsTask, miTask, ehTask, sbTask);
 
             _storageCount = (await storageTask).Value?.Length ?? 0;
             _keyVaultCount = (await keyVaultTask).Value?.Length ?? 0;
             _subscriptionCount = (await subsTask).Value?.Length ?? 0;
             _resourceGroupCount = (await rgsTask).Value?.Length ?? 0;
+            _managedIdentityCount = (await miTask).Value?.Length ?? 0;
+            _eventHubNamespaceCount = (await ehTask).Value?.Length ?? 0;
+            _serviceBusNamespaceCount = (await sbTask).Value?.Length ?? 0;
         }
         catch (Exception ex)
         {
