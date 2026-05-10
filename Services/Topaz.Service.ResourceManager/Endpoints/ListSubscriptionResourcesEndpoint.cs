@@ -71,17 +71,21 @@ internal sealed class ListSubscriptionResourcesEndpoint(Pipeline eventPipeline, 
     /// <summary>
     /// Parses the resource type from a $filter value such as:
     /// <c>resourceType eq 'Microsoft.KeyVault/vaults'</c>
+    /// or a compound filter like:
+    /// <c>resourceGroup eq 'my-rg' and resourceType eq 'Microsoft.KeyVault/vaults'</c>
     /// Returns the extracted type string, or null if the filter cannot be parsed.
     /// </summary>
     internal static string? ParseResourceType(string? filter)
     {
         if (string.IsNullOrWhiteSpace(filter)) return null;
 
-        // Expected format: "resourceType eq 'Some.Provider/resourceType'"
-        var eqIndex = filter.IndexOf(" eq '", StringComparison.OrdinalIgnoreCase);
-        if (eqIndex < 0) return null;
+        // Search specifically for "resourceType eq '" to avoid accidentally picking up
+        // other conditions in compound filters (e.g. "resourceGroup eq '...' and resourceType eq '...'").
+        const string prefix = "resourceType eq '";
+        var typeIndex = filter.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
+        if (typeIndex < 0) return null;
 
-        var start = eqIndex + 5; // skip " eq '"
+        var start = typeIndex + prefix.Length;
         var end = filter.IndexOf('\'', start);
         return end > start ? filter[start..end] : null;
     }

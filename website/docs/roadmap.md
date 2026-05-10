@@ -127,6 +127,15 @@ _Implemented in v1.3-beta._
 | <span class="badge--preview">Preview</span> | Subnet CRUD | PUT/GET/DELETE/LIST subnets within a VNet (`/virtualNetworks/{vnetName}/subnets/{subnetName}`) |
 | <span class="badge--preview">Preview</span> | Network Interface (NIC) CRUD | PUT/GET/DELETE/LIST network interfaces (`/networkInterfaces/{nicName}`) so `az vm create` can be used without manual ARM calls |
 
+### Azure Storage — OData query support for Table Storage
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | `$filter` expression evaluation | Parse and evaluate OData filter expressions against entity properties (logical: `and`/`or`/`not`; comparison: `eq`/`ne`/`gt`/`ge`/`lt`/`le`; types: string, int32, int64, bool, datetime, guid) |
+| <span class="badge--preview">Preview</span> | `$select` projection | Return only the requested property names in each entity |
+| <span class="badge--preview">Preview</span> | `$top` page size | Limit the number of entities returned per response page |
+| <span class="badge--preview">Preview</span> | `$skiptoken` continuation | Honour continuation tokens for server-side paging so multi-page SDK reads work correctly |
+
 ---
 
 ## v1.5-beta
