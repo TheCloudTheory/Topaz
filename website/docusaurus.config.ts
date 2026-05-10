@@ -70,16 +70,20 @@ const config: Config = {
               label: 'Next (unreleased)',
               badge: false,
             },
+            'v1.3': {
+              label: 'v1.3 (stable)',
+              badge: true,
+            },
             'v1.2': {
-              label: 'v1.2 (stable)',
+              label: 'v1.2 (deprecated)',
               badge: true,
             },
             'v1.1': {
-              label: 'v1.1',
+              label: 'v1.1 (deprecated)',
               badge: true,
             },
           },
-          lastVersion: 'v1.2',
+          lastVersion: 'v1.3',
         },
         blog: {
           showReadingTime: true,

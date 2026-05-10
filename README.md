@@ -46,10 +46,13 @@ See the [roadmap](https://topaz.thecloudtheory.com/docs/roadmap) for what's comi
 |---|---|---|---|
 | Azure Storage (Blob) | ✅ | ✅ | Preview |
 | Azure Storage (Table) | ✅ | ✅ | Preview |
+| Azure Storage (Queue) | ✅ | ✅ | Preview |
 | Azure Key Vault | ✅ | ✅ | Preview |
 | Azure Service Bus | ✅ | ✅ | Preview |
 | Azure Container Registry | ✅ | ✅ | Preview |
 | Azure Event Hub | ✅ | ✅ | Preview |
+| Azure Virtual Machines | ✅ | — | Preview |
+| Azure Virtual Network | ✅ | — | Preview |
 | Azure Resource Manager | ✅ | — | Preview |
 | Microsoft Entra ID | ✅ | — | Preview |
 
