@@ -281,6 +281,48 @@
   flex-shrink: 0;
 }
 
+/* ── Enterprise contact ────────────────────────────────────────── */
+.enterpriseCard {
+  max-width: 620px;
+  margin: 0 auto;
+  text-align: center;
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+}
+
+.enterpriseTitle {
+  font-size: 1.6rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 0.75rem;
+}
+
+.enterpriseText {
+  color: var(--ifm-color-secondary-darkest);
+  font-size: 1rem;
+  line-height: 1.65;
+  margin: 0 auto 2rem;
+  max-width: 460px;
+}
+
+.enterpriseActions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.enterpriseDiscussBtn {
+  border-color: var(--ifm-color-emphasis-400) !important;
+  color: var(--ifm-color-secondary-darkest) !important;
+}
+
+.enterpriseDiscussBtn:hover {
+  border-color: var(--ifm-color-primary) !important;
+  color: var(--ifm-color-primary) !important;
+}
+
 /* ── CTA ───────────────────────────────────────────────────────── */
 .ctaSection {
   padding: 5.5rem 0;

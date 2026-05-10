@@ -151,6 +151,37 @@ function FutureTiers() {
   );
 }
 
+function EnterpriseContact() {
+  return (
+    <section className={styles.section}>
+      <div className="container">
+        <div className={styles.enterpriseCard}>
+          <h2 className={styles.enterpriseTitle}>Evaluating Topaz for your team?</h2>
+          <p className={styles.enterpriseText}>
+            Pro and Enterprise tiers are in design. If you're considering Topaz
+            for team or company-wide use, reach out early — your workflow and
+            requirements will help shape what gets built.
+          </p>
+          <div className={styles.enterpriseActions}>
+            <Link
+              className="button button--primary button--lg"
+              to="/contact"
+            >
+              Get in touch →
+            </Link>
+            <Link
+              className={clsx('button button--outline button--lg', styles.enterpriseDiscussBtn)}
+              href="https://github.com/TheCloudTheory/Topaz/discussions"
+            >
+              GitHub Discussions
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Cta() {
   return (
     <section className={styles.ctaSection}>
@@ -187,6 +218,7 @@ export default function PricingPage(): JSX.Element {
       <Hero />
       <CurrentPlan />
       <FutureTiers />
+      <EnterpriseContact />
       <Cta />
     </Layout>
   );
