@@ -191,7 +191,7 @@ First-time setup. Starts the Topaz container, registers a subscription, creates 
 | `resourceGroupName` | ✅ | — | Name of the initial resource group |
 | `location` | ✅ | — | Azure location (e.g. `westeurope`) |
 | `objectId` | ✅ | — | Entra ID object ID of the acting user. Use `00000000-0000-0000-0000-000000000000` for superadmin |
-| `version` | — | `v1.2.6-beta` | Topaz Docker image tag to pull |
+| `version` | — | `v1.3.98-beta` | Topaz Docker image tag to pull |
 
 ---
 

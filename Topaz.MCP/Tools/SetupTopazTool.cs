@@ -21,7 +21,7 @@ public class SetupTopazTool
         [Description("Log level to be used by Topaz (e.g. Information, Debug, Warning)")]
         LogLevel logLevel = LogLevel.Information,
         [Description("Image tag to use when running the emulator")]
-        string version = "v1.2.6-beta")
+        string version = "v1.3.98-beta")
     {
         ushort[] ports =
         [

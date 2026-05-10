@@ -24,8 +24,8 @@ public sealed class EnvironmentPrompts
         string location,
         [Description("Object ID of the acting user. Pass '00000000-0000-0000-0000-000000000000' for superadmin.")]
         string objectId,
-        [Description("Topaz Docker image tag to pull (e.g. 'v1.2.6-beta'). Defaults to 'v1.2.6-beta'.")]
-        string version = "v1.2.6-beta")
+        [Description("Topaz Docker image tag to pull (e.g. 'v1.3.98-beta'). Defaults to 'v1.3.98-beta'.")]
+        string version = "v1.3.98-beta")
     {
         return
         [
