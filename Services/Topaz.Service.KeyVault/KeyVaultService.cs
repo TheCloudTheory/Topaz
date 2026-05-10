@@ -95,7 +95,6 @@ public sealed class KeyVaultService(Pipeline eventPipeline, ITopazLogger logger)
         new DeleteKeyVaultEndpoint(eventPipeline, logger),
         new ListKeyVaultsByResourceGroupEndpoint(eventPipeline, logger),
         new ListKeyVaultsBySubscriptionEndpoint(eventPipeline, logger),
-        new ListKeyVaultSubscriptionResourcesEndpoint(eventPipeline, logger),
         new ListDeletedVaultsEndpoint(eventPipeline, logger),
         new ListDeletedManagedHsmsEndpoint(eventPipeline, logger),
         new GetDeletedVaultEndpoint(eventPipeline, logger),
