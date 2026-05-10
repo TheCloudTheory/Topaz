@@ -7,6 +7,7 @@ using Topaz.Service.KeyVault;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription.Models.Responses;
+using Topaz.Service.VirtualMachine;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
@@ -23,6 +24,7 @@ internal sealed class ListSubscriptionResourcesEndpoint(Pipeline eventPipeline, 
 {
     private readonly KeyVaultControlPlane _kvControlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly ContainerRegistryControlPlane _acrControlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
+    private readonly VirtualMachineServiceControlPlane _vmControlPlane = VirtualMachineServiceControlPlane.New(eventPipeline, logger);
 
     public string? ProviderNamespace => null;
 
@@ -52,6 +54,7 @@ internal sealed class ListSubscriptionResourcesEndpoint(Pipeline eventPipeline, 
             {
                 "Microsoft.KeyVault/vaults" => Map(_kvControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
                 "Microsoft.ContainerRegistry/registries" => Map(_acrControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
+                "Microsoft.Compute/virtualMachines" => Map(_vmControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
                 _ => []
             };
 
@@ -70,7 +73,7 @@ internal sealed class ListSubscriptionResourcesEndpoint(Pipeline eventPipeline, 
     /// <c>resourceType eq 'Microsoft.KeyVault/vaults'</c>
     /// Returns the extracted type string, or null if the filter cannot be parsed.
     /// </summary>
-    private static string? ParseResourceType(string? filter)
+    internal static string? ParseResourceType(string? filter)
     {
         if (string.IsNullOrWhiteSpace(filter)) return null;
 
@@ -83,6 +86,6 @@ internal sealed class ListSubscriptionResourcesEndpoint(Pipeline eventPipeline, 
         return end > start ? filter[start..end] : null;
     }
 
-    private static ListSubscriptionResourcesResponse.GenericResourceExpanded[] Map<T>(IEnumerable<ArmResource<T>> resources)
+    internal static ListSubscriptionResourcesResponse.GenericResourceExpanded[] Map<T>(IEnumerable<ArmResource<T>> resources)
         => resources.Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From!).ToArray();
 }
