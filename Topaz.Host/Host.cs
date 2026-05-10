@@ -116,7 +116,12 @@ public class Host
 
         foreach (var service in services)
         {
-            service.Bootstrap();
+            service.Register();
+        }
+
+        foreach (var service in services)
+        {
+            service.Initialize();
         }
 
         PrintServicesTable(services);
@@ -168,9 +173,6 @@ public class Host
             Directory.CreateDirectory(GlobalSettings.MainEmulatorDirectory);
             Console.WriteLine("Emulator directory created.");
         }
-
-        new EntraService(_eventPipeline, _logger).Bootstrap();
-        new RoleAssignmentService(_eventPipeline, _logger).Bootstrap();
 
         if (File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))
         {

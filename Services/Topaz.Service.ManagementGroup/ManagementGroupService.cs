@@ -37,7 +37,7 @@ public sealed class ManagementGroupService(Pipeline eventPipeline, ITopazLogger 
         new UpdateHierarchySettingsEndpoint(logger),
     ];
 
-    public void Bootstrap()
+    public void Register()
     {
         var mgControlPlane = ManagementGroupControlPlane.New(logger);
         var mgProvider = new ManagementGroupResourceProvider(logger);
@@ -61,7 +61,7 @@ public sealed class ManagementGroupService(Pipeline eventPipeline, ITopazLogger 
                             }
                         });
 
-                    logger.LogDebug(nameof(ManagementGroupService), nameof(Bootstrap),
+                    logger.LogDebug(nameof(ManagementGroupService), nameof(Register),
                         "Root management group '{0}' created.", data.TenantId);
                 }
 
@@ -78,7 +78,7 @@ public sealed class ManagementGroupService(Pipeline eventPipeline, ITopazLogger 
                 {
                     if (sub.SubscriptionId == null || assignedSubscriptionIds.Contains(sub.SubscriptionId)) continue;
                     mgControlPlane.AssociateSubscription(data.TenantId, sub.SubscriptionId, sub.DisplayName);
-                    logger.LogDebug(nameof(ManagementGroupService), nameof(Bootstrap),
+                    logger.LogDebug(nameof(ManagementGroupService), nameof(Register),
                         "Associated existing subscription '{0}' with root management group.", sub.SubscriptionId);
                 }
             });
@@ -103,7 +103,7 @@ public sealed class ManagementGroupService(Pipeline eventPipeline, ITopazLogger 
                 var displayName = subResult.Result == OperationResult.Success ? subResult.Resource?.DisplayName : null;
 
                 mgControlPlane.AssociateSubscription(rootGroupId, data.SubscriptionId, displayName);
-                logger.LogDebug(nameof(ManagementGroupService), nameof(Bootstrap),
+                logger.LogDebug(nameof(ManagementGroupService), nameof(Register),
                     "Associated new subscription '{0}' with root management group.", data.SubscriptionId);
             });
     }

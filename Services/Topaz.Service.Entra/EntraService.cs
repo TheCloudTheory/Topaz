@@ -70,9 +70,9 @@ public class EntraService(Pipeline eventPipeline, ITopazLogger logger) : IServic
         new TokenEndpoint(logger)
     ];
 
-    public void Bootstrap()
+    public void Initialize()
     {
-        logger.LogDebug(nameof(EntraService), nameof(Bootstrap),$"Attempting to initialize Entra service directory directory...");
+        logger.LogDebug(nameof(EntraService), nameof(Initialize),$"Attempting to initialize Entra service directory directory...");
         
         var servicePath = Path.Combine(GlobalSettings.MainEmulatorDirectory, LocalDirectoryPath);
         var userPath = Path.Combine(servicePath, EntraResourceProvider.UsersDirectoryName);
@@ -94,7 +94,7 @@ public class EntraService(Pipeline eventPipeline, ITopazLogger logger) : IServic
         CreateServiceDirectory(groupsPath);
         CreateServiceDirectory(groupsDataPath);
         
-        logger.LogDebug(nameof(EntraService), nameof(Bootstrap),$"Entra service directory directory initialized.");
+        logger.LogDebug(nameof(EntraService), nameof(Initialize),$"Entra service directory directory initialized.");
         
         CreateSuperAdminUser();
 
@@ -126,11 +126,11 @@ public class EntraService(Pipeline eventPipeline, ITopazLogger logger) : IServic
         if(!Directory.Exists(servicePath))
         {
             Directory.CreateDirectory(servicePath);
-            logger.LogDebug(nameof(EntraService), nameof(Bootstrap),$"Directory {servicePath} created.");
+            logger.LogDebug(nameof(EntraService), nameof(Initialize),$"Directory {servicePath} created.");
         }
         else
         {
-            logger.LogDebug(nameof(EntraService), nameof(Bootstrap),$"Attempting to create {servicePath} directory - skipped.");
+            logger.LogDebug(nameof(EntraService), nameof(Initialize),$"Attempting to create {servicePath} directory - skipped.");
         }
     }
 }

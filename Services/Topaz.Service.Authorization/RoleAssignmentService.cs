@@ -29,7 +29,7 @@ public sealed class RoleAssignmentService(Pipeline eventPipeline, ITopazLogger l
         new DeleteRoleAssignmentEndpoint(eventPipeline, logger),
     ];
 
-    public void Bootstrap()
+    public void Register()
     {
         var controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
 

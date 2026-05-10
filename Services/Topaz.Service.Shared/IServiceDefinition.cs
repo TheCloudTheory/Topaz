@@ -10,5 +10,20 @@ public interface IServiceDefinition
     string Name { get; }
     IReadOnlyCollection<IEndpointDefinition> Endpoints { get; }
 
-    void Bootstrap();
+    /// <summary>
+    /// Register event handlers. Called for ALL services before any Initialize() runs,
+    /// guaranteeing that no event is fired before its handler is registered.
+    /// </summary>
+    void Register() { }
+
+    /// <summary>
+    /// Run side-effectful initialization: create directories, seed data, fire events.
+    /// Called for all services after all Register() calls have completed.
+    /// </summary>
+    void Initialize() { }
+
+    /// <summary>
+    /// Legacy hook kept for backward compatibility. Override Register() / Initialize() instead.
+    /// </summary>
+    void Bootstrap() { }
 }

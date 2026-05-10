@@ -4,7 +4,7 @@ namespace Topaz.EventPipeline;
 
 public sealed class Pipeline(ITopazLogger logger)
 {
-    private static readonly Dictionary<string, List<Action<object?>>> Handlers = new();
+    private readonly Dictionary<string, List<Action<object?>>> Handlers = new();
     
     public void RegisterHandler<TData>(string eventName, Action<TData?> handler) where TData : class
     {
