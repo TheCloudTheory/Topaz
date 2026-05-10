@@ -133,7 +133,7 @@ public sealed class TemplateDeploymentOrchestrator(
 
                 if (deployment == null)
                 {
-                    logger.LogInformation("No deployments in the queue, will attempt to check again in 10 seconds...");
+                    logger.LogDebug(nameof(TemplateDeploymentOrchestrator), nameof(Start),"No deployments in the queue, will attempt to check again in 10 seconds...");
                     Thread.Sleep(TimeSpan.FromSeconds(10));
                     continue;
                 }

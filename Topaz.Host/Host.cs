@@ -315,14 +315,14 @@ public class Host
 
                                 if (!IsRunningInsideContainer() && port == GlobalSettings.HttpsPort)
                                 {
-                                    _logger.LogWarning(
+                                    _logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),
                                         "Port 443 used by HTTPS endpoint will be skipped as Topaz isn't running inside a container.");
                                     continue;
                                 }
 
                                 if (!IsRunningInsideContainer() && port == GlobalSettings.AmqpTlsConnectionPort)
                                 {
-                                    _logger.LogWarning(
+                                    _logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync),
                                         $"Port {GlobalSettings.AmqpTlsConnectionPort} used by HTTPS endpoint will be skipped as Topaz isn't running inside a container.");
                                     continue;
                                 }
