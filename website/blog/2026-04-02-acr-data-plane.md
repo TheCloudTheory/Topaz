@@ -11,17 +11,6 @@ This post walks through how Topaz emulates the ACR data plane authentication lay
 
 {/* truncate */}
 
-:::tip[Try ACR locally with Topaz]
-`az acr login`, `docker push`, and the full OCI authentication flow work against Topaz with no real Azure subscription or Container Registry required.
-
-```bash
-brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
-curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
-```
-
-[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
-:::
-
 ## The Docker Registry V2 authentication protocol
 
 When `docker pull` contacts a registry for the first time, it starts with a simple probe: `GET /v2/`. If the registry requires authentication — and ACR always does — it responds with a `401 Unauthorized` and a `Www-Authenticate` header that tells the client exactly where to go next:
@@ -131,3 +120,14 @@ Updating a registry to disable admin access clears the stored credentials. Re-en
 The authentication layer described here is the foundation, not the ceiling. The OCI Distribution Spec defines a broader set of endpoints for manifests, blobs, and tags — the actual content of the registry. Full OCI data plane support (blob uploads, manifest push, blob existence checks) has since landed in Topaz. See the follow-up post [Pushing images to Topaz: how the OCI data plane works](/blog/acr-oci-data-plane) for the full picture.
 
 `docker pull` and tag listing remain on the roadmap. For now, the control plane (creating, updating, and deleting registries via ARM), the authentication layer, and the write path (`docker push`) are stable and ready to use.
+
+:::tip[Try ACR locally]
+`az acr login`, `docker push`, and the full OCI authentication flow from this post work against Topaz with no real Azure subscription required.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro) · Not ready to install? [Star the repo →](https://github.com/TheCloudTheory/Topaz)
+:::

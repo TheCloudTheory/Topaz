@@ -11,17 +11,6 @@ This post walks through why the split was done, how the boundary between Host an
 
 {/* truncate */}
 
-:::tip[Try Topaz locally]
-Everything described in this post — the two-binary design, the health endpoint, the Docker Compose setup — ships in the current release.
-
-```bash
-brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
-curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
-```
-
-[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
-:::
-
 ## The original design
 
 The original Topaz CLI was a single executable built on [Spectre.Console.Cli](https://spectreconsole.net/cli/). It loaded every command — resource management, subscriptions, Key Vault, Service Bus, Container Registry — alongside a `start` command that bootstrapped the Host process:
@@ -184,3 +173,14 @@ The split also means you can keep the Host running across many CLI invocations w
 ## Takeaway
 
 Splitting the CLI from the Host was a small refactor in terms of lines changed, but it clarified the design significantly: one process owns the emulator, another issues commands to it, and a lightweight HTTP contract (the health endpoint) provides the coordination layer. Any tool that can make an HTTP request can participate in that contract — which makes Topaz composable in environments far beyond what a single CLI binary could reach.
+
+:::tip[Try the two-binary design]
+`topaz-host` and `topaz` are separate binaries in the current release. The health endpoint, Docker Compose setup, and scripting patterns from this post all work today.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro) · Not ready to install? [Star the repo →](https://github.com/TheCloudTheory/Topaz)
+:::

@@ -9,17 +9,6 @@ Running the full test suite on every commit is simple to set up and expensive to
 
 {/* truncate */}
 
-:::tip[Add Topaz to your CI pipeline]
-Topaz runs as a service step in any pipeline — no Azure subscription, service principal, or network access required. Boot it in a single step, then run your tests against it.
-
-```bash
-brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
-curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
-```
-
-[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
-:::
-
 ## Stage one: skip CI entirely for non-code changes
 
 The first filter sits at the workflow trigger level. The `push` event that starts a CI run explicitly ignores paths that cannot affect the emulated Azure services:
@@ -159,3 +148,14 @@ The `|` separator in the joined expression is the vstest OR operator, so `FullyQ
 A change to a single service endpoint runs only that service's tests. A change to shared infrastructure runs everything. A docs commit skips the pipeline entirely. Manual runs always cover the full suite. The coverage report and PR comment appear only when there is something to report.
 
 The entire decision logic is a single shell step with no external service dependencies — no test impact analysis tool, no database of historical runs, no per-test timing data. It works because Topaz's project structure is already partitioned by service, and the test namespaces mirror that partition. The CI configuration just makes the correspondence explicit.
+
+:::tip[Add Topaz to your CI pipeline]
+Topaz runs as a service step in any pipeline — no Azure subscription, service principal, or cloud credentials required. Boot it in a single step, run your tests against it, tear it down.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[CI/CD integration guide →](https://topaz.thecloudtheory.com/docs/ecosystem/ci-cd) · Not ready to install? [Star the repo →](https://github.com/TheCloudTheory/Topaz)
+:::

@@ -11,15 +11,15 @@ Topaz removes all of that. The same `terraform apply` that would create resource
 
 {/* truncate */}
 
-:::tip[Try it in 2 minutes]
-Run the full `terraform apply` workflow against a local emulator — no Azure subscription, no service principal, no cloud charges.
+:::tip[Run this locally]
+The full `terraform apply` workflow in this post works against Topaz — no Azure subscription, no service principal, no cloud charges.
 
 ```bash
 brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
 curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
 ```
 
-[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro) · [Star on GitHub →](https://github.com/TheCloudTheory/Topaz)
 :::
 
 ## Why the standard AzureRM provider works at all

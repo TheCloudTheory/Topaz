@@ -11,17 +11,6 @@ This post walks through how Topaz implements `POST .../deployments/{name}/cancel
 
 {/* truncate */}
 
-:::tip[Try ARM deployments locally with Topaz]
-All ARM deployment operations — including `cancel` — work against Topaz with no Azure subscription required.
-
-```bash
-brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
-curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
-```
-
-[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
-:::
-
 ## How Topaz executes deployments
 
 Before looking at cancellation, it helps to understand how deployment execution works in Topaz.
@@ -167,3 +156,14 @@ Because `ProvisioningState` is persisted to disk, the cancelled state survives a
 ## Takeaway
 
 The cancel endpoint is a small but complete implementation: it matches the Azure REST contract for status codes and state transitions, enforces the correct preconditions with a lock-protected queue check, and persists the `Canceled` state durably. The one deliberate deviation — not supporting cancellation of actively running deployments — is a direct consequence of the synchronous orchestrator model and is worth knowing about when writing tests that depend on mid-flight cancellation semantics.
+
+:::tip[Test all deployment states locally]
+Drive a deployment into `Succeeded`, `Failed`, or `Canceled` against Topaz — useful for testing IaC pipelines and status-polling logic without a real Azure subscription.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro) · Not ready to install? [Star the repo →](https://github.com/TheCloudTheory/Topaz)
+:::

@@ -9,17 +9,6 @@ The [previous post on ACR authentication](/blog/acr-data-plane) covered everythi
 
 {/* truncate */}
 
-:::tip[Push images to a local registry]
-`docker push` to a local Topaz registry works today — no Azure subscription, no ACR quota, no network dependency.
-
-```bash
-brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
-curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
-```
-
-[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
-:::
-
 ## What Docker actually sends
 
 A container image is not a single file. It is a set of layer tarballs — one per filesystem layer — plus a configuration object (a JSON document describing the image's environment, entrypoint, and other metadata), and a manifest that ties them together by digest. `docker push` sends each of these as a separate upload, in a specific order, before it sends the manifest that references them.
@@ -157,3 +146,14 @@ No traffic leaves the machine. No real ACR subscription is needed.
 Topaz currently handles the write path: `docker push` works end-to-end. The read path (`docker pull`, `docker run`) requires `GET /v2/{repo}/blobs/{digest}` and `GET /v2/{repo}/manifests/{reference}`, which are on the roadmap. Tag listing (`GET /v2/{repo}/tags/list`) and repository enumeration (`GET /v2/_catalog`) are also planned.
 
 For teams that only need to push images as part of a build pipeline — for example, to test that an ACR task or a deployment manifest references the correct digest — the current implementation is already useful.
+
+:::tip[Push images to a local registry]
+`docker push` to a local Topaz registry works today — no Azure subscription, no ACR quota, no billing.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro) · Not ready to install? [Star the repo →](https://github.com/TheCloudTheory/Topaz)
+:::

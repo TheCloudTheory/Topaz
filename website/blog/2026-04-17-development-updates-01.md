@@ -13,16 +13,6 @@ Each edition is a concise, case-by-case summary of what changed in Topaz during 
 
 {/* truncate */}
 
-:::tip[Try Topaz locally]
-Everything described in this edition is available in the current release — one binary, no Azure subscription required.
-
-```bash
-brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
-curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
-```
-
-[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
-:::
 
 ## Case 1: CLI and Host are now properly split
 
@@ -151,3 +141,14 @@ This matters because most real test environments are multi-service. Improving on
 `Topaz Ship Log` will continue weekly with the same format: major changes, grouped by area, focused on practical impact.
 
 The current direction is clear: deeper Azure Storage parity, tighter CLI/SDK behavior, and continued investment in test-backed compatibility for local-first infrastructure development.
+
+:::tip[Try what shipped this week]
+Everything in this edition runs in the current release — one binary, no Azure subscription.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro) · Not ready to install? [Star the repo →](https://github.com/TheCloudTheory/Topaz)
+:::

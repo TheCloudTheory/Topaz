@@ -15,17 +15,6 @@ Topaz is a single .NET 8 (and when 1.3 version is released - .NET 10) binary tha
 
 {/* truncate */}
 
-:::tip[Try it in 2 minutes]
-Run the Azure SDK, Azure CLI, Terraform, and `docker push` against a local emulator — no Azure subscription, no service principal, no cloud charges.
-
-```bash
-brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
-curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
-```
-
-[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
-:::
-
 ## Where Topaz and Azurite agree
 
 It is worth being clear about this up front: for Azure Storage, Azurite is good. Anyone telling you otherwise is selling something. Topaz does not exist because Azurite is bad at Storage — it exists because Azurite is *only* Storage, and most real Azure applications are not.
@@ -256,3 +245,14 @@ Beyond Storage, the [API coverage docs](https://topaz.thecloudtheory.com/docs/ap
 Azurite is a good Storage emulator. Topaz is a Storage emulator that also covers Key Vault, Service Bus, Event Hubs, Container Registry, Managed Identity, RBAC, ARM, and Entra ID — in one binary, with one log stream, one working directory, and one Docker image. The Storage parity is essentially complete; the gaps that remain (SAS validation, RA-GRS, public-access reads) are scheduled and tracked in the open backlog.
 
 If your application is Storage-only, stay on Azurite. If it is anything else — and most real Azure applications are — Topaz exists to remove the orchestration tax of running five different local emulators that were never designed to work together.
+
+:::tip[Try it yourself]
+Single binary. Runs locally. The Azure SDK, Azure CLI, Terraform, and `docker push` all work against it with no Azure subscription.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro) · Not ready to install? [Star the repo →](https://github.com/TheCloudTheory/Topaz)
+:::

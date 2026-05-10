@@ -9,17 +9,6 @@ After months of alpha development, Topaz is moving to beta. The core emulation l
 
 {/* truncate */}
 
-:::tip[Try Topaz today]
-Everything listed in this post is available in the current release — install as a single binary and start emulating Azure services locally in minutes.
-
-```bash
-brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
-curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
-```
-
-[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
-:::
-
 ## What "beta" means for Topaz
 
 The alpha label was a signal that APIs, file layouts, and internal protocols were still in flux. Breaking changes happened between releases without ceremony. Starting with this release we are committing to a few things:
@@ -91,3 +80,14 @@ Beyond the raw Azure SDK compatibility, Topaz integrates with the tools you alre
 The beta period will focus on filling in the gaps visible in the API coverage pages: subscription-level list operations, Event Hub consumer groups, Service Bus authorization rules, and broader Blob Storage feature coverage are the near-term priorities. Feedback and pull requests are welcome.
 
 Check the API coverage docs (Key Vault, Storage, Service Bus, Event Hubs, and more) for a live view of what each service supports.
+
+:::tip[Try Topaz]
+One binary. No Azure subscription, no service principal, no cloud charges.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro) · Not ready to install? [Star the repo →](https://github.com/TheCloudTheory/Topaz)
+:::

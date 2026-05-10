@@ -11,17 +11,6 @@ This post is an account of a two-day investigation into a persistent `401 Unauth
 
 {/* truncate */}
 
-:::tip[Run this locally — no Azure subscription needed]
-All four fixes described in this post are shipped. Run the full `azurerm_storage_table_entity` Terraform workflow against Topaz — no subscription, no credentials, no cloud charges.
-
-```bash
-brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
-curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
-```
-
-[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
-:::
-
 ## The starting point
 
 Topaz already had table storage support: accounts, tables, entity insert and query. The `azurerm_storage_table` Terraform resource worked. What did not work was `azurerm_storage_table_entity`. Any Terraform run that tried to create a table entity failed immediately:
@@ -193,3 +182,14 @@ The storage API coverage page now marks `azurerm_storage_table_entity` create, r
 Each of the four bugs was independently plausible and independently fixable. But they were invisible until the previous one was resolved. You cannot see that `MERGE` is unrouted if you never get past the 401. You cannot see the upsert semantics gap if `MERGE` returns 404 before reaching the data plane. You cannot see the disposed stream if the upsert path is never exercised. The debugging process was necessarily sequential — each fix revealed the next layer.
 
 The URL encoding issue is worth calling out specifically. The Azure Table Storage SharedKey algorithm requires signing the *canonicalized resource*, which is derived from the request URL. Whether that URL is in its raw percent-encoded form or its decoded form is not a detail the specification makes obvious. ASP.NET Core's routing infrastructure silently decodes the path before most code ever sees it. `IHttpRequestFeature.RawTarget` is the correct place to read the unmodified wire path, and it is not the first thing you reach for. Getting there required enough diagnostic signal to rule out every other explanation first.
+
+:::tip[Run this workflow yourself]
+All four fixes are live. The full `azurerm_storage_table_entity` scenario from this post — resource group, storage account, table, entity — runs end-to-end against Topaz with no Azure subscription required.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro) · Not ready to install? [Star the repo →](https://github.com/TheCloudTheory/Topaz)
+:::

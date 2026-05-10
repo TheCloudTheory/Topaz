@@ -9,17 +9,6 @@ tags: [general, keyvault, storage, arm]
 
 {/* truncate */}
 
-:::tip[Try Topaz locally]
-Everything described in this edition is available in the current release — one binary, no Azure subscription required.
-
-```bash
-brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
-curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
-```
-
-[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
-:::
-
 ## Case 1: Key Vault cryptographic key operations are now fully covered
 
 Last week Key Vault had secrets. This week it gained a complete key management surface:
@@ -91,3 +80,14 @@ A shell installer for Linux (`install-linux.sh`) was added to the `install/` dir
 ## What to expect next
 
 Key Vault certificate operations are on the roadmap and partially scoped in the backlog already. Queue Storage will likely grow with storage account SAS support. The ARM deployment surface will continue toward full parity with the Azure Resource Manager REST API.
+
+:::tip[Try what shipped this week]
+Everything in this edition runs in the current release — one binary, no Azure subscription.
+
+```bash
+brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
+```
+
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro) · Not ready to install? [Star the repo →](https://github.com/TheCloudTheory/Topaz)
+:::
