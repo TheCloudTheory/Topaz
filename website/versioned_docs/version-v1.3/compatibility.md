@@ -31,13 +31,18 @@ This page lists the tool and SDK versions that Topaz is tested against in CI. Us
 | `Azure.ResourceManager.Network` | `1.13.0` |
 | `Azure.ResourceManager.Resources` | `1.11.2` |
 | `Azure.ResourceManager.Authorization` | `1.1.6` |
+| `Azure.ResourceManager.Compute` | `1.14.0` |
+| `Azure.Security.KeyVault.Certificates` | `4.8.0` |
+| `Azure.Security.KeyVault.Keys` | `4.7.0` |
 | `Azure.Security.KeyVault.Secrets` | `4.7.0` |
 | `Azure.Storage.Blobs` | `12.24.0` |
+| `Azure.Storage.Queues` | `12.20.0` |
 | `Azure.Data.Tables` | `12.11.0` |
 | `Azure.Messaging.ServiceBus` | `7.20.1` |
 | `Azure.Messaging.EventHubs` | `5.12.1` |
 | `Azure.Messaging.EventHubs.Processor` | `5.12.1` |
 | `Azure.Containers.ContainerRegistry` | `1.3.0` |
+| `Microsoft.Graph` | `5.103.0` |
 
 ## Runtime
 
