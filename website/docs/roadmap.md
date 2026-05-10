@@ -14,75 +14,6 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 ---
 
-## v1.3 ✅ Released
-
-_Released as v1.3.98 on 10 May 2026._
-
-### Management Groups — extended operations
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Get Descendants | List all child management groups and subscriptions under a group |
-| <span class="badge--preview">Preview</span> | Management Group Subscriptions | Associate, disassociate, and get subscriptions under a management group |
-| <span class="badge--preview">Preview</span> | Hierarchy Settings | Create, update, get, list, and delete tenant-level hierarchy settings |
-| <span class="badge--preview">Preview</span> | Entities list | `GET /providers/Microsoft.Management/getEntities` — list all accessible entities |
-
-### Resource Providers — operations support
-
-| | Feature | Description |
-|--|---------|-------------|
-| ✅ | List, Register, Unregister | Full provider lifecycle alongside the existing get-by-namespace operation. Registration state persisted per subscription and enforced in the router. |
-
-### Virtual Networks — full control plane
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--stable">Stable</span> | Delete, List, Update Tags | Complete the VNet control plane beyond create and get |
-| <span class="badge--stable">Stable</span> | Check IP Address Availability | Validate whether an IP is available within a VNet's address space |
-| <span class="badge--stable">Stable</span> | Subnets — full CRUD | Create, get, delete, and list subnets within a VNet |
-| <span class="badge--preview">Preview</span> | Network Security Groups | Full NSG control plane: create, get, delete, list, update tags |
-
-### Entra ID authentication for Azure Storage
-
-_Implemented in v1.3-beta._
-
-| | Feature | Description |
-|--|---------|-------------|
-| ✅ | Entra ID bearer-token auth on Blob, Queue & Table data plane | Accept `Authorization: Bearer` tokens with full RBAC check; returns `401 + WWW-Authenticate` challenge when no Authorization header is present |
-| ✅ | SharedKey HMAC for Blob & Queue (13-field format) | Blob and Queue now validate SharedKey signatures using the full 13-field Blob/Queue StringToSign (same algorithm as real Azure Storage) |
-| ✅ | Consistent `Authorize` override pattern | Storage base classes override `IEndpointDefinition.Authorize` to bypass the Router's ARM RBAC check; per-request auth is handled in `IsRequestAuthorized` |
-
-### Azure Virtual Machines — initial control plane
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.VirtualMachine` project with models, resource provider, and service registration |
-| <span class="badge--preview">Preview</span> | Core control plane | Create/update, get, delete, list VMs — emulated only (no actual boot) |
-
-### Key Vault — full certificate operations support
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Core CRUD | Create, import, get, update, delete certificates; list certificates and versions |
-| <span class="badge--preview">Preview</span> | Backup & Restore | Export and restore opaque certificate backup blobs |
-| <span class="badge--preview">Preview</span> | Certificate contacts | Get, set, and delete the vault-level certificate administrator contacts |
-| <span class="badge--preview">Preview</span> | Certificate issuers | Create, get, update, delete, and list certificate issuers |
-| <span class="badge--preview">Preview</span> | Pending operations | Get, update, and cancel in-flight certificate creation operations |
-| <span class="badge--preview">Preview</span> | Merge certificate | Merge a certificate from external PKI with a pending Key Vault CSR |
-| <span class="badge--preview">Preview</span> | Soft-delete surface | List, get, recover, and purge deleted certificates |
-
-### MCP Server — resource provisioning and tooling
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Resource provisioning tools | `CreateResourceGroup`, `CreateKeyVault`, `CreateServiceBusNamespace/Queue/Topic`, `CreateStorageAccount/BlobContainer` — thin wrappers over `TopazArmClient` following the `SubscriptionTool.cs` pattern |
-| <span class="badge--preview">Preview</span> | Event Hub and Container Registry tools | `CreateEventHubNamespace`, `CreateEventHub`, `CreateContainerRegistry` |
-| <span class="badge--preview">Preview</span> | `GetConnectionStrings` tool | Returns ready-to-use connection strings and URIs for all provisioned resources in a subscription — closes the provisioning workflow |
-| <span class="badge--preview">Preview</span> | `GetTopazStatus` diagnostics tool | Wraps the Topaz health-check endpoint; returns running version, live services, and bound ports |
-| <span class="badge--preview">Preview</span> | Pre-defined MCP prompts | Guided multi-step setup scenarios ("microservice environment", "CI bootstrap") that compose the provisioning tools into a single natural-language command |
-
----
-
 ## v1.4-beta
 
 ### Azure Storage — SAS validation and public access
@@ -229,6 +160,71 @@ _Implemented in v1.3-beta._
 ---
 
 ## ✅ Completed
+
+### v1.3
+
+_Released as v1.3.98 on 10 May 2026._
+
+#### Management Groups — extended operations
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Get Descendants | List all child management groups and subscriptions under a group |
+| <span class="badge--preview">Preview</span> | Management Group Subscriptions | Associate, disassociate, and get subscriptions under a management group |
+| <span class="badge--preview">Preview</span> | Hierarchy Settings | Create, update, get, list, and delete tenant-level hierarchy settings |
+| <span class="badge--preview">Preview</span> | Entities list | `GET /providers/Microsoft.Management/getEntities` — list all accessible entities |
+
+#### Resource Providers — operations support
+
+| | Feature | Description |
+|--|---------|-------------|
+| ✅ | List, Register, Unregister | Full provider lifecycle alongside the existing get-by-namespace operation. Registration state persisted per subscription and enforced in the router. |
+
+#### Virtual Networks — full control plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Delete, List, Update Tags | Complete the VNet control plane beyond create and get |
+| <span class="badge--stable">Stable</span> | Check IP Address Availability | Validate whether an IP is available within a VNet's address space |
+| <span class="badge--stable">Stable</span> | Subnets — full CRUD | Create, get, delete, and list subnets within a VNet |
+| <span class="badge--preview">Preview</span> | Network Security Groups | Full NSG control plane: create, get, delete, list, update tags |
+
+#### Entra ID authentication for Azure Storage
+
+| | Feature | Description |
+|--|---------|-------------|
+| ✅ | Entra ID bearer-token auth on Blob, Queue & Table data plane | Accept `Authorization: Bearer` tokens with full RBAC check; returns `401 + WWW-Authenticate` challenge when no Authorization header is present |
+| ✅ | SharedKey HMAC for Blob & Queue (13-field format) | Blob and Queue now validate SharedKey signatures using the full 13-field Blob/Queue StringToSign (same algorithm as real Azure Storage) |
+| ✅ | Consistent `Authorize` override pattern | Storage base classes override `IEndpointDefinition.Authorize` to bypass the Router's ARM RBAC check; per-request auth is handled in `IsRequestAuthorized` |
+
+#### Azure Virtual Machines — initial control plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.VirtualMachine` project with models, resource provider, and service registration |
+| <span class="badge--preview">Preview</span> | Core control plane | Create/update, get, delete, list VMs — emulated only (no actual boot) |
+
+#### Key Vault — full certificate operations support
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Core CRUD | Create, import, get, update, delete certificates; list certificates and versions |
+| <span class="badge--preview">Preview</span> | Backup & Restore | Export and restore opaque certificate backup blobs |
+| <span class="badge--preview">Preview</span> | Certificate contacts | Get, set, and delete the vault-level certificate administrator contacts |
+| <span class="badge--preview">Preview</span> | Certificate issuers | Create, get, update, delete, and list certificate issuers |
+| <span class="badge--preview">Preview</span> | Pending operations | Get, update, and cancel in-flight certificate creation operations |
+| <span class="badge--preview">Preview</span> | Merge certificate | Merge a certificate from external PKI with a pending Key Vault CSR |
+| <span class="badge--preview">Preview</span> | Soft-delete surface | List, get, recover, and purge deleted certificates |
+
+#### MCP Server — resource provisioning and tooling
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Resource provisioning tools | `CreateResourceGroup`, `CreateKeyVault`, `CreateServiceBusNamespace/Queue/Topic`, `CreateStorageAccount/BlobContainer` — thin wrappers over `TopazArmClient` following the `SubscriptionTool.cs` pattern |
+| <span class="badge--preview">Preview</span> | Event Hub and Container Registry tools | `CreateEventHubNamespace`, `CreateEventHub`, `CreateContainerRegistry` |
+| <span class="badge--preview">Preview</span> | `GetConnectionStrings` tool | Returns ready-to-use connection strings and URIs for all provisioned resources in a subscription — closes the provisioning workflow |
+| <span class="badge--preview">Preview</span> | `GetTopazStatus` diagnostics tool | Wraps the Topaz health-check endpoint; returns running version, live services, and bound ports |
+| <span class="badge--preview">Preview</span> | Pre-defined MCP prompts | Guided multi-step setup scenarios ("microservice environment", "CI bootstrap") that compose the provisioning tools into a single natural-language command |
 
 ### v1.2
 
