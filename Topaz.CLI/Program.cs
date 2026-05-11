@@ -8,6 +8,7 @@ using Topaz.Documentation.Command;
 using Topaz.EventPipeline;
 using Topaz.Service.Authorization.Commands;
 using Topaz.Service.ContainerRegistry.Commands;
+using Topaz.Service.VirtualNetwork.Commands;
 using Topaz.Service.EventHub.Commands;
 using Topaz.Service.KeyVault.Commands;
 using Topaz.Service.ManagedIdentity.Commands;
@@ -140,7 +141,8 @@ internal class Program
             typeof(GenericSubscriptionCommand),
             typeof(GenericManagedIdentityCommand),
             typeof(GenericRoleCommand),
-            typeof(GenericContainerRegistryCommand)
+            typeof(GenericContainerRegistryCommand),
+            typeof(GenericVirtualNetworkCommand)
         };
 
         var commands = Assembly.GetExecutingAssembly()

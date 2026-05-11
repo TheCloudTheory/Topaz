@@ -17,4 +17,14 @@ public class VirtualNetworkTests : AzureRmBatchFixture
     {
         Assert.That(GetOutput<string>("vnet_dns_name"), Is.EqualTo("tf-rm-vnet-dns"));
     }
+
+    [Test]
+    public void Subnet_CreateAndDestroy_Succeeds()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(GetOutput<string>("subnet_name"), Is.EqualTo("tf-rm-subnet"));
+            Assert.That(GetOutput<string>("subnet_prefix"), Is.EqualTo("10.0.1.0/24"));
+        });
+    }
 }

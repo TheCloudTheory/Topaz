@@ -103,6 +103,119 @@ public class VirtualNetworkTests
     }
 
     [Test]
+    public async Task Subnet_CreateOrUpdate_ShouldSucceed()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var vnetData = new VirtualNetworkData { AddressPrefixes = { "10.10.0.0/16" } };
+        const string virtualNetworkName = "vnet-subnet-test";
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName, vnetData, CancellationToken.None);
+        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+
+        // Act
+        var subnetData = new SubnetData { AddressPrefixes = { "10.10.1.0/24" } };
+        var subnet = await vnet.GetSubnets()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "test-subnet", subnetData, CancellationToken.None);
+
+        // Assert
+        Assert.That(subnet, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(subnet.Value.Data.Name, Is.EqualTo("test-subnet"));
+            Assert.That(subnet.Value.Data.ResourceType,
+                Is.EqualTo(new ResourceType("Microsoft.Network/virtualNetworks/subnets")));
+            Assert.That(subnet.Value.Data.AddressPrefixes, Contains.Item("10.10.1.0/24"));
+        });
+    }
+
+    [Test]
+    public async Task Subnet_Get_ShouldReturnSubnet()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var vnetData = new VirtualNetworkData { AddressPrefixes = { "10.20.0.0/16" } };
+        const string virtualNetworkName = "vnet-get-subnet-test";
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName, vnetData, CancellationToken.None);
+        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        await vnet.GetSubnets()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "get-subnet", new SubnetData { AddressPrefixes = { "10.20.1.0/24" } }, CancellationToken.None);
+
+        // Act
+        var subnet = await vnet.GetSubnetAsync("get-subnet");
+
+        // Assert
+        Assert.That(subnet, Is.Not.Null);
+        Assert.That(subnet.Value.Data.Name, Is.EqualTo("get-subnet"));
+        Assert.That(subnet.Value.Data.AddressPrefixes, Contains.Item("10.20.1.0/24"));
+    }
+
+    [Test]
+    public async Task Subnet_Delete_ShouldSucceed()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var vnetData = new VirtualNetworkData { AddressPrefixes = { "10.30.0.0/16" } };
+        const string virtualNetworkName = "vnet-delete-subnet-test";
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName, vnetData, CancellationToken.None);
+        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        await vnet.GetSubnets()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "del-subnet", new SubnetData { AddressPrefixes = { "10.30.1.0/24" } }, CancellationToken.None);
+
+        // Act
+        var subnetResponse = await vnet.GetSubnetAsync("del-subnet");
+        await subnetResponse.Value.DeleteAsync(WaitUntil.Completed);
+
+        // Assert
+        bool notFound = false;
+        try
+        {
+            await vnet.GetSubnetAsync("del-subnet");
+        }
+        catch (Azure.RequestFailedException ex) when (ex.Status == 404)
+        {
+            notFound = true;
+        }
+        Assert.That(notFound, Is.True, "Expected subnet to be deleted (404).");
+    }
+
+    [Test]
+    public async Task Subnet_List_ShouldReturnSubnets()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var vnetData = new VirtualNetworkData { AddressPrefixes = { "10.40.0.0/16" } };
+        const string virtualNetworkName = "vnet-list-subnets-test";
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName, vnetData, CancellationToken.None);
+        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        await vnet.GetSubnets().CreateOrUpdateAsync(WaitUntil.Completed, "subnet-a", new SubnetData { AddressPrefixes = { "10.40.1.0/24" } }, CancellationToken.None);
+        await vnet.GetSubnets().CreateOrUpdateAsync(WaitUntil.Completed, "subnet-b", new SubnetData { AddressPrefixes = { "10.40.2.0/24" } }, CancellationToken.None);
+
+        // Act
+        var subnets = await vnet.GetSubnets().GetAllAsync().ToListAsync();
+
+        // Assert
+        Assert.That(subnets.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(subnets.Select(s => s.Data.Name), Does.Contain("subnet-a"));
+        Assert.That(subnets.Select(s => s.Data.Name), Does.Contain("subnet-b"));
+    }
+
+    [Test]
     public async Task VirtualNetworkTests_WhenVirtualNetworkIsCreatedUsingTemplate_ItShouldBeAvailable()
     {
         // Arrange

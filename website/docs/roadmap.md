@@ -57,7 +57,7 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 | | Feature | Description |
 |--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Subnet CRUD | PUT/GET/DELETE/LIST subnets within a VNet (`/virtualNetworks/{vnetName}/subnets/{subnetName}`) |
+| <span class="badge--stable">Stable</span> | Subnet CRUD | PUT/GET/DELETE/LIST subnets within a VNet (`/virtualNetworks/{vnetName}/subnets/{subnetName}`) |
 | <span class="badge--preview">Preview</span> | Network Interface (NIC) CRUD | PUT/GET/DELETE/LIST network interfaces (`/networkInterfaces/{nicName}`) so `az vm create` can be used without manual ARM calls |
 
 ### Azure Storage — OData query support for Table Storage
@@ -192,7 +192,7 @@ _Released as v1.3.98 on 10 May 2026._
 |--|---------|-------------|
 | <span class="badge--stable">Stable</span> | Delete, List, Update Tags | Complete the VNet control plane beyond create and get |
 | <span class="badge--stable">Stable</span> | Check IP Address Availability | Validate whether an IP is available within a VNet's address space |
-| <span class="badge--stable">Stable</span> | Subnets — full CRUD | Create, get, delete, and list subnets within a VNet |
+| ✅ | Subnets — full CRUD | Create, get, delete, and list subnets within a VNet |
 | <span class="badge--preview">Preview</span> | Network Security Groups | Full NSG control plane: create, get, delete, list, update tags |
 
 #### Entra ID authentication for Azure Storage

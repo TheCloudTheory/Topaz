@@ -22,4 +22,65 @@ public class VirtualNetworkTests : TopazFixture
                 });
             }, 0);
     }
+
+    [Test]
+    public async Task Subnet_Create_ShouldSucceed()
+    {
+        await RunAzureCliCommand("az group create -l westeurope -n rg-subnet-create", null, 0);
+        await RunAzureCliCommand("az network vnet create --location westeurope --name vnet-subnet-create --resource-group rg-subnet-create --address-prefixes 10.50.0.0/16", null, 0);
+        await RunAzureCliCommand(
+            "az network vnet subnet create --vnet-name vnet-subnet-create --name my-subnet --address-prefixes 10.50.1.0/24 --resource-group rg-subnet-create",
+            response =>
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo("my-subnet"));
+                    Assert.That(response["type"]!.GetValue<string>(), Does.Contain("subnets"));
+                });
+            }, 0);
+    }
+
+    [Test]
+    public async Task Subnet_Show_ShouldReturnSubnet()
+    {
+        await RunAzureCliCommand("az group create -l westeurope -n rg-subnet-show", null, 0);
+        await RunAzureCliCommand("az network vnet create --location westeurope --name vnet-subnet-show --resource-group rg-subnet-show --address-prefixes 10.51.0.0/16", null, 0);
+        await RunAzureCliCommand("az network vnet subnet create --vnet-name vnet-subnet-show --name show-subnet --address-prefixes 10.51.1.0/24 --resource-group rg-subnet-show", null, 0);
+        await RunAzureCliCommand(
+            "az network vnet subnet show --vnet-name vnet-subnet-show --name show-subnet --resource-group rg-subnet-show",
+            response =>
+            {
+                Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo("show-subnet"));
+            }, 0);
+    }
+
+    [Test]
+    public async Task Subnet_List_ShouldReturnSubnets()
+    {
+        await RunAzureCliCommand("az group create -l westeurope -n rg-subnet-list", null, 0);
+        await RunAzureCliCommand("az network vnet create --location westeurope --name vnet-subnet-list --resource-group rg-subnet-list --address-prefixes 10.52.0.0/16", null, 0);
+        await RunAzureCliCommand("az network vnet subnet create --vnet-name vnet-subnet-list --name list-subnet-a --address-prefixes 10.52.1.0/24 --resource-group rg-subnet-list", null, 0);
+        await RunAzureCliCommand("az network vnet subnet create --vnet-name vnet-subnet-list --name list-subnet-b --address-prefixes 10.52.2.0/24 --resource-group rg-subnet-list", null, 0);
+        await RunAzureCliCommand(
+            "az network vnet subnet list --vnet-name vnet-subnet-list --resource-group rg-subnet-list",
+            response =>
+            {
+                var names = response.AsArray()!.Select(n => n!["name"]!.GetValue<string>()).ToList();
+                Assert.Multiple(() =>
+                {
+                    Assert.That(names, Does.Contain("list-subnet-a"));
+                    Assert.That(names, Does.Contain("list-subnet-b"));
+                });
+            }, 0);
+    }
+
+    [Test]
+    public async Task Subnet_Delete_ShouldSucceed()
+    {
+        await RunAzureCliCommand("az group create -l westeurope -n rg-subnet-delete", null, 0);
+        await RunAzureCliCommand("az network vnet create --location westeurope --name vnet-subnet-delete --resource-group rg-subnet-delete --address-prefixes 10.53.0.0/16", null, 0);
+        await RunAzureCliCommand("az network vnet subnet create --vnet-name vnet-subnet-delete --name del-subnet --address-prefixes 10.53.1.0/24 --resource-group rg-subnet-delete", null, 0);
+        await RunAzureCliCommand("az network vnet subnet delete --vnet-name vnet-subnet-delete --name del-subnet --resource-group rg-subnet-delete", null, 0);
+        await RunAzureCliCommand("az network vnet subnet show --vnet-name vnet-subnet-delete --name del-subnet --resource-group rg-subnet-delete", null, 3);
+    }
 }

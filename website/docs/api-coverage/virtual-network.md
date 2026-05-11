@@ -41,10 +41,10 @@ This page tracks which Azure Virtual Network REST API operations are implemented
 
 | Operation | Status |
 |-----------|--------|
-| Create Or Update | ❌ |
-| Delete | ❌ |
-| Get | ❌ |
-| List | ❌ |
+| Create Or Update | ✅ |
+| Delete | ✅ |
+| Get | ✅ |
+| List | ✅ |
 | Prepare Network Policies | ❌ |
 | Unprepare Network Policies | ❌ |
 

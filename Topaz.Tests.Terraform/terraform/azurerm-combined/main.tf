@@ -309,6 +309,13 @@ resource "azurerm_virtual_network" "vnet" {
   address_space       = ["10.0.0.0/16"]
 }
 
+resource "azurerm_subnet" "subnet" {
+  name                 = "tf-rm-subnet"
+  resource_group_name  = azurerm_resource_group.vnet_rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
 resource "azurerm_resource_group" "vnet_dns_rg" {
   name     = "tf-rm-vnet-dns-rg"
   location = "westeurope"
@@ -387,6 +394,8 @@ output "id_tags_name"               { value = azurerm_user_assigned_identity.id_
 output "vnet_name"                  { value = azurerm_virtual_network.vnet.name }
 output "vnet_address_space"         { value = azurerm_virtual_network.vnet.address_space }
 output "vnet_dns_name"              { value = azurerm_virtual_network.vnet_dns.name }
+output "subnet_name"                { value = azurerm_subnet.subnet.name }
+output "subnet_prefix"              { value = azurerm_subnet.subnet.address_prefixes[0] }
 
 output "acr_login_server"           { value = azurerm_container_registry.acr.login_server }
 output "acr_admin_enabled"          { value = azurerm_container_registry.acr.admin_enabled }

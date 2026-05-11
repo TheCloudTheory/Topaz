@@ -10,14 +10,6 @@ converted to a GitHub Issue by CI when new lines are committed.
 ---
 
 <!--
-TODO: VirtualNetwork — Subnet CRUD
-  Implement PUT/GET/DELETE/LIST subnet endpoints under /virtualNetworks/{vnetName}/subnets/{subnetName}.
-  Required to support `az vm create` (which provisions a subnet before creating the VM).
-  milestone: v1.4-beta
-  labels: enhancement
--->
-
-<!--
 TODO: VirtualNetwork — Network Interface (NIC) CRUD
   Implement PUT/GET/DELETE/LIST NIC endpoints under /networkInterfaces/{nicName}.
   Required to support `az vm create` (which creates a NIC and wires it into the VM payload).
@@ -586,18 +578,6 @@ TODO: Virtual Networks: Delete, List, List All, and Update Tags operations
 TODO: Virtual Networks: Check IP Address Availability
   Implement `GET .../virtualNetworks/{name}/CheckIPAddressAvailability?ipAddress={ip}`.
   Should validate whether the given IP falls within any subnet and is not already allocated.
-  milestone: v1.4-beta
-  labels: enhancement, virtual-network
--->
-
-<!--
-TODO: Subnets: Full CRUD operations
-  Implement the subnet resource surface under Virtual Networks:
-  - PUT    .../virtualNetworks/{vnet}/subnets/{name}  – create or update
-  - GET    .../virtualNetworks/{vnet}/subnets/{name}  – get
-  - DELETE .../virtualNetworks/{vnet}/subnets/{name}  – delete
-  - GET    .../virtualNetworks/{vnet}/subnets          – list
-  Follow the resource provider pattern used by other Topaz.Service.VirtualNetwork resources.
   milestone: v1.4-beta
   labels: enhancement, virtual-network
 -->
