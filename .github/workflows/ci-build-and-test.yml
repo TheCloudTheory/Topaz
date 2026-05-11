@@ -226,7 +226,14 @@ jobs:
         FILTER="${{ steps.test_filter.outputs.filter }}"
         EXCLUDE="FullyQualifiedName!~Topaz.Tests.Terraform&FullyQualifiedName!~Topaz.Tests.AzurePowerShell&FullyQualifiedName!~Topaz.Tests.AzureCLI"
         if [[ -n "$FILTER" ]]; then
-          FILTER="${FILTER}&${EXCLUDE}"
+          # Apply exclusions to each OR branch individually so that & (higher precedence
+          # than |) correctly scopes every branch, not just the last one.
+          FILTERED_PARTS=()
+          IFS='|' read -ra FILTER_PARTS <<< "$FILTER"
+          for part in "${FILTER_PARTS[@]}"; do
+            FILTERED_PARTS+=("${part}&${EXCLUDE}")
+          done
+          FILTER=$(IFS='|'; echo "${FILTERED_PARTS[*]}")
         else
           FILTER="${EXCLUDE}"
         fi
