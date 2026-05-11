@@ -37,6 +37,7 @@ RUN pwsh -NonInteractive -Command " \
     Install-Module -Name Az.KeyVault          -Force -Scope AllUsers -AllowClobber -Repository PSGallery; \
     Install-Module -Name Az.Storage           -Force -Scope AllUsers -AllowClobber -Repository PSGallery; \
     Install-Module -Name Az.ContainerRegistry -Force -Scope AllUsers -AllowClobber -Repository PSGallery; \
+    Install-Module -Name Az.Network           -Force -Scope AllUsers -AllowClobber -Repository PSGallery; \
     Write-Host 'Az modules installed.' \
     "
 
