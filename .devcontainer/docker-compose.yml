@@ -13,8 +13,6 @@ services:
   # --- Dev workspace ------------------------------------------------------------
   devcontainer:
     image: mcr.microsoft.com/devcontainers/base:ubuntu
-    volumes:
-      - ../:/workspace:cached
     command: sleep infinity
     networks:
       topaz-net:
