@@ -60,13 +60,19 @@ docker run -d \
 
 | Page | Description |
 |---|---|
+| **Dashboard** | Overview of the running emulator |
 | **Subscriptions** | List all subscriptions registered in the emulator |
 | **Resource Groups** | Browse resource groups within a subscription |
-| **Resource Manager** | Inspect raw ARM resources |
+| **Resource Manager** | Inspect raw ARM resources, deployment history, and management groups |
+| **Authorization (RBAC)** | View and inspect role assignments |
+| **Managed Identities** | Browse user-assigned managed identities, their federated credentials, and IAM settings |
+| **Entra ID** | Browse Entra ID tenants, users, groups, applications, and service principals |
 | **Key Vault** | View Key Vault instances and their secrets, keys, and certificates |
-| **Deployments** | Inspect ARM template deployment history |
-| **Entra** | Browse Entra ID objects managed by the emulator |
-| **Authorization** | View role assignments |
+| **Event Hubs** | Browse Event Hub namespaces and their event hubs |
+| **Service Bus** | Browse Service Bus namespaces, queues, and topics |
+| **Storage** | Browse storage accounts, blob containers, queues, and tables |
+| **Virtual Networks** | View virtual networks |
+| **Insights** | Observability and diagnostics information |
 
 ## Versioning
 
