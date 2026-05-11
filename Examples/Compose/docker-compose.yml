@@ -1,0 +1,62 @@
+networks:
+  topaz-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.28.0.0/16"
+
+volumes:
+  topaz-data: {}   # persists Topaz resource state across restarts
+  topaz-certs:     # pre-populated by setup.sh (uses docker cp, like Testcontainers WithResourceMapping)
+    external: true
+
+services:
+
+  # --- Topaz emulator -----------------------------------------------------------
+  topaz:
+    image: thecloudtheory/topaz-host:latest
+    platform: linux/amd64                     # required on Apple Silicon (uses Rosetta)
+    networks:
+      topaz-net:
+        ipv4_address: "172.28.0.10"
+    ports:
+      - "8899:8899"   # ARM / Resource Manager
+      - "8898:8898"   # Key Vault
+      - "8892:8892"   # Container Registry
+      - "8891:8891"   # Blob Storage
+    volumes:
+      - topaz-certs:/certs:ro
+      - topaz-data:/app/.topaz           # durable resource state
+    command:
+      - --certificate-file
+      - /certs/topaz.crt
+      - --certificate-key
+      - /certs/topaz.key
+      - --log-level
+      - Information
+
+
+  # --- Your application ---------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    depends_on:
+      - topaz
+    ports:
+      - "8080:8080"       # app HTTP endpoint
+    networks:
+      - topaz-net
+    environment:
+      # Topaz superadmin object ID — grants unrestricted access during local development
+      AZURE_TENANT_ID: "50717675-3E5E-4A1E-8CB5-C62D8BE8CA48"
+
+    extra_hosts:
+      # Resource Manager
+      - "topaz.local.dev:172.28.0.10"
+      # Key Vault data-plane
+      - "kv-my-app.vault.topaz.local.dev:172.28.0.10"
+      # Blob Storage data-plane
+      - "stmyapp001.blob.storage.topaz.local.dev:172.28.0.10"
+      # Container Registry data-plane
+      - "myregistry.cr.topaz.local.dev:172.28.0.10"
