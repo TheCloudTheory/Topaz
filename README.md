@@ -17,6 +17,8 @@ curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/g
 docker run -p 8891:8891 -p 8892:8892 -p 8898:8898 thecloudtheory/topaz-host
 ```
 
+[![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/TheCloudTheory/Topaz)
+
 → Full docs, quickstarts, and service guides at **[topaz.thecloudtheory.com](https://topaz.thecloudtheory.com/)**
 
 ## What is Topaz?

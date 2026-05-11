@@ -1,0 +1,39 @@
+{
+  "name": "Topaz",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
+
+  "features": {
+    "ghcr.io/devcontainers/features/azure-cli:1": {}
+  },
+
+  "postCreateCommand": "bash /workspace/.devcontainer/postCreate.sh",
+
+  // Forward all Topaz service ports with descriptive labels
+  "forwardPorts": [8899, 8898, 8897, 8892, 8891, 8893, 8890, 8894, 8889, 8888],
+  "portsAttributes": {
+    "8899": { "label": "ARM / Resource Manager" },
+    "8898": { "label": "Key Vault" },
+    "8897": { "label": "Event Hub (HTTP)" },
+    "8892": { "label": "Container Registry" },
+    "8891": { "label": "Blob Storage" },
+    "8893": { "label": "Queue Storage" },
+    "8890": { "label": "Table Storage" },
+    "8894": { "label": "File Storage" },
+    "8889": { "label": "Service Bus (AMQP)" },
+    "8888": { "label": "Event Hub (AMQP)" }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-azureresourcegroups",
+        "ms-vscode.azure-account"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}

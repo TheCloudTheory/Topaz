@@ -1,0 +1,64 @@
+networks:
+  topaz-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.28.0.0/16"
+
+volumes:
+  topaz-data: {}   # persists Topaz resource state across container restarts
+
+services:
+
+  # --- Dev workspace ------------------------------------------------------------
+  devcontainer:
+    image: mcr.microsoft.com/devcontainers/base:ubuntu
+    volumes:
+      - ../:/workspace:cached
+    command: sleep infinity
+    networks:
+      topaz-net:
+        ipv4_address: "172.28.0.2"
+    extra_hosts:
+      # Resource Manager & ARM
+      - "topaz.local.dev:172.28.0.10"
+      # Key Vault data-plane — add one entry per vault name, e.g.:
+      # - "my-vault.vault.topaz.local.dev:172.28.0.10"
+      # Blob Storage data-plane — add one entry per account name, e.g.:
+      # - "myaccount.blob.storage.topaz.local.dev:172.28.0.10"
+      # Queue Storage data-plane — add one entry per account name, e.g.:
+      # - "myaccount.queue.storage.topaz.local.dev:172.28.0.10"
+      # Table Storage data-plane — add one entry per account name, e.g.:
+      # - "myaccount.table.storage.topaz.local.dev:172.28.0.10"
+      # Container Registry data-plane — add one entry per registry name, e.g.:
+      # - "myregistry.cr.topaz.local.dev:172.28.0.10"
+
+  # --- Topaz emulator -----------------------------------------------------------
+  topaz:
+    image: thecloudtheory/topaz-host:latest
+    platform: linux/amd64   # required on Apple Silicon (Rosetta)
+    networks:
+      topaz-net:
+        ipv4_address: "172.28.0.10"
+    ports:
+      - "8899:8899"   # ARM / Resource Manager
+      - "8898:8898"   # Key Vault
+      - "8897:8897"   # Event Hub (HTTP)
+      - "8892:8892"   # Container Registry
+      - "8891:8891"   # Blob Storage
+      - "8893:8893"   # Queue Storage
+      - "8890:8890"   # Table Storage
+      - "8894:8894"   # File Storage
+      - "8889:8889"   # Service Bus (AMQP)
+      - "8888:8888"   # Event Hub (AMQP)
+    volumes:
+      - ./.devcontainer/topaz.crt:/certs/topaz.crt:ro
+      - ./.devcontainer/topaz.key:/certs/topaz.key:ro
+      - topaz-data:/app/.topaz   # durable resource state
+    command:
+      - --certificate-file
+      - /certs/topaz.crt
+      - --certificate-key
+      - /certs/topaz.key
+      - --log-level
+      - Information
