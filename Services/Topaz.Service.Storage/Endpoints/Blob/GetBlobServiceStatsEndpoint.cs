@@ -31,11 +31,8 @@ internal sealed class GetBlobServiceStatsEndpoint(Pipeline eventPipeline, ITopaz
 
         if (!IsRaGrsAccount(storageAccount!))
         {
-            const string errorXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
-                                    "<Error><Code>FeatureNotSupported</Code>" +
-                                    "<Message>The account does not support the specified HTTP verb.</Message></Error>";
-            response.StatusCode = HttpStatusCode.Forbidden;
-            response.Content = new StringContent(errorXml, Encoding.UTF8, "application/xml");
+            // Non-RAGRS accounts have no secondary endpoint — treat as not found.
+            response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
 

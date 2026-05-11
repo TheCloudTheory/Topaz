@@ -152,7 +152,7 @@ public class StorageAccountGeoReplicationTests
         request.Headers.Add("x-ms-date", date);
         request.Headers.Add("x-ms-version", "2020-10-02");
 
-        var stringToSign = $"GET\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{date}\nx-ms-version:2020-10-02\n/{RagrsAccountName}\ncomp:stats\nrestype:service";
+        var stringToSign = $"GET\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{date}\nx-ms-version:2020-10-02\n/{RagrsAccountName}/\ncomp:stats\nrestype:service";
         using var hmac = new System.Security.Cryptography.HMACSHA256(Convert.FromBase64String(key));
         var signature = Convert.ToBase64String(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(stringToSign)));
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(

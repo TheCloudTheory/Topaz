@@ -39,11 +39,12 @@ internal abstract class TableDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
         var firstLabel = host.ToString().Split('.')[0];
         if (!firstLabel.EndsWith("-secondary", StringComparison.OrdinalIgnoreCase)) return false;
 
-        const string errorXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
-                                 "<Error><Code>WriteOperationNotSupportedOnSecondary</Code>" +
-                                 "<Message>The account being accessed does not support writes from the secondary region.</Message></Error>";
+        // Table Storage clients parse OData JSON errors, not XML.
+        var error = new TableErrorResponse("WriteOperationNotSupportedOnSecondary",
+            "The account being accessed does not support writes from the secondary region.");
         response.StatusCode = System.Net.HttpStatusCode.Forbidden;
-        response.Content = new System.Net.Http.StringContent(errorXml, System.Text.Encoding.UTF8, "application/xml");
+        response.Headers.Add("x-ms-error-code", "WriteOperationNotSupportedOnSecondary");
+        response.Content = System.Net.Http.Json.JsonContent.Create(error);
         return true;
     }
 
