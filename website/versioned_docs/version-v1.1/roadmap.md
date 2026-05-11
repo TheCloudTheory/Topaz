@@ -105,10 +105,10 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 | | Feature | Description |
 |--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Secondary endpoint DNS & ARM response | Register `{accountName}-secondary.*` hostnames and populate `secondaryEndpoints` in the ARM response for RA-GRS/RA-GZRS accounts |
-| <span class="badge--preview">Preview</span> | `GetServiceStats` on secondary endpoints | Return a realistic `GeoReplicationStats` payload (status: live, lastSyncTime: now) for Blob, Table, and Queue secondary endpoints |
-| <span class="badge--preview">Preview</span> | `FeatureNotSupported` for non-RA-GRS stats | Return 403 on stats requests for LRS/ZRS accounts across all storage services (Table already done; extend to Blob and Queue) |
-| <span class="badge--preview">Preview</span> | Read-only enforcement on secondary | Mutating operations (PUT, DELETE, POST) on secondary endpoints return 403 `WriteOperationNotSupportedOnSecondary` |
+| <span class="badge--stable">Stable</span> | Secondary endpoint DNS & ARM response | Register `{accountName}-secondary.*` hostnames and populate `secondaryEndpoints` in the ARM response for RA-GRS/RA-GZRS accounts |
+| <span class="badge--stable">Stable</span> | `GetServiceStats` on secondary endpoints | Return a realistic `GeoReplicationStats` payload (status: live, lastSyncTime: now) for Blob, Table, and Queue secondary endpoints |
+| <span class="badge--stable">Stable</span> | `FeatureNotSupported` for non-RA-GRS stats | Return 403 on stats requests for LRS/ZRS accounts across all storage services |
+| <span class="badge--stable">Stable</span> | Read-only enforcement on secondary | Mutating operations (PUT, DELETE, POST) on secondary endpoints return 403 `WriteOperationNotSupportedOnSecondary` |
 
 ### Virtual Network — subnets and NICs
 
@@ -168,6 +168,12 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 ---
 
 ## v1.6-beta
+
+### Azure Storage — secondary endpoint general reads
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | General reads on secondary endpoints | Allow standard GET operations (blob download, container listing, queue listing, table entity reads) on `{accountName}-secondary.*` endpoints for RA-GRS/RA-GZRS accounts |
 
 ### Azure Storage — unified data-plane port
 

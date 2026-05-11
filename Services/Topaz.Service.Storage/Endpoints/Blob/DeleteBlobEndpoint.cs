@@ -25,6 +25,7 @@ internal sealed class DeleteBlobEndpoint(Pipeline eventPipeline, ITopazLogger lo
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
+        if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
         {
             response.StatusCode = HttpStatusCode.NotFound;

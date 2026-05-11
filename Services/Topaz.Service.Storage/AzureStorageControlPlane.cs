@@ -204,10 +204,13 @@ internal sealed class AzureStorageControlPlane(
         var existingKeys = existingDeserialized?.Keys;
         var existingCreationTime = existingDeserialized?.Properties?.CreationTime;
 
+        var raGrs = IsRaGrsSkuName(request.Sku?.Name);
         var properties = (request.Properties ?? new StorageAccountResourceProperties()) with
         {
             PrimaryEndpoints = BuildPrimaryEndpoints(storageAccountName),
             StatusOfPrimary = "available",
+            SecondaryEndpoints = raGrs ? BuildSecondaryEndpoints(storageAccountName) : null,
+            StatusOfSecondary = raGrs ? "available" : null,
             CreationTime = existingCreationTime ?? DateTimeOffset.UtcNow
         };
 
@@ -249,6 +252,18 @@ internal sealed class AzureStorageControlPlane(
         Web = $"https://{accountName}.web.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
         Dfs = $"https://{accountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
     };
+
+    private static StorageAccountSecondaryEndpoints BuildSecondaryEndpoints(string accountName) => new()
+    {
+        Blob = $"https://{accountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
+        Queue = $"https://{accountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/",
+        Table = $"https://{accountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/",
+        File = $"https://{accountName}-secondary.file.storage.topaz.local.dev:{GlobalSettings.DefaultFileStoragePort}/",
+    };
+
+    private static bool IsRaGrsSkuName(string? skuName) =>
+        string.Equals(skuName, StorageSkuName.StandardRagrs.ToString(), StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(skuName, StorageSkuName.StandardRagzrs.ToString(), StringComparison.OrdinalIgnoreCase);
 
     // LocalDirectoryPath has 5 segments; add 3 for .topaz prefix, account-name dir, and metadata.json
     private static readonly uint StorageAccountFileSegmentCount =

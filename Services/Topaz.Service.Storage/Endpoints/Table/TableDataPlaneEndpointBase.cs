@@ -33,6 +33,20 @@ internal abstract class TableDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
         HttpResponseMessage response,
         IArmAuthorizationChecker armAuthChecker) => (true, null);
 
+    protected static bool RejectIfSecondaryHostForMutation(IHeaderDictionary headers, HttpResponseMessage response)
+    {
+        if (!headers.TryGetValue("Host", out var host)) return false;
+        var firstLabel = host.ToString().Split('.')[0];
+        if (!firstLabel.EndsWith("-secondary", StringComparison.OrdinalIgnoreCase)) return false;
+
+        const string errorXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+                                 "<Error><Code>WriteOperationNotSupportedOnSecondary</Code>" +
+                                 "<Message>The account being accessed does not support writes from the secondary region.</Message></Error>";
+        response.StatusCode = System.Net.HttpStatusCode.Forbidden;
+        response.Content = new System.Net.Http.StringContent(errorXml, System.Text.Encoding.UTF8, "application/xml");
+        return true;
+    }
+
     protected bool TryGetStorageAccount(IHeaderDictionary headers, out StorageAccountResource? storageAccount)
     {
         Logger.LogDebug(nameof(TableDataPlaneEndpointBase), nameof(TryGetStorageAccount), "Executing {0}",

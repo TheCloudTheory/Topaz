@@ -24,6 +24,7 @@ internal sealed class CreateQueueEndpoint(Pipeline eventPipeline, ITopazLogger l
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
+        if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
         {
             response.StatusCode = HttpStatusCode.NotFound;

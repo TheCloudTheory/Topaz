@@ -101,3 +101,22 @@ Callers that specifically test HSM key attestation (i.e. rely on `attributes.att
 ### No fix planned
 
 Replicating real HSM attestation behaviour requires generating hardware-backed key material and signing certificate chains with an HSM root, which is outside the scope of a software emulator. The `attestation` field will remain `null` for all Topaz-managed keys.
+
+
+## Storage Account — secondary endpoint general reads
+
+**Affected services:** Blob Storage, Queue Storage, Table Storage (RA-GRS / RA-GZRS accounts)
+
+For accounts created with `Standard_RAGRS` or `Standard_RAGZRS` SKUs, Topaz registers secondary hostnames (`{accountName}-secondary.*`) and returns correct `secondaryEndpoints` URLs in the ARM response. The `GET ?restype=service&comp=stats` endpoint is fully functional on secondary endpoints for all three services, and mutating operations (PUT, DELETE, POST, PATCH) correctly return `403 WriteOperationNotSupportedOnSecondary`.
+
+However, standard data-plane read operations — downloading blobs, listing containers, reading queue messages, querying table entities — are not routed through the secondary endpoint. Requests to secondary data-plane endpoints other than `?comp=stats` return `404 Not Found` rather than serving data.
+
+### Impact
+
+SDK clients that configure a secondary read policy (e.g., `GeoRedundantReplication.On` in the Azure Storage SDK) and attempt to read data from the secondary endpoint will receive `404` responses.
+
+**Workaround:** avoid enabling secondary-read policies in tests or application code targeting Topaz. Use only the primary endpoint for all data reads.
+
+### Planned fix — v1.6-beta
+
+Route standard GET operations on secondary endpoints to the same in-memory data store as the primary endpoint, making secondary reads fully functional.

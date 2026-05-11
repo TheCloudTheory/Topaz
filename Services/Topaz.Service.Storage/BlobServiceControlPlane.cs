@@ -95,4 +95,18 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
         return provider.GetBlobBlocksStagingPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
             containerName, blobSubpathKey);
     }
+
+    public static string GetBlobServiceStatsXml()
+    {
+        var lastSyncTime = DateTimeOffset.UtcNow.ToString("R");
+        return $"""
+                <?xml version="1.0" encoding="utf-8"?>
+                <StorageServiceStats>
+                  <GeoReplication>
+                    <Status>live</Status>
+                    <LastSyncTime>{lastSyncTime}</LastSyncTime>
+                  </GeoReplication>
+                </StorageServiceStats>
+                """;
+    }
 }

@@ -93,6 +93,12 @@ Blob Storage is served on port **8891** (HTTP) in Topaz.
 | Snapshot Blob | ✅ | |
 | Undelete Blob | ✅ | |
 
+### Blob Service
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| Get Blob Service Stats | ✅ | `GET /?restype=service&comp=stats` — secondary endpoint only; returns 403 for non-RA-GRS accounts |
+
 ---
 
 ## Data Plane — Table Storage

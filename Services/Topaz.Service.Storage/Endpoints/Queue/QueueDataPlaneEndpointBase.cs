@@ -1,5 +1,6 @@
 using System.Net;
 using System.Security.Claims;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -51,6 +52,20 @@ internal abstract class QueueDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
         return _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccountName, context.Request.Headers, requiredPermissions, context.Request.Method,
             rawPath, context.Request.QueryString);
+    }
+
+    protected static bool RejectIfSecondaryHostForMutation(IHeaderDictionary headers, HttpResponseMessage response)
+    {
+        if (!headers.TryGetValue("Host", out var host)) return false;
+        var firstLabel = host.ToString().Split('.')[0];
+        if (!firstLabel.EndsWith("-secondary", StringComparison.OrdinalIgnoreCase)) return false;
+
+        const string errorXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+                                 "<Error><Code>WriteOperationNotSupportedOnSecondary</Code>" +
+                                 "<Message>The account being accessed does not support writes from the secondary region.</Message></Error>";
+        response.StatusCode = HttpStatusCode.Forbidden;
+        response.Content = new StringContent(errorXml, Encoding.UTF8, "application/xml");
+        return true;
     }
 
     protected bool TryGetStorageAccount(IHeaderDictionary headers, out StorageAccountResource? storageAccount)

@@ -15,6 +15,15 @@ internal record StorageAccountPrimaryEndpoints
 }
 
 [UsedImplicitly]
+internal record StorageAccountSecondaryEndpoints
+{
+    public string? Blob { get; set; }
+    public string? Queue { get; set; }
+    public string? Table { get; set; }
+    public string? File { get; set; }
+}
+
+[UsedImplicitly]
 internal record StorageAccountResourceProperties
 {
     public string? AllowedCopyScope { get; set; }
@@ -42,6 +51,8 @@ internal record StorageAccountResourceProperties
     public string? DnsEndpointType { get; set; }
     public string ProvisioningState { get; set; } = "Succeeded";
     public string StatusOfPrimary { get; set; } = "available";
+    public string? StatusOfSecondary { get; set; }
     public DateTimeOffset? CreationTime { get; set; }
     public StorageAccountPrimaryEndpoints? PrimaryEndpoints { get; set; }
+    public StorageAccountSecondaryEndpoints? SecondaryEndpoints { get; set; }
 }

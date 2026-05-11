@@ -21,6 +21,9 @@ internal static class StorageHostMapper
             await EnsureHostMapping(azureCliContainer, topazContainer, $"{accountName}.table.storage.topaz.local.dev");
             await EnsureHostMapping(azureCliContainer, topazContainer, $"{accountName}.blob.storage.topaz.local.dev");
             await EnsureHostMapping(azureCliContainer, topazContainer, $"{accountName}.queue.storage.topaz.local.dev");
+            await EnsureHostMapping(azureCliContainer, topazContainer, $"{accountName}-secondary.blob.storage.topaz.local.dev");
+            await EnsureHostMapping(azureCliContainer, topazContainer, $"{accountName}-secondary.queue.storage.topaz.local.dev");
+            await EnsureHostMapping(azureCliContainer, topazContainer, $"{accountName}-secondary.table.storage.topaz.local.dev");
         }
     }
 
