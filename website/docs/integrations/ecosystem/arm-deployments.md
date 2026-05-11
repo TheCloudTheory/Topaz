@@ -14,6 +14,7 @@ The following resource types are recognised by the Topaz deployment orchestrator
 | Resource type | Notes |
 |---|---|
 | `Microsoft.ContainerRegistry/registries` | ACR Basic / Standard / Premium SKUs |
+| `Microsoft.Compute/virtualMachines` | Resource persisted with hardware, OS, storage and network profiles; compute lifecycle operations (start, stop, restart) are not emulated |
 | `Microsoft.EventHub/namespaces` | Namespace + child `eventhubs` resources |
 | `Microsoft.KeyVault/vaults` | Standard and Premium SKUs |
 | `Microsoft.ManagedIdentity/userAssignedIdentities` | User-assigned only |
