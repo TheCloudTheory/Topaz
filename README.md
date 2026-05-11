@@ -1,4 +1,4 @@
-# Topaz ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/TheCloudTheory/Topaz/ci-build-and-test.yml) ![GitHub Release](https://img.shields.io/github/v/release/TheCloudTheory/Topaz?include_prereleases) [![Discord](https://img.shields.io/discord/1383721799736492032?logo=discord&label=Discord&color=5865F2)](https://discord.gg/eGTkS76w) [![Docs](https://img.shields.io/badge/docs-topaz.thecloudtheory.com-blue)](https://topaz.thecloudtheory.com/)
+# Topaz ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/TheCloudTheory/Topaz/ci-build-and-test.yml) ![GitHub Release](https://img.shields.io/github/v/release/TheCloudTheory/Topaz?include_prereleases) [![Discord](https://img.shields.io/discord/1383721799736492032?logo=discord&label=Discord&color=5865F2)](https://discord.gg/eGTkS76w) [![Docs](https://img.shields.io/badge/docs-topaz.thecloudtheory.com-blue)](https://topaz.thecloudtheory.com/) [![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/TheCloudTheory/Topaz)
 
 <div align="center">
   <img src="./static/topaz-logo.png" />
@@ -16,8 +16,6 @@ curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/g
 # Docker
 docker run -p 8891:8891 -p 8892:8892 -p 8898:8898 thecloudtheory/topaz-host
 ```
-
-[![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/TheCloudTheory/Topaz)
 
 → Full docs, quickstarts, and service guides at **[topaz.thecloudtheory.com](https://topaz.thecloudtheory.com/)**
 
