@@ -510,6 +510,23 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
     }
 
+    /// <summary>
+    /// Returns <see langword="true"/> when the Topaz host is up and responding to requests.
+    /// Uses the unauthenticated <c>GET /health</c> endpoint so no credentials are required.
+    /// </summary>
+    public async Task<bool> CheckIfReadyAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("health");
+            return response.IsSuccessStatusCode;
+        }
+        catch (HttpRequestException)
+        {
+            return false;
+        }
+    }
+
     public void Dispose()
     {
         _httpClient.Dispose();
