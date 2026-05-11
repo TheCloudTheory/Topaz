@@ -1100,4 +1100,41 @@ public class BlobStorageTests
         var content = (await blobClient.DownloadContentAsync()).Value.Content.ToString();
         Assert.That(content, Is.EqualTo("version 2"));
     }
+
+    [Test]
+    public async Task BlobStorageTests_WhenTokenCredentialIsUsed_ContainerShouldBeCreated()
+    {
+        // Arrange — use (Uri, TokenCredential) instead of a connection string to verify
+        // that Bearer auth works end-to-end for Blob Storage data-plane requests.
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var serviceUri = new Uri(TopazResourceHelpers.GetBlobServiceUri(StorageAccountName));
+        var blobServiceClient = new BlobServiceClient(serviceUri, credential);
+
+        // Act
+        var response = await blobServiceClient.CreateBlobContainerAsync("token-auth-test");
+
+        // Assert
+        Assert.That(response, Is.Not.Null);
+        Assert.That(response.Value.Name, Is.EqualTo("token-auth-test"));
+    }
+
+    [Test]
+    public async Task BlobStorageTests_WhenTokenCredentialIsUsed_BlobShouldBeUploadedAndDownloaded()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var serviceUri = new Uri(TopazResourceHelpers.GetBlobServiceUri(StorageAccountName));
+        var blobServiceClient = new BlobServiceClient(serviceUri, credential);
+
+        var containerClient = blobServiceClient.GetBlobContainerClient("token-auth-blob-test");
+        await containerClient.CreateIfNotExistsAsync();
+        var blobClient = containerClient.GetBlobClient("hello.txt");
+        await blobClient.UploadAsync(BinaryData.FromString("hello from token auth"), overwrite: true);
+
+        // Act
+        var content = await blobClient.DownloadContentAsync();
+
+        // Assert
+        Assert.That(content.Value.Content.ToString(), Is.EqualTo("hello from token auth"));
+    }
 }

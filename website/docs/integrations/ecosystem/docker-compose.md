@@ -12,13 +12,12 @@ Docker Compose is a natural fit for local development with Topaz. A single `dock
 
 ## Scenario
 
-This guide walks through a realistic setup: an application that depends on three Azure services.
+This guide walks through a realistic setup: an application that depends on two Azure services.
 
 | Service | Topaz port | Topaz DNS suffix |
 |---|---|---|
 | Azure Key Vault | 8898 | `{vault}.vault.topaz.local.dev` |
 | Azure Blob Storage | 8891 | `{account}.blob.storage.topaz.local.dev` |
-| Azure Container Registry | 8892 | `{registry}.cr.topaz.local.dev` |
 
 The resource names used throughout this guide are:
 
@@ -28,20 +27,27 @@ The resource names used throughout this guide are:
 | Resource group | `rg-my-app` |
 | Key Vault | `kv-my-app` |
 | Storage Account | `stmyapp001` |
-| Container Registry | `myregistry` |
 
-Replace these with your own names — but keep them consistent between the Compose file, the provisioning commands, and your application configuration.
+Replace these with your own names — but keep them consistent between the Compose file, the provisioning code, and your application configuration.
+
+A complete, runnable example is available in the Topaz repository under [`Examples/Compose/`](https://github.com/TheCloudTheory/Topaz/tree/main/Examples/Compose).
 
 ## How Topaz DNS works in Docker Compose
 
 Topaz data-plane clients (Key Vault SDK, Storage SDK, Docker daemon) resolve service hostnames like `kv-my-app.vault.topaz.local.dev` rather than talking to `localhost`. This is the same behaviour as real Azure.
 
-In Docker Compose there is no automatic wildcard DNS resolution for `*.topaz.local.dev`. The solution is:
+Docker Compose has no automatic wildcard DNS resolution for `*.topaz.local.dev`. The solution is:
 
 1. Assign Topaz a **fixed IP address** on a private bridge network.
 2. Add `extra_hosts` entries to the app service that map each Topaz hostname to that fixed IP.
 
 The Compose file below uses the subnet `172.28.0.0/16` and assigns Topaz the address `172.28.0.10`. You can use any private range that does not conflict with your existing networks.
+
+:::warning[`extra_hosts` are per-service]
+
+`extra_hosts` entries are only injected into the container they are declared on. They are **not** available inside the Topaz container itself. This matters for health checks — see [Startup ordering](#startup-ordering).
+
+:::
 
 ## Prerequisites
 
@@ -49,23 +55,58 @@ The Compose file below uses the subnet `172.28.0.0/16` and assigns Topaz the add
 
 Topaz exposes every endpoint over HTTPS using a self-signed certificate. You do **not** need to generate a certificate yourself — ready-to-use `topaz.crt` and `topaz.key` files are available from two places:
 
-- **Repository**: [`certificate/`](https://github.com/TheCloudTheory/Topaz/tree/main/certificate) in the Topaz GitHub repo — download and place them next to your `docker-compose.yml`.
+- **Repository**: [`certificate/`](https://github.com/TheCloudTheory/Topaz/tree/main/certificate) in the Topaz GitHub repo.
 - **Release artifacts**: each [GitHub Release](https://github.com/TheCloudTheory/Topaz/releases) ships `topaz.crt` and `topaz.key` as downloadable assets.
 
-If you prefer to generate your own (for example to use a different Common Name), run:
+Place `topaz.crt` and `topaz.key` next to your `docker-compose.yml`.
+
+### Certificate injection with `setup.sh`
+
+Topaz reads its certificate from a path **inside the container**. Bind-mounting individual certificate files from the host can be unreliable across operating systems and Docker configurations (on macOS with Docker Engine, bind-mounting a single file from an external drive creates a directory instead of a file). The recommended approach mirrors how Testcontainers handles file injection via `WithResourceMapping`: copy the files into a named Docker volume using `docker cp`.
+
+Run this once before `docker compose up`:
 
 ```bash
-bash certificate/generate.sh
+#!/bin/sh
+# setup.sh — run once before docker-compose up
+set -e
+
+VOLUME="topaz-certs"
+docker volume create "$VOLUME" > /dev/null
+
+CONTAINER=$(docker create -v "$VOLUME:/certs" alpine)
+docker cp topaz.crt "$CONTAINER:/certs/topaz.crt"
+docker cp topaz.key "$CONTAINER:/certs/topaz.key"
+docker rm "$CONTAINER" > /dev/null
+
+echo "Done. Run 'docker-compose up' to start the stack."
 ```
 
-However you obtain them, place `topaz.crt` and `topaz.key` next to your `docker-compose.yml`. The Compose file mounts both files into the Topaz container.
+The `topaz-certs` volume is declared `external: true` in the Compose file — Compose will not try to create or delete it automatically, which means it survives `docker compose down`.
 
-Your application also needs to trust this certificate. The approach differs by runtime:
+### Application TLS trust
 
-- **.NET** — add the certificate to the system store inside your container image (e.g. `update-ca-certificates` on Debian/Ubuntu). The Azure SDK clients will then connect normally without any code-level workarounds.
-- **Python** — set `SSL_CERT_FILE=/certs/topaz.crt` (shown in the Compose file).
-- **Node.js** — set `NODE_EXTRA_CA_CERTS=/certs/topaz.crt`.
-- **Go / Terraform** — set `SSL_CERT_FILE=/certs/topaz.crt`.
+Your application container also needs to trust the Topaz certificate. The approach differs by runtime:
+
+- **.NET** — add the certificate to the OS store in your `Dockerfile` (Debian/Ubuntu base images):
+  ```dockerfile
+  COPY topaz.crt /usr/local/share/ca-certificates/topaz.crt
+  RUN update-ca-certificates
+  ```
+  Azure SDK clients connect normally with no code-level TLS overrides.
+- **Python** — set `SSL_CERT_FILE=/certs/topaz.crt` in the Compose environment.
+- **Node.js** — set `NODE_EXTRA_CA_CERTS=/certs/topaz.crt` in the Compose environment.
+- **Go / Terraform** — set `SSL_CERT_FILE=/certs/topaz.crt` in the Compose environment.
+
+### Apple Silicon (linux/amd64 image)
+
+The Topaz host image is built for `linux/amd64`. On Apple Silicon (arm64) machines, add `platform: linux/amd64` to the `topaz` service so Docker uses Rosetta to run it:
+
+```yaml
+topaz:
+  image: thecloudtheory/topaz-host:latest
+  platform: linux/amd64   # required on Apple Silicon
+```
 
 ## docker-compose.yml
 
@@ -78,13 +119,16 @@ networks:
         - subnet: "172.28.0.0/16"
 
 volumes:
-  topaz-data: {}   # persists Topaz resource state across restarts
+  topaz-data: {}      # persists Topaz resource state across restarts
+  topaz-certs:        # populated by setup.sh (docker cp — no bind mounts)
+    external: true
 
 services:
 
   # --- Topaz emulator -----------------------------------------------------------
   topaz:
-    image: thecloudtheory/topaz-host:latest   # pin to a specific tag for reproducibility
+    image: thecloudtheory/topaz-host:latest
+    platform: linux/amd64   # remove if your host is already amd64
     networks:
       topaz-net:
         ipv4_address: "172.28.0.10"
@@ -94,40 +138,31 @@ services:
       - "8892:8892"   # Container Registry
       - "8891:8891"   # Blob Storage
     volumes:
-      - ./topaz.crt:/app/topaz.crt:ro   # from certificate/generate.sh
-      - ./topaz.key:/app/topaz.key:ro
-      - topaz-data:/app/.topaz           # durable resource state
+      - topaz-certs:/certs:ro      # certificate files injected by setup.sh
+      - topaz-data:/app/.topaz     # durable resource state
     command:
       - --certificate-file
-      - topaz.crt
+      - /certs/topaz.crt
       - --certificate-key
-      - topaz.key
+      - /certs/topaz.key
       - --log-level
       - Information
 
   # --- Your application ---------------------------------------------------------
   app:
-    image: my-app:latest   # replace with your application image, or add a `build:` section
+    build:
+      context: .
+      dockerfile: app/Dockerfile
     depends_on:
-      - topaz             # Topaz starts in ~1 s; add retry logic in your app for robustness
+      - topaz
+    ports:
+      - "8080:8080"
     networks:
       - topaz-net
-    volumes:
-      - ./topaz.crt:/certs/topaz.crt:ro   # mount cert so the app runtime can trust it
     environment:
-      # -- Azure identity -------------------------------------------------------
-      AZURE_SUBSCRIPTION_ID: "00000000-0000-0000-0000-000000000001"
-      AZURE_TENANT_ID: "50717675-3E5E-4A1E-8CB5-C62D8BE8CA48"   # Topaz default tenant
-
-      # -- Service endpoints (read by your app to construct SDK clients) --------
-      KEY_VAULT_ENDPOINT: "https://kv-my-app.vault.topaz.local.dev:8898"
-      STORAGE_ACCOUNT_NAME: "stmyapp001"
-      STORAGE_BLOB_ENDPOINT: "https://stmyapp001.blob.storage.topaz.local.dev:8891/"
-      ACR_LOGIN_SERVER: "myregistry.cr.topaz.local.dev:8892"
-
-      # -- TLS trust (adjust the env-var name for your runtime) ----------------
-      SSL_CERT_FILE: "/certs/topaz.crt"         # Go, Python, Terraform
-      # NODE_EXTRA_CA_CERTS: "/certs/topaz.crt" # Node.js (uncomment if needed)
+      AZURE_TENANT_ID: "50717675-3E5E-4A1E-8CB5-C62D8BE8CA48"
+      # SSL_CERT_FILE: "/certs/topaz.crt"         # Python, Go, Terraform
+      # NODE_EXTRA_CA_CERTS: "/certs/topaz.crt"   # Node.js
 
     extra_hosts:
       # Resource Manager
@@ -136,199 +171,134 @@ services:
       - "kv-my-app.vault.topaz.local.dev:172.28.0.10"
       # Blob Storage data-plane
       - "stmyapp001.blob.storage.topaz.local.dev:172.28.0.10"
-      # Container Registry data-plane
+      # Container Registry data-plane (add if needed)
       - "myregistry.cr.topaz.local.dev:172.28.0.10"
 ```
 
 :::tip[Adding more resources]
 
-Each new resource name needs a matching `extra_hosts` entry using the same IP:
+Each new resource name needs a matching `extra_hosts` entry in the **app** service using the same IP:
 
 ```yaml
 - "another-vault.vault.topaz.local.dev:172.28.0.10"
 - "stanotheracct.blob.storage.topaz.local.dev:172.28.0.10"
-- "anotherregistry.cr.topaz.local.dev:172.28.0.10"
 ```
 
 :::
 
-## Initial provisioning
+## Startup ordering
 
-Resources in Topaz are not created automatically when the container starts. Run the provisioning commands once after the first `docker compose up`. You can use the Azure CLI (configured to target Topaz) or the Topaz CLI.
+`depends_on: topaz` ensures the Topaz container is **started** before your app, but not that Topaz has finished initialising. Topaz prints `✓ Topaz is ready` to stdout when it is accepting connections, but Docker has no way to observe that automatically.
 
-<Tabs>
-<TabItem value="az" label="Azure CLI" default>
+### Why a Compose `healthcheck` is not straightforward
 
-```bash
-# Register and select the Topaz cloud
-az cloud register -n Topaz --cloud-config cloud.json
-az cloud set -n Topaz
+The most common approach — adding a `healthcheck` to the `topaz` service and using `depends_on: condition: service_healthy` — requires a tool (`curl`, `bash`, `nc`) to be available inside the Topaz image. The Topaz image is a minimal .NET runtime image and does not include any of these tools, so any `CMD`- or `CMD-SHELL`-based healthcheck will always fail.
 
-# Authenticate against Topaz
-az login --username topazadmin@topaz.local.dev --password admin
+### Recommended pattern: retry loop in the application
 
-SUBSCRIPTION_ID="00000000-0000-0000-0000-000000000001"
-RESOURCE_GROUP="rg-my-app"
+The correct solution is to have your application retry the first request to Topaz until it succeeds. The `TheCloudTheory.Topaz.ResourceManager` package provides `TopazArmClient.CheckIfReadyAsync()` for exactly this purpose:
 
-az account set --subscription $SUBSCRIPTION_ID
-
-# Resource group
-az group create \
-  --name $RESOURCE_GROUP \
-  --location westeurope
-
-# Key Vault
-az keyvault create \
-  --name kv-my-app \
-  --resource-group $RESOURCE_GROUP \
-  --location westeurope
-
-# Storage Account
-az storage account create \
-  --name stmyapp001 \
-  --resource-group $RESOURCE_GROUP \
-  --sku Standard_LRS \
-  --location westeurope
-
-# Container Registry
-az acr create \
-  --name myregistry \
-  --resource-group $RESOURCE_GROUP \
-  --sku Basic \
-  --admin-enabled true
+```csharp
+using var topazClient = new TopazArmClient(credential);
+for (var attempt = 1; ; attempt++)
+{
+    if (await topazClient.CheckIfReadyAsync()) break;
+    if (attempt >= 20) throw new TimeoutException("Topaz did not become ready after 40 seconds.");
+    Console.WriteLine($"[startup] Topaz not ready yet (attempt {attempt}/20), retrying in 2 s...");
+    await Task.Delay(TimeSpan.FromSeconds(2));
+}
+// proceed with provisioning...
+await topazClient.CreateSubscriptionAsync(subscriptionId, "dev-local");
 ```
 
-</TabItem>
-<TabItem value="topaz" label="Topaz CLI">
+`CheckIfReadyAsync()` calls the unauthenticated `GET /health` endpoint on the Resource Manager port (8899) and returns `true` when it receives a successful response. It catches `HttpRequestException` and returns `false` while Topaz is still starting.
 
-```bash
-SUBSCRIPTION_ID="00000000-0000-0000-0000-000000000001"
-RESOURCE_GROUP="rg-my-app"
+## Provisioning resources at startup
 
-# Create a subscription (once per environment)
-topaz subscription create \
-  --subscription-id $SUBSCRIPTION_ID \
-  --display-name dev-local
+The cleanest approach for a self-contained Compose stack is to provision resources programmatically inside your application at startup, using the Topaz ARM client and the Azure SDK. This means no separate provisioning step and the stack is fully reproducible with `docker compose up`.
 
-# Resource group
-topaz resource-group create \
-  --subscription-id $SUBSCRIPTION_ID \
-  --name $RESOURCE_GROUP \
-  --location westeurope
+```csharp
+using Azure.ResourceManager;
+using Azure.ResourceManager.KeyVault;
+using Azure.ResourceManager.KeyVault.Models;
+using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Storage;
+using Azure.ResourceManager.Storage.Models;
+using Topaz.Identity;
+using Topaz.ResourceManager;
 
-# Key Vault
-topaz keyvault create \
-  --subscription-id $SUBSCRIPTION_ID \
-  --resource-group $RESOURCE_GROUP \
-  --name kv-my-app \
-  --location westeurope
+// Topaz superadmin object ID — grants unrestricted access during local development.
+var credential = new AzureLocalCredential("00000000-0000-0000-0000-000000000000");
+var subscriptionId = "00000000-0000-0000-0000-000000000001";
 
-# Storage Account
-topaz storage account create \
-  --subscription-id $SUBSCRIPTION_ID \
-  --resource-group $RESOURCE_GROUP \
-  --name stmyapp001 \
-  --sku Standard_LRS \
-  --location westeurope
+// 1. Wait for Topaz to be ready (see Startup ordering above).
+using var topazClient = new TopazArmClient(credential);
+// ... retry loop ...
+await topazClient.CreateSubscriptionAsync(Guid.Parse(subscriptionId), "dev-local");
 
-# Container Registry
-topaz acr create \
-  --subscription-id $SUBSCRIPTION_ID \
-  --resource-group $RESOURCE_GROUP \
-  --name myregistry \
-  --sku Basic \
-  --admin-enabled true
+// 2. Create infrastructure via ARM SDK.
+var armClient = new ArmClient(credential, subscriptionId, TopazArmClientOptions.New);
+var subscription = armClient.GetSubscriptionResource(
+    SubscriptionResource.CreateResourceIdentifier(subscriptionId));
+
+var rgResponse = await subscription.GetResourceGroups().CreateOrUpdateAsync(
+    WaitUntil.Completed, "rg-my-app",
+    new ResourceGroupData(AzureLocation.WestEurope));
+var resourceGroup = rgResponse.Value;
+
+await resourceGroup.GetKeyVaults().CreateOrUpdateAsync(
+    WaitUntil.Completed, "kv-my-app",
+    new KeyVaultCreateOrUpdateContent(
+        AzureLocation.WestEurope,
+        new KeyVaultProperties(Guid.Empty,
+            new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))));
+
+await resourceGroup.GetStorageAccounts().CreateOrUpdateAsync(
+    WaitUntil.Completed, "stmyapp001",
+    new StorageAccountCreateOrUpdateContent(
+        new StorageSku(StorageSkuName.StandardLrs),
+        StorageKind.StorageV2,
+        AzureLocation.WestEurope));
 ```
-
-</TabItem>
-</Tabs>
 
 :::info[Surviving restarts]
 
-Because the `topaz-data` volume persists `/app/.topaz`, resources you create survive `docker compose restart`. You only need to re-run the provisioning commands when the volume is removed (see [Resetting state](#resetting-state)).
+The `topaz-data` volume persists `/app/.topaz` across `docker compose restart`. `CreateOrUpdateAsync` is idempotent — re-running provisioning against an already-populated volume is safe.
 
 :::
 
 ## Connecting the Azure SDK
 
-Configure your application's SDK clients to point at the Topaz endpoints injected via environment variables.
-
-<Tabs>
-<TabItem value="dotnet" label=".NET" default>
+### Key Vault
 
 ```csharp
-using Azure.Identity;
-using Azure.Security.KeyVault.Secrets;
-using Azure.Storage.Blobs;
-
-// The Topaz certificate is trusted at the OS level inside the container
-// (see the Dockerfile snippet below), so no custom transport is needed.
-
-// Key Vault
-var kvEndpoint = new Uri(Environment.GetEnvironmentVariable("KEY_VAULT_ENDPOINT")!);
-var secretClient = new SecretClient(kvEndpoint, new DefaultAzureCredential());
-
-// Blob Storage
-var blobEndpoint = new Uri(Environment.GetEnvironmentVariable("STORAGE_BLOB_ENDPOINT")!);
-var blobServiceClient = new BlobServiceClient(blobEndpoint, new DefaultAzureCredential());
+var kvEndpoint = TopazResourceHelpers.GetKeyVaultEndpoint("kv-my-app");
+var secretClient = new SecretClient(kvEndpoint, credential);
 ```
 
-To trust the certificate at the OS level, add these lines to your app's `Dockerfile`:
+### Blob Storage
 
-```dockerfile
-COPY topaz.crt /usr/local/share/ca-certificates/topaz.crt
-RUN update-ca-certificates
+You can connect to the Blob Storage data plane using either Shared Key (connection string) or a token credential. Token credential auth (`BlobServiceClient(Uri, TokenCredential)`) is fully supported — Topaz validates the Bearer token via its RBAC engine.
+
+**Token credential (Entra ID-style auth):**
+
+```csharp
+var credential = new AzureLocalCredential(objectId);
+var serviceUri = new Uri(TopazResourceHelpers.GetBlobServiceUri(storageAccountName));
+var blobServiceClient = new BlobServiceClient(serviceUri, credential);
 ```
 
-For Alpine-based images use `update-ca-trust` after placing the cert in `/etc/pki/ca-trust/source/anchors/`.
+**Shared Key (connection string):**
 
-</TabItem>
-<TabItem value="python" label="Python">
-
-```python
-import os
-from azure.keyvault.secrets import SecretClient
-from azure.storage.blob import BlobServiceClient
-from azure.identity import DefaultAzureCredential
-
-# SSL_CERT_FILE is set in the Compose environment, so requests/urllib3 will
-# pick up the Topaz certificate automatically — no extra configuration needed.
-
-credential = DefaultAzureCredential()
-
-# Key Vault
-kv_endpoint = os.environ["KEY_VAULT_ENDPOINT"]
-secret_client = SecretClient(vault_url=kv_endpoint, credential=credential)
-
-# Blob Storage
-blob_endpoint = os.environ["STORAGE_BLOB_ENDPOINT"]
-blob_service_client = BlobServiceClient(account_url=blob_endpoint, credential=credential)
+```csharp
+var storageAccount = await resourceGroup.GetStorageAccountAsync(storageAccountName);
+var keys = storageAccount.Value.GetKeys().ToArray();
+var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(
+    storageAccountName, keys[0].Value);
+var blobServiceClient = new BlobServiceClient(connectionString);
 ```
 
-</TabItem>
-<TabItem value="node" label="Node.js">
-
-```typescript
-import { SecretClient } from "@azure/keyvault-secrets";
-import { BlobServiceClient } from "@azure/storage-blob";
-import { DefaultAzureCredential } from "@azure/identity";
-
-// NODE_EXTRA_CA_CERTS is set in the Compose environment so the Node TLS
-// stack trusts the Topaz certificate automatically.
-
-const credential = new DefaultAzureCredential();
-
-// Key Vault
-const kvEndpoint = process.env.KEY_VAULT_ENDPOINT!;
-const secretClient = new SecretClient(kvEndpoint, credential);
-
-// Blob Storage
-const blobEndpoint = process.env.STORAGE_BLOB_ENDPOINT!;
-const blobServiceClient = new BlobServiceClient(blobEndpoint, credential);
-```
-
-</TabItem>
-</Tabs>
+Use the token credential form when your real application uses managed identity or workload identity — it exercises the same RBAC path. Use the connection string form when you need Shared Key auth or are testing storage-level functionality independent of identity.
 
 ### Container Registry
 
@@ -348,19 +318,14 @@ docker tag my-image:latest myregistry.cr.topaz.local.dev:8892/my-image:latest
 docker push myregistry.cr.topaz.local.dev:8892/my-image:latest
 ```
 
-Your app container can pull from the same registry by configuring its image reference to use the Topaz login server, or by calling the ACR data-plane SDK:
-
-```bash
-docker pull myregistry.cr.topaz.local.dev:8892/my-image:latest
-```
-
 ## Resetting state
 
 The `topaz-data` volume stores all resource state. To wipe everything and start fresh:
 
 ```bash
 docker compose down -v
+./setup.sh
 docker compose up
 ```
 
-Then re-run the [provisioning commands](#initial-provisioning).
+`-v` removes named volumes managed by Compose (`topaz-data`), but **not** the `topaz-certs` external volume. Re-run `setup.sh` only if you also removed `topaz-certs` manually.
