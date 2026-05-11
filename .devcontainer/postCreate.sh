@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-CERT="/workspace/certificate/topaz.crt"
+CERT="$(pwd)/certificate/topaz.crt"
 
 echo "=== Topaz devcontainer setup ==="
 echo ""
