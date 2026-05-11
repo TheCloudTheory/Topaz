@@ -61,7 +61,7 @@ internal sealed class AzureStorageControlPlane(
         };
         var properties = new StorageAccountResourceProperties
         {
-            PrimaryEndpoints = BuildPrimaryEndpoints(storageAccountName),
+            PrimaryEndpoints = StorageAccountPrimaryEndpoints.For(storageAccountName),
             StatusOfPrimary = "available",
             CreationTime = DateTimeOffset.UtcNow
         };
@@ -202,14 +202,14 @@ internal sealed class AzureStorageControlPlane(
             ? JsonSerializer.Deserialize<StorageAccountResource>(existingAccount, GlobalSettings.JsonOptions)
             : null;
         var existingKeys = existingDeserialized?.Keys;
-        var existingCreationTime = existingDeserialized?.Properties?.CreationTime;
+        var existingCreationTime = existingDeserialized?.Properties.CreationTime;
 
         var raGrs = IsRaGrsSkuName(request.Sku?.Name);
         var properties = (request.Properties ?? new StorageAccountResourceProperties()) with
         {
-            PrimaryEndpoints = BuildPrimaryEndpoints(storageAccountName),
+            PrimaryEndpoints = StorageAccountPrimaryEndpoints.For(storageAccountName),
             StatusOfPrimary = "available",
-            SecondaryEndpoints = raGrs ? BuildSecondaryEndpoints(storageAccountName) : null,
+            SecondaryEndpoints = raGrs ? StorageAccountSecondaryEndpoints.For(storageAccountName) : null,
             StatusOfSecondary = raGrs ? "available" : null,
             CreationTime = existingCreationTime ?? DateTimeOffset.UtcNow
         };
@@ -242,24 +242,6 @@ internal sealed class AzureStorageControlPlane(
                && storageAccountName.Length is >= 3 and <= 24
                && storageAccountName.All(character => char.IsLower(character) || char.IsDigit(character));
     }
-
-    private static StorageAccountPrimaryEndpoints BuildPrimaryEndpoints(string accountName) => new()
-    {
-        Blob = $"https://{accountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
-        Queue = $"https://{accountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/",
-        Table = $"https://{accountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/",
-        File = $"https://{accountName}.file.storage.topaz.local.dev:{GlobalSettings.DefaultFileStoragePort}/",
-        Web = $"https://{accountName}.web.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
-        Dfs = $"https://{accountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
-    };
-
-    private static StorageAccountSecondaryEndpoints BuildSecondaryEndpoints(string accountName) => new()
-    {
-        Blob = $"https://{accountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
-        Queue = $"https://{accountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/",
-        Table = $"https://{accountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/",
-        File = $"https://{accountName}-secondary.file.storage.topaz.local.dev:{GlobalSettings.DefaultFileStoragePort}/",
-    };
 
     private static bool IsRaGrsSkuName(string? skuName) =>
         string.Equals(skuName, StorageSkuName.StandardRagrs.ToString(), StringComparison.OrdinalIgnoreCase) ||
@@ -391,7 +373,7 @@ internal sealed class AzureStorageControlPlane(
             Tags = existing.Tags
         };
 
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, updated, false);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, updated);
 
         return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Success, updated, null, null);
     }
@@ -427,7 +409,7 @@ internal sealed class AzureStorageControlPlane(
             Tags = request.Tags ?? existing.Tags
         };
 
-        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, updated, false);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, updated);
 
         return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Updated, updated, null, null);
     }
