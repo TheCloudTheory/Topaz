@@ -30,6 +30,11 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
         // MSAL refreshes tokens via tenant-specific and /common paths, not just /organizations.
         "POST /{tenantId}/oauth2/v2.0/token",
         "POST /common/oauth2/v2.0/token",
+        // Old go-autorest (Azure SDK v1) used by azurerm provider for Key Vault data-plane calls
+        // issues token requests against the v1.0 endpoint without the /v2.0 segment.
+        "POST /organizations/oauth2/token",
+        "POST /{tenantId}/oauth2/token",
+        "POST /common/oauth2/token",
     ];
 
     public string[] Permissions => [];

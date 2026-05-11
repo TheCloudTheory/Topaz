@@ -59,6 +59,14 @@ internal abstract class KeyVaultDataPlaneEndpointBase(Pipeline eventPipeline, IT
         {
             response.StatusCode = HttpStatusCode.Unauthorized;
             response.Headers.Add("WWW-Authenticate", KeyVaultAuthorizationChecker.WwwAuthenticateChallenge);
+            // Real Azure Key Vault always returns a parseable JSON error body on 401.
+            // Old go-autorest (azurerm Terraform provider) calls azure.WithErrorUnlessStatusCode()
+            // which tries to decode the response body; an empty body causes an EOF error that
+            // prevents the bearer-challenge retry from ever being attempted.
+            response.Content = new StringContent(
+                "{\"error\":{\"code\":\"Unauthorized\",\"message\":\"Request is missing a Bearer or PoP token.\"}}",
+                System.Text.Encoding.UTF8,
+                "application/json");
             return (false, null);
         }
 

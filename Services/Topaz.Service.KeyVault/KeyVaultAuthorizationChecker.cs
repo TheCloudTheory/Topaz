@@ -18,10 +18,12 @@ internal sealed class KeyVaultAuthorizationChecker(Pipeline eventPipeline, ITopa
     /// <summary>
     /// WWW-Authenticate challenge header value used when a request arrives without a Bearer token.
     /// The Azure SDK uses this to discover the token endpoint and then retries with a token.
+    /// The authorization URL points to Topaz's ARM token endpoint (port 8899) so that
+    /// both MSAL v2 and old go-autorest v1 clients can acquire a token and retry.
     /// </summary>
     public static string WwwAuthenticateChallenge =>
-        $"Bearer authorization=\"https://{GlobalSettings.KeyVaultDnsSuffix}:{GlobalSettings.DefaultKeyVaultPort}/{Guid.Empty}\"," +
-        $" resource=\"https://{GlobalSettings.KeyVaultDnsSuffix}:{GlobalSettings.DefaultKeyVaultPort}\"";
+        $"Bearer authorization=\"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/{GlobalSettings.DefaultTenantId}\"," +
+        $" resource=\"https://vault.azure.net\"";
 
     /// <summary>
     /// Returns true when the caller identified by <paramref name="authHeader"/> is allowed to perform
