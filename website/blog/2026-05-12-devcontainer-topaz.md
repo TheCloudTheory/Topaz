@@ -85,7 +85,7 @@ This works when the container runtime can access the source path. When it cannot
 
 Topaz requires a TLS certificate to start. The certificate files live in `certificate/topaz.crt` and `certificate/topaz.key` in the repository. The straightforward approach — bind-mounting them into the Topaz sidecar — fails on Colima (and on Docker Desktop when the path is outside the configured file-sharing list) for the same reason workspace mounts fail: the bind mount silently becomes an empty directory.
 
-The [Docker Compose example in the repository](/Examples/Compose/) solved this a different way: using `docker cp` to populate a named volume, the same mechanism Testcontainers' `WithResourceMapping` uses internally. A named volume is always accessible to containers regardless of which paths the runtime has permission to bind-mount from the host.
+The [Docker Compose example in the repository](https://github.com/TheCloudTheory/Topaz/tree/main/Examples/Compose) solved this a different way: using `docker cp` to populate a named volume, the same mechanism Testcontainers' `WithResourceMapping` uses internally. A named volume is always accessible to containers regardless of which paths the runtime has permission to bind-mount from the host.
 
 The devcontainer uses the same pattern. A shell script at `.devcontainer/init-certs.sh` runs via `initializeCommand` in `devcontainer.json`:
 
