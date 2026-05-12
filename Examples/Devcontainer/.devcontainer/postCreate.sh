@@ -14,17 +14,41 @@ echo ""
 # ---------------------------------------------------------------------------
 # 1. Trust cert system-wide (needed by curl, wget, most HTTP clients)
 # ---------------------------------------------------------------------------
-echo "[1/3] Trusting Topaz certificate in the system CA store..."
+echo "[1/4] Trusting Topaz certificate in the system CA store..."
 sudo cp "$CERT" /usr/local/share/ca-certificates/topaz.crt
 sudo update-ca-certificates --fresh 2>&1 | grep -E "^(Updating|[0-9]+)" || true
 echo "      Done."
 echo ""
 
 # ---------------------------------------------------------------------------
+# 2. Configure wildcard DNS for *.topaz.local.dev via dnsmasq.
+#    systemd is not available in devcontainers, so we run dnsmasq as a
+#    background process and point /etc/resolv.conf at 127.0.0.1.
+# ---------------------------------------------------------------------------
+echo "[2/4] Configuring wildcard DNS for *.topaz.local.dev..."
+sudo apt-get install -y -qq dnsmasq > /dev/null 2>&1
+
+# Write dnsmasq config: resolve all *.topaz.local.dev to the Topaz sidecar IP
+sudo mkdir -p /etc/dnsmasq.d
+echo "address=/.topaz.local.dev/172.28.0.10" | sudo tee /etc/dnsmasq.d/topaz.conf > /dev/null
+
+# Prepend 127.0.0.1 as the first nameserver (preserve existing upstreams)
+if ! grep -q "^nameserver 127.0.0.1" /etc/resolv.conf; then
+    EXISTING=$(cat /etc/resolv.conf)
+    printf "nameserver 127.0.0.1\n%s\n" "$EXISTING" | sudo tee /etc/resolv.conf > /dev/null
+fi
+
+# Start dnsmasq in the background (no systemd in devcontainers)
+sudo dnsmasq --conf-dir=/etc/dnsmasq.d --no-daemon --log-facility=/tmp/dnsmasq.log &
+disown
+echo "      Done (wildcard: *.topaz.local.dev → 172.28.0.10)"
+echo ""
+
+# ---------------------------------------------------------------------------
 # 2. Inject cert into the Azure CLI certifi bundle
 #    The devcontainer azure-cli feature installs az under /opt/az on Ubuntu.
 # ---------------------------------------------------------------------------
-echo "[2/3] Injecting Topaz certificate into the Azure CLI certifi bundle..."
+echo "[3/4] Injecting Topaz certificate into the Azure CLI certifi bundle..."
 
 # Find the certifi cacert.pem used by the installed Azure CLI
 AZ_CERTIFI_BUNDLE=""
@@ -60,7 +84,7 @@ echo ""
 # ---------------------------------------------------------------------------
 # 3. Install Topaz CLI (best-effort — may not have a binary for this arch)
 # ---------------------------------------------------------------------------
-echo "[3/4] Installing Topaz CLI..."
+echo "[4/5] Installing Topaz CLI..."
 TOPAZ_CLI_OK=false
 
 # /releases/latest returns 404 for pre-releases; use /releases and pick the first.
@@ -71,6 +95,8 @@ if [ -n "$TOPAZ_VERSION" ] && \
    curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh \
    | bash -s -- --version "$TOPAZ_VERSION" 2>&1; then
     TOPAZ_CLI_OK=true
+    echo ""
+    echo "      Note: the \"Next steps\" above are already handled by this devcontainer setup."
     echo "      Done."
 else
     echo "      Skipped — could not install CLI (arch: $(uname -m), version: ${TOPAZ_VERSION:-unknown})."
@@ -81,10 +107,7 @@ echo ""
 # ---------------------------------------------------------------------------
 # 4. Set default environment variables for local Azure development
 # ---------------------------------------------------------------------------
-echo "[4/4] Configuring shell environment variables..."
-
-# Capture workspace path at postCreate time so aliases resolve correctly
-WORKSPACE_DIR="$(pwd)"
+echo "[5/5] Configuring shell environment variables..."
 
 SHELL_RC="$HOME/.bashrc"
 

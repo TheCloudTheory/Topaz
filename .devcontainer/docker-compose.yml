@@ -17,19 +17,6 @@ services:
     networks:
       topaz-net:
         ipv4_address: "172.28.0.2"
-    extra_hosts:
-      # Resource Manager & ARM
-      - "topaz.local.dev:172.28.0.10"
-      # Key Vault data-plane — add one entry per vault name, e.g.:
-      # - "my-vault.vault.topaz.local.dev:172.28.0.10"
-      # Blob Storage data-plane — add one entry per account name, e.g.:
-      # - "myaccount.blob.storage.topaz.local.dev:172.28.0.10"
-      # Queue Storage data-plane — add one entry per account name, e.g.:
-      # - "myaccount.queue.storage.topaz.local.dev:172.28.0.10"
-      # Table Storage data-plane — add one entry per account name, e.g.:
-      # - "myaccount.table.storage.topaz.local.dev:172.28.0.10"
-      # Container Registry data-plane — add one entry per registry name, e.g.:
-      # - "myregistry.cr.topaz.local.dev:172.28.0.10"
 
   # --- Topaz emulator -----------------------------------------------------------
   topaz:
