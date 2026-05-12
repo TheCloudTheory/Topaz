@@ -58,9 +58,17 @@ fi
 echo ""
 
 # ---------------------------------------------------------------------------
-# 3. Set default environment variables for local Azure development
+# 3. Install Topaz CLI
 # ---------------------------------------------------------------------------
-echo "[3/3] Configuring shell environment variables..."
+echo "[3/4] Installing Topaz CLI..."
+curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash
+echo "      Done."
+echo ""
+
+# ---------------------------------------------------------------------------
+# 4. Set default environment variables for local Azure development
+# ---------------------------------------------------------------------------
+echo "[4/4] Configuring shell environment variables..."
 
 SHELL_RC="$HOME/.bashrc"
 
@@ -82,7 +90,16 @@ echo ""
 echo "=== Setup complete ==="
 echo ""
 echo "Topaz is running as a sidecar container."
-echo "Try: curl https://topaz.local.dev:8899/subscriptions?api-version=2020-01-01"
+echo ""
+echo "Verify the host is up:"
+echo "  topaz health"
+echo "  curl https://topaz.local.dev:8899/health"
+echo ""
+echo "List subscriptions (requires az login first):"
+echo "  az rest --method get --url 'https://topaz.local.dev:8899/subscriptions?api-version=2020-01-01'"
+echo ""
+echo "Note: 'topaz <command>' (other than health) requires running from the host's"
+echo "working directory. In a devcontainer, use 'az rest' or the Azure SDK instead."
 echo ""
 echo "Add resource-specific hostnames to the extra_hosts block in"
 echo ".devcontainer/docker-compose.yml for Key Vault, Storage, and ACR endpoints."
