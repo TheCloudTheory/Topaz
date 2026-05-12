@@ -13,10 +13,29 @@ services:
   # --- Dev workspace ------------------------------------------------------------
   devcontainer:
     image: mcr.microsoft.com/devcontainers/base:ubuntu
+    volumes:
+      - ../:/workspaces/Topaz:cached
     command: sleep infinity
+    dns:
+      - 172.28.0.53   # topaz-dns sidecar (resolves *.topaz.local.dev)
+      - 1.1.1.1       # fallback internet DNS
+    depends_on:
+      - dns-sidecar
     networks:
       topaz-net:
         ipv4_address: "172.28.0.2"
+
+  # --- DNS sidecar (wildcard *.topaz.local.dev → 172.28.0.10) ------------------
+  dns-sidecar:
+    image: alpine:latest
+    command: >
+      sh -c "apk add --no-cache dnsmasq -q &&
+             echo 'address=/.topaz.local.dev/172.28.0.10' > /etc/dnsmasq.d/topaz.conf &&
+             dnsmasq --no-daemon --server=1.1.1.1 --server=8.8.8.8"
+    networks:
+      topaz-net:
+        ipv4_address: "172.28.0.53"
+    restart: unless-stopped
 
   # --- Topaz emulator -----------------------------------------------------------
   topaz:

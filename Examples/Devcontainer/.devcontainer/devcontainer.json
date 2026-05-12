@@ -2,15 +2,15 @@
   "name": "My App + Topaz",
   "dockerComposeFile": "docker-compose.yml",
   "service": "devcontainer",
-  "runServices": ["devcontainer", "topaz"],
-  "workspaceFolder": "/workspace",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "runServices": ["devcontainer", "topaz", "dns-sidecar"],
+  "workspaceFolder": "/workspaces/Topaz",
 
   "features": {
     "ghcr.io/devcontainers/features/azure-cli:1": {}
   },
 
-  "postCreateCommand": "bash .devcontainer/postCreate.sh",
+  "postCreateCommand": "bash /workspaces/Topaz/.devcontainer/postCreate.sh",
+  "postStartCommand": "sudo fuser -k 53/udp 53/tcp > /dev/null 2>&1 || true; sudo dnsmasq --conf-dir=/etc/dnsmasq.d --no-daemon --log-facility=/tmp/dnsmasq.log &",
 
   // Forward all Topaz service ports with descriptive labels
   "forwardPorts": [8899, 8898, 8897, 8892, 8891, 8893, 8890, 8894, 8889, 8888],

@@ -6,17 +6,38 @@ networks:
         - subnet: "172.28.0.0/16"
 
 volumes:
-  topaz-data: {}   # persists Topaz resource state across container restarts
+  topaz-data: {}                  # persists Topaz resource state across container restarts
+  topaz-devcontainer-certs:       # pre-populated by initializeCommand (init-certs.sh)
+    external: true
 
 services:
 
   # --- Dev workspace ------------------------------------------------------------
   devcontainer:
     image: mcr.microsoft.com/devcontainers/base:ubuntu
+    volumes:
+      - ../:/workspaces/Topaz:cached
     command: sleep infinity
+    dns:
+      - 172.28.0.53   # topaz-dns sidecar (resolves *.topaz.local.dev)
+      - 1.1.1.1       # fallback internet DNS
+    depends_on:
+      - dns-sidecar
     networks:
       topaz-net:
         ipv4_address: "172.28.0.2"
+
+  # --- DNS sidecar (wildcard *.topaz.local.dev → 172.28.0.10) ------------------
+  dns-sidecar:
+    image: alpine:latest
+    command: >
+      sh -c "apk add --no-cache dnsmasq -q &&
+             echo 'address=/.topaz.local.dev/172.28.0.10' > /etc/dnsmasq.d/topaz.conf &&
+             dnsmasq --no-daemon --server=1.1.1.1 --server=8.8.8.8"
+    networks:
+      topaz-net:
+        ipv4_address: "172.28.0.53"
+    restart: unless-stopped
 
   # --- Topaz emulator -----------------------------------------------------------
   topaz:
@@ -35,10 +56,11 @@ services:
       - "8890:8890"   # Table Storage
       - "8894:8894"   # File Storage
       - "8889:8889"   # Service Bus (AMQP)
+      - "8887:8887"   # Service Bus (additional)
+      - "5671:5671"   # AMQP TLS
       - "8888:8888"   # Event Hub (AMQP)
     volumes:
-      - ./topaz.crt:/certs/topaz.crt:ro
-      - ./topaz.key:/certs/topaz.key:ro
+      - topaz-devcontainer-certs:/certs:ro
       - topaz-data:/app/.topaz   # durable resource state
     command:
       - --certificate-file

@@ -2,18 +2,18 @@
   "name": "Topaz",
   "dockerComposeFile": "docker-compose.yml",
   "service": "devcontainer",
-  "runServices": ["devcontainer", "topaz"],
-  "workspaceFolder": "/workspace",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "runServices": ["devcontainer", "topaz", "dns-sidecar"],
+  "workspaceFolder": "/workspaces/Topaz",
 
   "features": {
     "ghcr.io/devcontainers/features/azure-cli:1": {}
   },
 
-  "postCreateCommand": "bash .devcontainer/postCreate.sh",
+  "initializeCommand": "bash .devcontainer/init-certs.sh",
+  "postCreateCommand": "bash /workspaces/Topaz/.devcontainer/postCreate.sh",
 
   // Forward all Topaz service ports with descriptive labels
-  "forwardPorts": [8899, 8898, 8897, 8892, 8891, 8893, 8890, 8894, 8889, 8888],
+  "forwardPorts": [8899, 8898, 8897, 8892, 8891, 8893, 8890, 8894, 8889, 8887, 5671, 8888],
   "portsAttributes": {
     "8899": { "label": "ARM / Resource Manager" },
     "8898": { "label": "Key Vault" },
@@ -24,6 +24,8 @@
     "8890": { "label": "Table Storage" },
     "8894": { "label": "File Storage" },
     "8889": { "label": "Service Bus (AMQP)" },
+    "8887": { "label": "Service Bus (additional)" },
+    "5671": { "label": "AMQP TLS" },
     "8888": { "label": "Event Hub (AMQP)" }
   },
 

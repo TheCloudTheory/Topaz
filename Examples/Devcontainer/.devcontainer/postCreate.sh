@@ -25,20 +25,7 @@ echo ""
 #    systemd is not available in devcontainers, so we run dnsmasq as a
 #    background process and point /etc/resolv.conf at 127.0.0.1.
 # ---------------------------------------------------------------------------
-echo "[2/4] Configuring wildcard DNS for *.topaz.local.dev..."
-sudo apt-get install -y -qq dnsmasq > /dev/null 2>&1
-
-# Write dnsmasq config: resolve all *.topaz.local.dev to the Topaz sidecar IP
-sudo mkdir -p /etc/dnsmasq.d
-echo "address=/.topaz.local.dev/172.28.0.10" | sudo tee /etc/dnsmasq.d/topaz.conf > /dev/null
-
-# Prepend 127.0.0.1 as the first nameserver (preserve existing upstreams)
-if ! grep -q "^nameserver 127.0.0.1" /etc/resolv.conf; then
-    EXISTING=$(cat /etc/resolv.conf)
-    printf "nameserver 127.0.0.1\n%s\n" "$EXISTING" | sudo tee /etc/resolv.conf > /dev/null
-fi
-
-# Start dnsmasq in the background (no systemd in devcontainers)
+echo "[2/3] Injecting Topaz certificate into the Azure CLI certifi bundle..."
 sudo dnsmasq --conf-dir=/etc/dnsmasq.d --no-daemon --log-facility=/tmp/dnsmasq.log &
 disown
 echo "      Done (wildcard: *.topaz.local.dev → 172.28.0.10)"
@@ -84,7 +71,7 @@ echo ""
 # ---------------------------------------------------------------------------
 # 3. Install Topaz CLI (best-effort — may not have a binary for this arch)
 # ---------------------------------------------------------------------------
-echo "[4/5] Installing Topaz CLI..."
+echo "[3/3] Installing Topaz CLI..."
 TOPAZ_CLI_OK=false
 
 # /releases/latest returns 404 for pre-releases; use /releases and pick the first.
@@ -107,7 +94,7 @@ echo ""
 # ---------------------------------------------------------------------------
 # 4. Set default environment variables for local Azure development
 # ---------------------------------------------------------------------------
-echo "[5/5] Configuring shell environment variables..."
+echo "[4/4] Configuring shell environment variables..."
 
 SHELL_RC="$HOME/.bashrc"
 
