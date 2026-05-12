@@ -14,7 +14,7 @@ TODO: VirtualNetwork — Network Interface (NIC) CRUD
   Implement PUT/GET/DELETE/LIST NIC endpoints under /networkInterfaces/{nicName}.
   Required to support `az vm create` (which creates a NIC and wires it into the VM payload).
   milestone: v1.4-beta
-  labels: enhancement
+  labels: enhancement, good first issue
 -->
 
 ---
@@ -571,7 +571,7 @@ TODO: Virtual Networks: Delete, List, List All, and Update Tags operations
   - GET    /subscriptions/{sub}/providers/Microsoft.Network/virtualNetworks
   - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks/{name} (update tags)
   milestone: v1.4-beta
-  labels: enhancement, virtual-network
+  labels: enhancement, virtual-network, good first issue
 -->
 
 <!--
@@ -579,7 +579,7 @@ TODO: Virtual Networks: Check IP Address Availability
   Implement `GET .../virtualNetworks/{name}/CheckIPAddressAvailability?ipAddress={ip}`.
   Should validate whether the given IP falls within any subnet and is not already allocated.
   milestone: v1.4-beta
-  labels: enhancement, virtual-network
+  labels: enhancement, virtual-network, good first issue
 -->
 
 <!--
@@ -592,7 +592,7 @@ TODO: Network Security Groups: Full control plane
   - GET    /subscriptions/{sub}/providers/Microsoft.Network/networkSecurityGroups – list all
   - PATCH  .../networkSecurityGroups/{name}  – update tags
   milestone: v1.4-beta
-  labels: enhancement, virtual-network
+  labels: enhancement, virtual-network, good first issue
 -->
 
 ### Azure Storage — OData query support for Table Storage
@@ -670,7 +670,7 @@ TODO: ARM Deployments: Full tenant-scope surface
   List at tenant scope is already implemented (v1.2). All other operations follow the
   subscription-scope pattern but without a subscriptionId segment in the path.
   milestone: v1.5-beta
-  labels: enhancement, resource-manager
+  labels: enhancement, resource-manager, good first issue
 -->
 
 ### Container Registry — ACR Tasks
@@ -687,7 +687,7 @@ TODO: ACR Tasks: Task CRUD control plane
   and TaskResource (ArmResource<T>) with fields matching the Azure REST API schema:
   https://learn.microsoft.com/en-us/rest/api/container-registry-tasks/tasks?view=rest-container-registry-tasks-2019-04-01
   milestone: v1.5-beta
-  labels: enhancement, container-registry
+  labels: enhancement, container-registry, good first issue
 -->
 
 <!--
@@ -717,7 +717,7 @@ TODO: Azure SQL: New service project scaffold
   - IServiceDefinition registration and wiring in Topaz.Host
   - ProjectReference in Topaz.Service.ResourceManager for template deployment routing
   milestone: v1.5-beta
-  labels: enhancement, azure-sql
+  labels: enhancement, azure-sql, good first issue
 -->
 
 <!--
@@ -733,7 +733,7 @@ TODO: Azure SQL: Server control plane endpoints
   as Succeeded immediately. fullyQualifiedDomainName follows the pattern
   {name}.database.topaz.local.dev.
   milestone: v1.5-beta
-  labels: enhancement, azure-sql
+  labels: enhancement, azure-sql, good first issue
 -->
 
 <!--
@@ -746,7 +746,7 @@ TODO: Azure SQL: Database control plane endpoints
   - PATCH  .../servers/{server}/databases/{database}  – update
   Databases are persisted as child resources of their server via the resource provider.
   milestone: v1.5-beta
-  labels: enhancement, azure-sql
+  labels: enhancement, azure-sql, good first issue
 -->
 
 ---
@@ -870,7 +870,7 @@ TODO: Azure Cosmos DB: New service project scaffold
   - ProjectReference in Topaz.Service.ResourceManager.csproj and a
     case "Microsoft.DocumentDB/databaseAccounts": entry in TemplateDeploymentOrchestrator.RouteDeployment().
   milestone: v1.6-beta
-  labels: enhancement, cosmos-db
+  labels: enhancement, cosmos-db, good first issue
 -->
 
 <!--
@@ -888,7 +888,7 @@ TODO: Azure Cosmos DB: DatabaseAccount control plane endpoints
   AccountKind defaults to GlobalDocumentDB (SQL API). Generate and persist 2 read-write
   and 2 read-only master keys (base64url-encoded random 64-byte blobs) on first creation.
   milestone: v1.6-beta
-  labels: enhancement, cosmos-db
+  labels: enhancement, cosmos-db, good first issue
 -->
 
 <!--
@@ -900,7 +900,7 @@ TODO: Azure Cosmos DB: Key and connection string management endpoints
   - POST   .../databaseAccounts/{name}/listConnectionStrings  – return AccountEndpoint=...;AccountKey=... connection strings for both primary and secondary keys
   Keys are persisted in the DatabaseAccountResourceProperties and updated by regenerateKey.
   milestone: v1.6-beta
-  labels: enhancement, cosmos-db
+  labels: enhancement, cosmos-db, good first issue
 -->
 
 <!--
@@ -914,7 +914,7 @@ TODO: Azure Cosmos DB: SQL API — Database control plane endpoints
   - PUT    .../databaseAccounts/{name}/sqlDatabases/{database}/throughputSettings/default – update throughput
   Persist SQL databases as subresources under the account directory.
   milestone: v1.6-beta
-  labels: enhancement, cosmos-db
+  labels: enhancement, cosmos-db, good first issue
 -->
 
 <!--
@@ -929,7 +929,7 @@ TODO: Azure Cosmos DB: SQL API — Container control plane endpoints
   Persist containers as child subresources of their SQL database.
   Store the partitionKey path, indexingPolicy, uniqueKeyPolicy, and defaultTtl.
   milestone: v1.6-beta
-  labels: enhancement, cosmos-db
+  labels: enhancement, cosmos-db, good first issue
 -->
 
 ---
