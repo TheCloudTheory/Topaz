@@ -83,6 +83,9 @@ echo ""
 # ---------------------------------------------------------------------------
 echo "[4/4] Configuring shell environment variables..."
 
+# Capture workspace path at postCreate time so aliases resolve correctly
+WORKSPACE_DIR="$(pwd)"
+
 SHELL_RC="$HOME/.bashrc"
 
 append_if_missing() {
@@ -102,7 +105,7 @@ echo ""
 
 echo "=== Setup complete ==="
 echo ""
-echo "Topaz is running as a sidecar container."
+echo "Topaz is running as a sidecar container (started automatically with the devcontainer)."
 echo ""
 echo "Verify the host is up:"
 if [ "$TOPAZ_CLI_OK" = true ]; then

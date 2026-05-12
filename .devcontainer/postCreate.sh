@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-CERT="$(pwd)/certificate/topaz.crt"
+CERT="$(pwd)/.devcontainer/topaz.crt"
 
 echo "=== Topaz devcontainer setup ==="
 echo ""
@@ -98,12 +98,13 @@ append_if_missing "export AZURE_TENANT_ID=50717675-3E5E-4A1E-8CB5-C62D8BE8CA48"
 # the Azure CLI when run manually) also trust the Topaz cert.
 append_if_missing "export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt"
 
+
 echo "      AZURE_TENANT_ID and REQUESTS_CA_BUNDLE written to $SHELL_RC"
 echo ""
 
 echo "=== Setup complete ==="
 echo ""
-echo "Topaz is running as a sidecar container."
+echo "Topaz is running as a sidecar container (started automatically with the devcontainer)."
 echo ""
 echo "Verify the host is up:"
 if [ "$TOPAZ_CLI_OK" = true ]; then

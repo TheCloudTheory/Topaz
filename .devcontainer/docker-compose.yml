@@ -50,8 +50,8 @@ services:
       - "8889:8889"   # Service Bus (AMQP)
       - "8888:8888"   # Event Hub (AMQP)
     volumes:
-      - ../certificate/topaz.crt:/certs/topaz.crt:ro
-      - ../certificate/topaz.key:/certs/topaz.key:ro
+      - ./topaz.crt:/certs/topaz.crt:ro
+      - ./topaz.key:/certs/topaz.key:ro
       - topaz-data:/app/.topaz   # durable resource state
     command:
       - --certificate-file
