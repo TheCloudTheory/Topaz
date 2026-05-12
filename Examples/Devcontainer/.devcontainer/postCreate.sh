@@ -58,11 +58,24 @@ fi
 echo ""
 
 # ---------------------------------------------------------------------------
-# 3. Install Topaz CLI
+# 3. Install Topaz CLI (best-effort — may not have a binary for this arch)
 # ---------------------------------------------------------------------------
 echo "[3/4] Installing Topaz CLI..."
-curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash
-echo "      Done."
+TOPAZ_CLI_OK=false
+
+# /releases/latest returns 404 for pre-releases; use /releases and pick the first.
+TOPAZ_VERSION=$(curl -fsSL "https://api.github.com/repos/TheCloudTheory/Topaz/releases" \
+    | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')
+
+if [ -n "$TOPAZ_VERSION" ] && \
+   curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh \
+   | bash -s -- --version "$TOPAZ_VERSION" 2>&1; then
+    TOPAZ_CLI_OK=true
+    echo "      Done."
+else
+    echo "      Skipped — could not install CLI (arch: $(uname -m), version: ${TOPAZ_VERSION:-unknown})."
+    echo "      Use curl or az rest to interact with the Topaz host."
+fi
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -92,14 +105,13 @@ echo ""
 echo "Topaz is running as a sidecar container."
 echo ""
 echo "Verify the host is up:"
-echo "  topaz health"
+if [ "$TOPAZ_CLI_OK" = true ]; then
+    echo "  topaz health"
+fi
 echo "  curl https://topaz.local.dev:8899/health"
 echo ""
 echo "List subscriptions (requires az login first):"
 echo "  az rest --method get --url 'https://topaz.local.dev:8899/subscriptions?api-version=2020-01-01'"
-echo ""
-echo "Note: 'topaz <command>' (other than health) requires running from the host's"
-echo "working directory. In a devcontainer, use 'az rest' or the Azure SDK instead."
 echo ""
 echo "Add resource-specific hostnames to the extra_hosts block in"
 echo ".devcontainer/docker-compose.yml for Key Vault, Storage, and ACR endpoints."
