@@ -2,6 +2,7 @@
   "name": "My App + Topaz",
   "dockerComposeFile": "docker-compose.yml",
   "service": "devcontainer",
+  "runServices": ["devcontainer", "topaz"],
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
 
