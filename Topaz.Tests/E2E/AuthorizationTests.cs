@@ -4,6 +4,8 @@ using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Authorization;
 using Azure.ResourceManager.Authorization.Models;
+using Azure.ResourceManager.KeyVault;
+using Azure.ResourceManager.KeyVault.Models;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 
@@ -410,5 +412,228 @@ public class AuthorizationTests
             Assert.That(result.Value.Data.Id.ToString(),
                 Does.Contain(readerRoleDefinitionId));
         });
+    }
+
+    // -------------------------------------------------------------------------
+    // Hierarchy propagation tests
+    // -------------------------------------------------------------------------
+
+    /// <summary>
+    /// A role assignment at subscription scope propagates down to resources inside that subscription.
+    /// </summary>
+    [Test]
+    public async Task RoleAssignment_SubscriptionScope_PermissionPropagatesDownToResource()
+    {
+        var principalId = Guid.NewGuid();
+        var adminCredential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var adminClient = new ArmClient(adminCredential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await adminClient.GetDefaultSubscriptionAsync();
+        var rg = (await subscription.GetResourceGroupAsync(ResourceGroupName)).Value;
+
+        // Create a Key Vault
+        var vaultName = $"hiersub{Guid.NewGuid():N}"[..20];
+        rg.GetKeyVaults().CreateOrUpdate(WaitUntil.Completed, vaultName,
+            new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+                new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))));
+
+        // Create a role definition that grants Key Vault read
+        var roleDefId = new ResourceIdentifier($"{Guid.NewGuid()}");
+        var roleDefData = new AuthorizationRoleDefinitionData
+            { RoleName = $"hier-sub-{roleDefId}", Description = "Grants KV read" };
+        roleDefData.Permissions.Add(new RoleDefinitionPermission { Actions = { "Microsoft.KeyVault/vaults/read" } });
+        roleDefData.AssignableScopes.Add($"/subscriptions/{SubscriptionId}");
+        await subscription.GetAuthorizationRoleDefinitions()
+            .CreateOrUpdateAsync(WaitUntil.Completed, roleDefId, roleDefData);
+
+        // Assign at SUBSCRIPTION scope
+        var assignmentId = new ResourceIdentifier($"{Guid.NewGuid()}");
+        await subscription.GetRoleAssignments()
+            .CreateOrUpdateAsync(WaitUntil.Completed, assignmentId,
+                new RoleAssignmentCreateOrUpdateContent(roleDefId, principalId));
+
+        // Non-admin reads the vault directly by resource ID — requires only KV read permission
+        var nonAdminClient = new ArmClient(new AzureLocalCredential(principalId.ToString()),
+            SubscriptionId.ToString(), ArmClientOptions);
+        var vaultId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}");
+
+        Assert.DoesNotThrowAsync(
+            async () => await nonAdminClient.GetKeyVaultResource(vaultId).GetAsync(),
+            "Principal with subscription-scope role assignment should be able to read Key Vault.");
+    }
+
+    /// <summary>
+    /// A role assignment at resource-group scope propagates to resources in that RG
+    /// but does NOT grant access to resources in a sibling resource group.
+    /// </summary>
+    [Test]
+    public async Task RoleAssignment_ResourceGroupScope_PermissionPropagatesDownButNotToSiblingRg()
+    {
+        var principalId = Guid.NewGuid();
+        var rgA = "hier-rg-a";
+        var rgB = "hier-rg-b";
+
+        // Set up two resource groups
+        await Program.RunAsync(["group", "delete", "--name", rgA, "--subscription-id", SubscriptionId.ToString()]);
+        await Program.RunAsync(["group", "delete", "--name", rgB, "--subscription-id", SubscriptionId.ToString()]);
+        await Program.RunAsync(["group", "create", "--name", rgA, "--location", "westeurope", "--subscription-id", SubscriptionId.ToString()]);
+        await Program.RunAsync(["group", "create", "--name", rgB, "--location", "westeurope", "--subscription-id", SubscriptionId.ToString()]);
+
+        var adminCredential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var adminClient = new ArmClient(adminCredential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await adminClient.GetDefaultSubscriptionAsync();
+
+        // Create one Key Vault in each RG
+        var vaultA = $"hierrga{Guid.NewGuid():N}"[..20];
+        var vaultB = $"hierrgb{Guid.NewGuid():N}"[..20];
+        (await subscription.GetResourceGroupAsync(rgA)).Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, vaultA,
+                new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+                    new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))));
+        (await subscription.GetResourceGroupAsync(rgB)).Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, vaultB,
+                new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+                    new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))));
+
+        // Create a role definition granting Key Vault read
+        var roleDefId = new ResourceIdentifier($"{Guid.NewGuid()}");
+        var roleDefData = new AuthorizationRoleDefinitionData
+            { RoleName = $"hier-rg-{roleDefId}", Description = "Grants KV read at RG-A" };
+        roleDefData.Permissions.Add(new RoleDefinitionPermission { Actions = { "Microsoft.KeyVault/vaults/read" } });
+        roleDefData.AssignableScopes.Add($"/subscriptions/{SubscriptionId}");
+        await subscription.GetAuthorizationRoleDefinitions()
+            .CreateOrUpdateAsync(WaitUntil.Completed, roleDefId, roleDefData);
+
+        // Assign at RG-A scope using the new RG-scoped endpoint
+        using var topaz = new TopazArmClient(adminCredential);
+        await topaz.CreateResourceGroupRoleAssignmentAsync(
+            SubscriptionId, rgA, Guid.NewGuid().ToString(),
+            principalId.ToString(), roleDefId.ToString());
+
+        var nonAdminClient = new ArmClient(new AzureLocalCredential(principalId.ToString()),
+            SubscriptionId.ToString(), ArmClientOptions);
+
+        var vaultAId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{rgA}/providers/Microsoft.KeyVault/vaults/{vaultA}");
+        var vaultBId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{rgB}/providers/Microsoft.KeyVault/vaults/{vaultB}");
+
+        // Access to vault in RG-A should succeed (within the assigned scope)
+        Assert.DoesNotThrowAsync(
+            async () => await nonAdminClient.GetKeyVaultResource(vaultAId).GetAsync(),
+            "Principal with RG-A-scoped role assignment should read vault in RG-A.");
+
+        // Access to vault in RG-B should be denied (outside the assigned scope)
+        Assert.ThrowsAsync<RequestFailedException>(
+            async () => await nonAdminClient.GetKeyVaultResource(vaultBId).GetAsync(),
+            "Principal with RG-A-scoped role assignment should NOT read vault in RG-B.");
+    }
+
+    /// <summary>
+    /// A role assignment at management-group scope propagates down through
+    /// the hierarchy to resources inside subscriptions under that MG.
+    /// </summary>
+    [Test]
+    public async Task RoleAssignment_ManagementGroupScope_PermissionPropagatesDownThroughHierarchy()
+    {
+        var principalId = Guid.NewGuid();
+        var mgId = $"hiermg{Guid.NewGuid():N}"[..20];
+
+        var adminCredential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var adminClient = new ArmClient(adminCredential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await adminClient.GetDefaultSubscriptionAsync();
+        var rg = (await subscription.GetResourceGroupAsync(ResourceGroupName)).Value;
+
+        // Create a Key Vault
+        var vaultName = $"hiermg{Guid.NewGuid():N}"[..20];
+        rg.GetKeyVaults().CreateOrUpdate(WaitUntil.Completed, vaultName,
+            new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+                new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))));
+
+        // Create MG and associate the subscription under it
+        using var topaz = new TopazArmClient(adminCredential);
+        await topaz.CreateManagementGroupAsync(mgId, "Hierarchy Test MG");
+        await topaz.AssociateSubscriptionWithManagementGroupAsync(mgId, SubscriptionId.ToString());
+
+        // Create a role definition granting Key Vault read
+        var roleDefId = new ResourceIdentifier($"{Guid.NewGuid()}");
+        var roleDefData = new AuthorizationRoleDefinitionData
+            { RoleName = $"hier-mg-{roleDefId}", Description = "Grants KV read at MG scope" };
+        roleDefData.Permissions.Add(new RoleDefinitionPermission { Actions = { "Microsoft.KeyVault/vaults/read" } });
+        roleDefData.AssignableScopes.Add($"/subscriptions/{SubscriptionId}");
+        await subscription.GetAuthorizationRoleDefinitions()
+            .CreateOrUpdateAsync(WaitUntil.Completed, roleDefId, roleDefData);
+
+        // Assign at MANAGEMENT GROUP scope
+        await topaz.CreateManagementGroupRoleAssignmentAsync(
+            mgId, Guid.NewGuid().ToString(),
+            principalId.ToString(), roleDefId.ToString());
+
+        // Non-admin reads vault directly by resource ID — should succeed via MG-level assignment
+        var nonAdminClient = new ArmClient(new AzureLocalCredential(principalId.ToString()),
+            SubscriptionId.ToString(), ArmClientOptions);
+        var vaultId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}");
+
+        Assert.DoesNotThrowAsync(
+            async () => await nonAdminClient.GetKeyVaultResource(vaultId).GetAsync(),
+            "Principal with MG-scope role assignment should be able to read Key Vault in a child subscription.");
+    }
+
+    /// <summary>
+    /// A role assignment scoped to an exact resource does NOT grant access to sibling resources
+    /// at the same scope level.
+    /// </summary>
+    [Test]
+    public async Task RoleAssignment_ResourceScopeOnly_DoesNotPropagateToSiblingResource()
+    {
+        var principalId = Guid.NewGuid();
+        var adminCredential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var adminClient = new ArmClient(adminCredential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await adminClient.GetDefaultSubscriptionAsync();
+        var rg = (await subscription.GetResourceGroupAsync(ResourceGroupName)).Value;
+
+        // Create two Key Vaults in the same RG
+        var vaultA = $"hierresa{Guid.NewGuid():N}"[..20];
+        var vaultB = $"hierresb{Guid.NewGuid():N}"[..20];
+        rg.GetKeyVaults().CreateOrUpdate(WaitUntil.Completed, vaultA,
+            new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+                new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))));
+        rg.GetKeyVaults().CreateOrUpdate(WaitUntil.Completed, vaultB,
+            new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+                new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard))));
+
+        // Create a role definition granting Key Vault read
+        var roleDefId = new ResourceIdentifier($"{Guid.NewGuid()}");
+        var roleDefData = new AuthorizationRoleDefinitionData
+            { RoleName = $"hier-res-{roleDefId}", Description = "Grants KV read at resource scope" };
+        roleDefData.Permissions.Add(new RoleDefinitionPermission { Actions = { "Microsoft.KeyVault/vaults/read" } });
+        roleDefData.AssignableScopes.Add($"/subscriptions/{SubscriptionId}");
+        await subscription.GetAuthorizationRoleDefinitions()
+            .CreateOrUpdateAsync(WaitUntil.Completed, roleDefId, roleDefData);
+
+        // Assign at the exact resource scope of vaultA
+        using var topaz = new TopazArmClient(adminCredential);
+        await topaz.CreateResourceRoleAssignmentAsync(
+            SubscriptionId, ResourceGroupName, "Microsoft.KeyVault", "vaults", vaultA,
+            Guid.NewGuid().ToString(), principalId.ToString(), roleDefId.ToString());
+
+        var nonAdminClient = new ArmClient(new AzureLocalCredential(principalId.ToString()),
+            SubscriptionId.ToString(), ArmClientOptions);
+
+        var vaultAId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultA}");
+        var vaultBId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultB}");
+
+        // vaultA — within the assigned scope → should succeed
+        Assert.DoesNotThrowAsync(
+            async () => await nonAdminClient.GetKeyVaultResource(vaultAId).GetAsync(),
+            "Principal with resource-scoped assignment on vaultA should be able to read vaultA.");
+
+        // vaultB — sibling, outside the assigned scope → should be denied
+        Assert.ThrowsAsync<RequestFailedException>(
+            async () => await nonAdminClient.GetKeyVaultResource(vaultBId).GetAsync(),
+            "Principal with resource-scoped assignment on vaultA should NOT be able to read vaultB.");
     }
 }

@@ -14,6 +14,8 @@ internal sealed class AuthorizationControlPlane(
     SubscriptionControlPlane subscriptionControlPlane,
     RoleDefinitionResourceProvider roleDefinitionProvider,
     RoleAssignmentResourceProvider roleAssignmentResourceProvider,
+    ManagementGroupRoleAssignmentResourceProvider mgRoleAssignmentProvider,
+    ManagementGroupSubscriptionIndexProvider mgSubscriptionIndexProvider,
     ITopazLogger logger
 ) : IControlPlane
 {
@@ -31,6 +33,8 @@ internal sealed class AuthorizationControlPlane(
         SubscriptionControlPlane.New(eventPipeline, logger),
         new RoleDefinitionResourceProvider(logger),
         new RoleAssignmentResourceProvider(logger),
+        new ManagementGroupRoleAssignmentResourceProvider(logger),
+        new ManagementGroupSubscriptionIndexProvider(logger),
         logger
     );
 
@@ -162,7 +166,8 @@ internal sealed class AuthorizationControlPlane(
 
     public ControlPlaneOperationResult<RoleAssignmentResource?> CreateOrUpdateRoleAssignment(
         SubscriptionIdentifier subscriptionIdentifier, RoleAssignmentName roleAssignmentName,
-        CreateOrUpdateRoleAssignmentRequest request)
+        CreateOrUpdateRoleAssignmentRequest request,
+        string? scope = null)
     {
         var subscriptionOperation = subscriptionControlPlane.Get(subscriptionIdentifier);
         if (subscriptionOperation.Result == OperationResult.NotFound)
@@ -177,10 +182,8 @@ internal sealed class AuthorizationControlPlane(
         var createOperation = roleDefinitionOperation.Result == OperationResult.NotFound;
         if (createOperation)
         {
-            var properties = RoleAssignmentResourceProperties.FromRequest(request);
-            properties.Scope = $"/subscriptions/{subscriptionIdentifier.Value}";
-            properties.CreatedOn = DateTimeOffset.UtcNow;
-            properties.UpdatedOn = DateTimeOffset.UtcNow;
+            var properties = RoleAssignmentResourceProperties.FromRequest(
+                request, scope ?? $"/subscriptions/{subscriptionIdentifier.Value}");
 
             resource = new RoleAssignmentResource(subscriptionIdentifier, roleAssignmentName.Value.ToString(),
                 properties);
@@ -201,7 +204,8 @@ internal sealed class AuthorizationControlPlane(
 
     public ControlPlaneOperationResult<RoleAssignmentResource?> CreateRoleAssignment(
         SubscriptionIdentifier subscriptionIdentifier, RoleAssignmentName roleAssignmentName,
-        CreateOrUpdateRoleAssignmentRequest request)
+        CreateOrUpdateRoleAssignmentRequest request,
+        string? scope = null)
     {
         var subscriptionOperation = subscriptionControlPlane.Get(subscriptionIdentifier);
         if (subscriptionOperation.Result == OperationResult.NotFound)
@@ -216,10 +220,8 @@ internal sealed class AuthorizationControlPlane(
         var createOperation = roleDefinitionOperation.Result == OperationResult.NotFound;
         if (createOperation)
         {
-            var properties = RoleAssignmentResourceProperties.FromRequest(request);
-            properties.Scope = $"/subscriptions/{subscriptionIdentifier.Value}";
-            properties.CreatedOn = DateTimeOffset.UtcNow;
-            properties.UpdatedOn = DateTimeOffset.UtcNow;
+            var properties = RoleAssignmentResourceProperties.FromRequest(
+                request, scope ?? $"/subscriptions/{subscriptionIdentifier.Value}");
 
             resource = new RoleAssignmentResource(subscriptionIdentifier, roleAssignmentName.Value.ToString(),
                 properties);
@@ -295,5 +297,30 @@ internal sealed class AuthorizationControlPlane(
 
         return new ControlPlaneOperationResult<RoleAssignmentResource[]>(OperationResult.Success,
             filteredResources.ToArray(), null, null);
+    }
+
+    public ControlPlaneOperationResult<RoleAssignmentResource?> CreateManagementGroupRoleAssignment(
+        string managementGroupId, RoleAssignmentName roleAssignmentName,
+        CreateOrUpdateRoleAssignmentRequest request)
+    {
+        var properties = RoleAssignmentResourceProperties.FromRequest(
+            request, $"/providers/Microsoft.Management/managementGroups/{managementGroupId}");
+
+        var resource = new RoleAssignmentResource(managementGroupId, roleAssignmentName.Value.ToString(), properties);
+        mgRoleAssignmentProvider.CreateOrUpdate(managementGroupId, roleAssignmentName.Value.ToString(), resource);
+
+        return new ControlPlaneOperationResult<RoleAssignmentResource?>(OperationResult.Created, resource, null, null);
+    }
+
+    public RoleAssignmentResource[] ListManagementGroupRoleAssignmentsByEntraObject(
+        string subscriptionId, string objectId)
+    {
+        var ancestorMgIds = mgSubscriptionIndexProvider.FindManagementGroupsForSubscription(subscriptionId);
+        var result = new List<RoleAssignmentResource>();
+        foreach (var mgId in ancestorMgIds)
+        {
+            result.AddRange(mgRoleAssignmentProvider.ListForPrincipal(mgId, objectId));
+        }
+        return result.ToArray();
     }
 }

@@ -20,6 +20,14 @@ internal sealed class RoleAssignmentResource : ArmResource<RoleAssignmentResourc
         Properties = properties;
     }
 
+    /// <summary>Creates a management-group-scoped role assignment.</summary>
+    public RoleAssignmentResource(string managementGroupId, string name, RoleAssignmentResourceProperties properties)
+    {
+        Id = $"/providers/Microsoft.Management/managementGroups/{managementGroupId}/providers/Microsoft.Authorization/roleAssignments/{name}";
+        Name = name;
+        Properties = properties;
+    }
+
     public override string Id { get; init; }
     public override string Name { get; init; }
     public override string Type { get; init; } = "Microsoft.Authorization/roleAssignments";

@@ -75,14 +75,13 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
         var assignments =
             _controlPlane.ListSubscriptionRoleAssignmentsByEntraObject(subscriptionIdentifier, validatedToken.Subject);
 
-        if (assignments.Resource == null || assignments.Resource.Length == 0)
-        {
-            logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
-                "No role assignments found for the given subscription and object ID.");
-            return (false, null);
-        }
+        // Only consider assignments whose scope is a prefix of the requested scope (hierarchy propagation).
+        var applicableAssignments = (assignments.Resource ?? [])
+            .Where(a => !string.IsNullOrEmpty(a.Properties.Scope) &&
+                        scope.StartsWith(a.Properties.Scope, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
 
-        foreach (var assignment in assignments.Resource)
+        foreach (var assignment in applicableAssignments)
         {
             var definition = _controlPlane.Get(subscriptionIdentifier,
                 RoleDefinitionIdentifier.From(assignment.Properties.RoleDefinitionId));
@@ -101,7 +100,32 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
                 "Found required permissions in role definition: {0}", definition.Resource.Id);
             return (true, GetClaimsPrincipal(validatedToken));
         }
-        
+
+        // Fall back to management-group-level assignments (MG scope propagates down through
+        // the hierarchy relationship, not through scope string prefix matching).
+        var mgAssignments = _controlPlane.ListManagementGroupRoleAssignmentsByEntraObject(
+            subscriptionIdentifier.Value.ToString(), validatedToken.Subject);
+
+        foreach (var mgAssignment in mgAssignments)
+        {
+            var definition = _controlPlane.Get(subscriptionIdentifier,
+                RoleDefinitionIdentifier.From(mgAssignment.Properties.RoleDefinitionId));
+
+            if (definition.Resource == null)
+            {
+                logger.LogError(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
+                    "Failed to retrieve role definition for MG assignment: `{0}`", mgAssignment.Id);
+                continue;
+            }
+
+            if (!PermissionChecks.HasAnyRequiredPermission(definition.Resource.Properties.Permissions,
+                    requiredPermissions)) continue;
+
+            logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
+                "Found required permissions via management group role definition: {0}", definition.Resource.Id);
+            return (true, GetClaimsPrincipal(validatedToken));
+        }
+
         logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
             "No required permissions found in any role definition for the given subscription and object ID.");
         return (false, null);

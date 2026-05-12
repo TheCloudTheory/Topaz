@@ -24,6 +24,9 @@ public sealed class RoleAssignmentService(Pipeline eventPipeline, ITopazLogger l
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         new CreateUpdateRoleAssignmentEndpoint(eventPipeline, logger),
+        new CreateUpdateRoleAssignmentAtResourceGroupEndpoint(eventPipeline, logger),
+        new CreateUpdateRoleAssignmentAtResourceEndpoint(eventPipeline, logger),
+        new CreateUpdateRoleAssignmentAtManagementGroupEndpoint(eventPipeline, logger),
         new ListRoleAssignmentsEndpoint(eventPipeline, logger),
         new GetRoleAssignmentEndpoint(eventPipeline, logger),
         new DeleteRoleAssignmentEndpoint(eventPipeline, logger),

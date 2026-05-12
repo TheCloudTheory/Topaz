@@ -4,6 +4,7 @@ using Topaz.Service.Authorization.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
+using Topaz.Service.ManagementGroup;
 
 namespace Topaz.Service.Authorization;
 
@@ -81,5 +82,66 @@ internal sealed class RoleDefinitionResourceProvider(ITopazLogger logger)
             }
             let roleId = fileModel.Id ?? $"/providers/Microsoft.Authorization/roleDefinitions/{fileModel.Name}"
             select new RoleDefinitionResource(roleId, fileModel.Name!, properties)).FirstOrDefault();
+    }
+}
+
+/// <summary>
+/// Stores and retrieves role assignments scoped to a management group.
+/// Files are kept under {emulatorDir}/.management-group/{mgId}/.role-assignment/{name}.json
+/// </summary>
+internal sealed class ManagementGroupRoleAssignmentResourceProvider(ITopazLogger logger)
+{
+    private static string GetDir(string mgId) =>
+        Path.Combine(GlobalSettings.MainEmulatorDirectory, ".management-group", mgId, ".role-assignment");
+
+    private static string GetPath(string mgId, string name) =>
+        Path.Combine(GetDir(mgId), $"{name}.json");
+
+    public void CreateOrUpdate(string mgId, string name, RoleAssignmentResource resource)
+    {
+        var dir = GetDir(mgId);
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(GetPath(mgId, name), JsonSerializer.Serialize(resource, GlobalSettings.JsonOptions));
+        logger.LogDebug(nameof(ManagementGroupRoleAssignmentResourceProvider), nameof(CreateOrUpdate),
+            "Saved MG role assignment '{0}' under management group '{1}'.", name, mgId);
+    }
+
+    public RoleAssignmentResource[] ListForPrincipal(string mgId, string principalId)
+    {
+        var dir = GetDir(mgId);
+        if (!Directory.Exists(dir)) return [];
+
+        return Directory.EnumerateFiles(dir, "*.json")
+            .Select(f => JsonSerializer.Deserialize<RoleAssignmentResource>(File.ReadAllText(f), GlobalSettings.JsonOptions))
+            .Where(r => r != null && r.Properties.PrincipalId == principalId)
+            .ToArray()!;
+    }
+}
+
+/// <summary>
+/// Finds which management groups a given subscription belongs to by reading the
+/// existing management-group directory structure (no separate index file needed).
+/// </summary>
+internal sealed class ManagementGroupSubscriptionIndexProvider(ITopazLogger logger)
+{
+    private static string BasePath =>
+        Path.Combine(GlobalSettings.MainEmulatorDirectory, ".management-group");
+
+    public IEnumerable<string> FindManagementGroupsForSubscription(string subscriptionId)
+    {
+        if (!Directory.Exists(BasePath)) yield break;
+
+        foreach (var groupDir in Directory.EnumerateDirectories(BasePath))
+        {
+            var mgId = Path.GetFileName(groupDir);
+            var subFile = Path.Combine(groupDir, "subscriptions", $"{subscriptionId}.json");
+            if (File.Exists(subFile))
+            {
+                logger.LogDebug(nameof(ManagementGroupSubscriptionIndexProvider),
+                    nameof(FindManagementGroupsForSubscription),
+                    "Subscription '{0}' is a member of management group '{1}'.", subscriptionId, mgId);
+                yield return mgId;
+            }
+        }
     }
 }

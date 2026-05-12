@@ -240,6 +240,14 @@ TopazArmClient(AzureLocalCredential credentials)
 | `GetProviderAsync(Guid subscriptionId, string providerNamespace)` | `Task<JsonNode>` | Returns the registration details for a single provider namespace. |
 | `ListProvidersAsync(Guid subscriptionId)` | `Task<JsonNode>` | Returns all provider namespaces registered on a subscription. |
 
+#### Role Assignments
+
+| Method | Returns | Description |
+|---|---|---|
+| `CreateManagementGroupRoleAssignmentAsync(string managementGroupId, string roleAssignmentName, string principalId, string roleDefinitionId)` | `Task` | Creates a role assignment at management-group scope. The assignment scope is set to `/providers/Microsoft.Management/managementGroups/{managementGroupId}` and propagates down to all child subscriptions and resources. |
+| `CreateResourceGroupRoleAssignmentAsync(Guid subscriptionId, string resourceGroupName, string roleAssignmentName, string principalId, string roleDefinitionId)` | `Task` | Creates a role assignment scoped to a specific resource group. The assignment propagates down to all resources within that group. |
+| `CreateResourceRoleAssignmentAsync(Guid subscriptionId, string resourceGroupName, string providerNamespace, string resourceType, string resourceName, string roleAssignmentName, string principalId, string roleDefinitionId)` | `Task` | Creates a role assignment scoped to a single resource (e.g. a Key Vault or Storage Account). The assignment does not propagate to sibling or parent scopes. |
+
 #### Health
 
 | Method | Returns | Description |

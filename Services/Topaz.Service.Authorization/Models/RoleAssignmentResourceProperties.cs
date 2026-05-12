@@ -20,7 +20,9 @@ internal sealed class RoleAssignmentResourceProperties
     public DateTimeOffset? UpdatedOn { get; set; }
     public string? UpdatedBy { get; set; }
 
-    public static RoleAssignmentResourceProperties FromRequest(CreateOrUpdateRoleAssignmentRequest request)
+    public static RoleAssignmentResourceProperties FromRequest(
+        CreateOrUpdateRoleAssignmentRequest request,
+        string? scope = null)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (request.Properties == null) throw new ArgumentNullException(nameof(request.Properties));
@@ -30,11 +32,13 @@ internal sealed class RoleAssignmentResourceProperties
             RoleDefinitionId = request.Properties.RoleDefinitionId,
             PrincipalId = request.Properties.PrincipalId,
             PrincipalType = request.Properties.PrincipalType,
-            Scope = request.Properties.Scope,
+            Scope = scope ?? request.Properties.Scope,
             Description = request.Properties.Description,
             Condition = request.Properties.Condition,
             ConditionVersion = request.Properties.ConditionVersion,
-            DelegatedManagedIdentityResourceId = request.Properties.DelegatedManagedIdentityResourceId
+            DelegatedManagedIdentityResourceId = request.Properties.DelegatedManagedIdentityResourceId,
+            CreatedOn = DateTimeOffset.UtcNow,
+            UpdatedOn = DateTimeOffset.UtcNow
         };
     }
 

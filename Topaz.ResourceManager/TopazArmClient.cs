@@ -205,6 +205,99 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         }
     }
 
+    public async Task CreateManagementGroupRoleAssignmentAsync(
+        string managementGroupId, string roleAssignmentName, string principalId, string roleDefinitionId)
+    {
+        var url = $"providers/Microsoft.Management/managementGroups/{managementGroupId}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}";
+        var request = new HttpRequestMessage(HttpMethod.Put, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var payload = new
+        {
+            properties = new
+            {
+                principalId,
+                roleDefinitionId
+            }
+        };
+        request.Content = new StringContent(
+            JsonSerializer.Serialize(payload, GlobalSettings.JsonOptions),
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(message, null, response.StatusCode);
+        }
+    }
+
+    public async Task CreateResourceGroupRoleAssignmentAsync(
+        Guid subscriptionId, string resourceGroupName,
+        string roleAssignmentName, string principalId, string roleDefinitionId)
+    {
+        var url = $"subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}";
+        var request = new HttpRequestMessage(HttpMethod.Put, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var payload = new
+        {
+            properties = new
+            {
+                principalId,
+                roleDefinitionId
+            }
+        };
+        request.Content = new StringContent(
+            JsonSerializer.Serialize(payload, GlobalSettings.JsonOptions),
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(message, null, response.StatusCode);
+        }
+    }
+
+    public async Task CreateResourceRoleAssignmentAsync(
+        Guid subscriptionId, string resourceGroupName,
+        string providerNamespace, string resourceType, string resourceName,
+        string roleAssignmentName, string principalId, string roleDefinitionId)
+    {
+        var url = $"subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{providerNamespace}/{resourceType}/{resourceName}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}";
+        var request = new HttpRequestMessage(HttpMethod.Put, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var payload = new
+        {
+            properties = new
+            {
+                principalId,
+                roleDefinitionId
+            }
+        };
+        request.Content = new StringContent(
+            JsonSerializer.Serialize(payload, GlobalSettings.JsonOptions),
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(message, null, response.StatusCode);
+        }
+    }
+
     public async Task<JsonNode> GetSubscriptionUnderManagementGroupAsync(string groupId, string subscriptionId)
     {
         var request = new HttpRequestMessage(HttpMethod.Get,
