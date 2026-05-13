@@ -48,6 +48,8 @@ public static class GlobalSettings
 
     public static readonly string GlobalDnsEntriesFilePath = Path.Combine(MainEmulatorDirectory, "global-dns.json");
 
+    public static readonly TimeSpan SoftDeletePurgeSchedulerInterval = TimeSpan.FromHours(1);
+
     public static string GetKeyVaultHost(string vaultName) => $"{vaultName.ToLowerInvariant()}.{KeyVaultDnsSuffix}";
 
     public static string GetKeyVaultEndpoint(string vaultName) =>

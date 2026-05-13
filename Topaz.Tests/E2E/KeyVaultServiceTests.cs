@@ -5,8 +5,14 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.Resources;
+using Topaz.EventPipeline;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Service.KeyVault;
+using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
+using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -339,5 +345,47 @@ public class KeyVaultServiceTests
         var names = vaults.Select(v => v.Data.Name).ToList();
         Assert.That(names, Does.Contain(testKeyVaultName1));
         Assert.That(names, Does.Contain(testKeyVaultName2));
+    }
+
+    [Test]
+    public async Task KeyVaultScheduler_WhenScheduledPurgeDateHasPassed_VaultShouldBePurged()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+        const string testKeyVaultName = "testkvscheduler";
+        resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, testKeyVaultName, operation, CancellationToken.None);
+        var kv = resourceGroup.Value.GetKeyVault(testKeyVaultName);
+        kv.Value.Delete(WaitUntil.Completed);
+
+        var logger = new PrettyTopazLogger();
+        var eventPipeline = new Pipeline(logger);
+        var controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
+        var subscriptionControlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
+
+        var subscriptionIdentifier = SubscriptionIdentifier.From(SubscriptionId);
+        controlPlane.OverrideScheduledPurgeDate(subscriptionIdentifier, testKeyVaultName,
+            DateTimeOffset.UtcNow.AddSeconds(30));
+
+        // Wait for the purge date to pass
+        await Task.Delay(TimeSpan.FromSeconds(31));
+
+        var scheduler = new KeyVaultSoftDeletePurgeScheduler(
+            controlPlane,
+            subscriptionControlPlane,
+            logger,
+            GlobalSettings.SoftDeletePurgeSchedulerInterval);
+
+        // Act
+        await scheduler.ScanAndPurgeAsync();
+
+        // Assert
+        var (result, _) = controlPlane.ShowDeleted(subscriptionIdentifier, testKeyVaultName);
+        Assert.That(result, Is.EqualTo(OperationResult.NotFound));
     }
 }

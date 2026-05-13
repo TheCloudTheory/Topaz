@@ -439,4 +439,21 @@ internal sealed class KeyVaultControlPlane(
         resource.DeletionDate = null;
         resource.ScheduledPurgeDate = null;
     }
+
+    /// <summary>
+    /// Overrides the <see cref="KeyVaultFullResource.ScheduledPurgeDate"/> of a soft-deleted vault.
+    /// Intended for testing only — allows fast-forwarding the purge date without waiting for the real retention window.
+    /// </summary>
+    internal void OverrideScheduledPurgeDate(SubscriptionIdentifier subscriptionIdentifier, string keyVaultName, DateTimeOffset purgeDate)
+    {
+        var keyVaults = ListBySubscription(subscriptionIdentifier);
+        var keyVault = (keyVaults.Resource ?? [])
+            .SingleOrDefault(kv => kv.Name == keyVaultName &&
+                                   GlobalDnsEntries.IsSoftDeleted(KeyVaultService.UniqueName, kv.Name));
+
+        if (keyVault == null) return;
+
+        keyVault.ScheduledPurgeDate = purgeDate;
+        provider.CreateOrUpdate(subscriptionIdentifier, keyVault.GetResourceGroup(), keyVaultName, keyVault);
+    }
 }

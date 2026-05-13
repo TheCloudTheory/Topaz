@@ -154,6 +154,13 @@ public class Host
         await CreateWebserverForHttpEndpointsAsync([.. httpEndpoints], idFactory, cancellationToken);
         CreateAmqpListenersForAmpqEndpoints([.. amqpEndpoints]);
 
+        var purgeScheduler = new KeyVaultSoftDeletePurgeScheduler(
+            KeyVaultControlPlane.New(_eventPipeline, _logger),
+            SubscriptionControlPlane.New(_eventPipeline, _logger),
+            _logger,
+            GlobalSettings.SoftDeletePurgeSchedulerInterval);
+        _ = purgeScheduler.StartAsync(cancellationToken);
+
         Console.WriteLine();
         AnsiConsole.MarkupLine("  [green]✓[/] Topaz is ready — listening for requests");
         Console.WriteLine();
