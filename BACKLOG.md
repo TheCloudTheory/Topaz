@@ -453,6 +453,81 @@ TODO: Virtual Networks: IP address allocation registry
   labels: enhancement, virtual-network
 -->
 
+### Azure App Service — initial control plane
+
+<!--
+TODO: Azure App Service: New service scaffold
+  Create Topaz.Service.AppService following the existing service conventions:
+  - Project file with references to Topaz.ResourceManager, Topaz.Service.Shared,
+    Topaz.Service.ResourceGroup, Topaz.Service.Subscription
+  - AppServicePlanResourceProperties + AppServicePlanResource (ArmResource<T>)
+  - AppServiceSiteResourceProperties + AppServiceSiteResource (ArmResource<T>),
+    including embedded SiteConfigProperties (appSettings, connectionStrings,
+    linuxFxVersion, netFrameworkVersion, alwaysOn, ftpsState, minTlsVersion, etc.)
+  - AppServicePlanResourceProvider and AppServiceSiteResourceProvider
+    (ResourceProviderBase<T> thin wrappers)
+  - AppServicePlanControlPlane and AppServiceSiteControlPlane implementing IControlPlane
+    with Deploy() for both Microsoft.Web/serverfarms and Microsoft.Web/sites
+  - Two IServiceDefinition classes: AppServicePlanService (LocalDirectoryPath .azure-web-plans)
+    and AppServiceSiteService (LocalDirectoryPath .azure-web-sites)
+  - Register both services in Topaz.Host/Host.cs
+  - Add case "Microsoft.Web/serverfarms" and case "Microsoft.Web/sites" to
+    TemplateDeploymentOrchestrator.RouteDeployment()
+  - Add ProjectReference to Topaz.Service.ResourceManager.csproj
+  milestone: v1.5-beta
+  labels: enhancement, app-service, good first issue
+-->
+
+<!--
+TODO: Azure App Service: App Service Plan control plane endpoints
+  Implement the ARM-level App Service Plan resource surface (Microsoft.Web/serverfarms):
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/serverfarms/{name}  – create or update
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/serverfarms/{name}  – get
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/serverfarms/{name}  – delete
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/serverfarms          – list by resource group
+  - GET    /subscriptions/{sub}/providers/Microsoft.Web/serverfarms                             – list all in subscription
+  All endpoints run on DefaultResourceManagerPort (8899). SKU (name/tier/size/family/capacity)
+  is persisted and round-tripped. provisioningState is always "Succeeded"; status is "Ready".
+  Follow the one-file-per-operation convention under Endpoints/Plans/.
+  milestone: v1.5-beta
+  labels: enhancement, app-service
+-->
+
+<!--
+TODO: Azure App Service: Web App and Function App (Sites) control plane endpoints
+  Implement the ARM-level Web App / Function App resource surface (Microsoft.Web/sites):
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites/{name}  – create or update
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites/{name}  – get
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites/{name}  – delete
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites          – list by resource group
+  - GET    /subscriptions/{sub}/providers/Microsoft.Web/sites                             – list all in subscription
+  The kind field distinguishes app (web app) from functionapp / functionapp,linux (Function Apps).
+  On create, compute defaultHostName as "{name}.azurewebsites.net", hostNames,
+  enabledHostNames, and hostNameSslStates. state is always "Running"; availabilityState is "Normal".
+  Follow the one-file-per-operation convention under Endpoints/Sites/.
+  milestone: v1.5-beta
+  labels: enhancement, app-service
+-->
+
+<!--
+TODO: Azure App Service: Site Config sub-resource endpoints
+  Implement the /config sub-resource surface for Microsoft.Web/sites:
+  - GET  .../sites/{name}/config/web              – return siteConfig wrapped as
+    {"id": ".../config/web", "name": "web", "type": "Microsoft.Web/sites/config",
+     "properties": {<full SiteConfigProperties>}}
+  - PUT  .../sites/{name}/config/web              – merge request.properties into the stored
+    siteConfig and return 200 with the same envelope
+  - PUT  .../sites/{name}/config/appsettings       – replace the appSettings name/value list;
+    return 200 with {"id": ".../config/appsettings", "name": "appsettings",
+    "type": "Microsoft.Web/sites/config", "properties": {"KEY": "VALUE", ...}}
+  - POST .../sites/{name}/config/appsettings/list  – return the current app settings dictionary
+    in the same envelope (used by Azure CLI az webapp config appsettings list)
+  siteConfig is stored embedded in AppServiceSiteResourceProperties (same persistence file as
+  the site resource). No separate subresource file is needed for initial support.
+  milestone: v1.5-beta
+  labels: enhancement, app-service
+-->
+
 ---
 
 ## v1.6-beta

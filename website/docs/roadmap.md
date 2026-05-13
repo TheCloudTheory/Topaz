@@ -114,6 +114,15 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 |--|---------|-------------|
 | <span class="badge--preview">Preview</span> | IP allocation registry | Track IPs assigned to NICs and private endpoints so `CheckIPAddressAvailability` can return real `availableIPAddresses` suggestions instead of `[]` |
 
+### Azure App Service — initial control plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.AppService` with `AppServicePlanService` and `AppServiceSiteService` definitions, resource providers, control planes (including `Deploy()`), host registration, and `RouteDeployment()` cases for `Microsoft.Web/serverfarms` and `Microsoft.Web/sites` |
+| <span class="badge--preview">Preview</span> | App Service Plan control plane | Create, get, delete, and list `Microsoft.Web/serverfarms` by resource group and subscription; SKU and all plan properties persisted and round-tripped |
+| <span class="badge--preview">Preview</span> | Web App & Function App control plane | Create, get, delete, and list `Microsoft.Web/sites`; `kind` field distinguishes `app` from `functionapp` / `functionapp,linux`; `defaultHostName` computed as `{name}.azurewebsites.net` |
+| <span class="badge--preview">Preview</span> | Site Config sub-resource | GET/PUT `/config/web` (full `SiteConfig`), PUT `/config/appsettings` (write), and POST `/config/appsettings/list` (read) — siteConfig persisted embedded in the site resource |
+
 ---
 
 ## v1.6-beta
