@@ -37,78 +37,11 @@ T0DO: Short issue title (required)
 
 ### Key Vault — full secrets support
 
-<!--
-TODO: Key Vault Secrets: Get Versions endpoint
-  Implement `GET {vaultBaseUrl}/secrets/{secret-name}/versions` returning a paged list of
-  all versions for the given secret. Follows the same pattern as `GetSecretsEndpoint`.
-  milestone: v1.1-beta
-  labels: enhancement, key-vault
--->
-
-<!--
-TODO: Key Vault Secrets: Backup and Restore endpoints
-  Implement `POST {vaultBaseUrl}/secrets/{secret-name}/backup` (returns an opaque blob)
-  and `POST {vaultBaseUrl}/secrets/restore` (accepts the blob and recreates the secret).
-  milestone: v1.1-beta
-  labels: enhancement, key-vault
--->
-
-<!--
-TODO: Key Vault Secrets: Deleted secrets operations
-  Implement the soft-delete data-plane surface:
-  - GET  {vaultBaseUrl}/deletedsecrets              – list deleted secrets
-  - GET  {vaultBaseUrl}/deletedsecrets/{name}       – get deleted secret
-  - POST {vaultBaseUrl}/deletedsecrets/{name}/recover – recover deleted secret
-  - POST {vaultBaseUrl}/deletedsecrets/{name}/purge  – purge deleted secret
-  milestone: v1.1-beta
-  labels: enhancement, key-vault
--->
+_Implemented in v1.1-beta: `GetVersions`, backup/restore, and full soft-delete surface (`ListDeleted`, `GetDeleted`, `Recover`, `Purge`) for secrets._
 
 ### Container Registry — data plane preview
 
-<!--
-TODO: Container Registry: ACR OAuth2 token endpoint
-  Implement `POST /oauth2/token` (refresh-token → access-token exchange).
-  The challenge endpoint and refresh-token exchange are already in place; this
-  completes the three-step ACR auth flow.
-  milestone: v1.1-beta
-  labels: enhancement, container-registry
--->
-
-<!--
-TODO: Container Registry: Repository and Tag data plane operations
-  Implement OCI distribution-spec endpoints for repositories and tags:
-  - GET /v2/_catalog                          – list repositories
-  - GET /v2/{name}/tags/list                  – list tags
-  - DELETE /v2/{name}/manifests/{reference}   – used to delete a tag
-  milestone: v1.1-beta
-  labels: enhancement, container-registry
--->
-
-<!--
-TODO: Container Registry: Manifest data plane operations
-  Implement OCI manifest endpoints:
-  - GET    /v2/{name}/manifests/{reference}   – get manifest
-  - PUT    /v2/{name}/manifests/{reference}   – put manifest
-  - DELETE /v2/{name}/manifests/{reference}   – delete manifest
-  - HEAD   /v2/{name}/manifests/{reference}   – check existence
-  Manifests must be stored per-registry on disk via the resource provider.
-  milestone: v1.1-beta
-  labels: enhancement, container-registry
--->
-
-<!--
-TODO: Container Registry: Blob data plane operations
-  Implement OCI blob upload/download endpoints:
-  - GET    /v2/{name}/blobs/{digest}           – download blob
-  - HEAD   /v2/{name}/blobs/{digest}           – check existence
-  - DELETE /v2/{name}/blobs/{digest}           – delete blob
-  - POST   /v2/{name}/blobs/uploads/           – start upload session
-  - PATCH  /v2/{name}/blobs/uploads/{uuid}     – stream chunk
-  - PUT    /v2/{name}/blobs/uploads/{uuid}     – complete upload
-  milestone: v1.1-beta
-  labels: enhancement, container-registry
--->
+_Implemented in v1.1-beta: OAuth2 token exchange, repository/tag listing (`/v2/_catalog`, `/v2/{name}/tags/list`), manifest CRUD (`GET/PUT/DELETE/HEAD`), and full blob upload/download pipeline (`GET/HEAD/DELETE`, chunked upload via `POST/PATCH/PUT`)._
 
 ---
 
@@ -116,95 +49,23 @@ TODO: Container Registry: Blob data plane operations
 
 ### Key Vault — keys support
 
-<!--
-TODO: Key Vault Keys: Core CRUD operations
-  Implement the data-plane key management surface:
-  - POST  {vaultBaseUrl}/keys/{name}/create       – create key
-  - PUT   {vaultBaseUrl}/keys/{name}              – import key
-  - GET   {vaultBaseUrl}/keys/{name}/{version}    – get key
-  - PATCH {vaultBaseUrl}/keys/{name}/{version}    – update key attributes
-  - DELETE {vaultBaseUrl}/keys/{name}             – delete key
-  - GET   {vaultBaseUrl}/keys                     – list keys
-  - GET   {vaultBaseUrl}/keys/{name}/versions     – list key versions
-  milestone: v1.2-beta
-  labels: enhancement, key-vault
--->
-
-<!--
-TODO: Key Vault Keys: Backup and Restore
-  Implement:
-  - POST {vaultBaseUrl}/keys/{name}/backup    – export opaque key backup blob
-  - POST {vaultBaseUrl}/keys/restore          – restore from backup blob
-  Follows the same pattern as the planned secret backup/restore endpoints.
-  milestone: v1.2-beta
-  labels: enhancement, key-vault
--->
-
-<!--
-TODO: Key Vault Keys: Key rotation and policy operations
-  Implement:
-  - POST {vaultBaseUrl}/keys/{name}/rotate           – rotate key
-  - GET  {vaultBaseUrl}/keys/{name}/rotationpolicy   – get rotation policy
-  - PUT  {vaultBaseUrl}/keys/{name}/rotationpolicy   – update rotation policy
-  milestone: v1.2-beta
-  labels: enhancement, key-vault
--->
+_Implemented in v1.2-beta: core key CRUD (create, import, get, update, delete, list, list versions), backup/restore, key rotation, and rotation policy._
 
 ### Azure PowerShell integration
 
-<!-- All three Azure PowerShell items completed in v1.2-beta:
-     - install/configure-azure-powershell-cert.ps1
-     - install/configure-azure-powershell-env.ps1
-     - Topaz.Tests.AzurePowerShell (TopazPowerShellFixture + resource-group + Key Vault tests)
--->
+_Implemented in v1.2-beta: `configure-azure-powershell-cert.ps1`, `configure-azure-powershell-env.ps1`, and `Topaz.Tests.AzurePowerShell` test project (PowerShellTestBase fixture, resource group, and Key Vault tests)._
 
 ### Management Groups — basic CRUD
 
-<!--
-TODO: Management Groups: Core CRUD operations
-  Implement the management group resource surface:
-  - PUT    /providers/Microsoft.Management/managementGroups/{groupId}  – create or update
-  - GET    /providers/Microsoft.Management/managementGroups/{groupId}  – get
-  - DELETE /providers/Microsoft.Management/managementGroups/{groupId}  – delete
-  - PATCH  /providers/Microsoft.Management/managementGroups/{groupId}  – update (rename / change parent)
-  - GET    /providers/Microsoft.Management/managementGroups             – list
-  milestone: v1.2-beta
-  labels: enhancement, management-groups
--->
+_Implemented in v1.2-beta: `PUT/GET/DELETE/PATCH` management groups and `GET /providers/Microsoft.Management/managementGroups` list._
 
 ### ARM Deployments — full support
 
-<!--
-TODO: ARM Deployments: Cancel operation
-  Implement `POST /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Resources/deployments/{name}/cancel`.
-  Should mark an in-progress deployment as cancelled.
-  milestone: v1.2-beta
-  labels: enhancement, resource-manager
--->
-
-<!--
-TODO: ARM Deployments: Export Template endpoint
-  Implement `POST /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Resources/deployments/{name}/exportTemplate`.
-  Returns the ARM template that was used for the deployment.
-  milestone: v1.2-beta
-  labels: enhancement, resource-manager
--->
-
-<!-- List at subscription scope, management-group scope, and tenant scope all implemented. -->
+_Implemented in v1.2-beta: `cancel` and `exportTemplate` at subscription scope; list at subscription, management-group, and tenant scope._
 
 ### Packaging — CLI and Host split
 
-<!--
-TODO: Split Topaz into separate CLI and Host executables
-  Separate the current monolithic Topaz CLI into two distinct artifacts:
-  - `topaz-host` — the standalone Host process that runs all emulated Azure services
-  - `topaz-cli` — a thin CLI tool that communicates with a running Host instance
-  Each artifact should be published as an independent binary and Docker image.
-  This is a breaking change: existing `topaz` CLI invocations and Docker image
-  references will need to be updated.
-  milestone: v1.2-beta
-  labels: enhancement, breaking-change
--->
+_Implemented in v1.2-beta: `topaz-host` and `topaz-cli` published as independent executables and Docker images._
 
 ---
 
@@ -212,43 +73,7 @@ TODO: Split Topaz into separate CLI and Host executables
 
 ### Management Groups — extended operations
 
-<!--
-TODO: Management Groups: Get Descendants
-  Implement `GET /providers/Microsoft.Management/managementGroups/{groupId}/descendants`.
-  Returns all child management groups and subscriptions under a given management group.
-  milestone: v1.3-beta
-  labels: enhancement, management-groups
--->
-
-<!--
-TODO: Management Groups: Management Group Subscriptions
-  Implement subscription association endpoints:
-  - PUT    /providers/Microsoft.Management/managementGroups/{groupId}/subscriptions/{subscriptionId}  – associate subscription
-  - DELETE /providers/Microsoft.Management/managementGroups/{groupId}/subscriptions/{subscriptionId}  – disassociate subscription
-  - GET    /providers/Microsoft.Management/managementGroups/{groupId}/subscriptions/{subscriptionId}  – get subscription under MG
-  milestone: v1.3-beta
-  labels: enhancement, management-groups
--->
-
-<!--
-TODO: Management Groups: Hierarchy Settings
-  Implement tenant-level hierarchy settings endpoints:
-  - PUT    /providers/Microsoft.Management/managementGroups/{groupId}/settings/default  – create or update
-  - DELETE /providers/Microsoft.Management/managementGroups/{groupId}/settings/default  – delete
-  - GET    /providers/Microsoft.Management/managementGroups/{groupId}/settings/default  – get
-  - GET    /providers/Microsoft.Management/managementGroups/{groupId}/settings           – list
-  - PATCH  /providers/Microsoft.Management/managementGroups/{groupId}/settings/default  – update
-  milestone: v1.3-beta
-  labels: enhancement, management-groups
--->
-
-<!--
-TODO: Management Groups: Entities list
-  Implement `GET /providers/Microsoft.Management/getEntities`.
-  Returns all management groups and subscriptions accessible by the caller.
-  milestone: v1.3-beta
-  labels: enhancement, management-groups
--->
+_Implemented in v1.3-beta: Get Descendants, Management Group Subscriptions (associate/disassociate/get), Hierarchy Settings (create/update/get/list/delete), and Entities list._
 
 ### Resource Providers — operations support
 
@@ -264,140 +89,11 @@ _Implemented in v1.3-beta: service scaffold, five control-plane endpoints (creat
 
 ### Key Vault — full certificate operations support
 
-<!--
-TODO: Key Vault Certificates: Core CRUD operations
-  Implement the data-plane certificate management surface:
-  - POST  {vaultBaseUrl}/certificates/{name}/create         – create certificate (or begin async CSR)
-  - POST  {vaultBaseUrl}/certificates/{name}/import         – import PEM/PFX certificate
-  - GET   {vaultBaseUrl}/certificates/{name}/{version}      – get certificate
-  - PATCH {vaultBaseUrl}/certificates/{name}/{version}      – update certificate attributes
-  - DELETE {vaultBaseUrl}/certificates/{name}               – delete certificate
-  - GET   {vaultBaseUrl}/certificates                       – list certificates
-  - GET   {vaultBaseUrl}/certificates/{name}/versions       – list certificate versions
-  milestone: v1.3-beta
-  labels: enhancement, key-vault
--->
-
-<!--
-TODO: Key Vault Certificates: Backup and Restore
-  Implement:
-  - POST {vaultBaseUrl}/certificates/{name}/backup   – export opaque certificate backup blob
-  - POST {vaultBaseUrl}/certificates/restore         – restore from backup blob
-  Follows the same pattern as the secret and key backup/restore endpoints.
-  milestone: v1.3-beta
-  labels: enhancement, key-vault
--->
-
-<!--
-TODO: Key Vault Certificates: Certificate contacts
-  Implement vault-level certificate administrator contact management:
-  - PUT    {vaultBaseUrl}/certificates/contacts  – set contacts
-  - GET    {vaultBaseUrl}/certificates/contacts  – get contacts
-  - DELETE {vaultBaseUrl}/certificates/contacts  – delete all contacts
-  milestone: v1.3-beta
-  labels: enhancement, key-vault
--->
-
-<!--
-TODO: Key Vault Certificates: Certificate issuers
-  Implement certificate issuer (CA) management:
-  - PUT    {vaultBaseUrl}/certificates/issuers/{issuerName}  – create or update issuer
-  - GET    {vaultBaseUrl}/certificates/issuers/{issuerName}  – get issuer
-  - PATCH  {vaultBaseUrl}/certificates/issuers/{issuerName}  – update issuer
-  - DELETE {vaultBaseUrl}/certificates/issuers/{issuerName}  – delete issuer
-  - GET    {vaultBaseUrl}/certificates/issuers               – list issuers
-  milestone: v1.3-beta
-  labels: enhancement, key-vault
--->
-
-<!--
-TODO: Key Vault Certificates: Pending certificate operations
-  Implement in-flight certificate operation endpoints (used when creation is async / CSR-based):
-  - GET    {vaultBaseUrl}/certificates/{name}/pending          – get pending operation
-  - PATCH  {vaultBaseUrl}/certificates/{name}/pending          – update (e.g. merge CSR response)
-  - DELETE {vaultBaseUrl}/certificates/{name}/pending          – cancel pending operation
-  milestone: v1.3-beta
-  labels: enhancement, key-vault
--->
-
-<!--
-TODO: Key Vault Certificates: Merge certificate
-  Implement:
-  - POST {vaultBaseUrl}/certificates/{name}/pending/merge  – merge an externally-signed certificate
-    (from a CA response) with the pending CSR stored in Key Vault.
-  milestone: v1.3-beta
-  labels: enhancement, key-vault
--->
-
-<!--
-TODO: Key Vault Certificates: Soft-delete surface
-  Implement the soft-delete data-plane surface for certificates:
-  - GET  {vaultBaseUrl}/deletedcertificates              – list deleted certificates
-  - GET  {vaultBaseUrl}/deletedcertificates/{name}       – get deleted certificate
-  - POST {vaultBaseUrl}/deletedcertificates/{name}/recover – recover deleted certificate
-  - POST {vaultBaseUrl}/deletedcertificates/{name}/purge   – purge deleted certificate
-  milestone: v1.3-beta
-  labels: enhancement, key-vault
--->
+_Implemented in v1.3-beta: core CRUD (create, import, get, update, delete, list, list versions), backup/restore, certificate contacts, certificate issuers, pending operations, merge certificate, and soft-delete surface._
 
 ### MCP Server — resource provisioning and tooling
 
-<!--
-TODO: MCP: Resource provisioning tools for Key Vault, Service Bus, and Storage
-  Extend Topaz.MCP with tools that provision the most common Azure resources into a running Topaz instance:
-  - CreateResourceGroup — create a resource group in a subscription
-  - CreateKeyVault — create a Key Vault and optionally seed a secret
-  - CreateServiceBusNamespace / CreateServiceBusQueue / CreateServiceBusTopic — Service Bus topology
-  - CreateStorageAccount / CreateBlobContainer — Storage resources
-  Each tool follows the existing SubscriptionTool.cs pattern using TopazArmClient REST calls.
-  milestone: v1.3-beta
-  labels: enhancement, mcp
--->
-
-<!--
-TODO: MCP: Event Hub and Container Registry provisioning tools
-  Add MCP tools for the remaining commonly-used services:
-  - CreateEventHubNamespace / CreateEventHub
-  - CreateContainerRegistry
-  milestone: v1.3-beta
-  labels: enhancement, mcp
--->
-
-<!--
-TODO: MCP: GetConnectionStrings tool
-  Add a GetConnectionStrings tool that queries the running Topaz instance and returns
-  ready-to-use connection strings and URIs for all provisioned resources in a subscription:
-  - Storage account connection strings
-  - Service Bus connection strings
-  - Key Vault URI
-  - Event Hub connection strings
-  - Container Registry login server
-  This closes the provisioning workflow: after creating resources the developer immediately
-  gets the values needed to configure their application or CI environment.
-  milestone: v1.3-beta
-  labels: enhancement, mcp
--->
-
-<!--
-TODO: MCP: GetTopazStatus diagnostics tool
-  Add a GetTopazStatus tool that calls the Topaz health-check endpoint and returns
-  the running version, which services are up, and which ports are bound.
-  Useful for debugging when an MCP-assisted setup fails partway through.
-  milestone: v1.3-beta
-  labels: enhancement, mcp
--->
-
-<!--
-TODO: MCP: Pre-defined prompts for common setup scenarios
-  Implement MCP prompts (the Prompts capability of the MCP protocol) for common
-  development environment patterns:
-  - "Set up a local Azure environment for a .NET microservice" — guides the AI to create
-    resource group → storage account → service bus namespace + queue → key vault → output connection strings
-  - "Bootstrap a CI environment" — subscription → registry → storage → env var export
-  Prompts compose the existing provisioning tools into guided multi-step workflows.
-  milestone: v1.3-beta
-  labels: enhancement, mcp
--->
+_Implemented in v1.3-beta: resource provisioning tools (Key Vault, Service Bus, Storage, Event Hub, Container Registry), `GetConnectionStrings`, `GetTopazStatus` diagnostics, and pre-defined MCP prompts._
 
 ---
 
@@ -741,6 +437,20 @@ TODO: Azure SQL: Database control plane endpoints
   Databases are persisted as child resources of their server via the resource provider.
   milestone: v1.5-beta
   labels: enhancement, azure-sql, good first issue
+-->
+
+### Virtual Network — IP address allocation registry
+
+<!--
+TODO: Virtual Networks: IP address allocation registry
+  Introduce an IP allocation registry in the VNet service so that NIC and private endpoint
+  creation records the assigned IP address. This enables:
+  - Real `availableIPAddresses` computation in the CheckIPAddressAvailability endpoint
+    (currently always returns `[]` — see known-limitations.md).
+  - More accurate `available: false` responses when an IP within a subnet is already
+    assigned to a resource.
+  milestone: v1.5-beta
+  labels: enhancement, virtual-network
 -->
 
 ---

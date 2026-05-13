@@ -166,6 +166,12 @@ _Implemented in v1.3-beta._
 | <span class="badge--preview">Preview</span> | SQL Server control plane | Create, get, update, delete, and list SQL Server resources; emulated server with `{name}.database.topaz.local.dev` as FQDN |
 | <span class="badge--preview">Preview</span> | SQL Database control plane | Create, get, update, delete, and list databases under a server — persisted as child resources on disk |
 
+### Virtual Network — IP address allocation registry
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | IP allocation registry | Track IPs assigned to NICs and private endpoints so `CheckIPAddressAvailability` can return real `availableIPAddresses` suggestions instead of `[]` |
+
 ---
 
 ## v1.6-beta
