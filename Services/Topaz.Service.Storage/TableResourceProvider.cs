@@ -34,8 +34,6 @@ internal sealed class TableResourceProvider(ITopazLogger logger) : ResourceProvi
         var storageAccountPath =
             GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
 
-        // Reassign the parameter so static-analysis tools track the sanitized value, not the
-        // original tainted one (mirrors the pattern used in BlobResourceProvider).
         tableName = PathGuard.SanitizeName(tableName);
         var result = Path.Combine(storageAccountPath, ".table", tableName);
         PathGuard.EnsureWithinDirectory(result, storageAccountPath);
