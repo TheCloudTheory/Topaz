@@ -19,7 +19,7 @@ public class VirtualNetworkTests : PowerShellTestBase
                 Assert.Multiple(() =>
                 {
                     Assert.That(subnets[0]!["Name"]!.GetValue<string>(), Is.EqualTo("ps-subnet"));
-                    Assert.That(subnets[0]!["AddressPrefix"]!.GetValue<string>(), Is.EqualTo("10.60.1.0/24"));
+                    Assert.That(subnets[0]!["AddressPrefix"]!.AsArray()[0]!.GetValue<string>(), Is.EqualTo("10.60.1.0/24"));
                 });
             });
     }
