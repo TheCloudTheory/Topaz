@@ -98,6 +98,7 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 
 | | Feature | Description |
 |--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Auto-purge soft-deleted vaults | Background scheduler permanently removes soft-deleted vaults once their `scheduledPurgeDate` has elapsed |
 | <span class="badge--preview">Preview</span> | Auto-purge soft-deleted secrets | Background scheduler permanently removes soft-deleted secrets once their `scheduledPurgeDate` has elapsed |
 
 ### Storage Account — geo-replication semantics

@@ -191,8 +191,8 @@ Backlog & Roadmap (mandatory)
 - `BACKLOG.md` (repo root) is the single source of truth for planned work. It contains `<!-- TODO: ... -->` blocks that the CI action converts to GitHub Issues automatically.
 - `website/docs/roadmap.md` is the public-facing view of the same plan, rendered as tables with `<span class="badge--stable">Stable</span>` or `<span class="badge--preview">Preview</span>` badges in a **Status** column.
 - **When adding items to `BACKLOG.md`**: always mirror them in `website/docs/roadmap.md` — add a new row to the matching milestone table (or create the milestone section if it doesn't exist yet). Choose the badge based on the expected quality at release: use `Stable` for well-defined, fully-specified features; use `Preview` for exploratory or incomplete implementations.
-- **When removing or completing items**: remove or strike through the corresponding row in `website/docs/roadmap.md` as well.
-- **Versioned docs**: mirror every roadmap change in `website/versioned_docs/version-v1.1/roadmap.md` too. Both files must stay in sync.
+- **When completing items**: leave the row as-is — never delete, modify, or strike through roadmap rows. Never delete rows from the roadmap.
+- **Versioned docs**: mirror every roadmap change in **all** `website/versioned_docs/version-*/roadmap.md` files too. All versioned roadmap files must stay in sync.
 - Badge CSS lives in `website/src/css/custom.css` (`.badge--stable` and `.badge--preview`). Do not add inline styles; always use these classes.
 
 Mandatory steps

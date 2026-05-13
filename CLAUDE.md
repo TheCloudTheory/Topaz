@@ -70,9 +70,9 @@ Services live under `Services/Topaz.Service.*`. Each service has:
 ### Backlog / Roadmap
 
 - New work → add `<!-- TODO: ... -->` to `BACKLOG.md` **and** a row to `website/docs/roadmap.md`.
-- Completed work → remove/strikethrough from both files.
+- Completed work → leave the row as-is. Never delete or modify existing roadmap rows.
 - Badges: `<span class="badge--stable">Stable</span>` or `<span class="badge--preview">Preview</span>` — use CSS classes, never inline styles.
-- **Versioned docs** — always mirror roadmap changes in `website/versioned_docs/version-v1.1/roadmap.md` as well. Both files must stay in sync.
+- **Versioned docs** — mirror every roadmap change in **all** `website/versioned_docs/version-*/roadmap.md` files. All versioned roadmap files must stay in sync.
 - Badge CSS lives in `website/src/css/custom.css` (`.badge--stable` and `.badge--preview`). Do not add inline styles; always use these classes.
 
 ## API Coverage docs
