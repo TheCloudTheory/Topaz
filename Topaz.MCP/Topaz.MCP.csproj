@@ -23,6 +23,7 @@
       <PackageReference Include="ModelContextProtocol" Version="1.2.0" />
       <ProjectReference Include="../Topaz.AspNetCore.Extensions/Topaz.AspNetCore.Extensions.csproj" />
       <ProjectReference Include="../Topaz.ResourceManager/Topaz.ResourceManager.csproj" />
+      <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
     </ItemGroup>
 
 </Project>

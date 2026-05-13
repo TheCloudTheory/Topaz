@@ -27,6 +27,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Topaz.AspNetCore.Extensions\Topaz.AspNetCore.Extensions.csproj" />
+      <ProjectReference Include="..\Services\Topaz.Service.Shared\Topaz.Service.Shared.csproj" />
     </ItemGroup>
 
     <ItemGroup>
