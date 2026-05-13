@@ -42,4 +42,34 @@ public class VirtualNetworkTests : PowerShellTestBase
                 });
             });
     }
+
+    [Test]
+    public async Task VirtualNetworkTests_WhenIpIsInSubnet_IpIsAvailable()
+    {
+        await RunAzurePowerShellCommand(
+            "New-AzResourceGroup -Name ps-vnet-checkip-rg -Location westeurope -Force | Out-Null\n" +
+            "$subnetConfig = New-AzVirtualNetworkSubnetConfig -Name ps-checkip-subnet -AddressPrefix '10.63.1.0/24'\n" +
+            "New-AzVirtualNetwork -Name ps-vnet-checkip -ResourceGroupName ps-vnet-checkip-rg -Location westeurope -AddressPrefix '10.63.0.0/16' -Subnet $subnetConfig | Out-Null\n" +
+            "$result = Test-AzPrivateIPAddressAvailability -ResourceGroupName ps-vnet-checkip-rg -VirtualNetworkName ps-vnet-checkip -IPAddress '10.63.1.5' | ConvertTo-Json -Depth 5\n" +
+            "$result",
+            response =>
+            {
+                Assert.That(response["Available"]!.GetValue<bool>(), Is.True);
+            });
+    }
+
+    [Test]
+    public async Task VirtualNetworkTests_WhenIpIsNotInAnySubnet_IpIsNotAvailable()
+    {
+        await RunAzurePowerShellCommand(
+            "New-AzResourceGroup -Name ps-vnet-checkip2-rg -Location westeurope -Force | Out-Null\n" +
+            "$subnetConfig = New-AzVirtualNetworkSubnetConfig -Name ps-checkip2-subnet -AddressPrefix '10.64.1.0/24'\n" +
+            "New-AzVirtualNetwork -Name ps-vnet-checkip2 -ResourceGroupName ps-vnet-checkip2-rg -Location westeurope -AddressPrefix '10.64.0.0/16' -Subnet $subnetConfig | Out-Null\n" +
+            "$result = Test-AzPrivateIPAddressAvailability -ResourceGroupName ps-vnet-checkip2-rg -VirtualNetworkName ps-vnet-checkip2 -IPAddress '192.168.1.1' | ConvertTo-Json -Depth 5\n" +
+            "$result",
+            response =>
+            {
+                Assert.That(response["Available"]!.GetValue<bool>(), Is.False);
+            });
+    }
 }

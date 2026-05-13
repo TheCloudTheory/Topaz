@@ -120,3 +120,22 @@ SDK clients that configure a secondary read policy (e.g., `GeoRedundantReplicati
 ### Planned fix — v1.6-beta
 
 Route standard GET operations on secondary endpoints to the same in-memory data store as the primary endpoint, making secondary reads fully functional.
+
+## Virtual Network — `CheckIPAddressAvailability` returns empty `availableIPAddresses`
+
+**Affected services:** Virtual Network control plane — `GET .../virtualNetworks/{name}/checkIPAddressAvailability`
+
+The `available` and `isPlatformReserved` fields in the response are computed correctly: `available` is `true` when the queried IP falls within a subnet CIDR registered on the VNet, and `false` otherwise. However, the `availableIPAddresses` field is always an empty array (`[]`).
+
+Real Azure populates `availableIPAddresses` with a list of alternative free IPs when the queried address is already allocated — for example when a NIC or private endpoint has claimed it. This requires a registry of which individual IPs within each subnet are in use. Topaz currently has no such registry: subnets are persisted, but the individual IP addresses assigned to child resources (NICs, private endpoints, service endpoints) are not tracked.
+
+### Impact
+
+`availableIPAddresses` is only meaningful when `available: false` due to an IP being in use. In Topaz, `available: false` only occurs when the IP falls outside all subnet CIDRs — a case where suggestions are practically meaningless anyway. Callers that inspect `availableIPAddresses` to find a next-available address will always receive an empty list.
+
+**Workaround:** if your test logic needs to locate a free IP, pick one explicitly within a known subnet CIDR. Any IP within a subnet is considered available in Topaz (no allocation tracking means no conflicts).
+
+### Planned fix — v1.5-beta
+
+Introduce an IP allocation registry in the VNet service so that NIC and private endpoint creation records their assigned IP address. This will enable real `availableIPAddresses` computation and bring the emulator's `available: false` branch into closer alignment with real Azure.
+

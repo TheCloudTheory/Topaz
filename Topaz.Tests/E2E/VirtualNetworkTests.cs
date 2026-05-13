@@ -248,4 +248,54 @@ public class VirtualNetworkTests
             Assert.That(vnet.Value.Data.Name, Is.EqualTo("topaz-vnet"));
         });
     }
+
+    [Test]
+    public async Task VirtualNetworkTests_CheckIPAddressAvailability_WhenIpIsInSubnet_ReturnsAvailable()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string virtualNetworkName = "vnet-checkip-available";
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
+                new VirtualNetworkData
+                {
+                    AddressPrefixes = { "10.50.0.0/16" },
+                    Subnets = { new SubnetData { Name = "checkip-subnet", AddressPrefixes = { "10.50.1.0/24" } } }
+                }, CancellationToken.None);
+        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+
+        // Act
+        var result = await vnet.CheckIPAddressAvailabilityAsync("10.50.1.5");
+
+        // Assert
+        Assert.That(result.Value.Available, Is.True);
+    }
+
+    [Test]
+    public async Task VirtualNetworkTests_CheckIPAddressAvailability_WhenIpIsOutsideSubnet_ReturnsNotAvailable()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string virtualNetworkName = "vnet-checkip-unavailable";
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
+                new VirtualNetworkData
+                {
+                    AddressPrefixes = { "10.51.0.0/16" },
+                    Subnets = { new SubnetData { Name = "checkip-subnet2", AddressPrefixes = { "10.51.1.0/24" } } }
+                }, CancellationToken.None);
+        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+
+        // Act
+        var result = await vnet.CheckIPAddressAvailabilityAsync("192.168.0.1");
+
+        // Assert
+        Assert.That(result.Value.Available, Is.False);
+    }
 }

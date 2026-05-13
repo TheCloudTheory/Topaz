@@ -83,4 +83,32 @@ public class VirtualNetworkTests : TopazFixture
         await RunAzureCliCommand("az network vnet subnet delete --vnet-name vnet-subnet-delete --name del-subnet --resource-group rg-subnet-delete", null, 0);
         await RunAzureCliCommand("az network vnet subnet show --vnet-name vnet-subnet-delete --name del-subnet --resource-group rg-subnet-delete", null, 3);
     }
+
+    [Test]
+    public async Task VirtualNetworkTests_CheckIpAddressAvailability_WhenIpInSubnet_ReturnsAvailable()
+    {
+        await RunAzureCliCommand("az group create -l westeurope -n rg-checkip", null, 0);
+        await RunAzureCliCommand("az network vnet create --location westeurope --name vnet-checkip --resource-group rg-checkip --address-prefixes 10.55.0.0/16", null, 0);
+        await RunAzureCliCommand("az network vnet subnet create --vnet-name vnet-checkip --name checkip-subnet --address-prefixes 10.55.1.0/24 --resource-group rg-checkip", null, 0);
+        await RunAzureCliCommand(
+            "az network vnet check-ip-address --resource-group rg-checkip --name vnet-checkip --ip-address 10.55.1.5",
+            response =>
+            {
+                Assert.That(response["available"]!.GetValue<bool>(), Is.True);
+            }, 0);
+    }
+
+    [Test]
+    public async Task VirtualNetworkTests_CheckIpAddressAvailability_WhenIpOutsideSubnet_ReturnsNotAvailable()
+    {
+        await RunAzureCliCommand("az group create -l westeurope -n rg-checkip2", null, 0);
+        await RunAzureCliCommand("az network vnet create --location westeurope --name vnet-checkip2 --resource-group rg-checkip2 --address-prefixes 10.56.0.0/16", null, 0);
+        await RunAzureCliCommand("az network vnet subnet create --vnet-name vnet-checkip2 --name checkip-subnet2 --address-prefixes 10.56.1.0/24 --resource-group rg-checkip2", null, 0);
+        await RunAzureCliCommand(
+            "az network vnet check-ip-address --resource-group rg-checkip2 --name vnet-checkip2 --ip-address 192.168.0.1",
+            response =>
+            {
+                Assert.That(response["available"]!.GetValue<bool>(), Is.False);
+            }, 0);
+    }
 }

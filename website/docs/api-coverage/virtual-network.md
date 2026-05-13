@@ -33,7 +33,7 @@ This page tracks which Azure Virtual Network REST API operations are implemented
 | List | ❌ | Subscription-level listing not implemented |
 | List All | ❌ | |
 | Update Tags | ❌ | |
-| Check IP Address Availability | ❌ | |
+| Check IP Address Availability | ✅ | |
 | List Ddos Protection Status | ❌ | |
 | List Usage | ❌ | |
 

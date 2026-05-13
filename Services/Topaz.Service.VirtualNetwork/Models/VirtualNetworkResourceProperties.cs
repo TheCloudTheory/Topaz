@@ -1,6 +1,7 @@
 using System.Text.Json;
 using JetBrains.Annotations;
 using Topaz.Service.VirtualNetwork.Models.Requests;
+using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork.Models;
 
@@ -26,7 +27,9 @@ public sealed class VirtualNetworkResourceProperties
         return new VirtualNetworkResourceProperties
         {
             AddressSpace = request.Properties?.AddressSpace,
-            Subnets = request.Properties?.Subnets,
+            Subnets = request.Properties?.Subnets != null
+                ? JsonSerializer.SerializeToElement(request.Properties.Subnets, GlobalSettings.JsonOptions)
+                : null,
             DhcpOptions = request.Properties?.DhcpOptions
         };
     }

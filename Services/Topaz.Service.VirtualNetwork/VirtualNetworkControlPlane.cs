@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text.Json;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.ResourceGroup;
@@ -42,7 +44,10 @@ internal sealed class VirtualNetworkControlPlane(
                 Properties = new CreateOrUpdateVirtualNetworkRequest.CreateOrUpdateVirtualNetworkRequestProperties
                 {
                     AddressSpace = vnet.Properties.AddressSpace,
-                    Subnets = vnet.Properties.Subnets,
+                    Subnets = vnet.Properties.Subnets.HasValue
+                        ? JsonSerializer.Deserialize<IList<CreateOrUpdateVirtualNetworkRequest.InlineSubnetEntry>>(
+                            vnet.Properties.Subnets.Value.GetRawText(), GlobalSettings.JsonOptions)
+                        : null,
                     EnableDdosProtection = vnet.Properties.EnableDdosProtection,
                     Encryption = vnet.Properties.Encryption,
                     BgpCommunities = vnet.Properties.BgpCommunities,
@@ -89,6 +94,67 @@ internal sealed class VirtualNetworkControlPlane(
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName, resource);
 
+        if (request.Properties?.Subnets != null)
+        {
+            var subnetControlPlane = new SubnetControlPlane(this, provider, logger);
+            foreach (var inlineSubnet in request.Properties.Subnets)
+            {
+                if (string.IsNullOrWhiteSpace(inlineSubnet.Name)) continue;
+                subnetControlPlane.CreateOrUpdate(
+                    subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName,
+                    inlineSubnet.Name,
+                    new CreateOrUpdateSubnetRequest { Properties = inlineSubnet.Properties });
+            }
+        }
+
         return new ControlPlaneOperationResult<VirtualNetworkResource>(OperationResult.Created, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult<IpAddressAvailabilityResult> CheckIpAddressAvailability(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string virtualNetworkName,
+        string ipAddress)
+    {
+        var vnetOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName);
+        if (vnetOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<IpAddressAvailabilityResult>(
+                OperationResult.NotFound, null,
+                vnetOperation.Reason, vnetOperation.Code);
+        }
+
+        if (!IPAddress.TryParse(ipAddress, out var ip))
+        {
+            return new ControlPlaneOperationResult<IpAddressAvailabilityResult>(
+                OperationResult.Success,
+                new IpAddressAvailabilityResult { Available = false },
+                null, null);
+        }
+
+        var subnetsControlPlane = new SubnetControlPlane(this, new VirtualNetworkResourceProvider(logger), logger);
+        var subnetsOperation = subnetsControlPlane.List(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName);
+        var subnets = subnetsOperation.Resource ?? [];
+
+        var available = subnets.Any(subnet =>
+        {
+            var prefixes = new List<string?>();
+            if (subnet.Properties?.AddressPrefix != null)
+                prefixes.Add(subnet.Properties.AddressPrefix);
+            if (subnet.Properties?.AddressPrefixes != null)
+                prefixes.AddRange(subnet.Properties.AddressPrefixes);
+
+            return prefixes.Any(prefix =>
+            {
+                if (string.IsNullOrWhiteSpace(prefix)) return false;
+                try { return IPNetwork.Parse(prefix).Contains(ip); }
+                catch { return false; }
+            });
+        });
+
+        return new ControlPlaneOperationResult<IpAddressAvailabilityResult>(
+            OperationResult.Success,
+            new IpAddressAvailabilityResult { Available = available },
+            null, null);
     }
 }
