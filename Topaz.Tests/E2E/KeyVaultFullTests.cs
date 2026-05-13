@@ -5,9 +5,14 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.Security.KeyVault.Secrets;
+using Topaz.EventPipeline;
 using Topaz.Identity;
 using Topaz.ResourceManager;
 using Topaz.Service.Entra;
+using Topaz.Service.KeyVault;
+using Topaz.Service.Shared.Domain;
+using Topaz.Service.Subscription;
+using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -235,5 +240,58 @@ public class KeyVaultFullTests
         // Assert — the secret must not appear in the deleted list after purge
         var deletedSecrets = client.GetDeletedSecrets().ToList();
         Assert.That(deletedSecrets.Any(s => s.Name == "purge-me"), Is.False);
+    }
+
+    [Test]
+    public async Task KeyVaultSecretsScheduler_WhenScheduledPurgeDateHasPassed_SecretShouldBePurged()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var operation = new KeyVaultCreateOrUpdateContent(AzureLocation.WestEurope,
+            new KeyVaultProperties(Guid.Empty, new KeyVaultSku(KeyVaultSkuFamily.A, KeyVaultSkuName.Standard)));
+        _ = resourceGroup.Value.GetKeyVaults()
+            .CreateOrUpdate(WaitUntil.Completed, TestKeyVaultName, operation, CancellationToken.None);
+
+        var client = new SecretClient(vaultUri: TopazResourceHelpers.GetKeyVaultEndpoint(TestKeyVaultName),
+            credential: credential,
+            new SecretClientOptions { DisableChallengeResourceVerification = true });
+        _ = client.SetSecret("scheduler-purge-me", "value");
+        client.StartDeleteSecret("scheduler-purge-me");
+
+        var logger = new PrettyTopazLogger();
+        var eventPipeline = new Pipeline(logger);
+        var controlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
+        var provider = new KeyVaultResourceProvider(logger);
+        var dataPlane = new KeyVaultSecretsDataPlane(logger, provider);
+        var subscriptionControlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
+
+        var subscriptionIdentifier = SubscriptionIdentifier.From(SubscriptionId);
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(ResourceGroupName);
+        dataPlane.OverrideSecretScheduledPurgeDate(
+            subscriptionIdentifier,
+            resourceGroupIdentifier,
+            TestKeyVaultName,
+            "scheduler-purge-me",
+            DateTimeOffset.UtcNow.AddSeconds(30).ToUnixTimeSeconds());
+
+        // Wait for the purge date to pass
+        await Task.Delay(TimeSpan.FromSeconds(31));
+
+        var scheduler = new KeyVaultSecretsSoftDeletePurgeScheduler(
+            controlPlane,
+            dataPlane,
+            subscriptionControlPlane,
+            logger,
+            GlobalSettings.SoftDeletePurgeSchedulerInterval);
+
+        // Act
+        await scheduler.ScanAndPurgeAsync();
+
+        // Assert
+        var deletedSecrets = client.GetDeletedSecrets().ToList();
+        Assert.That(deletedSecrets.Any(s => s.Name == "scheduler-purge-me"), Is.False);
     }
 }

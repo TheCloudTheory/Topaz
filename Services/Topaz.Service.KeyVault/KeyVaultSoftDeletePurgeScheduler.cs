@@ -9,8 +9,9 @@ internal sealed class KeyVaultSoftDeletePurgeScheduler(
     KeyVaultControlPlane controlPlane,
     SubscriptionControlPlane subscriptionControlPlane,
     ITopazLogger logger,
-    TimeSpan interval)
+    TimeSpan interval) : ITopazBackgroundService
 {
+    public string Name => $"Key Vault — soft-deleted vault purge (interval: {interval})";
     public Task ScanAndPurgeAsync()
     {
         try

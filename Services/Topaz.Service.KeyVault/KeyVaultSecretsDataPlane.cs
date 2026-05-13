@@ -434,4 +434,23 @@ internal sealed class KeyVaultSecretsDataPlane(ITopazLogger logger, KeyVaultReso
         logger.LogDebug(nameof(KeyVaultSecretsDataPlane), nameof(PurgeDeletedSecret), "Executing {0}: Purged secret {1}.", nameof(PurgeDeletedSecret), secretName);
         return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
     }
+
+    /// <summary>
+    /// Overrides the <see cref="DeletedSecretRecord.ScheduledPurgeDate"/> of a soft-deleted secret.
+    /// Intended for testing only — allows fast-forwarding the purge date without waiting for the real retention window.
+    /// </summary>
+    internal void OverrideSecretScheduledPurgeDate(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string vaultName, string secretName, long purgeDateUnixSeconds)
+    {
+        var path = provider.GetServiceInstanceDataPath(subscriptionIdentifier, resourceGroupIdentifier, vaultName);
+        var deletedPath = Path.Combine(path, "deleted", $"{secretName}.json");
+        if (!File.Exists(deletedPath)) return;
+
+        var data = File.ReadAllText(deletedPath);
+        var record = JsonSerializer.Deserialize<DeletedSecretRecord>(data, GlobalSettings.JsonOptions)!;
+        var updated = record with { ScheduledPurgeDate = purgeDateUnixSeconds };
+        File.WriteAllText(deletedPath, JsonSerializer.Serialize(updated, GlobalSettings.JsonOptions));
+    }
 }

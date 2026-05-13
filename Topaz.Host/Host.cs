@@ -69,7 +69,6 @@ public class Host
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
-        Bootstrap();
         Console.Title = "--- Topaz.Host ---";
 
         Console.WriteLine();
@@ -82,6 +81,8 @@ public class Host
         Console.WriteLine();
         Console.WriteLine($"  Azure emulator  •  v{ThisAssembly.AssemblyInformationalVersion}");
         Console.WriteLine();
+
+        Bootstrap();
 
         GlobalDnsEntries.ConfigureLogger(_logger);
 
@@ -154,12 +155,22 @@ public class Host
         await CreateWebserverForHttpEndpointsAsync([.. httpEndpoints], idFactory, cancellationToken);
         CreateAmqpListenersForAmpqEndpoints([.. amqpEndpoints]);
 
-        var purgeScheduler = new KeyVaultSoftDeletePurgeScheduler(
-            KeyVaultControlPlane.New(_eventPipeline, _logger),
-            SubscriptionControlPlane.New(_eventPipeline, _logger),
-            _logger,
-            GlobalSettings.SoftDeletePurgeSchedulerInterval);
-        _ = purgeScheduler.StartAsync(cancellationToken);
+        var backgroundServices = new ITopazBackgroundService[]
+        {
+            new KeyVaultSoftDeletePurgeScheduler(
+                KeyVaultControlPlane.New(_eventPipeline, _logger),
+                SubscriptionControlPlane.New(_eventPipeline, _logger),
+                _logger,
+                GlobalSettings.SoftDeletePurgeSchedulerInterval),
+            new KeyVaultSecretsSoftDeletePurgeScheduler(
+                KeyVaultControlPlane.New(_eventPipeline, _logger),
+                new KeyVaultSecretsDataPlane(_logger, new KeyVaultResourceProvider(_logger)),
+                SubscriptionControlPlane.New(_eventPipeline, _logger),
+                _logger,
+                GlobalSettings.SoftDeletePurgeSchedulerInterval),
+        };
+
+        new BackgroundServiceOrchestrator(backgroundServices, _logger).StartAll(cancellationToken);
 
         Console.WriteLine();
         AnsiConsole.MarkupLine("  [green]✓[/] Topaz is ready — listening for requests");
