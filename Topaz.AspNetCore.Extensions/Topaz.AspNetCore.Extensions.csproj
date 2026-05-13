@@ -4,7 +4,14 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AssemblyName>TheCloudTheory.Topaz.AspNetCore.Extensions</AssemblyName>
+        <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
     </PropertyGroup>
+
+    <Target DependsOnTargets="ResolveReferences" Name="CopyProjectReferencesToPackage">
+      <ItemGroup>
+        <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))"/>
+      </ItemGroup>
+    </Target>
 
     <ItemGroup>
       <PackageReference Include="Azure.ResourceManager.KeyVault" Version="1.3.2" />
@@ -14,7 +21,10 @@
       <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
       <ProjectReference Include="../Topaz.Identity/Topaz.Identity.csproj" />
       <ProjectReference Include="../Topaz.ResourceManager/Topaz.ResourceManager.csproj" />
-      <ProjectReference Include="../Services/Topaz.Service.Shared/Topaz.Service.Shared.csproj" />
+      <ProjectReference Include="../Services/Topaz.Service.Shared/Topaz.Service.Shared.csproj">
+        <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+        <IncludeAssets>Topaz.Service.Shared.dll</IncludeAssets>
+      </ProjectReference>
     </ItemGroup>
 
     <Target Name="SetNuGetManifestProperties" DependsOnTargets="GetBuildVersion">

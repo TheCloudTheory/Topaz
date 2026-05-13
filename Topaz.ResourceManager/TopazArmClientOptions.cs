@@ -1,7 +1,9 @@
 ﻿using Azure.ResourceManager;
+using JetBrains.Annotations;
 
 namespace Topaz.ResourceManager;
 
+[UsedImplicitly]
 public class TopazArmClientOptions
 {
     /// <summary>

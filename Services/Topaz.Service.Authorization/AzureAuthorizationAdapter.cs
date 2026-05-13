@@ -37,14 +37,14 @@ public sealed class AzureAuthorizationAdapter(Pipeline eventPipeline, ITopazLogg
         {
             logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),
                 "Shared key token - skipping authorization as it's offloaded to the service.");
-            return (true, null);;
+            return (true, null);
         }
         
         var validatedToken = JwtHelper.ValidateJwt(token);
         if (validatedToken == null)
         {
             logger.LogError(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized), "Invalid token.");
-            return (false, null);;
+            return (false, null);
         }
 
         logger.LogDebug(nameof(AzureAuthorizationAdapter), nameof(IsAuthorized),

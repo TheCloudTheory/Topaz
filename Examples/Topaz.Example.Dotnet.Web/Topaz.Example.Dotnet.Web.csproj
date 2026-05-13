@@ -14,8 +14,8 @@
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
         <PackageReference Include="Testcontainers" Version="4.10.0" />
         <PackageReference Include="TheCloudTheory.Topaz.AspNetCore.Extensions" Version="1.0.414-alpha" />
-        <PackageReference Include="TheCloudTheory.Topaz.Identity" Version="1.0.467-alpha" />
-        <PackageReference Include="TheCloudTheory.Topaz.ResourceManager" Version="1.0.464-alpha" />
+        <PackageReference Include="TheCloudTheory.Topaz.Identity" Version="1.4.20-beta" />
+        <PackageReference Include="TheCloudTheory.Topaz.ResourceManager" Version="1.4.14-beta" />
         <PackageReference Update="Nerdbank.GitVersioning">
           <Version>3.9.50</Version>
         </PackageReference>

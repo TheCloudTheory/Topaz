@@ -21,7 +21,7 @@ internal sealed class UserDataPlane(EntraResourceProvider provider, ITopazLogger
         if (File.Exists(entityPath))
         {
             logger.LogDebug(nameof(UserDataPlane), nameof(Create), "Superadmin user `{0}` already exists.", request.UserPrincipalName);
-            return new DataPlaneOperationResult<User>(OperationResult.Success, null, null, null);;
+            return new DataPlaneOperationResult<User>(OperationResult.Success, null, null, null);
         }
 
         var user = User.FromRequest(request, Guid.Empty);
