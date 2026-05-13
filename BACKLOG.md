@@ -574,13 +574,7 @@ TODO: Virtual Networks: Delete, List, List All, and Update Tags operations
   labels: enhancement, virtual-network, good first issue
 -->
 
-<!--
-TODO: Virtual Networks: Check IP Address Availability
-  Implement `GET .../virtualNetworks/{name}/CheckIPAddressAvailability?ipAddress={ip}`.
-  Should validate whether the given IP falls within any subnet and is not already allocated.
-  milestone: v1.4-beta
-  labels: enhancement, virtual-network, good first issue
--->
+_Implemented in v1.4-beta: `GET .../virtualNetworks/{name}/checkIPAddressAvailability?ipAddress={ip}`. Returns `available: true` when the IP falls within any subnet CIDR, `false` otherwise. `availableIPAddresses` is always `[]` (IP allocation tracking planned for v1.5-beta — see known-limitations.md)._
 
 <!--
 TODO: Network Security Groups: Full control plane
