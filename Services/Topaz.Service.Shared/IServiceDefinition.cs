@@ -21,9 +21,4 @@ public interface IServiceDefinition
     /// Called for all services after all Register() calls have completed.
     /// </summary>
     void Initialize() { }
-
-    /// <summary>
-    /// Legacy hook kept for backward compatibility. Override Register() / Initialize() instead.
-    /// </summary>
-    void Bootstrap() { }
 }

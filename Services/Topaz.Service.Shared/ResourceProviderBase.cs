@@ -26,15 +26,15 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             : Path.Combine(basePath, ResolveIdCasing(basePath, id));
         if (!Directory.Exists(servicePath))
         {
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(Delete),
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(Delete),
                 $"The resource '{servicePath}' does not exists, no changes applied.");
             return;
         }
 
-        // A resource wil be physically deleted only if it's not soft deleted
+        // A resource will be physically deleted only if it's not soft deleted
         if (!softDelete)
         {
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(Delete),
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(Delete),
                 $"Deleting resource '{servicePath}'.");
             Directory.Delete(servicePath, true);
         }
@@ -92,7 +92,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
         var match = Directory.EnumerateDirectories(parentPath)
             .FirstOrDefault(d => string.Equals(Path.GetFileName(d), id, StringComparison.OrdinalIgnoreCase));
-        return match != null ? Path.GetFileName(match)! : id;
+        return match != null ? Path.GetFileName(match) : id;
     }
 
     private static string GetLocalDirectoryPathWithReplacedValues(SubscriptionIdentifier? subscriptionIdentifier,
@@ -116,7 +116,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     public T? GetAs<T>(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier? resourceGroupIdentifier,
         string? id = null)
     {
-        _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(GetAs),
+        _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(GetAs),
             "Looking for a resource `{0}` in resource group `{1}` in subscription {2}.", id, resourceGroupIdentifier,
             subscriptionIdentifier);
 
@@ -136,12 +136,11 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var servicePath = string.IsNullOrWhiteSpace(id)
             ? listBasePath
             : Path.Combine(listBasePath, ResolveIdCasing(listBasePath, id));
+        
         if (!Directory.Exists(servicePath))
         {
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(List),
-                $"Used `{servicePath}` to check if a service exists.");
-            _logger.LogWarning(
-                "Trying to list resources for a non-existing service. If you see this warning, make sure you created a service (e.g subscription) before accessing its data.");
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(List),
+                $"Path `{servicePath}` does not exist — returning empty list. Note that this indicates a service has not been initialized ");
 
             return [];
         }
@@ -161,7 +160,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             .Split(['/', Path.DirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries)
             .LastOrDefault(s => !s.StartsWith('{'));
 
-        _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(List),
+        _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(List),
             $"If lookForNoOfSegments parameter wasn't provided (was {lookForNoOfSegments}) will default to {defaultLookForNoOfSegments} segments lookup. Service discriminator: '{serviceDiscriminator}'.");
 
         return metadataFiles
@@ -193,13 +192,13 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         if (existingInstance != null && TService.IsGlobalService)
         {
             // Verify the resource the DNS entry points to still exists on disk.
-            // If the metadata file is gone the entry is an orphan (e.g. the directory was deleted
-            // without a corresponding DNS cleanup) and we can safely remove it and proceed.
+            // If the metadata file is gone, the entry is an orphan (e.g. the directory was deleted
+            // without a corresponding DNS cleanup), and we can safely remove it and proceed.
             // If the file IS present, the resource genuinely exists, so we return early.
             var existingSubId = SubscriptionIdentifier.From(existingInstance.Value.subscription);
             var existingRgId = existingInstance.Value.resourceGroup != null
                 ? ResourceGroupIdentifier.From(existingInstance.Value.resourceGroup)
-                : (ResourceGroupIdentifier?)null;
+                : null;
             var existingPath = existingRgId != null
                 ? GetServiceInstancePath(existingSubId, existingRgId, existingInstance.Value.canonicalName)
                 : Path.Combine(BaseEmulatorPath,
@@ -209,12 +208,12 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
             if (File.Exists(existingMetadata))
             {
-                _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(Create),
+                _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(Create),
                     $"There's an existing instance of {TService.UniqueName} service existing with the name {instanceName}");
                 return;
             }
 
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(Create),
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(Create),
                 $"Removing orphaned DNS entry for {TService.UniqueName}/{instanceName}: metadata file no longer exists at '{existingMetadata}'.");
             GlobalDnsEntries.DeleteEntry(TService.UniqueName, existingInstance.Value.subscription,
                 existingInstance.Value.resourceGroup, instanceName);
@@ -222,7 +221,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
         var metadataFilePath = InitializeServiceDirectories(subscriptionIdentifier, resourceGroupIdentifier, id);
 
-        _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(Create),
+        _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(Create),
             $"Attempting to create {metadataFilePath} file.");
 
         if (File.Exists(metadataFilePath))
@@ -242,18 +241,18 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
     {
         var servicePath = Path.Combine(BaseEmulatorPath,
             GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier));
-        _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(InitializeServiceDirectories),
+        _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(InitializeServiceDirectories),
             $"Attempting to create {servicePath} directory...");
 
         if (!Directory.Exists(servicePath))
         {
             Directory.CreateDirectory(servicePath);
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(InitializeServiceDirectories),
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(InitializeServiceDirectories),
                 $"Directory {servicePath} created.");
         }
         else
         {
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(InitializeServiceDirectories),
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(InitializeServiceDirectories),
                 $"Attempting to create {servicePath} directory - skipped.");
         }
 
@@ -266,11 +265,11 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var metadataFilePath = Path.Combine(instancePath, fileName);
         var dataPath = Path.Combine(instancePath, "data");
 
-        _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(InitializeServiceDirectories),
+        _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(InitializeServiceDirectories),
             $"Attempting to create {instancePath} directory.");
         if (Directory.Exists(instancePath))
         {
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(InitializeServiceDirectories),
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(InitializeServiceDirectories),
                 $"Attempting to create {instancePath} directory - skipped.");
         }
         else
@@ -278,7 +277,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             Directory.CreateDirectory(instancePath);
             Directory.CreateDirectory(dataPath);
 
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(InitializeServiceDirectories),
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(InitializeServiceDirectories),
                 $"Attempting to create {instancePath} directory - created!");
         }
 
@@ -298,7 +297,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var existingInstance = GlobalDnsEntries.GetEntry(TService.UniqueName, instanceName);
         if (existingInstance != null && TService.IsGlobalService && createOperation && !recoverInstance)
         {
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(CreateOrUpdate),
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(CreateOrUpdate),
                 $"There's an existing instance of {TService.UniqueName} service existing with the name {instanceName}");
             return;
         }
@@ -382,21 +381,21 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var dataPath = Path.Combine(subresourcePath, "data");
         var metadataFilePath = Path.Combine(subresourcePath, metadataFile);
 
-        _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(InitializeSubresourceDirectories),
+        _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(InitializeSubresourceDirectories),
             $"Attempting to create {subresourcePath} directory.");
         if (!Directory.Exists(subresourcePath))
         {
             Directory.CreateDirectory(subresourcePath);
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(InitializeSubresourceDirectories),
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(InitializeSubresourceDirectories),
                 $"Attempting to create {subresourcePath} directory - created!");
         }
         else
         {
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(InitializeSubresourceDirectories),
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(InitializeSubresourceDirectories),
                 $"Attempting to create {subresourcePath} directory - skipped.");
         }
 
-        _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(InitializeSubresourceDirectories),
+        _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(InitializeSubresourceDirectories),
             $"Attempting to create {metadataFilePath} file.");
         if (!Directory.Exists(metadataFilePath))
         {
@@ -404,7 +403,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         }
         else
         {
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(InitializeSubresourceDirectories),
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(InitializeSubresourceDirectories),
                 $"Attempting to create {metadataFilePath} directory - skipped.");
         }
 
@@ -462,12 +461,12 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             GetSubresourcePath(subscriptionIdentifier, resourceGroupIdentifier, parentId, id, subresource);
         if (!Directory.Exists(subresourcePath))
         {
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(DeleteSubresource),
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(DeleteSubresource),
                 $"The subresource '{subresourcePath}' does not exists, no changes applied.");
             return;
         }
 
-        _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(DeleteSubresource),
+        _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(DeleteSubresource),
             $"Deleting subresource '{subresourcePath}'.");
         Directory.Delete(subresourcePath, true);
     }
@@ -493,7 +492,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
 
         if (!Directory.Exists(subresourcePath))
         {
-            _logger.LogDebug(nameof(ResourceProviderBase<TService>), nameof(ListSubresourcesAs),
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(ListSubresourcesAs),
                 $"Subresource directory '{subresourcePath}' does not exist, returning empty list.");
             return [];
         }

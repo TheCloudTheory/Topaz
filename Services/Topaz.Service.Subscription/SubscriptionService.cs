@@ -26,8 +26,4 @@ public sealed class SubscriptionService(Pipeline eventPipeline, ITopazLogger log
         new EnableSubscriptionEndpoint(eventPipeline, logger),
         new ListLocationsEndpoint(eventPipeline, logger),
     ];
-
-    public void Bootstrap()
-    {
-    }
 }
