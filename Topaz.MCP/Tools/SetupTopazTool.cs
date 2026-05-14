@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using ModelContextProtocol.Server;
 using Topaz.Shared;
@@ -22,7 +21,13 @@ public class SetupTopazTool
         [Description("Log level to be used by Topaz (e.g. Information, Debug, Warning)")]
         LogLevel logLevel = LogLevel.Information,
         [Description("Image tag to use when running the emulator")]
-        string version = "v1.3.98-beta")
+        string version = "v1.3.98-beta",
+        [Description(
+            "Docker platform to pull and run (e.g. 'linux/arm64' for Apple Silicon / ARM64 hosts, " +
+            "'linux/amd64' for Intel/AMD x86-64 hosts). " +
+            "Infer this from the user's CPU architecture: use 'linux/arm64' for Apple Silicon Macs and ARM64 Linux hosts, " +
+            "'linux/amd64' for Intel/AMD hosts. When unsure, ask the user before running.")]
+        string platform = "linux/amd64")
     {
         ushort[] ports =
         [
@@ -40,10 +45,6 @@ public class SetupTopazTool
         ];
 
         var portArgs = string.Join(" ", Array.ConvertAll(ports, p => $"-p {p}:{p}"));
-
-        var platform = RuntimeInformation.ProcessArchitecture == Architecture.Arm64
-            ? "linux/arm64"
-            : "linux/amd64";
 
         return $"docker run -d --name {ContainerName} --platform {platform} {portArgs} " +
                $"thecloudtheory/topaz-host:{version} " +
