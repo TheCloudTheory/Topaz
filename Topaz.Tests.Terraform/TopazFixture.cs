@@ -21,9 +21,12 @@ public class TopazFixture
 
     // Persisted on the host so providers and the Terraform binary are downloaded only once
     // across all test-class fixture setups, regardless of how many containers are created.
-    private static readonly string TerraformCacheDir = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-        ".terraform.d", "topaz-test-cache");
+    // Override with TOPAZ_TERRAFORM_CACHE_DIR to use a different path (e.g. when running under
+    // Colima or another container runtime that does not expose the home directory).
+    // Default: /tmp/topaz-test-cache — accessible to both Docker Desktop and Colima.
+    private static readonly string TerraformCacheDir =
+        Environment.GetEnvironmentVariable("TOPAZ_TERRAFORM_CACHE_DIR")
+        ?? "/tmp/topaz-test-cache";
 
     // Pre-initialized provider workspaces — each provider is initialized once in OneTimeSetUp
     // and then copied (cp -a) into every test workspace, eliminating the 30–90 s per-test

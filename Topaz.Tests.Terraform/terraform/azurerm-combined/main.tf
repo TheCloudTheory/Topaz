@@ -329,6 +329,28 @@ resource "azurerm_virtual_network" "vnet_dns" {
   dns_servers         = ["8.8.8.8", "8.8.4.4"]
 }
 
+# ── Network Security Group ────────────────────────────────────────────────────
+
+resource "azurerm_resource_group" "nsg_rg" {
+  name     = "tf-rm-nsg-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_network_security_group" "nsg" {
+  name                = "tf-rm-nsg"
+  location            = azurerm_resource_group.nsg_rg.location
+  resource_group_name = azurerm_resource_group.nsg_rg.name
+}
+
+resource "azurerm_network_security_group" "nsg_tagged" {
+  name                = "tf-rm-nsg-tagged"
+  location            = azurerm_resource_group.nsg_rg.location
+  resource_group_name = azurerm_resource_group.nsg_rg.name
+  tags = {
+    environment = "test"
+  }
+}
+
 # ── Container Registry ─────────────────────────────────────────────────────────
 
 resource "azurerm_resource_group" "acr_rg" {
@@ -396,6 +418,9 @@ output "vnet_address_space"         { value = azurerm_virtual_network.vnet.addre
 output "vnet_dns_name"              { value = azurerm_virtual_network.vnet_dns.name }
 output "subnet_name"                { value = azurerm_subnet.subnet.name }
 output "subnet_prefix"              { value = azurerm_subnet.subnet.address_prefixes[0] }
+output "nsg_name"                   { value = azurerm_network_security_group.nsg.name }
+output "nsg_location"               { value = azurerm_network_security_group.nsg.location }
+output "nsg_tagged_name"            { value = azurerm_network_security_group.nsg_tagged.name }
 
 output "acr_login_server"           { value = azurerm_container_registry.acr.login_server }
 output "acr_admin_enabled"          { value = azurerm_container_registry.acr.admin_enabled }
