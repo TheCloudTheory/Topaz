@@ -19,6 +19,10 @@ public sealed class VirtualNetworkService(Pipeline eventPipeline, ITopazLogger l
     public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
         new CreateUpdateVirtualNetworkEndpoint(eventPipeline, logger),
         new GetVirtualNetworkEndpoint(eventPipeline, logger),
+        new DeleteVirtualNetworkEndpoint(eventPipeline, logger),
+        new ListVirtualNetworksByResourceGroupEndpoint(eventPipeline, logger),
+        new ListVirtualNetworksBySubscriptionEndpoint(eventPipeline, logger),
+        new UpdateVirtualNetworkTagsEndpoint(eventPipeline, logger),
         new CheckIpAddressAvailabilityEndpoint(eventPipeline, logger),
         new CreateOrUpdateSubnetEndpoint(eventPipeline, logger),
         new GetSubnetEndpoint(eventPipeline, logger),

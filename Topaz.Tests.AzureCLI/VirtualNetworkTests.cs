@@ -111,4 +111,49 @@ public class VirtualNetworkTests : TopazFixture
                 Assert.That(response["available"]!.GetValue<bool>(), Is.False);
             }, 0);
     }
+
+    [Test]
+    public async Task VirtualNetwork_Delete_ShouldSucceed()
+    {
+        await RunAzureCliCommand("az group create -l westeurope -n rg-vnet-delete", null, 0);
+        await RunAzureCliCommand("az network vnet create --location westeurope --name vnet-to-delete --resource-group rg-vnet-delete", null, 0);
+        await RunAzureCliCommand("az network vnet delete --name vnet-to-delete --resource-group rg-vnet-delete", null, 0);
+        await RunAzureCliCommand("az network vnet show --name vnet-to-delete --resource-group rg-vnet-delete", null, 3);
+    }
+
+    [Test]
+    public async Task VirtualNetwork_List_ShouldReturnVirtualNetworks()
+    {
+        await RunAzureCliCommand("az group create -l westeurope -n rg-vnet-list", null, 0);
+        await RunAzureCliCommand("az network vnet create --location westeurope --name vnet-list-a --resource-group rg-vnet-list", null, 0);
+        await RunAzureCliCommand("az network vnet create --location westeurope --name vnet-list-b --resource-group rg-vnet-list", null, 0);
+        await RunAzureCliCommand(
+            "az network vnet list --resource-group rg-vnet-list",
+            response =>
+            {
+                var names = response.AsArray()!.Select(n => n!["name"]!.GetValue<string>()).ToList();
+                Assert.Multiple(() =>
+                {
+                    Assert.That(names, Does.Contain("vnet-list-a"));
+                    Assert.That(names, Does.Contain("vnet-list-b"));
+                });
+            }, 0);
+    }
+
+    [Test]
+    public async Task VirtualNetwork_UpdateTags_ShouldUpdateTags()
+    {
+        await RunAzureCliCommand("az group create -l westeurope -n rg-vnet-tags", null, 0);
+        await RunAzureCliCommand("az network vnet create --location westeurope --name vnet-tags-test --resource-group rg-vnet-tags", null, 0);
+        await RunAzureCliCommand(
+            "az network vnet update --name vnet-tags-test --resource-group rg-vnet-tags --set tags.env=test tags.owner=topaz",
+            response =>
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(response["tags"]!["env"]!.GetValue<string>(), Is.EqualTo("test"));
+                    Assert.That(response["tags"]!["owner"]!.GetValue<string>(), Is.EqualTo("topaz"));
+                });
+            }, 0);
+    }
 }

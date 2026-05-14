@@ -230,18 +230,9 @@ TODO: Storage Account — secondary endpoint general reads
 
 ### Virtual Networks — full control plane
 
-<!--
-TODO: Virtual Networks: Delete, List, List All, and Update Tags operations
-  Complete the VNet control plane by adding the missing endpoints:
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks/{name}
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks
-  - GET    /subscriptions/{sub}/providers/Microsoft.Network/virtualNetworks
-  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks/{name} (update tags)
-  milestone: v1.4-beta
-  labels: enhancement, virtual-network, good first issue
--->
-
 _Implemented in v1.4-beta: `GET .../virtualNetworks/{name}/checkIPAddressAvailability?ipAddress={ip}`. Returns `available: true` when the IP falls within any subnet CIDR, `false` otherwise. `availableIPAddresses` is always `[]` (IP allocation tracking planned for v1.5-beta — see known-limitations.md)._
+
+_Implemented: DELETE, List by resource group, List by subscription, and Update Tags operations._
 
 <!--
 TODO: Network Security Groups: Full control plane

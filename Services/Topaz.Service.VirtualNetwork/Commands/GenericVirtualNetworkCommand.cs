@@ -12,6 +12,8 @@ public sealed class GenericVirtualNetworkCommand : IEmulatorCommand
         {
             vnet.AddCommand<CreateVirtualNetworkCommand>("create");
             vnet.AddCommand<GetVirtualNetworkCommand>("show");
+            vnet.AddCommand<DeleteVirtualNetworkCommand>("delete");
+            vnet.AddCommand<ListVirtualNetworksCommand>("list");
             vnet.AddCommand<CheckIpAddressAvailabilityCommand>("check-ip");
             vnet.AddBranch("subnet", subnet =>
             {

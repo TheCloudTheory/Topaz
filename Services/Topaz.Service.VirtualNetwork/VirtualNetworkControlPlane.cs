@@ -92,6 +92,7 @@ internal sealed class VirtualNetworkControlPlane(
         var resource = new VirtualNetworkResource(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName,
             resourceGroupOperation.Resource!.Location!, properties);
 
+        resource.Tags = request.Tags ?? new Dictionary<string, string>();
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName, resource);
 
         if (request.Properties?.Subnets != null)
@@ -156,5 +157,61 @@ internal sealed class VirtualNetworkControlPlane(
             OperationResult.Success,
             new IpAddressAvailabilityResult { Available = available },
             null, null);
+    }
+
+    public ControlPlaneOperationResult Delete(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string virtualNetworkName)
+    {
+        var resource = provider.GetAs<VirtualNetworkResource>(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName);
+        if (resource == null)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound,
+                string.Format(VirtualNetworkNotFoundMessageTemplate, virtualNetworkName),
+                VirtualNetworkNotFoundCode);
+        }
+
+        provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName);
+        return new ControlPlaneOperationResult(OperationResult.Deleted, null, null);
+    }
+
+    public ControlPlaneOperationResult<VirtualNetworkResource[]> ListByResourceGroup(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier)
+    {
+        var resources = provider.ListAs<VirtualNetworkResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8);
+        var filtered = resources.Where(r =>
+            r.IsInSubscription(subscriptionIdentifier) && r.IsInResourceGroup(resourceGroupIdentifier));
+        return new ControlPlaneOperationResult<VirtualNetworkResource[]>(OperationResult.Success, filtered.ToArray(), null, null);
+    }
+
+    public ControlPlaneOperationResult<VirtualNetworkResource[]> ListBySubscription(
+        SubscriptionIdentifier subscriptionIdentifier)
+    {
+        var resources = provider.ListAs<VirtualNetworkResource>(subscriptionIdentifier, null, null, 8);
+        var filtered = resources.Where(r => r.IsInSubscription(subscriptionIdentifier));
+        return new ControlPlaneOperationResult<VirtualNetworkResource[]>(OperationResult.Success, filtered.ToArray(), null, null);
+    }
+
+    public ControlPlaneOperationResult<VirtualNetworkResource> UpdateTags(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string virtualNetworkName,
+        UpdateVirtualNetworkTagsRequest request)
+    {
+        var resource = provider.GetAs<VirtualNetworkResource>(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName);
+        if (resource == null)
+        {
+            return new ControlPlaneOperationResult<VirtualNetworkResource>(
+                OperationResult.NotFound, null,
+                string.Format(VirtualNetworkNotFoundMessageTemplate, virtualNetworkName),
+                VirtualNetworkNotFoundCode);
+        }
+
+        resource.Tags = request.Tags ?? new Dictionary<string, string>();
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName, resource);
+        return new ControlPlaneOperationResult<VirtualNetworkResource>(OperationResult.Updated, resource, null, null);
     }
 }

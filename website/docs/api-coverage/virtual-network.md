@@ -29,10 +29,10 @@ This page tracks which Azure Virtual Network REST API operations are implemented
 |-----------|--------|-------|
 | Create Or Update | ✅ | |
 | Get | ✅ | |
-| Delete | ❌ | |
-| List | ❌ | Subscription-level listing not implemented |
-| List All | ❌ | |
-| Update Tags | ❌ | |
+| Delete | ✅ | |
+| List | ✅ | |
+| List All | ✅ | |
+| Update Tags | ✅ | |
 | Check IP Address Availability | ✅ | |
 | List Ddos Protection Status | ❌ | |
 | List Usage | ❌ | |

@@ -5,6 +5,7 @@ namespace Topaz.Service.VirtualNetwork.Models.Requests;
 
 public sealed class CreateOrUpdateVirtualNetworkRequest
 {
+    public IDictionary<string, string>? Tags { get; init; }
     public CreateOrUpdateVirtualNetworkRequestProperties? Properties { get; init; }
 
     public sealed class InlineSubnetEntry

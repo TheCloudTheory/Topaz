@@ -28,7 +28,7 @@ public sealed class TemplateDeploymentOrchestrator(
     ITopazLogger logger)
 {
     private static readonly List<TemplateDeployment> DeploymentQueue = [];
-    private static readonly object QueueLock = new();
+    private static readonly Lock QueueLock = new();
     private static string? _currentDeploymentId;
     private static Thread? OrchestratorThread { get; set; }
 

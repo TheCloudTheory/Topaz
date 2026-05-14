@@ -3,6 +3,7 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Network;
+using Azure.ResourceManager.Network.Models;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Topaz.Identity;
@@ -297,5 +298,109 @@ public class VirtualNetworkTests
 
         // Assert
         Assert.That(result.Value.Available, Is.False);
+    }
+
+    [Test]
+    public async Task VirtualNetwork_Delete_ShouldRemoveVirtualNetwork()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string virtualNetworkName = "vnet-delete-test";
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
+                new VirtualNetworkData { AddressPrefixes = { "10.60.0.0/16" } }, CancellationToken.None);
+
+        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+
+        // Act
+        await vnet.DeleteAsync(WaitUntil.Completed);
+
+        // Assert
+        var notFound = false;
+        try { await resourceGroup.Value.GetVirtualNetworkAsync(virtualNetworkName); }
+        catch (RequestFailedException ex) when (ex.Status == 404) { notFound = true; }
+
+        Assert.That(notFound, Is.True, "Expected VNet to be deleted (404).");
+    }
+
+    [Test]
+    public async Task VirtualNetwork_ListByResourceGroup_ShouldReturnVirtualNetworks()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "vnet-list-rg-a",
+                new VirtualNetworkData { AddressPrefixes = { "10.61.0.0/16" } }, CancellationToken.None);
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "vnet-list-rg-b",
+                new VirtualNetworkData { AddressPrefixes = { "10.62.0.0/16" } }, CancellationToken.None);
+
+        // Act
+        var vnets = await resourceGroup.Value.GetVirtualNetworks().GetAllAsync().ToListAsync();
+
+        // Assert
+        var names = vnets.Select(v => v.Data.Name).ToList();
+        Assert.Multiple(() =>
+        {
+            Assert.That(names, Does.Contain("vnet-list-rg-a"));
+            Assert.That(names, Does.Contain("vnet-list-rg-b"));
+        });
+    }
+
+    [Test]
+    public async Task VirtualNetwork_ListBySubscription_ShouldReturnVirtualNetworks()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string virtualNetworkName = "vnet-list-sub-test";
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
+                new VirtualNetworkData { AddressPrefixes = { "10.63.0.0/16" } }, CancellationToken.None);
+
+        // Act
+        var vnets = await subscription.GetVirtualNetworksAsync().ToListAsync();
+
+        // Assert
+        Assert.That(vnets.Select(v => v.Data.Name), Does.Contain(virtualNetworkName));
+    }
+
+    [Test]
+    public async Task VirtualNetwork_UpdateTags_ShouldUpdateTags()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string virtualNetworkName = "vnet-update-tags-test";
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
+                new VirtualNetworkData { AddressPrefixes = { "10.64.0.0/16" } }, CancellationToken.None);
+
+        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+
+        // Act
+        var tagsObject = new NetworkTagsObject();
+        tagsObject.Tags.Add("env", "test");
+        tagsObject.Tags.Add("owner", "topaz");
+        var updated = await vnet.UpdateAsync(tagsObject);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(updated.Value.Data.Tags, Does.ContainKey("env"));
+            Assert.That(updated.Value.Data.Tags["env"], Is.EqualTo("test"));
+            Assert.That(updated.Value.Data.Tags, Does.ContainKey("owner"));
+            Assert.That(updated.Value.Data.Tags["owner"], Is.EqualTo("topaz"));
+        });
     }
 }
