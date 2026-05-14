@@ -142,10 +142,17 @@ internal abstract class BlobDataPlaneEndpointBase(Pipeline eventPipeline, ITopaz
             "Looking for container name in {0}", path);
 
         var pathParts = path.Split('/');
+        var containerName = pathParts[1];
 
-        Logger.LogDebug(nameof(BlobDataPlaneEndpointBase), nameof(GetContainerName), "Returning: {0}", pathParts[1]);
+        // Inline guard: CodeQL's cs/path-injection PathCheck requires a direct boolean guard
+        // on the tainted variable at the use site. Path.GetFileName (inside PathGuard.SanitizeName)
+        // is only recognised as a sanitizer for cs/zipslip, not for cs/path-injection.
+        if (containerName.Contains('/') || containerName.Contains('\\') || containerName.Contains(".."))
+            throw new ArgumentException("Container name contains invalid characters.");
 
-        return pathParts[1];
+        Logger.LogDebug(nameof(BlobDataPlaneEndpointBase), nameof(GetContainerName), "Returning: {0}", containerName);
+
+        return containerName;
     }
 
     protected static bool TryGetBlobName(string blobPath, out string? blobName)

@@ -488,6 +488,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         if (segments.Length == 0)
             return path;
         var virtualPath = Path.Combine(segments);
+        if (virtualPath.Contains("..") || virtualPath.Contains('\\'))
+            throw new ArgumentException("Blob path contains invalid characters.");
         var fullPath = Path.Combine(path, virtualPath);
 
         return fullPath;
@@ -496,13 +498,19 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
     private string GetContainerNameFromBlobPath(string blobPath)
     {
         var segments = blobPath.Split('/');
-        if (segments.Length == 1 && !blobPath.StartsWith($"/"))
+        if (segments.Length == 1 && !blobPath.StartsWith("/"))
         {
-            return PathGuard.SanitizeName(blobPath);
+            var singleName = PathGuard.SanitizeName(blobPath);
+            if (singleName.Contains('/') || singleName.Contains('\\') || singleName.Contains(".."))
+                throw new ArgumentException("Blob path contains invalid characters.");
+            return singleName;
         }
-        
-        var containerName = segments[1] == ".blob" ?  segments[2] : segments[1];
-        return PathGuard.SanitizeName(containerName);
+
+        var containerName = segments[1] == ".blob" ? segments[2] : segments[1];
+        containerName = PathGuard.SanitizeName(containerName);
+        if (containerName.Contains('/') || containerName.Contains('\\') || containerName.Contains(".."))
+            throw new ArgumentException("Container name contains invalid characters.");
+        return containerName;
     }
 
     private string GetBlobPropertiesPath(SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string blobPath)
@@ -510,6 +518,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var containerName = GetContainerNameFromBlobPath(blobPath);
         var segments = blobPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
         var metadataFileName = string.Join("_", segments.Select(PathGuard.SanitizeName));
+        if (metadataFileName.Contains('/') || metadataFileName.Contains('\\') || metadataFileName.Contains(".."))
+            throw new ArgumentException("Blob path contains invalid characters.");
         var path = Path.Combine(controlPlane.GetContainerBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
             $"{metadataFileName}.properties.json");
 
@@ -521,6 +531,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var containerName = GetContainerNameFromBlobPath(blobPath);
         var segments = blobPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
         var metadataFileName = string.Join("_", segments.Select(PathGuard.SanitizeName));
+        if (metadataFileName.Contains('/') || metadataFileName.Contains('\\') || metadataFileName.Contains(".."))
+            throw new ArgumentException("Blob path contains invalid characters.");
         return Path.Combine(
             controlPlane.GetContainerBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
             $"{metadataFileName}.committed-blocks.json");
@@ -847,6 +859,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         var containerName = GetContainerNameFromBlobPath(blobPath);
         var segments = blobPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
         var metadataFileName = string.Join("_", segments.Select(PathGuard.SanitizeName));
+        if (metadataFileName.Contains('/') || metadataFileName.Contains('\\') || metadataFileName.Contains(".."))
+            throw new ArgumentException("Blob path contains invalid characters.");
         var path = Path.Combine(controlPlane.GetContainerBlobMetadataPath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
             $"{metadataFileName}.metadata.json");
 
