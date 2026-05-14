@@ -12,7 +12,7 @@ internal sealed class GetSubnetEndpoint(Pipeline eventPipeline, ITopazLogger log
 {
     private readonly SubnetControlPlane _controlPlane = SubnetControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.Network";
+    public string ProviderNamespace => "Microsoft.Network";
 
     public string[] Endpoints =>
     [

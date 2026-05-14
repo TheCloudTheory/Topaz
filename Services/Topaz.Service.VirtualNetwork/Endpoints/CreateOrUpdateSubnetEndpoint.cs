@@ -14,7 +14,7 @@ internal sealed class CreateOrUpdateSubnetEndpoint(Pipeline eventPipeline, ITopa
 {
     private readonly SubnetControlPlane _controlPlane = SubnetControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.Network";
+    public string ProviderNamespace => "Microsoft.Network";
 
     public string[] Endpoints =>
     [

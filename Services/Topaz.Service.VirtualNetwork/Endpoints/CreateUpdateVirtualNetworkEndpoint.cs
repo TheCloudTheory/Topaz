@@ -16,7 +16,7 @@ public class CreateUpdateVirtualNetworkEndpoint(Pipeline eventPipeline, ITopazLo
     private readonly VirtualNetworkControlPlane _controlPlane =
         new(eventPipeline, new VirtualNetworkResourceProvider(logger), logger);
 
-    public string? ProviderNamespace => "Microsoft.Network";
+    public string ProviderNamespace => "Microsoft.Network";
 
     public string[] Endpoints =>
     [

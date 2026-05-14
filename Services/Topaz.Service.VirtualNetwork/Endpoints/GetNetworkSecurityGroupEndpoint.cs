@@ -8,49 +8,48 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.VirtualNetwork.Endpoints;
 
-internal sealed class DeleteVirtualNetworkEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class GetNetworkSecurityGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly VirtualNetworkControlPlane _controlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
+    private readonly NetworkSecurityGroupControlPlane _controlPlane = NetworkSecurityGroupControlPlane.New(eventPipeline, logger);
 
     public string ProviderNamespace => "Microsoft.Network";
 
     public string[] Endpoints =>
     [
-        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkSecurityGroups/{networkSecurityGroupName}"
     ];
 
-    public string[] Permissions => ["Microsoft.Network/virtualNetworks/delete"];
+    public string[] Permissions => ["Microsoft.Network/networkSecurityGroups/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        logger.LogDebug(nameof(DeleteVirtualNetworkEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
+        logger.LogDebug(nameof(GetNetworkSecurityGroupEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
 
         try
         {
             var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
             var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
-            var virtualNetworkName = context.Request.Path.Value.ExtractValueFromPath(8);
+            var name = context.Request.Path.Value.ExtractValueFromPath(8);
 
-            if (string.IsNullOrWhiteSpace(virtualNetworkName))
-            {
-                response.StatusCode = HttpStatusCode.BadRequest;
-                return;
-            }
-
-            var existing = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName);
-            if (existing.Result == OperationResult.NotFound)
+            if (string.IsNullOrWhiteSpace(name))
             {
                 response.StatusCode = HttpStatusCode.NotFound;
                 return;
             }
 
-            _controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName);
+            var operation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, name);
+            if (operation.Result == OperationResult.NotFound)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                response.CreateErrorResponse(operation.Code!, operation.Reason!, HttpStatusCode.NotFound);
+                return;
+            }
+
             response.StatusCode = HttpStatusCode.OK;
-            response.Content = new ByteArrayContent([]);
-            response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+            response.CreateJsonContentResponse(operation.Resource!);
         }
         catch (Exception ex)
         {

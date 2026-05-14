@@ -13,7 +13,7 @@ internal sealed class ListVirtualNetworksBySubscriptionEndpoint(Pipeline eventPi
 {
     private readonly VirtualNetworkControlPlane _controlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.Network";
+    public string ProviderNamespace => "Microsoft.Network";
 
     public string[] Endpoints =>
     [

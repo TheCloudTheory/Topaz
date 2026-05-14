@@ -234,18 +234,7 @@ _Implemented in v1.4-beta: `GET .../virtualNetworks/{name}/checkIPAddressAvailab
 
 _Implemented: DELETE, List by resource group, List by subscription, and Update Tags operations._
 
-<!--
-TODO: Network Security Groups: Full control plane
-  Add a new NSG resource under Topaz.Service.VirtualNetwork (new models, resource provider, and endpoints):
-  - PUT    .../networkSecurityGroups/{name}  – create or update
-  - GET    .../networkSecurityGroups/{name}  – get
-  - DELETE .../networkSecurityGroups/{name}  – delete
-  - GET    .../networkSecurityGroups          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.Network/networkSecurityGroups – list all
-  - PATCH  .../networkSecurityGroups/{name}  – update tags
-  milestone: v1.4-beta
-  labels: enhancement, virtual-network, good first issue
--->
+
 
 ### Azure Storage — OData query support for Table Storage
 

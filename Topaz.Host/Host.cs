@@ -101,6 +101,7 @@ public class Host
             new ServiceBusService(_eventPipeline, _logger),
             new ResourceManagerService(_eventPipeline, _logger, cancellationToken),
             new VirtualNetworkService(_eventPipeline, _logger),
+            new NetworkSecurityGroupService(_eventPipeline, _logger),
             new VirtualMachineService(_eventPipeline, _logger),
             new ManagedIdentityService(_eventPipeline, _logger),
             new ManagementGroupService(_eventPipeline, _logger),

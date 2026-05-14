@@ -12,7 +12,7 @@ internal sealed class DeleteSubnetEndpoint(Pipeline eventPipeline, ITopazLogger 
 {
     private readonly SubnetControlPlane _controlPlane = SubnetControlPlane.New(eventPipeline, logger);
 
-    public string? ProviderNamespace => "Microsoft.Network";
+    public string ProviderNamespace => "Microsoft.Network";
 
     public string[] Endpoints =>
     [

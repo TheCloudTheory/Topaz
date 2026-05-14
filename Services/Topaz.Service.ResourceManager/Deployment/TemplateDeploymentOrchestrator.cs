@@ -181,6 +181,9 @@ public sealed class TemplateDeploymentOrchestrator(
                 case "Microsoft.Network/virtualNetworks":
                     controlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
                     break;
+                case "Microsoft.Network/networkSecurityGroups":
+                    controlPlane = NetworkSecurityGroupControlPlane.New(eventPipeline, logger);
+                    break;
                 case "Microsoft.Compute/virtualMachines":
                     controlPlane = VirtualMachineServiceControlPlane.New(eventPipeline, logger);
                     break;
