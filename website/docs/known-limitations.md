@@ -50,6 +50,33 @@ Calling `POST .../deployments/{name}/cancel` against a deployment whose `provisi
 
 Introduce a cooperative cancellation token into the orchestrator thread so that a cancel request against a `Running` deployment signals the engine to stop processing further resources after the current one completes, matching real Azure mid-flight cancellation semantics.
 
+## ARM Deployments — child resources as standalone entries not supported
+
+**Affected services:** Azure Resource Manager (`Microsoft.Resources/deployments`)
+
+ARM templates allow declaring child resources either **inline** (nested under the parent's `properties`) or as **standalone sibling entries** in the top-level `resources` array using a compound type and name, for example:
+
+```json
+{
+  "type": "Microsoft.Network/virtualNetworks/subnets",
+  "name": "my-vnet/default",
+  "dependsOn": ["[resourceId('Microsoft.Network/virtualNetworks', 'my-vnet')]"],
+  ...
+}
+```
+
+Topaz's `TemplateDeploymentOrchestrator` routes each resource entry to a control plane by exact `type` match. Only top-level resource types (e.g. `Microsoft.Network/virtualNetworks`) have registered cases; compound child-resource types (e.g. `Microsoft.Network/virtualNetworks/subnets`) fall through to the `default` branch and are silently skipped with a warning log entry.
+
+This applies to all subresources across all services — subnets, NSG rules, Key Vault access policies declared as child resources, Event Hub consumer groups, etc.
+
+### Impact
+
+Templates that express subresources as standalone entries deploy the parent resource successfully but silently omit the child resources. No error is surfaced to the caller; the deployment still transitions to `Succeeded`.
+
+**Workaround:** use the inline subresource syntax instead of standalone child entries. For example, declare subnets inside `properties.subnets` of the VNet resource rather than as separate `Microsoft.Network/virtualNetworks/subnets` entries.
+
+### No fix planned
+
 ## Table Storage — explicit endpoint required in connection strings
 
 **Affected services:** Table Storage (port 8890)
