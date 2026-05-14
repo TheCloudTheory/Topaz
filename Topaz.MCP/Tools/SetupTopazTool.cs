@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using ModelContextProtocol.Server;
 using Topaz.Shared;
@@ -40,7 +41,11 @@ public class SetupTopazTool
 
         var portArgs = string.Join(" ", Array.ConvertAll(ports, p => $"-p {p}:{p}"));
 
-        return $"docker run -d --name {ContainerName} {portArgs} " +
+        var platform = RuntimeInformation.ProcessArchitecture == Architecture.Arm64
+            ? "linux/arm64"
+            : "linux/amd64";
+
+        return $"docker run -d --name {ContainerName} --platform {platform} {portArgs} " +
                $"thecloudtheory/topaz-host:{version} " +
                $"--log-level {logLevel}";
     }
