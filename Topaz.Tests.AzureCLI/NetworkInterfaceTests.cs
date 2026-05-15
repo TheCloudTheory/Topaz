@@ -26,7 +26,7 @@ public class NetworkInterfaceTests : TopazFixture
                     Assert.That(nic["name"]!.GetValue<string>(), Is.EqualTo(NicName));
                     Assert.That(nic["type"]!.GetValue<string>(),
                         Is.EqualTo("Microsoft.Network/networkInterfaces").IgnoreCase);
-                    Assert.That(nic["properties"]!["provisioningState"]!.GetValue<string>(),
+                    Assert.That(nic["provisioningState"]!.GetValue<string>(),
                         Is.EqualTo("Succeeded"));
                 });
             }, 0);

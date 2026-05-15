@@ -422,6 +422,39 @@ output "nsg_name"                   { value = azurerm_network_security_group.nsg
 output "nsg_location"               { value = azurerm_network_security_group.nsg.location }
 output "nsg_tagged_name"            { value = azurerm_network_security_group.nsg_tagged.name }
 
+# ── Network Interface + Public IP ─────────────────────────────────────────────
+
+resource "azurerm_resource_group" "nic_rg" {
+  name     = "tf-rm-nic-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_public_ip" "pip" {
+  name                = "tf-rm-pip"
+  location            = azurerm_resource_group.nic_rg.location
+  resource_group_name = azurerm_resource_group.nic_rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
+
+resource "azurerm_network_interface" "nic" {
+  name                = "tf-rm-nic"
+  location            = azurerm_resource_group.nic_rg.location
+  resource_group_name = azurerm_resource_group.nic_rg.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.subnet.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.pip.id
+  }
+}
+
+output "nic_name"     { value = azurerm_network_interface.nic.name }
+output "nic_location" { value = azurerm_network_interface.nic.location }
+output "pip_name"     { value = azurerm_public_ip.pip.name }
+output "pip_location" { value = azurerm_public_ip.pip.location }
+
 output "acr_login_server"           { value = azurerm_container_registry.acr.login_server }
 output "acr_admin_enabled"          { value = azurerm_container_registry.acr.admin_enabled }
 output "acr_admin_registry_name"    { value = azurerm_container_registry.acr_admin.name }
@@ -443,7 +476,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   disable_password_authentication = false
 
   network_interface_ids = [
-    "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/tf-rm-vm-rg/providers/Microsoft.Network/networkInterfaces/fake-nic"
+    azurerm_network_interface.nic.id
   ]
 
   os_disk {

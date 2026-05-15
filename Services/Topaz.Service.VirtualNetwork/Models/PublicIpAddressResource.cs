@@ -15,13 +15,15 @@ public sealed class PublicIpAddressResource : ArmResource<PublicIpAddressResourc
         string name,
         string location,
         IDictionary<string, string>? tags,
-        PublicIpAddressResourceProperties properties)
+        PublicIpAddressResourceProperties properties,
+        ResourceSku? sku = null)
     {
         Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Network/publicIPAddresses/{name}";
         Name = name;
         Location = location;
         Tags = tags ?? new Dictionary<string, string>();
         Properties = properties;
+        Sku = sku;
     }
 
     public sealed override string Id { get; init; } = string.Empty;

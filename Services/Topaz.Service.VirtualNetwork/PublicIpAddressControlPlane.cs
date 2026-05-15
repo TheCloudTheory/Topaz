@@ -110,7 +110,8 @@ internal sealed class PublicIpAddressControlPlane(
             name,
             request.Location ?? resourceGroupOperation.Resource!.Location!,
             request.Tags,
-            properties);
+            properties,
+            request.Sku ?? existing?.Sku);
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, resource);
 
