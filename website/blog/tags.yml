@@ -52,3 +52,18 @@ resource-manager:
   label: Resource Manager
   permalink: /resource-manager
   description: Resource Manager related posts
+
+networking:
+  label: Networking
+  permalink: /networking
+  description: Azure Networking related posts
+
+devcontainers:
+  label: Dev Containers
+  permalink: /devcontainers
+  description: Dev Containers related posts
+
+authorization:
+  label: Authorization
+  permalink: /authorization
+  description: Azure Authorization and RBAC related posts
