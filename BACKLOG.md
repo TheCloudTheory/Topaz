@@ -742,6 +742,17 @@ TODO: Azure Cosmos DB: MCP Server provisioning tools for Cosmos DB
   labels: enhancement, cosmos-db, mcp
 -->
 
+<!--
+TODO: VirtualNetwork — Public IP Address (PIP) CRUD
+  Implement PUT/GET/DELETE/LIST/PATCH endpoints for Microsoft.Network/publicIPAddresses.
+  Required to support `az vm create` which allocates a public IP before creating the NIC.
+  Properties: publicIPAllocationMethod (Dynamic/Static), publicIPAddressVersion (IPv4/IPv6),
+  ipAddress (stub value assigned on creation), provisioningState ("Succeeded").
+  Register Deploy() in TemplateDeploymentOrchestrator for "Microsoft.Network/publicIPAddresses".
+  milestone: v1.7-beta
+  labels: enhancement, good first issue
+-->
+
 ---
 
 ## Unplanned / Ideas

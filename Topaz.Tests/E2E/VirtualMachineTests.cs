@@ -3,6 +3,8 @@ using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Compute;
 using Azure.ResourceManager.Compute.Models;
+using Azure.ResourceManager.Network;
+using Azure.ResourceManager.Network.Models;
 using Azure.ResourceManager.Resources;
 using Topaz.CLI;
 using Topaz.Identity;
@@ -17,6 +19,8 @@ public class VirtualMachineTests
 
     private const string SubscriptionName = "sub-test-vm";
     private const string ResourceGroupName = "rg-test-vm";
+
+    private ResourceIdentifier _nicId = null!;
 
     [SetUp]
     public async Task SetUp()
@@ -48,9 +52,47 @@ public class VirtualMachineTests
             "--location", "westeurope",
             "--subscription-id", SubscriptionId.ToString()
         ]);
+
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+
+        var vnetData = new VirtualNetworkData
+        {
+            Location = AzureLocation.WestEurope,
+            AddressPrefixes = { "10.20.0.0/16" },
+            Subnets =
+            {
+                new SubnetData { Name = "default", AddressPrefixes = { "10.20.0.0/24" } }
+            }
+        };
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "vnet-test-vm", vnetData);
+
+        var nicData = new NetworkInterfaceData
+        {
+            Location = AzureLocation.WestEurope,
+            IPConfigurations =
+            {
+                new NetworkInterfaceIPConfigurationData
+                {
+                    Name = "ipconfig1",
+                    PrivateIPAllocationMethod = NetworkIPAllocationMethod.Dynamic,
+                    Subnet = new SubnetData
+                    {
+                        Id = new ResourceIdentifier(
+                            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.Network/virtualNetworks/vnet-test-vm/subnets/default")
+                    }
+                }
+            }
+        };
+        var nic = await resourceGroup.Value.GetNetworkInterfaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "nic-test-vm", nicData);
+        _nicId = nic.Value.Data.Id;
     }
 
-    private static VirtualMachineData MinimalVmData(string computerName) =>
+    private VirtualMachineData MinimalVmData(string computerName) =>
         new(AzureLocation.WestEurope)
         {
             HardwareProfile = new VirtualMachineHardwareProfile
@@ -80,8 +122,7 @@ public class VirtualMachineTests
                     new VirtualMachineNetworkInterfaceReference
                     {
                         Primary = true,
-                        Id = new ResourceIdentifier(
-                            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.Network/networkInterfaces/fake-nic")
+                        Id = _nicId
                     }
                 }
             }

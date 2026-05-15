@@ -184,6 +184,12 @@ public sealed class TemplateDeploymentOrchestrator(
                 case "Microsoft.Network/networkSecurityGroups":
                     controlPlane = NetworkSecurityGroupControlPlane.New(eventPipeline, logger);
                     break;
+                case "Microsoft.Network/networkInterfaces":
+                    controlPlane = NetworkInterfaceControlPlane.New(eventPipeline, logger);
+                    break;
+                case "Microsoft.Network/publicIPAddresses":
+                    controlPlane = PublicIpAddressControlPlane.New(eventPipeline, logger);
+                    break;
                 case "Microsoft.Compute/virtualMachines":
                     controlPlane = VirtualMachineServiceControlPlane.New(eventPipeline, logger);
                     break;

@@ -18,7 +18,7 @@ public sealed class ResourceProviderDataResponse(string providerName)
         ["Microsoft.Storage"]           = ["storageAccounts"],
         ["Microsoft.ServiceBus"]        = ["namespaces"],
         ["Microsoft.EventHub"]          = ["namespaces"],
-        ["Microsoft.Network"]           = ["virtualNetworks", "networkInterfaces"],
+        ["Microsoft.Network"]           = ["virtualNetworks", "networkInterfaces", "publicIPAddresses"],
         ["Microsoft.Compute"]           = ["virtualMachines"],
         ["Microsoft.Resources"]         = ["resourceGroups", "deployments", "subscriptions"],
         ["Microsoft.ManagedIdentity"]   = ["userAssignedIdentities"],

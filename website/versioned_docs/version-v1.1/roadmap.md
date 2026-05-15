@@ -234,6 +234,7 @@ The roadmap reflects current intentions and may change. Watch the [GitHub reposi
 | <span class="badge--preview">Preview</span> | Document CRUD | `POST/GET/PUT/PATCH/DELETE /dbs/{db}/colls/{coll}/docs/{id}` — full item lifecycle with partition key enforcement, ETag optimistic concurrency (If-Match / 412), and JSON Patch partial updates |
 | <span class="badge--preview">Preview</span> | SQL query execution | `POST /dbs/{db}/colls/{coll}/docs` with `x-ms-documentdb-isquery: true` — parameterised SQL subset: `SELECT`, `FROM`, `WHERE`, `ORDER BY`, `OFFSET/LIMIT`, aggregates (`COUNT`, `SUM`, `MIN`, `MAX`, `AVG`); continuation-token pagination |
 | <span class="badge--preview">Preview</span> | MCP Server tools | `CreateCosmosDbAccount`, `CreateCosmosDbDatabase`, `CreateCosmosDbContainer`; `GetConnectionStrings` extended with Cosmos DB endpoint and key |
+| <span class="badge--preview">Preview</span> | Public IP Address API | `Microsoft.Network/publicIPAddresses` — PUT/GET/DELETE/LIST/PATCH endpoints; stub `ipAddress` assigned on creation; supports `az vm create` public IP flow |
 
 ---
 
