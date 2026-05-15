@@ -8,7 +8,7 @@ using Topaz.Service.VirtualNetwork.Models.Requests;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.VirtualNetwork.Endpoints;
+namespace Topaz.Service.VirtualNetwork.Endpoints.PublicIpAddresses;
 
 internal sealed class UpdatePublicIpAddressTagsEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {

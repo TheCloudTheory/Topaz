@@ -8,27 +8,27 @@ using Topaz.Service.VirtualNetwork.Models.Requests;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.VirtualNetwork.Endpoints;
+namespace Topaz.Service.VirtualNetwork.Endpoints.NetworkSecurityGroups;
 
-internal sealed class CreateOrUpdatePublicIpAddressEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class CreateOrUpdateNetworkSecurityGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly PublicIpAddressControlPlane _controlPlane = PublicIpAddressControlPlane.New(eventPipeline, logger);
+    private readonly NetworkSecurityGroupControlPlane _controlPlane = NetworkSecurityGroupControlPlane.New(eventPipeline, logger);
 
     public string ProviderNamespace => "Microsoft.Network";
 
     public string[] Endpoints =>
     [
-        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPAddresses/{publicIpAddressName}"
+        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkSecurityGroups/{networkSecurityGroupName}"
     ];
 
-    public string[] Permissions => ["Microsoft.Network/publicIPAddresses/write"];
+    public string[] Permissions => ["Microsoft.Network/networkSecurityGroups/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        logger.LogDebug(nameof(CreateOrUpdatePublicIpAddressEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
+        logger.LogDebug(nameof(CreateOrUpdateNetworkSecurityGroupEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
 
         try
         {
@@ -44,7 +44,7 @@ internal sealed class CreateOrUpdatePublicIpAddressEndpoint(Pipeline eventPipeli
 
             using var reader = new StreamReader(context.Request.Body);
             var content = reader.ReadToEnd();
-            var request = JsonSerializer.Deserialize<CreateOrUpdatePublicIpAddressRequest>(content, GlobalSettings.JsonOptions)!;
+            var request = JsonSerializer.Deserialize<CreateOrUpdateNetworkSecurityGroupRequest>(content, GlobalSettings.JsonOptions)!;
 
             var operation = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, request);
 

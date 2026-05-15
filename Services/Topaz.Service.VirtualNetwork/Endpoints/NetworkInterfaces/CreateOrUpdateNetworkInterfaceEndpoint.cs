@@ -1,32 +1,34 @@
 using System.Net;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.VirtualNetwork.Models.Requests;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.VirtualNetwork.Endpoints;
+namespace Topaz.Service.VirtualNetwork.Endpoints.NetworkInterfaces;
 
-internal sealed class GetPublicIpAddressEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class CreateOrUpdateNetworkInterfaceEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly PublicIpAddressControlPlane _controlPlane = PublicIpAddressControlPlane.New(eventPipeline, logger);
+    private readonly NetworkInterfaceControlPlane _controlPlane = NetworkInterfaceControlPlane.New(eventPipeline, logger);
 
     public string ProviderNamespace => "Microsoft.Network";
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPAddresses/{publicIpAddressName}"
+        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkInterfaces/{networkInterfaceName}"
     ];
 
-    public string[] Permissions => ["Microsoft.Network/publicIPAddresses/read"];
+    public string[] Permissions => ["Microsoft.Network/networkInterfaces/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        logger.LogDebug(nameof(GetPublicIpAddressEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
+        logger.LogDebug(nameof(CreateOrUpdateNetworkInterfaceEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
 
         try
         {
@@ -36,11 +38,16 @@ internal sealed class GetPublicIpAddressEndpoint(Pipeline eventPipeline, ITopazL
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                response.StatusCode = HttpStatusCode.NotFound;
+                response.StatusCode = HttpStatusCode.BadRequest;
                 return;
             }
 
-            var operation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, name);
+            using var reader = new StreamReader(context.Request.Body);
+            var content = reader.ReadToEnd();
+            var request = JsonSerializer.Deserialize<CreateOrUpdateNetworkInterfaceRequest>(content, GlobalSettings.JsonOptions)!;
+
+            var operation = _controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, request);
+
             if (operation.Result == OperationResult.NotFound)
             {
                 response.StatusCode = HttpStatusCode.NotFound;
@@ -48,7 +55,7 @@ internal sealed class GetPublicIpAddressEndpoint(Pipeline eventPipeline, ITopazL
                 return;
             }
 
-            response.StatusCode = HttpStatusCode.OK;
+            response.StatusCode = operation.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
             response.CreateJsonContentResponse(operation.Resource!);
         }
         catch (Exception ex)

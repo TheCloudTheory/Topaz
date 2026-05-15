@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
@@ -7,9 +6,10 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.VirtualNetwork.Endpoints;
+namespace Topaz.Service.VirtualNetwork.Endpoints.VirtualNetworks;
 
-public class GetVirtualNetworkEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class CheckIpAddressAvailabilityEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : IEndpointDefinition
 {
     private readonly VirtualNetworkControlPlane _controlPlane =
         new(eventPipeline, new VirtualNetworkResourceProvider(logger), logger);
@@ -18,7 +18,7 @@ public class GetVirtualNetworkEndpoint(Pipeline eventPipeline, ITopazLogger logg
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/checkIPAddressAvailability"
     ];
 
     public string[] Permissions => ["Microsoft.Network/virtualNetworks/read"];
@@ -38,15 +38,23 @@ public class GetVirtualNetworkEndpoint(Pipeline eventPipeline, ITopazLogger logg
             return;
         }
 
-        var operation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName);
+        var ipAddress = context.Request.Query["ipAddress"].ToString();
+
+        if (string.IsNullOrWhiteSpace(ipAddress))
+        {
+            response.StatusCode = HttpStatusCode.BadRequest;
+            return;
+        }
+
+        var operation = _controlPlane.CheckIpAddressAvailability(
+            subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName, ipAddress);
+
         if (operation.Result == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
 
-        response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(operation.Resource?.ToString()!);
-        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        response.CreateJsonContentResponse(operation.Resource!);
     }
 }

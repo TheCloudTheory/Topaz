@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
@@ -7,27 +6,27 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.VirtualNetwork.Endpoints;
+namespace Topaz.Service.VirtualNetwork.Endpoints.NetworkInterfaces;
 
-internal sealed class DeletePublicIpAddressEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class GetNetworkInterfaceEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly PublicIpAddressControlPlane _controlPlane = PublicIpAddressControlPlane.New(eventPipeline, logger);
+    private readonly NetworkInterfaceControlPlane _controlPlane = NetworkInterfaceControlPlane.New(eventPipeline, logger);
 
     public string ProviderNamespace => "Microsoft.Network";
 
     public string[] Endpoints =>
     [
-        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPAddresses/{publicIpAddressName}"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkInterfaces/{networkInterfaceName}"
     ];
 
-    public string[] Permissions => ["Microsoft.Network/publicIPAddresses/delete"];
+    public string[] Permissions => ["Microsoft.Network/networkInterfaces/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        logger.LogDebug(nameof(DeletePublicIpAddressEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
+        logger.LogDebug(nameof(GetNetworkInterfaceEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
 
         try
         {
@@ -37,21 +36,20 @@ internal sealed class DeletePublicIpAddressEndpoint(Pipeline eventPipeline, ITop
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                response.StatusCode = HttpStatusCode.BadRequest;
+                response.StatusCode = HttpStatusCode.NotFound;
                 return;
             }
 
-            var deleteResult = _controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, name);
-            if (deleteResult.Result == OperationResult.NotFound)
+            var operation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, name);
+            if (operation.Result == OperationResult.NotFound)
             {
                 response.StatusCode = HttpStatusCode.NotFound;
-                response.CreateErrorResponse(deleteResult.Code!, deleteResult.Reason!, HttpStatusCode.NotFound);
+                response.CreateErrorResponse(operation.Code!, operation.Reason!, HttpStatusCode.NotFound);
                 return;
             }
 
             response.StatusCode = HttpStatusCode.OK;
-            response.Content = new ByteArrayContent([]);
-            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            response.CreateJsonContentResponse(operation.Resource!);
         }
         catch (Exception ex)
         {

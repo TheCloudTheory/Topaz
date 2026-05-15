@@ -1,7 +1,7 @@
 using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
-using Topaz.Service.VirtualNetwork.Endpoints;
+using Topaz.Service.VirtualNetwork.Endpoints.NetworkInterfaces;
 using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork;
@@ -25,8 +25,4 @@ public sealed class NetworkInterfaceService(Pipeline eventPipeline, ITopazLogger
         new ListNetworkInterfacesBySubscriptionEndpoint(eventPipeline, logger),
         new UpdateNetworkInterfaceTagsEndpoint(eventPipeline, logger)
     ];
-
-    public void Bootstrap()
-    {
-    }
 }

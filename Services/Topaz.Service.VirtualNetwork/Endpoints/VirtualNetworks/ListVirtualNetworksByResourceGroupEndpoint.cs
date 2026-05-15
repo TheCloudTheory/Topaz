@@ -7,35 +7,35 @@ using Topaz.Service.Subscription.Models.Responses;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.VirtualNetwork.Endpoints;
+namespace Topaz.Service.VirtualNetwork.Endpoints.VirtualNetworks;
 
-internal sealed class ListNetworkSecurityGroupsByResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class ListVirtualNetworksByResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly NetworkSecurityGroupControlPlane _controlPlane = NetworkSecurityGroupControlPlane.New(eventPipeline, logger);
+    private readonly VirtualNetworkControlPlane _controlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
 
     public string ProviderNamespace => "Microsoft.Network";
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkSecurityGroups"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks"
     ];
 
-    public string[] Permissions => ["Microsoft.Network/networkSecurityGroups/read"];
+    public string[] Permissions => ["Microsoft.Network/virtualNetworks/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        logger.LogDebug(nameof(ListNetworkSecurityGroupsByResourceGroupEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
+        logger.LogDebug(nameof(ListVirtualNetworksByResourceGroupEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
 
         try
         {
             var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
             var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
 
-            var nsgs = _controlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier);
-            if (nsgs.Result != OperationResult.Success || nsgs.Resource == null)
+            var vnets = _controlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier);
+            if (vnets.Result != OperationResult.Success || vnets.Resource == null)
             {
                 response.StatusCode = HttpStatusCode.InternalServerError;
                 return;
@@ -43,7 +43,7 @@ internal sealed class ListNetworkSecurityGroupsByResourceGroupEndpoint(Pipeline 
 
             var result = new ListSubscriptionResourcesResponse
             {
-                Value = nsgs.Resource.Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From!).ToArray()
+                Value = vnets.Resource.Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From!).ToArray()
             };
 
             response.CreateJsonContentResponse(result);

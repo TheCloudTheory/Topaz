@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
@@ -6,9 +7,9 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.VirtualNetwork.Endpoints;
+namespace Topaz.Service.VirtualNetwork.Endpoints.NetworkInterfaces;
 
-internal sealed class GetNetworkInterfaceEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class DeleteNetworkInterfaceEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly NetworkInterfaceControlPlane _controlPlane = NetworkInterfaceControlPlane.New(eventPipeline, logger);
 
@@ -16,17 +17,17 @@ internal sealed class GetNetworkInterfaceEndpoint(Pipeline eventPipeline, ITopaz
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkInterfaces/{networkInterfaceName}"
+        "DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkInterfaces/{networkInterfaceName}"
     ];
 
-    public string[] Permissions => ["Microsoft.Network/networkInterfaces/read"];
+    public string[] Permissions => ["Microsoft.Network/networkInterfaces/delete"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        logger.LogDebug(nameof(GetNetworkInterfaceEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
+        logger.LogDebug(nameof(DeleteNetworkInterfaceEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
 
         try
         {
@@ -36,20 +37,21 @@ internal sealed class GetNetworkInterfaceEndpoint(Pipeline eventPipeline, ITopaz
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                response.StatusCode = HttpStatusCode.NotFound;
+                response.StatusCode = HttpStatusCode.BadRequest;
                 return;
             }
 
-            var operation = _controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, name);
-            if (operation.Result == OperationResult.NotFound)
+            var deleteResult = _controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, name);
+            if (deleteResult.Result == OperationResult.NotFound)
             {
                 response.StatusCode = HttpStatusCode.NotFound;
-                response.CreateErrorResponse(operation.Code!, operation.Reason!, HttpStatusCode.NotFound);
+                response.CreateErrorResponse(deleteResult.Code!, deleteResult.Reason!, HttpStatusCode.NotFound);
                 return;
             }
 
             response.StatusCode = HttpStatusCode.OK;
-            response.CreateJsonContentResponse(operation.Resource!);
+            response.Content = new ByteArrayContent([]);
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
         }
         catch (Exception ex)
         {

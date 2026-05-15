@@ -1,7 +1,7 @@
 using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
-using Topaz.Service.VirtualNetwork.Endpoints;
+using Topaz.Service.VirtualNetwork.Endpoints.PublicIpAddresses;
 using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork;

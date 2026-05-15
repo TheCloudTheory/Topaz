@@ -9,7 +9,7 @@ using Topaz.Service.VirtualNetwork.Models.Requests;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.VirtualNetwork.Endpoints;
+namespace Topaz.Service.VirtualNetwork.Endpoints.VirtualNetworks;
 
 public class CreateUpdateVirtualNetworkEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {

@@ -7,35 +7,35 @@ using Topaz.Service.Subscription.Models.Responses;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.VirtualNetwork.Endpoints;
+namespace Topaz.Service.VirtualNetwork.Endpoints.NetworkInterfaces;
 
-internal sealed class ListPublicIpAddressesByResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class ListNetworkInterfacesByResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly PublicIpAddressControlPlane _controlPlane = PublicIpAddressControlPlane.New(eventPipeline, logger);
+    private readonly NetworkInterfaceControlPlane _controlPlane = NetworkInterfaceControlPlane.New(eventPipeline, logger);
 
     public string ProviderNamespace => "Microsoft.Network";
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPAddresses"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkInterfaces"
     ];
 
-    public string[] Permissions => ["Microsoft.Network/publicIPAddresses/read"];
+    public string[] Permissions => ["Microsoft.Network/networkInterfaces/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        logger.LogDebug(nameof(ListPublicIpAddressesByResourceGroupEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
+        logger.LogDebug(nameof(ListNetworkInterfacesByResourceGroupEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
 
         try
         {
             var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
             var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
 
-            var pips = _controlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier);
-            if (pips.Result != OperationResult.Success || pips.Resource == null)
+            var nics = _controlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier);
+            if (nics.Result != OperationResult.Success || nics.Resource == null)
             {
                 response.StatusCode = HttpStatusCode.InternalServerError;
                 return;
@@ -43,7 +43,7 @@ internal sealed class ListPublicIpAddressesByResourceGroupEndpoint(Pipeline even
 
             var result = new ListSubscriptionResourcesResponse
             {
-                Value = pips.Resource.Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From!).ToArray()
+                Value = nics.Resource.Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From!).ToArray()
             };
 
             response.CreateJsonContentResponse(result);

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using JetBrains.Annotations;
 using Topaz.Service.VirtualNetwork.Models.Requests;
 
 namespace Topaz.Service.VirtualNetwork.Models;
@@ -9,7 +10,7 @@ public sealed class NetworkInterfaceResourceProperties
     public JsonElement? NetworkSecurityGroup { get; set; }
     public bool? EnableAcceleratedNetworking { get; set; }
     public bool? EnableIPForwarding { get; set; }
-    public string ProvisioningState => "Succeeded";
+    [UsedImplicitly] public string ProvisioningState => "Succeeded";
 
     internal static NetworkInterfaceResourceProperties FromRequest(CreateOrUpdateNetworkInterfaceRequest request)
     {

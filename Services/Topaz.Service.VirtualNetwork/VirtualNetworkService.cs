@@ -1,7 +1,8 @@
 ﻿using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
-using Topaz.Service.VirtualNetwork.Endpoints;
+using Topaz.Service.VirtualNetwork.Endpoints.VirtualNetworks;
+using Topaz.Service.VirtualNetwork.Endpoints.Subnets;
 using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork;
@@ -29,8 +30,4 @@ public sealed class VirtualNetworkService(Pipeline eventPipeline, ITopazLogger l
         new DeleteSubnetEndpoint(eventPipeline, logger),
         new ListSubnetsEndpoint(eventPipeline, logger)
     ];
-
-    public void Bootstrap()
-    {
-    }
 }

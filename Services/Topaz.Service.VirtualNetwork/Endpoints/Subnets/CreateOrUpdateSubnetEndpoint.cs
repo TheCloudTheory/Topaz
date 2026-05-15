@@ -1,14 +1,16 @@
 using System.Net;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.VirtualNetwork.Models.Requests;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.VirtualNetwork.Endpoints;
+namespace Topaz.Service.VirtualNetwork.Endpoints.Subnets;
 
-internal sealed class GetSubnetEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class CreateOrUpdateSubnetEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly SubnetControlPlane _controlPlane = SubnetControlPlane.New(eventPipeline, logger);
 
@@ -16,10 +18,10 @@ internal sealed class GetSubnetEndpoint(Pipeline eventPipeline, ITopazLogger log
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}"
+        "PUT /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}"
     ];
 
-    public string[] Permissions => ["Microsoft.Network/virtualNetworks/subnets/read"];
+    public string[] Permissions => ["Microsoft.Network/virtualNetworks/subnets/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
@@ -37,8 +39,12 @@ internal sealed class GetSubnetEndpoint(Pipeline eventPipeline, ITopazLogger log
             return;
         }
 
-        var operation = _controlPlane.Get(
-            subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName, subnetName);
+        using var reader = new StreamReader(context.Request.Body);
+        var content = reader.ReadToEnd();
+        var request = JsonSerializer.Deserialize<CreateOrUpdateSubnetRequest>(content, GlobalSettings.JsonOptions) ?? new CreateOrUpdateSubnetRequest();
+
+        var operation = _controlPlane.CreateOrUpdate(
+            subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName, subnetName, request);
 
         if (operation.Result == OperationResult.NotFound)
         {
@@ -46,6 +52,7 @@ internal sealed class GetSubnetEndpoint(Pipeline eventPipeline, ITopazLogger log
             return;
         }
 
-        response.CreateJsonContentResponse(operation.Resource!);
+        var statusCode = operation.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
+        response.CreateJsonContentResponse(operation.Resource!, statusCode);
     }
 }

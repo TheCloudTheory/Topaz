@@ -6,7 +6,7 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.VirtualNetwork.Endpoints;
+namespace Topaz.Service.VirtualNetwork.Endpoints.Subnets;
 
 internal sealed class DeleteSubnetEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {

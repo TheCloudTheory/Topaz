@@ -8,37 +8,37 @@ using Topaz.Service.VirtualNetwork.Models.Requests;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.VirtualNetwork.Endpoints;
+namespace Topaz.Service.VirtualNetwork.Endpoints.VirtualNetworks;
 
-internal sealed class UpdateNetworkInterfaceTagsEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class UpdateVirtualNetworkTagsEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly NetworkInterfaceControlPlane _controlPlane = NetworkInterfaceControlPlane.New(eventPipeline, logger);
+    private readonly VirtualNetworkControlPlane _controlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
 
     public string ProviderNamespace => "Microsoft.Network";
 
     public string[] Endpoints =>
     [
-        "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkInterfaces/{networkInterfaceName}"
+        "PATCH /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}"
     ];
 
-    public string[] Permissions => ["Microsoft.Network/networkInterfaces/write"];
+    public string[] Permissions => ["Microsoft.Network/virtualNetworks/write"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        logger.LogDebug(nameof(UpdateNetworkInterfaceTagsEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
+        logger.LogDebug(nameof(UpdateVirtualNetworkTagsEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
 
         try
         {
             var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
             var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
-            var name = context.Request.Path.Value.ExtractValueFromPath(8);
+            var virtualNetworkName = context.Request.Path.Value.ExtractValueFromPath(8);
 
             using var reader = new StreamReader(context.Request.Body);
             var content = reader.ReadToEnd();
-            var request = JsonSerializer.Deserialize<UpdateNetworkInterfaceTagsRequest>(content, GlobalSettings.JsonOptions);
+            var request = JsonSerializer.Deserialize<UpdateVirtualNetworkTagsRequest>(content, GlobalSettings.JsonOptions);
 
             if (request == null)
             {
@@ -46,12 +46,11 @@ internal sealed class UpdateNetworkInterfaceTagsEndpoint(Pipeline eventPipeline,
                 return;
             }
 
-            var result = _controlPlane.UpdateTags(subscriptionIdentifier, resourceGroupIdentifier, name!, request);
+            var result = _controlPlane.UpdateTags(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName!, request);
 
             if (result.Result == OperationResult.NotFound)
             {
                 response.StatusCode = HttpStatusCode.NotFound;
-                response.CreateErrorResponse(result.Code!, result.Reason!, HttpStatusCode.NotFound);
                 return;
             }
 

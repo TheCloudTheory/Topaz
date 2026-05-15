@@ -7,35 +7,35 @@ using Topaz.Service.Subscription.Models.Responses;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.VirtualNetwork.Endpoints;
+namespace Topaz.Service.VirtualNetwork.Endpoints.NetworkSecurityGroups;
 
-internal sealed class ListNetworkInterfacesByResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class ListNetworkSecurityGroupsByResourceGroupEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly NetworkInterfaceControlPlane _controlPlane = NetworkInterfaceControlPlane.New(eventPipeline, logger);
+    private readonly NetworkSecurityGroupControlPlane _controlPlane = NetworkSecurityGroupControlPlane.New(eventPipeline, logger);
 
     public string ProviderNamespace => "Microsoft.Network";
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkInterfaces"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkSecurityGroups"
     ];
 
-    public string[] Permissions => ["Microsoft.Network/networkInterfaces/read"];
+    public string[] Permissions => ["Microsoft.Network/networkSecurityGroups/read"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        logger.LogDebug(nameof(ListNetworkInterfacesByResourceGroupEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
+        logger.LogDebug(nameof(ListNetworkSecurityGroupsByResourceGroupEndpoint), nameof(GetResponse), "Executing {0}.", nameof(GetResponse));
 
         try
         {
             var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
             var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
 
-            var nics = _controlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier);
-            if (nics.Result != OperationResult.Success || nics.Resource == null)
+            var nsgs = _controlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier);
+            if (nsgs.Result != OperationResult.Success || nsgs.Resource == null)
             {
                 response.StatusCode = HttpStatusCode.InternalServerError;
                 return;
@@ -43,7 +43,7 @@ internal sealed class ListNetworkInterfacesByResourceGroupEndpoint(Pipeline even
 
             var result = new ListSubscriptionResourcesResponse
             {
-                Value = nics.Resource.Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From!).ToArray()
+                Value = nsgs.Resource.Select(ListSubscriptionResourcesResponse.GenericResourceExpanded.From!).ToArray()
             };
 
             response.CreateJsonContentResponse(result);

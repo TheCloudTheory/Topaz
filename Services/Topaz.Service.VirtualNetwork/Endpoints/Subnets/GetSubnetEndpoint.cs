@@ -1,16 +1,14 @@
 using System.Net;
-using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
-using Topaz.Service.VirtualNetwork.Models;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
-namespace Topaz.Service.VirtualNetwork.Endpoints;
+namespace Topaz.Service.VirtualNetwork.Endpoints.Subnets;
 
-internal sealed class ListSubnetsEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class GetSubnetEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
 {
     private readonly SubnetControlPlane _controlPlane = SubnetControlPlane.New(eventPipeline, logger);
 
@@ -18,7 +16,7 @@ internal sealed class ListSubnetsEndpoint(Pipeline eventPipeline, ITopazLogger l
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets"
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}"
     ];
 
     public string[] Permissions => ["Microsoft.Network/virtualNetworks/subnets/read"];
@@ -31,15 +29,16 @@ internal sealed class ListSubnetsEndpoint(Pipeline eventPipeline, ITopazLogger l
         var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
         var virtualNetworkName = context.Request.Path.Value.ExtractValueFromPath(8);
+        var subnetName = context.Request.Path.Value.ExtractValueFromPath(10);
 
-        if (string.IsNullOrWhiteSpace(virtualNetworkName))
+        if (string.IsNullOrWhiteSpace(virtualNetworkName) || string.IsNullOrWhiteSpace(subnetName))
         {
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
 
-        var operation = _controlPlane.List(
-            subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName);
+        var operation = _controlPlane.Get(
+            subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName, subnetName);
 
         if (operation.Result == OperationResult.NotFound)
         {
@@ -47,14 +46,6 @@ internal sealed class ListSubnetsEndpoint(Pipeline eventPipeline, ITopazLogger l
             return;
         }
 
-        var listResponse = new ListSubnetsResponse { Value = operation.Resource ?? [] };
-        response.CreateJsonContentResponse(listResponse);
-    }
-
-    private sealed class ListSubnetsResponse
-    {
-        public SubnetResource[] Value { get; init; } = [];
-
-        public override string ToString() => JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
+        response.CreateJsonContentResponse(operation.Resource!);
     }
 }
