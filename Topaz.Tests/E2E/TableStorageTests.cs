@@ -948,5 +948,86 @@ namespace Topaz.Tests.E2E
             public DateTimeOffset? Timestamp { get; set; }
             public ETag ETag { get; set; }
         }
+
+        [Test]
+        public void TableStorageTests_WhenFilterByPartitionKeyIsApplied_ItShouldReturnOnlyMatchingEntities()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            tableServiceClient.CreateTable("filterpktable");
+            var tableClient = tableServiceClient.GetTableClient("filterpktable");
+
+            tableClient.AddEntity(new TestEntity { PartitionKey = "pk1", RowKey = "rk1", Name = "entity1" });
+            tableClient.AddEntity(new TestEntity { PartitionKey = "pk1", RowKey = "rk2", Name = "entity2" });
+            tableClient.AddEntity(new TestEntity { PartitionKey = "pk2", RowKey = "rk1", Name = "entity3" });
+
+            // Act
+            var entities = tableClient.Query<TestEntity>("PartitionKey eq 'pk1'").ToArray();
+
+            // Assert — only the two pk1 entities must be returned.
+            Assert.That(entities, Has.Length.EqualTo(2));
+            Assert.That(entities.All(e => e.PartitionKey == "pk1"), Is.True);
+        }
+
+        [Test]
+        public void TableStorageTests_WhenFilterByCustomPropertyIsApplied_ItShouldReturnMatchingEntities()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            tableServiceClient.CreateTable("filternumtable");
+            var tableClient = tableServiceClient.GetTableClient("filternumtable");
+
+            tableClient.AddEntity(new TableEntity("pk1", "rk1") { ["Score"] = 10 });
+            tableClient.AddEntity(new TableEntity("pk1", "rk2") { ["Score"] = 50 });
+            tableClient.AddEntity(new TableEntity("pk1", "rk3") { ["Score"] = 100 });
+
+            // Act — filter Score gt 25 should return the two entities with Score 50 and 100.
+            var entities = tableClient.Query<TableEntity>("Score gt 25").ToArray();
+
+            // Assert
+            Assert.That(entities, Has.Length.EqualTo(2));
+            Assert.That(entities.All(e => e.GetInt32("Score") > 25), Is.True);
+        }
+
+        [Test]
+        public void TableStorageTests_WhenSelectIsApplied_ItShouldReturnOnlySelectedProperties()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            tableServiceClient.CreateTable("selecttable");
+            var tableClient = tableServiceClient.GetTableClient("selecttable");
+
+            tableClient.AddEntity(new TableEntity("pk1", "rk1") { ["Name"] = "Alice", ["Age"] = 30 });
+
+            // Act — select only PartitionKey, RowKey, Timestamp, and Name; Age must be absent.
+            var entities = tableClient.Query<TableEntity>(
+                select: ["PartitionKey", "RowKey", "Timestamp", "Name"]).ToArray();
+
+            // Assert
+            Assert.That(entities, Has.Length.EqualTo(1));
+            Assert.That(entities[0].ContainsKey("Name"), Is.True);
+            Assert.That(entities[0].ContainsKey("Age"), Is.False);
+        }
+
+        [Test]
+        public async Task TableStorageTests_WhenTopIsApplied_PaginationWorksAcrossPages()
+        {
+            // Arrange
+            var tableServiceClient = new TableServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+            tableServiceClient.CreateTable("pagetable");
+            var tableClient = tableServiceClient.GetTableClient("pagetable");
+
+            for (var i = 1; i <= 5; i++)
+                tableClient.AddEntity(new TestEntity { PartitionKey = "pk1", RowKey = $"rk{i}", Name = $"entity{i}" });
+
+            // Act — request two entities per page; the SDK drives continuation automatically.
+            var allEntities = new List<TestEntity>();
+            await foreach (var page in tableClient.QueryAsync<TestEntity>(maxPerPage: 2).AsPages())
+                allEntities.AddRange(page.Values);
+
+            // Assert — all 5 entities are received across multiple pages, each row key is unique.
+            Assert.That(allEntities, Has.Count.EqualTo(5));
+            Assert.That(allEntities.Select(e => e.RowKey).Distinct().Count(), Is.EqualTo(5));
+        }
     }
 }

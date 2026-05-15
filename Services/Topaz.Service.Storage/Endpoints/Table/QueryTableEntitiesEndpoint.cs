@@ -56,9 +56,17 @@ internal sealed class QueryTableEntitiesEndpoint(Pipeline eventPipeline, ITopazL
         if (IsPathReferencingTable(subscriptionIdentifier, resourceGroupIdentifier, potentialTableName,
                 storageAccount.Name))
         {
-            var entities = DataPlane.QueryEntities(context.Request.QueryString, subscriptionIdentifier,
+            var result = DataPlane.QueryEntities(context.Request.QueryString, subscriptionIdentifier,
                 resourceGroupIdentifier, potentialTableName, storageAccount.Name);
-            response.Content = JsonContent.Create(new TableDataEndpointResponse(entities));
+
+            if (result.NextPartitionKey is not null)
+            {
+                response.Headers.Add("x-ms-continuation-NextPartitionKey", result.NextPartitionKey);
+                if (result.NextRowKey is not null)
+                    response.Headers.Add("x-ms-continuation-NextRowKey", result.NextRowKey);
+            }
+
+            response.Content = JsonContent.Create(new TableDataEndpointResponse(result.Entities));
             response.StatusCode = HttpStatusCode.OK;
             return;
         }

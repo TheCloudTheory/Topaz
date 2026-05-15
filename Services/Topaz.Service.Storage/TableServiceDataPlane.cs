@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Topaz.Service.Storage.Exceptions;
 using Topaz.Service.Storage.Models;
+using Topaz.Service.Storage.OData;
 using Topaz.Shared;
 using Microsoft.AspNetCore.Http;
 using Azure;
@@ -76,19 +77,100 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
         return File.ReadAllText(entityPath);
     }
 
-    internal object?[] QueryEntities(QueryString query, SubscriptionIdentifier subscriptionIdentifier,
+    internal TableQueryResult QueryEntities(QueryString query, SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string tableName, string storageAccountName)
     {
         logger.LogDebug(nameof(TableServiceDataPlane), nameof(QueryEntities), "Executing {0}: {1} {2} {3}", nameof(QueryEntities), query, tableName, storageAccountName);
 
-        var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
-        var files = Directory.EnumerateFiles(path);
-        var entities = files.Select(e => {
-            var content = File.ReadAllText(e);
-            return JsonSerializer.Deserialize<object>(content, GlobalSettings.JsonOptions);
-        }).ToArray();
+        var options = TableODataQueryOptions.Parse(query);
 
-        return entities; 
+        var path = resourceProvider.GetTableDataPath(subscriptionIdentifier, resourceGroupIdentifier, tableName, storageAccountName);
+
+        // Load all entities from disk as JsonObject so we can inspect individual properties.
+        var allEntities = Directory.EnumerateFiles(path)
+            .Select(file =>
+            {
+                var content = File.ReadAllText(file);
+                return JsonSerializer.Deserialize<JsonObject>(content, GlobalSettings.JsonOptions);
+            })
+            .Where(e => e is not null)
+            .Select(e => e!)
+            .ToList();
+
+        // Sort by (PartitionKey ASC, RowKey ASC) for deterministic, stable paging.
+        allEntities.Sort((a, b) =>
+        {
+            var pkA = a["PartitionKey"]?.GetValue<string>() ?? string.Empty;
+            var pkB = b["PartitionKey"]?.GetValue<string>() ?? string.Empty;
+            var pkCmp = string.Compare(pkA, pkB, StringComparison.Ordinal);
+            if (pkCmp != 0) return pkCmp;
+            var rkA = a["RowKey"]?.GetValue<string>() ?? string.Empty;
+            var rkB = b["RowKey"]?.GetValue<string>() ?? string.Empty;
+            return string.Compare(rkA, rkB, StringComparison.Ordinal);
+        });
+
+        // Apply continuation seek: skip entities that precede the (NextPartitionKey, NextRowKey) cursor.
+        IEnumerable<JsonObject> sequence = allEntities;
+        if (options.NextPartitionKey is not null)
+        {
+            var nextPk = options.NextPartitionKey;
+            var nextRk = options.NextRowKey ?? string.Empty;
+            sequence = sequence.SkipWhile(e =>
+            {
+                var pk = e["PartitionKey"]?.GetValue<string>() ?? string.Empty;
+                var rk = e["RowKey"]?.GetValue<string>() ?? string.Empty;
+                var pkCmp = string.Compare(pk, nextPk, StringComparison.Ordinal);
+                return pkCmp < 0 || (pkCmp == 0 && string.Compare(rk, nextRk, StringComparison.Ordinal) < 0);
+            });
+        }
+
+        // Apply $filter.
+        if (options.Filter is not null)
+            sequence = sequence.Where(e => TableODataFilter.Evaluate(options.Filter, e));
+
+        // Materialise so we can index for paging.
+        var filtered = sequence.ToList();
+
+        // Determine page boundary and populate continuation keys when more entities follow.
+        string? contNextPk = null;
+        string? contNextRk = null;
+        List<JsonObject> page;
+
+        if (options.Top.HasValue && filtered.Count > options.Top.Value)
+        {
+            page = filtered.Take(options.Top.Value).ToList();
+            var firstExcluded = filtered[options.Top.Value];
+            contNextPk = firstExcluded["PartitionKey"]?.GetValue<string>();
+            contNextRk = firstExcluded["RowKey"]?.GetValue<string>();
+        }
+        else
+        {
+            page = filtered;
+        }
+
+        // Apply $select projection: create a new JsonObject containing only the requested properties.
+        object?[] result;
+        if (options.Select is not null)
+        {
+            result = page
+                .Select(e =>
+                {
+                    var projected = new JsonObject();
+                    foreach (var prop in options.Select)
+                    {
+                        if (e.TryGetPropertyValue(prop, out var value))
+                            projected[prop] = value?.DeepClone();
+                    }
+                    return (object?)projected;
+                })
+                .ToArray();
+        }
+        else
+        {
+            result = page.Cast<object?>().ToArray();
+        }
+
+        return new TableQueryResult(result, contNextPk, contNextRk);
     }
 
     internal void DeleteEntity(SubscriptionIdentifier subscriptionIdentifier,

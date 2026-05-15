@@ -27,8 +27,9 @@ public sealed class QueryTableEntitiesCommand(ITopazLogger logger)
             : QueryString.Create("$filter", settings.Filter);
 
         var dataPlane = new TableServiceDataPlane(new TableResourceProvider(logger), logger);
-        var entities = dataPlane.QueryEntities(queryString, subscriptionIdentifier, resourceGroupIdentifier,
+        var queryResult = dataPlane.QueryEntities(queryString, subscriptionIdentifier, resourceGroupIdentifier,
             settings.TableName!, settings.AccountName!);
+        var entities = queryResult.Entities;
 
         if (entities.Length == 0)
         {

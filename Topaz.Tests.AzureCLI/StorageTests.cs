@@ -263,6 +263,49 @@ public class StorageTests : TopazFixture
     }
 
     [Test]
+    public async Task TableEntity_Query_WithFilter_ReturnsOnlyMatchingEntities()
+    {
+        const string storageAccountName = "topazstortblqry01";
+        const string resourceGroup = "test-storage-table-entity-qry-rg";
+        const string tableName = "testentities";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+                Assert.That(accountKey, Is.Not.Null.And.Not.Empty);
+            });
+
+        await RunAzureCliCommand(
+            $"az storage table create --name {tableName} --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint https://{storageAccountName}.table.storage.topaz.local.dev:8890");
+
+        await RunAzureCliCommand(
+            $"az storage entity insert --table-name {tableName} --entity PartitionKey=pk1 RowKey=rk1 Name=alice --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint https://{storageAccountName}.table.storage.topaz.local.dev:8890");
+
+        await RunAzureCliCommand(
+            $"az storage entity insert --table-name {tableName} --entity PartitionKey=pk2 RowKey=rk1 Name=bob --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint https://{storageAccountName}.table.storage.topaz.local.dev:8890");
+
+        // Act — filter should return only the pk1 entity.
+        await RunAzureCliCommand(
+            $"az storage entity query --table-name {tableName} --filter \"PartitionKey eq 'pk1'\" --account-name {storageAccountName} --account-key \"{accountKey}\" --table-endpoint https://{storageAccountName}.table.storage.topaz.local.dev:8890",
+            (resp) =>
+            {
+                var items = resp["items"]!.AsArray();
+                Assert.That(items, Has.Count.EqualTo(1));
+                Assert.That(items[0]!["PartitionKey"]!.GetValue<string>(), Is.EqualTo("pk1"));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
     public async Task Blob_Show_ReturnsExpectedProperties()
     {
         const string storageAccountName = "topazstorblobshow01";

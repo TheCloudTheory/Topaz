@@ -236,30 +236,6 @@ _Implemented: DELETE, List by resource group, List by subscription, and Update T
 
 
 
-### Azure Storage — OData query support for Table Storage
-
-<!--
-TODO: Storage: Improved OData $filter / $select / $top handling for Table Storage
-  Table Storage exposes a rich OData query interface that Topaz currently lacks.
-  The Azure SDK, Azure CLI, and Terraform all emit OData query parameters when
-  listing or querying table entities; without proper parsing these parameters are
-  silently ignored and callers receive unfiltered full-table results.
-
-  Implement OData query support in the Table Storage data plane:
-  - $filter — parse and evaluate simple OData filter expressions against entity
-    properties (logical operators: and, or, not; comparison operators: eq, ne, gt,
-    ge, lt, le; supported literal types: string, int32, int64, bool, datetime, guid).
-    Prioritise the predicates emitted by the Azure SDK and Terraform provider.
-  - $select — return only the requested property names in each entity object.
-  - $top — limit the number of entities returned per response page.
-  - $skiptoken — honour continuation tokens for server-side paging so multi-page
-    reads driven by the SDK work correctly.
-  Consider using Microsoft.OData.Core (ODataUriParser) for robust OData expression
-  parsing rather than ad-hoc string splitting.
-  milestone: v1.4-beta
-  labels: enhancement, storage
--->
-
 ---
 
 ## v1.5-beta

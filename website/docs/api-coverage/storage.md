@@ -134,7 +134,7 @@ Table Storage is served on port **8890** (HTTPS) in Topaz.
 | Upsert Entity (InsertOrReplace) | ✅ | `PUT /{tableName}(...)` |
 | Merge Entity (InsertOrMerge) | ✅ | `PATCH` |
 | Delete Entity | ✅ | `DELETE /{tableName}(PartitionKey='{pk}',RowKey='{rk}')` |
-| Query Entities | ✅ | `GET /{tableName}` |
+| Query Entities | ✅ | `GET /{tableName}` — supports `$filter` (OData v3: `eq`, `ne`, `gt`, `ge`, `lt`, `le`, `and`, `or`, `not`; string, int32, int64, bool, datetime, guid literals), `$select`, `$top`, and server-side paging via `NextPartitionKey`/`NextRowKey` continuation headers |
 
 ---
 
