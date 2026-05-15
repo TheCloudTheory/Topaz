@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 using Topaz.Service.VirtualNetwork.Models.Requests;
 using Topaz.Shared;
 
@@ -9,13 +10,13 @@ public sealed class NetworkSecurityGroupResourceProperties
 {
     public JsonElement? SecurityRules { get; set; }
 
-    public string ProvisioningState => "Succeeded";
+    [UsedImplicitly] public string ProvisioningState => "Succeeded";
 
-    public IReadOnlyList<DefaultSecurityRule> DefaultSecurityRules { get; } = _defaultRules;
+    [UsedImplicitly] public IReadOnlyList<DefaultSecurityRule> DefaultSecurityRules { get; } = DefaultRules;
 
-    private static readonly DefaultSecurityRule[] _defaultRules =
+    private static readonly DefaultSecurityRule[] DefaultRules =
     [
-        new DefaultSecurityRule
+        new()
         {
             Name = "AllowVnetInBound",
             Properties = new DefaultSecurityRuleProperties
@@ -31,7 +32,7 @@ public sealed class NetworkSecurityGroupResourceProperties
                 Direction = "Inbound"
             }
         },
-        new DefaultSecurityRule
+        new()
         {
             Name = "AllowAzureLoadBalancerInBound",
             Properties = new DefaultSecurityRuleProperties
@@ -47,7 +48,7 @@ public sealed class NetworkSecurityGroupResourceProperties
                 Direction = "Inbound"
             }
         },
-        new DefaultSecurityRule
+        new()
         {
             Name = "DenyAllInBound",
             Properties = new DefaultSecurityRuleProperties
@@ -63,7 +64,7 @@ public sealed class NetworkSecurityGroupResourceProperties
                 Direction = "Inbound"
             }
         },
-        new DefaultSecurityRule
+        new()
         {
             Name = "AllowVnetOutBound",
             Properties = new DefaultSecurityRuleProperties
@@ -79,7 +80,7 @@ public sealed class NetworkSecurityGroupResourceProperties
                 Direction = "Outbound"
             }
         },
-        new DefaultSecurityRule
+        new()
         {
             Name = "AllowInternetOutBound",
             Properties = new DefaultSecurityRuleProperties
@@ -95,7 +96,7 @@ public sealed class NetworkSecurityGroupResourceProperties
                 Direction = "Outbound"
             }
         },
-        new DefaultSecurityRule
+        new()
         {
             Name = "DenyAllOutBound",
             Properties = new DefaultSecurityRuleProperties
@@ -127,8 +128,7 @@ public sealed class NetworkSecurityGroupResourceProperties
         public required string Name { get; init; }
         public required DefaultSecurityRuleProperties Properties { get; init; }
 
-        [JsonIgnore]
-        public string Type => "Microsoft.Network/networkSecurityGroups/defaultSecurityRules";
+        [JsonIgnore] [UsedImplicitly] public string Type => "Microsoft.Network/networkSecurityGroups/defaultSecurityRules";
     }
 
     public sealed class DefaultSecurityRuleProperties
@@ -142,6 +142,6 @@ public sealed class NetworkSecurityGroupResourceProperties
         public required string Access { get; init; }
         public required int Priority { get; init; }
         public required string Direction { get; init; }
-        public string ProvisioningState => "Succeeded";
+        [UsedImplicitly] public string ProvisioningState => "Succeeded";
     }
 }

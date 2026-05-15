@@ -26,12 +26,12 @@ public sealed class PublicIpAddressResource : ArmResource<PublicIpAddressResourc
         Sku = sku;
     }
 
-    public sealed override string Id { get; init; } = string.Empty;
-    public sealed override string Name { get; init; } = string.Empty;
+    public override string Id { get; init; } = string.Empty;
+    public override string Name { get; init; } = string.Empty;
     public override string Type { get; init; } = "Microsoft.Network/publicIPAddresses";
-    public sealed override string? Location { get; set; }
-    public sealed override IDictionary<string, string>? Tags { get; set; }
+    public override string? Location { get; set; }
+    public override IDictionary<string, string>? Tags { get; set; }
     public override ResourceSku? Sku { get; init; }
     public override string? Kind { get; init; }
-    public sealed override PublicIpAddressResourceProperties Properties { get; init; } = new();
+    public override PublicIpAddressResourceProperties Properties { get; init; } = new();
 }

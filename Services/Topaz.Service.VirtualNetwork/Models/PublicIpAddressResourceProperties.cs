@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Topaz.Service.VirtualNetwork.Models.Requests;
 
 namespace Topaz.Service.VirtualNetwork.Models;
@@ -8,7 +9,7 @@ public sealed class PublicIpAddressResourceProperties
     public string PublicIPAddressVersion { get; set; } = "IPv4";
     public int IdleTimeoutInMinutes { get; set; } = 4;
     public string IpAddress { get; set; } = string.Empty;
-    public string ProvisioningState => "Succeeded";
+    [UsedImplicitly] public string ProvisioningState => "Succeeded";
 
     internal static PublicIpAddressResourceProperties FromRequest(CreateOrUpdatePublicIpAddressRequest request)
     {

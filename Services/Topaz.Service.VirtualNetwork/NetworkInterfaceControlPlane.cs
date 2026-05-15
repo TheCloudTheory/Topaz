@@ -91,15 +91,26 @@ internal sealed class NetworkInterfaceControlPlane(
                 resourceGroupOperation.Reason, resourceGroupOperation.Code);
         }
 
-        var isUpdate = provider.GetAs<NetworkInterfaceResource>(subscriptionIdentifier, resourceGroupIdentifier, name) != null;
+        var existing = provider.GetAs<NetworkInterfaceResource>(subscriptionIdentifier, resourceGroupIdentifier, name);
+        var isUpdate = existing != null;
 
-        var properties = NetworkInterfaceResourceProperties.FromRequest(request);
+        NetworkInterfaceResourceProperties properties;
+        if (isUpdate)
+        {
+            properties = existing!.Properties;
+            NetworkInterfaceResourceProperties.UpdateFromRequest(properties, request);
+        }
+        else
+        {
+            properties = NetworkInterfaceResourceProperties.FromRequest(request);
+        }
+
         var resource = new NetworkInterfaceResource(
             subscriptionIdentifier,
             resourceGroupIdentifier,
             name,
-            request.Location ?? resourceGroupOperation.Resource!.Location!,
-            request.Tags,
+            request.Location ?? existing?.Location ?? resourceGroupOperation.Resource!.Location!,
+            request.Tags ?? existing?.Tags,
             properties);
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, resource);
