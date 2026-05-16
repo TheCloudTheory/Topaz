@@ -17,6 +17,7 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
 {
     private readonly AzureStorageControlPlane _controlPlane = new(new StorageResourceProvider(logger), logger);
     private readonly StorageDataPlaneAuthorizationChecker _bearerChecker = new(eventPipeline, logger);
+    private readonly BlobServiceControlPlane _blobControlPlane = new(new BlobResourceProvider(logger));
 
     public bool RequestIsAuthorized(
         SubscriptionIdentifier subscriptionIdentifier,
@@ -28,11 +29,8 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
         string absolutePath,
         QueryString query)
     {
-        if (!headers.TryGetValue("Authorization", out var value))
-        {
-            logger.LogError("Authentication failure for Blob Storage. Authorization header is missing.");
-            return false;
-        }
+        if (!headers.TryGetValue("Authorization", out var value) || string.IsNullOrEmpty(value))
+            return IsAnonymousAccessAllowed(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method);
 
         var headerValue = value.ToString();
         var parts = headerValue.Split(' ', 2);
@@ -218,5 +216,77 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
         var dataBytes = Encoding.UTF8.GetBytes(stringToSign);
         using var hmac = new HMACSHA256(keyBytes);
         return Convert.ToBase64String(hmac.ComputeHash(dataBytes));
+    }
+
+    private bool IsAnonymousAccessAllowed(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string absolutePath,
+        QueryString query,
+        string method)
+    {
+        if (!method.Equals("GET", StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogError($"Anonymous access denied: method '{method}' is not permitted without credentials.");
+            return false;
+        }
+
+        // If a SAS signature is present treat this as a failed SAS request, not anonymous.
+        if (query.HasValue)
+        {
+            var queryPairs = query.Value!.TrimStart('?')
+                .Split('&', StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => p.Split('=', 2)[0]);
+            if (queryPairs.Any(k => k.Equals("sig", StringComparison.OrdinalIgnoreCase)))
+            {
+                logger.LogError("Authentication failure for Blob Storage: SAS signature present but no Authorization header.");
+                return false;
+            }
+        }
+
+        var segments = absolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length == 0) return false;
+        var containerName = segments[0];
+
+        var accessLevel = _blobControlPlane.GetContainerPublicAccess(
+            subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
+
+        if (string.IsNullOrEmpty(accessLevel))
+        {
+            logger.LogError($"Anonymous access denied: container '{containerName}' has no public access configured.");
+            return false;
+        }
+
+        var isBlobOperation = segments.Length > 1;
+
+        if (accessLevel.Equals("container", StringComparison.OrdinalIgnoreCase))
+        {
+            // container level: allow list-blobs (comp=list) and all blob GET operations
+            if (isBlobOperation) return true;
+            if (query.HasValue)
+            {
+                var queryPairs = query.Value!.TrimStart('?')
+                    .Split('&', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => p.Split('=', 2))
+                    .Where(p => p.Length == 2)
+                    .ToDictionary(p => p[0], p => p[1], StringComparer.OrdinalIgnoreCase);
+                if (queryPairs.TryGetValue("comp", out var comp) &&
+                    comp.Equals("list", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            logger.LogError($"Anonymous access denied: container-level access does not permit this operation on '{absolutePath}'.");
+            return false;
+        }
+
+        if (accessLevel.Equals("blob", StringComparison.OrdinalIgnoreCase))
+        {
+            if (isBlobOperation) return true;
+            logger.LogError($"Anonymous access denied: blob-level access does not permit container operations on '{absolutePath}'.");
+            return false;
+        }
+
+        logger.LogError($"Anonymous access denied: unrecognised access level '{accessLevel}' on container '{containerName}'.");
+        return false;
     }
 }

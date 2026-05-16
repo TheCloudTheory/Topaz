@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
@@ -9,7 +10,8 @@ namespace Topaz.Service.Storage;
 internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
 {
     public ControlPlaneOperationResult<Container> CreateContainer(SubscriptionIdentifier subscriptionIdentifier,
-        ResourceGroupIdentifier resourceGroupIdentifier, string containerName, string storageAccountName)
+        ResourceGroupIdentifier resourceGroupIdentifier, string containerName, string storageAccountName,
+        IHeaderDictionary? headers = null)
     {
         if (provider.ContainerExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName))
             return new ControlPlaneOperationResult<Container>(OperationResult.Conflict, null, null, null);
@@ -20,6 +22,12 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
         };
 
         provider.Create(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName, container);
+
+        var publicAccess = headers != null && headers.TryGetValue("x-ms-blob-public-access", out var v) && !string.IsNullOrWhiteSpace(v)
+            ? v.ToString() : null;
+        if (!string.IsNullOrWhiteSpace(publicAccess))
+            provider.SetContainerPublicAccess(subscriptionIdentifier, resourceGroupIdentifier,
+                storageAccountName, containerName, publicAccess);
 
         return new ControlPlaneOperationResult<Container>(OperationResult.Created, container, null, null);
     }
@@ -108,5 +116,20 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
                   </GeoReplication>
                 </StorageServiceStats>
                 """;
+    }
+
+    public string? GetContainerPublicAccess(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
+    {
+        if (!provider.ContainerExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName))
+            return null;
+        return provider.GetContainerPublicAccess(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
+    }
+
+    public void SetContainerPublicAccess(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName,
+        string? accessLevel)
+    {
+        provider.SetContainerPublicAccess(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName, accessLevel);
     }
 }

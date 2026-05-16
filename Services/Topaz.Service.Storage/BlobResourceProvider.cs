@@ -98,4 +98,36 @@ internal sealed class BlobResourceProvider(ITopazLogger logger) : ResourceProvid
         containerName = PathGuard.SanitizeName(containerName);
         return Path.Combine(storageAccountPath, ".blob", containerName);
     }
+
+    public string GetContainerPublicAccessFilePath(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
+    {
+        return Path.Combine(
+            GetContainerPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName),
+            ".container-public-access.txt");
+    }
+
+    public string? GetContainerPublicAccess(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
+    {
+        var filePath = GetContainerPublicAccessFilePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
+        if (!File.Exists(filePath)) return null;
+        var value = File.ReadAllText(filePath).Trim();
+        return string.IsNullOrEmpty(value) ? null : value;
+    }
+
+    public void SetContainerPublicAccess(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName,
+        string? accessLevel)
+    {
+        var filePath = GetContainerPublicAccessFilePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName);
+        if (string.IsNullOrEmpty(accessLevel))
+        {
+            if (File.Exists(filePath)) File.Delete(filePath);
+        }
+        else
+        {
+            File.WriteAllText(filePath, accessLevel);
+        }
+    }
 }

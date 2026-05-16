@@ -59,6 +59,11 @@ internal sealed class GetContainerPropertiesEndpoint(Pipeline eventPipeline, ITo
                     response.Headers.TryAddWithoutValidation(key, value);
             }
 
+            var accessLevelOp = _dataPlane.GetContainerPublicAccess(subscriptionIdentifier,
+                resourceGroupIdentifier, storageAccount!.Name, containerName);
+            if (accessLevelOp.Result == OperationResult.Success && !string.IsNullOrEmpty(accessLevelOp.Resource))
+                response.Headers.TryAddWithoutValidation("x-ms-blob-public-access", accessLevelOp.Resource);
+
             response.Content = new ByteArrayContent([]);
             response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/xml");
             response.Content.Headers.TryAddWithoutValidation("Last-Modified", now.ToString("R"));

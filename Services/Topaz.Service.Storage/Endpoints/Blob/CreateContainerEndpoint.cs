@@ -45,7 +45,7 @@ internal sealed class CreateContainerEndpoint(Pipeline eventPipeline, ITopazLogg
                 "Creating container: {0}", containerName);
 
             var op = _controlPlane.CreateContainer(subscriptionIdentifier, resourceGroupIdentifier, containerName,
-                storageAccount!.Name);
+                storageAccount!.Name, context.Request.Headers);
 
             response.StatusCode = op.Result switch
             {

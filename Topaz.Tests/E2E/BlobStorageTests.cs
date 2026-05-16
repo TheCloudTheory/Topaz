@@ -7,6 +7,7 @@ using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -1136,5 +1137,157 @@ public class BlobStorageTests
 
         // Assert
         Assert.That(content.Value.Content.ToString(), Is.EqualTo("hello from token auth"));
+    }
+
+    [Test]
+    public void BlobContainer_CreateWithContainerAccess_PublicAccessLevelStoredAndReturned()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+
+        // Act
+        serviceClient.CreateBlobContainer("anon-container-props", PublicAccessType.BlobContainer);
+        var containerClient = serviceClient.GetBlobContainerClient("anon-container-props");
+        var properties = containerClient.GetProperties();
+
+        // Assert
+        Assert.That(properties.Value.PublicAccess, Is.EqualTo(PublicAccessType.BlobContainer));
+    }
+
+    [Test]
+    public void BlobContainer_CreateWithBlobAccess_PublicAccessLevelStoredAndReturned()
+    {
+        // Arrange
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+
+        // Act
+        serviceClient.CreateBlobContainer("anon-blob-props", PublicAccessType.Blob);
+        var containerClient = serviceClient.GetBlobContainerClient("anon-blob-props");
+        var properties = containerClient.GetProperties();
+
+        // Assert
+        Assert.That(properties.Value.PublicAccess, Is.EqualTo(PublicAccessType.Blob));
+    }
+
+    [Test]
+    public async Task BlobContainer_AnonymousGetBlob_WithContainerAccess_Returns200()
+    {
+        // Arrange
+        const string containerName = "anon-get-container";
+        const string blobName = "hello.txt";
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer(containerName, PublicAccessType.BlobContainer);
+        serviceClient.GetBlobContainerClient(containerName).GetBlobClient(blobName)
+            .Upload(new BinaryData("anonymous content"), overwrite: true);
+
+        // Act – unauthenticated request
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        using var httpClient = new HttpClient(handler);
+        var blobUri = $"{TopazResourceHelpers.GetBlobServiceUri(StorageAccountName)}{containerName}/{blobName}";
+        var response = await httpClient.GetAsync(blobUri);
+
+        // Assert
+        Assert.That((int)response.StatusCode, Is.EqualTo(200));
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.That(body, Is.EqualTo("anonymous content"));
+    }
+
+    [Test]
+    public async Task BlobContainer_AnonymousListBlobs_WithContainerAccess_Returns200()
+    {
+        // Arrange
+        const string containerName = "anon-list-container";
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer(containerName, PublicAccessType.BlobContainer);
+        serviceClient.GetBlobContainerClient(containerName).GetBlobClient("file.txt")
+            .Upload(new BinaryData("data"), overwrite: true);
+
+        // Act – unauthenticated list request
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        using var httpClient = new HttpClient(handler);
+        var listUri = $"{TopazResourceHelpers.GetBlobServiceUri(StorageAccountName)}{containerName}?restype=container&comp=list";
+        var response = await httpClient.GetAsync(listUri);
+
+        // Assert
+        Assert.That((int)response.StatusCode, Is.EqualTo(200));
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.That(body, Does.Contain("file.txt"));
+    }
+
+    [Test]
+    public async Task BlobContainer_AnonymousGetBlob_WithBlobAccess_Returns200()
+    {
+        // Arrange
+        const string containerName = "anon-blob-get";
+        const string blobName = "data.txt";
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer(containerName, PublicAccessType.Blob);
+        serviceClient.GetBlobContainerClient(containerName).GetBlobClient(blobName)
+            .Upload(new BinaryData("blob-level content"), overwrite: true);
+
+        // Act – unauthenticated blob GET
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        using var httpClient = new HttpClient(handler);
+        var blobUri = $"{TopazResourceHelpers.GetBlobServiceUri(StorageAccountName)}{containerName}/{blobName}";
+        var response = await httpClient.GetAsync(blobUri);
+
+        // Assert
+        Assert.That((int)response.StatusCode, Is.EqualTo(200));
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.That(body, Is.EqualTo("blob-level content"));
+    }
+
+    [Test]
+    public async Task BlobContainer_AnonymousListBlobs_WithBlobAccess_Returns401()
+    {
+        // Arrange
+        const string containerName = "anon-blob-list-denied";
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer(containerName, PublicAccessType.Blob);
+
+        // Act – unauthenticated list (not permitted at blob-level)
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        using var httpClient = new HttpClient(handler);
+        var listUri = $"{TopazResourceHelpers.GetBlobServiceUri(StorageAccountName)}{containerName}?restype=container&comp=list";
+        var response = await httpClient.GetAsync(listUri);
+
+        // Assert
+        Assert.That((int)response.StatusCode, Is.EqualTo(401));
+    }
+
+    [Test]
+    public async Task BlobContainer_AnonymousGetBlob_WithNoPublicAccess_Returns401()
+    {
+        // Arrange
+        const string containerName = "anon-private";
+        const string blobName = "secret.txt";
+        var serviceClient = new BlobServiceClient(TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _key));
+        serviceClient.CreateBlobContainer(containerName); // no public access
+        serviceClient.GetBlobContainerClient(containerName).GetBlobClient(blobName)
+            .Upload(new BinaryData("secret"), overwrite: true);
+
+        // Act – unauthenticated request on private container
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        using var httpClient = new HttpClient(handler);
+        var blobUri = $"{TopazResourceHelpers.GetBlobServiceUri(StorageAccountName)}{containerName}/{blobName}";
+        var response = await httpClient.GetAsync(blobUri);
+
+        // Assert
+        Assert.That((int)response.StatusCode, Is.EqualTo(401));
     }
 }

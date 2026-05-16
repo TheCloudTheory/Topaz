@@ -51,6 +51,11 @@ internal sealed class GetContainerAclEndpoint(Pipeline eventPipeline, ITopazLogg
 
             if (op.Result != OperationResult.Success) return;
 
+            var accessLevelOp = _dataPlane.GetContainerPublicAccess(subscriptionIdentifier,
+                resourceGroupIdentifier, storageAccount!.Name, containerName);
+            if (accessLevelOp.Result == OperationResult.Success && !string.IsNullOrEmpty(accessLevelOp.Resource))
+                response.Headers.TryAddWithoutValidation("x-ms-blob-public-access", accessLevelOp.Resource);
+
             var now = DateTimeOffset.UtcNow;
             response.Headers.ETag = new EntityTagHeaderValue($"\"{now.Ticks}\"");
             response.Content = new StringContent(op.Resource!, Encoding.UTF8); // codeql[cs/web/xss] - Content is stored ACL XML retrieved from the data plane; served as application/xml, not reflected HTML.

@@ -948,7 +948,8 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
         string containerName,
-        Stream input)
+        Stream input,
+        IHeaderDictionary? headers = null)
     {
         logger.LogDebug(nameof(BlobServiceDataPlane), nameof(SetContainerAcl),
             "Account: `{0}`, Container: {1}", storageAccountName, containerName);
@@ -967,6 +968,56 @@ internal sealed class BlobServiceDataPlane(BlobServiceControlPlane controlPlane,
             body = "<?xml version=\"1.0\" encoding=\"utf-8\"?><SignedIdentifiers />";
 
         File.WriteAllText(aclFilePath, body);
+
+        // Store or clear the public access level alongside the ACL
+        var publicAccess = headers != null && headers.TryGetValue("x-ms-blob-public-access", out var v) && !string.IsNullOrWhiteSpace(v)
+            ? v.ToString() : null;
+        controlPlane.SetContainerPublicAccess(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, containerName, publicAccess);
+
+        return new DataPlaneOperationResult(OperationResult.Updated, null, null);
+    }
+
+    public DataPlaneOperationResult<string?> GetContainerPublicAccess(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string containerName)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(GetContainerPublicAccess),
+            "Account: `{0}`, Container: {1}", storageAccountName, containerName);
+
+        var (exists, _) = controlPlane.GetContainerMetadataState(subscriptionIdentifier,
+            resourceGroupIdentifier, storageAccountName, containerName);
+
+        if (!exists)
+            return new DataPlaneOperationResult<string?>(OperationResult.NotFound, null, null, null);
+
+        var accessLevel = controlPlane.GetContainerPublicAccess(subscriptionIdentifier,
+            resourceGroupIdentifier, storageAccountName, containerName);
+
+        return new DataPlaneOperationResult<string?>(OperationResult.Success, accessLevel, null, null);
+    }
+
+    public DataPlaneOperationResult SetContainerPublicAccess(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string containerName,
+        string? accessLevel)
+    {
+        logger.LogDebug(nameof(BlobServiceDataPlane), nameof(SetContainerPublicAccess),
+            "Account: `{0}`, Container: {1}, Level: {2}", storageAccountName, containerName, accessLevel ?? "(clear)");
+
+        var (exists, _) = controlPlane.GetContainerMetadataState(subscriptionIdentifier,
+            resourceGroupIdentifier, storageAccountName, containerName);
+
+        if (!exists)
+            return new DataPlaneOperationResult(OperationResult.NotFound, null, null);
+
+        controlPlane.SetContainerPublicAccess(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, containerName, accessLevel);
+
         return new DataPlaneOperationResult(OperationResult.Updated, null, null);
     }
 

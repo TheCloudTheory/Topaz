@@ -45,7 +45,7 @@ internal sealed class SetContainerAclEndpoint(Pipeline eventPipeline, ITopazLogg
                 "Setting ACL for container: {0}", containerName);
 
             var op = _dataPlane.SetContainerAcl(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccount!.Name, containerName, context.Request.Body);
+                storageAccount!.Name, containerName, context.Request.Body, context.Request.Headers);
 
             response.StatusCode = op.Result == OperationResult.Updated ? HttpStatusCode.OK : HttpStatusCode.NotFound;
 
