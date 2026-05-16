@@ -31,7 +31,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
         var safeRowKey = PathGuard.SanitizeName(metadata.RowKey!);
 
         var etag = new ETag(DateTimeOffset.Now.Ticks.ToString());
-        var timestamp = DateTimeOffset.Now.ToUniversalTime();
+        var timestamp = DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.ffffff'Z'");
         var fileName = $"{safePartitionKey}_{safeRowKey}.json";
         var entityPath = Path.Combine(path, fileName);
         PathGuard.EnsureWithinDirectory(entityPath, path);
@@ -235,7 +235,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
         var root = JsonNode.Parse(rawContent) ?? throw new Exception("Cannot parse entity body.");
         root["PartitionKey"] = partitionKey;
         root["RowKey"] = rowKey;
-        root["Timestamp"] = DateTimeOffset.Now.ToUniversalTime();
+        root["Timestamp"] = DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.ffffff'Z'");
         root["odata.etag"] = DateTimeOffset.Now.Ticks;
 
         File.WriteAllText(entityPath, root.ToJsonString());
@@ -280,7 +280,7 @@ internal sealed class TableServiceDataPlane(TableResourceProvider resourceProvid
 
         var root = JsonNode.Parse(rawContent);
         var newEtag = DateTimeOffset.Now.Ticks;
-        var timestamp = DateTimeOffset.Now.ToUniversalTime();
+        var timestamp = DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.ffffff'Z'");
 
         root!["Timestamp"] = timestamp;
         root!["odata.etag"] = newEtag;
