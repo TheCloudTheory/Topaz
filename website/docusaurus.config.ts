@@ -132,9 +132,9 @@ const config: Config = {
           to: '/docs/intro',
           label: 'Documentation',
           position: 'left',
-          activeBaseRegex: '/docs/(?!roadmap)',
+          activeBaseRegex: '/docs/',
         },
-        { to: '/docs/roadmap', label: 'Roadmap', position: 'left' },
+        { to: '/roadmap', label: 'Roadmap', position: 'left' },
         { to: '/pricing', label: 'Pricing', position: 'left' },
         { to: '/demo', label: 'Demo', position: 'left' },
         { to: '/blog', label: 'Blog', position: 'left' },
@@ -162,7 +162,7 @@ const config: Config = {
             },
             {
               label: 'Roadmap',
-              to: '/docs/roadmap',
+              to: '/roadmap',
             },
             {
               label: 'Pricing',
@@ -191,7 +191,7 @@ const config: Config = {
             },
             {
               label: 'Roadmap',
-              to: '/docs/roadmap',
+              to: '/roadmap',
             },
             {
               label: 'MCP server',

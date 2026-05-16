@@ -69,10 +69,9 @@ Services live under `Services/Topaz.Service.*`. Each service has:
 
 ### Backlog / Roadmap
 
-- New work → add `<!-- TODO: ... -->` to `BACKLOG.md` **and** a row to `website/docs/roadmap.md`.
+- New work → add `<!-- TODO: ... -->` to `BACKLOG.md` **and** a row to `website/src/pages/roadmap.md`.
 - Completed work → remove the task from backlog so it will be removed from GitHub issues.
 - Badges: `<span class="badge--stable">Stable</span>` or `<span class="badge--preview">Preview</span>` — use CSS classes, never inline styles.
-- **Versioned docs** — mirror every roadmap change in **all** `website/versioned_docs/version-*/roadmap.md` files. All versioned roadmap files must stay in sync.
 - Badge CSS lives in `website/src/css/custom.css` (`.badge--stable` and `.badge--preview`). Do not add inline styles; always use these classes.
 - For simple tasks (CRUD, scafollding, boilerplate) always add `good first issue` label.
 
