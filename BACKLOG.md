@@ -163,25 +163,6 @@ TODO: Storage: Stored Access Policy enforcement at request time
   labels: enhancement, storage, security
 -->
 
-<!--
-TODO: Storage: Anonymous / public-access reads for Blob containers
-  Real Azure allows Blob containers to permit unauthenticated reads when created
-  with `x-ms-blob-public-access: container` (list + read) or `blob` (read only).
-  Currently any request that reaches a Blob endpoint without an Authorization header
-  or SAS token receives 401 unconditionally.
-  Implement anonymous read support:
-  - Store the public-access level when a container is created or updated
-    (`x-ms-blob-public-access` header on PUT /{containerName}?restype=container).
-  - In BlobStorageSecurityProvider.RequestIsAuthorized, if no Authorization header
-    and no SAS query parameters are present, look up the container's public-access
-    level. Allow the request if the access level permits the operation
-    (container-level: list blobs + get blob; blob-level: get blob only).
-  - Return the public-access level in the `x-ms-blob-public-access` response header
-    on GetContainerProperties and GetContainerAcl.
-  milestone: v1.4-beta
-  labels: enhancement, storage, security
--->
-
 ### Topaz Portal — tag editing
 
 <!--
