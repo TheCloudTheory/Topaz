@@ -210,6 +210,12 @@ _Implemented in v1.3-beta._
 
 ## v1.7-beta
 
+### Storage — Service SAS permission enforcement
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Service SAS permission-letter enforcement | Map `sp=` letters to HTTP verb; return 403 `AuthorizationPermissionMismatch` on mismatch for Blob, Queue, and Table |
+
 ### Azure Cosmos DB — SQL API data plane
 
 | | Feature | Description |

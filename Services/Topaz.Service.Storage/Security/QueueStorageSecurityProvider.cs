@@ -11,12 +11,14 @@ namespace Topaz.Service.Storage.Security;
 
 /// <summary>
 /// Validates authorization for Azure Queue Storage data-plane requests.
-/// Supports SharedKey (13-field Blob/Queue format), SharedKeyLite, and Bearer (RBAC).
+/// Supports SharedKey (13-field Blob/Queue format), SharedKeyLite, Bearer (RBAC), and Service SAS.
 /// </summary>
 internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopazLogger logger)
 {
     private readonly AzureStorageControlPlane _controlPlane = new(new StorageResourceProvider(logger), logger);
     private readonly StorageDataPlaneAuthorizationChecker _bearerChecker = new(eventPipeline, logger);
+    private readonly QueueServiceControlPlane _queueControlPlane = new(new QueueResourceProvider(logger), logger);
+    private readonly ServiceSasValidator _sasValidator = new(new AzureStorageControlPlane(new StorageResourceProvider(logger), logger), logger);
 
     public bool RequestIsAuthorized(
         SubscriptionIdentifier subscriptionIdentifier,
@@ -30,6 +32,14 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
     {
         if (!headers.TryGetValue("Authorization", out var value))
         {
+            if (ServiceSasValidator.IsServiceSas(query))
+            {
+                logger.LogDebug(nameof(QueueStorageSecurityProvider), nameof(RequestIsAuthorized),
+                    "No Authorization header; attempting Service SAS validation for path='{0}'", absolutePath);
+                return IsAuthorizedForServiceSas(
+                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query);
+            }
+
             logger.LogError("Authentication failure for Queue Storage. Authorization header is missing.");
             return false;
         }
@@ -56,6 +66,23 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
     {
         logger.LogError($"Authentication failure for Queue Storage. Unsupported scheme: {scheme}.");
         return false;
+    }
+
+    private bool IsAuthorizedForServiceSas(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string absolutePath,
+        QueryString query)
+    {
+        // Derive the queue name from the first path segment (strip /messages suffix if present).
+        var queueName = absolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
+
+        return _sasValidator.Validate(
+            subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
+            absolutePath, query, ServiceSasValidator.SasServiceType.Queue,
+            policyId => _queueControlPlane.GetQueueStoredPolicy(
+                subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName, policyId));
     }
 
     private bool IsAuthorizedForSharedKey(

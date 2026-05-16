@@ -1,8 +1,10 @@
 using System.Net;
+using System.Xml.Linq;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
+using Topaz.Service.Storage.Security;
 using Topaz.Service.Storage.Serialization;
 
 namespace Topaz.Service.Storage;
@@ -131,5 +133,27 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
         string? accessLevel)
     {
         provider.SetContainerPublicAccess(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName, accessLevel);
+    }
+
+    public StoredAccessPolicy? GetContainerStoredPolicy(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string containerName,
+        string policyId)
+    {
+        var filePath = provider.GetContainerAclFilePath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, containerName);
+        if (!File.Exists(filePath)) return null;
+
+        var doc = XDocument.Load(filePath);
+        var match = doc.Descendants("SignedIdentifier")
+            .FirstOrDefault(e => (string?)e.Element("Id") == policyId);
+        if (match == null) return null;
+
+        return new StoredAccessPolicy(
+            (string?)match.Element("Permission"),
+            (string?)match.Element("Start"),
+            (string?)match.Element("Expiry"));
     }
 }

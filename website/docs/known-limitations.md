@@ -8,6 +8,26 @@ keywords: [topaz limitations, azure emulator limitations, storage ports, topaz k
 
 This page documents deliberate design trade-offs in the current version of Topaz that differ from real Azure behaviour. Each entry notes the impact and the milestone where the limitation is expected to be resolved.
 
+## Service SAS — IP range restriction (`sip=`) not enforced
+
+**Affected services:** Blob Storage, Queue Storage, Table Storage (data plane)
+
+Real Azure validates the `sip` parameter in a Service SAS token against the source IP address of the incoming request. If the caller's IP falls outside the declared range the request is rejected with `403 AuthorizationSourceIPMismatch`.
+
+Topaz detects the `sip` parameter and logs it at debug level but does **not** block any requests based on it. All source IPs are permitted regardless of the `sip` value in the SAS token.
+
+### Impact
+
+Tests or applications that rely on `sip=` to restrict access to a specific IP range will not see requests rejected — the SAS token grants access to all callers as if `sip` were absent.
+
+**Workaround:** none. IP-range enforcement cannot be tested against Topaz in this release.
+
+### Planned fix — v1.7-beta
+
+Implement source-IP extraction from the HTTP context and compare it against the CIDR or single-IP range expressed in `sip`. Return `403 AuthorizationSourceIPMismatch` when the check fails.
+
+---
+
 ## Azure Storage — per-service ports
 
 **Affected services:** Blob Storage (8891), Table Storage (8890), Queue Storage (8893), File Storage (8894)

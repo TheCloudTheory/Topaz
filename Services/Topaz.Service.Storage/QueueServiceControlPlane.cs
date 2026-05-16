@@ -3,6 +3,7 @@ using System.Xml.Linq;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
+using Topaz.Service.Storage.Security;
 using Topaz.Shared;
 
 namespace Topaz.Service.Storage;
@@ -72,6 +73,28 @@ internal sealed class QueueServiceControlPlane(QueueResourceProvider provider, I
         var exists = provider.QueueExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName);
         var filePath = provider.GetQueueAclFilePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName);
         return (exists, filePath);
+    }
+
+    public StoredAccessPolicy? GetQueueStoredPolicy(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string queueName,
+        string policyId)
+    {
+        var filePath = provider.GetQueueAclFilePath(subscriptionIdentifier, resourceGroupIdentifier,
+            storageAccountName, queueName);
+        if (!File.Exists(filePath)) return null;
+
+        var doc = XDocument.Load(filePath);
+        var match = doc.Descendants("SignedIdentifier")
+            .FirstOrDefault(e => (string?)e.Element("Id") == policyId);
+        if (match == null) return null;
+
+        return new StoredAccessPolicy(
+            (string?)match.Element("Permission"),
+            (string?)match.Element("Start"),
+            (string?)match.Element("Expiry"));
     }
 
     public ControlPlaneOperationResult SetQueueMetadata(SubscriptionIdentifier subscriptionIdentifier,

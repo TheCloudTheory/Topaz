@@ -6,6 +6,7 @@ using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage.Models;
 using Topaz.Service.Storage.Models.Requests;
 using Topaz.Service.Storage.Models.Responses;
+using Topaz.Service.Storage.Security;
 using Topaz.Service.Storage.Serialization;
 using Topaz.Shared;
 using TableServiceProperties = Topaz.Service.Storage.Models.TableServiceProperties;
@@ -191,5 +192,27 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         var result = new SignedIdentifiers(acls.ToArray());
 
         return new ControlPlaneOperationResult<SignedIdentifiers>(OperationResult.Success, result, null, null);
+    }
+
+    public StoredAccessPolicy? GetTableStoredPolicy(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string tableName,
+        string policyId)
+    {
+        var aclPath = provider.GetTableAclPath(subscriptionIdentifier, resourceGroupIdentifier, tableName,
+            storageAccountName);
+        var policyFile = Path.Combine(aclPath, policyId + ".xml");
+        if (!File.Exists(policyFile)) return null;
+
+        var serializer = new XmlSerializer(typeof(TableSignedIdentifier));
+        using var stream = File.OpenRead(policyFile);
+        var policy = (TableSignedIdentifier)serializer.Deserialize(stream)!;
+
+        return new StoredAccessPolicy(
+            policy.AccessPolicy.Permission,
+            policy.AccessPolicy.StartsOn?.ToString("O"),
+            policy.AccessPolicy.ExpiresOn?.ToString("O"));
     }
 }

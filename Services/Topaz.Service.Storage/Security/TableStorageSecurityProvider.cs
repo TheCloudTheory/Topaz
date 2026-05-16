@@ -14,6 +14,8 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
 {
     private readonly AzureStorageControlPlane _controlPlane = new(new StorageResourceProvider(logger), logger);
     private readonly StorageDataPlaneAuthorizationChecker _bearerChecker = new(eventPipeline, logger);
+    private readonly TableServiceControlPlane _tableControlPlane = new(new TableResourceProvider(logger), logger);
+    private readonly ServiceSasValidator _sasValidator = new(new AzureStorageControlPlane(new StorageResourceProvider(logger), logger), logger);
 
     public bool RequestIsAuthorized(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, IHeaderDictionary headers,
@@ -22,6 +24,14 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
     {
         if (!headers.TryGetValue("Authorization", out var value))
         {
+            if (ServiceSasValidator.IsServiceSas(query))
+            {
+                logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(RequestIsAuthorized),
+                    "No Authorization header; attempting Service SAS validation for path='{0}'", absolutePath);
+                return IsAuthorizedForServiceSas(
+                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query);
+            }
+
             logger.LogError($"Authentication failure for SharedKeyLite scheme. Authorization header is missing.");
             return false;
         }
@@ -47,6 +57,25 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
                 logger.LogError($"Authentication failure for {scheme}. Scheme is not supported.");
                 return false;
         }
+    }
+
+    private bool IsAuthorizedForServiceSas(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string absolutePath,
+        QueryString query)
+    {
+        // Derive the table name from the first path segment (strip OData key predicates if present).
+        var firstSegment = absolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
+        var parenIndex = firstSegment.IndexOf('(');
+        var tableName = parenIndex >= 0 ? firstSegment[..parenIndex] : firstSegment;
+
+        return _sasValidator.Validate(
+            subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
+            absolutePath, query, ServiceSasValidator.SasServiceType.Table,
+            policyId => _tableControlPlane.GetTableStoredPolicy(
+                subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName, policyId));
     }
 
     private bool IsAuthorizedForSharedKeyScheme(SubscriptionIdentifier subscriptionIdentifier,

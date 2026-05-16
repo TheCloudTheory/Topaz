@@ -38,20 +38,23 @@ internal abstract class QueueDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
         HttpContext context,
         HttpResponseMessage response)
     {
-        if (!context.Request.Headers.TryGetValue("Authorization", out _))
-        {
-            response.StatusCode = HttpStatusCode.Unauthorized;
-            response.Headers.TryAddWithoutValidation("WWW-Authenticate", StorageDataPlaneAuthorizationChecker.WwwAuthenticateChallenge);
-            return false;
-        }
         var rawTarget = context.Features.Get<IHttpRequestFeature>()?.RawTarget
                         ?? context.Request.Path.Value
                         ?? string.Empty;
         var queryIndex = rawTarget.IndexOf('?');
         var rawPath = queryIndex >= 0 ? rawTarget[..queryIndex] : rawTarget;
-        return _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
+
+        var authorized = _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccountName, context.Request.Headers, requiredPermissions, context.Request.Method,
             rawPath, context.Request.QueryString);
+
+        if (!authorized)
+        {
+            response.StatusCode = HttpStatusCode.Unauthorized;
+            response.Headers.TryAddWithoutValidation("WWW-Authenticate", StorageDataPlaneAuthorizationChecker.WwwAuthenticateChallenge);
+        }
+
+        return authorized;
     }
 
     protected static bool RejectIfSecondaryHostForMutation(IHeaderDictionary headers, HttpResponseMessage response)

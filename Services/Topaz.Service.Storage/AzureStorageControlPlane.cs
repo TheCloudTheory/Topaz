@@ -312,7 +312,7 @@ internal sealed class AzureStorageControlPlane(
             signedVersion,
             string.Empty);
 
-        var keyBytes = System.Text.Encoding.UTF8.GetBytes(signingKey.Value);
+        var keyBytes = Convert.FromBase64String(signingKey.Value);
         var signature = Convert.ToBase64String(
             System.Security.Cryptography.HMACSHA256.HashData(keyBytes,
                 System.Text.Encoding.UTF8.GetBytes(stringToSign)));
@@ -491,7 +491,7 @@ internal sealed class AzureStorageControlPlane(
             string.Empty,  // rscl (Content-Language)
             string.Empty); // rsct (Content-Type)
 
-        var keyBytes = System.Text.Encoding.UTF8.GetBytes(signingKey.Value);
+        var keyBytes = Convert.FromBase64String(signingKey.Value);
         var signature = Convert.ToBase64String(
             System.Security.Cryptography.HMACSHA256.HashData(keyBytes,
                 System.Text.Encoding.UTF8.GetBytes(stringToSign)));

@@ -172,3 +172,26 @@ Queue Storage is served on port **8893** (HTTPS) in Topaz.
 | Delete Message | ✅ | `DELETE /{queue-name}/messages/{messageId}?popreceipt={popReceipt}` |
 | Update Message | ✅ | `PUT /{queue-name}/messages/{messageId}` — update visibility timeout and/or content |
 | Clear Messages | ✅ | `DELETE /{queue-name}/messages` |
+
+---
+
+## Service SAS Authentication
+
+Topaz validates [Service SAS](https://learn.microsoft.com/en-us/rest/api/storageservices/create-service-sas) tokens on all three data-plane services. The signature is verified using HMAC-SHA256 with the storage account key. Stored access policies (`si=` parameter) are resolved from the persisted ACL of each resource.
+
+| Service | SAS resource type (`sr=`) | Status | Notes |
+|---------|--------------------------|--------|-------|
+| Blob | Container (`c`) | ✅ | StringToSign: 16 fields including `sr`, `si`, `sip`, `spr`, response header overrides |
+| Blob | Blob (`b`) | ✅ | Full blob-level SAS (read, write, delete, create, add) |
+| Blob | Stored access policy (`si=`) | ✅ | Policy resolved from `.container-acl.xml`; expiry / permissions merged from stored policy |
+| Queue | Queue (`q`) | ✅ | StringToSign: 8 fields; add/process/read/update permissions |
+| Queue | Stored access policy (`si=`) | ✅ | Policy resolved from `.acl.xml` |
+| Table | Table (`t`) | ✅ | StringToSign: 12 fields including `spk`/`srk`/`epk`/`erk` row-range fields |
+| Table | Stored access policy (`si=`) | ✅ | Policy resolved from `acl/{policyId}.xml` |
+
+:::caution[Known Limitations]
+
+- **IP range restriction (`sip=`)**: The `sip` parameter is detected and logged but not enforced. All source IPs are permitted regardless of the `sip` value in the SAS token.
+- **Permission-letter enforcement (`sp=`)**: The `sp` permission letters are not checked against the HTTP verb of the incoming request (e.g. `r`→GET, `w`→PUT, `d`→DELETE). Any cryptographically valid SAS token is accepted regardless of the declared permissions. Verb-level enforcement is tracked in the backlog for a future release.
+
+:::

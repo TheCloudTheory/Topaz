@@ -11,13 +11,14 @@ namespace Topaz.Service.Storage.Security;
 
 /// <summary>
 /// Validates authorization for Azure Blob Storage data-plane requests.
-/// Supports SharedKey (13-field Blob/Queue format), SharedKeyLite, and Bearer (RBAC).
+/// Supports SharedKey (13-field Blob/Queue format), SharedKeyLite, Bearer (RBAC), and Service SAS.
 /// </summary>
 internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopazLogger logger)
 {
     private readonly AzureStorageControlPlane _controlPlane = new(new StorageResourceProvider(logger), logger);
     private readonly StorageDataPlaneAuthorizationChecker _bearerChecker = new(eventPipeline, logger);
     private readonly BlobServiceControlPlane _blobControlPlane = new(new BlobResourceProvider(logger));
+    private readonly ServiceSasValidator _sasValidator = new(new AzureStorageControlPlane(new StorageResourceProvider(logger), logger), logger);
 
     public bool RequestIsAuthorized(
         SubscriptionIdentifier subscriptionIdentifier,
@@ -30,7 +31,17 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
         QueryString query)
     {
         if (!headers.TryGetValue("Authorization", out var value) || string.IsNullOrEmpty(value))
+        {
+            if (ServiceSasValidator.IsServiceSas(query))
+            {
+                logger.LogDebug(nameof(BlobStorageSecurityProvider), nameof(RequestIsAuthorized),
+                    "No Authorization header; attempting Service SAS validation for path='{0}'", absolutePath);
+                return IsAuthorizedForServiceSas(
+                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query);
+            }
+
             return IsAnonymousAccessAllowed(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method);
+        }
 
         var headerValue = value.ToString();
         var parts = headerValue.Split(' ', 2);
@@ -54,6 +65,23 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
     {
         logger.LogError($"Authentication failure for Blob Storage. Unsupported scheme: {scheme}.");
         return false;
+    }
+
+    private bool IsAuthorizedForServiceSas(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName,
+        string absolutePath,
+        QueryString query)
+    {
+        // Derive the container name from the first path segment.
+        var containerName = absolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
+
+        return _sasValidator.Validate(
+            subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
+            absolutePath, query, ServiceSasValidator.SasServiceType.Blob,
+            policyId => _blobControlPlane.GetContainerStoredPolicy(
+                subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName, policyId));
     }
 
     private bool IsAuthorizedForSharedKey(
