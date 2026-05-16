@@ -14,6 +14,10 @@ The Portal is a front-end for the emulator. Start `topaz-host` (or the `thecloud
 
 :::
 
+![Topaz Portal dashboard showing subscriptions, resource groups, and service overview](/img/topaz-portal.png)
+
+*The Topaz Portal dashboard gives you an at-a-glance overview of all emulated services — subscriptions, resource groups, Key Vaults, storage accounts, and more — without leaving your browser.*
+
 ## Running the Portal
 
 Pull and start the Portal container, binding it to a local port of your choice (8900 is used in the examples below):
