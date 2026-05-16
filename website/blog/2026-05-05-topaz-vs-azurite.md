@@ -142,7 +142,7 @@ If your application uses only Storage, a single account is enough, and you do no
 
 ## What is coming for Storage in Topaz
 
-The Storage roadmap is publicly tracked in [`BACKLOG.md`](https://github.com/TheCloudTheory/Topaz/blob/main/BACKLOG.md) and mirrored on the [website roadmap](/docs/roadmap). The near-term Storage work in flight:
+The Storage roadmap is publicly tracked in [`BACKLOG.md`](https://github.com/TheCloudTheory/Topaz/blob/main/BACKLOG.md) and mirrored on the [website roadmap](/roadmap). The near-term Storage work in flight:
 
 **v1.4-beta — SAS token validation on the data plane.**
 The control plane already generates SAS tokens via `ListAccountSas` and `ListServiceSas`. The data-plane security providers (Blob, Queue, Table) currently only recognise the `Authorization:` header — incoming requests with `?sv=...&sig=...` query strings hit the missing-header path and return `401`. The work in progress adds:
