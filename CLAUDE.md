@@ -70,10 +70,11 @@ Services live under `Services/Topaz.Service.*`. Each service has:
 ### Backlog / Roadmap
 
 - New work → add `<!-- TODO: ... -->` to `BACKLOG.md` **and** a row to `website/docs/roadmap.md`.
-- Completed work → leave the row as-is. Never delete or modify existing roadmap rows.
+- Completed work → remove the task from backlog so it will be removed from GitHub issues.
 - Badges: `<span class="badge--stable">Stable</span>` or `<span class="badge--preview">Preview</span>` — use CSS classes, never inline styles.
 - **Versioned docs** — mirror every roadmap change in **all** `website/versioned_docs/version-*/roadmap.md` files. All versioned roadmap files must stay in sync.
 - Badge CSS lives in `website/src/css/custom.css` (`.badge--stable` and `.badge--preview`). Do not add inline styles; always use these classes.
+- For simple tasks (CRUD, scafollding, boilerplate) always add `good first issue` label.
 
 ## API Coverage docs
 
@@ -113,6 +114,10 @@ response.StatusCode = HttpStatusCode.OK;
 ### Filesystem rule
 
 Never access the filesystem directly from a control plane or endpoint. All reads and writes must go through a `ResourceProviderBase<TService>` subclass.
+
+### Control / data plane responsibility rule
+
+Control and data planes are the layer between endpoints and resource providers. Endpoints **must never** implement service-specific logic.
 
 ### Serialization
 
@@ -237,6 +242,11 @@ The `UpdateMessage` endpoint returns metadata in **response headers, not the bod
 
 - Changes to networking ports, resource ID formats, or `GlobalSettings.JsonOptions` — confirm desired behaviour before applying broad changes.
 - Public API changes or anything affecting resource IDs or serialization — present a summary before applying.
+- New concepts which are not yet introduced
+
+## Naming conventions
+
+- **Always** use full names, do not use abbrevations.
 
 ## Git rules
 
