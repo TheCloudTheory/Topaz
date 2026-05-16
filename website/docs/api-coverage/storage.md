@@ -195,3 +195,35 @@ Topaz validates [Service SAS](https://learn.microsoft.com/en-us/rest/api/storage
 - **Permission-letter enforcement (`sp=`)**: The `sp` permission letters are not checked against the HTTP verb of the incoming request (e.g. `r`→GET, `w`→PUT, `d`→DELETE). Any cryptographically valid SAS token is accepted regardless of the declared permissions. Verb-level enforcement is tracked in the backlog for a future release.
 
 :::
+
+---
+
+## Account SAS Authentication
+
+Topaz validates [Account SAS](https://learn.microsoft.com/en-us/rest/api/storageservices/create-account-sas) tokens on all three data-plane services. The signature is verified using HMAC-SHA256 with the storage account key, with full support for the `sv`, `ss`, `srt`, `sp`, `se`, `st`, `sip`, `spr`, and `ses` parameters.
+
+Detection: Account SAS tokens are identified by the simultaneous presence of `sv=`, `sig=`, `ss=`, and `srt=` query parameters. This distinguishes them from Service SAS tokens (which lack `ss=` and `srt=`).
+
+| Service | Resource type (`srt=`) | Status | Notes |
+|---------|------------------------|--------|-------|
+| Blob (`ss=b`) | Service (`s`) | ✅ | Service-level operations (list containers, get/set service properties) |
+| Blob (`ss=b`) | Container (`c`) | ✅ | Container-level operations (list blobs, create/delete container) |
+| Blob (`ss=b`) | Object (`o`) | ✅ | Blob-level operations (get, put, delete blob) |
+| Queue (`ss=q`) | Service (`s`) | ✅ | Service-level operations (list queues, get/set service properties) |
+| Queue (`ss=q`) | Container (`c`) | ✅ | Queue-level operations (create/delete queue, get metadata) |
+| Queue (`ss=q`) | Object (`o`) | ✅ | Message-level operations (send, receive, delete, update messages) |
+| Table (`ss=t`) | Service (`s`) | ✅ | Service-level operations (get/set service properties) |
+| Table (`ss=t`) | Container (`c`) | ✅ | Table-level operations (query tables, create/delete table) |
+| Table (`ss=t`) | Object (`o`) | ✅ | Entity-level operations (query, insert, update, delete entities) |
+
+The `StringToSign` format follows the spec:
+- For `sv < 2020-12-06`: `accountName\nsp\nss\nsrt\nst\nse\nsip\nspr\nsv\n`
+- For `sv >= 2020-12-06`: `accountName\nsp\nss\nsrt\nst\nse\nsip\nspr\nsv\nses\n` (adds signed encryption scope)
+
+:::caution[Known Limitations]
+
+- **IP range restriction (`sip=`)**: The `sip` parameter is detected and logged but not enforced.
+- **HTTP method enforcement (`sp=`)**: Permission letters are validated against the HTTP method of the request (e.g. `r`→GET, `w`→PUT, `d`→DELETE, `a`→POST add, `p`→GET process). Enforcement is complete for standard CRUD operations.
+- **Encryption scope (`ses=`)**: The `ses` field is included in the `StringToSign` for versions ≥ 2020-12-06 but the encryption scope is not applied to storage operations.
+
+:::

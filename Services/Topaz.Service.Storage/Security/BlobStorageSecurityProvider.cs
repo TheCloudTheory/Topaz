@@ -19,6 +19,7 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
     private readonly StorageDataPlaneAuthorizationChecker _bearerChecker = new(eventPipeline, logger);
     private readonly BlobServiceControlPlane _blobControlPlane = new(new BlobResourceProvider(logger));
     private readonly ServiceSasValidator _sasValidator = new(new AzureStorageControlPlane(new StorageResourceProvider(logger), logger), logger);
+    private readonly AccountSasValidator _accountSasValidator = new(new AzureStorageControlPlane(new StorageResourceProvider(logger), logger), logger);
 
     public bool RequestIsAuthorized(
         SubscriptionIdentifier subscriptionIdentifier,
@@ -32,6 +33,15 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
     {
         if (!headers.TryGetValue("Authorization", out var value) || string.IsNullOrEmpty(value))
         {
+            if (AccountSasValidator.IsAccountSas(query))
+            {
+                logger.LogDebug(nameof(BlobStorageSecurityProvider), nameof(RequestIsAuthorized),
+                    "No Authorization header; attempting Account SAS validation for path='{0}'", absolutePath);
+                return _accountSasValidator.ValidateForPath(
+                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
+                    method, absolutePath, query, AccountSasValidator.AccountSasService.Blob);
+            }
+
             if (ServiceSasValidator.IsServiceSas(query))
             {
                 logger.LogDebug(nameof(BlobStorageSecurityProvider), nameof(RequestIsAuthorized),

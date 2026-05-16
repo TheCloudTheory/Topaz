@@ -16,6 +16,7 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
     private readonly StorageDataPlaneAuthorizationChecker _bearerChecker = new(eventPipeline, logger);
     private readonly TableServiceControlPlane _tableControlPlane = new(new TableResourceProvider(logger), logger);
     private readonly ServiceSasValidator _sasValidator = new(new AzureStorageControlPlane(new StorageResourceProvider(logger), logger), logger);
+    private readonly AccountSasValidator _accountSasValidator = new(new AzureStorageControlPlane(new StorageResourceProvider(logger), logger), logger);
 
     public bool RequestIsAuthorized(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, IHeaderDictionary headers,
@@ -24,6 +25,15 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
     {
         if (!headers.TryGetValue("Authorization", out var value))
         {
+            if (AccountSasValidator.IsAccountSas(query))
+            {
+                logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(RequestIsAuthorized),
+                    "No Authorization header; attempting Account SAS validation for path='{0}'", absolutePath);
+                return _accountSasValidator.ValidateForPath(
+                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
+                    method, absolutePath, query, AccountSasValidator.AccountSasService.Table);
+            }
+
             if (ServiceSasValidator.IsServiceSas(query))
             {
                 logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(RequestIsAuthorized),
