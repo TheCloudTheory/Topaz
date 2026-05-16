@@ -2,6 +2,7 @@
   display: flex;
   align-items: stretch;
   padding: 4.5rem 0;
+  padding-top: 0;
   width: 100%;
   background: var(--ifm-background-color);
 }
@@ -49,18 +50,6 @@
   color: var(--ifm-color-primary);
 }
 
-/* draw.io SVGs bake in `color-scheme: light dark` and `light-dark()` fills.
-   Force light-only so face fills stay white in dark mode, then punch out
-   the SVG canvas so the wrapper gradient shows through. */
-.featureIconWrapper svg {
-  color-scheme: only light !important;
-  background: transparent !important;
-  background-color: transparent !important;
-}
-
-.featureIconWrapper svg rect:first-child {
-  fill: transparent !important;
-}
 
 .featureTitle {
   font-size: 1.15rem;

@@ -11,32 +11,35 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Seamless integration',
-    Svg: require('@site/static/img/topaz-integration.svg').default,
-    description: (
-      <>
-        Topaz doesn't require custom SDKs or hacks. It integrates with Azure SDKs without complex
-        workarounds, network proxies or additional tools.
-      </>
-    ),
-  },
-  {
-    title: 'Single tool for all services',
+    title: 'One tool for all services',
     Svg: require('@site/static/img/topaz-single-tool.svg').default,
     description: (
       <>
-        Tired of setting all the Azure emulators one by one? Not anymore! Topaz comes with
-        a minimalistic configuration and acts as a complete environment for your applications.
+        Stop juggling Azurite for Storage, a separate emulator for Key Vault, and manual mocks for
+        Service Bus. Topaz bundles every Azure service in a single process, with a single config,
+        started with a single command.
       </>
     ),
   },
   {
-    title: 'Platform agnostic',
+    title: 'ARM, Bicep & Terraform ready',
+    Svg: require('@site/static/img/topaz-integration.svg').default,
+    description: (
+      <>
+        Deploy your real infrastructure templates without touching Azure. Topaz implements ARM
+        deployments so your Bicep files, ARM templates, and Terraform{' '}
+        <code>azurerm</code> provider configurations work locally — in CI or completely offline.
+      </>
+    ),
+  },
+  {
+    title: 'Azure RBAC & Entra ID',
     Svg: require('@site/static/img/topaz-tech-agnostic.svg').default,
     description: (
       <>
-        You can run Topaz anywhere and anytime. Select between a single executable or a container,
-        choose your hosting platform and just start it.
+        Role assignments, permission checks, and Microsoft Entra ID identity flows — all emulated
+        locally. Build and test secure‑by‑design applications without a live Azure tenant or a
+        service principal.
       </>
     ),
   },

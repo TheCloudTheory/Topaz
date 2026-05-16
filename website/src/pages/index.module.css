@@ -117,3 +117,284 @@
     font-size: 1rem !important;
   }
 }
+
+/* ── Hero tagline (bold one-liner beneath the title) ──────────── */
+.heroTagline {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 auto 0.75rem;
+  letter-spacing: -0.01em;
+  position: relative;
+  z-index: 1;
+}
+
+@media screen and (max-width: 480px) {
+  .heroTagline {
+    font-size: 1.15rem;
+  }
+}
+
+/* ── Shared section helpers ───────────────────────────────────── */
+.sectionHeading {
+  text-align: center;
+  margin-bottom: 0.5rem !important;
+}
+
+.sectionSubtitle {
+  text-align: center;
+  color: var(--ifm-color-secondary-darkest);
+  font-size: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* ── Install section ──────────────────────────────────────────── */
+.installSection {
+  padding: 4.5rem 0;
+  background: var(--ifm-background-color);
+}
+
+.installCard {
+  max-width: 700px;
+  margin: 0 auto;
+  background: #0d1b3e;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(77, 133, 240, 0.2);
+}
+
+.installTabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.installTab {
+  padding: 0.65rem 1.35rem;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.18s ease;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.installTab:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.installTabActive {
+  color: #ffffff !important;
+  border-bottom-color: var(--ifm-color-primary-light) !important;
+}
+
+.installCodeBlock {
+  padding: 1.35rem 1.6rem;
+  overflow-x: auto;
+}
+
+.installCodeBlock code {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.9rem;
+  color: #7dd3fc;
+  white-space: pre;
+  background: transparent;
+}
+
+.installNote {
+  text-align: center;
+  margin-top: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--ifm-color-secondary-darkest);
+}
+
+/* ── Services section ─────────────────────────────────────────── */
+.servicesSection {
+  padding: 4.5rem 0;
+  background: var(--ifm-color-emphasis-100);
+}
+
+.servicesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.serviceCard {
+  background: var(--ifm-card-background-color, var(--ifm-background-surface-color));
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 12px;
+  padding: 1.15rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: var(--topaz-card-shadow);
+}
+
+.serviceCard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--topaz-card-shadow-hover);
+  border-color: var(--ifm-color-primary-lighter);
+}
+
+.serviceName {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--ifm-heading-color);
+}
+
+.serviceSub {
+  font-size: 0.78rem;
+  color: var(--ifm-color-secondary-darkest);
+}
+
+.servicesCta {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+  color: var(--ifm-color-secondary-darkest);
+}
+
+/* ── Integrations section ─────────────────────────────────────── */
+.integrationsSection {
+  padding: 4rem 0;
+  background: var(--ifm-background-color);
+}
+
+.integrationsList {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.integrationTag {
+  background: var(--ifm-color-emphasis-100);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 999px;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ifm-color-content);
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.integrationTag:hover {
+  border-color: var(--ifm-color-primary-lighter);
+  background: var(--ifm-color-emphasis-200);
+}
+
+/* ── Community section ────────────────────────────────────────── */
+.communitySection {
+  padding: 4rem 0;
+  background: var(--ifm-color-emphasis-100);
+}
+
+.discordWrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+/* ── CTA section ──────────────────────────────────────────────── */
+.ctaSection {
+  padding: 5.5rem 0;
+  text-align: center;
+  background: linear-gradient(150deg,
+    var(--topaz-hero-bg-start) 0%,
+    var(--topaz-hero-bg-mid) 55%,
+    var(--topaz-hero-bg-end) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.ctaSection::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 50% at 50% 110%,
+    rgba(77, 133, 240, 0.3) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.ctaHeading {
+  color: #ffffff !important;
+  font-size: 2.25rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.ctaSubtitle {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 1.05rem;
+  max-width: 560px;
+  margin: 0 auto 1.75rem;
+  line-height: 1.65;
+  position: relative;
+  z-index: 1;
+}
+
+.ctaCodeBlock {
+  display: inline-block;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 0.85rem 1.6rem;
+  margin-bottom: 1.75rem;
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.ctaCodeBlock code {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.88rem;
+  color: #7dd3fc;
+  white-space: pre;
+  background: transparent;
+}
+
+.ctaButtons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+.ctaGhButton {
+  background: transparent !important;
+  border: 2px solid rgba(255, 255, 255, 0.55) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.ctaGhButton:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.9) !important;
+  color: #ffffff !important;
+}
+
+@media screen and (max-width: 480px) {
+  .ctaHeading {
+    font-size: 1.75rem !important;
+  }
+}

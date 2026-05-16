@@ -1,4 +1,5 @@
 import type {ReactNode} from 'react';
+import {useState} from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
@@ -7,6 +8,43 @@ import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import Heading from '@theme/Heading';
 
 import styles from './index.module.css';
+
+const INSTALL_TABS = [
+  {
+    label: 'macOS',
+    command: 'brew tap thecloudtheory/topaz && brew install topaz && topaz-host',
+  },
+  {
+    label: 'Linux',
+    command: 'curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash',
+  },
+  {
+    label: 'Docker',
+    command: 'docker run -p 8891:8891 -p 8892:8892 -p 8898:8898 thecloudtheory/topaz-host',
+  },
+];
+
+const SERVICES = [
+  {name: 'Azure Storage', sub: 'Blob · Table · Queue'},
+  {name: 'Azure Key Vault', sub: 'Secrets · Keys · Certificates'},
+  {name: 'Azure Service Bus', sub: 'Queues · Topics · Subscriptions'},
+  {name: 'Azure Event Hub', sub: 'Namespaces · Event Hubs'},
+  {name: 'Container Registry', sub: 'Images · Tags · Manifests'},
+  {name: 'Virtual Machines', sub: 'Control Plane'},
+  {name: 'Virtual Network', sub: 'VNets · Subnets · NICs'},
+  {name: 'Resource Manager', sub: 'ARM · Bicep · Terraform'},
+  {name: 'Microsoft Entra ID', sub: 'Tenants · Identity'},
+  {name: 'Azure RBAC', sub: 'Roles · Assignments'},
+];
+
+const INTEGRATIONS = [
+  'Azure CLI',
+  'Azure PowerShell',
+  'Terraform',
+  '.NET SDK',
+  'GitHub Actions',
+  'Docker Compose',
+];
 
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
@@ -19,7 +57,12 @@ function HomepageHeader() {
         <Heading as="h1" className={styles.heroTitle}>
           {siteConfig.title}
         </Heading>
-        <p className={styles.heroSubtitle}>{siteConfig.tagline}</p>
+        <p className={styles.heroTagline}>One binary. Multiple Azure services. No cloud required.</p>
+        <p className={styles.heroSubtitle}>
+          Stop juggling Azurite, manual mocks, and disconnected emulators.
+          Topaz runs Storage, Key Vault, Service Bus, Event Hub, Container Registry, RBAC, and more —
+          with ARM template deployment support — from a single process.
+        </p>
         <div className={styles.buttons}>
           <Link
             className="button button--lg"
@@ -42,9 +85,113 @@ function HomepageHeader() {
             alt="License"
             src="https://img.shields.io/github/license/TheCloudTheory/Topaz?style=flat-square"
           />
+          <img
+            alt="Discord"
+            src="https://img.shields.io/discord/1383721799736492032?logo=discord&label=Discord&color=5865F2&style=flat-square"
+          />
         </div>
       </div>
     </header>
+  );
+}
+
+function HomepageInstall() {
+  const [activeTab, setActiveTab] = useState(0);
+  return (
+    <section className={styles.installSection}>
+      <div className="container">
+        <Heading as="h2" className={styles.sectionHeading}>Get started in seconds</Heading>
+        <p className={styles.sectionSubtitle}>One command and Topaz is running locally.</p>
+        <div className={styles.installCard}>
+          <div className={styles.installTabs}>
+            {INSTALL_TABS.map((tab, i) => (
+              <button
+                key={tab.label}
+                className={clsx(styles.installTab, i === activeTab && styles.installTabActive)}
+                onClick={() => setActiveTab(i)}>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className={styles.installCodeBlock}>
+            <code>{INSTALL_TABS[activeTab].command}</code>
+          </div>
+        </div>
+        <p className={styles.installNote}>
+          Then verify with <code>topaz health</code> — or jump straight to the{' '}
+          <Link to="/docs/intro">Getting Started guide</Link>.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function HomepageServices() {
+  return (
+    <section className={styles.servicesSection}>
+      <div className="container">
+        <Heading as="h2" className={styles.sectionHeading}>Supported Azure services</Heading>
+        <p className={styles.sectionSubtitle}>
+          Control plane and data plane — not just partial API coverage.
+        </p>
+        <div className={styles.servicesGrid}>
+          {SERVICES.map(service => (
+            <div key={service.name} className={styles.serviceCard}>
+              <span className={styles.serviceName}>{service.name}</span>
+              <span className={styles.serviceSub}>{service.sub}</span>
+            </div>
+          ))}
+        </div>
+        <p className={styles.servicesCta}>
+          See the full{' '}
+          <Link to="/docs/api-coverage/container-registry">API coverage docs</Link>{' '}
+          for operation-level detail.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function HomepageIntegrations() {
+  return (
+    <section className={styles.integrationsSection}>
+      <div className="container">
+        <Heading as="h2" className={styles.sectionHeading}>Works with your existing toolchain</Heading>
+        <p className={styles.sectionSubtitle}>No code changes. Point your tools at Topaz and go.</p>
+        <div className={styles.integrationsList}>
+          {INTEGRATIONS.map(name => (
+            <span key={name} className={styles.integrationTag}>{name}</span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HomepageCta() {
+  return (
+    <section className={styles.ctaSection}>
+      <div className="container">
+        <Heading as="h2" className={styles.ctaHeading}>Stop paying for dev &amp; test cloud resources</Heading>
+        <p className={styles.ctaSubtitle}>
+          Topaz runs entirely locally — no Azure subscription, no service principal, no cloud costs.
+          CI pipelines, offline development, and rapid iteration included.
+        </p>
+        <div className={styles.ctaCodeBlock}>
+          <code>brew tap thecloudtheory/topaz && brew install topaz && topaz-host</code>
+        </div>
+        <div className={styles.ctaButtons}>
+          <Link className="button button--lg" style={{background: 'white', color: '#1B63EB', fontWeight: 700}} to="/docs/intro">
+            Read the docs →
+          </Link>
+          <Link
+            className={clsx('button button--lg', styles.ctaGhButton)}
+            href="https://github.com/TheCloudTheory/Topaz">
+            ★ Star on GitHub
+          </Link>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -52,26 +199,32 @@ export default function Home(): ReactNode {
   const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      title={`Azure emulator for local development and learning`}
-      description="Topaz is an open-source Azure emulator that allows you to run Azure services locally for development and testing. It supports a wide range of Azure services, including Azure Storage, Azure Resource Manager and Azure Key Vault. Topaz is designed to be easy to use and integrate into your existing development workflow.">
+      title="Azure emulator for local development and learning"
+      description="Topaz is an open-source Azure emulator that runs Azure Storage, Key Vault, Service Bus, Event Hub, Container Registry, RBAC, and more locally — with ARM, Bicep, and Terraform support — from a single binary. No Azure subscription required.">
       <HomepageHeader />
       <main>
+        <HomepageInstall />
         <HomepageFeatures />
-        <section style={{padding: '3rem 0', textAlign: 'center', background: 'var(--ifm-color-emphasis-100)'}}>
+        <HomepageServices />
+        <HomepageIntegrations />
+        <section className={styles.communitySection}>
           <div className="container">
-            <Heading as="h2">Join the community</Heading>
-            <p style={{marginBottom: '1.5rem'}}>Ask questions, share workflows, and follow development on Discord.</p>
-            <iframe
-              src="https://discord.com/widget?id=1383721799736492032&theme=dark"
-              width="350"
-              height="500"
-              allowTransparency={true}
-              frameBorder={0}
-              sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
-              style={{borderRadius: '8px'}}
-            />
+            <Heading as="h2" className={styles.sectionHeading}>Join the community</Heading>
+            <p className={styles.sectionSubtitle}>Ask questions, share workflows, and follow development on Discord.</p>
+            <div className={styles.discordWrapper}>
+              <iframe
+                src="https://discord.com/widget?id=1383721799736492032&theme=dark"
+                width="350"
+                height="500"
+                allowTransparency={true}
+                frameBorder={0}
+                sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+                style={{borderRadius: '8px'}}
+              />
+            </div>
           </div>
         </section>
+        <HomepageCta />
       </main>
     </Layout>
   );
