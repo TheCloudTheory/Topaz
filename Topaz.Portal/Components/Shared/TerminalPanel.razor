@@ -1,5 +1,8 @@
 @implements IDisposable
 @inject IJSRuntime JS
+@inject ICliSuggestionService SuggestionService
+@using Topaz.Portal.Models.Cli
+@using Topaz.Portal.Services
 
 @if (_isOpen)
 {
@@ -37,17 +40,55 @@
             }
         </div>
 
-        <div class="terminal-input-row">
-            <span class="terminal-prompt">topaz&gt;</span>
-            <input
-                class="terminal-input"
-                type="text"
-                placeholder="Enter command…"
-                aria-label="Command input"
-                @bind="_currentInput"
-                @bind:event="oninput"
-                @onkeydown="OnKeyDown"
-                @ref="_inputRef" />
+        <div class="terminal-input-wrapper">
+            @if (_suggestions.Count > 0)
+            {
+                <div class="terminal-suggestions" role="listbox" aria-label="Command suggestions">
+                    @for (var i = 0; i < _suggestions.Count; i++)
+                    {
+                        var suggestion = _suggestions[i];
+                        var index = i;
+                        var isSelected = index == _selectedIndex;
+
+                        <div class="terminal-suggestion-item @(isSelected ? "terminal-suggestion-item--selected" : "")"
+                             role="option"
+                             aria-selected="@isSelected"
+                             @onmousedown="() => SelectSuggestion(suggestion)"
+                             @onmouseenter="() => _selectedIndex = index">
+                            <div class="terminal-suggestion-main">
+                                <span class="terminal-suggestion-name">@suggestion.Name</span>
+                                @if (isSelected && suggestion.Examples.Length > 0)
+                                {
+                                    <div class="terminal-suggestion-examples">
+                                        @foreach (var example in suggestion.Examples)
+                                        {
+                                            <div class="terminal-suggestion-example">
+                                                <span class="terminal-suggestion-example-title">@example.Title</span>
+                                                <code class="terminal-suggestion-example-cmd">@example.Command</code>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <span class="terminal-suggestion-desc">@suggestion.Description</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="terminal-input-row">
+                <span class="terminal-prompt">topaz&gt;</span>
+                <input
+                    class="terminal-input"
+                    type="text"
+                    placeholder="Enter command…"
+                    aria-label="Command input"
+                    aria-autocomplete="list"
+                    value="@_currentInput"
+                    @oninput="OnInputChanged"
+                    @onkeydown="OnKeyDown"
+                    @ref="_inputRef" />
+            </div>
         </div>
     </div>
 }
@@ -65,6 +106,9 @@
 
     private double _dragStartY;
     private double _dragStartHeight;
+
+    private List<CliCommandModel> _suggestions = [];
+    private int _selectedIndex = -1;
 
     public void Open()
     {
@@ -84,15 +128,77 @@
         else Open();
     }
 
-    private void OnKeyDown(KeyboardEventArgs e)
+    private void OnInputChanged(ChangeEventArgs e)
     {
-        if (e.Key != "Enter") return;
+        _currentInput = e.Value?.ToString() ?? string.Empty;
+        _suggestions = [..SuggestionService.GetSuggestions(_currentInput)];
+        _selectedIndex = _suggestions.Count > 0 ? 0 : -1;
+    }
 
-        var command = _currentInput.Trim();
-        if (string.IsNullOrEmpty(command)) return;
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "ArrowDown":
+                if (_suggestions.Count > 0)
+                    _selectedIndex = (_selectedIndex + 1) % _suggestions.Count;
+                return;
 
-        _history.Add(new TerminalEntry(command, string.Empty, IsError: false));
-        _currentInput = string.Empty;
+            case "ArrowUp":
+                if (_suggestions.Count > 0)
+                    _selectedIndex = (_selectedIndex - 1 + _suggestions.Count) % _suggestions.Count;
+                return;
+
+            case "Tab":
+                if (_selectedIndex >= 0 && _selectedIndex < _suggestions.Count)
+                {
+                    SelectSuggestion(_suggestions[_selectedIndex]);
+                    await FocusInputAsync();
+                }
+                return;
+
+            case "Escape":
+                _suggestions = [];
+                _selectedIndex = -1;
+                return;
+
+            case "Enter":
+                if (_selectedIndex >= 0 && _selectedIndex < _suggestions.Count)
+                {
+                    SelectSuggestion(_suggestions[_selectedIndex]);
+                    await FocusInputAsync();
+                    return;
+                }
+
+                var command = _currentInput.Trim();
+                if (string.IsNullOrEmpty(command)) return;
+
+                _history.Add(new TerminalEntry(command, string.Empty, IsError: false));
+                _currentInput = string.Empty;
+                _suggestions = [];
+                _selectedIndex = -1;
+
+                await ScrollOutputToBottomAsync();
+                return;
+        }
+    }
+
+    private void SelectSuggestion(CliCommandModel suggestion)
+    {
+        _currentInput = suggestion.Name + " ";
+        _suggestions = [];
+        _selectedIndex = -1;
+    }
+
+    private async Task FocusInputAsync()
+    {
+        await JS.InvokeVoidAsync("eval", "document.querySelector('.terminal-input')?.focus()");
+    }
+
+    private async Task ScrollOutputToBottomAsync()
+    {
+        await JS.InvokeVoidAsync("eval",
+            "var el = document.querySelector('.terminal-output'); if (el) el.scrollTop = el.scrollHeight;");
     }
 
     private async Task OnResizeMouseDown(MouseEventArgs e)

@@ -18,6 +18,8 @@
       <ProjectReference Include="..\..\Services\Topaz.Service.ServiceBus\Topaz.Service.ServiceBus.csproj" />
       <ProjectReference Include="..\..\Services\Topaz.Service.Storage\Topaz.Service.Storage.csproj" />
       <ProjectReference Include="..\..\Services\Topaz.Service.Subscription\Topaz.Service.Subscription.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.ManagementGroup\Topaz.Service.ManagementGroup.csproj" />
+      <ProjectReference Include="..\..\Services\Topaz.Service.VirtualNetwork\Topaz.Service.VirtualNetwork.csproj" />
     </ItemGroup>
 
     <ItemGroup>

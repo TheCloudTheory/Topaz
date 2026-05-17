@@ -1,0 +1,5475 @@
+[
+  {
+    "name": "acr check-name",
+    "group": "container-registry",
+    "description": "Checks whether a container registry name is available.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Registry name to check.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Check registry name availability",
+        "command": "topaz acr check-name \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --name \u0022myregistry\u0022"
+      }
+    ]
+  },
+  {
+    "name": "acr create",
+    "group": "container-registry",
+    "description": "Creates a new Azure Container Registry.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Registry name (5-50 alphanumeric characters).",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": false
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Registry location.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": false
+      },
+      {
+        "names": "--sku",
+        "description": "SKU name: Basic, Standard, or Premium. Defaults to Basic.",
+        "required": false
+      },
+      {
+        "names": "--admin-enabled",
+        "description": "Enable the admin user.",
+        "required": false
+      },
+      {
+        "names": "--tags",
+        "description": "Resource tags (key=value pairs).",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a Basic registry",
+        "command": "topaz acr create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022my-rg\u0022 \\\n    --name \u0022myregistry\u0022 \\\n    --location \u0022westeurope\u0022"
+      },
+      {
+        "title": "Create a Standard registry with admin user",
+        "command": "topaz acr create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022my-rg\u0022 \\\n    --name \u0022myregistry\u0022 \\\n    --location \u0022westeurope\u0022 \\\n    --sku Standard \\\n    --admin-enabled"
+      }
+    ]
+  },
+  {
+    "name": "acr delete",
+    "group": "container-registry",
+    "description": "Deletes an Azure Container Registry.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Registry name.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a registry",
+        "command": "topaz acr delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022my-rg\u0022 \\\n    --name \u0022myregistry\u0022"
+      }
+    ]
+  },
+  {
+    "name": "acr generate-credentials",
+    "group": "container-registry",
+    "description": "Generates credentials for an Azure Container Registry token.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": false
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Registry name.",
+        "required": false
+      },
+      {
+        "names": "--token-id",
+        "description": "Resource ID of the token for which credentials are generated.",
+        "required": false
+      },
+      {
+        "names": "--expiry",
+        "description": "Expiry date-time for the generated credentials (ISO 8601). Defaults to 1 year from now.",
+        "required": false
+      },
+      {
+        "names": "--password-name",
+        "description": "Specific password to regenerate: password1 or password2. Omit to regenerate both.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Generate credentials for a token",
+        "command": "topaz acr generate-credentials \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022my-rg\u0022 \\\n    --name \u0022myregistry\u0022 \\\n    --token-id \u0022/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-rg/providers/Microsoft.ContainerRegistry/registries/myregistry/tokens/myToken\u0022"
+      }
+    ]
+  },
+  {
+    "name": "acr list",
+    "group": "container-registry",
+    "description": "Lists Azure Container Registries.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "Resource group name. Omit to list across the entire subscription.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "List registries in a resource group",
+        "command": "topaz acr list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022my-rg\u0022"
+      },
+      {
+        "title": "List all registries in a subscription",
+        "command": "topaz acr list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022"
+      }
+    ]
+  },
+  {
+    "name": "acr list-credentials",
+    "group": "container-registry",
+    "description": "Lists admin credentials for an Azure Container Registry.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Registry name.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "List credentials for a registry",
+        "command": "topaz acr list-credentials \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022my-rg\u0022 \\\n    --name \u0022myregistry\u0022"
+      }
+    ]
+  },
+  {
+    "name": "acr list-usages",
+    "group": "container-registry",
+    "description": "Lists quota usages for an Azure Container Registry.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Registry name.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "List usages for a registry",
+        "command": "topaz acr list-usages \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022my-rg\u0022 \\\n    --name \u0022myregistry\u0022"
+      }
+    ]
+  },
+  {
+    "name": "acr regenerate-credential",
+    "group": "container-registry",
+    "description": "Regenerates an admin password for an Azure Container Registry.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Registry name.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": false
+      },
+      {
+        "names": "--password-name",
+        "description": "(Required) Password to regenerate: \u0027password\u0027 or \u0027password2\u0027.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Regenerate password",
+        "command": "topaz acr regenerate-credential \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022my-rg\u0022 \\\n    --name \u0022myregistry\u0022 \\\n    --password-name password"
+      },
+      {
+        "title": "Regenerate password2",
+        "command": "topaz acr regenerate-credential \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022my-rg\u0022 \\\n    --name \u0022myregistry\u0022 \\\n    --password-name password2"
+      }
+    ]
+  },
+  {
+    "name": "acr repository delete",
+    "group": "container-registry",
+    "description": "Deletes a repository from an Azure Container Registry.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Repository name.",
+        "required": false
+      },
+      {
+        "names": "-r, --registry",
+        "description": "(Required) Registry name.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a repository",
+        "command": "topaz acr repository delete \\\n\u002B    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n\u002B    --resource-group \u0022my-rg\u0022 \\\n\u002B    --registry \u0022myregistry\u0022 \\\n\u002B    --name \u0022sample-repository\u0022"
+      }
+    ]
+  },
+  {
+    "name": "acr repository list",
+    "group": "container-registry",
+    "description": "Lists repositories in an Azure Container Registry.",
+    "options": [
+      {
+        "names": "-r, --registry",
+        "description": "(Required) Registry name.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "List repositories in a registry",
+        "command": "topaz acr repository list \\\n\u002B    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n\u002B    --resource-group \u0022my-rg\u0022 \\\n\u002B    --registry \u0022myregistry\u0022"
+      }
+    ]
+  },
+  {
+    "name": "acr show",
+    "group": "container-registry",
+    "description": "Shows details of an Azure Container Registry.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Registry name.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Show a registry",
+        "command": "topaz acr show \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022my-rg\u0022 \\\n    --name \u0022myregistry\u0022"
+      }
+    ]
+  },
+  {
+    "name": "acr update",
+    "group": "container-registry",
+    "description": "Updates an Azure Container Registry.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Registry name.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": false
+      },
+      {
+        "names": "--sku",
+        "description": "SKU name: Basic, Standard, or Premium.",
+        "required": false
+      },
+      {
+        "names": "--admin-enabled",
+        "description": "Enable or disable the admin user (true/false).",
+        "required": false
+      },
+      {
+        "names": "--tags",
+        "description": "Resource tags (key=value pairs). Replaces existing tags.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Enable admin user",
+        "command": "topaz acr update \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022my-rg\u0022 \\\n    --name \u0022myregistry\u0022 \\\n    --admin-enabled true"
+      },
+      {
+        "title": "Change SKU and set tags",
+        "command": "topaz acr update \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022my-rg\u0022 \\\n    --name \u0022myregistry\u0022 \\\n    --sku Premium \\\n    --tags env=prod team=ops"
+      }
+    ]
+  },
+  {
+    "name": "deployment group create",
+    "group": "deployment",
+    "description": "Creates a new deployment on a resource group level",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "Subscription ID for the deployment",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "Name of the deployment",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "Resource group for the deployment",
+        "required": true
+      },
+      {
+        "names": "--mode",
+        "description": "Deployment mode. Available options are: Incremental, Complete",
+        "required": false
+      },
+      {
+        "names": "-f, --template-file",
+        "description": "The path to the template file or Bicep file.",
+        "required": false
+      }
+    ],
+    "examples": []
+  },
+  {
+    "name": "deployment group export-template",
+    "group": "deployment",
+    "description": "Exports an ARM template from a resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-o, --options",
+        "description": "Export options: comma-separated list of IncludeParameterDefaultValue, IncludeComments, SkipResourceNameParameterization, SkipAllParameterization.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Export template from a resource group",
+        "command": "topaz deployment group export-template \\\n    --name \u0022my-rg\u0022 \\\n    --subscription-id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022"
+      },
+      {
+        "title": "Export template with parameterization options",
+        "command": "topaz deployment group export-template \\\n    --name \u0022my-rg\u0022 \\\n    --subscription-id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022 \\\n    --options \u0022IncludeParameterDefaultValue,IncludeComments\u0022"
+      }
+    ]
+  },
+  {
+    "name": "deployment group list",
+    "group": "deployment",
+    "description": "Returns a list of all deployments for the given resource group",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "Subscription ID for the deployment",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "Resource group for the deployment",
+        "required": true
+      }
+    ],
+    "examples": []
+  },
+  {
+    "name": "eventhubs eventhub create",
+    "group": "event-hub",
+    "description": "Creates new Event Hub.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) hub name.",
+        "required": false
+      },
+      {
+        "names": "--namespace-name",
+        "description": "(Required) namespace name.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates Event Hub",
+        "command": "topaz eventhubs eventhub create \\\n    --resource-group rg-test \\\n    --namespace-name \u0022eh-namespace\u0022 \\\n    --name \u0022hubtest\u0022 \\\n    --subscription-id \u002207CB2605-9C16-46E9-A2BD-0A8D39E049E8\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventhubs eventhub delete",
+    "group": "event-hub",
+    "description": "Deletes an Event Hub.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Hub name.",
+        "required": false
+      },
+      {
+        "names": "--namespace-name",
+        "description": "(Required) Event Hub namespace name.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes Event Hub",
+        "command": "topaz eventhubs eventhub delete \\\n    --namespace-name \u0022sb-namespace\u0022 \\\n    --name \u0022ehtest\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventhubs namespace create",
+    "group": "event-hub",
+    "description": "Creates new Event Hub namespace.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) hub name.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name.",
+        "required": false
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Event Hub namespace location.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates Event Hub namespace",
+        "command": "topaz eventhubs namespace create \\\n    --resource-group rg-test \\\n    --location \u0022westeurope\u0022 \\\n    --name \u0022eh-namespace\u0022 \\\n    --subscription-id \u002207CB2605-9C16-46E9-A2BD-0A8D39E049E8\u0022"
+      }
+    ]
+  },
+  {
+    "name": "eventhubs namespace delete",
+    "group": "event-hub",
+    "description": "Deletes an Event Hub.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Event Hub namespace name.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Event Hub namespace resource group name.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Event Hub namespace subscription ID.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes Event Hub",
+        "command": "topaz eventhubs namespace delete \\\n    --name \u0022sb-namespace\u0022 \\\n    --resource-group \u0022rg\u0022 \\\n    --subscription-id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022"
+      }
+    ]
+  },
+  {
+    "name": "group create",
+    "group": "group",
+    "description": "Creates a new resource group.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Azure region for the resource group.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a resource group",
+        "command": "topaz group create \\\n    --name \u0022my-rg\u0022 \\\n    --location \u0022eastus\u0022 \\\n    --subscription-id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022"
+      }
+    ]
+  },
+  {
+    "name": "group delete",
+    "group": "group",
+    "description": "Deletes a resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a resource group",
+        "command": "topaz group delete \\\n    --name \u0022my-rg\u0022 \\\n    --subscription-id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022"
+      }
+    ]
+  },
+  {
+    "name": "group exists",
+    "group": "group",
+    "description": "Checks whether a resource group exists.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Check if a resource group exists",
+        "command": "topaz group exists \\\n    --name \u0022my-rg\u0022 \\\n    --subscription-id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022"
+      }
+    ]
+  },
+  {
+    "name": "group list",
+    "group": "group",
+    "description": "Lists all resource groups in a subscription.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List resource groups",
+        "command": "topaz group list \\\n    --subscription-id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022"
+      }
+    ]
+  },
+  {
+    "name": "group show",
+    "group": "group",
+    "description": "Shows details of a resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Show a resource group",
+        "command": "topaz group show \\\n    --name \u0022my-rg\u0022 \\\n    --subscription-id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022"
+      }
+    ]
+  },
+  {
+    "name": "group update",
+    "group": "group",
+    "description": "Updates the tags of a resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "--tags",
+        "description": "Tags as a JSON object, e.g. \u0027{\u0022env\u0022:\u0022prod\u0022}\u0027. Replaces existing tags.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Update tags on a resource group",
+        "command": "topaz group update \\\n    --name \u0022my-rg\u0022 \\\n    --subscription-id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022 \\\n    --tags \u0027{\u0022env\u0022:\u0022prod\u0022}\u0027"
+      }
+    ]
+  },
+  {
+    "name": "identity create",
+    "group": "managed-identity",
+    "description": "Creates a new user-assigned managed identity.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) managed identity name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) location",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      },
+      {
+        "names": "--tags",
+        "description": "(Optional) resource tags",
+        "required": false
+      },
+      {
+        "names": "--isolation-scope",
+        "description": "(Optional) isolation scope (None or Regional)",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a new managed identity",
+        "command": "topaz identity create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022myIdentity\u0022 \\\n    --location \u0022westeurope\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "identity delete",
+    "group": "managed-identity",
+    "description": "Deletes a user-assigned managed identity.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) managed identity name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes a managed identity",
+        "command": "topaz identity delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022myIdentity\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "identity list",
+    "group": "managed-identity",
+    "description": "Lists user-assigned managed identities.",
+    "options": [
+      {
+        "names": "-g, --resource-group",
+        "description": "(Optional) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists managed identities by resource group",
+        "command": "topaz identity list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \u0022rg-local\u0022"
+      },
+      {
+        "title": "Lists managed identities by subscription",
+        "command": "topaz identity list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae"
+      }
+    ]
+  },
+  {
+    "name": "identity show",
+    "group": "managed-identity",
+    "description": "Shows details of a user-assigned managed identity.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) managed identity name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Shows a managed identity",
+        "command": "topaz identity show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022myIdentity\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "identity update",
+    "group": "managed-identity",
+    "description": "Updates a user-assigned managed identity.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) managed identity name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      },
+      {
+        "names": "--tags",
+        "description": "(Optional) resource tags",
+        "required": false
+      },
+      {
+        "names": "--isolation-scope",
+        "description": "(Optional) isolation scope (None or Regional)",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Updates a managed identity with tags",
+        "command": "topaz identity update --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022myIdentity\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --tags environment=production team=devops"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate backup",
+    "group": "key-vault",
+    "description": "Backs up a certificate from an Azure Key Vault as an opaque blob.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Certificate name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Backup a certificate",
+        "command": "topaz keyvault certificate backup --vault-name \u0022kvlocal\u0022 --name \u0022my-cert\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate cancel-operation",
+    "group": "key-vault",
+    "description": "Cancels the pending creation operation for a certificate in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Certificate name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Cancel a certificate pending operation",
+        "command": "topaz keyvault certificate cancel-operation --vault-name \u0022kvlocal\u0022 --name \u0022my-cert\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate create",
+    "group": "key-vault",
+    "description": "Creates a self-signed certificate in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Certificate name.",
+        "required": true
+      },
+      {
+        "names": "--subject",
+        "description": "(Optional) X.509 subject (e.g. CN=my-cert). Defaults to CN=\u003Cname\u003E.",
+        "required": false
+      },
+      {
+        "names": "--validity-months",
+        "description": "(Optional) Validity in months. Defaults to 12.",
+        "required": false
+      },
+      {
+        "names": "--key-size",
+        "description": "(Optional) RSA key size in bits. Defaults to 2048.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a certificate",
+        "command": "topaz keyvault certificate create --vault-name \u0022kvlocal\u0022 --name \u0022my-cert\u0022 --subject \u0022CN=my-cert\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate delete",
+    "group": "key-vault",
+    "description": "Deletes a certificate from an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Certificate name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a certificate",
+        "command": "topaz keyvault certificate delete --vault-name \u0022kvlocal\u0022 --name \u0022my-cert\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate delete-operation",
+    "group": "key-vault",
+    "description": "Deletes the pending creation operation for a certificate in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Certificate name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a certificate pending operation",
+        "command": "topaz keyvault certificate delete-operation --vault-name \u0022kvlocal\u0022 --name \u0022my-cert\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate get",
+    "group": "key-vault",
+    "description": "Gets a certificate from an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Certificate name.",
+        "required": true
+      },
+      {
+        "names": "--version",
+        "description": "(Optional) Certificate version. Omit to get the latest.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get a certificate",
+        "command": "topaz keyvault certificate get --vault-name \u0022kvlocal\u0022 --name \u0022my-cert\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate get-deleted",
+    "group": "key-vault",
+    "description": "Gets a soft-deleted certificate from an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Certificate name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get a deleted certificate",
+        "command": "topaz keyvault certificate get-deleted --vault-name \u0022kvlocal\u0022 --name \u0022my-cert\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate get-operation",
+    "group": "key-vault",
+    "description": "Gets the pending creation operation for a certificate in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Certificate name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get a certificate pending operation",
+        "command": "topaz keyvault certificate get-operation --vault-name \u0022kvlocal\u0022 --name \u0022my-cert\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate import",
+    "group": "key-vault",
+    "description": "Imports a PFX/PKCS#12 certificate into an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Certificate name.",
+        "required": true
+      },
+      {
+        "names": "--value",
+        "description": "(Required) Base64-encoded PFX/PKCS#12 certificate bytes.",
+        "required": true
+      },
+      {
+        "names": "--password",
+        "description": "(Optional) Password for the PFX file.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Import a certificate",
+        "command": "topaz keyvault certificate import --vault-name \u0022kvlocal\u0022 --name \u0022my-cert\u0022 --value \u0022\u003Cbase64-pfx\u003E\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate list",
+    "group": "key-vault",
+    "description": "Lists all certificates in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List certificates",
+        "command": "topaz keyvault certificate list --vault-name \u0022kvlocal\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate list-deleted",
+    "group": "key-vault",
+    "description": "Lists soft-deleted certificates in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List deleted certificates",
+        "command": "topaz keyvault certificate list-deleted --vault-name \u0022kvlocal\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate list-versions",
+    "group": "key-vault",
+    "description": "Lists all versions of a certificate in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Certificate name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List certificate versions",
+        "command": "topaz keyvault certificate list-versions --vault-name \u0022kvlocal\u0022 --name \u0022my-cert\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate purge",
+    "group": "key-vault",
+    "description": "Permanently deletes a soft-deleted certificate from an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Certificate name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Purge a deleted certificate",
+        "command": "topaz keyvault certificate purge --vault-name \u0022kvlocal\u0022 --name \u0022my-cert\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate recover",
+    "group": "key-vault",
+    "description": "Recovers a soft-deleted certificate in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Certificate name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Recover a deleted certificate",
+        "command": "topaz keyvault certificate recover --vault-name \u0022kvlocal\u0022 --name \u0022my-cert\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate restore",
+    "group": "key-vault",
+    "description": "Restores a certificate into an Azure Key Vault from a backup blob.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "--backup-value",
+        "description": "(Required) Base64url-encoded backup blob produced by the backup command.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Restore a certificate",
+        "command": "topaz keyvault certificate restore --vault-name \u0022kvlocal\u0022 --backup-value \u0022\u003Cencoded blob\u003E\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault certificate update",
+    "group": "key-vault",
+    "description": "Updates the attributes of a certificate in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Certificate name.",
+        "required": true
+      },
+      {
+        "names": "--version",
+        "description": "(Required) Certificate version.",
+        "required": true
+      },
+      {
+        "names": "--enabled",
+        "description": "(Optional) Enable or disable the certificate.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Disable a certificate",
+        "command": "topaz keyvault certificate update --vault-name \u0022kvlocal\u0022 --name \u0022my-cert\u0022 --version \u0022\u003Cversion-guid\u003E\u0022 --enabled false --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault check-name",
+    "group": "key-vault",
+    "description": "Checks if the provided Key Vault name is available.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key Vault name.",
+        "required": false
+      },
+      {
+        "names": "--resource-type",
+        "description": "Type of Key Vault to create.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Key Vault subscription ID.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Check Key Vault name",
+        "command": "topaz keyvault check-name \\\n    --name \u0022sb-namespace\u0022 \\\n    --resource-group \u0022rg\u0022 \\\n    --subscription-id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault create",
+    "group": "key-vault",
+    "description": "Creates a new Azure Key Vault.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) vault name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Key Vault location",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a new Key Vault",
+        "command": "topaz keyvault create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022kvlocal\u0022 \\\n    --location \u0022westeurope\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault delete",
+    "group": "key-vault",
+    "description": "Deletes a Key Vault.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a Key Vault",
+        "command": "topaz keyvault delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022kvlocal\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key backup",
+    "group": "key-vault",
+    "description": "Backs up a key from an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Backup a key",
+        "command": "topaz keyvault key backup --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key create",
+    "group": "key-vault",
+    "description": "Creates a key in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "--kty",
+        "description": "Key type (RSA, EC). Defaults to RSA.",
+        "required": false
+      },
+      {
+        "names": "--key-size",
+        "description": "RSA key size in bits (2048, 3072, 4096). Defaults to 2048.",
+        "required": false
+      },
+      {
+        "names": "--crv",
+        "description": "EC curve name (P-256, P-384, P-521). Defaults to P-256 for EC keys.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create an RSA key",
+        "command": "topaz keyvault key create --vault-name \u0022kvlocal\u0022 --name \u0022my-rsa-key\u0022 --kty RSA --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      },
+      {
+        "title": "Create an EC key",
+        "command": "topaz keyvault key create --vault-name \u0022kvlocal\u0022 --name \u0022my-ec-key\u0022 --kty EC --crv P-256 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key decrypt",
+    "group": "key-vault",
+    "description": "Decrypts ciphertext using a Key Vault key (RSA keys only: RSA1_5, RSA-OAEP, RSA-OAEP-256).",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "--version",
+        "description": "(Required) Key version.",
+        "required": true
+      },
+      {
+        "names": "-a, --algorithm",
+        "description": "(Required) Decryption algorithm. Supported: RSA1_5, RSA-OAEP, RSA-OAEP-256.",
+        "required": true
+      },
+      {
+        "names": "--value",
+        "description": "(Required) Base64url-encoded ciphertext to decrypt.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Decrypt with RSA-OAEP-256",
+        "command": "topaz keyvault key decrypt --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --version \u0022abc123\u0022 --algorithm \u0022RSA-OAEP-256\u0022 --value \u0022\u003Cbase64url-ciphertext\u003E\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key delete",
+    "group": "key-vault",
+    "description": "Soft-deletes a key from an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a key",
+        "command": "topaz keyvault key delete --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key encrypt",
+    "group": "key-vault",
+    "description": "Encrypts plaintext using a Key Vault key (RSA keys only: RSA1_5, RSA-OAEP, RSA-OAEP-256).",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "--version",
+        "description": "(Required) Key version.",
+        "required": true
+      },
+      {
+        "names": "-a, --algorithm",
+        "description": "(Required) Encryption algorithm. Supported: RSA1_5, RSA-OAEP, RSA-OAEP-256.",
+        "required": true
+      },
+      {
+        "names": "--value",
+        "description": "(Required) Base64url-encoded plaintext to encrypt.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Encrypt with RSA-OAEP-256",
+        "command": "topaz keyvault key encrypt --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --version \u0022abc123\u0022 --algorithm \u0022RSA-OAEP-256\u0022 --value \u0022aGVsbG8=\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key get",
+    "group": "key-vault",
+    "description": "Gets a key from an Azure Key Vault (latest version or a specific version).",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "--version",
+        "description": "Key version (omit to retrieve the latest version).",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get the latest version of a key",
+        "command": "topaz keyvault key get --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      },
+      {
+        "title": "Get a specific version of a key",
+        "command": "topaz keyvault key get --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --version \u0022abc123\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key get-attestation",
+    "group": "key-vault",
+    "description": "Gets a key and its attestation information from an Azure Key Vault. For software-backed keys the attestation field is null, matching real Azure behaviour.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "--version",
+        "description": "Key version (omit to retrieve the latest version).",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get attestation for the latest version of a key",
+        "command": "topaz keyvault key get-attestation --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      },
+      {
+        "title": "Get attestation for a specific version of a key",
+        "command": "topaz keyvault key get-attestation --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --version \u0022abc123\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key get-deleted",
+    "group": "key-vault",
+    "description": "Gets a deleted key from an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get a deleted key",
+        "command": "topaz keyvault key get-deleted --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key import",
+    "group": "key-vault",
+    "description": "Imports an externally created key into an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "--pem-file",
+        "description": "(Required) Path to a PEM-encoded RSA or EC key file.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Import an RSA key from a PEM file",
+        "command": "topaz keyvault key import --vault-name \u0022kvlocal\u0022 --name \u0022my-imported-key\u0022 --pem-file \u0022/path/to/key.pem\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key list",
+    "group": "key-vault",
+    "description": "Lists all keys in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List all keys in a vault",
+        "command": "topaz keyvault key list --vault-name \u0022kvlocal\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key list-versions",
+    "group": "key-vault",
+    "description": "Lists all versions of a key in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List key versions",
+        "command": "topaz keyvault key list-versions --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key purge",
+    "group": "key-vault",
+    "description": "Permanently deletes a soft-deleted key in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Purge a deleted key",
+        "command": "topaz keyvault key purge --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key random-bytes",
+    "group": "key-vault",
+    "description": "Generates random bytes using the Key Vault random number generator.",
+    "options": [
+      {
+        "names": "-c, --count",
+        "description": "(Required) Number of random bytes to generate (1\u2013128).",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Generate 32 random bytes",
+        "command": "topaz keyvault key random-bytes --count 32"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key recover",
+    "group": "key-vault",
+    "description": "Recovers a soft-deleted key from an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Recover a deleted key",
+        "command": "topaz keyvault key recover --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key release",
+    "group": "key-vault",
+    "description": "Releases a key for Secure Key Release (SKR). Any non-empty attestation token is accepted by the emulator.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "--version",
+        "description": "(Required) Key version.",
+        "required": true
+      },
+      {
+        "names": "--target",
+        "description": "(Required) Attestation assertion (target). Any non-empty value is accepted by the emulator.",
+        "required": true
+      },
+      {
+        "names": "--enc",
+        "description": "(Optional) Encryption algorithm hint. Accepted but not enforced by the emulator.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Release a key",
+        "command": "topaz keyvault key release --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --version \u0022abc123\u0022 --target \u0022mytoken\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key restore",
+    "group": "key-vault",
+    "description": "Restores a key into an Azure Key Vault from a backup blob.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "--backup-value",
+        "description": "(Required) Base64url-encoded backup blob produced by the backup command.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Restore a key",
+        "command": "topaz keyvault key restore --vault-name \u0022kvlocal\u0022 --backup-value \u0022\u003Cencoded blob\u003E\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key rotate",
+    "group": "key-vault",
+    "description": "Rotates a key in an Azure Key Vault by creating a new version with fresh cryptographic material of the same type.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Rotate a key",
+        "command": "topaz keyvault key rotate --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key rotation-policy show",
+    "group": "key-vault",
+    "description": "Gets the rotation policy for a key in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get the rotation policy for a key",
+        "command": "topaz keyvault key rotation-policy show --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key rotation-policy update",
+    "group": "key-vault",
+    "description": "Updates the rotation policy for a key in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "--expires-in",
+        "description": "The expiry time as an ISO 8601 duration (e.g. P2Y). If omitted, the expiry is cleared.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Set a 2-year expiry on a key rotation policy",
+        "command": "topaz keyvault key rotation-policy update --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --expires-in \u0022P2Y\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key sign",
+    "group": "key-vault",
+    "description": "Signs a pre-hashed digest using a Key Vault key (RSA: RS256, RS384, RS512, PS256, PS384, PS512; EC: ES256, ES384, ES512).",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "--version",
+        "description": "(Required) Key version.",
+        "required": true
+      },
+      {
+        "names": "-a, --algorithm",
+        "description": "(Required) Signing algorithm. Supported: RS256, RS384, RS512, PS256, PS384, PS512, ES256, ES384, ES512.",
+        "required": true
+      },
+      {
+        "names": "--value",
+        "description": "(Required) Base64url-encoded pre-hashed digest to sign.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Sign a digest with RS256",
+        "command": "topaz keyvault key sign --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --version \u0022abc123\u0022 --algorithm \u0022RS256\u0022 --value \u0022\u003Cbase64url-digest\u003E\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key unwrap",
+    "group": "key-vault",
+    "description": "Unwraps (decrypts) a wrapped key using a Key Vault key (RSA keys only: RSA1_5, RSA-OAEP, RSA-OAEP-256).",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "--version",
+        "description": "(Required) Key version.",
+        "required": true
+      },
+      {
+        "names": "-a, --algorithm",
+        "description": "(Required) Unwrap algorithm. Supported: RSA1_5, RSA-OAEP, RSA-OAEP-256.",
+        "required": true
+      },
+      {
+        "names": "--value",
+        "description": "(Required) Base64url-encoded wrapped key material to unwrap.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Unwrap with RSA-OAEP-256",
+        "command": "topaz keyvault key unwrap --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --version \u0022abc123\u0022 --algorithm \u0022RSA-OAEP-256\u0022 --value \u0022\u003Cwrapped-base64url\u003E\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key update",
+    "group": "key-vault",
+    "description": "Updates the attributes of a key version in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "--version",
+        "description": "(Required) Key version.",
+        "required": true
+      },
+      {
+        "names": "--enabled",
+        "description": "Enable or disable the key version.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Disable a key version",
+        "command": "topaz keyvault key update --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --version \u0022\u003Cversion-guid\u003E\u0022 --enabled false --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key verify",
+    "group": "key-vault",
+    "description": "Verifies a signature against a pre-hashed digest using a Key Vault key (RSA: RS256, RS384, RS512, PS256, PS384, PS512; EC: ES256, ES384, ES512).",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "--version",
+        "description": "(Required) Key version.",
+        "required": true
+      },
+      {
+        "names": "-a, --algorithm",
+        "description": "(Required) Verification algorithm. Supported: RS256, RS384, RS512, PS256, PS384, PS512, ES256, ES384, ES512.",
+        "required": true
+      },
+      {
+        "names": "--value",
+        "description": "(Required) Base64url-encoded pre-hashed digest.",
+        "required": true
+      },
+      {
+        "names": "--signature",
+        "description": "(Required) Base64url-encoded signature to verify.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Verify a signature with RS256",
+        "command": "topaz keyvault key verify --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --version \u0022abc123\u0022 --algorithm \u0022RS256\u0022 --value \u0022\u003Cbase64url-digest\u003E\u0022 --signature \u0022\u003Cbase64url-signature\u003E\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault key wrap",
+    "group": "key-vault",
+    "description": "Wraps (encrypts) a key using a Key Vault key (RSA keys only: RSA1_5, RSA-OAEP, RSA-OAEP-256).",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Key name.",
+        "required": true
+      },
+      {
+        "names": "--version",
+        "description": "(Required) Key version.",
+        "required": true
+      },
+      {
+        "names": "-a, --algorithm",
+        "description": "(Required) Wrap algorithm. Supported: RSA1_5, RSA-OAEP, RSA-OAEP-256.",
+        "required": true
+      },
+      {
+        "names": "--value",
+        "description": "(Required) Base64url-encoded key material to wrap.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Wrap with RSA-OAEP-256",
+        "command": "topaz keyvault key wrap --vault-name \u0022kvlocal\u0022 --name \u0022my-key\u0022 --version \u0022abc123\u0022 --algorithm \u0022RSA-OAEP-256\u0022 --value \u0022aGVsbG8=\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault secret backup",
+    "group": "key-vault",
+    "description": "Backs up a secret from an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Secret name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Backup a secret",
+        "command": "topaz keyvault secret backup --vault-name \u0022kvlocal\u0022 --name \u0022my-secret\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault secret delete",
+    "group": "key-vault",
+    "description": "Deletes a secret from an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Secret name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a secret",
+        "command": "topaz keyvault secret delete --vault-name \u0022kvlocal\u0022 --name \u0022my-secret\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault secret get",
+    "group": "key-vault",
+    "description": "Gets a secret from an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Secret name.",
+        "required": true
+      },
+      {
+        "names": "--version",
+        "description": "Secret version. Defaults to the latest version.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get a secret",
+        "command": "topaz keyvault secret get --vault-name \u0022kvlocal\u0022 --name \u0022my-secret\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault secret get-deleted",
+    "group": "key-vault",
+    "description": "Gets a deleted secret from an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Secret name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get a deleted secret",
+        "command": "topaz keyvault secret get-deleted --vault-name \u0022kvlocal\u0022 --name \u0022my-secret\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault secret list",
+    "group": "key-vault",
+    "description": "Lists all secrets in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List secrets",
+        "command": "topaz keyvault secret list --vault-name \u0022kvlocal\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault secret list-deleted",
+    "group": "key-vault",
+    "description": "Lists all deleted secrets in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List deleted secrets",
+        "command": "topaz keyvault secret list-deleted --vault-name \u0022kvlocal\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault secret list-versions",
+    "group": "key-vault",
+    "description": "Lists all versions of a secret in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Secret name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List secret versions",
+        "command": "topaz keyvault secret list-versions --vault-name \u0022kvlocal\u0022 --name \u0022my-secret\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault secret purge",
+    "group": "key-vault",
+    "description": "Permanently deletes a soft-deleted secret in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Secret name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Purge a deleted secret",
+        "command": "topaz keyvault secret purge --vault-name \u0022kvlocal\u0022 --name \u0022my-secret\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault secret recover",
+    "group": "key-vault",
+    "description": "Recovers a deleted secret in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Secret name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Recover a deleted secret",
+        "command": "topaz keyvault secret recover --vault-name \u0022kvlocal\u0022 --name \u0022my-secret\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault secret restore",
+    "group": "key-vault",
+    "description": "Restores a secret into an Azure Key Vault from a backup blob.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "--backup-value",
+        "description": "(Required) Base64url-encoded backup blob produced by the backup command.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Restore a secret",
+        "command": "topaz keyvault secret restore --vault-name \u0022kvlocal\u0022 --backup-value \u0022\u003Cencoded blob\u003E\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault secret set",
+    "group": "key-vault",
+    "description": "Sets a secret in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Secret name.",
+        "required": true
+      },
+      {
+        "names": "--value",
+        "description": "(Required) Secret value.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Set a secret",
+        "command": "topaz keyvault secret set --vault-name \u0022kvlocal\u0022 --name \u0022my-secret\u0022 --value \u0022my-value\u0022 --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "keyvault secret update",
+    "group": "key-vault",
+    "description": "Updates the attributes of a secret in an Azure Key Vault.",
+    "options": [
+      {
+        "names": "--vault-name",
+        "description": "(Required) Key Vault name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Secret name.",
+        "required": true
+      },
+      {
+        "names": "--version",
+        "description": "(Required) Secret version.",
+        "required": true
+      },
+      {
+        "names": "--enabled",
+        "description": "Enable or disable the secret.",
+        "required": false
+      },
+      {
+        "names": "--content-type",
+        "description": "Content type of the secret.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Disable a secret",
+        "command": "topaz keyvault secret update --vault-name \u0022kvlocal\u0022 --name \u0022my-secret\u0022 --version \u0022\u003Cversion-guid\u003E\u0022 --enabled false --resource-group \u0022rg-local\u0022 --subscription-id \u002236a28ebb-9370-46d8-981c-84efe02048ae\u0022"
+      }
+    ]
+  },
+  {
+    "name": "management-group create",
+    "group": "management-group",
+    "description": "Creates or updates a management group.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Management group ID / name.",
+        "required": true
+      },
+      {
+        "names": "-d, --display-name",
+        "description": "Display name for the management group.",
+        "required": false
+      },
+      {
+        "names": "-p, --parent-id",
+        "description": "ARM ID or name of the parent management group.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a management group",
+        "command": "topaz management-group create --name \u0022my-mg\u0022 --display-name \u0022My Management Group\u0022"
+      },
+      {
+        "title": "Create a management group under a parent",
+        "command": "topaz management-group create --name \u0022child-mg\u0022 --display-name \u0022Child MG\u0022 \\\n    --parent-id \u0022/providers/Microsoft.Management/managementGroups/parent-mg\u0022"
+      }
+    ]
+  },
+  {
+    "name": "management-group delete",
+    "group": "management-group",
+    "description": "Deletes a management group.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Management group ID / name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a management group",
+        "command": "topaz management-group delete --name \u0022my-mg\u0022"
+      }
+    ]
+  },
+  {
+    "name": "management-group descendants list",
+    "group": "management-group",
+    "description": "Lists all descendant management groups and subscriptions under a management group.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Management group ID / name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List descendants of a management group",
+        "command": "topaz management-group descendants list --name \u0022my-mg\u0022"
+      }
+    ]
+  },
+  {
+    "name": "management-group hierarchy-settings create-or-update",
+    "group": "management-group",
+    "description": "Creates or updates the hierarchy settings for a management group.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Management group ID / name.",
+        "required": true
+      },
+      {
+        "names": "--require-authorization",
+        "description": "Require authorization to create child management groups.",
+        "required": false
+      },
+      {
+        "names": "--default-management-group",
+        "description": "ID of the default management group for new subscriptions.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create hierarchy settings",
+        "command": "topaz management-group hierarchy-settings create-or-update --name \u0022my-mg\u0022 --require-authorization"
+      },
+      {
+        "title": "Set a default management group",
+        "command": "topaz management-group hierarchy-settings create-or-update --name \u0022my-mg\u0022 --default-management-group \u0022default-mg\u0022"
+      }
+    ]
+  },
+  {
+    "name": "management-group hierarchy-settings delete",
+    "group": "management-group",
+    "description": "Deletes the hierarchy settings for a management group.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Management group ID / name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete hierarchy settings",
+        "command": "topaz management-group hierarchy-settings delete --name \u0022my-mg\u0022"
+      }
+    ]
+  },
+  {
+    "name": "management-group hierarchy-settings list",
+    "group": "management-group",
+    "description": "Lists all hierarchy settings for a management group.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Management group ID / name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List hierarchy settings",
+        "command": "topaz management-group hierarchy-settings list --name \u0022my-mg\u0022"
+      }
+    ]
+  },
+  {
+    "name": "management-group hierarchy-settings show",
+    "group": "management-group",
+    "description": "Shows the hierarchy settings for a management group.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Management group ID / name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Show hierarchy settings",
+        "command": "topaz management-group hierarchy-settings show --name \u0022my-mg\u0022"
+      }
+    ]
+  },
+  {
+    "name": "management-group hierarchy-settings update",
+    "group": "management-group",
+    "description": "Updates the hierarchy settings for a management group.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Management group ID / name.",
+        "required": true
+      },
+      {
+        "names": "--require-authorization",
+        "description": "Require authorization to create child management groups.",
+        "required": false
+      },
+      {
+        "names": "--default-management-group",
+        "description": "ID of the default management group for new subscriptions.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Enable authorization requirement",
+        "command": "topaz management-group hierarchy-settings update --name \u0022my-mg\u0022 --require-authorization true"
+      },
+      {
+        "title": "Change the default management group",
+        "command": "topaz management-group hierarchy-settings update --name \u0022my-mg\u0022 --default-management-group \u0022new-default-mg\u0022"
+      }
+    ]
+  },
+  {
+    "name": "management-group list",
+    "group": "management-group",
+    "description": "Lists all management groups.",
+    "options": [],
+    "examples": [
+      {
+        "title": "List management groups",
+        "command": "topaz management-group list"
+      }
+    ]
+  },
+  {
+    "name": "management-group show",
+    "group": "management-group",
+    "description": "Shows details of a management group.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Management group ID / name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Show a management group",
+        "command": "topaz management-group show --name \u0022my-mg\u0022"
+      }
+    ]
+  },
+  {
+    "name": "management-group subscription add",
+    "group": "management-group",
+    "description": "Associates a subscription with a management group.",
+    "options": [
+      {
+        "names": "-g, --group-id",
+        "description": "(Required) Management group ID.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID to associate.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Associate a subscription",
+        "command": "topaz management-group subscription add --group-id \u0022my-mg\u0022 --subscription-id \u0022\u003Cguid\u003E\u0022"
+      }
+    ]
+  },
+  {
+    "name": "management-group subscription remove",
+    "group": "management-group",
+    "description": "Disassociates a subscription from a management group.",
+    "options": [
+      {
+        "names": "-g, --group-id",
+        "description": "(Required) Management group ID.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID to disassociate.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Remove a subscription from a management group",
+        "command": "topaz management-group subscription remove --group-id \u0022my-mg\u0022 --subscription-id \u0022\u003Cguid\u003E\u0022"
+      }
+    ]
+  },
+  {
+    "name": "management-group subscription show",
+    "group": "management-group",
+    "description": "Shows a subscription association under a management group.",
+    "options": [
+      {
+        "names": "-g, --group-id",
+        "description": "(Required) Management group ID.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Show a subscription under a management group",
+        "command": "topaz management-group subscription show --group-id \u0022my-mg\u0022 --subscription-id \u0022\u003Cguid\u003E\u0022"
+      }
+    ]
+  },
+  {
+    "name": "management-group update",
+    "group": "management-group",
+    "description": "Updates a management group.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Management group ID / name.",
+        "required": true
+      },
+      {
+        "names": "-d, --display-name",
+        "description": "New display name for the management group.",
+        "required": false
+      },
+      {
+        "names": "-p, --parent-id",
+        "description": "ID of the new parent management group.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Rename a management group",
+        "command": "topaz management-group update --name \u0022my-mg\u0022 --display-name \u0022New Display Name\u0022"
+      },
+      {
+        "title": "Re-parent a management group",
+        "command": "topaz management-group update --name \u0022my-mg\u0022 --parent-id \u0022parent-mg\u0022"
+      }
+    ]
+  },
+  {
+    "name": "role assignment create",
+    "group": "authorization",
+    "description": "Creates (or updates) an Azure RBAC role assignment for a principal at a given scope.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) role assignment name (GUID). This becomes the roleAssignment resource name.",
+        "required": false
+      },
+      {
+        "names": "-d, --role-definition-id",
+        "description": "(Required) role definition ID. Example: /providers/Microsoft.Authorization/roleDefinitions/\u003CroleGuid\u003E.",
+        "required": false
+      },
+      {
+        "names": "-p, --principal-id",
+        "description": "(Required) principal (object) ID in Entra ID (GUID).",
+        "required": false
+      },
+      {
+        "names": "-t, --principal-type",
+        "description": "(Required) principal type. Common value: ServicePrincipal.",
+        "required": false
+      },
+      {
+        "names": "--scope",
+        "description": "(Required) scope for the role assignment. Example: /subscriptions/\u003CsubId\u003E or a resource ID.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID (GUID).",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Assign Reader at subscription scope to a managed identity (or service principal)",
+        "command": "topaz role assignment create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name 11111111-2222-3333-4444-555555555555 \\\n    --role-definition-id acdd72a7-3385-48ef-bd42-f606fba81ae7 \\\n    --principal-id 66666666-7777-8888-9999-000000000000 \\\n    --principal-type ServicePrincipal \\\n    --scope /subscriptions/36a28ebb-9370-46d8-981c-84efe02048ae"
+      },
+      {
+        "title": "Assign Key Vault Secrets User at Key Vault scope (data-plane secrets access)",
+        "command": "topaz role assignment create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee \\\n    --role-definition-id 4633458b-17de-408a-b874-0445c86b69e6 \\\n    --principal-id 66666666-7777-8888-9999-000000000000 \\\n    --principal-type ServicePrincipal \\\n    --scope /subscriptions/36a28ebb-9370-46d8-981c-84efe02048ae/resourceGroups/rg-local/providers/Microsoft.KeyVault/vaults/mykv"
+      }
+    ]
+  },
+  {
+    "name": "servicebus namespace create",
+    "group": "service-bus",
+    "description": "Creates or updates a Service Bus namespace.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Namespace name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a namespace",
+        "command": "topaz servicebus namespace create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022sblocal\u0022"
+      }
+    ]
+  },
+  {
+    "name": "servicebus namespace delete",
+    "group": "service-bus",
+    "description": "Deletes a Service Bus namespace.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Namespace name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a namespace",
+        "command": "topaz servicebus namespace delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022sblocal\u0022"
+      }
+    ]
+  },
+  {
+    "name": "servicebus queue create",
+    "group": "service-bus",
+    "description": "Creates or updates a queue in a Service Bus namespace.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --queue-name",
+        "description": "(Required) Queue name.",
+        "required": true
+      },
+      {
+        "names": "--namespace-name",
+        "description": "(Required) Service Bus namespace name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a queue",
+        "command": "topaz servicebus queue create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --namespace-name \u0022sblocal\u0022 \\\n    --queue-name \u0022myqueue\u0022"
+      }
+    ]
+  },
+  {
+    "name": "servicebus queue delete",
+    "group": "service-bus",
+    "description": "Deletes a queue from a Service Bus namespace.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --queue-name",
+        "description": "(Required) Queue name.",
+        "required": true
+      },
+      {
+        "names": "--namespace-name",
+        "description": "(Required) Service Bus namespace name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a queue",
+        "command": "topaz servicebus queue delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --namespace-name \u0022sblocal\u0022 \\\n    --queue-name \u0022myqueue\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage account check-name",
+    "group": "azure-storage/account",
+    "description": "Checks whether a storage account name is available.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Storage account name to check.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Check name availability",
+        "command": "topaz storage account check-name \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --name \u0022salocal\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage account create",
+    "group": "azure-storage/account",
+    "description": "Creates a new Azure Storage account.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Location (e.g. westeurope).",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a storage account",
+        "command": "topaz storage account create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022salocal\u0022 \\\n    --location \u0022westeurope\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage account delete",
+    "group": "azure-storage/account",
+    "description": "Deletes an Azure Storage account.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a storage account",
+        "command": "topaz storage account delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022salocal\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage account generate-sas",
+    "group": "azure-storage/account",
+    "description": "Generates a Shared Access Signature (SAS) token for a storage account.",
+    "options": [
+      {
+        "names": "-n, --account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--services",
+        "description": "(Required) The storage services to sign (b=blob, f=file, q=queue, t=table). Combine letters as needed.",
+        "required": true
+      },
+      {
+        "names": "--resource-types",
+        "description": "(Required) The resource types accessible with the SAS (s=service, c=container, o=object).",
+        "required": true
+      },
+      {
+        "names": "--permissions",
+        "description": "(Required) The permissions granted by the SAS (e.g. rwdlacup).",
+        "required": true
+      },
+      {
+        "names": "--expiry",
+        "description": "(Required) Expiry date/time in UTC (ISO 8601, e.g. 2030-01-01T00:00:00Z).",
+        "required": true
+      },
+      {
+        "names": "--start",
+        "description": "Start date/time in UTC (ISO 8601).",
+        "required": false
+      },
+      {
+        "names": "--https-only",
+        "description": "Restrict to HTTPS connections only.",
+        "required": false
+      },
+      {
+        "names": "--ip",
+        "description": "Restrict to a specific IP address or range.",
+        "required": false
+      },
+      {
+        "names": "--key-to-sign",
+        "description": "The storage account key to use for signing (key1 or key2).",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Generate SAS token",
+        "command": "topaz storage account generate-sas \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --services \u0022b\u0022 \\\n    --resource-types \u0022sco\u0022 \\\n    --permissions \u0022rwdlacup\u0022 \\\n    --expiry \u00222030-01-01T00:00:00Z\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage account generate-service-sas",
+    "group": "azure-storage/account",
+    "description": "Generates a service-level Shared Access Signature (SAS) token for a storage account resource.",
+    "options": [
+      {
+        "names": "-n, --account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--canonicalized-resource",
+        "description": "(Required) Canonicalized path of the resource (e.g. /blob/accountname/containername).",
+        "required": true
+      },
+      {
+        "names": "--resource",
+        "description": "(Required) Signed resource type (b=blob, c=container, f=file, s=share).",
+        "required": true
+      },
+      {
+        "names": "--permissions",
+        "description": "(Required) The permissions granted by the SAS (e.g. rwdl).",
+        "required": true
+      },
+      {
+        "names": "--expiry",
+        "description": "(Required) Expiry date/time in UTC (ISO 8601, e.g. 2030-01-01T00:00:00Z).",
+        "required": true
+      },
+      {
+        "names": "--start",
+        "description": "Start date/time in UTC (ISO 8601).",
+        "required": false
+      },
+      {
+        "names": "--https-only",
+        "description": "Restrict to HTTPS connections only.",
+        "required": false
+      },
+      {
+        "names": "--ip",
+        "description": "Restrict to a specific IP address or range.",
+        "required": false
+      },
+      {
+        "names": "--identifier",
+        "description": "Stored access policy identifier.",
+        "required": false
+      },
+      {
+        "names": "--key-to-sign",
+        "description": "The storage account key to use for signing (key1 or key2).",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Generate service SAS token",
+        "command": "topaz storage account generate-service-sas \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --canonicalized-resource \u0022/blob/salocal/mycontainer\u0022 \\\n    --resource \u0022c\u0022 \\\n    --permissions \u0022rwdl\u0022 \\\n    --expiry \u00222030-01-01T00:00:00Z\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage account keys list",
+    "group": "azure-storage/account",
+    "description": "Lists the access keys for a storage account.",
+    "options": [
+      {
+        "names": "-n, --account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List storage account keys",
+        "command": "topaz storage account keys list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage account keys renew",
+    "group": "azure-storage/account",
+    "description": "Regenerates an access key for a storage account.",
+    "options": [
+      {
+        "names": "-n, --account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-k, --key-name",
+        "description": "(Required) The key to regenerate (key1 or key2).",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Regenerate key1",
+        "command": "topaz storage account keys renew \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --key-name \u0022key1\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage account list",
+    "group": "azure-storage/account",
+    "description": "Lists Azure Storage accounts.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "Resource group name (filters to accounts in this group when specified).",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "List all accounts in a subscription",
+        "command": "topaz storage account list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022"
+      },
+      {
+        "title": "List accounts in a resource group",
+        "command": "topaz storage account list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage account show",
+    "group": "azure-storage/account",
+    "description": "Shows details of an Azure Storage account.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Show a storage account",
+        "command": "topaz storage account show \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022salocal\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage account show-connection-string",
+    "group": "azure-storage/account",
+    "description": "Shows the connection string for a storage account.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Show connection string",
+        "command": "topaz storage account show-connection-string \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022salocal\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage account update",
+    "group": "azure-storage/account",
+    "description": "Updates an Azure Storage account.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--tags",
+        "description": "Resource tags as key=value pairs.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Update tags on a storage account",
+        "command": "topaz storage account update \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022salocal\u0022 \\\n    --tags \u0022env=prod\u0022 \u0022owner=team\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage blob copy",
+    "group": "azure-storage/blob",
+    "description": "Copies a blob to a destination container, optionally across accounts.",
+    "options": [
+      {
+        "names": "--source-account-name",
+        "description": "(Required) Source storage account name.",
+        "required": true
+      },
+      {
+        "names": "--source-container",
+        "description": "(Required) Source container name.",
+        "required": true
+      },
+      {
+        "names": "--source-blob",
+        "description": "(Required) Source blob name.",
+        "required": true
+      },
+      {
+        "names": "--source-resource-group",
+        "description": "(Required) Source resource group name.",
+        "required": true
+      },
+      {
+        "names": "--source-subscription-id",
+        "description": "(Required) Source subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--dest-account-name",
+        "description": "(Required) Destination storage account name.",
+        "required": true
+      },
+      {
+        "names": "--dest-container",
+        "description": "(Required) Destination container name.",
+        "required": true
+      },
+      {
+        "names": "--dest-blob",
+        "description": "(Required) Destination blob name.",
+        "required": true
+      },
+      {
+        "names": "--dest-resource-group",
+        "description": "(Required) Destination resource group name.",
+        "required": true
+      },
+      {
+        "names": "--dest-subscription-id",
+        "description": "(Required) Destination subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Copy blob within same account",
+        "command": "topaz storage blob copy \\\n    --source-subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --source-resource-group \u0022rg-local\u0022 \\\n    --source-account-name \u0022salocal\u0022 \\\n    --source-container \u0022src\u0022 \\\n    --source-blob \u0022file.txt\u0022 \\\n    --dest-subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --dest-resource-group \u0022rg-local\u0022 \\\n    --dest-account-name \u0022salocal\u0022 \\\n    --dest-container \u0022dst\u0022 \\\n    --dest-blob \u0022file-copy.txt\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage blob delete",
+    "group": "azure-storage/blob",
+    "description": "Deletes a blob from a container.",
+    "options": [
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-c, --container-name",
+        "description": "(Required) Container name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Blob name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a blob",
+        "command": "topaz storage blob delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --container-name \u0022mycontainer\u0022 \\\n    --name \u0022file.txt\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage blob download",
+    "group": "azure-storage/blob",
+    "description": "Downloads a blob to a local file.",
+    "options": [
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-c, --container-name",
+        "description": "(Required) Container name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Blob name.",
+        "required": true
+      },
+      {
+        "names": "-d, --destination",
+        "description": "Destination file path (defaults to blob name).",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Download a blob",
+        "command": "topaz storage blob download \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --container-name \u0022mycontainer\u0022 \\\n    --name \u0022file.txt\u0022 \\\n    --destination \u0022/tmp/file.txt\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage blob lease",
+    "group": "azure-storage/blob",
+    "description": "Manages lease operations on a blob (acquire, renew, change, release, break).",
+    "options": [
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-c, --container-name",
+        "description": "(Required) Container name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Blob name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--action",
+        "description": "(Required) Lease action: acquire, renew, change, release, or break.",
+        "required": true
+      },
+      {
+        "names": "--lease-duration",
+        "description": "Lease duration in seconds (-1 for infinite).",
+        "required": false
+      },
+      {
+        "names": "--lease-id",
+        "description": "Existing lease ID (required for renew, change, release).",
+        "required": false
+      },
+      {
+        "names": "--proposed-lease-id",
+        "description": "Proposed lease ID (required for change action).",
+        "required": false
+      },
+      {
+        "names": "--lease-break-period",
+        "description": "Break period in seconds (used with break action).",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Acquire a lease",
+        "command": "topaz storage blob lease \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --container-name \u0022mycontainer\u0022 \\\n    --name \u0022file.txt\u0022 \\\n    --action \u0022acquire\u0022 \\\n    --lease-duration 60"
+      }
+    ]
+  },
+  {
+    "name": "storage blob list",
+    "group": "azure-storage/blob",
+    "description": "Lists blobs in a container.",
+    "options": [
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-c, --container-name",
+        "description": "(Required) Container name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List blobs in a container",
+        "command": "topaz storage blob list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --container-name \u0022mycontainer\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage blob metadata show",
+    "group": "azure-storage/blob",
+    "description": "Shows the metadata key-value pairs on a blob.",
+    "options": [
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-c, --container-name",
+        "description": "(Required) Container name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Blob name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Show blob metadata",
+        "command": "topaz storage blob metadata show \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --container-name \u0022mycontainer\u0022 \\\n    --name \u0022file.txt\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage blob metadata update",
+    "group": "azure-storage/blob",
+    "description": "Sets or replaces metadata key-value pairs on a blob.",
+    "options": [
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-c, --container-name",
+        "description": "(Required) Container name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Blob name.",
+        "required": true
+      },
+      {
+        "names": "--metadata",
+        "description": "Metadata key=value pairs (e.g. --metadata \u0022env=prod\u0022 \u0022owner=team\u0022).",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Set blob metadata",
+        "command": "topaz storage blob metadata update \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --container-name \u0022mycontainer\u0022 \\\n    --name \u0022file.txt\u0022 \\\n    --metadata \u0022env=prod\u0022 \u0022owner=team\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage blob show",
+    "group": "azure-storage/blob",
+    "description": "Shows the properties of a blob.",
+    "options": [
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-c, --container-name",
+        "description": "(Required) Container name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Blob name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Show blob properties",
+        "command": "topaz storage blob show \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --container-name \u0022mycontainer\u0022 \\\n    --name \u0022file.txt\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage blob snapshot",
+    "group": "azure-storage/blob",
+    "description": "Creates a read-only snapshot of a blob at the current time.",
+    "options": [
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-c, --container-name",
+        "description": "(Required) Container name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Blob name.",
+        "required": true
+      },
+      {
+        "names": "--lease-id",
+        "description": "Lease ID required if the blob has an active lease.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a blob snapshot",
+        "command": "topaz storage blob snapshot \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --container-name \u0022mycontainer\u0022 \\\n    --name \u0022file.txt\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage blob undelete",
+    "group": "azure-storage/blob",
+    "description": "Restores a soft-deleted blob.",
+    "options": [
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-c, --container-name",
+        "description": "(Required) Container name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Blob name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Undelete a blob",
+        "command": "topaz storage blob undelete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --container-name \u0022mycontainer\u0022 \\\n    --name \u0022file.txt\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage blob update",
+    "group": "azure-storage/blob",
+    "description": "Updates the HTTP properties (content type, encoding, etc.) of a blob.",
+    "options": [
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-c, --container-name",
+        "description": "(Required) Container name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Blob name.",
+        "required": true
+      },
+      {
+        "names": "--content-type",
+        "description": "Content-Type header value (e.g. text/plain).",
+        "required": false
+      },
+      {
+        "names": "--content-encoding",
+        "description": "Content-Encoding header value.",
+        "required": false
+      },
+      {
+        "names": "--content-language",
+        "description": "Content-Language header value.",
+        "required": false
+      },
+      {
+        "names": "--cache-control",
+        "description": "Cache-Control header value.",
+        "required": false
+      },
+      {
+        "names": "--content-disposition",
+        "description": "Content-Disposition header value.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Update content type of a blob",
+        "command": "topaz storage blob update \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --container-name \u0022mycontainer\u0022 \\\n    --name \u0022file.txt\u0022 \\\n    --content-type \u0022text/plain\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage blob upload",
+    "group": "azure-storage/blob",
+    "description": "Uploads a local file to a blob container.",
+    "options": [
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-c, --container-name",
+        "description": "(Required) Container name.",
+        "required": true
+      },
+      {
+        "names": "-f, --file",
+        "description": "(Required) Path to the local file to upload.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "Blob name (defaults to the file name).",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Upload a file",
+        "command": "topaz storage blob upload \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --container-name \u0022mycontainer\u0022 \\\n    --file \u0022/path/to/file.txt\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage container create",
+    "group": "azure-storage/container",
+    "description": "Creates a new blob container in a storage account.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Container name.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a container",
+        "command": "topaz storage container create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --name \u0022mycontainer\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage container delete",
+    "group": "azure-storage/container",
+    "description": "Deletes a blob container from a storage account.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Container name.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a container",
+        "command": "topaz storage container delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --name \u0022mycontainer\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage container list",
+    "group": "azure-storage/container",
+    "description": "Lists blob containers in a storage account.",
+    "options": [
+      {
+        "names": "-n, --account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List containers",
+        "command": "topaz storage container list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage container metadata set",
+    "group": "azure-storage/container",
+    "description": "Sets metadata key-value pairs on a blob container.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Container name.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--metadata",
+        "description": "Metadata key=value pairs (e.g. --metadata \u0022env=prod\u0022 \u0022owner=team\u0022).",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Set container metadata",
+        "command": "topaz storage container metadata set \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --name \u0022mycontainer\u0022 \\\n    --metadata \u0022env=prod\u0022 \u0022owner=team\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage message delete",
+    "group": "azure-storage/queue",
+    "description": "Deletes a message from a queue.",
+    "options": [
+      {
+        "names": "-q, --queue-name",
+        "description": "(Required) Queue name.",
+        "required": true
+      },
+      {
+        "names": "-i, --message-id",
+        "description": "(Required) Message ID.",
+        "required": true
+      },
+      {
+        "names": "-r, --pop-receipt",
+        "description": "(Required) Pop receipt obtained when the message was dequeued.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a message",
+        "command": "topaz storage message delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --queue-name \u0022myqueue\u0022 \\\n    --message-id \u0022\u003Cid\u003E\u0022 \\\n    --pop-receipt \u0022\u003Creceipt\u003E\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage message get",
+    "group": "azure-storage/queue",
+    "description": "Dequeues one or more messages from a queue, hiding them for the visibility timeout duration.",
+    "options": [
+      {
+        "names": "-q, --queue-name",
+        "description": "(Required) Queue name.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --num-messages",
+        "description": "Number of messages to retrieve (1\u201332). Default: 1.",
+        "required": false
+      },
+      {
+        "names": "--visibility-timeout",
+        "description": "Seconds messages are hidden after dequeue (0\u2013604800). Default: 30.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Dequeue up to 5 messages",
+        "command": "topaz storage message get \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --queue-name \u0022myqueue\u0022 \\\n    --num-messages 5"
+      }
+    ]
+  },
+  {
+    "name": "storage message peek",
+    "group": "azure-storage/queue",
+    "description": "Peeks at one or more messages in a queue without dequeuing them.",
+    "options": [
+      {
+        "names": "-q, --queue-name",
+        "description": "(Required) Queue name.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --num-messages",
+        "description": "Number of messages to peek (1\u201332). Default: 1.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Peek at up to 5 messages",
+        "command": "topaz storage message peek \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --queue-name \u0022myqueue\u0022 \\\n    --num-messages 5"
+      }
+    ]
+  },
+  {
+    "name": "storage message put",
+    "group": "azure-storage/queue",
+    "description": "Enqueues a new message in a queue.",
+    "options": [
+      {
+        "names": "-q, --queue-name",
+        "description": "(Required) Queue name.",
+        "required": true
+      },
+      {
+        "names": "-c, --content",
+        "description": "(Required) Message content.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--visibility-timeout",
+        "description": "Seconds the message is invisible after enqueue (0\u2013604800). Default: 0.",
+        "required": false
+      },
+      {
+        "names": "--ttl",
+        "description": "Message time-to-live in seconds (1\u2013604800). Default: 604800.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Enqueue a message",
+        "command": "topaz storage message put \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --queue-name \u0022myqueue\u0022 \\\n    --content \u0022Hello World\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage message update",
+    "group": "azure-storage/queue",
+    "description": "Updates the visibility timeout and/or content of a dequeued message.",
+    "options": [
+      {
+        "names": "-q, --queue-name",
+        "description": "(Required) Queue name.",
+        "required": true
+      },
+      {
+        "names": "-i, --message-id",
+        "description": "(Required) Message ID.",
+        "required": true
+      },
+      {
+        "names": "-r, --pop-receipt",
+        "description": "(Required) Pop receipt obtained when the message was dequeued.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--visibility-timeout",
+        "description": "New visibility timeout in seconds (0\u2013604800). Default: 30.",
+        "required": false
+      },
+      {
+        "names": "-c, --content",
+        "description": "Updated message content. If omitted, content is preserved.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Update message visibility",
+        "command": "topaz storage message update \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --queue-name \u0022myqueue\u0022 \\\n    --message-id \u0022\u003Cid\u003E\u0022 \\\n    --pop-receipt \u0022\u003Creceipt\u003E\u0022 \\\n    --visibility-timeout 60"
+      }
+    ]
+  },
+  {
+    "name": "storage queue create",
+    "group": "azure-storage/queue",
+    "description": "Creates a new queue in a storage account.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Queue name.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a queue",
+        "command": "topaz storage queue create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --name \u0022myqueue\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage queue delete",
+    "group": "azure-storage/queue",
+    "description": "Deletes a queue from a storage account.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Queue name.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a queue",
+        "command": "topaz storage queue delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --name \u0022myqueue\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage queue list",
+    "group": "azure-storage/queue",
+    "description": "Lists queues in a storage account.",
+    "options": [
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List queues",
+        "command": "topaz storage queue list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage queue show",
+    "group": "azure-storage/queue",
+    "description": "Shows properties of a queue in a storage account.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Queue name.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Show a queue",
+        "command": "topaz storage queue show \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --name \u0022myqueue\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage table create",
+    "group": "azure-storage/table",
+    "description": "Creates a new table in a storage account.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Table name.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a table",
+        "command": "topaz storage table create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --name \u0022mytable\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage table delete",
+    "group": "azure-storage/table",
+    "description": "Deletes a table from a storage account.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Table name.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a table",
+        "command": "topaz storage table delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --name \u0022mytable\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage table delete-entity",
+    "group": "azure-storage/table",
+    "description": "Deletes an entity from a storage table.",
+    "options": [
+      {
+        "names": "-t, --table-name",
+        "description": "(Required) Table name.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-p, --partition-key",
+        "description": "(Required) Partition key of the entity.",
+        "required": true
+      },
+      {
+        "names": "-r, --row-key",
+        "description": "(Required) Row key of the entity.",
+        "required": true
+      },
+      {
+        "names": "--if-match",
+        "description": "ETag for conditional delete (defaults to * for unconditional).",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete an entity",
+        "command": "topaz storage table delete-entity \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --table-name \u0022mytable\u0022 \\\n    --partition-key \u0022pk1\u0022 \\\n    --row-key \u0022rk1\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage table insert-entity",
+    "group": "azure-storage/table",
+    "description": "Inserts an entity into a storage table.",
+    "options": [
+      {
+        "names": "-t, --table-name",
+        "description": "(Required) Table name.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-e, --entity",
+        "description": "(Required) JSON-encoded entity object with PartitionKey and RowKey.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Insert an entity",
+        "command": "topaz storage table insert-entity \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --table-name \u0022mytable\u0022 \\\n    --entity \u0027{\u0022PartitionKey\u0022:\u0022pk1\u0022,\u0022RowKey\u0022:\u0022rk1\u0022,\u0022Value\u0022:\u0022hello\u0022}\u0027"
+      }
+    ]
+  },
+  {
+    "name": "storage table list",
+    "group": "azure-storage/table",
+    "description": "Lists tables in a storage account.",
+    "options": [
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List tables",
+        "command": "topaz storage table list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage table query-entity",
+    "group": "azure-storage/table",
+    "description": "Queries entities in a storage table with an optional OData filter.",
+    "options": [
+      {
+        "names": "-t, --table-name",
+        "description": "(Required) Table name.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-f, --filter",
+        "description": "OData filter expression (e.g. \u0022PartitionKey eq \u0027pk1\u0027\u0022).",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Query all entities",
+        "command": "topaz storage table query-entity \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --table-name \u0022mytable\u0022"
+      },
+      {
+        "title": "Query with filter",
+        "command": "topaz storage table query-entity \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --table-name \u0022mytable\u0022 \\\n    --filter \u0022PartitionKey eq \u0027pk1\u0027\u0022"
+      }
+    ]
+  },
+  {
+    "name": "storage table show",
+    "group": "azure-storage/table",
+    "description": "Shows whether a table exists in a storage account.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Table name.",
+        "required": true
+      },
+      {
+        "names": "--account-name",
+        "description": "(Required) Storage account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Show a table",
+        "command": "topaz storage table show \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022salocal\u0022 \\\n    --name \u0022mytable\u0022"
+      }
+    ]
+  },
+  {
+    "name": "subscription cancel",
+    "group": "subscription",
+    "description": "Cancels a subscription, setting its state to Disabled.",
+    "options": [
+      {
+        "names": "-i, --id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Cancel a subscription",
+        "command": "topaz subscription cancel \\\n    --id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022"
+      }
+    ]
+  },
+  {
+    "name": "subscription create",
+    "group": "subscription",
+    "description": "Creates a new subscription.",
+    "options": [
+      {
+        "names": "-i, --id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Subscription display name.",
+        "required": true
+      },
+      {
+        "names": "-t, --tag",
+        "description": "Tags to assign to the subscription (key=value).",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a subscription",
+        "command": "topaz subscription create \\\n    --id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022 \\\n    --name \u0022my-subscription\u0022"
+      }
+    ]
+  },
+  {
+    "name": "subscription delete",
+    "group": "subscription",
+    "description": "Deletes a subscription.",
+    "options": [
+      {
+        "names": "-i, --id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a subscription",
+        "command": "topaz subscription delete \\\n    --id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022"
+      }
+    ]
+  },
+  {
+    "name": "subscription enable",
+    "group": "subscription",
+    "description": "Enables a subscription, setting its state to Enabled.",
+    "options": [
+      {
+        "names": "-i, --id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Enable a subscription",
+        "command": "topaz subscription enable \\\n    --id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022"
+      }
+    ]
+  },
+  {
+    "name": "subscription list",
+    "group": "subscription",
+    "description": "Lists all subscriptions.",
+    "options": [],
+    "examples": [
+      {
+        "title": "List all subscriptions",
+        "command": "topaz subscription list"
+      }
+    ]
+  },
+  {
+    "name": "subscription list-locations",
+    "group": "subscription",
+    "description": "Lists all available Azure locations for a subscription.",
+    "options": [
+      {
+        "names": "-i, --id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List subscription locations",
+        "command": "topaz subscription list-locations \\\n    --id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vnet check-ip",
+    "group": "virtual-network",
+    "description": "Checks whether a private IP address is available for use in a Virtual Network.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) virtual network name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      },
+      {
+        "names": "-i, --ip-address",
+        "description": "(Required) private IP address to check",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Check IP address availability",
+        "command": "topaz vnet check-ip --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-vnet\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --ip-address \u002210.0.1.5\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vnet create",
+    "group": "virtual-network",
+    "description": "Creates or updates an Azure Virtual Network.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) virtual network name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) location",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      },
+      {
+        "names": "--address-prefix",
+        "description": "Address prefix for the virtual network (e.g. 10.0.0.0/16)",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a new Virtual Network",
+        "command": "topaz vnet create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-vnet\u0022 \\\n    --location \u0022westeurope\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --address-prefix \u002210.0.0.0/16\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vnet delete",
+    "group": "virtual-network",
+    "description": "Deletes an Azure Virtual Network.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) virtual network name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes a Virtual Network",
+        "command": "topaz vnet delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-vnet\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vnet list",
+    "group": "virtual-network",
+    "description": "Lists Azure Virtual Networks in a subscription or resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Optional) filter by resource group name",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists Virtual Networks in a resource group",
+        "command": "topaz vnet list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vnet show",
+    "group": "virtual-network",
+    "description": "Gets an Azure Virtual Network.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) virtual network name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets a Virtual Network",
+        "command": "topaz vnet show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-vnet\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vnet subnet create",
+    "group": "virtual-network",
+    "description": "Creates or updates a subnet in a Virtual Network.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) subnet name",
+        "required": false
+      },
+      {
+        "names": "--vnet-name",
+        "description": "(Required) virtual network name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      },
+      {
+        "names": "--address-prefix",
+        "description": "Address prefix for the subnet (e.g. 10.0.1.0/24)",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a subnet",
+        "command": "topaz vnet subnet create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --vnet-name \u0022my-vnet\u0022 \\\n    --name \u0022my-subnet\u0022 \\\n    --address-prefix \u002210.0.1.0/24\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vnet subnet delete",
+    "group": "virtual-network",
+    "description": "Deletes a subnet from a Virtual Network.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) subnet name",
+        "required": false
+      },
+      {
+        "names": "--vnet-name",
+        "description": "(Required) virtual network name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes a subnet",
+        "command": "topaz vnet subnet delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --vnet-name \u0022my-vnet\u0022 \\\n    --name \u0022my-subnet\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vnet subnet list",
+    "group": "virtual-network",
+    "description": "Lists subnets in a Virtual Network.",
+    "options": [
+      {
+        "names": "--vnet-name",
+        "description": "(Required) virtual network name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists all subnets",
+        "command": "topaz vnet subnet list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --vnet-name \u0022my-vnet\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vnet subnet show",
+    "group": "virtual-network",
+    "description": "Gets a subnet from a Virtual Network.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) subnet name",
+        "required": false
+      },
+      {
+        "names": "--vnet-name",
+        "description": "(Required) virtual network name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets a subnet",
+        "command": "topaz vnet subnet show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --vnet-name \u0022my-vnet\u0022 \\\n    --name \u0022my-subnet\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  }
+]

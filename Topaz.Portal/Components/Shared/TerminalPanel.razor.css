@@ -149,3 +149,100 @@
 .terminal-input::placeholder {
     color: #484f58;
 }
+
+/* Suggestion dropdown */
+
+.terminal-input-wrapper {
+    flex-shrink: 0;
+    position: relative;
+}
+
+.terminal-suggestions {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    max-height: 320px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #30363d #161b22;
+    z-index: 10;
+}
+
+.terminal-suggestion-item {
+    padding: 0.45rem 0.75rem;
+    cursor: pointer;
+    border-bottom: 1px solid #21262d;
+    transition: background 0.1s;
+}
+
+.terminal-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.terminal-suggestion-item:hover {
+    background: #1f2937;
+}
+
+.terminal-suggestion-item--selected {
+    background: #1d3a6b;
+}
+
+.terminal-suggestion-item--selected:hover {
+    background: #1e4080;
+}
+
+.terminal-suggestion-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.terminal-suggestion-name {
+    color: #79c0ff;
+    font-weight: 600;
+    font-size: 0.83rem;
+}
+
+.terminal-suggestion-desc {
+    display: block;
+    color: #8b949e;
+    font-size: 0.78rem;
+    margin-top: 0.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.terminal-suggestion-examples {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid #30363d;
+}
+
+.terminal-suggestion-example {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.terminal-suggestion-example-title {
+    color: #8b949e;
+    font-size: 0.74rem;
+}
+
+.terminal-suggestion-example-cmd {
+    font-family: inherit;
+    font-size: 0.78rem;
+    color: #a5d6ff;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+}

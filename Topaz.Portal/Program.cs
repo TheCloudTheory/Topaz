@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Topaz.Portal;
 using Topaz.Portal.Components;
+using Topaz.Portal.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +50,7 @@ builder.Services.AddScoped<AccountSession>();
 builder.Services.AddScoped<ITopazClient, TopazClient>();
 builder.Services.AddSingleton<AuthenticationClient>();
 builder.Services.AddScoped<ProtectedSessionStorage>();
+builder.Services.AddSingleton<ICliSuggestionService, CliSuggestionService>();
 
 var app = builder.Build();
 
