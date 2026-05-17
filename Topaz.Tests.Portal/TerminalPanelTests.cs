@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Components.Web;
 using Topaz.Portal.Components.Shared;
 
 namespace Topaz.Tests.Portal;
@@ -149,5 +148,95 @@ public class TerminalPanel_IgnoresNonEnterKey : BunitTestContext
         cut.Find(".terminal-input").KeyDown(new KeyboardEventArgs { Key = "a" });
 
         Assert.That(cut.FindAll(".terminal-command"), Is.Empty);
+    }
+}
+
+[TestFixture]
+public class TerminalPanel_ExecuteCommand_ShowsOutput : BunitTestContext
+{
+    [SetUp]
+    public void Setup()
+    {
+        var cliExecution = Substitute.For<ICliExecutionService>();
+        cliExecution.ExecuteAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new CliExecutionResult("my-resource-group", IsError: false)));
+        Services.AddSingleton(cliExecution);
+    }
+
+    [Test]
+    public async Task Test()
+    {
+        var cut = RenderComponent<TerminalPanel>();
+        await cut.InvokeAsync(() => cut.Instance.Open());
+        cut.WaitForAssertion(() => cut.Find(".terminal-input"));
+
+        cut.Find(".terminal-input").Input("group list");
+        cut.Find(".terminal-input").KeyDown(new KeyboardEventArgs { Key = "Enter" });
+
+        cut.WaitForAssertion(() =>
+        {
+            var results = cut.FindAll(".terminal-result");
+            Assert.That(results.Any(r => r.TextContent.Contains("my-resource-group")), Is.True);
+        });
+    }
+}
+
+[TestFixture]
+public class TerminalPanel_ExecuteCommand_ShowsError : BunitTestContext
+{
+    [SetUp]
+    public void Setup()
+    {
+        var cliExecution = Substitute.For<ICliExecutionService>();
+        cliExecution.ExecuteAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new CliExecutionResult("Resource group not found.", IsError: true)));
+        Services.AddSingleton(cliExecution);
+    }
+
+    [Test]
+    public async Task Test()
+    {
+        var cut = RenderComponent<TerminalPanel>();
+        await cut.InvokeAsync(() => cut.Instance.Open());
+        cut.WaitForAssertion(() => cut.Find(".terminal-input"));
+
+        cut.Find(".terminal-input").Input("group list");
+        cut.Find(".terminal-input").KeyDown(new KeyboardEventArgs { Key = "Enter" });
+
+        cut.WaitForAssertion(() =>
+        {
+            var errorResult = cut.Find(".terminal-result--error");
+            Assert.That(errorResult.TextContent, Does.Contain("Resource group not found."));
+        });
+    }
+}
+
+[TestFixture]
+public class TerminalPanel_ExecuteCommand_ClearsInputBeforeResult : BunitTestContext
+{
+    [SetUp]
+    public void Setup()
+    {
+        var cliExecution = Substitute.For<ICliExecutionService>();
+        cliExecution.ExecuteAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new CliExecutionResult("ok", IsError: false)));
+        Services.AddSingleton(cliExecution);
+    }
+
+    [Test]
+    public async Task Test()
+    {
+        var cut = RenderComponent<TerminalPanel>();
+        await cut.InvokeAsync(() => cut.Instance.Open());
+        cut.WaitForAssertion(() => cut.Find(".terminal-input"));
+
+        cut.Find(".terminal-input").Input("group list");
+        cut.Find(".terminal-input").KeyDown(new KeyboardEventArgs { Key = "Enter" });
+
+        cut.WaitForAssertion(() =>
+        {
+            var input = cut.Find(".terminal-input");
+            Assert.That(input.GetAttribute("value") ?? string.Empty, Is.Empty);
+        });
     }
 }

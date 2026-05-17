@@ -20,3 +20,5 @@ public sealed record CliExampleModel(
     [property: JsonPropertyName("title")] string Title,
     [property: JsonPropertyName("command")] string Command
 );
+
+public sealed record CliExecutionResult(string Output, bool IsError);

@@ -51,6 +51,7 @@ builder.Services.AddScoped<ITopazClient, TopazClient>();
 builder.Services.AddSingleton<AuthenticationClient>();
 builder.Services.AddScoped<ProtectedSessionStorage>();
 builder.Services.AddSingleton<ICliSuggestionService, CliSuggestionService>();
+builder.Services.AddSingleton<ICliExecutionService, CliExecutionService>();
 
 var app = builder.Build();
 

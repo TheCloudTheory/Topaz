@@ -22,6 +22,8 @@ public sealed class CliSuggestionService : ICliSuggestionService
         _commands = JsonSerializer.Deserialize<CliCommandModel[]>(json) ?? [];
     }
 
+    public IReadOnlyList<CliCommandModel> GetAll() => _commands;
+
     public IReadOnlyList<CliCommandModel> GetSuggestions(string prefix)
     {
         if (string.IsNullOrWhiteSpace(prefix))

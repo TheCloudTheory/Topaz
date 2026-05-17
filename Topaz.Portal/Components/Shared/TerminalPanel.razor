@@ -2,6 +2,7 @@
 @inject IJSRuntime JS
 @inject ICliSuggestionService SuggestionService
 @inject ITopazClient TopazClient
+@inject ICliExecutionService CliExecutionService
 @using Topaz.Portal.Models
 @using Topaz.Portal.Models.Cli
 @using Topaz.Portal.Services
@@ -62,7 +63,11 @@
                     <span class="terminal-prompt">topaz&gt;</span>
                     <span class="terminal-command">@entry.Command</span>
                 </div>
-                @if (!string.IsNullOrEmpty(entry.Output))
+                @if (entry.IsExecuting)
+                {
+                    <div class="terminal-result terminal-result--executing">Executing…</div>
+                }
+                else if (!string.IsNullOrEmpty(entry.Output))
                 {
                     <div class="terminal-result @(entry.IsError ? "terminal-result--error" : "")">@entry.Output</div>
                 }
@@ -207,10 +212,19 @@
                 var command = _currentInput.Trim();
                 if (string.IsNullOrEmpty(command)) return;
 
-                _history.Add(new TerminalEntry(command, string.Empty, IsError: false));
+                var entry = new TerminalEntry(command) { IsExecuting = true };
+                _history.Add(entry);
                 _currentInput = string.Empty;
                 _suggestions = [];
                 _selectedIndex = -1;
+
+                StateHasChanged();
+                await ScrollOutputToBottomAsync();
+
+                var result = await CliExecutionService.ExecuteAsync(command);
+                entry.Output = result?.Output ?? string.Empty;
+                entry.IsError = result?.IsError ?? false;
+                entry.IsExecuting = false;
 
                 await ScrollOutputToBottomAsync();
                 return;
@@ -277,5 +291,11 @@
 
     public void Dispose() { }
 
-    private sealed record TerminalEntry(string Command, string Output, bool IsError);
+    private sealed class TerminalEntry(string command)
+    {
+        public string Command { get; } = command;
+        public string Output { get; set; } = string.Empty;
+        public bool IsError { get; set; }
+        public bool IsExecuting { get; set; }
+    }
 }

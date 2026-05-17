@@ -60,3 +60,20 @@ services:
       - "stmyapp001.blob.storage.topaz.local.dev:172.28.0.10"
       # Container Registry data-plane
       - "myregistry.cr.topaz.local.dev:172.28.0.10"
+
+
+  # --- Topaz Portal (optional) --------------------------------------------------
+  portal:
+    image: topaz/portal:latest
+    depends_on:
+      - topaz
+    ports:
+      - "8095:8080"       # Portal UI — http://localhost:8095 or (if DNS is registered) http://topaz.local.dev:8095
+    networks:
+      - topaz-net
+    volumes:
+      - topaz-data:/app/.topaz   # shared read access for the bundled topaz CLI binary
+    environment:
+      ASPNETCORE_URLS: "http://+:8080"
+    extra_hosts:
+      - "topaz.local.dev:172.28.0.10"
