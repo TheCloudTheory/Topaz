@@ -1,6 +1,8 @@
 @implements IDisposable
 @inject IJSRuntime JS
 @inject ICliSuggestionService SuggestionService
+@inject ITopazClient TopazClient
+@using Topaz.Portal.Models
 @using Topaz.Portal.Models.Cli
 @using Topaz.Portal.Services
 
@@ -27,6 +29,33 @@
         </div>
 
         <div class="terminal-output" @ref="_outputRef">
+            <div class="terminal-welcome">
+                <pre class="terminal-welcome-logo">  ████████╗ ██████╗ ██████╗  █████╗ ███████╗
+     ██╔══╝██╔═══██╗██╔══██╗██╔══██╗╚══███╔╝
+     ██║   ██║   ██║██████╔╝███████║  ███╔╝ 
+     ██║   ██║   ██║██╔═══╝ ██╔══██║ ███╔╝  
+     ██║   ╚██████╔╝██║     ██║  ██║███████╗
+     ╚═╝    ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚══════╝</pre>
+                @if (!_welcomeReady)
+                {
+                    <p class="terminal-welcome-meta">Connecting to Topaz Host…</p>
+                }
+                else if (_hostInfo is not null)
+                {
+                    <p class="terminal-welcome-meta">
+                        Azure Emulator&nbsp;&nbsp;•&nbsp;&nbsp;v@(_hostInfo.Version)
+                        &nbsp;&nbsp;•&nbsp;&nbsp;<span class="terminal-welcome-status terminal-welcome-status--healthy">✓ @(_hostInfo.Status)</span>
+                    </p>
+                }
+                else
+                {
+                    <p class="terminal-welcome-meta">
+                        Azure Emulator&nbsp;&nbsp;•&nbsp;&nbsp;<span class="terminal-welcome-status terminal-welcome-status--offline">✗ Host unreachable</span>
+                    </p>
+                }
+                <p class="terminal-welcome-hint">Type a command or use ↑↓ to browse suggestions. Tab or Enter to select.</p>
+            </div>
+
             @foreach (var entry in _history)
             {
                 <div class="terminal-entry">
@@ -110,10 +139,15 @@
     private List<CliCommandModel> _suggestions = [];
     private int _selectedIndex = -1;
 
+    private HostInfoDto? _hostInfo;
+    private bool _welcomeReady;
+
     public void Open()
     {
         _isOpen = true;
         StateHasChanged();
+        if (!_welcomeReady)
+            _ = LoadWelcomeAsync();
     }
 
     public void Close()
@@ -183,8 +217,14 @@
         }
     }
 
-    private void SelectSuggestion(CliCommandModel suggestion)
+    private async Task LoadWelcomeAsync()
     {
+        _hostInfo = await TopazClient.GetHostInfoAsync();
+        _welcomeReady = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void SelectSuggestion(CliCommandModel suggestion)    {
         var parts = new List<string> { suggestion.Name };
 
         foreach (var option in suggestion.Options)

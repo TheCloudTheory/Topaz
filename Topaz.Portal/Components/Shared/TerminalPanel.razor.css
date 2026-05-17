@@ -143,7 +143,8 @@
     color: #e6edf3;
     font-family: inherit;
     font-size: inherit;
-    caret-color: var(--topaz-blue-600, #2563eb);
+    caret-color: #93c5fd;
+    caret-shape: block;
 }
 
 .terminal-input::placeholder {
@@ -245,4 +246,42 @@
     white-space: pre-wrap;
     word-break: break-all;
 }
+
+/* Welcome screen */
+
+.terminal-welcome {
+    padding: 0.5rem 0 0.9rem 0;
+    border-bottom: 1px solid #21262d;
+    margin-bottom: 0.6rem;
+}
+
+.terminal-welcome-logo {
+    margin: 0 0 0.5rem 0;
+    color: var(--topaz-blue-600, #2563eb);
+    font-family: inherit;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    user-select: none;
+}
+
+.terminal-welcome-meta {
+    margin: 0 0 0.2rem 0;
+    color: #8b949e;
+    font-size: 0.8rem;
+    padding-left: 2px;
+}
+
+.terminal-welcome-status--healthy {
+    color: #3fb950;
+}
+
+.terminal-welcome-status--offline {
+    color: #f85149;
+}
+
+.terminal-welcome-hint {
+    margin: 0.35rem 0 0 0;
+    color: #484f58;
+    font-size: 0.76rem;
+    padding-left: 2px;
 }

@@ -1,5 +1,6 @@
 using Azure.ResourceManager.Resources;
 using Microsoft.Graph.Models;
+using Topaz.Portal.Models;
 using Topaz.Portal.Models.EventHubs;
 using Topaz.Portal.Models.KeyVaults;
 using Topaz.Portal.Models.ManagedIdentities;
@@ -441,4 +442,7 @@ public interface ITopazClient
         CancellationToken cancellationToken = default);
 
     Task<TenantInformationResponse> GetDirectoryInfo();
+
+    // Host
+    Task<HostInfoDto?> GetHostInfoAsync(CancellationToken cancellationToken = default);
 }
