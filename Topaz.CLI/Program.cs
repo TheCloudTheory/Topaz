@@ -1,4 +1,3 @@
-using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
 using JetBrains.Annotations;
@@ -27,12 +26,11 @@ internal class Program
 {
     internal static async Task<int> Main(string[] args)
     {
-        if (args.Length == 0 || args[0] != "health")
-        {
-            var hostCheck = await CheckHostAsync();
-            if (hostCheck != 0)
-                return hostCheck;
-        }
+        if (args.Length != 0 && args[0] == "health") return await RunAsync(args);
+        
+        var hostCheck = await CheckHostAsync();
+        if (hostCheck != 0)
+            return hostCheck;
 
         return await RunAsync(args);
     }
@@ -62,11 +60,10 @@ internal class Program
 
     private static async Task<int> CheckHostAsync()
     {
-        using var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
-        };
-        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
+        using var handler = new HttpClientHandler();
+        handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
+        using var client = new HttpClient(handler);
+        client.Timeout = TimeSpan.FromSeconds(5);
 
         try
         {
@@ -81,15 +78,13 @@ internal class Program
             var hostDir = Path.GetFullPath(wdElement.GetString() ?? string.Empty);
             var cliDir = Path.GetFullPath(Environment.CurrentDirectory);
 
-            if (!string.Equals(hostDir, cliDir, StringComparison.OrdinalIgnoreCase))
-            {
-                await Console.Error.WriteLineAsync(
-                    $"Topaz Host is running from a different directory ('{hostDir}'). " +
-                    "Run the CLI from the same directory as the Host.");
-                return 1;
-            }
+            if (string.Equals(hostDir, cliDir, StringComparison.OrdinalIgnoreCase)) return 0;
+            
+            await Console.Error.WriteLineAsync(
+                $"Topaz Host is running from a different directory ('{hostDir}'). " +
+                "Run the CLI from the same directory as the Host.");
+            return 1;
 
-            return 0;
         }
         catch (HttpRequestException)
         {

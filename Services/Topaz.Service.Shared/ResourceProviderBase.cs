@@ -145,7 +145,7 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             return [];
         }
 
-        // Add a parameter which will allow to explicitly say how many segments should be looked for.
+        // Add a parameter which will allow explicitly saying how many segments should be looked for.
         var metadataFiles = Directory.EnumerateFiles(servicePath, "metadata.json", SearchOption.AllDirectories);
         var servicePathSegments = TService.LocalDirectoryPath.Split("/");
         var defaultLookForNoOfSegments =
