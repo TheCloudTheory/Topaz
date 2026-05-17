@@ -1,0 +1,116 @@
+@implements IDisposable
+@inject IJSRuntime JS
+
+@if (_isOpen)
+{
+    <div class="terminal-overlay" style="height: @(_height)px" role="region" aria-label="Topaz CLI terminal">
+        <div class="terminal-resize-handle"
+             @onmousedown="OnResizeMouseDown"
+             @onmousedown:preventDefault="true">
+            <div class="terminal-resize-grip"></div>
+        </div>
+
+        <div class="terminal-header">
+            <span class="terminal-title">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;display:inline-block;margin-right:0.4rem;vertical-align:middle" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3zm9.5 5.5h-3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1zm-6.354-.354a.5.5 0 1 0 .708.708l2-2a.5.5 0 0 0 0-.708l-2-2a.5.5 0 1 0-.708.708L4.793 6.5 3.146 7.854z"/>
+                </svg>Topaz CLI
+            </span>
+            <button class="terminal-close-btn" @onclick="Close" title="Close terminal" aria-label="Close terminal">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;display:block" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708z"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="terminal-output" @ref="_outputRef">
+            @foreach (var entry in _history)
+            {
+                <div class="terminal-entry">
+                    <span class="terminal-prompt">topaz&gt;</span>
+                    <span class="terminal-command">@entry.Command</span>
+                </div>
+                @if (!string.IsNullOrEmpty(entry.Output))
+                {
+                    <div class="terminal-result @(entry.IsError ? "terminal-result--error" : "")">@entry.Output</div>
+                }
+            }
+        </div>
+
+        <div class="terminal-input-row">
+            <span class="terminal-prompt">topaz&gt;</span>
+            <input
+                class="terminal-input"
+                type="text"
+                placeholder="Enter command…"
+                aria-label="Command input"
+                @bind="_currentInput"
+                @bind:event="oninput"
+                @onkeydown="OnKeyDown"
+                @ref="_inputRef" />
+        </div>
+    </div>
+}
+
+@code {
+    private bool _isOpen;
+    private string _currentInput = string.Empty;
+    private readonly List<TerminalEntry> _history = [];
+    private ElementReference _outputRef;
+    private ElementReference _inputRef;
+
+    private double _height = 320;
+    private const double MinHeight = 150;
+    private const double MaxHeight = 800;
+
+    private double _dragStartY;
+    private double _dragStartHeight;
+
+    public void Open()
+    {
+        _isOpen = true;
+        StateHasChanged();
+    }
+
+    public void Close()
+    {
+        _isOpen = false;
+        StateHasChanged();
+    }
+
+    public void Toggle()
+    {
+        if (_isOpen) Close();
+        else Open();
+    }
+
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key != "Enter") return;
+
+        var command = _currentInput.Trim();
+        if (string.IsNullOrEmpty(command)) return;
+
+        _history.Add(new TerminalEntry(command, string.Empty, IsError: false));
+        _currentInput = string.Empty;
+    }
+
+    private async Task OnResizeMouseDown(MouseEventArgs e)
+    {
+        _dragStartY = e.ClientY;
+        _dragStartHeight = _height;
+        var dotnetRef = DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("terminalResize.start", dotnetRef, _dragStartY, _dragStartHeight);
+    }
+
+    [JSInvokable]
+    public void SetHeight(double height)
+    {
+        _height = height;
+        StateHasChanged();
+    }
+
+    public void Dispose() { }
+
+    private sealed record TerminalEntry(string Command, string Output, bool IsError);
+}

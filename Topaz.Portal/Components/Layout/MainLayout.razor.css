@@ -28,6 +28,26 @@ main {
     color: var(--topaz-blue-700, #1d4ed8);
 }
 
+.terminal-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    margin-left: 1.5rem;
+    color: var(--topaz-blue-700, #1d4ed8);
+    opacity: 0.75;
+    transition: opacity 0.15s;
+    line-height: 1;
+}
+
+.terminal-toggle-btn:hover {
+    opacity: 1;
+    text-decoration: none !important;
+}
+
 .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
     text-decoration: underline;
 }
