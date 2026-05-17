@@ -185,7 +185,26 @@
 
     private void SelectSuggestion(CliCommandModel suggestion)
     {
-        _currentInput = suggestion.Name + " ";
+        var parts = new List<string> { suggestion.Name };
+
+        foreach (var option in suggestion.Options)
+        {
+            var isRequired = option.Required ||
+                             option.Description.StartsWith("(Required)", StringComparison.OrdinalIgnoreCase);
+            if (!isRequired) continue;
+
+            // Prefer --long-name over -s short name
+            var preferredName = option.Names
+                .Split(',')
+                .Select(n => n.Trim())
+                .OrderByDescending(n => n.StartsWith("--"))
+                .First();
+
+            var placeholder = preferredName.TrimStart('-');
+            parts.Add($"{preferredName} <{placeholder}>");
+        }
+
+        _currentInput = string.Join(" ", parts);
         _suggestions = [];
         _selectedIndex = -1;
     }
