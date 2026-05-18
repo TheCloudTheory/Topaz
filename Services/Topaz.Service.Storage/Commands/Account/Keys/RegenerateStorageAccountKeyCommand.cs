@@ -1,45 +1,25 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Storage.Models.Responses;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage account keys renew", "azure-storage/account", "Regenerates an access key for a storage account.")]
 [CommandExample("Regenerate key1", "topaz storage account keys renew \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --key-name \"key1\"")]
-public sealed class RegenerateStorageAccountKeyCommand(ITopazLogger logger)
-    : Command<RegenerateStorageAccountKeyCommand.RegenerateStorageAccountKeyCommandSettings>
+public sealed class RegenerateStorageAccountKeyCommand(HttpClient httpClient)
+    : TopazHttpCommand<RegenerateStorageAccountKeyCommand.RegenerateStorageAccountKeyCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, RegenerateStorageAccountKeyCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, RegenerateStorageAccountKeyCommandSettings settings)
     {
         AnsiConsole.WriteLine($"Regenerating storage account key '{settings.KeyName}'...");
 
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var controlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
-
-        var result = controlPlane.RegenerateKey(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!, settings.KeyName!);
-
-        if (result.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"Storage account '{settings.AccountName}' not found.");
-            return 1;
-        }
-
-        if (result.Result == OperationResult.Failed || result.Resource == null)
-        {
-            Console.Error.WriteLine("There was an error regenerating the storage account key.");
-            return 1;
-        }
-
-        var keys = new ListKeysResponse(result.Resource.Keys);
-        AnsiConsole.WriteLine(keys.ToString());
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/regenerateKey";
+        var (success, body) = await PostAsync(url, new { keyName = settings.KeyName });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

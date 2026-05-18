@@ -12,6 +12,7 @@
     <ProjectReference Include="../../Topaz.ResourceManager/Topaz.ResourceManager.csproj" />
     <ProjectReference Include="../Topaz.Service.ResourceGroup/Topaz.Service.ResourceGroup.csproj" />
     <ProjectReference Include="..\..\Documentation\Topaz.Documentation\Topaz.Documentation.csproj" />
+    <ProjectReference Include="..\..\Topaz.CLI.Infrastructure\Topaz.CLI.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

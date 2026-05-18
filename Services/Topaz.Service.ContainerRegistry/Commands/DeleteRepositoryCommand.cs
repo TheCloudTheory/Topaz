@@ -1,9 +1,8 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Commands;
@@ -11,27 +10,15 @@ namespace Topaz.Service.ContainerRegistry.Commands;
 [UsedImplicitly]
 [CommandDefinition("acr repository delete", "container-registry", "Deletes a repository from an Azure Container Registry.")]
 [CommandExample("Delete a repository", "topaz acr repository delete \\\n+    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n+    --resource-group \"my-rg\" \\\n+    --registry \"myregistry\" \\\n+    --name \"sample-repository\"")]
-public sealed class DeleteRepositoryCommand(ITopazLogger logger)
-    : Command<DeleteRepositoryCommand.DeleteRepositoryCommandSettings>
+public sealed class DeleteRepositoryCommand(HttpClient httpClient)
+    : TopazHttpCommand<DeleteRepositoryCommand.DeleteRepositoryCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteRepositoryCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteRepositoryCommandSettings settings)
     {
-        var dataPlane = AcrDataPlane();
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-
-        var deleted = dataPlane.DeleteRepository(
-            subscriptionIdentifier,
-            resourceGroupIdentifier,
-            settings.Registry!,
-            settings.Name!);
-
-        if (!deleted)
-        {
-            Console.Error.WriteLine($"Repository '{settings.Name}' not found.");
-            return 1;
-        }
-
+        var url = $"https://{settings.Registry}.azurecr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}/acr/v1/{settings.Name}";
+        var success = await DeleteAsync(url);
+        if (!success) return 1;
         AnsiConsole.WriteLine($"Repository '{settings.Name}' deleted.");
         return 0;
     }
@@ -55,9 +42,6 @@ public sealed class DeleteRepositoryCommand(ITopazLogger logger)
 
         return base.Validate(context, settings);
     }
-
-    private AcrDataPlane AcrDataPlane() =>
-        new(new ContainerRegistryResourceProvider(logger), logger);
 
     [UsedImplicitly]
     public sealed class DeleteRepositoryCommandSettings : CommandSettings

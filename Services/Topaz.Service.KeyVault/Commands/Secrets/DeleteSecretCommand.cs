@@ -1,33 +1,21 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Secrets;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault secret delete", "key-vault", "Deletes a secret from an Azure Key Vault.")]
 [CommandExample("Delete a secret", "topaz keyvault secret delete --vault-name \"kvlocal\" --name \"my-secret\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class DeleteSecretCommand(ITopazLogger logger) : Command<DeleteSecretCommand.DeleteSecretCommandSettings>
+public class DeleteSecretCommand(HttpClient httpClient) : TopazHttpCommand<DeleteSecretCommand.DeleteSecretCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteSecretCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteSecretCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var operation = dataPlane.DeleteSecret(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/secrets/{settings.Name}?api-version=7.4";
+        var success = await DeleteAsync(url);
+        if (!success) return 1;
         AnsiConsole.WriteLine($"Secret '{settings.Name}' deleted.");
         return 0;
     }

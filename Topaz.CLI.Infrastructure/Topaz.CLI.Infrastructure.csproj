@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console.Cli" Version="0.52.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

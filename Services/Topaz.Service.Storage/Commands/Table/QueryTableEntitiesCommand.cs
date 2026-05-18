@@ -1,10 +1,9 @@
 using JetBrains.Annotations;
-using Microsoft.AspNetCore.Http;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
@@ -12,34 +11,17 @@ namespace Topaz.Service.Storage.Commands;
 [CommandDefinition("storage table query-entity", "azure-storage/table", "Queries entities in a storage table with an optional OData filter.")]
 [CommandExample("Query all entities", "topaz storage table query-entity \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --table-name \"mytable\"")]
 [CommandExample("Query with filter", "topaz storage table query-entity \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --table-name \"mytable\" \\\n    --filter \"PartitionKey eq 'pk1'\"")]
-public sealed class QueryTableEntitiesCommand(ITopazLogger logger)
-    : Command<QueryTableEntitiesCommand.QueryTableEntitiesCommandSettings>
+public sealed class QueryTableEntitiesCommand(HttpClient httpClient)
+    : TopazHttpCommand<QueryTableEntitiesCommand.QueryTableEntitiesCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, QueryTableEntitiesCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, QueryTableEntitiesCommandSettings settings)
     {
-        logger.LogInformation($"Querying entities in table '{settings.TableName}'...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        var queryString = string.IsNullOrEmpty(settings.Filter)
-            ? QueryString.Empty
-            : QueryString.Create("$filter", settings.Filter);
-
-        var dataPlane = new TableServiceDataPlane(new TableResourceProvider(logger), logger);
-        var queryResult = dataPlane.QueryEntities(queryString, subscriptionIdentifier, resourceGroupIdentifier,
-            settings.TableName!, settings.AccountName!);
-        var entities = queryResult.Entities;
-
-        if (entities.Length == 0)
-        {
-            logger.LogInformation("No entities found.");
-            return 0;
-        }
-
-        foreach (var entity in entities)
-            logger.LogInformation(entity?.ToString() ?? "(null)");
-
+        var qs = new List<string>();
+        if (!string.IsNullOrEmpty(settings.Filter)) qs.Add($"$filter={Uri.EscapeDataString(settings.Filter)}");
+        var url = $"{TableDataPlaneUrl(settings.AccountName!)}/{settings.TableName}" + (qs.Count > 0 ? "?" + string.Join("&", qs) : string.Empty);
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

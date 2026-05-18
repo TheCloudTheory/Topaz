@@ -1,37 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage queue list", "azure-storage/queue", "Lists queues in a storage account.")]
 [CommandExample("List queues", "topaz storage queue list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\"")]
-public sealed class ListQueuesCommand(ITopazLogger logger) : Command<ListQueuesCommand.ListQueuesCommandSettings>
+public sealed class ListQueuesCommand(HttpClient httpClient) : TopazHttpCommand<ListQueuesCommand.ListQueuesCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListQueuesCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ListQueuesCommandSettings settings)
     {
-        logger.LogInformation("Listing queues...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        var controlPlane = new QueueServiceControlPlane(new QueueResourceProvider(logger), logger);
-        var queuesOp = controlPlane.ListQueues(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!);
-        var queues = queuesOp.Resource ?? [];
-
-        if (queues.Length == 0)
-        {
-            logger.LogInformation("No queues found.");
-            return 0;
-        }
-
-        foreach (var queue in queues)
-            logger.LogInformation(queue.Name ?? "(unnamed)");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/queueServices/default/queues";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

@@ -1,37 +1,21 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
 [CommandDefinition("storage blob delete", "azure-storage/blob", "Deletes a blob from a container.")]
 [CommandExample("Delete a blob", "topaz storage blob delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\"")]
-public sealed class DeleteBlobCommand(ITopazLogger logger) : Command<DeleteBlobCommand.DeleteBlobCommandSettings>
+public sealed class DeleteBlobCommand(HttpClient httpClient) : TopazHttpCommand<DeleteBlobCommand.DeleteBlobCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteBlobCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteBlobCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Deleting blob...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        var blobPath = $"/{settings.ContainerName}/{settings.BlobName}";
-        var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
-        var result = dataPlane.DeleteBlob(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!,
-            blobPath, settings.BlobName!);
-
-        if (result.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"Blob '{blobPath}' not found.");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine($"Blob '{blobPath}' deleted.");
+        var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{settings.BlobName}";
+        if (!await DeleteAsync(url)) return 1;
+        AnsiConsole.WriteLine($"Blob '{settings.BlobName}' deleted.");
         return 0;
     }
 

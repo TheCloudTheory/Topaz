@@ -1,36 +1,24 @@
 using JetBrains.Annotations;
-using Topaz.Documentation.Command;
-using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
+using Topaz.Documentation.Command;
 
 namespace Topaz.Service.Subscription.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("subscription enable", "subscription", "Enables a subscription, setting its state to Enabled.")]
 [CommandExample("Enable a subscription", "topaz subscription enable \\\n    --id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
-public sealed class EnableSubscriptionCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<EnableSubscriptionCommand.EnableSubscriptionCommandSettings>
+public sealed class EnableSubscriptionCommand(HttpClient httpClient)
+    : TopazHttpCommand<EnableSubscriptionCommand.EnableSubscriptionCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, EnableSubscriptionCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, EnableSubscriptionCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Enabling subscription...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
-        var controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
-        var result = controlPlane.Enable(subscriptionIdentifier);
-
-        if (result.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"Subscription '{settings.Id}' not found.");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine($"Subscription '{settings.Id}' enabled successfully.");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.Id}/providers/Microsoft.Subscription/enable";
+        var (success, body) = await PostAsync(url, new { });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

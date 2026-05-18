@@ -1,60 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.ResourceGroup;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
-using Topaz.Shared;
 
 namespace Topaz.Service.ServiceBus.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("servicebus queue delete", "service-bus", "Deletes a queue from a Service Bus namespace.")]
 [CommandExample("Delete a queue", "topaz servicebus queue delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --namespace-name \"sblocal\" \\\n    --queue-name \"myqueue\"")]
-public sealed class DeleteServiceBusQueueCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<DeleteServiceBusQueueCommand.DeleteServiceBusQueueCommandSettings>
+public sealed class DeleteServiceBusQueueCommand(HttpClient httpClient)
+    : TopazHttpCommand<DeleteServiceBusQueueCommand.DeleteServiceBusQueueCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteServiceBusQueueCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteServiceBusQueueCommandSettings settings)
     {
-        logger.LogDebug(nameof(DeleteServiceBusQueueCommand), nameof(Execute), "Executing {0}.{1}.",
-            nameof(DeleteServiceBusQueueCommand), nameof(Execute));
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                SubscriptionControlPlane.New(eventPipeline, logger), logger);
-        var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId),
-            resourceGroupIdentifier);
-        if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
-        {
-            Console.Error.WriteLine($"Resource group {resourceGroupIdentifier} not found.");
-            return 1;
-        }
-
-        var controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
-        var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(settings.NamespaceName!);
-        var @namespace =
-            controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
-        if (@namespace.Result == OperationResult.NotFound || @namespace.Resource == null)
-        {
-            Console.Error.WriteLine($"Namespace {namespaceIdentifier} not found.");
-            return 1;
-        }
-
-        var deleteOperation = controlPlane.DeleteQueue(subscriptionIdentifier, resourceGroupIdentifier,
-            namespaceIdentifier, settings.Name!);
-        if (deleteOperation.Result == OperationResult.Failed)
-        {
-            Console.Error.WriteLine($"There was a problem deleting queue '{settings.Name!}'.");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine($"Queue '{settings.Name}' deleted.");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ServiceBus/namespaces/{settings.NamespaceName}/queues/{settings.Name}";
+        if (!await DeleteAsync(url)) return 1;
+        AnsiConsole.WriteLine($"Service Bus queue '{settings.Name}' deleted.");
         return 0;
     }
 

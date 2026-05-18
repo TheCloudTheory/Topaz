@@ -1,52 +1,22 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
 [CommandDefinition("storage blob show", "azure-storage/blob", "Shows the properties of a blob.")]
 [CommandExample("Show blob properties", "topaz storage blob show \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\"")]
-public sealed class ShowBlobCommand(ITopazLogger logger) : Command<ShowBlobCommand.ShowBlobCommandSettings>
+public sealed class ShowBlobCommand(HttpClient httpClient) : TopazHttpCommand<ShowBlobCommand.ShowBlobCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ShowBlobCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ShowBlobCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Getting blob properties...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        var blobPath = $"/{settings.ContainerName}/{settings.BlobName}";
-        var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
-        var result = dataPlane.GetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.AccountName!, blobPath, settings.BlobName!);
-
-        if (result.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"Blob '{blobPath}' not found.");
-            return 1;
-        }
-
-        var props = result.Resource!;
-        AnsiConsole.WriteLine($"Name:          {props.Name}");
-        AnsiConsole.WriteLine($"ETag:          {props.ETag}");
-        AnsiConsole.WriteLine($"Last Modified: {props.LastModified}");
-        AnsiConsole.WriteLine($"Date Uploaded: {props.DateUploaded}");
-        AnsiConsole.WriteLine($"Content Type:  {props.ContentType}");
-        AnsiConsole.WriteLine($"Content Length:{props.ContentLength}");
-        if (!string.IsNullOrEmpty(props.ContentEncoding))
-            AnsiConsole.WriteLine($"Content Encoding:    {props.ContentEncoding}");
-        if (!string.IsNullOrEmpty(props.ContentLanguage))
-            AnsiConsole.WriteLine($"Content Language:    {props.ContentLanguage}");
-        if (!string.IsNullOrEmpty(props.CacheControl))
-            AnsiConsole.WriteLine($"Cache Control:       {props.CacheControl}");
-        if (!string.IsNullOrEmpty(props.ContentDisposition))
-            AnsiConsole.WriteLine($"Content Disposition: {props.ContentDisposition}");
-
+        var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{settings.BlobName}";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

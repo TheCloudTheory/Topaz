@@ -1,43 +1,24 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("acr list-credentials", "container-registry", "Lists admin credentials for an Azure Container Registry.")]
 [CommandExample("List credentials for a registry", "topaz acr list-credentials \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\" \\\n    --name \"myregistry\"")]
-public sealed class ListContainerRegistryCredentialsCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<ListContainerRegistryCredentialsCommand.ListCredentialsCommandSettings>
+public sealed class ListContainerRegistryCredentialsCommand(HttpClient httpClient)
+    : TopazHttpCommand<ListContainerRegistryCredentialsCommand.ListCredentialsCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListCredentialsCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, ListCredentialsCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
-
-        var operation = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        var props = operation.Resource!.Properties;
-        if (!props.AdminUserEnabled)
-        {
-            Console.Error.WriteLine($"Admin user is disabled for registry '{settings.Name}'. Enable it first with 'acr update --admin-enabled'.");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine($"Username: {props.AdminUsername}");
-        AnsiConsole.WriteLine($"Password:  {props.AdminPassword}");
-        AnsiConsole.WriteLine($"Password2: {props.AdminPassword}");
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ContainerRegistry/registries/{settings.Name}/listCredentials";
+        var (success, body) = await PostAsync(url, new { });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

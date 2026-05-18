@@ -1,11 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork.Commands;
 
@@ -13,24 +11,15 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 [CommandDefinition("vnet show", "virtual-network", "Gets an Azure Virtual Network.")]
 [CommandExample("Gets a Virtual Network",
     "topaz vnet show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-vnet\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class GetVirtualNetworkCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<GetVirtualNetworkCommand.GetVirtualNetworkCommandSettings>
+internal sealed class GetVirtualNetworkCommand(HttpClient httpClient)
+    : TopazHttpCommand<GetVirtualNetworkCommand.GetVirtualNetworkCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, GetVirtualNetworkCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, GetVirtualNetworkCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
-
-        var operation = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/virtualNetworks/{settings.Name}";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

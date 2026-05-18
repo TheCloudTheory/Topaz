@@ -1,9 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup.Commands;
 
@@ -12,21 +12,14 @@ namespace Topaz.Service.ManagementGroup.Commands;
     "Disassociates a subscription from a management group.")]
 [CommandExample("Remove a subscription from a management group",
     "topaz management-group subscription remove --group-id \"my-mg\" --subscription-id \"<guid>\"")]
-public sealed class RemoveManagementGroupSubscriptionCommand(ITopazLogger logger)
-    : Command<RemoveManagementGroupSubscriptionCommand.Settings>
+public sealed class RemoveManagementGroupSubscriptionCommand(HttpClient httpClient)
+    : TopazHttpCommand<RemoveManagementGroupSubscriptionCommand.Settings>(httpClient)
 {
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var controlPlane = ManagementGroupControlPlane.New(logger);
-        var operation = controlPlane.DisassociateSubscription(settings.GroupId!, settings.SubscriptionId!);
-
-        if (operation.Result is not OperationResult.Deleted)
-        {
-            Console.Error.WriteLine($"Failed: {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine("Removed.");
+        var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.GroupId}/subscriptions/{settings.SubscriptionId}";
+        if (!await DeleteAsync(url)) return 1;
+        AnsiConsole.WriteLine($"Subscription removed from management group.");
         return 0;
     }
 

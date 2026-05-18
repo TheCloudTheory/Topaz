@@ -1,9 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup.Commands;
 
@@ -12,21 +12,15 @@ namespace Topaz.Service.ManagementGroup.Commands;
     "Associates a subscription with a management group.")]
 [CommandExample("Associate a subscription",
     "topaz management-group subscription add --group-id \"my-mg\" --subscription-id \"<guid>\"")]
-public sealed class AddManagementGroupSubscriptionCommand(ITopazLogger logger)
-    : Command<AddManagementGroupSubscriptionCommand.Settings>
+public sealed class AddManagementGroupSubscriptionCommand(HttpClient httpClient)
+    : TopazHttpCommand<AddManagementGroupSubscriptionCommand.Settings>(httpClient)
 {
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var controlPlane = ManagementGroupControlPlane.New(logger);
-        var operation = controlPlane.AssociateSubscription(settings.GroupId!, settings.SubscriptionId!);
-
-        if (operation.Result is not OperationResult.Updated)
-        {
-            Console.Error.WriteLine($"Failed: {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.GroupId}/subscriptions/{settings.SubscriptionId}";
+        var (success, body) = await PostAsync(url, new { });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

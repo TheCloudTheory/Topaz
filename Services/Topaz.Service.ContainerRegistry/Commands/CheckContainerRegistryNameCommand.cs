@@ -1,31 +1,24 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("acr check-name", "container-registry", "Checks whether a container registry name is available.")]
 [CommandExample("Check registry name availability", "topaz acr check-name \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --name \"myregistry\"")]
-public sealed class CheckContainerRegistryNameCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<CheckContainerRegistryNameCommand.CheckNameCommandSettings>
+public sealed class CheckContainerRegistryNameCommand(HttpClient httpClient)
+    : TopazHttpCommand<CheckContainerRegistryNameCommand.CheckNameCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CheckNameCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, CheckNameCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
-
-        var isAvailable = controlPlane.IsNameAvailable(subscriptionIdentifier, null, settings.Name!);
-
-        if (isAvailable)
-            AnsiConsole.WriteLine($"Name '{settings.Name}' is available.");
-        else
-            AnsiConsole.WriteLine($"Name '{settings.Name}' is not available.");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/providers/Microsoft.ContainerRegistry/checkNameAvailability";
+        var (success, body) = await PostAsync(url, new { name = settings.Name, type = "Microsoft.ContainerRegistry/registries" });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

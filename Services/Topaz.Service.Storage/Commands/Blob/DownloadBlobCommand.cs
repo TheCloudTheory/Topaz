@@ -1,39 +1,29 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
 [CommandDefinition("storage blob download", "azure-storage/blob", "Downloads a blob to a local file.")]
 [CommandExample("Download a blob", "topaz storage blob download \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\" \\\n    --destination \"/tmp/file.txt\"")]
-public sealed class DownloadBlobCommand(ITopazLogger logger) : Command<DownloadBlobCommand.DownloadBlobCommandSettings>
+public sealed class DownloadBlobCommand(HttpClient httpClient) : TopazHttpCommand<DownloadBlobCommand.DownloadBlobCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DownloadBlobCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DownloadBlobCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Downloading blob...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        var blobPath = $"/{settings.ContainerName}/{settings.BlobName}";
-        var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
-        var result = dataPlane.GetBlob(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!, blobPath);
-
-        if (result.Result == OperationResult.NotFound)
+        var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{settings.BlobName}";
+        var response = await HttpClient.GetAsync(url);
+        if (!response.IsSuccessStatusCode)
         {
-            Console.Error.WriteLine($"Blob '{blobPath}' not found.");
+            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
             return 1;
         }
-
+        var bytes = await response.Content.ReadAsByteArrayAsync();
         var destination = settings.Destination ?? settings.BlobName!;
-        File.WriteAllText(destination, result.Resource);
+        await File.WriteAllBytesAsync(destination, bytes);
         AnsiConsole.WriteLine($"Blob downloaded to: {destination}");
-
         return 0;
     }
 

@@ -1,39 +1,24 @@
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription.Models.Responses;
-using Topaz.Shared;
 
 namespace Topaz.Service.Subscription.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("subscription list-locations", "subscription", "Lists all available Azure locations for a subscription.")]
 [CommandExample("List subscription locations", "topaz subscription list-locations \\\n    --id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
-public sealed class ListLocationsCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<ListLocationsCommand.ListLocationsCommandSettings>
+public sealed class ListLocationsCommand(HttpClient httpClient)
+    : TopazHttpCommand<ListLocationsCommand.ListLocationsCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListLocationsCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ListLocationsCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Listing locations for subscription...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
-        var controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
-        var result = controlPlane.ListLocations(subscriptionIdentifier);
-
-        if (result.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"Subscription '{settings.Id}' not found.");
-            return 1;
-        }
-
-        var response = new ListLocationsResponse(settings.Id!);
-        AnsiConsole.WriteLine(JsonSerializer.Serialize(response, GlobalSettings.JsonOptionsCli));
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.Id}/locations";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

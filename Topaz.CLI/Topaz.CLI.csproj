@@ -23,8 +23,7 @@
     <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.EventHub/Topaz.Service.EventHub.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.VirtualNetwork/Topaz.Service.VirtualNetwork.csproj" />
-    <ProjectReference Include="..\Documentation\Topaz.Documentation\Topaz.Documentation.csproj" />
-  </ItemGroup>
+    <ProjectReference Include="..\Documentation\Topaz.Documentation\Topaz.Documentation.csproj" />    <ProjectReference Include="../Topaz.CLI.Infrastructure/Topaz.CLI.Infrastructure.csproj" />  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />

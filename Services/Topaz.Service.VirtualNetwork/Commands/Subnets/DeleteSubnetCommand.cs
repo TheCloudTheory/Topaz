@@ -1,11 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork.Commands.Subnets;
 
@@ -13,24 +11,14 @@ namespace Topaz.Service.VirtualNetwork.Commands.Subnets;
 [CommandDefinition("vnet subnet delete", "virtual-network", "Deletes a subnet from a Virtual Network.")]
 [CommandExample("Deletes a subnet",
     "topaz vnet subnet delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --vnet-name \"my-vnet\" \\\n    --name \"my-subnet\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class DeleteSubnetCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<DeleteSubnetCommand.DeleteSubnetCommandSettings>
+internal sealed class DeleteSubnetCommand(HttpClient httpClient)
+    : TopazHttpCommand<DeleteSubnetCommand.DeleteSubnetCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteSubnetCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteSubnetCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = SubnetControlPlane.New(eventPipeline, logger);
-
-        var operation = controlPlane.Delete(
-            subscriptionIdentifier, resourceGroupIdentifier, settings.VnetName!, settings.Name!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/virtualNetworks/{settings.VnetName}/subnets/{settings.Name}";
+        if (!await DeleteAsync(url)) return 1;
+        AnsiConsole.WriteLine($"Subnet '{settings.Name}' deleted.");
         return 0;
     }
 

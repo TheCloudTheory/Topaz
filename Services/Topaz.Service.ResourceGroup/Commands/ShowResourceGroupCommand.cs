@@ -1,29 +1,23 @@
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
-using Topaz.Shared;
 
 namespace Topaz.Service.ResourceGroup.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("group show", "group", "Shows details of a resource group.")]
 [CommandExample("Show a resource group", "topaz group show \\\n    --name \"my-rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
-public sealed class ShowResourceGroupCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<ShowResourceGroupCommand.ShowResourceGroupCommandSettings>
+public sealed class ShowResourceGroupCommand(HttpClient httpClient) : TopazHttpCommand<ShowResourceGroupCommand.ShowResourceGroupCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ShowResourceGroupCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ShowResourceGroupCommandSettings settings)
     {
-        logger.LogDebug(nameof(ShowResourceGroupCommand), nameof(Execute), "Executing {0}.{1}.", nameof(ShowResourceGroupCommand), nameof(Execute));
-
-        var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
-        var operation = controlPlane.Get(new SubscriptionIdentifier(Guid.Parse(settings.SubscriptionId)), new ResourceGroupIdentifier(settings.Name!));
-
-        AnsiConsole.WriteLine(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.Name}";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

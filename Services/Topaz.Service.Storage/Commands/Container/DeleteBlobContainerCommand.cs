@@ -1,32 +1,24 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage container delete", "azure-storage/container", "Deletes a blob container from a storage account.")]
 [CommandExample("Delete a container", "topaz storage container delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --name \"mycontainer\"")]
-public sealed class DeleteBlobContainerCommand(ITopazLogger logger)
-    : Command<DeleteBlobContainerCommand.DeleteBlobContainerCommandSettings>
+public sealed class DeleteBlobContainerCommand(HttpClient httpClient)
+    : TopazHttpCommand<DeleteBlobContainerCommand.DeleteBlobContainerCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteBlobContainerCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteBlobContainerCommandSettings settings)
     {
         AnsiConsole.WriteLine("Deleting blob container...");
 
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var controlPlane = new BlobServiceControlPlane(new BlobResourceProvider(logger));
-        var result = controlPlane.DeleteContainer(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!,
-            settings.Name!);
-
-        if (result.Result != OperationResult.Success)
-            return 1;
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/blobServices/default/containers/{settings.Name}";
+        var success = await DeleteAsync(url);
+        if (!success) return 1;
         AnsiConsole.WriteLine($"Container '{settings.Name}' deleted.");
         return 0;
     }

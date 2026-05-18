@@ -1,28 +1,22 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage table delete", "azure-storage/table", "Deletes a table from a storage account.")]
 [CommandExample("Delete a table", "topaz storage table delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --name \"mytable\"")]
-public sealed class DeleteTableCommand(ITopazLogger logger) : Command<DeleteTableCommand.DeleteTableCommandSettings>
+public sealed class DeleteTableCommand(HttpClient httpClient) : TopazHttpCommand<DeleteTableCommand.DeleteTableCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteTableCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteTableCommandSettings settings)
     {
-        logger.LogInformation($"Deleting table {settings.Name}...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var rp = new TableServiceControlPlane(new TableResourceProvider(logger), logger);
-        rp.DeleteTable(subscriptionIdentifier, resourceGroupIdentifier, settings.Name, settings.AccountName);
-
-        logger.LogInformation("Table deleted.");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/tableServices/default/tables/{settings.Name}";
+        if (!await DeleteAsync(url)) return 1;
+        AnsiConsole.WriteLine("Table deleted.");
         return 0;
     }
 

@@ -1,35 +1,22 @@
 using JetBrains.Annotations;
-using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.ResourceGroup;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
 
 namespace Topaz.Service.KeyVault.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault delete", "key-vault", "Deletes a Key Vault.")]
 [CommandExample("Delete a Key Vault", "topaz keyvault delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"kvlocal\"")]
-public sealed class DeleteKeyVaultCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<DeleteKeyVaultCommand.DeleteKeyVaultCommandSettings>
+public sealed class DeleteKeyVaultCommand(HttpClient httpClient) : TopazHttpCommand<DeleteKeyVaultCommand.DeleteKeyVaultCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteKeyVaultCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteKeyVaultCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Deleting Azure Key Vault...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                SubscriptionControlPlane.New(eventPipeline, logger), logger),
-            SubscriptionControlPlane.New(eventPipeline, logger), logger);
-        
-        controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
-
-        AnsiConsole.WriteLine("Azure Key Vault deleted.");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.KeyVault/vaults/{settings.Name}";
+        var success = await DeleteAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine($"Key vault '{settings.Name}' deleted.");
         return 0;
     }
 

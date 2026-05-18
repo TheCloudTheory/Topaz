@@ -1,46 +1,30 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("acr generate-credentials", "container-registry", "Generates credentials for an Azure Container Registry token.")]
 [CommandExample("Generate credentials for a token", "topaz acr generate-credentials \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\" \\\n    --name \"myregistry\" \\\n    --token-id \"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-rg/providers/Microsoft.ContainerRegistry/registries/myregistry/tokens/myToken\"")]
-public class GenerateContainerRegistryCredentialsCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<GenerateContainerRegistryCredentialsCommand.GenerateCredentialsCommandSettings>
+public class GenerateContainerRegistryCredentialsCommand(HttpClient httpClient)
+    : TopazHttpCommand<GenerateContainerRegistryCredentialsCommand.GenerateCredentialsCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, GenerateCredentialsCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, GenerateCredentialsCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-
-        var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
-        var operation = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, settings.RegistryName!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        var tokenName = ExtractTokenName(settings.TokenId) ?? settings.RegistryName!;
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ContainerRegistry/registries/{settings.RegistryName}/generateCredentials";
         var expiry = settings.Expiry ?? DateTimeOffset.UtcNow.AddYears(1);
-
-        var passwords = BuildPasswords(settings.PasswordName, expiry);
-
-        AnsiConsole.MarkupLine($"[bold]Username:[/] {tokenName}");
-        AnsiConsole.MarkupLine("[bold]Passwords:[/]");
-        foreach (var pw in passwords)
+        var (success, body) = await PostAsync(url, new
         {
-            AnsiConsole.MarkupLine($"  [green]{pw.Name}[/]: {pw.Value} (expires: {pw.Expiry:o})");
-        }
-
+            tokenId = settings.TokenId,
+            expiry = expiry,
+            name = settings.PasswordName
+        });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 
@@ -59,33 +43,6 @@ public class GenerateContainerRegistryCredentialsCommand(Pipeline eventPipeline,
             return ValidationResult.Error("Registry name can't be null.");
 
         return base.Validate(context, settings);
-    }
-
-    private static string? ExtractTokenName(string? tokenId)
-    {
-        if (string.IsNullOrEmpty(tokenId))
-            return null;
-
-        var lastSlash = tokenId.LastIndexOf('/');
-        if (lastSlash >= 0 && lastSlash < tokenId.Length - 1)
-            return tokenId[(lastSlash + 1)..];
-
-        return null;
-    }
-
-    private static (string Name, string Value, DateTimeOffset Expiry)[] BuildPasswords(string? name, DateTimeOffset expiry)
-    {
-        if (string.Equals(name, "password1", StringComparison.OrdinalIgnoreCase))
-            return [("password1", Guid.NewGuid().ToString("N"), expiry)];
-
-        if (string.Equals(name, "password2", StringComparison.OrdinalIgnoreCase))
-            return [("password2", Guid.NewGuid().ToString("N"), expiry)];
-
-        return
-        [
-            ("password1", Guid.NewGuid().ToString("N"), expiry),
-            ("password2", Guid.NewGuid().ToString("N"), expiry)
-        ];
     }
 
     [UsedImplicitly]

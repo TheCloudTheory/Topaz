@@ -1,29 +1,24 @@
 using JetBrains.Annotations;
-using Topaz.Documentation.Command;
-using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using Topaz.Service.Shared.Domain;
+using Topaz.CLI.Infrastructure;
+using Topaz.Documentation.Command;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage account delete", "azure-storage/account", "Deletes an Azure Storage account.")]
 [CommandExample("Delete a storage account", "topaz storage account delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\"")]
-public class DeleteStorageAccountCommand(ITopazLogger logger) : Command<DeleteStorageAccountCommand.DeleteStorageAccountCommandSettings>
+public class DeleteStorageAccountCommand(HttpClient httpClient) : TopazHttpCommand<DeleteStorageAccountCommand.DeleteStorageAccountCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteStorageAccountCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteStorageAccountCommandSettings settings)
     {
         AnsiConsole.WriteLine("Deleting storage account...");
 
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var rp = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
-        
-        rp.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
-
-        AnsiConsole.WriteLine("Storage account deleted.");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.Name}";
+        var success = await DeleteAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine($"Storage account '{settings.Name}' deleted.");
         return 0;
     }
 

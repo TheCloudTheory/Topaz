@@ -1,56 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.EventHub.Models.Requests;
-using Topaz.Service.ResourceGroup;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
-using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("eventhubs eventhub create",  "event-hub", "Creates new Event Hub.")]
 [CommandExample("Creates Event Hub", "topaz eventhubs eventhub create \\\n    --resource-group rg-test \\\n    --namespace-name \"eh-namespace\" \\\n    --name \"hubtest\" \\\n    --subscription-id \"07CB2605-9C16-46E9-A2BD-0A8D39E049E8\"")]
-public sealed class CreateEventHubCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateEventHubCommand.CreateEventHubCommandSettings>
+public sealed class CreateEventHubCommand(HttpClient httpClient) : TopazHttpCommand<CreateEventHubCommand.CreateEventHubCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateEventHubCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateEventHubCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                SubscriptionControlPlane.New(eventPipeline, logger), logger);
-        var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId),
-            resourceGroupIdentifier);
-        if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
-        {
-            Console.Error.WriteLine($"Resource group {resourceGroupIdentifier} not found.");
-            return 1;
-        }
-        
-        var controlPlane = new EventHubServiceControlPlane(new EventHubResourceProvider(logger), logger);
-        var namespaceIdentifier = EventHubNamespaceIdentifier.From(settings.NamespaceName!);
-        var @namespace = controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
-        if (@namespace.Result == OperationResult.NotFound || @namespace.Resource == null)
-        {
-            Console.Error.WriteLine($"Namespace {namespaceIdentifier} not found.");
-            return 1;
-        }
-
-        var queue = controlPlane.CreateOrUpdateEventHub(resourceGroup.Resource.GetSubscription(),
-            resourceGroupIdentifier, namespaceIdentifier, settings.Name!, new CreateOrUpdateEventHubRequest());
-        if (queue.Result == OperationResult.Failed || queue.Resource == null)
-        {
-            Console.Error.WriteLine($"There was a problem creating queue '{settings.Name!}'.");
-            return 1;
-        }
-        
-        AnsiConsole.WriteLine(queue.Resource.ToString());
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.EventHub/namespaces/{settings.NamespaceName}/eventhubs/{settings.Name}";
+        var (success, body) = await PutAsync(url, new { properties = new { } });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

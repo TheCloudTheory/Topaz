@@ -1,34 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Keys;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault key backup", "key-vault", "Backs up a key from an Azure Key Vault.")]
 [CommandExample("Backup a key", "topaz keyvault key backup --vault-name \"kvlocal\" --name \"my-key\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class BackupKeyCommand(ITopazLogger logger) : Command<BackupKeyCommand.BackupKeyCommandSettings>
+public class BackupKeyCommand(HttpClient httpClient) : TopazHttpCommand<BackupKeyCommand.BackupKeyCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, BackupKeyCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, BackupKeyCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var operation = dataPlane.BackupKey(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!);
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}/backup?api-version=7.4";
+        var (success, body) = await PostAsync(url, new { });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

@@ -1,28 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage queue create", "azure-storage/queue", "Creates a new queue in a storage account.")]
 [CommandExample("Create a queue", "topaz storage queue create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --name \"myqueue\"")]
-public sealed class CreateQueueCommand(ITopazLogger logger) : Command<CreateQueueCommand.CreateQueueCommandSettings>
+public sealed class CreateQueueCommand(HttpClient httpClient) : TopazHttpCommand<CreateQueueCommand.CreateQueueCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateQueueCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateQueueCommandSettings settings)
     {
-        logger.LogInformation("Creating queue...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var rp = new QueueServiceControlPlane(new QueueResourceProvider(logger), logger);
-        var queueOp = rp.CreateQueue(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName, settings.Name);
-
-        logger.LogInformation($"Queue created: {queueOp.Resource!.Name}");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/queueServices/default/queues/{settings.Name}";
+        var (success, body) = await PutAsync(url, new { });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

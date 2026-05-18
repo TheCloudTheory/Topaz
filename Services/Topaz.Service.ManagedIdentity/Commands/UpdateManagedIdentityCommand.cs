@@ -1,57 +1,26 @@
 using JetBrains.Annotations;
-using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.ManagedIdentity.Models.Requests;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ManagedIdentity.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("identity update", "managed-identity", "Updates a user-assigned managed identity.")]
 [CommandExample("Updates a managed identity with tags", "topaz identity update --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"myIdentity\" \\\n    --resource-group \"rg-local\" \\\n    --tags environment=production team=devops")]
-public sealed class UpdateManagedIdentityCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<UpdateManagedIdentityCommand.UpdateManagedIdentityCommandSettings>
+public sealed class UpdateManagedIdentityCommand(HttpClient httpClient) : TopazHttpCommand<UpdateManagedIdentityCommand.UpdateManagedIdentityCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, UpdateManagedIdentityCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, UpdateManagedIdentityCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Updating user-assigned managed identity...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var managedIdentityIdentifier = ManagedIdentityIdentifier.From(settings.Name!);
-        var controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
-
-        var existingIdentity = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
-        if (existingIdentity.Resource == null)
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{settings.Name}";
+        var (success, body) = await PatchAsync(url, new
         {
-            Console.Error.WriteLine($"Managed identity '{settings.Name}' not found in resource group '{settings.ResourceGroup}'.");
-            return 1;
-        }
-
-        var request = new CreateUpdateManagedIdentityRequest
-        {
-            Location = existingIdentity.Resource.Location!,
-            Tags = settings.Tags?.ToDictionary(t => t.Split('=')[0], t => t.Split('=')[1]),
-            Properties = new CreateUpdateManagedIdentityRequest.ManagedIdentityProperties
-            {
-                IsolationScope = settings.IsolationScope ?? existingIdentity.Resource.Properties.IsolationScope
-            }
-        };
-
-        var operation = controlPlane.Update(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier, request);
-        
-        if (operation.Result != OperationResult.Updated)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
-        AnsiConsole.WriteLine("User-assigned managed identity updated.");
-
+            tags = settings.Tags?.ToDictionary(t => t.Split('=')[0], t => t.Split('=')[1])
+        });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

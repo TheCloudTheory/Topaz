@@ -1,11 +1,8 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Requests.Keys;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Keys;
 
@@ -13,36 +10,15 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 [CommandDefinition("keyvault key sign", "key-vault", "Signs a pre-hashed digest using a Key Vault key (RSA: RS256, RS384, RS512, PS256, PS384, PS512; EC: ES256, ES384, ES512).")]
 [CommandExample("Sign a digest with RS256",
     "topaz keyvault key sign --vault-name \"kvlocal\" --name \"my-key\" --version \"abc123\" --algorithm \"RS256\" --value \"<base64url-digest>\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class SignKeyCommand(ITopazLogger logger) : Command<SignKeyCommand.SignKeyCommandSettings>
+public class SignKeyCommand(HttpClient httpClient) : TopazHttpCommand<SignKeyCommand.SignKeyCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, SignKeyCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, SignKeyCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var request = new KeyOperationRequest
-        {
-            Algorithm = settings.Algorithm,
-            Value = settings.Value
-        };
-
-        var operation = dataPlane.SignKey(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!, settings.Version!, request);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        if (operation.Result == OperationResult.Failed)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}/{settings.Version ?? ""}/sign?api-version=7.4";
+        var (success, body) = await PostAsync(url, new { alg = settings.Algorithm, value = settings.Value });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

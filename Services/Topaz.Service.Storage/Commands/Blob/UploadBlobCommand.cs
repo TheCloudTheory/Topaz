@@ -1,38 +1,31 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
 [CommandDefinition("storage blob upload", "azure-storage/blob", "Uploads a local file to a blob container.")]
 [CommandExample("Upload a file", "topaz storage blob upload \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --file \"/path/to/file.txt\"")]
-public sealed class UploadBlobCommand(ITopazLogger logger) : Command<UploadBlobCommand.UploadBlobCommandSettings>
+public sealed class UploadBlobCommand(HttpClient httpClient) : TopazHttpCommand<UploadBlobCommand.UploadBlobCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, UploadBlobCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, UploadBlobCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Uploading blob...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        using var stream = File.OpenRead(settings.FilePath!);
-        var blobPath = $"/{settings.ContainerName}/{settings.BlobName ?? Path.GetFileName(settings.FilePath)}";
-
-        var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
-        var result = dataPlane.PutBlob(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!,
-            blobPath, settings.BlobName ?? Path.GetFileName(settings.FilePath)!, stream);
-
-        if (result.Result == OperationResult.Created)
-            AnsiConsole.WriteLine($"Blob uploaded: {blobPath}");
-        else
-            Console.Error.WriteLine($"Upload failed with status {result.Result}.");
-
-        return result.Result == OperationResult.Created ? 0 : 1;
+        var blobName = settings.BlobName ?? Path.GetFileName(settings.FilePath)!;
+        var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{blobName}";
+        await using var stream = File.OpenRead(settings.FilePath!);
+        using var content = new StreamContent(stream);
+        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        var response = await HttpClient.PutAsync(url, content);
+        if (!response.IsSuccessStatusCode)
+        {
+            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+            return 1;
+        }
+        AnsiConsole.WriteLine($"Blob uploaded: {blobName}");
+        return 0;
     }
 
     public override ValidationResult Validate(CommandContext context, UploadBlobCommandSettings settings)

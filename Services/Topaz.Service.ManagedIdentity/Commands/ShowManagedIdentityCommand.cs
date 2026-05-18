@@ -1,37 +1,23 @@
 using JetBrains.Annotations;
-using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ManagedIdentity.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("identity show", "managed-identity", "Shows details of a user-assigned managed identity.")]
 [CommandExample("Shows a managed identity", "topaz identity show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"myIdentity\" \\\n    --resource-group \"rg-local\"")]
-public sealed class ShowManagedIdentityCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<ShowManagedIdentityCommand.ShowManagedIdentityCommandSettings>
+public sealed class ShowManagedIdentityCommand(HttpClient httpClient) : TopazHttpCommand<ShowManagedIdentityCommand.ShowManagedIdentityCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ShowManagedIdentityCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ShowManagedIdentityCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Retrieving user-assigned managed identity...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var managedIdentityIdentifier = ManagedIdentityIdentifier.From(settings.Name!);
-        var controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
-        
-        var operation = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
-        
-        if (operation.Resource == null)
-        {
-            Console.Error.WriteLine($"Managed identity '{settings.Name}' not found in resource group '{settings.ResourceGroup}'.");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource.ToString());
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{settings.Name}";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

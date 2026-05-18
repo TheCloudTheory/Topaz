@@ -1,9 +1,8 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Commands;
@@ -11,26 +10,16 @@ namespace Topaz.Service.ContainerRegistry.Commands;
 [UsedImplicitly]
 [CommandDefinition("acr repository list", "container-registry", "Lists repositories in an Azure Container Registry.")]
 [CommandExample("List repositories in a registry", "topaz acr repository list \\\n+    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n+    --resource-group \"my-rg\" \\\n+    --registry \"myregistry\"")]
-public sealed class ListRepositoriesCommand(ITopazLogger logger)
-    : Command<ListRepositoriesCommand.ListRepositoriesCommandSettings>
+public sealed class ListRepositoriesCommand(HttpClient httpClient)
+    : TopazHttpCommand<ListRepositoriesCommand.ListRepositoriesCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListRepositoriesCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, ListRepositoriesCommandSettings settings)
     {
-        var dataPlane = AcrDataPlane();
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-
-        var repositories = dataPlane.ListRepositories(subscriptionIdentifier, resourceGroupIdentifier, settings.Registry!);
-
-        if (repositories.Count == 0)
-        {
-            AnsiConsole.WriteLine("No repositories found.");
-            return 0;
-        }
-
-        foreach (var repository in repositories)
-            AnsiConsole.WriteLine(repository);
-
+        var url = $"https://{settings.Registry}.azurecr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}/acr/v1/_catalog";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 
@@ -50,9 +39,6 @@ public sealed class ListRepositoriesCommand(ITopazLogger logger)
 
         return base.Validate(context, settings);
     }
-
-    private AcrDataPlane AcrDataPlane() =>
-        new(new ContainerRegistryResourceProvider(logger), logger);
 
     [UsedImplicitly]
     public sealed class ListRepositoriesCommandSettings : CommandSettings

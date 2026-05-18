@@ -1,46 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.EventHub.Models.Requests;
-using Topaz.Service.ResourceGroup;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
-using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("eventhubs namespace create",  "event-hub", "Creates new Event Hub namespace.")]
 [CommandExample("Creates Event Hub namespace", "topaz eventhubs namespace create \\\n    --resource-group rg-test \\\n    --location \"westeurope\" \\\n    --name \"eh-namespace\" \\\n    --subscription-id \"07CB2605-9C16-46E9-A2BD-0A8D39E049E8\"")]
-public sealed class CreateEventHubNamespaceCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateEventHubNamespaceCommand.CreateEventHubCommandSettings>
+public sealed class CreateEventHubNamespaceCommand(HttpClient httpClient) : TopazHttpCommand<CreateEventHubNamespaceCommand.CreateEventHubCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateEventHubCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateEventHubCommandSettings settings)
     {
-        logger.LogDebug(nameof(CreateEventHubNamespaceCommand), nameof(Execute), "Executing {0}.{1}.", nameof(CreateEventHubNamespaceCommand), nameof(Execute));
-        
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                SubscriptionControlPlane.New(eventPipeline, logger), logger);
-        var resourceGroup =
-            resourceGroupControlPlane.Get(SubscriptionIdentifier.From(Guid.Parse(settings.SubscriptionId)),
-                resourceGroupIdentifier);
-        if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
-        {
-            Console.Error.WriteLine($"ResourceGroup {resourceGroupIdentifier} not found.");
-            return 1;
-        }
-
-        var controlPlane = new EventHubServiceControlPlane(new EventHubResourceProvider(logger), logger);
-        var request = new CreateOrUpdateEventHubNamespaceRequest();
-        var ns = controlPlane.CreateOrUpdateNamespace(resourceGroup.Resource.GetSubscription(), resourceGroupIdentifier,
-            settings.Location!, EventHubNamespaceIdentifier.From(settings.Name!), request);
-
-        AnsiConsole.WriteLine(ns.ToString());
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.EventHub/namespaces/{settings.Name}";
+        var (success, body) = await PutAsync(url, new { location = settings.Location, properties = new { } });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

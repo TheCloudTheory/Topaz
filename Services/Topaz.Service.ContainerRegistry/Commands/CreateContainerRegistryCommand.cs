@@ -1,12 +1,8 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.ContainerRegistry.Models.Requests;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Commands;
 
@@ -14,34 +10,22 @@ namespace Topaz.Service.ContainerRegistry.Commands;
 [CommandDefinition("acr create", "container-registry", "Creates a new Azure Container Registry.")]
 [CommandExample("Create a Basic registry", "topaz acr create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\" \\\n    --name \"myregistry\" \\\n    --location \"westeurope\"")]
 [CommandExample("Create a Standard registry with admin user", "topaz acr create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\" \\\n    --name \"myregistry\" \\\n    --location \"westeurope\" \\\n    --sku Standard \\\n    --admin-enabled")]
-public sealed class CreateContainerRegistryCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<CreateContainerRegistryCommand.CreateContainerRegistryCommandSettings>
+public sealed class CreateContainerRegistryCommand(HttpClient httpClient)
+    : TopazHttpCommand<CreateContainerRegistryCommand.CreateContainerRegistryCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateContainerRegistryCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateContainerRegistryCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
-
-        var request = new CreateOrUpdateContainerRegistryRequest
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ContainerRegistry/registries/{settings.Name}";
+        var (success, body) = await PutAsync(url, new
         {
-            Location = settings.Location!,
-            Tags = settings.Tags?.ToDictionary(t => t.Split('=')[0], t => t.Split('=')[1]),
-            Sku = new CreateOrUpdateContainerRegistryRequest.ContainerRegistrySku { Name = settings.Sku },
-            Properties = new CreateOrUpdateContainerRegistryRequest.ContainerRegistryProperties
-            {
-                AdminUserEnabled = settings.AdminEnabled
-            }
-        };
-
-        var operation = controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!, request);
-        if (operation.Result is not (OperationResult.Created or OperationResult.Updated))
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+            location = settings.Location,
+            tags = (object?)settings.Tags?.ToDictionary(t => t.Split('=')[0], t => t.Split('=')[1]),
+            sku = new { name = settings.Sku },
+            properties = new { adminUserEnabled = settings.AdminEnabled }
+        });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

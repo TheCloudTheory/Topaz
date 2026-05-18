@@ -1,44 +1,30 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
 [CommandDefinition("storage blob snapshot", "azure-storage/blob", "Creates a read-only snapshot of a blob at the current time.")]
 [CommandExample("Create a blob snapshot", "topaz storage blob snapshot \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\"")]
-public sealed class SnapshotBlobCommand(ITopazLogger logger) : Command<SnapshotBlobCommand.SnapshotBlobCommandSettings>
+public sealed class SnapshotBlobCommand(HttpClient httpClient) : TopazHttpCommand<SnapshotBlobCommand.SnapshotBlobCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, SnapshotBlobCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, SnapshotBlobCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Creating blob snapshot...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        var blobPath = $"/{settings.ContainerName}/{settings.BlobName}";
-        var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
-
-        var result = dataPlane.SnapshotBlob(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.AccountName!, blobPath, settings.LeaseId);
-
-        if (result.Result == OperationResult.NotFound)
+        var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{settings.BlobName}?comp=snapshot";
+        using var request = new HttpRequestMessage(HttpMethod.Put, url);
+        if (!string.IsNullOrEmpty(settings.LeaseId))
+            request.Headers.Add("x-ms-lease-id", settings.LeaseId);
+        request.Content = new StringContent(string.Empty);
+        var response = await HttpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
         {
-            Console.Error.WriteLine($"Blob '{blobPath}' not found.");
+            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
             return 1;
         }
-
-        if (result.Result == OperationResult.PreconditionFailed)
-        {
-            Console.Error.WriteLine("Lease ID mismatch: the specified lease ID does not match the active lease.");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine($"Snapshot created: {result.Resource}");
+        AnsiConsole.WriteLine("Snapshot created.");
         return 0;
     }
 

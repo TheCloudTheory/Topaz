@@ -1,31 +1,22 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.ResourceGroup;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault check-name",  "key-vault", "Checks if the provided Key Vault name is available.")]
 [CommandExample("Check Key Vault name", "topaz keyvault check-name \\\n    --name \"sb-namespace\" \\\n    --resource-group \"rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
-public class CheckKeyVaultNameCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CheckKeyVaultNameCommand.CheckKeyVaultNameCommandSettings>
+public class CheckKeyVaultNameCommand(HttpClient httpClient) : TopazHttpCommand<CheckKeyVaultNameCommand.CheckKeyVaultNameCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CheckKeyVaultNameCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CheckKeyVaultNameCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                SubscriptionControlPlane.New(eventPipeline, logger), logger),
-            SubscriptionControlPlane.New(eventPipeline, logger), logger);
-        var kv = controlPlane.CheckName(subscriptionIdentifier, settings.Name!, settings.ResourceType);
-
-        AnsiConsole.WriteLine(kv.response.ToString());
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/providers/Microsoft.KeyVault/checkNameAvailability";
+        var (success, body) = await PostAsync(url, new { name = settings.Name, type = "Microsoft.KeyVault/vaults" });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

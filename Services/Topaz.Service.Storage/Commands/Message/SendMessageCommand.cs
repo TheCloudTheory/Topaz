@@ -1,39 +1,32 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands.Message;
 
 [UsedImplicitly]
 [CommandDefinition("storage message put", "azure-storage/queue", "Enqueues a new message in a queue.")]
 [CommandExample("Enqueue a message", "topaz storage message put \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --queue-name \"myqueue\" \\\n    --content \"Hello World\"")]
-public sealed class SendMessageCommand(ITopazLogger logger) : Command<SendMessageCommand.SendMessageCommandSettings>
+public sealed class SendMessageCommand(HttpClient httpClient) : TopazHttpCommand<SendMessageCommand.SendMessageCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, SendMessageCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, SendMessageCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var dataPlane = QueueServiceDataPlane.New(logger);
-
-        var result = dataPlane.SendMessage(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.AccountName!, settings.QueueName!, settings.Content!,
-            settings.VisibilityTimeout, settings.Ttl ?? 604800);
-
-        if (result.Result != OperationResult.Success || result.Resource == null)
+        var url = $"{QueueDataPlaneUrl(settings.AccountName!)}/{settings.QueueName}/messages";
+        if (settings.VisibilityTimeout > 0)
+            url += $"?visibilitytimeout={settings.VisibilityTimeout}";
+        var encoded = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(settings.Content!));
+        var xml = $"<QueueMessage><MessageText>{encoded}</MessageText></QueueMessage>";
+        using var content = new StringContent(xml, System.Text.Encoding.UTF8, "application/xml");
+        var response = await HttpClient.PostAsync(url, content);
+        if (!response.IsSuccessStatusCode)
         {
-            logger.LogError($"Failed to enqueue message: {result.Reason}");
+            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
             return 1;
         }
-
-        logger.LogInformation($"MessageId:  {result.Resource.Id}");
-        logger.LogInformation($"PopReceipt: {result.Resource.PopReceipt}");
-        logger.LogInformation($"InsertedAt: {result.Resource.EnqueuedTime:O}");
-        logger.LogInformation($"ExpiresAt:  {result.Resource.ExpiryTime:O}");
-
+        AnsiConsole.WriteLine(await response.Content.ReadAsStringAsync());
         return 0;
     }
 

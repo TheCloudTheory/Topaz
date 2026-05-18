@@ -1,40 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands.Message;
 
 [UsedImplicitly]
 [CommandDefinition("storage message delete", "azure-storage/queue", "Deletes a message from a queue.")]
 [CommandExample("Delete a message", "topaz storage message delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --queue-name \"myqueue\" \\\n    --message-id \"<id>\" \\\n    --pop-receipt \"<receipt>\"")]
-public sealed class DeleteMessageCommand(ITopazLogger logger) : Command<DeleteMessageCommand.DeleteMessageCommandSettings>
+public sealed class DeleteMessageCommand(HttpClient httpClient) : TopazHttpCommand<DeleteMessageCommand.DeleteMessageCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteMessageCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteMessageCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var dataPlane = QueueServiceDataPlane.New(logger);
-
-        var result = dataPlane.DeleteMessage(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.AccountName!, settings.QueueName!, settings.MessageId!);
-
-        if (result.Result == OperationResult.NotFound)
-        {
-            logger.LogError($"Message '{settings.MessageId}' not found in queue '{settings.QueueName}'.");
-            return 1;
-        }
-
-        if (result.Result != OperationResult.Success)
-        {
-            logger.LogError($"Failed to delete message: {result.Reason}");
-            return 1;
-        }
-
-        logger.LogInformation($"Message '{settings.MessageId}' deleted.");
+        var popEncoded = Uri.EscapeDataString(settings.PopReceipt!);
+        var url = $"{QueueDataPlaneUrl(settings.AccountName!)}/{settings.QueueName}/messages/{settings.MessageId}?popreceipt={popEncoded}";
+        if (!await DeleteAsync(url)) return 1;
+        AnsiConsole.WriteLine("Message deleted.");
         return 0;
     }
 

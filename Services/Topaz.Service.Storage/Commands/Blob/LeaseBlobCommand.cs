@@ -1,55 +1,38 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
 [CommandDefinition("storage blob lease", "azure-storage/blob", "Manages lease operations on a blob (acquire, renew, change, release, break).")]
 [CommandExample("Acquire a lease", "topaz storage blob lease \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\" \\\n    --action \"acquire\" \\\n    --lease-duration 60")]
-public sealed class LeaseBlobCommand(ITopazLogger logger) : Command<LeaseBlobCommand.LeaseBlobCommandSettings>
+public sealed class LeaseBlobCommand(HttpClient httpClient) : TopazHttpCommand<LeaseBlobCommand.LeaseBlobCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, LeaseBlobCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, LeaseBlobCommandSettings settings)
     {
-        AnsiConsole.WriteLine($"Leasing blob (action: {settings.Action!})...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        var blobPath = $"/{settings.ContainerName}/{settings.BlobName}";
-        var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
-
-        var result = dataPlane.LeaseBlob(
-            subscriptionIdentifier, resourceGroupIdentifier,
-            settings.AccountName!,
-            blobPath,
-            settings.Action!,
-            settings.LeaseDuration ?? -1,
-            settings.ProposedLeaseId,
-            settings.LeaseId,
-            settings.LeaseBreakPeriod);
-
-        return result.Result switch
+        var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{settings.BlobName}?comp=lease";
+        using var request = new HttpRequestMessage(HttpMethod.Put, url);
+        request.Headers.Add("x-ms-lease-action", settings.Action!.ToLower());
+        if (!string.IsNullOrEmpty(settings.LeaseId))
+            request.Headers.Add("x-ms-lease-id", settings.LeaseId);
+        if (settings.LeaseDuration.HasValue)
+            request.Headers.Add("x-ms-lease-duration", settings.LeaseDuration.Value.ToString());
+        if (!string.IsNullOrEmpty(settings.ProposedLeaseId))
+            request.Headers.Add("x-ms-proposed-lease-id", settings.ProposedLeaseId);
+        if (settings.LeaseBreakPeriod.HasValue)
+            request.Headers.Add("x-ms-lease-break-period", settings.LeaseBreakPeriod.Value.ToString());
+        request.Content = new StringContent(string.Empty);
+        var response = await HttpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
         {
-            OperationResult.Created or OperationResult.Success =>
-                LogLeaseId(result.Resource!.LeaseId),
-            OperationResult.Accepted =>
-                LogBreakTime(result.Resource!),
-            OperationResult.NotFound =>
-                LogError($"Blob '{blobPath}' not found."),
-            OperationResult.Conflict =>
-                LogError("Lease conflict — check current lease state."),
-            OperationResult.PreconditionFailed =>
-                LogError("Lease ID mismatch."),
-            OperationResult.BadRequest =>
-                LogError("Bad request — check required headers (e.g. proposed-lease-id for change)."),
-            _ =>
-                LogError($"Unexpected result: {result.Result}.")
-        };
+            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+            return 1;
+        }
+        AnsiConsole.WriteLine(await response.Content.ReadAsStringAsync());
+        return 0;
     }
 
     public override ValidationResult Validate(CommandContext context, LeaseBlobCommandSettings settings)
@@ -72,27 +55,6 @@ public sealed class LeaseBlobCommand(ITopazLogger logger) : Command<LeaseBlobCom
             return ValidationResult.Error($"Invalid lease action '{settings.Action}'. Must be one of: {string.Join(", ", valid)}.");
 
         return base.Validate(context, settings);
-    }
-
-    private int LogLeaseId(string? leaseId)
-    {
-        AnsiConsole.WriteLine($"Lease ID: {leaseId}");
-        return 0;
-    }
-
-    private int LogBreakTime(Models.ContainerLease lease)
-    {
-        var remaining = lease.BreakTime.HasValue
-            ? (int)Math.Max(0, Math.Ceiling((lease.BreakTime.Value - DateTimeOffset.UtcNow).TotalSeconds))
-            : 0;
-        AnsiConsole.WriteLine($"Lease breaking — remaining seconds: {remaining}");
-        return 0;
-    }
-
-    private int LogError(string message)
-    {
-        Console.Error.WriteLine(message);
-        return 1;
     }
 
     [UsedImplicitly]

@@ -1,27 +1,22 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("eventhubs eventhub delete",  "event-hub", "Deletes an Event Hub.")]
 [CommandExample("Deletes Event Hub", "topaz eventhubs eventhub delete \\\n    --namespace-name \"sb-namespace\" \\\n    --name \"ehtest\"")]
-public class DeleteEventHubCommand(ITopazLogger logger) : Command<DeleteEventHubCommand.DeleteEventHubCommandSettings>
+public class DeleteEventHubCommand(HttpClient httpClient) : TopazHttpCommand<DeleteEventHubCommand.DeleteEventHubCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteEventHubCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteEventHubCommandSettings settings)
     {
-        logger.LogDebug(nameof(DeleteEventHubCommand), nameof(Execute), "Executing {0}.{1}.", nameof(DeleteEventHubCommand), nameof(Execute));
-        AnsiConsole.WriteLine($"Deleting {settings.Name} event hub...");
-
-        var controlPlane = new EventHubServiceControlPlane(new EventHubResourceProvider(logger), logger);
-        controlPlane.Delete(settings.Name!, EventHubNamespaceIdentifier.From(settings.NamespaceName!));
-
-        AnsiConsole.WriteLine($"Event hub {settings.Name} deleted.");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.EventHub/namespaces/{settings.NamespaceName}/eventhubs/{settings.Name}";
+        if (!await DeleteAsync(url)) return 1;
+        AnsiConsole.WriteLine($"Event Hub '{settings.Name}' deleted.");
         return 0;
     }
 
@@ -31,9 +26,28 @@ public class DeleteEventHubCommand(ITopazLogger logger) : Command<DeleteEventHub
         {
             return ValidationResult.Error("Name can't be null.");
         }
-        
-        return string.IsNullOrEmpty(settings.NamespaceName) 
-            ? ValidationResult.Error("Namespace name can't be null.") : base.Validate(context, settings);
+
+        if(string.IsNullOrEmpty(settings.NamespaceName))
+        {
+            return ValidationResult.Error("Namespace name can't be null.");
+        }
+
+        if(string.IsNullOrEmpty(settings.ResourceGroup))
+        {
+            return ValidationResult.Error("Resource group can't be null.");
+        }
+
+        if(string.IsNullOrEmpty(settings.SubscriptionId))
+        {
+            return ValidationResult.Error("Subscription ID can't be null.");
+        }
+
+        if (!Guid.TryParse(settings.SubscriptionId, out _))
+        {
+            return ValidationResult.Error("Subscription ID must be a valid GUID.");
+        }
+
+        return base.Validate(context, settings);
     }
     
     [UsedImplicitly]
@@ -46,5 +60,13 @@ public class DeleteEventHubCommand(ITopazLogger logger) : Command<DeleteEventHub
         [CommandOptionDefinition("(Required) Event Hub namespace name.")]
         [CommandOption("--namespace-name")]
         public string? NamespaceName { get; set; }
+
+        [CommandOptionDefinition("(Required) Resource group name.")]
+        [CommandOption("-g|--resource-group")]
+        public string? ResourceGroup { get; set; }
+
+        [CommandOptionDefinition("(Required) Subscription ID.")]
+        [CommandOption("-s|--subscription-id")]
+        public string? SubscriptionId { get; set; }
     }
 }

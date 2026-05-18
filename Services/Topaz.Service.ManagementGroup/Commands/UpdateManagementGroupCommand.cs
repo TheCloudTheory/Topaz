@@ -1,10 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.ManagementGroup.Models.Requests;
-using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup.Commands;
 
@@ -14,28 +13,15 @@ namespace Topaz.Service.ManagementGroup.Commands;
     "topaz management-group update --name \"my-mg\" --display-name \"New Display Name\"")]
 [CommandExample("Re-parent a management group",
     "topaz management-group update --name \"my-mg\" --parent-id \"parent-mg\"")]
-public sealed class UpdateManagementGroupCommand(ITopazLogger logger)
-    : Command<UpdateManagementGroupCommand.Settings>
+public sealed class UpdateManagementGroupCommand(HttpClient httpClient)
+    : TopazHttpCommand<UpdateManagementGroupCommand.Settings>(httpClient)
 {
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var controlPlane = ManagementGroupControlPlane.New(logger);
-        var operation = controlPlane.Update(settings.Name!, new UpdateManagementGroupRequest
-        {
-            Properties = new UpdateManagementGroupProperties
-            {
-                DisplayName = settings.DisplayName,
-                ParentGroupId = settings.ParentId
-            }
-        });
-
-        if (operation.Result is not OperationResult.Updated)
-        {
-            Console.Error.WriteLine($"Failed: {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.Name}";
+        var (success, body) = await PatchAsync(url, new { properties = new { displayName = settings.DisplayName } });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

@@ -1,9 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup.Commands;
 
@@ -11,21 +11,14 @@ namespace Topaz.Service.ManagementGroup.Commands;
 [CommandDefinition("management-group hierarchy-settings delete", "management-group",
     "Deletes the hierarchy settings for a management group.")]
 [CommandExample("Delete hierarchy settings", "topaz management-group hierarchy-settings delete --name \"my-mg\"")]
-public sealed class DeleteHierarchySettingsCommand(ITopazLogger logger)
-    : Command<DeleteHierarchySettingsCommand.Settings>
+public sealed class DeleteHierarchySettingsCommand(HttpClient httpClient)
+    : TopazHttpCommand<DeleteHierarchySettingsCommand.Settings>(httpClient)
 {
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var controlPlane = ManagementGroupControlPlane.New(logger);
-        var operation = controlPlane.DeleteHierarchySettings(settings.Name!);
-
-        if (operation.Result is not OperationResult.Deleted)
-        {
-            Console.Error.WriteLine($"Failed: {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine("Deleted.");
+        var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.Name}/settings/default";
+        if (!await DeleteAsync(url)) return 1;
+        AnsiConsole.WriteLine($"Hierarchy settings deleted.");
         return 0;
     }
 

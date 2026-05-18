@@ -1,11 +1,8 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Commands;
 
@@ -13,37 +10,16 @@ namespace Topaz.Service.ContainerRegistry.Commands;
 [CommandDefinition("acr regenerate-credential", "container-registry", "Regenerates an admin password for an Azure Container Registry.")]
 [CommandExample("Regenerate password", "topaz acr regenerate-credential \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\" \\\n    --name \"myregistry\" \\\n    --password-name password")]
 [CommandExample("Regenerate password2", "topaz acr regenerate-credential \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\" \\\n    --name \"myregistry\" \\\n    --password-name password2")]
-public sealed class RegenerateContainerRegistryCredentialCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<RegenerateContainerRegistryCredentialCommand.RegenerateCredentialCommandSettings>
+public sealed class RegenerateContainerRegistryCredentialCommand(HttpClient httpClient)
+    : TopazHttpCommand<RegenerateContainerRegistryCredentialCommand.RegenerateCredentialCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, RegenerateCredentialCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, RegenerateCredentialCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
-
-        var operation = controlPlane.RegenerateCredential(
-            subscriptionIdentifier,
-            resourceGroupIdentifier,
-            settings.Name!,
-            settings.PasswordName!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        if (operation.Result == OperationResult.Failed)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        var props = operation.Resource!.Properties;
-        AnsiConsole.WriteLine($"Username:  {props.AdminUsername}");
-        AnsiConsole.WriteLine($"Password:  {props.AdminPassword}");
-        AnsiConsole.WriteLine($"Password2: {props.AdminPassword2 ?? props.AdminPassword}");
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ContainerRegistry/registries/{settings.Name}/regenerateCredential";
+        var (success, body) = await PostAsync(url, new { name = settings.PasswordName });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

@@ -1,11 +1,8 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Requests.Keys;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Keys;
 
@@ -13,36 +10,15 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 [CommandDefinition("keyvault key release", "key-vault", "Releases a key for Secure Key Release (SKR). Any non-empty attestation token is accepted by the emulator.")]
 [CommandExample("Release a key",
     "topaz keyvault key release --vault-name \"kvlocal\" --name \"my-key\" --version \"abc123\" --target \"mytoken\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class ReleaseKeyCommand(ITopazLogger logger) : Command<ReleaseKeyCommand.ReleaseKeyCommandSettings>
+public class ReleaseKeyCommand(HttpClient httpClient) : TopazHttpCommand<ReleaseKeyCommand.ReleaseKeyCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ReleaseKeyCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, ReleaseKeyCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var request = new ReleaseKeyRequest
-        {
-            Target = settings.Target,
-            Enc = settings.Enc
-        };
-
-        var operation = dataPlane.ReleaseKey(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!, settings.Version!, request);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        if (operation.Result == OperationResult.Failed)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}/{settings.Version ?? ""}/release?api-version=7.4";
+        var (success, body) = await PostAsync(url, new { target = settings.Target, enc = settings.Enc });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

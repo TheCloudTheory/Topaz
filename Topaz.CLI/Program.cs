@@ -4,7 +4,6 @@ using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
 using Topaz.Service.Authorization.Commands;
 using Topaz.Service.ContainerRegistry.Commands;
 using Topaz.Service.VirtualNetwork.Commands;
@@ -75,15 +74,8 @@ internal class Program
             if (!doc.RootElement.TryGetProperty("workingDirectory", out var wdElement))
                 return 0;
 
-            var hostDir = Path.GetFullPath(wdElement.GetString() ?? string.Empty);
-            var cliDir = Path.GetFullPath(Environment.CurrentDirectory);
-
-            if (string.Equals(hostDir, cliDir, StringComparison.OrdinalIgnoreCase)) return 0;
-            
-            await Console.Error.WriteLineAsync(
-                $"Topaz Host is running from a different directory ('{hostDir}'). " +
-                "Run the CLI from the same directory as the Host.");
-            return 1;
+                _ = wdElement; // no longer required to match working directories
+            return 0;
 
         }
         catch (HttpRequestException)
@@ -102,14 +94,11 @@ internal class Program
 
     private static void RegisterDependencies(ServiceCollection registrations)
     {
-        registrations.AddSingleton<ITopazLogger, SilentTopazLogger>();
-        registrations.AddSingleton<Pipeline, Pipeline>();
-
         var handler = new HttpClientHandler
         {
             ServerCertificateCustomValidationCallback = (_, _, _, _) => true
         };
-        registrations.AddSingleton(new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) });
+        registrations.AddSingleton(new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) });
     }
 
     private static void FindAndRegisterCommands(IConfigurator config)

@@ -1,40 +1,22 @@
-using System.Text;
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Requests.Secrets;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Secrets;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault secret restore", "key-vault", "Restores a secret into an Azure Key Vault from a backup blob.")]
 [CommandExample("Restore a secret", "topaz keyvault secret restore --vault-name \"kvlocal\" --backup-value \"<encoded blob>\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class RestoreSecretCommand(ITopazLogger logger) : Command<RestoreSecretCommand.RestoreSecretCommandSettings>
+public class RestoreSecretCommand(HttpClient httpClient) : TopazHttpCommand<RestoreSecretCommand.RestoreSecretCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, RestoreSecretCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, RestoreSecretCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var body = JsonSerializer.Serialize(new RestoreSecretRequest { Value = settings.BackupValue }, GlobalSettings.JsonOptions);
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(body));
-
-        var operation = dataPlane.RestoreSecretBackup(stream, subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!);
-
-        if (operation.Result == OperationResult.Failed || operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/secrets/restore?api-version=7.4";
+        var (success, body) = await PostAsync(url, new { value = settings.BackupValue });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

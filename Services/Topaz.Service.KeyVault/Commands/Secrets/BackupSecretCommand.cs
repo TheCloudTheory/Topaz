@@ -1,34 +1,22 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Secrets;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault secret backup", "key-vault", "Backs up a secret from an Azure Key Vault.")]
 [CommandExample("Backup a secret", "topaz keyvault secret backup --vault-name \"kvlocal\" --name \"my-secret\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class BackupSecretCommand(ITopazLogger logger) : Command<BackupSecretCommand.BackupSecretCommandSettings>
+public class BackupSecretCommand(HttpClient httpClient) : TopazHttpCommand<BackupSecretCommand.BackupSecretCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, BackupSecretCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, BackupSecretCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var operation = dataPlane.BackupSecret(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!);
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/secrets/{settings.Name}/backup?api-version=7.4";
+        var (success, body) = await PostAsync(url, new { });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

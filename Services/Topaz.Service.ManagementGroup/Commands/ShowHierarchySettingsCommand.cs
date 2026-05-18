@@ -1,9 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup.Commands;
 
@@ -11,21 +11,15 @@ namespace Topaz.Service.ManagementGroup.Commands;
 [CommandDefinition("management-group hierarchy-settings show", "management-group",
     "Shows the hierarchy settings for a management group.")]
 [CommandExample("Show hierarchy settings", "topaz management-group hierarchy-settings show --name \"my-mg\"")]
-public sealed class ShowHierarchySettingsCommand(ITopazLogger logger)
-    : Command<ShowHierarchySettingsCommand.Settings>
+public sealed class ShowHierarchySettingsCommand(HttpClient httpClient)
+    : TopazHttpCommand<ShowHierarchySettingsCommand.Settings>(httpClient)
 {
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var controlPlane = ManagementGroupControlPlane.New(logger);
-        var operation = controlPlane.GetHierarchySettings(settings.Name!);
-
-        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
-        {
-            Console.Error.WriteLine($"Hierarchy settings for management group '{settings.Name}' not found.");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource.ToString());
+        var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.Name}/settings/default";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

@@ -1,43 +1,31 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands.Message;
 
 [UsedImplicitly]
 [CommandDefinition("storage message update", "azure-storage/queue", "Updates the visibility timeout and/or content of a dequeued message.")]
 [CommandExample("Update message visibility", "topaz storage message update \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --queue-name \"myqueue\" \\\n    --message-id \"<id>\" \\\n    --pop-receipt \"<receipt>\" \\\n    --visibility-timeout 60")]
-public sealed class UpdateMessageCommand(ITopazLogger logger) : Command<UpdateMessageCommand.UpdateMessageCommandSettings>
+public sealed class UpdateMessageCommand(HttpClient httpClient) : TopazHttpCommand<UpdateMessageCommand.UpdateMessageCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, UpdateMessageCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, UpdateMessageCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var dataPlane = QueueServiceDataPlane.New(logger);
-
-        var result = dataPlane.PutMessage(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.AccountName!, settings.QueueName!, settings.MessageId!,
-            settings.Content ?? string.Empty, settings.VisibilityTimeout);
-
-        if (result.Result == OperationResult.NotFound)
+        var popEncoded = Uri.EscapeDataString(settings.PopReceipt!);
+        var url = $"{QueueDataPlaneUrl(settings.AccountName!)}/{settings.QueueName}/messages/{settings.MessageId}?popreceipt={popEncoded}&visibilitytimeout={settings.VisibilityTimeout}";
+        var encoded = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(settings.Content ?? string.Empty));
+        var xml = $"<QueueMessage><MessageText>{encoded}</MessageText></QueueMessage>";
+        using var content = new StringContent(xml, System.Text.Encoding.UTF8, "application/xml");
+        var response = await HttpClient.PutAsync(url, content);
+        if (!response.IsSuccessStatusCode && response.StatusCode != System.Net.HttpStatusCode.NoContent)
         {
-            logger.LogError($"Message '{settings.MessageId}' not found in queue '{settings.QueueName}'.");
+            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
             return 1;
         }
-
-        if (result.Result != OperationResult.Success || result.Resource == null)
-        {
-            logger.LogError($"Failed to update message: {result.Reason}");
-            return 1;
-        }
-
-        logger.LogInformation($"PopReceipt:  {result.Resource.PopReceipt}");
-        logger.LogInformation($"NextVisible: {result.Resource.NextVisibleTime:O}");
-
+        AnsiConsole.WriteLine("Message updated.");
         return 0;
     }
 

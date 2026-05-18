@@ -1,13 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Authorization.Domain;
-using Topaz.Service.Authorization.Models.Requests;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Authorization.Commands;
 
@@ -32,35 +28,24 @@ namespace Topaz.Service.Authorization.Commands;
     "    --principal-id 66666666-7777-8888-9999-000000000000 \\\n" +
     "    --principal-type ServicePrincipal \\\n" +
     "    --scope /subscriptions/36a28ebb-9370-46d8-981c-84efe02048ae/resourceGroups/rg-local/providers/Microsoft.KeyVault/vaults/mykv")]
-public sealed class CreateRoleAssignmentCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<CreateRoleAssignmentCommand.CreateRoleAssignmentCommandSettings>
+public sealed class CreateRoleAssignmentCommand(HttpClient httpClient)
+    : TopazHttpCommand<CreateRoleAssignmentCommand.CreateRoleAssignmentCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateRoleAssignmentCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateRoleAssignmentCommandSettings settings)
     {
-        logger.LogDebug(nameof(CreateRoleAssignmentCommand), nameof(Execute), "Creating a role assignment...");
-        
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var roleAssignmentName = RoleAssignmentName.From(settings.Name);
-        var controlPlane = AuthorizationControlPlane.New(eventPipeline, logger);
-        var operation = controlPlane.CreateRoleAssignment(subscriptionIdentifier, roleAssignmentName,
-            new CreateOrUpdateRoleAssignmentRequest
-            {
-                Properties = new RoleAssignmentProperties
-                {
-                    PrincipalId = settings.PrincipalId,
-                    PrincipalType = settings.PrincipalType,
-                    RoleDefinitionId = settings.RoleDefinitionId,
-                    Scope = settings.Scope
-                }
-            });
-
-        if (operation.Result != OperationResult.Created)
+        var url = $"{ArmBaseUrl}{settings.Scope}/providers/Microsoft.Authorization/roleAssignments/{settings.Name}";
+        var (success, body) = await PutAsync(url, new
         {
-            Console.Error.WriteLine($"Failed to create role assignment: {operation.Reason}");
-            return 1;
-        }
-        
-        AnsiConsole.WriteLine(operation.Result.ToString());
+            properties = new
+            {
+                roleDefinitionId = settings.RoleDefinitionId,
+                principalId = settings.PrincipalId,
+                principalType = settings.PrincipalType,
+                scope = settings.Scope
+            }
+        });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
     

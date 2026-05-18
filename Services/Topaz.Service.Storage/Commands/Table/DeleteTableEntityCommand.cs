@@ -1,32 +1,32 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage table delete-entity", "azure-storage/table", "Deletes an entity from a storage table.")]
 [CommandExample("Delete an entity", "topaz storage table delete-entity \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --table-name \"mytable\" \\\n    --partition-key \"pk1\" \\\n    --row-key \"rk1\"")]
-public sealed class DeleteTableEntityCommand(ITopazLogger logger)
-    : Command<DeleteTableEntityCommand.DeleteTableEntityCommandSettings>
+public sealed class DeleteTableEntityCommand(HttpClient httpClient)
+    : TopazHttpCommand<DeleteTableEntityCommand.DeleteTableEntityCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteTableEntityCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteTableEntityCommandSettings settings)
     {
-        logger.LogInformation($"Deleting entity (PartitionKey='{settings.PartitionKey}', RowKey='{settings.RowKey}') from table '{settings.TableName}'...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        var dataPlane = new TableServiceDataPlane(new TableResourceProvider(logger), logger);
-        dataPlane.DeleteEntity(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.TableName!, settings.AccountName!, settings.PartitionKey!, settings.RowKey!,
-            settings.IfMatch ?? "*");
-
-        logger.LogInformation("Entity deleted.");
-
+        var pk = Uri.EscapeDataString(settings.PartitionKey!);
+        var rk = Uri.EscapeDataString(settings.RowKey!);
+        var url = $"{TableDataPlaneUrl(settings.AccountName!)}/{settings.TableName}(PartitionKey='{pk}',RowKey='{rk}')";
+        using var request = new HttpRequestMessage(HttpMethod.Delete, url);
+        request.Headers.TryAddWithoutValidation("If-Match", settings.IfMatch ?? "*");
+        var response = await HttpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode && response.StatusCode != System.Net.HttpStatusCode.NoContent)
+        {
+            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+            return 1;
+        }
+        AnsiConsole.WriteLine("Entity deleted.");
         return 0;
     }
 

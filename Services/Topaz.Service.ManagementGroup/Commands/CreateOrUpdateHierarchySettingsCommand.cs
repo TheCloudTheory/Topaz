@@ -1,10 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.ManagementGroup.Models.Requests;
-using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup.Commands;
 
@@ -15,29 +14,15 @@ namespace Topaz.Service.ManagementGroup.Commands;
     "topaz management-group hierarchy-settings create-or-update --name \"my-mg\" --require-authorization")]
 [CommandExample("Set a default management group",
     "topaz management-group hierarchy-settings create-or-update --name \"my-mg\" --default-management-group \"default-mg\"")]
-public sealed class CreateOrUpdateHierarchySettingsCommand(ITopazLogger logger)
-    : Command<CreateOrUpdateHierarchySettingsCommand.Settings>
+public sealed class CreateOrUpdateHierarchySettingsCommand(HttpClient httpClient)
+    : TopazHttpCommand<CreateOrUpdateHierarchySettingsCommand.Settings>(httpClient)
 {
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var controlPlane = ManagementGroupControlPlane.New(logger);
-        var operation = controlPlane.CreateOrUpdateHierarchySettings(settings.Name!,
-            new CreateOrUpdateHierarchySettingsRequest
-            {
-                Properties = new CreateOrUpdateHierarchySettingsRequestProperties
-                {
-                    RequireAuthorizationForGroupCreation = settings.RequireAuthorization,
-                    DefaultManagementGroup = settings.DefaultManagementGroup
-                }
-            });
-
-        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
-        {
-            Console.Error.WriteLine($"Failed: {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource.ToString());
+        var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.Name}/settings/default";
+        var (success, body) = await PutAsync(url, new { properties = new { requireAuthorizationForGroupCreation = settings.RequireAuthorization, defaultManagementGroup = settings.DefaultManagementGroup } });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

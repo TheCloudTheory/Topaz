@@ -1,44 +1,34 @@
 using System.Reflection;
+using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.ResourceGroup;
-using Topaz.Service.ResourceManager.Deployment;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
-using Topaz.Shared;
 
 namespace Topaz.Service.ResourceManager.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("deployment group create", "deployment", "Creates a new deployment on a resource group level")]
-public class CreateGroupDeploymentCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateGroupDeploymentCommand.CreateGroupDeploymentCommandSettings>
+public class CreateGroupDeploymentCommand(HttpClient httpClient) : TopazHttpCommand<CreateGroupDeploymentCommand.CreateGroupDeploymentCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateGroupDeploymentCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateGroupDeploymentCommandSettings settings)
     {
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
-        var resourceGroupOperation = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
-        if (resourceGroupOperation.Result == OperationResult.NotFound || resourceGroupOperation.Resource == null)
-        {
-            Console.Error.WriteLine(resourceGroupOperation.ToString());
-            return 1;
-        }
-
-        var provider = new ResourceManagerResourceProvider(logger);
-        var controlPlane = new ResourceManagerControlPlane(provider, new TemplateDeploymentOrchestrator(eventPipeline, provider, new SubscriptionDeploymentResourceProvider(logger), logger), logger);
-        var fakeRequest = GetTemplate(settings.TemplateFile);
+        var templateJson = GetTemplate(settings.TemplateFile);
+        var template = JsonSerializer.Deserialize<JsonElement>(templateJson);
         var deploymentName = DetermineDeploymentName(settings);
-        var deployment = controlPlane.CreateOrUpdateDeployment(resourceGroupOperation.Resource.GetSubscription(),
-            resourceGroupIdentifier, deploymentName, fakeRequest, null,
-            resourceGroupOperation.Resource.Location!, settings.Mode.ToString());
-
-        AnsiConsole.WriteLine(deployment.resource.ToString());
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Resources/deployments/{deploymentName}";
+        var (success, body) = await PutAsync(url, new
+        {
+            properties = new
+            {
+                mode = settings.Mode.ToString(),
+                template
+            }
+        });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

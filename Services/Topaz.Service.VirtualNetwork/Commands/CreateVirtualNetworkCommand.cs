@@ -1,13 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.VirtualNetwork.Models;
-using Topaz.Service.VirtualNetwork.Models.Requests;
-using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork.Commands;
 
@@ -15,38 +11,25 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 [CommandDefinition("vnet create", "virtual-network", "Creates or updates an Azure Virtual Network.")]
 [CommandExample("Creates a new Virtual Network",
     "topaz vnet create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-vnet\" \\\n    --location \"westeurope\" \\\n    --resource-group \"rg-local\" \\\n    --address-prefix \"10.0.0.0/16\"")]
-internal sealed class CreateVirtualNetworkCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<CreateVirtualNetworkCommand.CreateVirtualNetworkCommandSettings>
+internal sealed class CreateVirtualNetworkCommand(HttpClient httpClient)
+    : TopazHttpCommand<CreateVirtualNetworkCommand.CreateVirtualNetworkCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateVirtualNetworkCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateVirtualNetworkCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
-
-        var request = new CreateOrUpdateVirtualNetworkRequest
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/virtualNetworks/{settings.Name}";
+        var (success, body) = await PutAsync(url, new
         {
-            Properties = new CreateOrUpdateVirtualNetworkRequest.CreateOrUpdateVirtualNetworkRequestProperties
+            location = settings.Location,
+            properties = new
             {
-                AddressSpace = settings.AddressPrefix is not null
-                    ? new VirtualNetworkResourceProperties.VirtualNetworkAddressSpace
-                    {
-                        AddressPrefixes = [settings.AddressPrefix]
-                    }
-                    : null
+                addressSpace = new
+                {
+                    addressPrefixes = new[] { settings.AddressPrefix ?? "10.0.0.0/16" }
+                }
             }
-        };
-
-        var operation = controlPlane.CreateOrUpdate(
-            subscriptionIdentifier, resourceGroupIdentifier, settings.Name!, request);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

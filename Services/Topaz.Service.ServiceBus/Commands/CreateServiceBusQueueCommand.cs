@@ -1,55 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.ResourceGroup;
-using Topaz.Service.ServiceBus.Models.Requests;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
-using Topaz.Shared;
 
 namespace Topaz.Service.ServiceBus.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("servicebus queue create", "service-bus", "Creates or updates a queue in a Service Bus namespace.")]
 [CommandExample("Create a queue", "topaz servicebus queue create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --namespace-name \"sblocal\" \\\n    --queue-name \"myqueue\"")]
-public class CreateServiceBusQueueCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateServiceBusQueueCommand.CreateServiceBusQueueCommandSettings>
+public class CreateServiceBusQueueCommand(HttpClient httpClient) : TopazHttpCommand<CreateServiceBusQueueCommand.CreateServiceBusQueueCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateServiceBusQueueCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateServiceBusQueueCommandSettings settings)
     {
-        logger.LogDebug(nameof(CreateServiceBusQueueCommand), nameof(Execute), "Executing {0}.{1}.", nameof(CreateServiceBusQueueCommand), nameof(Execute));
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var resourceGroupControlPlane =
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
-        var resourceGroup = resourceGroupControlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
-        if (resourceGroup.Result == OperationResult.NotFound || resourceGroup.Resource == null)
-        {
-            Console.Error.WriteLine($"Resource group {resourceGroupIdentifier} not found.");
-            return 1;
-        }
-
-        var controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
-        var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(settings.NamespaceName!);
-        var @namespace = controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
-        if (@namespace.Result == OperationResult.NotFound || @namespace.Resource == null)
-        {
-            Console.Error.WriteLine($"Namespace {namespaceIdentifier} not found.");
-            return 1;
-        }
-        
-        var queue = controlPlane.CreateOrUpdateQueue(resourceGroup.Resource.GetSubscription(), resourceGroupIdentifier, namespaceIdentifier, settings.Name!, new CreateOrUpdateServiceBusQueueRequest());
-        if (queue.Result == OperationResult.Failed || queue.Resource == null)
-        {
-            Console.Error.WriteLine($"There was a problem creating queue '{settings.Name!}'.");
-            return 1;
-        }
-        
-        AnsiConsole.WriteLine(queue.Resource.ToString());
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ServiceBus/namespaces/{settings.NamespaceName}/queues/{settings.Name}";
+        var (success, body) = await PutAsync(url, new { properties = new { } });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

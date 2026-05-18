@@ -1,42 +1,38 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
 [CommandDefinition("storage blob update", "azure-storage/blob", "Updates the HTTP properties (content type, encoding, etc.) of a blob.")]
 [CommandExample("Update content type of a blob", "topaz storage blob update \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\" \\\n    --content-type \"text/plain\"")]
-public sealed class SetBlobPropertiesCommand(ITopazLogger logger) : Command<SetBlobPropertiesCommand.SetBlobPropertiesCommandSettings>
+public sealed class SetBlobPropertiesCommand(HttpClient httpClient) : TopazHttpCommand<SetBlobPropertiesCommand.SetBlobPropertiesCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, SetBlobPropertiesCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, SetBlobPropertiesCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Setting blob properties...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        var blobPath = $"/{settings.ContainerName}/{settings.BlobName}";
-        var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
-        var result = dataPlane.SetBlobProperties(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.AccountName!, blobPath,
-            settings.ContentType,
-            settings.ContentEncoding,
-            settings.ContentLanguage,
-            settings.CacheControl,
-            settings.ContentDisposition);
-
-        if (result.Result == OperationResult.NotFound)
+        var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{settings.BlobName}?comp=properties";
+        using var request = new HttpRequestMessage(HttpMethod.Put, url);
+        if (!string.IsNullOrEmpty(settings.ContentType))
+            request.Headers.TryAddWithoutValidation("x-ms-blob-content-type", settings.ContentType);
+        if (!string.IsNullOrEmpty(settings.ContentEncoding))
+            request.Headers.TryAddWithoutValidation("x-ms-blob-content-encoding", settings.ContentEncoding);
+        if (!string.IsNullOrEmpty(settings.ContentLanguage))
+            request.Headers.TryAddWithoutValidation("x-ms-blob-content-language", settings.ContentLanguage);
+        if (!string.IsNullOrEmpty(settings.CacheControl))
+            request.Headers.TryAddWithoutValidation("x-ms-blob-cache-control", settings.CacheControl);
+        if (!string.IsNullOrEmpty(settings.ContentDisposition))
+            request.Headers.TryAddWithoutValidation("x-ms-blob-content-disposition", settings.ContentDisposition);
+        request.Content = new StringContent(string.Empty);
+        var response = await HttpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
         {
-            Console.Error.WriteLine($"Blob '{blobPath}' not found.");
+            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
             return 1;
         }
-
-        AnsiConsole.WriteLine($"Blob '{blobPath}' properties updated.");
+        AnsiConsole.WriteLine("Properties set.");
         return 0;
     }
 

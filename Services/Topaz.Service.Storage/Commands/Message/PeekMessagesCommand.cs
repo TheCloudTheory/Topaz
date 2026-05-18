@@ -1,55 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands.Message;
 
 [UsedImplicitly]
 [CommandDefinition("storage message peek", "azure-storage/queue", "Peeks at one or more messages in a queue without dequeuing them.")]
 [CommandExample("Peek at up to 5 messages", "topaz storage message peek \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --queue-name \"myqueue\" \\\n    --num-messages 5")]
-public sealed class PeekMessagesCommand(ITopazLogger logger) : Command<PeekMessagesCommand.PeekMessagesCommandSettings>
+public sealed class PeekMessagesCommand(HttpClient httpClient) : TopazHttpCommand<PeekMessagesCommand.PeekMessagesCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, PeekMessagesCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, PeekMessagesCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var dataPlane = QueueServiceDataPlane.New(logger);
-
-        var result = dataPlane.PeekMessages(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.AccountName!, settings.QueueName!, settings.NumMessages);
-
-        if (result.Result == OperationResult.NotFound)
-        {
-            logger.LogError($"Queue '{settings.QueueName}' not found.");
-            return 1;
-        }
-
-        if (result.Result != OperationResult.Success || result.Resource == null)
-        {
-            logger.LogError($"Failed to peek messages: {result.Reason}");
-            return 1;
-        }
-
-        if (result.Resource.Count == 0)
-        {
-            logger.LogInformation("No messages available.");
-            return 0;
-        }
-
-        foreach (var msg in result.Resource)
-        {
-            logger.LogInformation($"MessageId:     {msg.Id}");
-            logger.LogInformation($"Content:       {msg.Content}");
-            logger.LogInformation($"DequeueCount:  {msg.DequeueCount}");
-            logger.LogInformation($"InsertedAt:    {msg.EnqueuedTime:O}");
-            logger.LogInformation($"ExpiresAt:     {msg.ExpiryTime:O}");
-            logger.LogInformation("---");
-        }
-
+        var url = $"{QueueDataPlaneUrl(settings.AccountName!)}/{settings.QueueName}/messages?peekonly=true&numofmessages={settings.NumMessages}";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

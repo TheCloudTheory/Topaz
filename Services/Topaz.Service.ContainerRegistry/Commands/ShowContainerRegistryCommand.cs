@@ -1,34 +1,24 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("acr show", "container-registry", "Shows details of an Azure Container Registry.")]
 [CommandExample("Show a registry", "topaz acr show \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\" \\\n    --name \"myregistry\"")]
-public sealed class ShowContainerRegistryCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<ShowContainerRegistryCommand.ShowContainerRegistryCommandSettings>
+public sealed class ShowContainerRegistryCommand(HttpClient httpClient)
+    : TopazHttpCommand<ShowContainerRegistryCommand.ShowContainerRegistryCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ShowContainerRegistryCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, ShowContainerRegistryCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
-
-        var operation = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ContainerRegistry/registries/{settings.Name}";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

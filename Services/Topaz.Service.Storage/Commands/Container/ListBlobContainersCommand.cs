@@ -1,41 +1,25 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage container list", "azure-storage/container", "Lists blob containers in a storage account.")]
 [CommandExample("List containers", "topaz storage container list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\"")]
-public sealed class ListBlobContainersCommand(ITopazLogger logger)
-    : Command<ListBlobContainersCommand.ListBlobContainersCommandSettings>
+public sealed class ListBlobContainersCommand(HttpClient httpClient)
+    : TopazHttpCommand<ListBlobContainersCommand.ListBlobContainersCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListBlobContainersCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ListBlobContainersCommandSettings settings)
     {
         AnsiConsole.WriteLine("Listing blob containers...");
 
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var controlPlane = new BlobServiceControlPlane(new BlobResourceProvider(logger));
-        var result = controlPlane.ListContainers(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!);
-
-        if (result.Result != OperationResult.Success || result.Resource == null)
-            return 1;
-
-        var containers = result.Resource.GetContainers();
-        if (containers.Length == 0)
-        {
-            AnsiConsole.WriteLine("No containers found.");
-            return 0;
-        }
-
-        foreach (var container in containers)
-            AnsiConsole.WriteLine(container.Name ?? "(unnamed)");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/blobServices/default/containers";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

@@ -1,48 +1,26 @@
-using System.Text;
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Requests.Secrets;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Secrets;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault secret update", "key-vault", "Updates the attributes of a secret in an Azure Key Vault.")]
 [CommandExample("Disable a secret", "topaz keyvault secret update --vault-name \"kvlocal\" --name \"my-secret\" --version \"<version-guid>\" --enabled false --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class UpdateSecretCommand(ITopazLogger logger) : Command<UpdateSecretCommand.UpdateSecretCommandSettings>
+public class UpdateSecretCommand(HttpClient httpClient) : TopazHttpCommand<UpdateSecretCommand.UpdateSecretCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, UpdateSecretCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, UpdateSecretCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var request = new UpdateSecretRequest
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/secrets/{settings.Name}/{settings.Version}?api-version=7.4";
+        var (success, body) = await PatchAsync(url, new
         {
-            ContentType = settings.ContentType,
-            Attributes = settings.Enabled.HasValue
-                ? new UpdateSecretRequest.UpdateSecretAttributes { Enabled = settings.Enabled }
-                : null
-        };
-
-        var requestJson = JsonSerializer.Serialize(request, GlobalSettings.JsonOptions);
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(requestJson));
-
-        var operation = dataPlane.UpdateSecret(stream, subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!, settings.Version!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+            contentType = settings.ContentType,
+            attributes = new { enabled = settings.Enabled }
+        });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

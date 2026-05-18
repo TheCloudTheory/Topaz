@@ -1,35 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Responses.Certificates;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Certificates;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault certificate get-deleted", "key-vault", "Gets a soft-deleted certificate from an Azure Key Vault.")]
 [CommandExample("Get a deleted certificate", "topaz keyvault certificate get-deleted --vault-name \"kvlocal\" --name \"my-cert\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class GetDeletedCertificateCommand(ITopazLogger logger) : Command<GetDeletedCertificateCommand.GetDeletedCertificateCommandSettings>
+public class GetDeletedCertificateCommand(HttpClient httpClient) : TopazHttpCommand<GetDeletedCertificateCommand.GetDeletedCertificateCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, GetDeletedCertificateCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, GetDeletedCertificateCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultCertificatesDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var operation = dataPlane.GetDeletedCertificate(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(GetDeletedCertificateResponse.FromRecord(operation.Resource!, settings.VaultName!).ToString());
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/deletedcertificates/{settings.Name}?api-version=7.4";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

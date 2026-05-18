@@ -1,12 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.VirtualNetwork.Models.Requests;
-using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork.Commands.Subnets;
 
@@ -14,34 +11,15 @@ namespace Topaz.Service.VirtualNetwork.Commands.Subnets;
 [CommandDefinition("vnet subnet create", "virtual-network", "Creates or updates a subnet in a Virtual Network.")]
 [CommandExample("Creates a subnet",
     "topaz vnet subnet create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --vnet-name \"my-vnet\" \\\n    --name \"my-subnet\" \\\n    --address-prefix \"10.0.1.0/24\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class CreateSubnetCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<CreateSubnetCommand.CreateSubnetCommandSettings>
+internal sealed class CreateSubnetCommand(HttpClient httpClient)
+    : TopazHttpCommand<CreateSubnetCommand.CreateSubnetCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateSubnetCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateSubnetCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = SubnetControlPlane.New(eventPipeline, logger);
-
-        var request = new CreateOrUpdateSubnetRequest
-        {
-            Properties = new CreateOrUpdateSubnetRequest.CreateOrUpdateSubnetRequestProperties
-            {
-                AddressPrefix = settings.AddressPrefix,
-                AddressPrefixes = settings.AddressPrefix is not null ? [settings.AddressPrefix] : null
-            }
-        };
-
-        var operation = controlPlane.CreateOrUpdate(
-            subscriptionIdentifier, resourceGroupIdentifier, settings.VnetName!, settings.Name!, request);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/virtualNetworks/{settings.VnetName}/subnets/{settings.Name}";
+        var (success, body) = await PutAsync(url, new { properties = new { addressPrefix = settings.AddressPrefix } });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

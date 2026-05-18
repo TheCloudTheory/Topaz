@@ -1,58 +1,31 @@
-using System.Text;
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models;
-using Topaz.Service.KeyVault.Models.Requests.Certificates;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Certificates;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault certificate create", "key-vault", "Creates a self-signed certificate in an Azure Key Vault.")]
 [CommandExample("Create a certificate", "topaz keyvault certificate create --vault-name \"kvlocal\" --name \"my-cert\" --subject \"CN=my-cert\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class CreateCertificateCommand(ITopazLogger logger) : Command<CreateCertificateCommand.CreateCertificateCommandSettings>
+public class CreateCertificateCommand(HttpClient httpClient) : TopazHttpCommand<CreateCertificateCommand.CreateCertificateCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateCertificateCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateCertificateCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultCertificatesDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var request = new CreateCertificateRequest
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/certificates/{settings.Name}/create?api-version=7.4";
+        var (success, body) = await PostAsync(url, new
         {
-            Policy = new CertificatePolicy
+            policy = new
             {
-                Issuer = new CertificatePolicy.IssuerParameters { Name = "Self" },
-                X509Props = new CertificatePolicy.X509CertificateProperties
-                {
-                    Subject = settings.Subject ?? $"CN={settings.Name}",
-                    ValidityMonths = settings.ValidityMonths ?? 12
-                },
-                KeyProps = new CertificatePolicy.KeyProperties
-                {
-                    KeySize = settings.KeySize ?? 2048
-                }
+                issuer = new { name = "Self" },
+                x509Props = new { subject = settings.Subject ?? $"CN={settings.Name}", validityMonths = settings.ValidityMonths ?? 12 },
+                keyProps = new { keySize = settings.KeySize ?? 2048 }
             }
-        };
-
-        var requestJson = JsonSerializer.Serialize(request, GlobalSettings.JsonOptions);
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(requestJson));
-
-        var operation = dataPlane.CreateCertificate(stream, subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!);
-
-        if (operation.Result == OperationResult.Failed)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.Bundle.ToString());
+        });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

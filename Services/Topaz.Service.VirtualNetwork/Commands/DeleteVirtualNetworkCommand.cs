@@ -1,11 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork.Commands;
 
@@ -13,23 +11,14 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 [CommandDefinition("vnet delete", "virtual-network", "Deletes an Azure Virtual Network.")]
 [CommandExample("Deletes a Virtual Network",
     "topaz vnet delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-vnet\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class DeleteVirtualNetworkCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<DeleteVirtualNetworkCommand.DeleteVirtualNetworkCommandSettings>
+internal sealed class DeleteVirtualNetworkCommand(HttpClient httpClient)
+    : TopazHttpCommand<DeleteVirtualNetworkCommand.DeleteVirtualNetworkCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteVirtualNetworkCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteVirtualNetworkCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
-
-        var existing = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
-        if (existing.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({existing.Code}) {existing.Reason}");
-            return 1;
-        }
-
-        controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/virtualNetworks/{settings.Name}";
+        if (!await DeleteAsync(url)) return 1;
+        AnsiConsole.WriteLine($"Virtual network '{settings.Name}' deleted.");
         return 0;
     }
 

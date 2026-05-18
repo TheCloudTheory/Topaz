@@ -1,39 +1,22 @@
 using JetBrains.Annotations;
-using Topaz.Documentation.Command;
-using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
+using Topaz.Documentation.Command;
 
 namespace Topaz.Service.ResourceGroup.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("group delete", "group", "Deletes a resource group.")]
 [CommandExample("Delete a resource group", "topaz group delete \\\n    --name \"my-rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
-public sealed class DeleteResourceGroupCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<DeleteResourceGroupCommand.DeleteResourceGroupCommandSettings>
+public sealed class DeleteResourceGroupCommand(HttpClient httpClient) : TopazHttpCommand<DeleteResourceGroupCommand.DeleteResourceGroupCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteResourceGroupCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteResourceGroupCommandSettings settings)
     {
-        logger.LogDebug(nameof(DeleteResourceGroupCommand), nameof(Execute), "Executing {0}.{1}.", nameof(DeleteResourceGroupCommand), nameof(Execute));
-        AnsiConsole.WriteLine("Deleting resource group...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.Name!);
-        var controlPlane = new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
-        var existingResource = controlPlane.Get(SubscriptionIdentifier.From(settings.SubscriptionId), resourceGroupIdentifier);
-        if (existingResource.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"Resource group '{settings.Name}' could not be found.");
-            return 1;
-        }
-        
-        _= controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier);
-        
-        AnsiConsole.WriteLine("Resource group deleted.");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.Name}";
+        if (!await DeleteAsync(url)) return 1;
+        AnsiConsole.WriteLine($"Resource group '{settings.Name}' deleted.");
         return 0;
     }
 

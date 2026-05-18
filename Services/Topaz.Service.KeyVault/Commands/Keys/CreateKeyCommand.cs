@@ -1,13 +1,8 @@
-using System.Text;
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Requests.Keys;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Keys;
 
@@ -15,34 +10,15 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 [CommandDefinition("keyvault key create", "key-vault", "Creates a key in an Azure Key Vault.")]
 [CommandExample("Create an RSA key", "topaz keyvault key create --vault-name \"kvlocal\" --name \"my-rsa-key\" --kty RSA --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
 [CommandExample("Create an EC key", "topaz keyvault key create --vault-name \"kvlocal\" --name \"my-ec-key\" --kty EC --crv P-256 --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class CreateKeyCommand(ITopazLogger logger) : Command<CreateKeyCommand.CreateKeyCommandSettings>
+public class CreateKeyCommand(HttpClient httpClient) : TopazHttpCommand<CreateKeyCommand.CreateKeyCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateKeyCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateKeyCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var request = new CreateKeyRequest
-        {
-            KeyType = settings.KeyType,
-            KeySize = settings.KeySize,
-            Curve = settings.Curve
-        };
-
-        var requestJson = JsonSerializer.Serialize(request, GlobalSettings.JsonOptions);
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(requestJson));
-
-        var operation = dataPlane.CreateKey(stream, subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!);
-
-        if (operation.Result == OperationResult.Failed)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}/create?api-version=7.4";
+        var (success, body) = await PostAsync(url, new { kty = settings.KeyType, keySize = settings.KeySize, keyOps = (string[]?)null, crv = settings.Curve });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

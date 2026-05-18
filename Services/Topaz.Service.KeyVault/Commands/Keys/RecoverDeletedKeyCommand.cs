@@ -1,34 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Keys;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault key recover", "key-vault", "Recovers a soft-deleted key from an Azure Key Vault.")]
 [CommandExample("Recover a deleted key", "topaz keyvault key recover --vault-name \"kvlocal\" --name \"my-key\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class RecoverDeletedKeyCommand(ITopazLogger logger) : Command<RecoverDeletedKeyCommand.RecoverDeletedKeyCommandSettings>
+public class RecoverDeletedKeyCommand(HttpClient httpClient) : TopazHttpCommand<RecoverDeletedKeyCommand.RecoverDeletedKeyCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, RecoverDeletedKeyCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, RecoverDeletedKeyCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var operation = dataPlane.RecoverDeletedKey(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine($"Key '{settings.Name}' recovered.");
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/deletedkeys/{settings.Name}/recover?api-version=7.4";
+        var (success, body) = await PostAsync(url, new { });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

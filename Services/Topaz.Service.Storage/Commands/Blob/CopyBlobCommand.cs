@@ -1,50 +1,30 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
 [CommandDefinition("storage blob copy", "azure-storage/blob", "Copies a blob to a destination container, optionally across accounts.")]
 [CommandExample("Copy blob within same account", "topaz storage blob copy \\\n    --source-subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --source-resource-group \"rg-local\" \\\n    --source-account-name \"salocal\" \\\n    --source-container \"src\" \\\n    --source-blob \"file.txt\" \\\n    --dest-subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --dest-resource-group \"rg-local\" \\\n    --dest-account-name \"salocal\" \\\n    --dest-container \"dst\" \\\n    --dest-blob \"file-copy.txt\"")]
-public sealed class CopyBlobCommand(ITopazLogger logger) : Command<CopyBlobCommand.CopyBlobCommandSettings>
+public sealed class CopyBlobCommand(HttpClient httpClient) : TopazHttpCommand<CopyBlobCommand.CopyBlobCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CopyBlobCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CopyBlobCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Copying blob...");
-
-        var srcSubscriptionId = SubscriptionIdentifier.From(settings.SourceSubscriptionId);
-        var srcResourceGroupId = ResourceGroupIdentifier.From(settings.SourceResourceGroup);
-        var dstSubscriptionId = SubscriptionIdentifier.From(settings.DestinationSubscriptionId);
-        var dstResourceGroupId = ResourceGroupIdentifier.From(settings.DestinationResourceGroup);
-
-        var srcBlobPath = $"/{settings.SourceContainerName}/{settings.SourceBlobName}";
-        var dstBlobPath = $"/{settings.DestinationContainerName}/{settings.DestinationBlobName}";
-
-        var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
-        var op = dataPlane.CopyBlob(
-            srcSubscriptionId, srcResourceGroupId, settings.SourceAccountName!,
-            srcBlobPath,
-            dstSubscriptionId, dstResourceGroupId, settings.DestinationAccountName!,
-            dstBlobPath, settings.DestinationBlobName!);
-
-        if (op.Result == OperationResult.NotFound)
+        var destUrl = $"{BlobDataPlaneUrl(settings.DestinationAccountName!)}/{settings.DestinationContainerName}/{settings.DestinationBlobName}";
+        var sourceUrl = $"{BlobDataPlaneUrl(settings.SourceAccountName!)}/{settings.SourceContainerName}/{settings.SourceBlobName}";
+        using var request = new HttpRequestMessage(HttpMethod.Put, destUrl);
+        request.Headers.Add("x-ms-copy-source", sourceUrl);
+        request.Content = new StringContent(string.Empty);
+        var response = await HttpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
         {
-            Console.Error.WriteLine($"Source blob '{srcBlobPath}' not found.");
+            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
             return 1;
         }
-
-        if (op.Result != OperationResult.Accepted)
-        {
-            Console.Error.WriteLine($"Copy failed with status {op.Result}.");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine($"Blob copied: {srcBlobPath} -> {dstBlobPath} (copy-id: {op.Resource!.CopyId})");
+        AnsiConsole.WriteLine("Blob copy started.");
         return 0;
     }
 

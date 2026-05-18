@@ -1,13 +1,8 @@
-using System.Text;
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Requests.Keys;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Keys;
 
@@ -15,34 +10,16 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 [CommandDefinition("keyvault key update", "key-vault", "Updates the attributes of a key version in an Azure Key Vault.")]
 [CommandExample("Disable a key version",
     "topaz keyvault key update --vault-name \"kvlocal\" --name \"my-key\" --version \"<version-guid>\" --enabled false --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class UpdateKeyCommand(ITopazLogger logger) : Command<UpdateKeyCommand.UpdateKeyCommandSettings>
+public class UpdateKeyCommand(HttpClient httpClient) : TopazHttpCommand<UpdateKeyCommand.UpdateKeyCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, UpdateKeyCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, UpdateKeyCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var request = new UpdateKeyRequest
-        {
-            Attributes = settings.Enabled.HasValue
-                ? new UpdateKeyRequest.UpdateKeyAttributes { Enabled = settings.Enabled }
-                : null
-        };
-
-        var requestJson = JsonSerializer.Serialize(request, GlobalSettings.JsonOptions);
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(requestJson));
-
-        var operation = dataPlane.UpdateKey(stream, subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!, settings.Version!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}/{settings.Version ?? ""}?api-version=7.4";
+        var body = new { attributes = settings.Enabled.HasValue ? new { enabled = settings.Enabled } : (object?)null };
+        var (success, response) = await PatchAsync(url, body);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(response);
         return 0;
     }
 

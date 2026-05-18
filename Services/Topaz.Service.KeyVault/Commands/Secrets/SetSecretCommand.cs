@@ -1,40 +1,22 @@
-using System.Text;
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Requests.Secrets;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Secrets;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault secret set", "key-vault", "Sets a secret in an Azure Key Vault.")]
 [CommandExample("Set a secret", "topaz keyvault secret set --vault-name \"kvlocal\" --name \"my-secret\" --value \"my-value\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class SetSecretCommand(ITopazLogger logger) : Command<SetSecretCommand.SetSecretCommandSettings>
+public class SetSecretCommand(HttpClient httpClient) : TopazHttpCommand<SetSecretCommand.SetSecretCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, SetSecretCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, SetSecretCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var requestJson = JsonSerializer.Serialize(new SetSecretRequest(settings.Value!), GlobalSettings.JsonOptions);
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(requestJson));
-
-        var operation = dataPlane.SetSecret(stream, subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!);
-
-        if (operation.Result == OperationResult.Failed)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/secrets/{settings.Name}?api-version=7.4";
+        var (success, body) = await PutAsync(url, new { value = settings.Value, attributes = new { enabled = true } });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

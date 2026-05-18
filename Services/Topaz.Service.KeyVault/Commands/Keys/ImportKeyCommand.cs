@@ -1,14 +1,9 @@
 using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Requests.Keys;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Keys;
 
@@ -16,28 +11,16 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 [CommandDefinition("keyvault key import", "key-vault", "Imports an externally created key into an Azure Key Vault.")]
 [CommandExample("Import an RSA key from a PEM file",
     "topaz keyvault key import --vault-name \"kvlocal\" --name \"my-imported-key\" --pem-file \"/path/to/key.pem\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class ImportKeyCommand(ITopazLogger logger) : Command<ImportKeyCommand.ImportKeyCommandSettings>
+public class ImportKeyCommand(HttpClient httpClient) : TopazHttpCommand<ImportKeyCommand.ImportKeyCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ImportKeyCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, ImportKeyCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
-
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}?api-version=7.4";
         var importRequest = BuildImportRequest(settings.PemFile!);
-        var requestJson = JsonSerializer.Serialize(importRequest, GlobalSettings.JsonOptions);
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(requestJson));
-
-        var operation = dataPlane.ImportKey(stream, subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!);
-
-        if (operation.Result == OperationResult.Failed)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var (success, body) = await PutAsync(url, importRequest);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 
@@ -60,7 +43,7 @@ public class ImportKeyCommand(ITopazLogger logger) : Command<ImportKeyCommand.Im
         return base.Validate(context, settings);
     }
 
-    private static ImportKeyRequest BuildImportRequest(string pemFilePath)
+    private static object BuildImportRequest(string pemFilePath)
     {
         var pem = File.ReadAllText(pemFilePath);
 
@@ -70,20 +53,20 @@ public class ImportKeyCommand(ITopazLogger logger) : Command<ImportKeyCommand.Im
         {
             rsa.ImportFromPem(pem);
             var parameters = rsa.ExportParameters(true);
-            return new ImportKeyRequest
+            return new
             {
-                Key = new ImportKeyJwk
+                key = new
                 {
-                    KeyType = "RSA",
-                    N = Base64UrlEncode(parameters.Modulus!),
-                    E = Base64UrlEncode(parameters.Exponent!),
-                    D         = parameters.D        != null ? Base64UrlEncode(parameters.D)        : null,
-                    P         = parameters.P        != null ? Base64UrlEncode(parameters.P)        : null,
-                    Q         = parameters.Q        != null ? Base64UrlEncode(parameters.Q)        : null,
-                    DP        = parameters.DP       != null ? Base64UrlEncode(parameters.DP)       : null,
-                    DQ        = parameters.DQ       != null ? Base64UrlEncode(parameters.DQ)       : null,
-                    InverseQ  = parameters.InverseQ != null ? Base64UrlEncode(parameters.InverseQ) : null,
-                    KeyOperations = ["encrypt", "decrypt", "sign", "verify", "wrapKey", "unwrapKey"]
+                    kty = "RSA",
+                    n = Base64UrlEncode(parameters.Modulus!),
+                    e = Base64UrlEncode(parameters.Exponent!),
+                    d         = parameters.D        != null ? Base64UrlEncode(parameters.D)        : null,
+                    p         = parameters.P        != null ? Base64UrlEncode(parameters.P)        : null,
+                    q         = parameters.Q        != null ? Base64UrlEncode(parameters.Q)        : null,
+                    dp        = parameters.DP       != null ? Base64UrlEncode(parameters.DP)       : null,
+                    dq        = parameters.DQ       != null ? Base64UrlEncode(parameters.DQ)       : null,
+                    qi        = parameters.InverseQ != null ? Base64UrlEncode(parameters.InverseQ) : null,
+                    key_ops   = new[] { "encrypt", "decrypt", "sign", "verify", "wrapKey", "unwrapKey" }
                 }
             };
         }
@@ -101,15 +84,15 @@ public class ImportKeyCommand(ITopazLogger logger) : Command<ImportKeyCommand.Im
                 "nistP521" or "ECDSA_P521" => "P-521",
                 _ => "P-256"
             };
-            return new ImportKeyRequest
+            return new
             {
-                Key = new ImportKeyJwk
+                key = new
                 {
-                    KeyType = "EC",
-                    Crv = curveName,
-                    X = Base64UrlEncode(parameters.Q.X!),
-                    Y = Base64UrlEncode(parameters.Q.Y!),
-                    KeyOperations = ["sign", "verify"]
+                    kty = "EC",
+                    crv = curveName,
+                    x   = Base64UrlEncode(parameters.Q.X!),
+                    y   = Base64UrlEncode(parameters.Q.Y!),
+                    key_ops = new[] { "sign", "verify" }
                 }
             };
         }

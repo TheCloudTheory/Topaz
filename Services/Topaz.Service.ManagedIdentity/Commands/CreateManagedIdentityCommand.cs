@@ -1,54 +1,27 @@
 using JetBrains.Annotations;
-using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.ManagedIdentity.Models.Requests;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ManagedIdentity.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("identity create", "managed-identity", "Creates a new user-assigned managed identity.")]
 [CommandExample("Creates a new managed identity", "topaz identity create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"myIdentity\" \\\n    --location \"westeurope\" \\\n    --resource-group \"rg-local\"")]
-public class CreateManagedIdentityCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateManagedIdentityCommand.CreateManagedIdentityCommandSettings>
+public class CreateManagedIdentityCommand(HttpClient httpClient) : TopazHttpCommand<CreateManagedIdentityCommand.CreateManagedIdentityCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateManagedIdentityCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateManagedIdentityCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var managedIdentityIdentifier = ManagedIdentityIdentifier.From(settings.Name!);
-        var controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
-
-        var existingIdentity =
-            controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
-        if (existingIdentity.Resource != null)
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{settings.Name}";
+        var (success, body) = await PutAsync(url, new
         {
-            Console.Error.WriteLine($"The specified managed identity: {settings.Name} already exists.");
-            return 1;
-        }
-
-        var request = new CreateUpdateManagedIdentityRequest
-        {
-            Location = settings.Location!,
-            Tags = settings.Tags?.ToDictionary(t => t.Split('=')[0], t => t.Split('=')[1]),
-            Properties = new CreateUpdateManagedIdentityRequest.ManagedIdentityProperties
-            {
-                IsolationScope = settings.IsolationScope
-            }
-        };
-
-        var operation = controlPlane.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier, request);
-        if (operation.Result != OperationResult.Created)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
-
+            location = settings.Location,
+            tags = settings.Tags?.ToDictionary(t => t.Split('=')[0], t => t.Split('=')[1])
+        });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

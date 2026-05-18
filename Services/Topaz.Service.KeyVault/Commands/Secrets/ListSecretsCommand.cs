@@ -1,28 +1,22 @@
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Secrets;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault secret list", "key-vault", "Lists all secrets in an Azure Key Vault.")]
 [CommandExample("List secrets", "topaz keyvault secret list --vault-name \"kvlocal\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class ListSecretsCommand(ITopazLogger logger) : Command<ListSecretsCommand.ListSecretsCommandSettings>
+public class ListSecretsCommand(HttpClient httpClient) : TopazHttpCommand<ListSecretsCommand.ListSecretsCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListSecretsCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ListSecretsCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var operation = dataPlane.GetSecrets(subscriptionIdentifier, resourceGroupIdentifier, settings.VaultName!);
-
-        AnsiConsole.WriteLine(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/secrets?api-version=7.4";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

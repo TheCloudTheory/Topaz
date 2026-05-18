@@ -1,11 +1,8 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.ContainerRegistry.Commands;
 
@@ -13,54 +10,18 @@ namespace Topaz.Service.ContainerRegistry.Commands;
 [CommandDefinition("acr list", "container-registry", "Lists Azure Container Registries.")]
 [CommandExample("List registries in a resource group", "topaz acr list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\"")]
 [CommandExample("List all registries in a subscription", "topaz acr list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\"")]
-public sealed class ListContainerRegistriesCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<ListContainerRegistriesCommand.ListContainerRegistriesCommandSettings>
+public sealed class ListContainerRegistriesCommand(HttpClient httpClient)
+    : TopazHttpCommand<ListContainerRegistriesCommand.ListContainerRegistriesCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListContainerRegistriesCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, ListContainerRegistriesCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
-
-        if (!string.IsNullOrEmpty(settings.ResourceGroup))
-        {
-            var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-            var operation = controlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier);
-
-            if (operation.Result != OperationResult.Success)
-            {
-                Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-                return 1;
-            }
-
-            if (operation.Resource == null || operation.Resource.Length == 0)
-            {
-                AnsiConsole.WriteLine("No registries found in the resource group.");
-                return 0;
-            }
-
-            foreach (var registry in operation.Resource)
-                AnsiConsole.WriteLine(registry.ToString());
-        }
-        else
-        {
-            var operation = controlPlane.ListBySubscription(subscriptionIdentifier);
-
-            if (operation.Result != OperationResult.Success)
-            {
-                Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-                return 1;
-            }
-
-            if (operation.Resource == null || operation.Resource.Length == 0)
-            {
-                AnsiConsole.WriteLine("No registries found in the subscription.");
-                return 0;
-            }
-
-            foreach (var registry in operation.Resource)
-                AnsiConsole.WriteLine(registry.ToString());
-        }
-
+        var url = !string.IsNullOrEmpty(settings.ResourceGroup)
+            ? $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ContainerRegistry/registries"
+            : $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/providers/Microsoft.ContainerRegistry/registries";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

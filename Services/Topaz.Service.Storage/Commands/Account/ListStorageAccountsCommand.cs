@@ -1,10 +1,8 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
@@ -12,56 +10,19 @@ namespace Topaz.Service.Storage.Commands;
 [CommandDefinition("storage account list", "azure-storage/account", "Lists Azure Storage accounts.")]
 [CommandExample("List all accounts in a subscription", "topaz storage account list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\"")]
 [CommandExample("List accounts in a resource group", "topaz storage account list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\"")]
-public sealed class ListStorageAccountsCommand(ITopazLogger logger)
-    : Command<ListStorageAccountsCommand.ListStorageAccountsCommandSettings>
+public sealed class ListStorageAccountsCommand(HttpClient httpClient)
+    : TopazHttpCommand<ListStorageAccountsCommand.ListStorageAccountsCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListStorageAccountsCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ListStorageAccountsCommandSettings settings)
     {
         AnsiConsole.WriteLine("Listing storage accounts...");
 
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var controlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
-
-        if (!string.IsNullOrEmpty(settings.ResourceGroup))
-        {
-            var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-            var operation = controlPlane.List(subscriptionIdentifier, resourceGroupIdentifier);
-
-            if (operation.Result != OperationResult.Success)
-            {
-                Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-                return 1;
-            }
-
-            if (operation.Resource == null || operation.Resource.Length == 0)
-            {
-                AnsiConsole.WriteLine("No storage accounts found in the resource group.");
-                return 0;
-            }
-
-            foreach (var account in operation.Resource)
-                AnsiConsole.WriteLine(account.ToString());
-        }
-        else
-        {
-            var operation = controlPlane.ListBySubscription(subscriptionIdentifier);
-
-            if (operation.Result != OperationResult.Success)
-            {
-                Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-                return 1;
-            }
-
-            if (operation.Resource == null || operation.Resource.Length == 0)
-            {
-                AnsiConsole.WriteLine("No storage accounts found in the subscription.");
-                return 0;
-            }
-
-            foreach (var account in operation.Resource)
-                AnsiConsole.WriteLine(account.ToString());
-        }
-
+        var url = !string.IsNullOrEmpty(settings.ResourceGroup)
+            ? $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts"
+            : $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/providers/Microsoft.Storage/storageAccounts";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

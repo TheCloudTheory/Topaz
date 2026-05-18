@@ -1,11 +1,8 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Requests.Keys;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Keys;
 
@@ -13,36 +10,15 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 [CommandDefinition("keyvault key wrap", "key-vault", "Wraps (encrypts) a key using a Key Vault key (RSA keys only: RSA1_5, RSA-OAEP, RSA-OAEP-256).")]
 [CommandExample("Wrap with RSA-OAEP-256",
     "topaz keyvault key wrap --vault-name \"kvlocal\" --name \"my-key\" --version \"abc123\" --algorithm \"RSA-OAEP-256\" --value \"aGVsbG8=\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class WrapKeyCommand(ITopazLogger logger) : Command<WrapKeyCommand.WrapKeyCommandSettings>
+public class WrapKeyCommand(HttpClient httpClient) : TopazHttpCommand<WrapKeyCommand.WrapKeyCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, WrapKeyCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, WrapKeyCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var request = new KeyOperationRequest
-        {
-            Algorithm = settings.Algorithm,
-            Value = settings.Value
-        };
-
-        var operation = dataPlane.WrapKey(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!, settings.Version!, request);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        if (operation.Result == OperationResult.Failed)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}/{settings.Version ?? ""}/wrapkey?api-version=7.4";
+        var (success, body) = await PostAsync(url, new { alg = settings.Algorithm, value = settings.Value });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

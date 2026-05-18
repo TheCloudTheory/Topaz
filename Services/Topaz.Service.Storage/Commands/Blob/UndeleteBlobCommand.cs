@@ -1,38 +1,28 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
 [CommandDefinition("storage blob undelete", "azure-storage/blob", "Restores a soft-deleted blob.")]
 [CommandExample("Undelete a blob", "topaz storage blob undelete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\"")]
-public sealed class UndeleteBlobCommand(ITopazLogger logger) : Command<UndeleteBlobCommand.UndeleteBlobCommandSettings>
+public sealed class UndeleteBlobCommand(HttpClient httpClient) : TopazHttpCommand<UndeleteBlobCommand.UndeleteBlobCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, UndeleteBlobCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, UndeleteBlobCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Undeleting blob...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        var blobPath = $"/{settings.ContainerName}/{settings.BlobName}";
-        var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
-
-        var result = dataPlane.UndeleteBlob(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.AccountName!, blobPath);
-
-        if (result.Result == OperationResult.NotFound)
+        var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{settings.BlobName}?comp=undelete";
+        using var request = new HttpRequestMessage(HttpMethod.Put, url);
+        request.Content = new StringContent(string.Empty);
+        var response = await HttpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
         {
-            Console.Error.WriteLine($"Blob '{blobPath}' not found in soft-deleted state.");
+            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
             return 1;
         }
-
-        AnsiConsole.WriteLine("Blob undeleted successfully.");
+        AnsiConsole.WriteLine("Blob undeleted.");
         return 0;
     }
 

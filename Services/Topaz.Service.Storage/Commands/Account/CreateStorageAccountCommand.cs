@@ -1,35 +1,24 @@
 using JetBrains.Annotations;
-using Topaz.Documentation.Command;
-using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
+using Topaz.CLI.Infrastructure;
+using Topaz.Documentation.Command;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage account create", "azure-storage/account", "Creates a new Azure Storage account.")]
 [CommandExample("Create a storage account", "topaz storage account create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\" \\\n    --location \"westeurope\"")]
-public sealed class CreateStorageAccountCommand(ITopazLogger logger) : Command<CreateStorageAccountCommand.CreateStorageAccountCommandSettings>
+public sealed class CreateStorageAccountCommand(HttpClient httpClient) : TopazHttpCommand<CreateStorageAccountCommand.CreateStorageAccountCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateStorageAccountCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateStorageAccountCommandSettings settings)
     {
         AnsiConsole.WriteLine("Creating storage account...");
 
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var controlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
-        var sa = controlPlane.Create(settings.Name!, resourceGroupIdentifier,
-            settings.Location!, subscriptionIdentifier);
-
-        if (sa.Result == OperationResult.Failed || sa.Resource == null)
-        {
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(sa.Resource.ToString());
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.Name}";
+        var (success, body) = await PutAsync(url, new { location = settings.Location, kind = "StorageV2", sku = new { name = "Standard_LRS" }, properties = new { } });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

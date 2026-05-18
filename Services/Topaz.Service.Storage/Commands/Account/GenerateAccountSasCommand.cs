@@ -1,56 +1,35 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Storage.Models.Requests;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage account generate-sas", "azure-storage/account", "Generates a Shared Access Signature (SAS) token for a storage account.")]
 [CommandExample("Generate SAS token", "topaz storage account generate-sas \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --services \"b\" \\\n    --resource-types \"sco\" \\\n    --permissions \"rwdlacup\" \\\n    --expiry \"2030-01-01T00:00:00Z\"")]
-public sealed class GenerateAccountSasCommand(ITopazLogger logger)
-    : Command<GenerateAccountSasCommand.GenerateAccountSasCommandSettings>
+public sealed class GenerateAccountSasCommand(HttpClient httpClient)
+    : TopazHttpCommand<GenerateAccountSasCommand.GenerateAccountSasCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, GenerateAccountSasCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, GenerateAccountSasCommandSettings settings)
     {
         AnsiConsole.WriteLine("Generating account SAS token...");
 
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var controlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
-
-        var request = new ListAccountSasRequest
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/ListAccountSas";
+        var (success, body) = await PostAsync(url, new
         {
-            SignedServices = settings.Services,
-            SignedResourceTypes = settings.ResourceTypes,
-            SignedPermission = settings.Permissions,
-            SignedExpiry = settings.Expiry,
-            SignedStart = settings.Start,
-            SignedProtocol = settings.Protocol,
-            SignedIp = settings.Ip,
-            KeyToSign = settings.KeyToSign
-        };
-
-        var result = controlPlane.ListAccountSas(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!, request);
-
-        if (result.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"Storage account '{settings.AccountName}' not found.");
-            return 1;
-        }
-
-        if (result.Result == OperationResult.Failed || result.Resource == null)
-        {
-            Console.Error.WriteLine("There was an error generating the account SAS token.");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(result.Resource.ToString());
-
+            signedServices = settings.Services,
+            signedResourceTypes = settings.ResourceTypes,
+            signedPermission = settings.Permissions,
+            signedExpiry = settings.Expiry,
+            signedStart = settings.Start,
+            signedProtocol = settings.Protocol,
+            signedIp = settings.Ip,
+            keyToSign = settings.KeyToSign
+        });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

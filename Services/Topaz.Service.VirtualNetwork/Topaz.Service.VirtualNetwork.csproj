@@ -7,8 +7,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Topaz.Service.ResourceGroup\Topaz.Service.ResourceGroup.csproj" />
-      <ProjectReference Include="..\Topaz.Service.Shared\Topaz.Service.Shared.csproj" />
-    </ItemGroup>
+      <ProjectReference Include="..\Topaz.Service.Shared\Topaz.Service.Shared.csproj" />      <ProjectReference Include="..\..\Topaz.CLI.Infrastructure\Topaz.CLI.Infrastructure.csproj" />    </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Azure.ResourceManager.Network" Version="1.13.0" />

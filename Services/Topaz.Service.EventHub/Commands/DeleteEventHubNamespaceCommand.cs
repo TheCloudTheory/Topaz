@@ -1,29 +1,22 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.EventHub.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("eventhubs namespace delete",  "event-hub", "Deletes an Event Hub.")]
 [CommandExample("Deletes Event Hub", "topaz eventhubs namespace delete \\\n    --name \"sb-namespace\" \\\n    --resource-group \"rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
-public class DeleteEventHubNamespaceCommand(ITopazLogger logger) : Command<DeleteEventHubNamespaceCommand.DeleteEventHubNamespaceCommandSettings>
+public class DeleteEventHubNamespaceCommand(HttpClient httpClient) : TopazHttpCommand<DeleteEventHubNamespaceCommand.DeleteEventHubNamespaceCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteEventHubNamespaceCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteEventHubNamespaceCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Deleting Azure Event Hub Namespace...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var rp = new EventHubResourceProvider(logger);
-        
-        rp.Delete(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
-
-        AnsiConsole.WriteLine("Azure Event Hub Namespace deleted.");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.EventHub/namespaces/{settings.Name}";
+        if (!await DeleteAsync(url)) return 1;
+        AnsiConsole.WriteLine($"Event Hub namespace '{settings.Name}' deleted.");
         return 0;
     }
 

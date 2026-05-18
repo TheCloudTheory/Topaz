@@ -1,35 +1,22 @@
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Secrets;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault secret list-versions", "key-vault", "Lists all versions of a secret in an Azure Key Vault.")]
 [CommandExample("List secret versions", "topaz keyvault secret list-versions --vault-name \"kvlocal\" --name \"my-secret\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class ListSecretVersionsCommand(ITopazLogger logger) : Command<ListSecretVersionsCommand.ListSecretVersionsCommandSettings>
+public class ListSecretVersionsCommand(HttpClient httpClient) : TopazHttpCommand<ListSecretVersionsCommand.ListSecretVersionsCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListSecretVersionsCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ListSecretVersionsCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var operation = dataPlane.GetSecretVersions(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/secrets/{settings.Name}/versions?api-version=7.4";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

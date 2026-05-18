@@ -1,38 +1,29 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Text.Json;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Storage.Models;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage account show-connection-string", "azure-storage/account", "Shows the connection string for a storage account.")]
 [CommandExample("Show connection string", "topaz storage account show-connection-string \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\"")]
-public sealed class ShowStorageAccountConnectionStringCommand(ITopazLogger logger) : Command<ShowStorageAccountConnectionStringCommand.ShowStorageAccountConnectionStringCommandSettings>
+public sealed class ShowStorageAccountConnectionStringCommand(HttpClient httpClient) : TopazHttpCommand<ShowStorageAccountConnectionStringCommand.ShowStorageAccountConnectionStringCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ShowStorageAccountConnectionStringCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ShowStorageAccountConnectionStringCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Listing storage account connection strings...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var controlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
-        var operation = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
-
-        if (operation.Result == OperationResult.Failed || operation.Resource == null)
-        {
-            Console.Error.WriteLine("Failed to get storage account connection string");
-            return 1;
-        }
-        
-        var connectionString = new StorageAccountConnectionString(settings.Name!, operation.Resource.Keys[0].Value);
-        
-        AnsiConsole.WriteLine(connectionString.ToString());
-
+        var keysUrl = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.Name}/listKeys";
+        var (success, body) = await PostAsync(keysUrl, new { });
+        if (!success) return 1;
+        var keysResponse = JsonSerializer.Deserialize<JsonElement>(body);
+        var key = keysResponse.GetProperty("keys")[0].GetProperty("value").GetString();
+        var cs = $"DefaultEndpointsProtocol=https;AccountName={settings.Name};AccountKey={key};" +
+                 $"BlobEndpoint={BlobDataPlaneUrl(settings.Name!)};" +
+                 $"QueueEndpoint={QueueDataPlaneUrl(settings.Name!)};" +
+                 $"TableEndpoint={TableDataPlaneUrl(settings.Name!)}";
+        AnsiConsole.WriteLine(cs);
         return 0;
     }
 

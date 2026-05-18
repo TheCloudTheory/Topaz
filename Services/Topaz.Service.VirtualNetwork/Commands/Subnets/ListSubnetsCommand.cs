@@ -1,13 +1,9 @@
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.VirtualNetwork.Models;
-using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork.Commands.Subnets;
 
@@ -15,25 +11,15 @@ namespace Topaz.Service.VirtualNetwork.Commands.Subnets;
 [CommandDefinition("vnet subnet list", "virtual-network", "Lists subnets in a Virtual Network.")]
 [CommandExample("Lists all subnets",
     "topaz vnet subnet list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --vnet-name \"my-vnet\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class ListSubnetsCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<ListSubnetsCommand.ListSubnetsCommandSettings>
+internal sealed class ListSubnetsCommand(HttpClient httpClient)
+    : TopazHttpCommand<ListSubnetsCommand.ListSubnetsCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListSubnetsCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ListSubnetsCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = SubnetControlPlane.New(eventPipeline, logger);
-
-        var operation = controlPlane.List(
-            subscriptionIdentifier, resourceGroupIdentifier, settings.VnetName!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/virtualNetworks/{settings.VnetName}/subnets";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

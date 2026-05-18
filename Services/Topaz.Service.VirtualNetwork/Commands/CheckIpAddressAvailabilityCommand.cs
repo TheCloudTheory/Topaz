@@ -1,11 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.VirtualNetwork.Commands;
 
@@ -13,25 +11,15 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 [CommandDefinition("vnet check-ip", "virtual-network", "Checks whether a private IP address is available for use in a Virtual Network.")]
 [CommandExample("Check IP address availability",
     "topaz vnet check-ip --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-vnet\" \\\n    --resource-group \"rg-local\" \\\n    --ip-address \"10.0.1.5\"")]
-internal sealed class CheckIpAddressAvailabilityCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<CheckIpAddressAvailabilityCommand.CheckIpAddressAvailabilityCommandSettings>
+internal sealed class CheckIpAddressAvailabilityCommand(HttpClient httpClient)
+    : TopazHttpCommand<CheckIpAddressAvailabilityCommand.CheckIpAddressAvailabilityCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CheckIpAddressAvailabilityCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CheckIpAddressAvailabilityCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
-
-        var operation = controlPlane.CheckIpAddressAvailability(
-            subscriptionIdentifier, resourceGroupIdentifier, settings.Name!, settings.IpAddress!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/virtualNetworks/{settings.Name}/CheckIPAddressAvailability?ipAddress={settings.IpAddress}";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

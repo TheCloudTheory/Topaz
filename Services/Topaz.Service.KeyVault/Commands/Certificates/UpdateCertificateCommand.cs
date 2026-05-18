@@ -1,47 +1,24 @@
-using System.Text;
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Requests.Certificates;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Certificates;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault certificate update", "key-vault", "Updates the attributes of a certificate in an Azure Key Vault.")]
 [CommandExample("Disable a certificate", "topaz keyvault certificate update --vault-name \"kvlocal\" --name \"my-cert\" --version \"<version-guid>\" --enabled false --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class UpdateCertificateCommand(ITopazLogger logger) : Command<UpdateCertificateCommand.UpdateCertificateCommandSettings>
+public class UpdateCertificateCommand(HttpClient httpClient) : TopazHttpCommand<UpdateCertificateCommand.UpdateCertificateCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, UpdateCertificateCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, UpdateCertificateCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultCertificatesDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var request = new UpdateCertificateRequest
-        {
-            Attributes = settings.Enabled.HasValue
-                ? new UpdateCertificateRequest.UpdateCertificateAttributes { Enabled = settings.Enabled }
-                : null
-        };
-
-        var requestJson = JsonSerializer.Serialize(request, GlobalSettings.JsonOptions);
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(requestJson));
-
-        var operation = dataPlane.UpdateCertificate(stream, subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!, settings.Version!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/certificates/{settings.Name}/{settings.Version ?? ""}?api-version=7.4";
+        var body = new { attributes = settings.Enabled.HasValue ? new { enabled = settings.Enabled } : (object?)null };
+        var (success, response) = await PatchAsync(url, body);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(response);
         return 0;
     }
 

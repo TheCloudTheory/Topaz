@@ -1,43 +1,34 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands.Blob;
 
 [UsedImplicitly]
 [CommandDefinition("storage blob metadata update", "azure-storage/blob", "Sets or replaces metadata key-value pairs on a blob.")]
 [CommandExample("Set blob metadata", "topaz storage blob metadata update \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\" \\\n    --metadata \"env=prod\" \"owner=team\"")]
-public sealed class SetBlobMetadataCommand(ITopazLogger logger) : Command<SetBlobMetadataCommand.SetBlobMetadataCommandSettings>
+public sealed class SetBlobMetadataCommand(HttpClient httpClient) : TopazHttpCommand<SetBlobMetadataCommand.SetBlobMetadataCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, SetBlobMetadataCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, SetBlobMetadataCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Setting blob metadata...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        var blobPath = $"/{settings.ContainerName}/{settings.BlobName}";
-        var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
-
-        var metadata = (settings.Metadata ?? [])
-            .Select(m => m.Split('=', 2))
-            .Where(parts => parts.Length == 2)
-            .ToDictionary(parts => parts[0], parts => parts[1]);
-
-        var result = dataPlane.SetBlobMetadata(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.AccountName!, blobPath, metadata);
-
-        if (result.Result == OperationResult.NotFound)
+        var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{settings.BlobName}?comp=metadata";
+        using var request = new HttpRequestMessage(HttpMethod.Put, url);
+        if (settings.Metadata != null)
+            foreach (var kv in settings.Metadata)
+            {
+                var parts = kv.Split('=', 2);
+                if (parts.Length == 2) request.Headers.TryAddWithoutValidation($"x-ms-meta-{parts[0]}", parts[1]);
+            }
+        request.Content = new StringContent(string.Empty);
+        var response = await HttpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
         {
-            Console.Error.WriteLine($"Blob '{blobPath}' not found.");
+            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
             return 1;
         }
-
-        AnsiConsole.WriteLine($"Blob '{blobPath}' metadata updated.");
+        AnsiConsole.WriteLine("Metadata set.");
         return 0;
     }
 

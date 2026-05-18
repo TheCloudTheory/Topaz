@@ -1,34 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Certificates;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault certificate delete-operation", "key-vault", "Deletes the pending creation operation for a certificate in an Azure Key Vault.")]
 [CommandExample("Delete a certificate pending operation", "topaz keyvault certificate delete-operation --vault-name \"kvlocal\" --name \"my-cert\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class DeleteCertificateOperationCommand(ITopazLogger logger) : Command<DeleteCertificateOperationCommand.DeleteCertificateOperationCommandSettings>
+public class DeleteCertificateOperationCommand(HttpClient httpClient) : TopazHttpCommand<DeleteCertificateOperationCommand.DeleteCertificateOperationCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteCertificateOperationCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteCertificateOperationCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultCertificatesDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var result = dataPlane.DeleteCertificateOperation(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!);
-
-        if (result.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({result.Code}) {result.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(result.Resource!.ToString());
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/certificates/{settings.Name}/pending?api-version=7.4";
+        var success = await DeleteAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine($"Certificate operation for '{settings.Name}' deleted.");
         return 0;
     }
 

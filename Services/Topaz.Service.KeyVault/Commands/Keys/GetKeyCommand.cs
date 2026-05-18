@@ -1,10 +1,8 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Keys;
 
@@ -14,24 +12,15 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
     "topaz keyvault key get --vault-name \"kvlocal\" --name \"my-key\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
 [CommandExample("Get a specific version of a key",
     "topaz keyvault key get --vault-name \"kvlocal\" --name \"my-key\" --version \"abc123\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class GetKeyCommand(ITopazLogger logger) : Command<GetKeyCommand.GetKeyCommandSettings>
+public class GetKeyCommand(HttpClient httpClient) : TopazHttpCommand<GetKeyCommand.GetKeyCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, GetKeyCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, GetKeyCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var operation = dataPlane.GetKey(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!, settings.Version);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"Key '{settings.Name}' not found.");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}/{settings.Version ?? ""}?api-version=7.4";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

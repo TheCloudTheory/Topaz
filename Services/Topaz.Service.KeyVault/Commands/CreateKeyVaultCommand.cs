@@ -1,46 +1,31 @@
 using JetBrains.Annotations;
-using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.ResourceGroup;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
 
 namespace Topaz.Service.KeyVault.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault create",  "key-vault", "Creates a new Azure Key Vault.")]
 [CommandExample("Creates a new Key Vault", "topaz keyvault create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"kvlocal\" \\\n    --location \"westeurope\" \\\n    --resource-group \"rg-local\"")]
-public class CreateKeyVaultCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<CreateKeyVaultCommand.CreateKeyVaultCommandSettings>
+public class CreateKeyVaultCommand(HttpClient httpClient) : TopazHttpCommand<CreateKeyVaultCommand.CreateKeyVaultCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateKeyVaultCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateKeyVaultCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var controlPlane = new KeyVaultControlPlane(new KeyVaultResourceProvider(logger),
-            new ResourceGroupControlPlane(new ResourceGroupResourceProvider(logger),
-                SubscriptionControlPlane.New(eventPipeline, logger), logger),
-            SubscriptionControlPlane.New(eventPipeline, logger), logger);
-        var existingKeyVault = controlPlane.CheckName(subscriptionIdentifier, settings.Name!, null);
-
-        if (!existingKeyVault.response.NameAvailable)
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.KeyVault/vaults/{settings.Name}";
+        var (success, body) = await PutAsync(url, new
         {
-            Console.Error.WriteLine($"The specified vault: {settings.Name} already exists.");
-            return 1;
-        }
-        
-        var operation = controlPlane.Create(subscriptionIdentifier, resourceGroupIdentifier, settings.Location!, settings.Name!);
-        if (operation.Result != OperationResult.Created)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
-
+            location = settings.Location,
+            properties = new
+            {
+                sku = new { name = "standard", family = "A" },
+                tenantId = "00000000-0000-0000-0000-000000000000",
+                accessPolicies = Array.Empty<object>()
+            }
+        });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

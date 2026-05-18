@@ -1,38 +1,24 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Storage.Models.Responses;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage account keys list", "azure-storage/account", "Lists the access keys for a storage account.")]
 [CommandExample("List storage account keys", "topaz storage account keys list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\"")]
-public sealed class ListStorageAccountKeysCommand(ITopazLogger logger) : Command<ListStorageAccountKeysCommand.ListStorageAccountKeysCommandSettings>
+public sealed class ListStorageAccountKeysCommand(HttpClient httpClient) : TopazHttpCommand<ListStorageAccountKeysCommand.ListStorageAccountKeysCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListStorageAccountKeysCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ListStorageAccountKeysCommandSettings settings)
     {
         AnsiConsole.WriteLine("Fetching storage account keys...");
 
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var controlPlane = new AzureStorageControlPlane(new StorageResourceProvider(logger), logger);
-        var storageAccount = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, settings.Name!);
-
-        if (storageAccount.Result == OperationResult.Failed || storageAccount.Result == OperationResult.Failed ||
-            storageAccount.Resource == null)
-        {
-            Console.Error.WriteLine($"[{storageAccount.Result}] There was an error fetching storage account keys.");
-            return 1;
-        }
-
-        var keys = new ListKeysResponse(storageAccount.Resource.Keys);
-        AnsiConsole.WriteLine(keys.ToString());
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.Name}/listKeys";
+        var (success, body) = await PostAsync(url, new { });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

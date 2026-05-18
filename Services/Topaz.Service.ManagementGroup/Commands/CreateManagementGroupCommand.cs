@@ -1,10 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.ManagementGroup.Models.Requests;
-using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup.Commands;
 
@@ -15,38 +14,15 @@ namespace Topaz.Service.ManagementGroup.Commands;
 [CommandExample("Create a management group under a parent",
     "topaz management-group create --name \"child-mg\" --display-name \"Child MG\" \\\n" +
     "    --parent-id \"/providers/Microsoft.Management/managementGroups/parent-mg\"")]
-public sealed class CreateManagementGroupCommand(ITopazLogger logger)
-    : Command<CreateManagementGroupCommand.Settings>
+public sealed class CreateManagementGroupCommand(HttpClient httpClient)
+    : TopazHttpCommand<CreateManagementGroupCommand.Settings>(httpClient)
 {
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var controlPlane = ManagementGroupControlPlane.New(logger);
-
-        var parentArmId = string.IsNullOrWhiteSpace(settings.ParentId)
-            ? null
-            : settings.ParentId!.StartsWith('/')
-                ? settings.ParentId
-                : $"/providers/Microsoft.Management/managementGroups/{settings.ParentId}";
-
-        var operation = controlPlane.CreateOrUpdate(settings.Name!, new CreateOrUpdateManagementGroupRequest
-        {
-            Properties = new CreateManagementGroupProperties
-            {
-                DisplayName = settings.DisplayName ?? settings.Name,
-                Details = parentArmId == null ? null : new CreateManagementGroupDetails
-                {
-                    Parent = new CreateParentGroupInfo { Id = parentArmId }
-                }
-            }
-        });
-
-        if (operation.Result is not (OperationResult.Created or OperationResult.Updated))
-        {
-            Console.Error.WriteLine($"Failed: {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.Name}";
+        var (success, body) = await PutAsync(url, new { properties = new { displayName = settings.DisplayName } });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

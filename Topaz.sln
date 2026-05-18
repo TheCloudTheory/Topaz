@@ -5,6 +5,8 @@ VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.CLI", "Topaz.CLI\Topaz.CLI.csproj", "{A3314034-B02C-1953-C3F0-CEBF0F0DF273}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.CLI.Infrastructure", "Topaz.CLI.Infrastructure\Topaz.CLI.Infrastructure.csproj", "{B4C2A1F7-3D5E-4A8B-9F0C-1E2D3F4A5B6C}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Host", "Topaz.Host\Topaz.Host.csproj", "{A3BE88FD-26B9-4159-B372-A2B026C8368F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Storage", "Services\Topaz.Service.Storage\Topaz.Service.Storage.csproj", "{510318F8-BDBF-4F90-AE5A-FB71244D45E0}"

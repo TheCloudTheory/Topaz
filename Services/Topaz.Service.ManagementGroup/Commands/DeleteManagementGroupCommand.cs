@@ -1,30 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("management-group delete", "management-group", "Deletes a management group.")]
 [CommandExample("Delete a management group", "topaz management-group delete --name \"my-mg\"")]
-public sealed class DeleteManagementGroupCommand(ITopazLogger logger)
-    : Command<DeleteManagementGroupCommand.Settings>
+public sealed class DeleteManagementGroupCommand(HttpClient httpClient)
+    : TopazHttpCommand<DeleteManagementGroupCommand.Settings>(httpClient)
 {
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var controlPlane = ManagementGroupControlPlane.New(logger);
-        var operation = controlPlane.Delete(settings.Name!);
-
-        if (operation.Result is not OperationResult.Deleted)
-        {
-            Console.Error.WriteLine($"Failed: {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine("Deleted.");
+        var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.Name}";
+        if (!await DeleteAsync(url)) return 1;
+        AnsiConsole.WriteLine($"Management group '{settings.Name}' deleted.");
         return 0;
     }
 

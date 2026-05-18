@@ -1,37 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage table list", "azure-storage/table", "Lists tables in a storage account.")]
 [CommandExample("List tables", "topaz storage table list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\"")]
-public sealed class ListTablesCommand(ITopazLogger logger) : Command<ListTablesCommand.ListTablesCommandSettings>
+public sealed class ListTablesCommand(HttpClient httpClient) : TopazHttpCommand<ListTablesCommand.ListTablesCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListTablesCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ListTablesCommandSettings settings)
     {
-        logger.LogInformation("Listing tables...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        var controlPlane = new TableServiceControlPlane(new TableResourceProvider(logger), logger);
-        var tablesOp = controlPlane.GetTables(subscriptionIdentifier, resourceGroupIdentifier, settings.AccountName!);
-        var tables = tablesOp.Resource ?? [];
-
-        if (tables.Length == 0)
-        {
-            logger.LogInformation("No tables found.");
-            return 0;
-        }
-
-        foreach (var table in tables)
-            logger.LogInformation(table.Name ?? "(unnamed)");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/tableServices/default/tables";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

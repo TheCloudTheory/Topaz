@@ -1,29 +1,24 @@
 using JetBrains.Annotations;
-using Topaz.Documentation.Command;
-using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared.Domain;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
+using Topaz.Documentation.Command;
 
 namespace Topaz.Service.Subscription.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("subscription create", "subscription", "Creates a new subscription.")]
 [CommandExample("Create a subscription", "topaz subscription create \\\n    --id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\" \\\n    --name \"my-subscription\"" )]
-public sealed class CreateSubscriptionCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<CreateSubscriptionCommand.CreateSubscriptionCommandSettings>
+public sealed class CreateSubscriptionCommand(HttpClient httpClient)
+    : TopazHttpCommand<CreateSubscriptionCommand.CreateSubscriptionCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CreateSubscriptionCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CreateSubscriptionCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Creating subscription...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.Id);
-        var controlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
-        var sa = controlPlane.Create(subscriptionIdentifier, settings.Name!, settings.Tags);
-
-        AnsiConsole.WriteLine(sa.ToString());
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.Id}";
+        var (success, body) = await PutAsync(url, new { displayName = settings.Name });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

@@ -1,34 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.ServiceBus.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("servicebus namespace delete", "service-bus", "Deletes a Service Bus namespace.")]
 [CommandExample("Delete a namespace", "topaz servicebus namespace delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"sblocal\"")]
-public sealed class DeleteServiceBusNamespaceCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<DeleteServiceBusNamespaceCommand.DeleteServiceBusNamespaceCommandSettings>
+public sealed class DeleteServiceBusNamespaceCommand(HttpClient httpClient)
+    : TopazHttpCommand<DeleteServiceBusNamespaceCommand.DeleteServiceBusNamespaceCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteServiceBusNamespaceCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteServiceBusNamespaceCommandSettings settings)
     {
-        logger.LogDebug(nameof(DeleteServiceBusNamespaceCommand), nameof(Execute), "Executing {0}.{1}.",
-            nameof(DeleteServiceBusNamespaceCommand), nameof(Execute));
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var serviceBusNamespaceIdentifier = ServiceBusNamespaceIdentifier.From(settings.Name!);
-        var controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
-
-        _ = controlPlane.DeleteNamespace(subscriptionIdentifier, resourceGroupIdentifier,
-            serviceBusNamespaceIdentifier);
-
-        AnsiConsole.WriteLine("Service Bus namespace deleted.");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ServiceBus/namespaces/{settings.Name}";
+        if (!await DeleteAsync(url)) return 1;
+        AnsiConsole.WriteLine($"Service Bus namespace '{settings.Name}' deleted.");
         return 0;
     }
 

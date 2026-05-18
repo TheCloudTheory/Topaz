@@ -1,10 +1,9 @@
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup.Commands;
 
@@ -13,21 +12,15 @@ namespace Topaz.Service.ManagementGroup.Commands;
     "Lists all descendant management groups and subscriptions under a management group.")]
 [CommandExample("List descendants of a management group",
     "topaz management-group descendants list --name \"my-mg\"")]
-public sealed class ListManagementGroupDescendantsCommand(ITopazLogger logger)
-    : Command<ListManagementGroupDescendantsCommand.Settings>
+public sealed class ListManagementGroupDescendantsCommand(HttpClient httpClient)
+    : TopazHttpCommand<ListManagementGroupDescendantsCommand.Settings>(httpClient)
 {
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var controlPlane = ManagementGroupControlPlane.New(logger);
-        var operation = controlPlane.GetDescendants(settings.Name!);
-
-        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
-        {
-            Console.Error.WriteLine($"Management group '{settings.Name}' not found.");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
+        var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.Name}/descendants";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

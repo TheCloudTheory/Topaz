@@ -1,37 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Certificates;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault certificate cancel-operation", "key-vault", "Cancels the pending creation operation for a certificate in an Azure Key Vault.")]
 [CommandExample("Cancel a certificate pending operation", "topaz keyvault certificate cancel-operation --vault-name \"kvlocal\" --name \"my-cert\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class CancelCertificateOperationCommand(ITopazLogger logger) : Command<CancelCertificateOperationCommand.CancelCertificateOperationCommandSettings>
+public class CancelCertificateOperationCommand(HttpClient httpClient) : TopazHttpCommand<CancelCertificateOperationCommand.CancelCertificateOperationCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, CancelCertificateOperationCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, CancelCertificateOperationCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultCertificatesDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var result = dataPlane.UpdateCertificateOperation(
-            new System.IO.MemoryStream(
-                System.Text.Encoding.UTF8.GetBytes("{\"cancellation_requested\":true}")),
-            subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!);
-
-        if (result.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({result.Code}) {result.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(result.Resource!.ToString());
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/certificates/{settings.Name}/pending?api-version=7.4";
+        var (success, body) = await PatchAsync(url, new { cancellationRequested = true });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

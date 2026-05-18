@@ -1,11 +1,8 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Requests.Keys;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Keys;
 
@@ -13,36 +10,15 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 [CommandDefinition("keyvault key decrypt", "key-vault", "Decrypts ciphertext using a Key Vault key (RSA keys only: RSA1_5, RSA-OAEP, RSA-OAEP-256).")]
 [CommandExample("Decrypt with RSA-OAEP-256",
     "topaz keyvault key decrypt --vault-name \"kvlocal\" --name \"my-key\" --version \"abc123\" --algorithm \"RSA-OAEP-256\" --value \"<base64url-ciphertext>\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class DecryptKeyCommand(ITopazLogger logger) : Command<DecryptKeyCommand.DecryptKeyCommandSettings>
+public class DecryptKeyCommand(HttpClient httpClient) : TopazHttpCommand<DecryptKeyCommand.DecryptKeyCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DecryptKeyCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, DecryptKeyCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var request = new KeyOperationRequest
-        {
-            Algorithm = settings.Algorithm,
-            Value = settings.Value
-        };
-
-        var operation = dataPlane.DecryptKey(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!, settings.Version!, request);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        if (operation.Result == OperationResult.Failed)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource!.ToString());
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}/{settings.Version ?? ""}/decrypt?api-version=7.4";
+        var (success, body) = await PostAsync(url, new { alg = settings.Algorithm, value = settings.Value });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

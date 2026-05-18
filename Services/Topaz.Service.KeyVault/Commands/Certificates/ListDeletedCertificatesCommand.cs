@@ -1,29 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.KeyVault.Models.Responses.Certificates;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Certificates;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault certificate list-deleted", "key-vault", "Lists soft-deleted certificates in an Azure Key Vault.")]
 [CommandExample("List deleted certificates", "topaz keyvault certificate list-deleted --vault-name \"kvlocal\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class ListDeletedCertificatesCommand(ITopazLogger logger) : Command<ListDeletedCertificatesCommand.ListDeletedCertificatesCommandSettings>
+public class ListDeletedCertificatesCommand(HttpClient httpClient) : TopazHttpCommand<ListDeletedCertificatesCommand.ListDeletedCertificatesCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListDeletedCertificatesCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, ListDeletedCertificatesCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultCertificatesDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var operation = dataPlane.GetDeletedCertificates(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!);
-
-        AnsiConsole.WriteLine(GetDeletedCertificatesResponse.FromRecords(operation.Resource!, settings.VaultName!).ToString());
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/deletedcertificates?api-version=7.4";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

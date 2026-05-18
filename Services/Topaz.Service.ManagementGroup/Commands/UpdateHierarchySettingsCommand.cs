@@ -1,10 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.ManagementGroup.Models.Requests;
-using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup.Commands;
 
@@ -15,29 +14,15 @@ namespace Topaz.Service.ManagementGroup.Commands;
     "topaz management-group hierarchy-settings update --name \"my-mg\" --require-authorization true")]
 [CommandExample("Change the default management group",
     "topaz management-group hierarchy-settings update --name \"my-mg\" --default-management-group \"new-default-mg\"")]
-public sealed class UpdateHierarchySettingsCommand(ITopazLogger logger)
-    : Command<UpdateHierarchySettingsCommand.Settings>
+public sealed class UpdateHierarchySettingsCommand(HttpClient httpClient)
+    : TopazHttpCommand<UpdateHierarchySettingsCommand.Settings>(httpClient)
 {
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var controlPlane = ManagementGroupControlPlane.New(logger);
-        var operation = controlPlane.UpdateHierarchySettings(settings.Name!,
-            new UpdateHierarchySettingsRequest
-            {
-                Properties = new UpdateHierarchySettingsRequestProperties
-                {
-                    RequireAuthorizationForGroupCreation = settings.RequireAuthorization,
-                    DefaultManagementGroup = settings.DefaultManagementGroup
-                }
-            });
-
-        if (operation.Result is not OperationResult.Updated || operation.Resource == null)
-        {
-            Console.Error.WriteLine($"Failed: {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource.ToString());
+        var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.Name}/settings/default";
+        var (success, body) = await PatchAsync(url, new { properties = new { requireAuthorizationForGroupCreation = settings.RequireAuthorization, defaultManagementGroup = settings.DefaultManagementGroup } });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

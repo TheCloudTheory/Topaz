@@ -1,15 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.ResourceGroup;
-using Topaz.Service.ResourceManager.Deployment;
-using Topaz.Service.ResourceManager.Models.Requests;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Service.Subscription;
-using Topaz.Shared;
 
 namespace Topaz.Service.ResourceManager.Commands;
 
@@ -17,44 +11,15 @@ namespace Topaz.Service.ResourceManager.Commands;
 [CommandDefinition("deployment group export-template", "deployment", "Exports an ARM template from a resource group.")]
 [CommandExample("Export template from a resource group", "topaz deployment group export-template \\\n    --name \"my-rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
 [CommandExample("Export template with parameterization options", "topaz deployment group export-template \\\n    --name \"my-rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\" \\\n    --options \"IncludeParameterDefaultValue,IncludeComments\"")]
-public sealed class ExportGroupTemplateCommand(Pipeline eventPipeline, ITopazLogger logger)
-    : Command<ExportGroupTemplateCommand.ExportGroupTemplateCommandSettings>
+public sealed class ExportGroupTemplateCommand(HttpClient httpClient)
+    : TopazHttpCommand<ExportGroupTemplateCommand.ExportGroupTemplateCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ExportGroupTemplateCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ExportGroupTemplateCommandSettings settings)
     {
-        logger.LogDebug(nameof(ExportGroupTemplateCommand), nameof(Execute),
-            "Executing {0}.{1}.", nameof(ExportGroupTemplateCommand), nameof(Execute));
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(Guid.Parse(settings.SubscriptionId));
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.Name!);
-
-        var rgControlPlane = new ResourceGroupControlPlane(
-            new ResourceGroupResourceProvider(logger),
-            SubscriptionControlPlane.New(eventPipeline, logger),
-            logger);
-
-        var rgOperation = rgControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
-        if (rgOperation.Result == OperationResult.NotFound || rgOperation.Resource == null)
-        {
-            Console.Error.WriteLine($"Resource group '{settings.Name}' not found.");
-            return 1;
-        }
-
-        var provider = new ResourceManagerResourceProvider(logger);
-        var controlPlane = new ResourceManagerControlPlane(
-            provider,
-            new TemplateDeploymentOrchestrator(eventPipeline, provider, new SubscriptionDeploymentResourceProvider(logger), logger),
-            logger);
-
-        var request = new ExportTemplateRequest
-        {
-            Resources = ["*"],
-            Options = settings.Options,
-        };
-
-        var result = controlPlane.ExportTemplate(subscriptionIdentifier, resourceGroupIdentifier, request);
-        AnsiConsole.WriteLine(result.ToString());
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.Name}/exportTemplate";
+        var (success, body) = await PostAsync(url, new { resources = new[] { "*" } });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

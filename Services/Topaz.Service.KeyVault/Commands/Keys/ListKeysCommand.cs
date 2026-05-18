@@ -1,11 +1,8 @@
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Keys;
 
@@ -13,17 +10,15 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 [CommandDefinition("keyvault key list", "key-vault", "Lists all keys in an Azure Key Vault.")]
 [CommandExample("List all keys in a vault",
     "topaz keyvault key list --vault-name \"kvlocal\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class ListKeysCommand(ITopazLogger logger) : Command<ListKeysCommand.ListKeysCommandSettings>
+public class ListKeysCommand(HttpClient httpClient) : TopazHttpCommand<ListKeysCommand.ListKeysCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListKeysCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context, ListKeysCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultKeysDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var operation = dataPlane.GetKeys(subscriptionIdentifier, resourceGroupIdentifier, settings.VaultName!);
-
-        AnsiConsole.WriteLine(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys?api-version=7.4";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

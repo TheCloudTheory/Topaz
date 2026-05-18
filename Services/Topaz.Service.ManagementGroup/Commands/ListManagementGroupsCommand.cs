@@ -1,25 +1,24 @@
-using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("management-group list", "management-group", "Lists all management groups.")]
 [CommandExample("List management groups", "topaz management-group list")]
-public sealed class ListManagementGroupsCommand(ITopazLogger logger)
-    : Command<ListManagementGroupsCommand.Settings>
+public sealed class ListManagementGroupsCommand(HttpClient httpClient)
+    : TopazHttpCommand<ListManagementGroupsCommand.Settings>(httpClient)
 {
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var controlPlane = ManagementGroupControlPlane.New(logger);
-        var operation = controlPlane.List();
-
-        AnsiConsole.WriteLine(JsonSerializer.Serialize(operation.Resource, GlobalSettings.JsonOptionsCli));
+        var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

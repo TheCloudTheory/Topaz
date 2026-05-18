@@ -1,41 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage queue show", "azure-storage/queue", "Shows properties of a queue in a storage account.")]
 [CommandExample("Show a queue", "topaz storage queue show \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --name \"myqueue\"")]
-public sealed class ShowQueueCommand(ITopazLogger logger) : Command<ShowQueueCommand.ShowQueueCommandSettings>
+public sealed class ShowQueueCommand(HttpClient httpClient) : TopazHttpCommand<ShowQueueCommand.ShowQueueCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ShowQueueCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ShowQueueCommandSettings settings)
     {
-        logger.LogInformation($"Getting queue '{settings.Name}'...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        var controlPlane = new QueueServiceControlPlane(new QueueResourceProvider(logger), logger);
-        var propsOp = controlPlane.GetQueueProperties(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.AccountName!, settings.Name!);
-
-        if (propsOp.Result != OperationResult.Success || propsOp.Resource == null)
-        {
-            logger.LogError($"Queue '{settings.Name}' not found.");
-            return 1;
-        }
-
-        var props = propsOp.Resource;
-        logger.LogInformation($"Name: {props.Name}");
-        logger.LogInformation($"Created: {props.CreatedTime:O}");
-        logger.LogInformation($"Updated: {props.UpdatedTime:O}");
-        logger.LogInformation($"Message Count: {props.ApproximateMessageCount}");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/queueServices/default/queues/{settings.Name}";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

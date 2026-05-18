@@ -1,11 +1,9 @@
 using JetBrains.Annotations;
-using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ManagedIdentity.Commands;
 
@@ -13,59 +11,19 @@ namespace Topaz.Service.ManagedIdentity.Commands;
 [CommandDefinition("identity list", "managed-identity", "Lists user-assigned managed identities.")]
 [CommandExample("Lists managed identities by resource group", "topaz identity list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \"rg-local\"")]
 [CommandExample("Lists managed identities by subscription", "topaz identity list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae")]
-public sealed class ListManagedIdentityCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<ListManagedIdentityCommand.ListManagedIdentityCommandSettings>
+public sealed class ListManagedIdentityCommand(HttpClient httpClient) : TopazHttpCommand<ListManagedIdentityCommand.ListManagedIdentityCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ListManagedIdentityCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ListManagedIdentityCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Listing user-assigned managed identities...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
-
+        string url;
         if (!string.IsNullOrEmpty(settings.ResourceGroup))
-        {
-            var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-            var operation = controlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier);
-            
-            if (operation.Result != OperationResult.Success)
-            {
-                Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-                return 1;
-            }
-
-            if (operation.Resource == null || operation.Resource.Length == 0)
-            {
-                AnsiConsole.WriteLine("No managed identities found in the resource group.");
-                return 0;
-            }
-
-            foreach (var identity in operation.Resource)
-            {
-                AnsiConsole.WriteLine(identity.ToString());
-            }
-        }
+            url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities";
         else
-        {
-            var operation = controlPlane.ListBySubscription(subscriptionIdentifier);
-            
-            if (operation.Result != OperationResult.Success)
-            {
-                Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-                return 1;
-            }
+            url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/providers/Microsoft.ManagedIdentity/userAssignedIdentities";
 
-            if (operation.Resource == null || operation.Resource.Length == 0)
-            {
-                AnsiConsole.WriteLine("No managed identities found in the subscription.");
-                return 0;
-            }
-
-            foreach (var identity in operation.Resource)
-            {
-                AnsiConsole.WriteLine(identity.ToString());
-            }
-        }
-
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

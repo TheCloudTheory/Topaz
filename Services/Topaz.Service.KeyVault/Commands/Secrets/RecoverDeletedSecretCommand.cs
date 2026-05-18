@@ -1,34 +1,22 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Secrets;
 
 [UsedImplicitly]
 [CommandDefinition("keyvault secret recover", "key-vault", "Recovers a deleted secret in an Azure Key Vault.")]
 [CommandExample("Recover a deleted secret", "topaz keyvault secret recover --vault-name \"kvlocal\" --name \"my-secret\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
-public class RecoverDeletedSecretCommand(ITopazLogger logger) : Command<RecoverDeletedSecretCommand.RecoverDeletedSecretCommandSettings>
+public class RecoverDeletedSecretCommand(HttpClient httpClient) : TopazHttpCommand<RecoverDeletedSecretCommand.RecoverDeletedSecretCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, RecoverDeletedSecretCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, RecoverDeletedSecretCommandSettings settings)
     {
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId!);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var dataPlane = new KeyVaultSecretsDataPlane(logger, new KeyVaultResourceProvider(logger));
-
-        var operation = dataPlane.RecoverDeletedSecret(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.VaultName!, settings.Name!);
-
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine($"Secret '{settings.Name}' recovered successfully.");
+        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/deletedsecrets/{settings.Name}/recover?api-version=7.4";
+        var (success, body) = await PostAsync(url, new { });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

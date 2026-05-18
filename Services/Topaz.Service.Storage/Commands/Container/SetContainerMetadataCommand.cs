@@ -1,38 +1,28 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage container metadata set", "azure-storage/container", "Sets metadata key-value pairs on a blob container.")]
 [CommandExample("Set container metadata", "topaz storage container metadata set \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --name \"mycontainer\" \\\n    --metadata \"env=prod\" \"owner=team\"")]
-public sealed class SetContainerMetadataCommand(ITopazLogger logger)
-    : Command<SetContainerMetadataCommand.SetContainerMetadataCommandSettings>
+public sealed class SetContainerMetadataCommand(HttpClient httpClient)
+    : TopazHttpCommand<SetContainerMetadataCommand.SetContainerMetadataCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, SetContainerMetadataCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, SetContainerMetadataCommandSettings settings)
     {
-        logger.LogInformation("Setting container metadata...");
+        AnsiConsole.WriteLine("Setting container metadata...");
 
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-        var dataPlane = new BlobServiceDataPlane(new BlobServiceControlPlane(new BlobResourceProvider(logger)), logger);
-
-        var metadata = ParseMetadata(settings.Metadata ?? []);
-        var result = dataPlane.SetContainerMetadata(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.AccountName!, settings.Name!, metadata);
-
-        if (result.Result == OperationResult.NotFound)
-        {
-            logger.LogError($"Container '{settings.Name}' not found.");
-            return 1;
-        }
-
-        logger.LogInformation($"Metadata for container '{settings.Name}' set.");
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/blobServices/default/containers/{settings.Name}";
+        var metadata = settings.Metadata?.ToDictionary(
+            p => p.Split('=')[0].Trim(),
+            p => p.Contains('=') ? p.Split('=', 2)[1].Trim() : string.Empty);
+        var (success, body) = await PatchAsync(url, new { properties = new { metadata } });
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 
@@ -47,20 +37,6 @@ public sealed class SetContainerMetadataCommand(ITopazLogger logger)
         if (string.IsNullOrEmpty(settings.SubscriptionId))
             return ValidationResult.Error("Subscription ID can't be null.");
         return base.Validate(context, settings);
-    }
-
-    private static Dictionary<string, string> ParseMetadata(string[] pairs)
-    {
-        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var pair in pairs)
-        {
-            var idx = pair.IndexOf('=');
-            if (idx <= 0) continue;
-            var key = $"x-ms-meta-{pair[..idx].Trim()}";
-            var value = pair[(idx + 1)..].Trim();
-            result[key] = value;
-        }
-        return result;
     }
 
     [UsedImplicitly]

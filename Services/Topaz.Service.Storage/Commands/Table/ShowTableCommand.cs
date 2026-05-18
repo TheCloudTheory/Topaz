@@ -1,36 +1,23 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared.Domain;
-using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage table show", "azure-storage/table", "Shows whether a table exists in a storage account.")]
 [CommandExample("Show a table", "topaz storage table show \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --name \"mytable\"")]
-public sealed class ShowTableCommand(ITopazLogger logger) : Command<ShowTableCommand.ShowTableCommandSettings>
+public sealed class ShowTableCommand(HttpClient httpClient) : TopazHttpCommand<ShowTableCommand.ShowTableCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, ShowTableCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ShowTableCommandSettings settings)
     {
-        logger.LogInformation($"Getting table '{settings.Name}'...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup);
-
-        var controlPlane = new TableServiceControlPlane(new TableResourceProvider(logger), logger);
-        var exists = controlPlane.CheckIfTableExists(subscriptionIdentifier, resourceGroupIdentifier,
-            settings.AccountName!, settings.Name!);
-
-        if (!exists)
-        {
-            logger.LogError($"Table '{settings.Name}' not found.");
-            return 1;
-        }
-
-        logger.LogInformation($"Name: {settings.Name}");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/tableServices/default/tables/{settings.Name}";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

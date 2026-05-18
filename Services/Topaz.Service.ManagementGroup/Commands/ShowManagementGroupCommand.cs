@@ -1,30 +1,24 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("management-group show", "management-group", "Shows details of a management group.")]
 [CommandExample("Show a management group", "topaz management-group show --name \"my-mg\"")]
-public sealed class ShowManagementGroupCommand(ITopazLogger logger)
-    : Command<ShowManagementGroupCommand.Settings>
+public sealed class ShowManagementGroupCommand(HttpClient httpClient)
+    : TopazHttpCommand<ShowManagementGroupCommand.Settings>(httpClient)
 {
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var controlPlane = ManagementGroupControlPlane.New(logger);
-        var operation = controlPlane.Get(settings.Name!);
-
-        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
-        {
-            Console.Error.WriteLine($"Management group '{settings.Name}' not found.");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource.ToString());
+        var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.Name}";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

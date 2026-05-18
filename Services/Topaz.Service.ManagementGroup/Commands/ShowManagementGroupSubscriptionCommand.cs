@@ -1,9 +1,9 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup.Commands;
 
@@ -12,21 +12,15 @@ namespace Topaz.Service.ManagementGroup.Commands;
     "Shows a subscription association under a management group.")]
 [CommandExample("Show a subscription under a management group",
     "topaz management-group subscription show --group-id \"my-mg\" --subscription-id \"<guid>\"")]
-public sealed class ShowManagementGroupSubscriptionCommand(ITopazLogger logger)
-    : Command<ShowManagementGroupSubscriptionCommand.Settings>
+public sealed class ShowManagementGroupSubscriptionCommand(HttpClient httpClient)
+    : TopazHttpCommand<ShowManagementGroupSubscriptionCommand.Settings>(httpClient)
 {
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var controlPlane = ManagementGroupControlPlane.New(logger);
-        var operation = controlPlane.GetSubscriptionUnderManagementGroup(settings.GroupId!, settings.SubscriptionId!);
-
-        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
-        {
-            Console.Error.WriteLine($"Failed: {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine(operation.Resource.ToString());
+        var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.GroupId}/subscriptions/{settings.SubscriptionId}";
+        var (success, body) = await GetAsync(url);
+        if (!success) return 1;
+        AnsiConsole.WriteLine(body);
         return 0;
     }
 

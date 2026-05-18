@@ -1,38 +1,22 @@
 using JetBrains.Annotations;
-using Topaz.Shared;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.Net.Http;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.EventPipeline;
-using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
 
 namespace Topaz.Service.ManagedIdentity.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("identity delete", "managed-identity", "Deletes a user-assigned managed identity.")]
 [CommandExample("Deletes a managed identity", "topaz identity delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"myIdentity\" \\\n    --resource-group \"rg-local\"")]
-public sealed class DeleteManagedIdentityCommand(Pipeline eventPipeline, ITopazLogger logger) : Command<DeleteManagedIdentityCommand.DeleteManagedIdentityCommandSettings>
+public sealed class DeleteManagedIdentityCommand(HttpClient httpClient) : TopazHttpCommand<DeleteManagedIdentityCommand.DeleteManagedIdentityCommandSettings>(httpClient)
 {
-    public override int Execute(CommandContext context, DeleteManagedIdentityCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, DeleteManagedIdentityCommandSettings settings)
     {
-        AnsiConsole.WriteLine("Deleting user-assigned managed identity...");
-
-        var subscriptionIdentifier = SubscriptionIdentifier.From(settings.SubscriptionId);
-        var resourceGroupIdentifier = ResourceGroupIdentifier.From(settings.ResourceGroup!);
-        var managedIdentityIdentifier = ManagedIdentityIdentifier.From(settings.Name!);
-        var controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
-        
-        var operation = controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, managedIdentityIdentifier);
-        
-        if (operation.Result == OperationResult.NotFound)
-        {
-            Console.Error.WriteLine($"({operation.Code}) {operation.Reason}");
-            return 1;
-        }
-
-        AnsiConsole.WriteLine("User-assigned managed identity deleted.");
-
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{settings.Name}";
+        if (!await DeleteAsync(url)) return 1;
+        AnsiConsole.WriteLine($"Managed identity '{settings.Name}' deleted.");
         return 0;
     }
 
