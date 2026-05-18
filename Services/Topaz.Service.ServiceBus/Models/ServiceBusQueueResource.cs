@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using Topaz.ResourceManager;
-using Topaz.Service.ServiceBus.Models.Responses;
 using Topaz.Service.ServiceBus.Models.Responses.Queue;
 using Topaz.Service.Shared.Domain;
 

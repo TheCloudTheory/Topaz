@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
-using Topaz.Service.ServiceBus.Models.Responses;
 using Topaz.Service.ServiceBus.Models.Responses.Queue;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;

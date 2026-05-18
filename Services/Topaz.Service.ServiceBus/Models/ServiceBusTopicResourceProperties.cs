@@ -1,4 +1,3 @@
-using System.Xml;
 using Topaz.Service.ServiceBus.Models.Requests;
 
 namespace Topaz.Service.ServiceBus.Models;

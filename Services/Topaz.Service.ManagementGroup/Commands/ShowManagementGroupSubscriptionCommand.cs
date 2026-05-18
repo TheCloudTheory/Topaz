@@ -1,7 +1,6 @@
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using System.Net.Http;
 using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
 
