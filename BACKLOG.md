@@ -101,51 +101,7 @@ _Implemented in v1.3-beta: resource provisioning tools (Key Vault, Service Bus, 
 
 ### Azure Storage — SAS (Shared Access Signature) validation
 
-<!--
-TODO: Storage: Account SAS query-string validation for Blob, Queue, and Table
-  The ARM `ListAccountSas` and `ListServiceSas` endpoints already generate and return SAS
-  token strings. However the data-plane security providers (BlobStorageSecurityProvider,
-  QueueStorageSecurityProvider, TableStorageSecurityProvider) only recognise the
-  `Authorization:` request header — they ignore query-string SAS parameters entirely.
-  A request carrying `?sv=…&sig=…` but no Authorization header hits the missing-header
-  fast-path and returns 401.
-
-  Implement Account SAS validation in all three security providers:
-  - Detect SAS parameters (sv, ss, srt, sp, se, st, spr, sip, sig) in the query string.
-  - Build the StringToSign from the canonical Account SAS format:
-    `accountName + permissions + services + resourceTypes + start + expiry + ip + protocol + version`
-    (all newline-separated), then HMAC-SHA256 with the account key.
-  - Validate that the computed signature matches `sig=`, the expiry (`se=`) has not passed,
-    the requested service letter appears in `ss=` (b/q/t/f), the resource type letter
-    appears in `srt=` (s/c/o), and the HTTP method is covered by `sp=`.
-  - A valid SAS may be used in place of an Authorization header; the request is then
-    treated as authorized for the subset of operations the SAS permits.
-  milestone: v1.4-beta
-  labels: enhancement, storage, security
--->
-
-<!--
-TODO: Storage: Service SAS query-string validation for Blob, Queue, and Table
-  Service SAS tokens are scoped to a single service and resource (container, blob, queue,
-  or table). Implement Service SAS validation:
-  - Detect Service SAS parameters (sv, sr, sp, se, st, spr, sip, si, sig, and the
-    response-header overrides rscc/rscd/rsce/rscl/rsct) in the query string.
-  - Build the StringToSign per service:
-    Blob:  `permissions + start + expiry + canonicalizedResource + signedIdentifier +
-            signedIP + signedProtocol + signedVersion + signedDirectoryDepth +
-            signedEncryptionScope + rscc + rscd + rsce + rscl + rsct`
-    Queue: `permissions + start + expiry + canonicalizedResource + signedIdentifier +
-            signedIP + signedProtocol + signedVersion`
-    Table: `permissions + start + expiry + canonicalizedResource + signedIdentifier +
-            signedIP + signedProtocol + signedVersion + startPk + startRk + endPk + endRk`
-  - When `si=<policyId>` is present, look up the named policy from the stored
-    `<SignedIdentifiers>` XML for the resource (container ACL / queue ACL / table ACL),
-    merge the policy's permissions/start/expiry into the validation, and skip those
-    fields from the wire token.
-  - Validate signature, expiry, IP restrictions, and HTTP method as for Account SAS.
-  milestone: v1.4-beta
-  labels: enhancement, storage, security
--->
+_Implemented in v1.4-beta: Account SAS and Service SAS query-string validation for Blob, Queue, and Table data-plane endpoints. Stored access policy enforcement (`si=`) with revocation support across all three services._
 
 ### Topaz Portal — tag editing
 
