@@ -1,7 +1,6 @@
 ﻿using Topaz.Service.Authorization.Endpoints;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
-using Topaz.Shared;
 
 namespace Topaz.Service.Authorization;
 

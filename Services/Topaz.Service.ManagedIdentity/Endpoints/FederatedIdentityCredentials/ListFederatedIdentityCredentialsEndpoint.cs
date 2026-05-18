@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
-using Topaz.Service.ManagedIdentity.Models;
 using Topaz.Service.ManagedIdentity.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;

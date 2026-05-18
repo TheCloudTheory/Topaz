@@ -9,15 +9,10 @@ namespace Topaz.CLI.Infrastructure;
 /// rather than invoking control-plane classes in-process, so they work regardless of
 /// whether the CLI binary runs in the same process or container as the Host.
 /// </summary>
-public abstract class TopazHttpCommand<TSettings> : AsyncCommand<TSettings>
+public abstract class TopazHttpCommand<TSettings>(HttpClient httpClient) : AsyncCommand<TSettings>
     where TSettings : CommandSettings
 {
-    protected readonly HttpClient HttpClient;
-
-    protected TopazHttpCommand(HttpClient httpClient)
-    {
-        HttpClient = httpClient;
-    }
+    protected readonly HttpClient HttpClient = httpClient;
 
     /// <summary>Base URL for all ARM / control-plane operations.</summary>
     protected string ArmBaseUrl =>
@@ -45,12 +40,9 @@ public abstract class TopazHttpCommand<TSettings> : AsyncCommand<TSettings>
     {
         var response = await HttpClient.GetAsync(url, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {body}");
-            return (false, body);
-        }
-        return (true, body);
+        if (response.IsSuccessStatusCode) return (true, body);
+        await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {body}");
+        return (false, body);
     }
 
     /// <summary>Sends PUT with a JSON body; returns (true, responseBody) on success.</summary>
@@ -60,12 +52,9 @@ public abstract class TopazHttpCommand<TSettings> : AsyncCommand<TSettings>
         using var content = JsonContent.Create(request, options: GlobalSettings.JsonOptions);
         var response = await HttpClient.PutAsync(url, content, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {body}");
-            return (false, body);
-        }
-        return (true, body);
+        if (response.IsSuccessStatusCode) return (true, body);
+        await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {body}");
+        return (false, body);
     }
 
     /// <summary>Sends POST with a JSON body; returns (true, responseBody) on success.</summary>
@@ -75,12 +64,9 @@ public abstract class TopazHttpCommand<TSettings> : AsyncCommand<TSettings>
         using var content = JsonContent.Create(request, options: GlobalSettings.JsonOptions);
         var response = await HttpClient.PostAsync(url, content, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {body}");
-            return (false, body);
-        }
-        return (true, body);
+        if (response.IsSuccessStatusCode) return (true, body);
+        await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {body}");
+        return (false, body);
     }
 
     /// <summary>Sends PATCH with a JSON body; returns (true, responseBody) on success.</summary>
@@ -90,12 +76,9 @@ public abstract class TopazHttpCommand<TSettings> : AsyncCommand<TSettings>
         using var content = JsonContent.Create(request, options: GlobalSettings.JsonOptions);
         var response = await HttpClient.PatchAsync(url, content, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {body}");
-            return (false, body);
-        }
-        return (true, body);
+        if (response.IsSuccessStatusCode) return (true, body);
+        await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {body}");
+        return (false, body);
     }
 
     /// <summary>Sends DELETE; returns true on success (200/202/204/404 all treated as ok).</summary>
@@ -103,14 +86,11 @@ public abstract class TopazHttpCommand<TSettings> : AsyncCommand<TSettings>
         string url, CancellationToken cancellationToken = default)
     {
         var response = await HttpClient.DeleteAsync(url, cancellationToken);
-        if (!response.IsSuccessStatusCode &&
-            response.StatusCode != System.Net.HttpStatusCode.NoContent &&
-            response.StatusCode != System.Net.HttpStatusCode.NotFound)
-        {
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
-            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {body}");
-            return false;
-        }
-        return true;
+        if (response.IsSuccessStatusCode ||
+            response.StatusCode == System.Net.HttpStatusCode.NoContent ||
+            response.StatusCode == System.Net.HttpStatusCode.NotFound) return true;
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {body}");
+        return false;
     }
 }

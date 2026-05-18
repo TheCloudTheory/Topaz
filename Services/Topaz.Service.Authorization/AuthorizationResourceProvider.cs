@@ -4,7 +4,6 @@ using Topaz.Service.Authorization.Models;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
-using Topaz.Service.ManagementGroup;
 
 namespace Topaz.Service.Authorization;
 

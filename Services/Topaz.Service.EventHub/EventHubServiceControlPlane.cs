@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Azure.Core;
 using Topaz.ResourceManager;
 using Topaz.Service.EventHub.Models;

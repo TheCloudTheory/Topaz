@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using Azure.Core;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
 

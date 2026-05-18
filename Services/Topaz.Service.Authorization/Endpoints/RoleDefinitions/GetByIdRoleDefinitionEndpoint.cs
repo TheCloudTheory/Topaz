@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Authorization.Domain;
 using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 

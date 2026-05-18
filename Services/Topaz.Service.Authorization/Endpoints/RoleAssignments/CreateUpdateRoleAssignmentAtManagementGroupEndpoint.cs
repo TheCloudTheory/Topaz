@@ -6,7 +6,6 @@ using Topaz.EventPipeline;
 using Topaz.Service.Authorization.Domain;
 using Topaz.Service.Authorization.Models.Requests;
 using Topaz.Service.Shared;
-using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
 
