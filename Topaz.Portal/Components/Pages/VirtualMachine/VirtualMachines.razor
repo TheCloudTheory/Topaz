@@ -1,21 +1,21 @@
-@page "/portal/virtual-networks"
+@page "/portal/virtual-machines"
 @using System.Net
-@using Topaz.Portal.Models.VirtualNetworks
+@using Topaz.Portal.Models.VirtualMachines
 @using Topaz.Portal.Models.ResourceGroups
 @using Topaz.Portal.Models.Subscriptions
 @using Topaz.Portal.Components.Shared
 @inject ITopazClient TopazClient
 @inject NavigationManager Nav
 
-<PageTitle>Virtual networks — Topaz Portal</PageTitle>
+<PageTitle>Virtual machines — Topaz Portal</PageTitle>
 
 <div class="d-flex align-items-center justify-content-between mb-3">
-    <h1 class="mb-0">Virtual networks</h1>
+    <h1 class="mb-0">Virtual machines</h1>
 
     <button class="btn btn-primary btn-sm"
             @onclick="ToggleCreate"
             disabled="@(_loading || _creatingBusy)">
-        New virtual network
+        New virtual machine
     </button>
 </div>
 
@@ -86,9 +86,9 @@
                         @_error
                     </div>
                 }
-                else if (FilteredVnets.Length == 0)
+                else if (FilteredVms.Length == 0)
                 {
-                    <p class="mb-0">No virtual networks found.</p>
+                    <p class="mb-0">No virtual machines found.</p>
                 }
                 else
                 {
@@ -100,38 +100,29 @@
                                     <th>Resource group</th>
                                     <th>Subscription</th>
                                     <th>Location</th>
-                                    <th>Address space</th>
+                                    <th>Size</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var vnet in FilteredVnets)
+                                @foreach (var vm in FilteredVms)
                                 {
                                     <tr>
                                         <td>
-                                            @if (Guid.TryParse(vnet.SubscriptionId, out var subId) &&
-                                                 !string.IsNullOrWhiteSpace(vnet.ResourceGroupName) &&
-                                                 !string.IsNullOrWhiteSpace(vnet.Name))
+                                            @if (Guid.TryParse(vm.SubscriptionId, out var subId) &&
+                                                 !string.IsNullOrWhiteSpace(vm.ResourceGroupName) &&
+                                                 !string.IsNullOrWhiteSpace(vm.Name))
                                             {
-                                                <a href="@GetVnetHref(subId, vnet.ResourceGroupName, vnet.Name)">@vnet.Name</a>
+                                                <a href="@GetVmHref(subId, vm.ResourceGroupName, vm.Name)">@vm.Name</a>
                                             }
                                             else
                                             {
-                                                @(vnet.Name ?? "(unknown)")
+                                                @(vm.Name ?? "(unknown)")
                                             }
                                         </td>
-                                        <td>@(vnet.ResourceGroupName ?? "-")</td>
-                                        <td>@(vnet.SubscriptionName ?? "(unknown)")</td>
-                                        <td><code>@(vnet.Location ?? "-")</code></td>
-                                        <td>
-                                            @if (vnet.AddressPrefixes?.Count > 0)
-                                            {
-                                                <code>@string.Join(", ", vnet.AddressPrefixes)</code>
-                                            }
-                                            else
-                                            {
-                                                <span>-</span>
-                                            }
-                                        </td>
+                                        <td>@(vm.ResourceGroupName ?? "-")</td>
+                                        <td>@(vm.SubscriptionName ?? "(unknown)")</td>
+                                        <td><code>@(vm.Location ?? "-")</code></td>
+                                        <td>@(vm.VmSize ?? "-")</td>
                                     </tr>
                                 }
                             </tbody>
@@ -148,7 +139,7 @@
             <div class="card h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between mb-3">
-                        <h5 class="card-title mb-0">Create virtual network</h5>
+                        <h5 class="card-title mb-0">Create virtual machine</h5>
 
                         <button class="btn btn-sm btn-outline-secondary"
                                 @onclick="CloseCreate"
@@ -194,10 +185,10 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Virtual network name</label>
+                        <label class="form-label">VM name</label>
                         <input class="form-control"
-                               @bind="_createVnetName"
-                               placeholder="e.g. my-vnet"
+                               @bind="_createVmName"
+                               placeholder="e.g. my-vm"
                                disabled="@_creatingBusy" />
                     </div>
 
@@ -207,17 +198,20 @@
                         Disabled="@_creatingBusy" />
 
                     <div class="mb-3">
-                        <label class="form-label">Address prefix</label>
-                        <input class="form-control"
-                               @bind="_createAddressPrefix"
-                               placeholder="e.g. 10.0.0.0/16"
-                               disabled="@_creatingBusy" />
-                        <div class="form-text">CIDR notation, e.g. <code>10.0.0.0/16</code></div>
+                        <label class="form-label">VM size</label>
+                        <select class="form-select" @bind="_createVmSize" disabled="@_creatingBusy">
+                            <option value="Standard_B2s">Standard_B2s (2 vCPUs, 4 GiB RAM)</option>
+                            <option value="Standard_B4ms">Standard_B4ms (4 vCPUs, 16 GiB RAM)</option>
+                            <option value="Standard_D2s_v3">Standard_D2s_v3 (2 vCPUs, 8 GiB RAM)</option>
+                            <option value="Standard_D4s_v3">Standard_D4s_v3 (4 vCPUs, 16 GiB RAM)</option>
+                            <option value="Standard_D2SV3">Standard_D2SV3</option>
+                            <option value="Standard_F2s_v2">Standard_F2s_v2 (2 vCPUs, 4 GiB RAM)</option>
+                        </select>
                     </div>
 
                     <div class="d-grid gap-2 mt-3">
                         <button class="btn btn-success"
-                                @onclick="CreateVnetAsync"
+                                @onclick="CreateVmAsync"
                                 disabled="@_creatingBusy">
                             @(_creatingBusy ? "Creating…" : "Create")
                         </button>
@@ -237,7 +231,7 @@
 @code {
     private bool _loading = true;
     private string? _error;
-    private VirtualNetworkDto[] _vnets = [];
+    private VirtualMachineDto[] _vms = [];
     private SubscriptionDto[] _subscriptions = [];
     private bool _showFilter = true;
     private readonly HashSet<string> _selectedSubscriptionIds = new(StringComparer.OrdinalIgnoreCase);
@@ -247,16 +241,16 @@
     private string? _createError;
     private string _createSubscriptionId = "";
     private string _createResourceGroupName = "";
-    private string _createVnetName = "";
+    private string _createVmName = "";
     private string _createLocation = "westeurope";
-    private string _createAddressPrefix = "10.0.0.0/16";
+    private string _createVmSize = "Standard_B2s";
     private bool _rgLoading;
     private ResourceGroupDto[] _resourceGroupOptions = [];
 
-    private VirtualNetworkDto[] FilteredVnets =>
+    private VirtualMachineDto[] FilteredVms =>
         _selectedSubscriptionIds.Count == 0
-            ? _vnets
-            : _vnets.Where(v =>
+            ? _vms
+            : _vms.Where(v =>
                 !string.IsNullOrWhiteSpace(v.SubscriptionId) &&
                 _selectedSubscriptionIds.Contains(v.SubscriptionId))
             .ToArray();
@@ -274,12 +268,12 @@
         try
         {
             var subsTask = TopazClient.ListSubscriptions();
-            var vnetsTask = TopazClient.ListVirtualNetworks();
+            var vmsTask = TopazClient.ListVirtualMachines();
 
-            await Task.WhenAll(subsTask, vnetsTask);
+            await Task.WhenAll(subsTask, vmsTask);
 
             _subscriptions = subsTask.Result.Value;
-            _vnets = vnetsTask.Result.Value;
+            _vms = vmsTask.Result.Value;
         }
         catch (Exception ex)
         {
@@ -291,8 +285,8 @@
         }
     }
 
-    private static string GetVnetHref(Guid subscriptionId, string resourceGroupName, string vnetName)
-        => $"/portal/virtual-networks/{subscriptionId:D}/{WebUtility.UrlEncode(resourceGroupName)}/{WebUtility.UrlEncode(vnetName)}";
+    private static string GetVmHref(Guid subscriptionId, string resourceGroupName, string vmName)
+        => $"/portal/virtual-machines/{subscriptionId:D}/{WebUtility.UrlEncode(resourceGroupName)}/{WebUtility.UrlEncode(vmName)}";
 
     private void ToggleFilter() => _showFilter = !_showFilter;
     private void ClearFilter() => _selectedSubscriptionIds.Clear();
@@ -319,9 +313,9 @@
         _createError = null;
         _createSubscriptionId = "";
         _createResourceGroupName = "";
-        _createVnetName = "";
+        _createVmName = "";
         _createLocation = "westeurope";
-        _createAddressPrefix = "10.0.0.0/16";
+        _createVmSize = "Standard_B2s";
         _resourceGroupOptions = [];
     }
 
@@ -349,7 +343,7 @@
         }
     }
 
-    private async Task CreateVnetAsync()
+    private async Task CreateVmAsync()
     {
         _createError = null;
 
@@ -371,9 +365,9 @@
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_createVnetName))
+        if (string.IsNullOrWhiteSpace(_createVmName))
         {
-            _createError = "Please enter a virtual network name.";
+            _createError = "Please enter a VM name.";
             return;
         }
 
@@ -383,23 +377,17 @@
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_createAddressPrefix))
-        {
-            _createError = "Please enter an address prefix.";
-            return;
-        }
-
         _creatingBusy = true;
         try
         {
-            await TopazClient.CreateVirtualNetwork(
+            await TopazClient.CreateVirtualMachine(
                 subscriptionId,
                 _createResourceGroupName,
-                _createVnetName,
+                _createVmName,
                 _createLocation,
-                _createAddressPrefix);
+                _createVmSize);
 
-            _createVnetName = "";
+            _createVmName = "";
             _createResourceGroupName = "";
             _showCreate = false;
 

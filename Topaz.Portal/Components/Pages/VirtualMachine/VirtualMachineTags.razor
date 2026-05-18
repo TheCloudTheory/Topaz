@@ -1,0 +1,113 @@
+@page "/portal/virtual-machines/{SubscriptionId:guid}/{ResourceGroupName}/{VmName}/tags"
+@using System.Net
+@using Topaz.Portal.Models.VirtualMachines
+@inject ITopazClient TopazClient
+
+<PageTitle>Tags — @DecodedName — Topaz Portal</PageTitle>
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/virtual-machines">Virtual machines</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/portal/virtual-machines/{SubscriptionId:D}/{ResourceGroupName}/{VmName}")">@DecodedName</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Tags</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedName</h1>
+
+<VirtualMachineDetailsShell SubscriptionId="SubscriptionId"
+                             ResourceGroupName="@DecodedRg"
+                             VmName="@DecodedName">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_loadError is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @_loadError
+        </div>
+    }
+    else
+    {
+        <TagsPanel Tags="_tags"
+                   OnAdd="AddTagAsync"
+                   OnRemove="RemoveTagAsync" />
+    }
+</VirtualMachineDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string VmName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _loadError;
+    private Dictionary<string, string> _tags = [];
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedName => WebUtility.UrlDecode(VmName);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadError = null;
+
+        try
+        {
+            var vm = await TopazClient.GetVirtualMachine(SubscriptionId, DecodedRg, DecodedName);
+
+            if (vm is null)
+            {
+                _tags = [];
+                _loadError = "Virtual machine not found.";
+                return;
+            }
+
+            _tags = new Dictionary<string, string>(vm.Tags, StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            _tags = [];
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<string?> AddTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateVirtualMachineTag(SubscriptionId, DecodedRg, DecodedName, tag, value);
+            await LoadAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> RemoveTagAsync(string key)
+    {
+        try
+        {
+            await TopazClient.DeleteVirtualMachineTag(SubscriptionId, DecodedRg, DecodedName, key);
+            await LoadAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+}

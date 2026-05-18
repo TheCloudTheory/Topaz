@@ -147,6 +147,14 @@
 | <span class="badge--preview">Preview</span> | SQL API — Database CRUD | Create, get, delete, list SQL databases and their throughput settings via `databaseAccounts/{name}/sqlDatabases` |
 | <span class="badge--preview">Preview</span> | SQL API — Container CRUD | Create, get, update, delete, list SQL containers (with partitionKey, indexingPolicy, defaultTtl) and throughput settings via `sqlDatabases/{db}/containers` |
 
+### Azure Disks — initial control plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.Disk` project with `DiskResource`, `DiskResourceProperties`, resource provider, control plane (including `Deploy()`), host registration, and `RouteDeployment()` case for `Microsoft.Compute/disks` |
+| <span class="badge--preview">Preview</span> | Managed Disk CRUD | Create, get, update (tags, diskSizeGB, SKU), delete, list by resource group, and list by subscription for `Microsoft.Compute/disks`; key properties persisted: `diskSizeGB`, `osType`, `hyperVGeneration`, `creationData`, `diskState`, `uniqueId` |
+| <span class="badge--preview">Preview</span> | SAS access endpoints | `beginGetAccess` (returns stub accessSAS URI) and `endGetAccess` (revoke) — enables SDK/CLI disk export flows without real data streaming |
+
 ---
 
 ## v1.7-beta

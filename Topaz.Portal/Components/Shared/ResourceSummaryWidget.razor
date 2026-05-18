@@ -3,6 +3,8 @@
 @using Topaz.Portal.Models.ManagedIdentities
 @using Topaz.Portal.Models.EventHubs
 @using Topaz.Portal.Models.ServiceBus
+@using Topaz.Portal.Models.VirtualMachines
+@using Topaz.Portal.Models.VirtualNetworks
 @inject ITopazClient TopazClient
 
 <div class="card h-100">
@@ -71,6 +73,20 @@
                         <a href="/portal/service-bus" class="small stretched-link text-decoration-none">View →</a>
                     </div>
                 </div>
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 text-center h-100 position-relative">
+                        <div class="display-6 fw-bold text-primary">@_virtualMachineCount</div>
+                        <div class="small text-muted mt-1">Virtual machines</div>
+                        <a href="/portal/virtual-machines" class="small stretched-link text-decoration-none">View →</a>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-3 text-center h-100 position-relative">
+                        <div class="display-6 fw-bold text-primary">@_virtualNetworkCount</div>
+                        <div class="small text-muted mt-1">Virtual networks</div>
+                        <a href="/portal/virtual-networks" class="small stretched-link text-decoration-none">View →</a>
+                    </div>
+                </div>
             </div>
         }
     </div>
@@ -86,6 +102,8 @@
     private int _managedIdentityCount;
     private int _eventHubNamespaceCount;
     private int _serviceBusNamespaceCount;
+    private int _virtualMachineCount;
+    private int _virtualNetworkCount;
 
     protected override async Task OnInitializedAsync()
     {
@@ -98,8 +116,10 @@
             var miTask = TopazClient.ListManagedIdentities();
             var ehTask = TopazClient.ListEventHubNamespaces();
             var sbTask = TopazClient.ListServiceBusNamespaces();
+            var vmTask = TopazClient.ListVirtualMachines();
+            var vnetTask = TopazClient.ListVirtualNetworks();
 
-            await Task.WhenAll(storageTask, keyVaultTask, subsTask, rgsTask, miTask, ehTask, sbTask);
+            await Task.WhenAll(storageTask, keyVaultTask, subsTask, rgsTask, miTask, ehTask, sbTask, vmTask, vnetTask);
 
             _storageCount = (await storageTask).Value?.Length ?? 0;
             _keyVaultCount = (await keyVaultTask).Value?.Length ?? 0;
@@ -108,6 +128,8 @@
             _managedIdentityCount = (await miTask).Value?.Length ?? 0;
             _eventHubNamespaceCount = (await ehTask).Value?.Length ?? 0;
             _serviceBusNamespaceCount = (await sbTask).Value?.Length ?? 0;
+            _virtualMachineCount = (await vmTask).Value?.Length ?? 0;
+            _virtualNetworkCount = (await vnetTask).Value?.Length ?? 0;
         }
         catch (Exception ex)
         {

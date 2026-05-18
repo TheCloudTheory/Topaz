@@ -12,6 +12,8 @@ using Topaz.Portal.Models.ServiceBus;
 using Topaz.Portal.Models.Storage;
 using Topaz.Portal.Models.Subscriptions;
 using Topaz.Portal.Models.Tenant;
+using Topaz.Portal.Models.VirtualMachines;
+using Topaz.Portal.Models.VirtualNetworks;
 
 namespace Topaz.Portal;
 
@@ -445,4 +447,80 @@ public interface ITopazClient
 
     // Host
     Task<HostInfoDto?> GetHostInfoAsync(CancellationToken cancellationToken = default);
+
+    // Virtual Machines
+    Task<ListVirtualMachinesResponse> ListVirtualMachines(CancellationToken cancellationToken = default);
+
+    Task<VirtualMachineDto?> GetVirtualMachine(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string vmName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateVirtualMachine(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string vmName,
+        string location,
+        string vmSize = "Standard_B2s",
+        CancellationToken cancellationToken = default);
+
+    Task DeleteVirtualMachine(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string vmName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateOrUpdateVirtualMachineTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string vmName,
+        string tagName,
+        string tagValue,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteVirtualMachineTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string vmName,
+        string tagName,
+        CancellationToken cancellationToken = default);
+
+    // Virtual Networks
+    Task<ListVirtualNetworksResponse> ListVirtualNetworks(CancellationToken cancellationToken = default);
+
+    Task<VirtualNetworkDto?> GetVirtualNetwork(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string vnetName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateVirtualNetwork(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string vnetName,
+        string location,
+        string addressPrefix = "10.0.0.0/16",
+        CancellationToken cancellationToken = default);
+
+    Task DeleteVirtualNetwork(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string vnetName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateOrUpdateVirtualNetworkTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string vnetName,
+        string tagName,
+        string tagValue,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteVirtualNetworkTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string vnetName,
+        string tagName,
+        CancellationToken cancellationToken = default);
 }

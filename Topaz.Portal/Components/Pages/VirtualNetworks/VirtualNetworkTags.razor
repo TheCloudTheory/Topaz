@@ -1,0 +1,113 @@
+@page "/portal/virtual-networks/{SubscriptionId:guid}/{ResourceGroupName}/{VnetName}/tags"
+@using System.Net
+@using Topaz.Portal.Models.VirtualNetworks
+@inject ITopazClient TopazClient
+
+<PageTitle>Tags — @DecodedName — Topaz Portal</PageTitle>
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/virtual-networks">Virtual networks</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/portal/virtual-networks/{SubscriptionId:D}/{ResourceGroupName}/{VnetName}")">@DecodedName</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Tags</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedName</h1>
+
+<VirtualNetworkDetailsShell SubscriptionId="SubscriptionId"
+                             ResourceGroupName="@DecodedRg"
+                             VnetName="@DecodedName">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_loadError is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @_loadError
+        </div>
+    }
+    else
+    {
+        <TagsPanel Tags="_tags"
+                   OnAdd="AddTagAsync"
+                   OnRemove="RemoveTagAsync" />
+    }
+</VirtualNetworkDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string VnetName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _loadError;
+    private Dictionary<string, string> _tags = [];
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedName => WebUtility.UrlDecode(VnetName);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadError = null;
+
+        try
+        {
+            var vnet = await TopazClient.GetVirtualNetwork(SubscriptionId, DecodedRg, DecodedName);
+
+            if (vnet is null)
+            {
+                _tags = [];
+                _loadError = "Virtual network not found.";
+                return;
+            }
+
+            _tags = new Dictionary<string, string>(vnet.Tags, StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            _tags = [];
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<string?> AddTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateVirtualNetworkTag(SubscriptionId, DecodedRg, DecodedName, tag, value);
+            await LoadAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> RemoveTagAsync(string key)
+    {
+        try
+        {
+            await TopazClient.DeleteVirtualNetworkTag(SubscriptionId, DecodedRg, DecodedName, key);
+            await LoadAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+}

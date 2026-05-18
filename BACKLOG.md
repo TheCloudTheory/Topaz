@@ -541,6 +541,51 @@ TODO: Azure Cosmos DB: SQL API — Container control plane endpoints
   labels: enhancement, cosmos-db, good first issue
 -->
 
+### Azure Disks — initial control plane
+
+<!--
+TODO: Azure Disks: New service project scaffold
+  Create Topaz.Service.Disk following the existing service conventions:
+  - DiskResourceProperties + DiskResource (ArmResource<T>) with fields: diskSizeGB,
+    diskSizeBytes, diskIOPSReadWrite, diskMBpsReadWrite, osType, hyperVGeneration,
+    creationData (createOption, sourceResourceId, imageReference), diskState,
+    provisioningState (always Succeeded), timeCreated, uniqueId (GUID).
+  - DiskResourceProvider (ResourceProviderBase<T>) for filesystem persistence.
+  - DiskServiceControlPlane implementing IControlPlane with a working Deploy().
+  - IServiceDefinition registration and wiring in Topaz.Host.
+  - ProjectReference in Topaz.Service.ResourceManager.csproj.
+  - case "Microsoft.Compute/disks" in TemplateDeploymentOrchestrator.RouteDeployment().
+  See: https://learn.microsoft.com/en-us/rest/api/compute/disks?view=rest-compute-2025-11-01
+  milestone: v1.6-beta
+  labels: enhancement, good first issue
+-->
+
+<!--
+TODO: Azure Disks: Managed Disk control plane endpoints
+  Implement the ARM-level Disk resource surface (Microsoft.Compute/disks):
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}  – create or update
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}  – get
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}  – delete
+  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}  – update (tags, diskSizeGB, SKU)
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks          – list by resource group
+  - GET    /subscriptions/{sub}/providers/Microsoft.Compute/disks                              – list all in subscription
+  Follow the one-file-per-operation convention under Endpoints/. Return 200 for get/update,
+  201 for create, 204 for delete. provisioningState is always Succeeded.
+  milestone: v1.6-beta
+  labels: enhancement
+-->
+
+<!--
+TODO: Azure Disks: SAS access endpoints
+  Implement the SAS URI access operations:
+  - POST .../disks/{name}/beginGetAccess  – grant read or readwrite access, returning an accessSAS URI stub
+  - POST .../disks/{name}/endGetAccess    – revoke access (returns 200 with empty body)
+  The SAS URI value is a stub (no actual data streaming required); return a plausible
+  https://md-{uniqueId}.blob.core.windows.net/... URL so SDK/CLI callers do not error.
+  milestone: v1.6-beta
+  labels: enhancement
+-->
+
 ---
 
 ## v1.7-beta

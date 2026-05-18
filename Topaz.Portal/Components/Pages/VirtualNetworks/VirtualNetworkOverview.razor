@@ -1,0 +1,172 @@
+@page "/portal/virtual-networks/{SubscriptionId:guid}/{ResourceGroupName}/{VnetName}"
+@using System.Net
+@using Topaz.Portal.Models.VirtualNetworks
+@inject ITopazClient TopazClient
+@inject NavigationManager Nav
+
+<PageTitle>@DecodedName — Virtual networks — Topaz Portal</PageTitle>
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/virtual-networks">Virtual networks</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">@DecodedName</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedName</h1>
+
+<VirtualNetworkDetailsShell SubscriptionId="SubscriptionId"
+                             ResourceGroupName="@DecodedRg"
+                             VnetName="@DecodedName">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_error</div>
+    }
+    else if (_vnet is null)
+    {
+        <p class="mb-0">Virtual network not found.</p>
+    }
+    else
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between mb-3">
+                    <h5 class="card-title mb-0">Essentials</h5>
+                    <button class="btn btn-sm btn-outline-danger"
+                            @onclick="() => _showDeleteConfirm = true"
+                            disabled="@_deletingBusy">
+                        Delete
+                    </button>
+                </div>
+
+                @if (_showDeleteConfirm)
+                {
+                    <div class="alert alert-warning d-flex align-items-center justify-content-between" role="alert">
+                        <span>Delete <strong>@(_vnet.Name)</strong>? This cannot be undone.</span>
+                        <div class="d-flex gap-2 ms-3">
+                            <button class="btn btn-sm btn-danger"
+                                    @onclick="DeleteVnetAsync"
+                                    disabled="@_deletingBusy">
+                                Confirm delete
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    @onclick="() => _showDeleteConfirm = false"
+                                    disabled="@_deletingBusy">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_deleteError))
+                {
+                    <div class="alert alert-danger" role="alert">@_deleteError</div>
+                }
+
+                <div class="row g-0">
+                    <div class="col-12 col-xl-6">
+                        <dl class="row mb-0 essentials-grid">
+                            <dt class="col-5 text-muted fw-normal">Resource group</dt>
+                            <dd class="col-7">
+                                <a href="/resource-groups/@SubscriptionId:D/@WebUtility.UrlEncode(_vnet.ResourceGroupName ?? "")">
+                                    @(_vnet.ResourceGroupName ?? "-")
+                                </a>
+                            </dd>
+
+                            <dt class="col-5 text-muted fw-normal">Location</dt>
+                            <dd class="col-7">@(_vnet.Location ?? "-")</dd>
+
+                            <dt class="col-5 text-muted fw-normal">Subscription</dt>
+                            <dd class="col-7">@(_vnet.SubscriptionName ?? "-")</dd>
+
+                            <dt class="col-5 text-muted fw-normal">Subscription ID</dt>
+                            <dd class="col-7"><small class="font-monospace">@(_vnet.SubscriptionId ?? "-")</small></dd>
+                        </dl>
+                    </div>
+
+                    <div class="col-12 col-xl-6">
+                        <dl class="row mb-0 essentials-grid">
+                            <dt class="col-5 text-muted fw-normal">Address space</dt>
+                            <dd class="col-7">
+                                @if (_vnet.AddressPrefixes?.Count > 0)
+                                {
+                                    <code>@string.Join(", ", _vnet.AddressPrefixes)</code>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </dd>
+
+                            <dt class="col-5 text-muted fw-normal">Provisioning state</dt>
+                            <dd class="col-7">@(_vnet.ProvisioningState ?? "-")</dd>
+
+                            <dt class="col-5 text-muted fw-normal">Resource ID</dt>
+                            <dd class="col-7"><small class="font-monospace text-break">@(_vnet.Id ?? "-")</small></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</VirtualNetworkDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string VnetName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _error;
+    private VirtualNetworkDto? _vnet;
+
+    private bool _showDeleteConfirm;
+    private bool _deletingBusy;
+    private string? _deleteError;
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedName => WebUtility.UrlDecode(VnetName);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            _vnet = await TopazClient.GetVirtualNetwork(SubscriptionId, DecodedRg, DecodedName);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task DeleteVnetAsync()
+    {
+        _deleteError = null;
+        _deletingBusy = true;
+
+        try
+        {
+            await TopazClient.DeleteVirtualNetwork(SubscriptionId, DecodedRg, DecodedName);
+            Nav.NavigateTo("/portal/virtual-networks");
+        }
+        catch (Exception ex)
+        {
+            _deleteError = ex.Message;
+            _showDeleteConfirm = false;
+        }
+        finally
+        {
+            _deletingBusy = false;
+        }
+    }
+}
