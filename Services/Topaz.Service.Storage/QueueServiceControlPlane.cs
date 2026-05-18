@@ -91,10 +91,11 @@ internal sealed class QueueServiceControlPlane(QueueResourceProvider provider, I
             .FirstOrDefault(e => (string?)e.Element("Id") == policyId);
         if (match == null) return null;
 
+        var accessPolicy = match.Element("AccessPolicy");
         return new StoredAccessPolicy(
-            (string?)match.Element("Permission"),
-            (string?)match.Element("Start"),
-            (string?)match.Element("Expiry"));
+            (string?)accessPolicy?.Element("Permission"),
+            (string?)accessPolicy?.Element("Start"),
+            (string?)accessPolicy?.Element("Expiry"));
     }
 
     public ControlPlaneOperationResult SetQueueMetadata(SubscriptionIdentifier subscriptionIdentifier,

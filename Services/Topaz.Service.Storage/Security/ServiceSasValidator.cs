@@ -81,6 +81,14 @@ internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane,
         var erk = parsed["erk"] ?? string.Empty;
 
         // If si= references a stored access policy, merge its fields.
+        // Per the Azure SAS spec, fields that are stored in the access policy are represented
+        // as empty strings in the string to sign — wire values take precedence, but the policy
+        // fills in any that were omitted. Save wire values before merging so that the StringToSign
+        // is always built from the original wire token (as the client signed it).
+        var wireSignedPermissions = sp;
+        var wireSignedStart       = st;
+        var wireSignedExpiry      = se;
+
         if (!string.IsNullOrEmpty(si))
         {
             var policy = policyResolver(si);
@@ -92,7 +100,8 @@ internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane,
                 return false;
             }
 
-            // Policy fields take precedence when the wire token omits them.
+            // Merge policy fields into sp/st/se for authorization checks (expiry).
+            // These merged values are NOT used for the StringToSign.
             if (string.IsNullOrEmpty(sp) && !string.IsNullOrEmpty(policy.Permissions)) sp = policy.Permissions;
             if (string.IsNullOrEmpty(st) && !string.IsNullOrEmpty(policy.StartsOn))    st = policy.StartsOn;
             if (string.IsNullOrEmpty(se) && !string.IsNullOrEmpty(policy.ExpiresOn))   se = policy.ExpiresOn;
@@ -127,9 +136,9 @@ internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane,
 
         var stringToSign = serviceType switch
         {
-            SasServiceType.Blob  => BuildBlobStringToSign(sp, st, se, canonicalizedResource, si, sip, spr, sv, sr, rscc, rscd, rsce, rscl, rsct),
-            SasServiceType.Queue => BuildQueueStringToSign(sp, st, se, canonicalizedResource, si, sip, spr, sv),
-            SasServiceType.Table => BuildTableStringToSign(sp, st, se, canonicalizedResource, si, sip, spr, sv, spk, srk, epk, erk),
+            SasServiceType.Blob  => BuildBlobStringToSign(wireSignedPermissions, wireSignedStart, wireSignedExpiry, canonicalizedResource, si, sip, spr, sv, sr, rscc, rscd, rsce, rscl, rsct),
+            SasServiceType.Queue => BuildQueueStringToSign(wireSignedPermissions, wireSignedStart, wireSignedExpiry, canonicalizedResource, si, sip, spr, sv),
+            SasServiceType.Table => BuildTableStringToSign(wireSignedPermissions, wireSignedStart, wireSignedExpiry, canonicalizedResource, si, sip, spr, sv, spk, srk, epk, erk),
             _ => throw new ArgumentOutOfRangeException(nameof(serviceType))
         };
 

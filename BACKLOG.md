@@ -147,22 +147,6 @@ TODO: Storage: Service SAS query-string validation for Blob, Queue, and Table
   labels: enhancement, storage, security
 -->
 
-<!--
-TODO: Storage: Stored Access Policy enforcement at request time
-  The GET/SET Container ACL, Queue ACL, and Table ACL endpoints already persist
-  `<SignedIdentifiers>` XML to disk. This data is currently only round-tripped —
-  it is never consulted when a Service SAS arrives with `si=<policyId>`.
-  As part of the Service SAS implementation, add a lookup path in each security
-  provider that:
-  - Reads the stored policy XML for the targeted resource.
-  - Finds the `<SignedIdentifier>` whose `<Id>` matches `si=`.
-  - Merges the policy's `<Start>`, `<Expiry>`, and `<Permission>` values into the
-    SAS validation, overriding the corresponding (absent) query parameters.
-  - Returns 403 `AuthorizationFailure` if the policy no longer exists (revocation).
-  milestone: v1.4-beta
-  labels: enhancement, storage, security
--->
-
 ### Topaz Portal — tag editing
 
 <!--

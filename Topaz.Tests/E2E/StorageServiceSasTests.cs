@@ -7,6 +7,7 @@ using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using Azure.Storage.Sas;
 using Azure.Data.Tables;
+using Azure.Data.Tables.Models;
 using Azure.Data.Tables.Sas;
 using Topaz.CLI;
 using Topaz.Identity;
@@ -232,5 +233,196 @@ public class StorageServiceSasTests
             Assert.That(entities[0].RowKey, Is.EqualTo("rk"));
             Assert.That(entities[0]["Value"].ToString(), Is.EqualTo("42"));
         });
+    }
+
+    // -----------------------------------------------------------------------
+    // Queue SAS — stored access policy
+    // -----------------------------------------------------------------------
+
+    [Test]
+    public void Queue_ServiceSas_StoredPolicy_GrantsSendAndReceiveAccess()
+    {
+        // Arrange — create a queue and set a named stored access policy.
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var serviceClient = new QueueServiceClient(connectionString);
+        serviceClient.CreateQueue("sas-policy-queue");
+        var queue = serviceClient.GetQueueClient("sas-policy-queue");
+
+        queue.SetAccessPolicy([
+            new Azure.Storage.Queues.Models.QueueSignedIdentifier
+            {
+                Id = "sendreceive",
+                AccessPolicy = new Azure.Storage.Queues.Models.QueueAccessPolicy
+                {
+                    StartsOn  = DateTimeOffset.UtcNow.AddMinutes(-1),
+                    ExpiresOn = DateTimeOffset.UtcNow.AddHours(1),
+                    Permissions = "ap"
+                }
+            }
+        ]);
+
+        // Generate a SAS that references the policy by name (si=sendreceive, no sp/st/se on wire).
+        var sasBuilder = new QueueSasBuilder
+        {
+            QueueName  = "sas-policy-queue",
+            Identifier = "sendreceive"
+        };
+        var sharedKey = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
+        var sasParams = sasBuilder.ToSasQueryParameters(sharedKey).ToString();
+        var queueEndpoint = new Uri(
+            $"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/sas-policy-queue");
+        var sasQueue = new QueueClient(queueEndpoint, new AzureSasCredential(sasParams));
+
+        // Act
+        sasQueue.SendMessage("policy-msg");
+        var messages = sasQueue.ReceiveMessages(maxMessages: 1).Value;
+
+        // Assert
+        Assert.That(messages, Has.Length.EqualTo(1));
+        Assert.That(messages[0].MessageText, Is.EqualTo("policy-msg"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Table SAS — stored access policy
+    // -----------------------------------------------------------------------
+
+    [Test]
+    public void Table_ServiceSas_StoredPolicy_GrantsQueryAccess()
+    {
+        // Arrange — create a table, insert an entity, and set a named stored access policy.
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var tableServiceClient = new TableServiceClient(connectionString);
+        tableServiceClient.CreateTable("SasPolicyTable");
+        var tableClient = tableServiceClient.GetTableClient("SasPolicyTable");
+        tableClient.AddEntity(new TableEntity("pk", "rk") { ["Value"] = "hello" });
+
+        tableClient.SetAccessPolicy([
+            new TableSignedIdentifier("readpolicy",
+                new TableAccessPolicy(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddHours(1), "r"))
+        ]);
+
+        // Generate a SAS that references the policy by name (si=readpolicy, no sp/st/se on wire).
+        var sasUri = tableClient.GenerateSasUri(new TableSasBuilder { TableName = "SasPolicyTable", Identifier = "readpolicy" });
+        var tableEndpoint = new Uri(
+            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/SasPolicyTable");
+        var sasTable = new TableClient(tableEndpoint, new AzureSasCredential(sasUri.Query.TrimStart('?')));
+
+        // Act
+        var entities = sasTable.Query<TableEntity>().ToArray();
+
+        // Assert
+        Assert.That(entities, Has.Length.EqualTo(1));
+        Assert.That(entities[0]["Value"].ToString(), Is.EqualTo("hello"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Stored access policy — revocation
+    // -----------------------------------------------------------------------
+
+    [Test]
+    public void Blob_ServiceSas_StoredPolicy_Revocation_Returns403()
+    {
+        // Arrange — create a container, set a policy, generate a SAS, then revoke the policy.
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var serviceClient = new BlobServiceClient(connectionString);
+        serviceClient.CreateBlobContainer("sas-revoke-blob");
+        var container = serviceClient.GetBlobContainerClient("sas-revoke-blob");
+
+        container.SetAccessPolicy(PublicAccessType.None, [
+            new BlobSignedIdentifier
+            {
+                Id = "revokeme",
+                AccessPolicy = new BlobAccessPolicy
+                {
+                    StartsOn  = DateTimeOffset.UtcNow.AddMinutes(-1),
+                    ExpiresOn = DateTimeOffset.UtcNow.AddHours(1),
+                    Permissions = "rl"
+                }
+            }
+        ]);
+
+        var sasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = "sas-revoke-blob",
+            Resource          = "c",
+            Identifier        = "revokeme"
+        };
+        var sharedKey = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
+        var sasParams = sasBuilder.ToSasQueryParameters(sharedKey).ToString();
+        var sasUri = new Uri(
+            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/sas-revoke-blob?{sasParams}");
+
+        // Revoke: clear all stored policies.
+        container.SetAccessPolicy(PublicAccessType.None, []);
+
+        // Act + Assert — request with a now-revoked SAS must be denied.
+        var sasClient = new BlobContainerClient(sasUri);
+        Assert.Catch<Exception>(() => sasClient.GetBlobs().ToArray());
+    }
+
+    [Test]
+    public void Queue_ServiceSas_StoredPolicy_Revocation_Returns403()
+    {
+        // Arrange — create a queue, set a policy, generate a SAS, then revoke the policy.
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var serviceClient = new QueueServiceClient(connectionString);
+        serviceClient.CreateQueue("sas-revoke-queue");
+        var queue = serviceClient.GetQueueClient("sas-revoke-queue");
+
+        queue.SetAccessPolicy([
+            new Azure.Storage.Queues.Models.QueueSignedIdentifier
+            {
+                Id = "revokeme",
+                AccessPolicy = new Azure.Storage.Queues.Models.QueueAccessPolicy
+                {
+                    StartsOn  = DateTimeOffset.UtcNow.AddMinutes(-1),
+                    ExpiresOn = DateTimeOffset.UtcNow.AddHours(1),
+                    Permissions = "a"
+                }
+            }
+        ]);
+
+        var sasBuilder = new QueueSasBuilder
+        {
+            QueueName  = "sas-revoke-queue",
+            Identifier = "revokeme"
+        };
+        var sharedKey = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
+        var sasParams = sasBuilder.ToSasQueryParameters(sharedKey).ToString();
+        var queueEndpoint = new Uri(
+            $"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/sas-revoke-queue");
+        var sasQueue = new QueueClient(queueEndpoint, new AzureSasCredential(sasParams));
+
+        // Revoke: clear all stored policies.
+        queue.SetAccessPolicy([]);
+
+        // Act + Assert — request with a now-revoked SAS must be denied.
+        Assert.Catch<Exception>(() => sasQueue.SendMessage("should-fail"));
+    }
+
+    [Test]
+    public void Table_ServiceSas_StoredPolicy_Revocation_Returns403()
+    {
+        // Arrange — create a table, set a policy, generate a SAS, then revoke the policy.
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var tableServiceClient = new TableServiceClient(connectionString);
+        tableServiceClient.CreateTable("SasRevokeTable");
+        var tableClient = tableServiceClient.GetTableClient("SasRevokeTable");
+
+        tableClient.SetAccessPolicy([
+            new TableSignedIdentifier("revokeme",
+                new TableAccessPolicy(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddHours(1), "r"))
+        ]);
+
+        var sasUri = tableClient.GenerateSasUri(new TableSasBuilder { TableName = "SasRevokeTable", Identifier = "revokeme" });
+        var tableEndpoint = new Uri(
+            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/SasRevokeTable");
+        var sasTable = new TableClient(tableEndpoint, new AzureSasCredential(sasUri.Query.TrimStart('?')));
+
+        // Revoke: clear all stored policies.
+        tableClient.SetAccessPolicy([]);
+
+        // Act + Assert — request with a now-revoked SAS must be denied.
+        Assert.Catch<Exception>(() => sasTable.Query<TableEntity>().ToArray());
     }
 }

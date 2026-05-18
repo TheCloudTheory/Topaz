@@ -156,6 +156,14 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
                 return new ControlPlaneOperationResult(OperationResult.BadRequest,
                     "Too many signed identifiers (max 5).", "TooManySignedIdentifiers");
 
+            // SetAccessPolicy is a full replace — remove any previously stored policies
+            // that are not present in the new list before writing the new ones.
+            if (Directory.Exists(aclPath))
+            {
+                foreach (var existingFile in Directory.EnumerateFiles(aclPath, "*.xml", SearchOption.TopDirectoryOnly))
+                    File.Delete(existingFile);
+            }
+
             foreach (var acl in acls)
             {
                 using var sw = new EncodingAwareStringWriter();
