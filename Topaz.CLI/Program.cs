@@ -76,7 +76,7 @@ internal class Program
             if (!doc.RootElement.TryGetProperty("workingDirectory", out var wdElement))
                 return 0;
 
-                _ = wdElement; // no longer required to match working directories
+            _ = wdElement; // no longer required to match working directories
             return 0;
 
         }
@@ -109,8 +109,6 @@ internal class Program
     {
         config.AddCommand<Commands.HealthCommand>("health")
             .WithDescription("Check whether the Topaz host is running and display its status.");
-
-        Console.WriteLine("Searching and configuring commands...");
 
         // Even though the types will be loaded via reflection, they must be explicitly
         // used so they can be loaded. The issue here is related to GetReferencedAssemblies(),

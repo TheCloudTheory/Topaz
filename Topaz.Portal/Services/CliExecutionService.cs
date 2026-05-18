@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 using Topaz.Portal.Models.Cli;
 
 namespace Topaz.Portal.Services;
@@ -30,7 +31,7 @@ public sealed class CliExecutionService : ICliExecutionService
                 $"Unknown command: '{args[0]}'. Only Topaz CLI commands are allowed.",
                 IsError: true);
 
-        var binary = FindTopazBinary();
+        var (binary, prefixArgs) = FindBinaryAndArgs();
         if (binary is null)
             return new CliExecutionResult(
                 "topaz binary not found. Install Topaz CLI or ensure it is on the system PATH.",
@@ -47,10 +48,14 @@ public sealed class CliExecutionService : ICliExecutionService
                 WorkingDirectory = AppContext.BaseDirectory
             };
 
+            foreach (var arg in prefixArgs)
+                startInfo.ArgumentList.Add(arg);
+
             foreach (var arg in args)
                 startInfo.ArgumentList.Add(arg);
 
-            using var process = new Process { StartInfo = startInfo };
+            using var process = new Process();
+            process.StartInfo = startInfo;
             process.Start();
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -69,7 +74,7 @@ public sealed class CliExecutionService : ICliExecutionService
                     string.IsNullOrWhiteSpace(stderr) ? stdout.TrimEnd() : stderr.TrimEnd(),
                     IsError: true);
 
-            return new CliExecutionResult(stdout.TrimEnd(), IsError: false);
+            return new CliExecutionResult(PrettyPrint(stdout), IsError: false);
         }
         catch (OperationCanceledException)
         {
@@ -82,25 +87,64 @@ public sealed class CliExecutionService : ICliExecutionService
         }
     }
 
-    private static string? FindTopazBinary()
+    private static string PrettyPrint(string output)
     {
-        // Check same directory first — used in Docker where the binary is bundled with the app
+        var trimmed = output.Trim();
+        if (trimmed.StartsWith('{') || trimmed.StartsWith('['))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(trimmed);
+                return JsonSerializer.Serialize(doc, new JsonSerializerOptions { WriteIndented = true });
+            }
+            catch (JsonException) { /* not valid JSON — return as-is */ }
+        }
+        return output.TrimEnd();
+    }
+
+    private static (string? Binary, string[] PrefixArgs) FindBinaryAndArgs()
+    {
+#if DEBUG
+        // In Debug builds use the already-compiled binary from the CLI project's bin/Debug
+        // folder — no build step, no warnings, no startup lag.
+        var debugBinary = FindCliDebugBinary();
+        if (debugBinary != null)
+            return (debugBinary, []);
+#endif
+
+        // Check same directory first — used in Docker where the binary is bundled with the app.
         var localPath = Path.Combine(AppContext.BaseDirectory, "topaz");
         if (File.Exists(localPath))
-            return localPath;
+            return (localPath, []);
 
-        // Fall back to PATH — used in local development where Topaz CLI is installed on the host
+        // Fall back to PATH — used in local development where Topaz CLI is installed on the host.
         var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
-        var separator = OperatingSystem.IsWindows() ? ';' : ':';
-        var binaryName = OperatingSystem.IsWindows() ? "topaz.exe" : "topaz";
+        var binary = pathEnv.Split(':').Select(dir => Path.Combine(dir.Trim(), "topaz")).FirstOrDefault(File.Exists);
+        return (binary, []);
+    }
 
-        foreach (var dir in pathEnv.Split(separator))
+    /// <summary>
+    /// Walks up from <see cref="AppContext.BaseDirectory"/> to find the solution root
+    /// (directory containing <c>Topaz.sln</c>), then searches
+    /// <c>Topaz.CLI/bin/Debug</c> for the compiled executable (a file whose name
+    /// starts with "topaz" and has no extension).
+    /// </summary>
+    private static string? FindCliDebugBinary()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null)
         {
-            var candidate = Path.Combine(dir.Trim(), binaryName);
-            if (File.Exists(candidate))
-                return candidate;
-        }
+            if (dir.GetFiles("Topaz.sln").Length > 0)
+            {
+                var debugDir = Path.Combine(dir.FullName, "Topaz.CLI", "bin", "Debug");
+                if (!Directory.Exists(debugDir)) return null;
 
+                return Directory
+                    .GetFiles(debugDir, "topaz*", SearchOption.AllDirectories)
+                    .FirstOrDefault(f => !Path.GetFileName(f).Contains('.'));
+            }
+            dir = dir.Parent;
+        }
         return null;
     }
 
