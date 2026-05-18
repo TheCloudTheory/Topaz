@@ -7,6 +7,8 @@ using Topaz.Portal.Models.ResourceManager;
 using Topaz.Portal.Models.ServiceBus;
 using Topaz.Portal.Models.Storage;
 using Topaz.Portal.Models.Subscriptions;
+using Topaz.Portal.Models.VirtualMachines;
+using Topaz.Portal.Models.VirtualNetworks;
 
 namespace Topaz.Tests.Portal;
 
@@ -159,6 +161,8 @@ public class ResourceSummaryWidget_ShowsStorageAndKeyVaultCounts : BunitTestCont
         client.ListManagedIdentities().Returns(Task.FromResult(new ListManagedIdentitiesResponse { Value = [] }));
         client.ListEventHubNamespaces().Returns(Task.FromResult(new ListEventHubNamespacesResponse { Value = [] }));
         client.ListServiceBusNamespaces().Returns(Task.FromResult(new ListServiceBusNamespacesResponse { Value = [] }));
+        client.ListVirtualMachines().Returns(Task.FromResult(new ListVirtualMachinesResponse { Value = [] }));
+        client.ListVirtualNetworks().Returns(Task.FromResult(new ListVirtualNetworksResponse { Value = [] }));
 
         var cut = RenderComponent<ResourceSummaryWidget>();
 
@@ -187,6 +191,8 @@ public class ResourceSummaryWidget_ShowsError_WhenLoadFails : BunitTestContext
         client.ListManagedIdentities().Returns(Task.FromResult(new ListManagedIdentitiesResponse { Value = [] }));
         client.ListEventHubNamespaces().Returns(Task.FromResult(new ListEventHubNamespacesResponse { Value = [] }));
         client.ListServiceBusNamespaces().Returns(Task.FromResult(new ListServiceBusNamespacesResponse { Value = [] }));
+        client.ListVirtualMachines().Returns(Task.FromResult(new ListVirtualMachinesResponse { Value = [] }));
+        client.ListVirtualNetworks().Returns(Task.FromResult(new ListVirtualNetworksResponse { Value = [] }));
 
         var cut = RenderComponent<ResourceSummaryWidget>();
 
