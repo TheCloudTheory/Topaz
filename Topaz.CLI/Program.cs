@@ -1,6 +1,8 @@
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.Json;
 using JetBrains.Annotations;
+using Topaz.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
@@ -98,7 +100,9 @@ internal class Program
         {
             ServerCertificateCustomValidationCallback = (_, _, _, _) => true
         };
-        registrations.AddSingleton(new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) });
+        var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", JwtHelper.GenerateCliToken());
+        registrations.AddSingleton(client);
     }
 
     private static void FindAndRegisterCommands(IConfigurator config)

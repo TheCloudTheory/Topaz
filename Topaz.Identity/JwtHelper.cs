@@ -11,6 +11,12 @@ public static class JwtHelper
     private static readonly byte[] SecretKey =
         "yD1sMV1WcwVjSfNUxxLNfVHn5sbqD056LwOnkXCkIDnWkXcrg95plLQ3T1tvinLAnuNNiRRZrKyUvs6YzZnJ/A=="u8.ToArray();
 
+    /// <summary>
+    /// Generates a short-lived JWT token for the Topaz CLI to authenticate with the Topaz Host.
+    /// The token is issued as the global admin principal, bypassing RBAC checks.
+    /// </summary>
+    public static string GenerateCliToken() => GenerateJwt(Globals.GlobalAdminId);
+
     internal static string GenerateJwt(string objectId, bool isForGraph = false, string? preferredUsername = null)
     {
         return CreateJwt(objectId, isForGraph ? "https://topaz.local.dev:8899/.graph" : "https://topaz.local.dev:8899",

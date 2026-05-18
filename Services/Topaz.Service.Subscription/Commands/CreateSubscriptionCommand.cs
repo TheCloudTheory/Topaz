@@ -16,7 +16,7 @@ public sealed class CreateSubscriptionCommand(HttpClient httpClient)
     public override async Task<int> ExecuteAsync(CommandContext context, CreateSubscriptionCommandSettings settings)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.Id}";
-        var (success, body) = await PutAsync(url, new { displayName = settings.Name });
+        var (success, body) = await PostAsync(url, new { subscriptionId = settings.Id, subscriptionName = settings.Name, tags = settings.Tags });
         if (!success) return 1;
         AnsiConsole.WriteLine(body);
         return 0;

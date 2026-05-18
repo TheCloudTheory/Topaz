@@ -21,6 +21,7 @@
     <ProjectReference Include="../Services/Topaz.Service.ServiceBus/Topaz.Service.ServiceBus.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.Subscription/Topaz.Service.Subscription.csproj" />
     <ProjectReference Include="../Topaz.Shared/Topaz.Shared.csproj" />
+    <ProjectReference Include="../Topaz.Identity/Topaz.Identity.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.EventHub/Topaz.Service.EventHub.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.VirtualNetwork/Topaz.Service.VirtualNetwork.csproj" />
     <ProjectReference Include="..\Documentation\Topaz.Documentation\Topaz.Documentation.csproj" />    <ProjectReference Include="../Topaz.CLI.Infrastructure/Topaz.CLI.Infrastructure.csproj" />  </ItemGroup>
