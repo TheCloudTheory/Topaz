@@ -6,6 +6,7 @@ sidebar_position: 25
 Generates random bytes using the Key Vault random number generator.
 
 ## Options
+* `--vault-name` - (Optional) Key Vault name. When provided the remote Key Vault RNG endpoint is used; otherwise bytes are generated locally.
 * `-c, --count` - (Required) (Required) Number of random bytes to generate (1–128).
 
 ## Examples
