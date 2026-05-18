@@ -14,6 +14,15 @@ public class CreateKeyVaultCommand(HttpClient httpClient) : TopazHttpCommand<Cre
     public override async Task<int> ExecuteAsync(CommandContext context, CreateKeyVaultCommandSettings settings)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.KeyVault/vaults/{settings.Name}";
+
+        // Check whether the vault already exists; if so, fail gracefully.
+        var getResponse = await HttpClient.GetAsync(url);
+        if (getResponse.IsSuccessStatusCode)
+        {
+            await Console.Error.WriteLineAsync($"The specified vault: {settings.Name} already exists.");
+            return 1;
+        }
+
         var (success, body) = await PutAsync(url, new
         {
             location = settings.Location,

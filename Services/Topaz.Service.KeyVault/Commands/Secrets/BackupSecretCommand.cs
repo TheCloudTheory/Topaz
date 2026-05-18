@@ -1,8 +1,10 @@
+using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
+using Topaz.Shared;
 
 namespace Topaz.Service.KeyVault.Commands.Secrets;
 
@@ -16,7 +18,8 @@ public class BackupSecretCommand(HttpClient httpClient) : TopazHttpCommand<Backu
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/secrets/{settings.Name}/backup?api-version=7.4";
         var (success, body) = await PostAsync(url, new { });
         if (!success) return 1;
-        AnsiConsole.WriteLine(body);
+        var value = JsonSerializer.Deserialize<JsonElement>(body, GlobalSettings.JsonOptions).GetProperty("value").GetString();
+        await Console.Out.WriteLineAsync(value!);
         return 0;
     }
 

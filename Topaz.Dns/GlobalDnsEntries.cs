@@ -152,29 +152,19 @@ public record GlobalDnsEntries
             // If both the name of an instance and a resource group are null,
             // it means a subscription was removed. Cascade delete all the resources
             // which may have entries related to the subscription
-            foreach (var service in entries.Services)
-            {
-                foreach (var instance in service.Value)
-                {
-                    if (instance.Key.Contains(subscriptionIdentifier.ToString()))
-                    {
-                        entries.Services.Remove(service.Key);
-                    }
-                }
-            }
+            var keysToRemove = entries.Services
+                .Where(s => s.Value.Keys.Any(k => k.Contains(subscriptionIdentifier.ToString())))
+                .Select(s => s.Key)
+                .ToList();
+            foreach (var key in keysToRemove)
+                entries.Services.Remove(key);
         }
 
         if (string.IsNullOrWhiteSpace(instanceName) && !string.IsNullOrWhiteSpace(resourceGroupIdentifier))
         {
             // If only instance name is null then we need to remove global entries
             // for resources inside that resource group only
-            foreach (var service in entries.Services)
-            {
-                if (service.Key == GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier))
-                {
-                    entries.Services.Remove(service.Key);
-                }
-            }
+            entries.Services.Remove(GetHierarchyValue(subscriptionIdentifier, resourceGroupIdentifier));
         }
 
         var newEntries = JsonSerializer.Serialize(entries, GlobalSettings.JsonOptionsCli);

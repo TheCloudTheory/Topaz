@@ -15,17 +15,27 @@ public class GetRandomBytesCommand(HttpClient httpClient) : TopazHttpCommand<Get
 
     public override async Task<int> ExecuteAsync(CommandContext context, GetRandomBytesCommandSettings settings)
     {
-        var url = $"{KvDataPlaneUrl(settings.VaultName!)}/rng?api-version=7.4";
-        var (success, body) = await PostAsync(url, new { count = settings.Count });
-        if (!success) return 1;
-        AnsiConsole.WriteLine(body);
+        if (!string.IsNullOrEmpty(settings.VaultName))
+        {
+            var url = $"{KvDataPlaneUrl(settings.VaultName)}/rng?api-version=7.4";
+            var (success, body) = await PostAsync(url, new { count = settings.Count });
+            if (!success) return 1;
+            AnsiConsole.WriteLine(body);
+            return 0;
+        }
+
+        var bytes = new byte[settings.Count];
+        System.Security.Cryptography.RandomNumberGenerator.Fill(bytes);
+        var base64Url = Convert.ToBase64String(bytes)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+        AnsiConsole.WriteLine(base64Url);
         return 0;
     }
 
     public override ValidationResult Validate(CommandContext context, GetRandomBytesCommandSettings settings)
     {
-        if (string.IsNullOrEmpty(settings.VaultName))
-            return ValidationResult.Error("Vault name can't be null.");
         if (settings.Count < 1 || settings.Count > 128)
             return ValidationResult.Error("Count must be between 1 and 128.");
         return base.Validate(context, settings);
@@ -34,7 +44,7 @@ public class GetRandomBytesCommand(HttpClient httpClient) : TopazHttpCommand<Get
     [UsedImplicitly]
     public sealed class GetRandomBytesCommandSettings : CommandSettings
     {
-        [CommandOptionDefinition("(Required) Key Vault name.", required: true)]
+        [CommandOptionDefinition("(Optional) Key Vault name. When provided the remote Key Vault RNG endpoint is used; otherwise bytes are generated locally.", required: false)]
         [CommandOption("--vault-name")]
         public string? VaultName { get; set; }
 
