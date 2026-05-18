@@ -297,9 +297,32 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
         var existingInstance = GlobalDnsEntries.GetEntry(TService.UniqueName, instanceName);
         if (existingInstance != null && TService.IsGlobalService && createOperation && !recoverInstance)
         {
+            // Verify the resource the DNS entry points to still exists on disk.
+            // If the parent resource (e.g. a resource group) was deleted, the directory is gone
+            // but this service's DNS entry may remain as a stale orphan. Detect this and clean
+            // up so that recreation can proceed normally.
+            var existingSubId = SubscriptionIdentifier.From(existingInstance.Value.subscription);
+            var existingRgId = existingInstance.Value.resourceGroup != null
+                ? ResourceGroupIdentifier.From(existingInstance.Value.resourceGroup)
+                : null;
+            var existingPath = existingRgId != null
+                ? GetServiceInstancePath(existingSubId, existingRgId, existingInstance.Value.canonicalName)
+                : Path.Combine(BaseEmulatorPath,
+                    GetLocalDirectoryPathWithReplacedValues(existingSubId, null),
+                    existingInstance.Value.canonicalName);
+            var existingMetadata = Path.Combine(existingPath, "metadata.json");
+
+            if (File.Exists(existingMetadata))
+            {
+                _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(CreateOrUpdate),
+                    $"There's an existing instance of {TService.UniqueName} service existing with the name {instanceName}");
+                return;
+            }
+
             _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(CreateOrUpdate),
-                $"There's an existing instance of {TService.UniqueName} service existing with the name {instanceName}");
-            return;
+                $"Removing orphaned DNS entry for {TService.UniqueName}/{instanceName}: metadata file no longer exists at '{existingMetadata}'.");
+            GlobalDnsEntries.DeleteEntry(TService.UniqueName, existingInstance.Value.subscription,
+                existingInstance.Value.resourceGroup, instanceName);
         }
 
         var metadataFilePath = InitializeServiceDirectories(subscriptionIdentifier, resourceGroupIdentifier, id);
