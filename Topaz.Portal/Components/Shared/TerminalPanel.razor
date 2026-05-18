@@ -144,6 +144,10 @@
     private List<CliCommandModel> _suggestions = [];
     private int _selectedIndex = -1;
 
+    // Command history navigation (ArrowUp/Down when no suggestions are open)
+    private int _historyIndex = -1;          // -1 = not browsing history
+    private string _historyInputBuffer = string.Empty; // saves in-progress input while browsing
+
     private HostInfoDto? _hostInfo;
     private bool _welcomeReady;
 
@@ -170,6 +174,7 @@
     private void OnInputChanged(ChangeEventArgs e)
     {
         _currentInput = e.Value?.ToString() ?? string.Empty;
+        _historyIndex = -1; // typing always leaves history-browsing mode
         _suggestions = [..SuggestionService.GetSuggestions(_currentInput)];
         _selectedIndex = _suggestions.Count > 0 ? 0 : -1;
     }
@@ -181,11 +186,15 @@
             case "ArrowDown":
                 if (_suggestions.Count > 0)
                     _selectedIndex = (_selectedIndex + 1) % _suggestions.Count;
+                else
+                    NavigateHistory(newer: true);
                 return;
 
             case "ArrowUp":
                 if (_suggestions.Count > 0)
                     _selectedIndex = (_selectedIndex - 1 + _suggestions.Count) % _suggestions.Count;
+                else
+                    NavigateHistory(newer: false);
                 return;
 
             case "Tab":
@@ -215,6 +224,7 @@
                 var entry = new TerminalEntry(command) { IsExecuting = true };
                 _history.Add(entry);
                 _currentInput = string.Empty;
+                _historyIndex = -1;
                 _suggestions = [];
                 _selectedIndex = -1;
 
@@ -261,6 +271,38 @@
         _currentInput = string.Join(" ", parts);
         _suggestions = [];
         _selectedIndex = -1;
+    }
+
+    /// <summary>
+    /// Navigates command history. <paramref name="newer"/> = true moves towards the most
+    /// recent command (ArrowDown); false moves towards older commands (ArrowUp).
+    /// Index –1 means "not browsing" and shows the buffered in-progress input.
+    /// </summary>
+    private void NavigateHistory(bool newer)
+    {
+        // Build a deduplicated list of completed commands, most recent first.
+        var completed = _history
+            .Where(e => !e.IsExecuting)
+            .Select(e => e.Command)
+            .Reverse()
+            .Distinct()
+            .ToList();
+
+        if (completed.Count == 0) return;
+
+        if (_historyIndex == -1 && !newer)
+        {
+            // First ArrowUp — save current input so ArrowDown can restore it.
+            _historyInputBuffer = _currentInput;
+        }
+
+        var next = _historyIndex + (newer ? -1 : 1);
+
+        if (next < -1) return;              // already at current input, nothing newer
+        if (next >= completed.Count) return; // already at the oldest entry
+
+        _historyIndex = next;
+        _currentInput = _historyIndex == -1 ? _historyInputBuffer : completed[_historyIndex];
     }
 
     private async Task FocusInputAsync()
