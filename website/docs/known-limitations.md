@@ -113,21 +113,23 @@ Constructing a `TableServiceClient` with only `DefaultEndpointsProtocol=https;Ac
 
 Covered by the single-port HTTPS consolidation planned for Blob/Table/Queue/File storage (see above).
 
-## Key Vault — AES symmetric key (`oct`) cryptographic operations not supported
+## Key Vault — `wrapKey`/`unwrapKey` for `oct` keys does not implement RFC 3394 AES Key Wrap
 
-**Affected services:** Key Vault data plane — `encrypt`, `decrypt`, `wrapKey`, `unwrapKey`
+**Affected services:** Key Vault data plane — `wrapKey`, `unwrapKey`
 
-The current implementation of Key Vault crypto operations (`encrypt`, `decrypt`, `wrapKey`, `unwrapKey`) only supports **RSA key types** (`RSA`, `RSA-HSM`). AES symmetric algorithms — `A128GCM`, `A192GCM`, `A256GCM`, `A128CBC`, `A192CBC`, `A256CBC`, `A128CBCPAD`, `A192CBCPAD`, `A256CBCPAD` — require `oct` key material which is not yet stored or modelled in `KeyBundle`.
+The Azure Key Vault REST API specifies that `wrapKey`/`unwrapKey` operations on `oct` (symmetric) keys use **RFC 3394 AES Key Wrap** — algorithms `A128KW`, `A192KW`, and `A256KW`. These produce a deterministic, padded output with no initialization vector.
+
+Topaz's current implementation dispatches `wrapKey`/`unwrapKey` for `oct` keys to the same AES-GCM and AES-CBC(PAD) code paths as `encrypt`/`decrypt`. At the REST layer the endpoints respond correctly to AES-GCM and AES-CBC(PAD) algorithm names, but the RFC 3394 algorithms (`A128KW`, `A192KW`, `A256KW`) return `400 BadParameter` because Topaz has no RFC 3394 implementation. The `encrypt` and `decrypt` endpoints for `oct` keys are fully supported and unaffected.
 
 ### Impact
 
-Calling `az keyvault key encrypt --algorithm A256GCM` (or the SDK equivalent via `CryptographyClient.Encrypt(EncryptionAlgorithm.A256Gcm, ...)`) against any key in Topaz returns `400 BadParameter`. Creating an `oct` key via `POST /keys/{name}/create` with `"kty": "oct"` succeeds but the key object carries no usable material.
+Code that calls `CryptographyClient.WrapKey(KeyWrapAlgorithm.A256KW, ...)` or `az keyvault key wrap-key --algorithm A256KW` against a Topaz `oct` key will receive a `400 BadParameter` error. Callers that use `CryptographyClient.Encrypt` / `Decrypt` with the same AES-GCM or AES-CBC(PAD) algorithms are fully functional.
 
-**Workaround:** use RSA key types (`RSA`, `RSA-HSM`) with algorithms `RSA1_5`, `RSA-OAEP`, or `RSA-OAEP-256` — these are fully supported.
+**Workaround:** use `CryptographyClient.Encrypt` and `Decrypt` with AES-GCM or AES-CBC(PAD) algorithms (`A256GCM`, `A256CBCPAD`, etc.) instead of `WrapKey`/`UnwrapKey` for symmetric key scenarios.
 
-### Planned fix — v1.4-beta
+### No fix planned
 
-Extend `KeyBundle` / `JsonWebKey` with a `k` field to store raw symmetric key material, and implement AES-GCM and AES-CBC(PAD) encrypt/decrypt dispatch in the data plane.
+Implementing RFC 3394 AES Key Wrap requires a custom in-process implementation (no built-in .NET API exists). This is deferred indefinitely.
 
 ## Key Vault — `Get Key Attestation` returns no attestation blob
 

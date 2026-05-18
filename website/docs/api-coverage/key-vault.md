@@ -113,11 +113,11 @@ The data plane covers operations served directly from the vault's own hostname (
 | Get Key Rotation Policy | ✅ |
 | Update Key Rotation Policy | ✅ |
 | Get Random Bytes | ✅ | `POST /rng` |
-| encrypt | ✅ | `POST /keys/{name}/{version}/encrypt` — RSA1_5, RSA-OAEP, RSA-OAEP-256 |
+| encrypt | ✅ | `POST /keys/{name}/{version}/encrypt` — RSA: RSA1_5, RSA-OAEP, RSA-OAEP-256; oct: A128GCM, A192GCM, A256GCM, A128CBC, A192CBC, A256CBC, A128CBCPAD, A192CBCPAD, A256CBCPAD |
 | decrypt | ✅ |
 | sign | ✅ |
 | verify | ✅ |
-| wrap Key | ✅ | `POST /keys/{name}/{version}/wrapkey` — RSA1_5, RSA-OAEP, RSA-OAEP-256 |
+| wrap Key | ✅ | `POST /keys/{name}/{version}/wrapkey` — RSA: RSA1_5, RSA-OAEP, RSA-OAEP-256; oct: A128GCM, A192GCM, A256GCM, A128CBC, A192CBC, A256CBC, A128CBCPAD, A192CBCPAD, A256CBCPAD (RFC 3394 AES-KW not implemented — see [known limitations](../known-limitations.md#key-vault--wrapkeyunwrapkey-for-oct-keys-does-not-implement-rfc-3394-aes-key-wrap)) |
 | unwrap Key | ✅ |
 | release | ✅ |
 | Get Key Attestation | ✅ |

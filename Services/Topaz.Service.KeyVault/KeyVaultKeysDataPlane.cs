@@ -479,9 +479,12 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key does not permit the 'encrypt' operation.", "Forbidden");
 
         var kty = bundle.Key.Kty.ToUpperInvariant();
+        if (kty is "OCT" or "OCT-HSM")
+            return EncryptWithAes(bundle.Key.Kid, bundle.Key, request, logger, nameof(EncryptKey));
+
         if (kty is not ("RSA" or "RSA-HSM"))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
-                $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'. Only RSA keys support this algorithm.", "BadParameter");
+                $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'.", "BadParameter");
 
         var padding = request.Algorithm.ToUpperInvariant() switch
         {
@@ -551,9 +554,12 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key does not permit the 'decrypt' operation.", "Forbidden");
 
         var kty = bundle.Key.Kty.ToUpperInvariant();
+        if (kty is "OCT" or "OCT-HSM")
+            return DecryptWithAes(bundle.Key.Kid, bundle.Key, request, logger, nameof(DecryptKey));
+
         if (kty is not ("RSA" or "RSA-HSM"))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
-                $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'. Only RSA keys support this algorithm.", "BadParameter");
+                $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'.", "BadParameter");
 
         // All six CRT fields are required — macOS (.NET 8) ImportParameters fails without them.
         if (string.IsNullOrEmpty(bundle.Key.D)       || string.IsNullOrEmpty(bundle.Key.P)  ||
@@ -643,9 +649,12 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key does not permit the 'wrapKey' operation.", "Forbidden");
 
         var kty = bundle.Key.Kty.ToUpperInvariant();
+        if (kty is "OCT" or "OCT-HSM")
+            return EncryptWithAes(bundle.Key.Kid, bundle.Key, request, logger, nameof(WrapKey));
+
         if (kty is not ("RSA" or "RSA-HSM"))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
-                $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'. Only RSA keys support this algorithm.", "BadParameter");
+                $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'.", "BadParameter");
 
         var padding = request.Algorithm.ToUpperInvariant() switch
         {
@@ -717,9 +726,12 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null, "Key does not permit the 'unwrapKey' operation.", "Forbidden");
 
         var kty = bundle.Key.Kty.ToUpperInvariant();
+        if (kty is "OCT" or "OCT-HSM")
+            return DecryptWithAes(bundle.Key.Kid, bundle.Key, request, logger, nameof(UnwrapKey));
+
         if (kty is not ("RSA" or "RSA-HSM"))
             return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
-                $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'. Only RSA keys support this algorithm.", "BadParameter");
+                $"Algorithm '{request.Algorithm}' is not supported for key type '{bundle.Key.Kty}'.", "BadParameter");
 
         // All six CRT fields are required — macOS (.NET 8) ImportParameters fails without them.
         if (string.IsNullOrEmpty(bundle.Key.D)       || string.IsNullOrEmpty(bundle.Key.P)  ||
@@ -1192,6 +1204,18 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
                 keyBundle = new KeyBundle(keyName, vaultName, keyType, null, jwk.Crv ?? "P-256", keyOps, null, null, x, y, ecD: ecDBytes);
                 break;
             }
+            case "OCT":
+            case "OCT-HSM":
+            {
+                if (string.IsNullOrEmpty(jwk.K))
+                    return new DataPlaneOperationResult<KeyBundle>(OperationResult.Failed, null,
+                        "Oct key import requires the 'k' (key material) field in the JWK.", "BadRequest");
+
+                var octKBytes = Base64UrlDecode(jwk.K);
+                keyBundle = new KeyBundle(keyName, vaultName, keyType, octKBytes.Length * 8, null, keyOps,
+                    null, null, null, null, octK: octKBytes);
+                break;
+            }
             default:
                 // Symmetric / oct — no public material to validate.
                 keyBundle = new KeyBundle(keyName, vaultName, keyType, null, null, keyOps, null, null, null, null);
@@ -1357,10 +1381,140 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
             KeyReleaseResponse.New(jws), null, null);
     }
 
+    private static DataPlaneOperationResult<KeyOperationResponse> EncryptWithAes(
+        string kid, JsonWebKey jwk, KeyOperationRequest request, ITopazLogger logger, string callerName)
+    {
+        if (string.IsNullOrEmpty(jwk.K))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                "AES key material (k) is missing. Recreate the key to enable this operation.", "BadParameter");
+
+        var alg = request.Algorithm!.ToUpperInvariant();
+        var keyBytes = Base64UrlDecode(jwk.K);
+        var expectedKeyLength = AesAlgorithmKeyLength(alg);
+
+        if (expectedKeyLength < 0)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Algorithm '{request.Algorithm}' is not supported for oct keys. Supported AES algorithms: A128GCM, A192GCM, A256GCM, A128CBC, A192CBC, A256CBC, A128CBCPAD, A192CBCPAD, A256CBCPAD.", "BadParameter");
+
+        if (keyBytes.Length != expectedKeyLength)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Key length ({keyBytes.Length * 8} bits) does not match algorithm '{request.Algorithm}' (expects {expectedKeyLength * 8} bits).", "BadParameter");
+
+        var plaintext = Base64UrlDecode(request.Value!);
+
+        try
+        {
+            if (alg.EndsWith("GCM"))
+            {
+                var iv = RandomNumberGenerator.GetBytes(12);
+                var aadBytes = string.IsNullOrEmpty(request.Aad) ? null : Base64UrlDecode(request.Aad);
+                var ciphertext = new byte[plaintext.Length];
+                var tag = new byte[16];
+                using var aesGcm = new AesGcm(keyBytes, 16);
+                aesGcm.Encrypt(iv, plaintext, ciphertext, tag, aadBytes);
+
+                logger.LogDebug(nameof(KeyVaultKeysDataPlane), callerName, "AES-GCM encrypted {0} bytes with {1}.", plaintext.Length, request.Algorithm);
+                return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Success,
+                    KeyOperationResponse.New(kid, Base64UrlEncode(ciphertext),
+                        iv: Base64UrlEncode(iv), tag: Base64UrlEncode(tag), aad: request.Aad), null, null);
+            }
+            else
+            {
+                var iv = RandomNumberGenerator.GetBytes(16);
+                var padding = alg.EndsWith("PAD") ? PaddingMode.PKCS7 : PaddingMode.None;
+                using var aes = Aes.Create();
+                aes.Key = keyBytes;
+                var ciphertext = aes.EncryptCbc(plaintext, iv, padding);
+
+                logger.LogDebug(nameof(KeyVaultKeysDataPlane), callerName, "AES-CBC encrypted {0} bytes with {1}.", plaintext.Length, request.Algorithm);
+                return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Success,
+                    KeyOperationResponse.New(kid, Base64UrlEncode(ciphertext), iv: Base64UrlEncode(iv)), null, null);
+            }
+        }
+        catch (Exception ex) when (ex is ArgumentException or CryptographicException)
+        {
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"AES encryption failed: {ex.Message}", "BadParameter");
+        }
+    }
+
+    private static DataPlaneOperationResult<KeyOperationResponse> DecryptWithAes(
+        string kid, JsonWebKey jwk, KeyOperationRequest request, ITopazLogger logger, string callerName)
+    {
+        if (string.IsNullOrEmpty(jwk.K))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                "AES key material (k) is missing. Recreate the key to enable this operation.", "BadParameter");
+
+        if (string.IsNullOrEmpty(request.Iv))
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                "Initialization vector ('iv') is required for AES decryption.", "BadParameter");
+
+        var alg = request.Algorithm!.ToUpperInvariant();
+        var keyBytes = Base64UrlDecode(jwk.K);
+        var expectedKeyLength = AesAlgorithmKeyLength(alg);
+
+        if (expectedKeyLength < 0)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Algorithm '{request.Algorithm}' is not supported for oct keys. Supported AES algorithms: A128GCM, A192GCM, A256GCM, A128CBC, A192CBC, A256CBC, A128CBCPAD, A192CBCPAD, A256CBCPAD.", "BadParameter");
+
+        if (keyBytes.Length != expectedKeyLength)
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"Key length ({keyBytes.Length * 8} bits) does not match algorithm '{request.Algorithm}' (expects {expectedKeyLength * 8} bits).", "BadParameter");
+
+        try
+        {
+            var iv = Base64UrlDecode(request.Iv);
+            var ciphertext = Base64UrlDecode(request.Value!);
+
+            if (alg.EndsWith("GCM"))
+            {
+                if (string.IsNullOrEmpty(request.Tag))
+                    return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                        "Authentication tag ('tag') is required for AES-GCM decryption.", "BadParameter");
+
+                var tag = Base64UrlDecode(request.Tag);
+                var aadBytes = string.IsNullOrEmpty(request.Aad) ? null : Base64UrlDecode(request.Aad);
+                var plaintext = new byte[ciphertext.Length];
+                using var aesGcm = new AesGcm(keyBytes, tag.Length);
+                aesGcm.Decrypt(iv, ciphertext, tag, plaintext, aadBytes);
+
+                logger.LogDebug(nameof(KeyVaultKeysDataPlane), callerName, "AES-GCM decrypted {0} bytes with {1}.", ciphertext.Length, request.Algorithm);
+                return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Success,
+                    KeyOperationResponse.New(kid, Base64UrlEncode(plaintext)), null, null);
+            }
+            else
+            {
+                var padding = alg.EndsWith("PAD") ? PaddingMode.PKCS7 : PaddingMode.None;
+                using var aes = Aes.Create();
+                aes.Key = keyBytes;
+                var plaintext = aes.DecryptCbc(ciphertext, iv, padding);
+
+                logger.LogDebug(nameof(KeyVaultKeysDataPlane), callerName, "AES-CBC decrypted {0} bytes with {1}.", ciphertext.Length, request.Algorithm);
+                return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Success,
+                    KeyOperationResponse.New(kid, Base64UrlEncode(plaintext)), null, null);
+            }
+        }
+        catch (Exception ex) when (ex is FormatException or CryptographicException or ArgumentException)
+        {
+            return new DataPlaneOperationResult<KeyOperationResponse>(OperationResult.Failed, null,
+                $"AES decryption failed: {ex.Message}", "BadParameter");
+        }
+    }
+
+    private static int AesAlgorithmKeyLength(string alg) => alg.ToUpperInvariant() switch
+    {
+        var a when a.StartsWith("A128") => 16,
+        var a when a.StartsWith("A192") => 24,
+        var a when a.StartsWith("A256") => 32,
+        _ => -1
+    };
+
     private static KeyBundle GenerateKeyBundle(string vaultName, string keyName, string keyType,
         CreateKeyRequest request)
     {
-        var defaultOps = new[] { "encrypt", "decrypt", "sign", "verify", "wrapKey", "unwrapKey" };
+        var defaultOps = keyType.ToUpperInvariant() is "OCT" or "OCT-HSM"
+            ? new[] { "encrypt", "decrypt", "wrapKey", "unwrapKey" }
+            : new[] { "encrypt", "decrypt", "sign", "verify", "wrapKey", "unwrapKey" };
         var keyOps = request.KeyOperations ?? defaultOps;
 
         switch (keyType.ToUpperInvariant())
@@ -1391,8 +1545,18 @@ internal sealed class KeyVaultKeysDataPlane(ITopazLogger logger, KeyVaultResourc
                 return new KeyBundle(keyName, vaultName, keyType, null, request.Curve ?? "P-256", keyOps,
                     null, null, parameters.Q.X, parameters.Q.Y, ecD: parameters.D);
             }
+            case "OCT":
+            case "OCT-HSM":
+            {
+                var keySizeBits = request.KeySize ?? 256;
+                if (keySizeBits is not (128 or 192 or 256))
+                    keySizeBits = 256;
+                var keyBytes = RandomNumberGenerator.GetBytes(keySizeBits / 8);
+                return new KeyBundle(keyName, vaultName, keyType, keySizeBits, null, keyOps,
+                    null, null, null, null, octK: keyBytes);
+            }
             default:
-                // Symmetric / oct keys — no public material exposed.
+                // Unknown type — create an empty bundle; crypto operations will fail gracefully.
                 return new KeyBundle(keyName, vaultName, keyType, request.KeySize, null, keyOps,
                     null, null, null, null);
         }

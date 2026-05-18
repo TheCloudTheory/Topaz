@@ -19,7 +19,7 @@ public record class KeyBundle
         byte[]? ecX, byte[]? ecY,
         byte[]? rsaD = null, byte[]? rsaP = null, byte[]? rsaQ = null,
         byte[]? rsaDP = null, byte[]? rsaDQ = null, byte[]? rsaInverseQ = null,
-        byte[]? ecD = null)
+        byte[]? ecD = null, byte[]? octK = null)
     {
         var version = Guid.NewGuid();
         Name = name;
@@ -44,6 +44,8 @@ public record class KeyBundle
             Crv = curve,
             X = ecX != null ? Base64UrlEncode(ecX) : null,
             Y = ecY != null ? Base64UrlEncode(ecY) : null,
+            // Symmetric (oct) components — stored on disk only
+            K = octK != null ? Base64UrlEncode(octK) : null,
         };
 
         Attributes = new KeyAttributes(
@@ -157,9 +159,14 @@ public record class JsonWebKey
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Y { get; set; }
 
-    /// <summary>Returns a copy of this JWK with all private RSA fields removed — safe to include in API responses.</summary>
+    // Symmetric (oct) — raw key bytes. Stored on disk; never sent in HTTP responses.
+    [JsonPropertyName("k")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? K { get; set; }
+
+    /// <summary>Returns a copy of this JWK with all private fields removed — safe to include in API responses.</summary>
     public JsonWebKey ToPublicJwk() =>
-        this with { D = null, P = null, Q = null, DP = null, DQ = null, InverseQ = null };
+        this with { D = null, P = null, Q = null, DP = null, DQ = null, InverseQ = null, K = null };
 }
 
 public record class KeyAttributes

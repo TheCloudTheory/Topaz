@@ -12,7 +12,21 @@ public class KeyOperationResponse
     [JsonPropertyName("value")]
     public string? Result { get; init; }
 
-    public static KeyOperationResponse New(string kid, string result) => new() { Kid = kid, Result = result };
+    [JsonPropertyName("iv")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Iv { get; init; }
+
+    [JsonPropertyName("tag")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Tag { get; init; }
+
+    [JsonPropertyName("aad")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Aad { get; init; }
+
+    public static KeyOperationResponse New(string kid, string result,
+        string? iv = null, string? tag = null, string? aad = null)
+        => new() { Kid = kid, Result = result, Iv = iv, Tag = tag, Aad = aad };
 
     public override string ToString()
     {

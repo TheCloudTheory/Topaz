@@ -17,4 +17,8 @@ public record class KeyOperationRequest
     /// <summary>Additional authenticated data (AES-GCM only). Base64url-encoded.</summary>
     [JsonPropertyName("aad")]
     public string? Aad { get; init; }
+
+    /// <summary>Authentication tag (AES-GCM decrypt only). Base64url-encoded.</summary>
+    [JsonPropertyName("tag")]
+    public string? Tag { get; init; }
 }

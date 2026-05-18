@@ -1515,6 +1515,63 @@ public class KeyVaultKeyTests
     }
 
     [Test]
+    public void KeyVaultKeyTests_CreateOctKey_ShouldReturnValidKeyBundleWithOctType()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+
+        // Act
+        var key = keyClient.CreateOctKey(new CreateOctKeyOptions("oct-key-create") { KeySize = 256 });
+
+        // Assert
+        Assert.That(key.Value.Key.KeyType, Is.EqualTo(KeyType.Oct));
+        Assert.That(key.Value.Key.Id, Is.Not.Null.And.Not.Empty);
+        // k (symmetric material) must NOT appear in the response
+        Assert.That(key.Value.Key.K, Is.Null);
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_Encrypt_AesGcm_RoundTrip_DecryptedPlaintextMatchesOriginal()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateOctKey(new CreateOctKeyOptions("oct-aes-gcm-key") { KeySize = 256 });
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var plaintext = new byte[64];
+        Random.Shared.NextBytes(plaintext);
+
+        // Act
+        var encrypted = cryptoClient.Encrypt(EncryptParameters.A256GcmParameters(plaintext));
+        var decrypted = cryptoClient.Decrypt(
+            DecryptParameters.A256GcmParameters(encrypted.Ciphertext, encrypted.Iv, encrypted.AuthenticationTag));
+
+        // Assert
+        Assert.That(decrypted.Plaintext, Is.EqualTo(plaintext));
+    }
+
+    [Test]
+    public void KeyVaultKeyTests_Encrypt_AesCbcPad_RoundTrip_DecryptedPlaintextMatchesOriginal()
+    {
+        // Arrange
+        EnsureVault();
+        var keyClient = CreateKeyClient();
+        var key = keyClient.CreateOctKey(new CreateOctKeyOptions("oct-aes-cbcpad-key") { KeySize = 256 });
+        var cryptoClient = CreateCryptoClient(key.Value);
+        var plaintext = new byte[64];
+        Random.Shared.NextBytes(plaintext);
+
+        // Act
+        var encrypted = cryptoClient.Encrypt(EncryptParameters.A256CbcPadParameters(plaintext));
+        var decrypted = cryptoClient.Decrypt(
+            DecryptParameters.A256CbcPadParameters(encrypted.Ciphertext, encrypted.Iv));
+
+        // Assert
+        Assert.That(decrypted.Plaintext, Is.EqualTo(plaintext));
+    }
+
+    [Test]
     public void KeyVaultKeyTests_Release_ReturnsJws()
     {
         // Arrange

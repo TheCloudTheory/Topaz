@@ -64,4 +64,8 @@ public record class ImportKeyJwk
 
     [JsonPropertyName("y")]
     public string? Y { get; init; }
+
+    // Symmetric (oct)
+    [JsonPropertyName("k")]
+    public string? K { get; init; }
 }
