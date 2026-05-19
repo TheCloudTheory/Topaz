@@ -16,13 +16,6 @@ Topaz exposes a custom Azure cloud environment that Azure CLI can register and a
 
 - Azure CLI installed (`az --version` to verify)
 - Topaz installed and the certificate trusted at the OS level (see [Getting started](../intro.md))
-- A Microsoft Entra ID tenant you can log into (a free/personal tenant works fine)
-
-:::tip[Use a dedicated test tenant]
-
-Creating a dedicated Entra ID tenant for local development disables stricter security policies like Conditional Access, which can otherwise interrupt the `az login` flow. Head to [portal.azure.com](https://portal.azure.com) → *Manage Microsoft Entra ID* → *Create a tenant* to create a free one.
-
-:::
 
 ## Step 1 — Trust the certificate in Azure CLI
 
@@ -69,13 +62,12 @@ The script is idempotent — safe to run multiple times. It will prompt you befo
 
 If you prefer not to run the script, follow the [official Azure CLI guide](https://learn.microsoft.com/en-gb/cli/azure/use-azure-cli-successfully-troubleshooting?view=azure-cli-latest#work-behind-a-proxy) to set `REQUESTS_CA_BUNDLE` to a bundle file that includes the Topaz certificate.
 
-## Step 2 — Start the emulator with a tenant ID
+## Step 2 — Start the emulator
 
-Azure CLI needs to resolve Entra ID metadata endpoints when you log in. Topaz intercepts these, but only when started with the `--tenant-id` option pointing at your real Entra ID tenant:
+Topaz emulates Entra ID itself — no real Azure tenant is required. Start the host with an optional default subscription ID so it is created automatically:
 
 ```bash
 topaz-host start \
-  --tenant-id <your-entra-tenant-id> \
   --default-subscription 00000000-0000-0000-0000-000000000001 \
   --log-level Information
 ```

@@ -41,7 +41,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
       # 1 — Configure DNS so Azure SDK hostnames resolve to localhost
       - name: Configure DNS
@@ -63,13 +63,13 @@ jobs:
             -p 8897:8897 \
             thecloudtheory/topaz-host:${{ env.TOPAZ_VERSION }}
         env:
-          TOPAZ_VERSION: v1.0.299-alpha   # pin to a specific release tag
+          TOPAZ_VERSION: v1.5.7-beta   # pin to a specific release tag
 
-      # 4 — Wait for the ARM endpoint to become ready
+      # 4 — Wait for Topaz to become healthy
       - name: Wait for Topaz
         run: |
           for i in $(seq 1 30); do
-            if curl -sk https://localhost:8899/subscriptions > /dev/null 2>&1; then
+            if curl -sk https://localhost:8899/health > /dev/null 2>&1; then
               echo "Topaz is ready"
               exit 0
             fi
@@ -105,7 +105,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
       - name: Configure DNS
         run: sudo bash install/install-linux.sh
@@ -120,7 +120,7 @@ jobs:
         run: dotnet test --no-build --verbosity normal
         env:
           # Testcontainers reads this to pull the correct image
-          TOPAZ_HOST_CONTAINER_IMAGE: thecloudtheory/topaz-host:v1.0.299-alpha
+          TOPAZ_HOST_CONTAINER_IMAGE: thecloudtheory/topaz-host:v1.5.7-beta
 ```
 
 ### Using a locally built image
@@ -182,12 +182,12 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  TOPAZ_VERSION: v1.0.299-alpha
+  TOPAZ_VERSION: v1.5.7-beta
 
 steps:
   - task: UseDotNet@2
     inputs:
-      version: '8.0.x'
+      version: '10.0.x'
 
   - script: sudo bash install/install-linux.sh
     displayName: Configure DNS
@@ -208,7 +208,7 @@ steps:
 
   - script: |
       for i in $(seq 1 30); do
-        if curl -sk https://localhost:8899/subscriptions > /dev/null 2>&1; then
+        if curl -sk https://localhost:8899/health > /dev/null 2>&1; then
           echo "Topaz is ready"; exit 0
         fi
         echo "Waiting... ($i/30)"; sleep 2
