@@ -81,3 +81,25 @@ This requirement does **not** apply when running Topaz as a Docker container —
 If you are only using the Azure SDK (not the Azure CLI), you can point your SDK client directly at port 8898 and skip port 443 entirely.
 
 :::
+
+## Ready to try it?
+
+Get Topaz running in minutes — no account or registration needed.
+
+```bash
+brew install topaz
+```
+
+Or pull the Docker image:
+
+```bash
+docker pull ghcr.io/thecloudtheory/topaz:latest
+```
+
+See the [Getting Started guide](./intro) for full setup instructions, including certificate installation and Azure CLI integration.
+
+:::tip[Missing a service?]
+
+If a service you need isn't listed above or the coverage isn't deep enough for your use case, [open a GitHub Discussion](https://github.com/TheCloudTheory/Topaz/discussions) — your workflow will directly influence what gets built next.
+
+:::
