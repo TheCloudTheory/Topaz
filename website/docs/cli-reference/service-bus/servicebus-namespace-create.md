@@ -9,6 +9,7 @@ Creates or updates a Service Bus namespace.
 * `-s, --subscription-id` - (Required) (Required) Subscription ID.
 * `-n, --name` - (Required) (Required) Namespace name.
 * `-g, --resource-group` - (Required) (Required) Resource group name.
+* `-l, --location` - (Required) (Required) Azure region for the namespace.
 
 ## Examples
 
