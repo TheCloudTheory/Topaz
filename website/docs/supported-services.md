@@ -96,7 +96,7 @@ Or pull the Docker image:
 docker pull ghcr.io/thecloudtheory/topaz:latest
 ```
 
-See the [Getting Started guide](./intro) for full setup instructions, including certificate installation and Azure CLI integration.
+See the [Getting Started guide](/docs/intro) for full setup instructions, including certificate installation and Azure CLI integration.
 
 :::tip[Missing a service?]
 
