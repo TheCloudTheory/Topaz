@@ -714,6 +714,24 @@ TODO: VirtualNetwork — Public IP Address (PIP) CRUD
   labels: enhancement, good first issue
 -->
 
+<!--
+TODO: Topaz CLI — configurable defaults
+  Add a `topaz configure` command (and `topaz configure list` sub-command) that persists
+  per-user default values for the most commonly repeated flags:
+  - --subscription-id  (default subscription GUID)
+  - --resource-group   (default resource group name)
+  - --location         (default Azure region)
+  Defaults are stored in a JSON config file inside the Topaz data directory
+  (e.g. ~/.topaz/defaults.json or alongside global-dns.json).
+  All existing commands that accept these flags should read from the config file when
+  the flag is not explicitly supplied on the command line, following the same precedence
+  as the Azure CLI: explicit flag > environment variable > config file default.
+  Include CLI tests covering: set a default, verify it is applied by a downstream command,
+  and clear/override a default.
+  milestone: v1.7-beta
+  labels: enhancement, cli, good first issue
+-->
+
 ---
 
 ## Unplanned / Ideas
