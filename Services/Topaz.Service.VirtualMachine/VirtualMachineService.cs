@@ -21,7 +21,9 @@ public sealed class VirtualMachineService(Pipeline eventPipeline, ITopazLogger l
         new GetVirtualMachineEndpoint(eventPipeline, logger),
         new DeleteVirtualMachineEndpoint(eventPipeline, logger),
         new ListVirtualMachinesByResourceGroupEndpoint(eventPipeline, logger),
-        new ListVirtualMachinesBySubscriptionEndpoint(eventPipeline, logger)
+        new ListVirtualMachinesBySubscriptionEndpoint(eventPipeline, logger),
+        new ListVirtualMachineImageVersionsEndpoint(logger),
+        new GetVirtualMachineImageVersionEndpoint(logger)
     ];
 
     public void Bootstrap() { }

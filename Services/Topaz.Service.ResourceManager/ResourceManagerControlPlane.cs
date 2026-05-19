@@ -212,8 +212,8 @@ internal sealed class ResourceManagerControlPlane(
 
             _templateEngineFacade.ProcessTemplate(subscriptionIdentifier, resourceGroupIdentifier, template,
                 metadataInsensitive,
-                request.Properties?.Parameters?.Parameters == null ? null
-                    : BinaryData.FromObjectAsJson(request.Properties.Parameters.Parameters, GlobalSettings.JsonOptions));
+                request.Properties?.Parameters == null ? null
+                    : BinaryData.FromObjectAsJson(request.Properties.Parameters, GlobalSettings.JsonOptions));
 
             foreach (var resource in template.Resources)
             {
@@ -260,8 +260,8 @@ internal sealed class ResourceManagerControlPlane(
 
             _templateEngineFacade.ProcessTemplateAtSubscriptionScope(subscriptionIdentifier, template,
                 metadataInsensitive,
-                request.Properties?.Parameters?.Parameters == null ? null
-                    : BinaryData.FromObjectAsJson(request.Properties.Parameters.Parameters, GlobalSettings.JsonOptions));
+                request.Properties?.Parameters == null ? null
+                    : BinaryData.FromObjectAsJson(request.Properties.Parameters, GlobalSettings.JsonOptions));
 
             foreach (var resource in template.Resources)
             {

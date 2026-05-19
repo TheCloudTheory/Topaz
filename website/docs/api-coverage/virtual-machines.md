@@ -41,3 +41,13 @@ sidebar_position: 11
 | Simulate Eviction | ❌ | |
 | Start | ❌ | |
 | Update | ❌ | `PATCH` variant — use Create Or Update (`PUT`) instead |
+
+### Virtual Machine Images
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| List | ✅ | `GET /subscriptions/{sub}/providers/Microsoft.Compute/locations/{location}/publishers/{publisher}/artifacttypes/vmimage/offers/{offer}/skus/{sku}/versions` — returns a stub version entry; satisfies `az vm create` image resolution |
+| Get | ✅ | `GET /subscriptions/{sub}/providers/Microsoft.Compute/locations/{location}/publishers/{publisher}/artifacttypes/vmimage/offers/{offer}/skus/{sku}/versions/{version}` — returns stub version details with `plan: null` |
+| List Publishers | ❌ | |
+| List Offers | ❌ | |
+| List Skus | ❌ | |

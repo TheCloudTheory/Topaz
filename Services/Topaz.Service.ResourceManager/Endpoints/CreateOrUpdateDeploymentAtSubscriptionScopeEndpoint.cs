@@ -72,7 +72,7 @@ public sealed class CreateOrUpdateDeploymentAtSubscriptionScopeEndpoint(
             subscriptionIdentifier,
             deploymentName!,
             JsonSerializer.Serialize(request.Properties.Template),
-            request.Properties.Parameters?.Parameters,
+            request.Properties.Parameters,
             request.Location,
             request.Properties.Mode);
 

@@ -14,7 +14,7 @@ internal record CreateDeploymentRequest
     {
         public string? Mode { get; init; }
         public object? Template { get; set; }
-        public DeploymentParameters? Parameters { get; set; }
+        public Dictionary<string, ParameterValue>? Parameters { get; set; }
     }
 
     internal record DeploymentParameters

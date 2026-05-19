@@ -11,6 +11,7 @@ public sealed class VirtualMachineResourceProperties
     public JsonElement? NetworkProfile { get; set; }
     public Guid VmId { get; set; }
     public string ProvisioningState => "Succeeded";
+    public VirtualMachineInstanceView InstanceView => new();
 
     public static VirtualMachineResourceProperties FromRequest(CreateOrUpdateVirtualMachineRequest request)
     {
@@ -31,4 +32,20 @@ public sealed class VirtualMachineResourceProperties
         properties.OsProfile = request.Properties?.OsProfile;
         properties.NetworkProfile = request.Properties?.NetworkProfile;
     }
+}
+
+public sealed class VirtualMachineInstanceView
+{
+    public VirtualMachineStatus[] Statuses { get; } =
+    [
+        new() { Code = "ProvisioningState/succeeded", Level = "Info", DisplayStatus = "Provisioning succeeded" },
+        new() { Code = "PowerState/running", Level = "Info", DisplayStatus = "VM running" }
+    ];
+}
+
+public sealed class VirtualMachineStatus
+{
+    public string Code { get; init; } = string.Empty;
+    public string Level { get; init; } = string.Empty;
+    public string DisplayStatus { get; init; } = string.Empty;
 }

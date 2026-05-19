@@ -80,7 +80,7 @@ public sealed class CreateOrUpdateDeploymentEndpoint(
             resourceGroupOperation.Resource.GetResourceGroup(),
             deploymentName!,
             JsonSerializer.Serialize(request.Properties.Template),
-            request.Properties.Parameters?.Parameters,
+            request.Properties.Parameters,
             resourceGroupOperation.Resource.Location!,
             request.Properties.Mode);
 
