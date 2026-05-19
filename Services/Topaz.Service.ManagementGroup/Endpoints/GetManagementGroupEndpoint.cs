@@ -29,8 +29,7 @@ internal sealed class GetManagementGroupEndpoint(ITopazLogger logger) : IEndpoin
         var operation = _controlPlane.Get(groupId);
         if (operation.Result == OperationResult.NotFound || operation.Resource == null)
         {
-            response.StatusCode = HttpStatusCode.NotFound;
-            response.CreateJsonContentResponse(new { error = new { code = operation.Code, message = operation.Reason } });
+            response.CreateJsonContentResponse(new { error = new { code = operation.Code, message = operation.Reason } }, HttpStatusCode.NotFound);
             return;
         }
 

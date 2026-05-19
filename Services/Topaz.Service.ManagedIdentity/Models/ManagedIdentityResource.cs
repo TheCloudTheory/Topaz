@@ -42,7 +42,7 @@ public class ManagedIdentityResource
 
     public void UpdateFrom(CreateUpdateManagedIdentityRequest request)
     {
-        Location =  request.Location;
+        if (request.Location != null) Location = request.Location;
         Tags = request.Tags ?? new Dictionary<string, string>();
         Properties.IsolationScope = request.Properties?.IsolationScope;
     }

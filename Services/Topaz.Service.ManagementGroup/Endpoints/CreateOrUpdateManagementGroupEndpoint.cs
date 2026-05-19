@@ -38,8 +38,7 @@ internal sealed class CreateOrUpdateManagementGroupEndpoint(ITopazLogger logger)
         var operation = _controlPlane.CreateOrUpdate(groupId, request);
         if (operation.Result == OperationResult.Failed)
         {
-            response.StatusCode = HttpStatusCode.BadRequest;
-            response.CreateJsonContentResponse(new { error = new { code = operation.Code, message = operation.Reason } });
+            response.CreateJsonContentResponse(new { error = new { code = operation.Code, message = operation.Reason } }, HttpStatusCode.BadRequest);
             return;
         }
 

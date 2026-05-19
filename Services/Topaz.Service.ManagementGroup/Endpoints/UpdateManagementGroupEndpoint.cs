@@ -36,7 +36,7 @@ internal sealed class UpdateManagementGroupEndpoint(ITopazLogger logger) : IEndp
               ?? new UpdateManagementGroupRequest();
 
         var operation = _controlPlane.Update(groupId, request);
-        response.StatusCode = operation.Result switch
+        var statusCode = operation.Result switch
         {
             OperationResult.Updated => HttpStatusCode.OK,
             OperationResult.NotFound => HttpStatusCode.NotFound,
@@ -46,12 +46,12 @@ internal sealed class UpdateManagementGroupEndpoint(ITopazLogger logger) : IEndp
 
         if (operation.Resource != null)
         {
-            response.CreateJsonContentResponse(operation.Resource);
+            response.CreateJsonContentResponse(operation.Resource, statusCode);
         }
         else
         {
             response.CreateJsonContentResponse(
-                new { error = new { code = operation.Code, message = operation.Reason } });
+                new { error = new { code = operation.Code, message = operation.Reason } }, statusCode);
         }
     }
 }

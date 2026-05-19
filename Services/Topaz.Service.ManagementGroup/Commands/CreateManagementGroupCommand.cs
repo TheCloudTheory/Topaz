@@ -19,7 +19,10 @@ public sealed class CreateManagementGroupCommand(HttpClient httpClient)
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
         var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.Name}";
-        var (success, body) = await PutAsync(url, new { properties = new { displayName = settings.DisplayName } });
+        var requestBody = string.IsNullOrWhiteSpace(settings.ParentId)
+            ? (object)new { properties = new { displayName = settings.DisplayName } }
+            : new { properties = new { displayName = settings.DisplayName, details = new { parent = new { id = settings.ParentId } } } };
+        var (success, body) = await PutAsync(url, requestBody);
         if (!success) return 1;
         AnsiConsole.WriteLine(body);
         return 0;

@@ -77,6 +77,8 @@ public class ServiceBusAdministrationClientTests
             NamespaceName,
             "--resource-group",
             ResourceGroupName,
+            "--location",
+            "westeurope",
             "--subscription-id",
             SubscriptionId.ToString()
         ]);

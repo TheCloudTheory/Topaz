@@ -81,14 +81,13 @@ public abstract class TopazHttpCommand<TSettings>(HttpClient httpClient) : Async
         return (false, body);
     }
 
-    /// <summary>Sends DELETE; returns true on success (200/202/204/404 all treated as ok).</summary>
+    /// <summary>Sends DELETE; returns true on success (200/202/204); returns false for 404 and other errors.</summary>
     protected async Task<bool> DeleteAsync(
         string url, CancellationToken cancellationToken = default)
     {
         var response = await HttpClient.DeleteAsync(url, cancellationToken);
         if (response.IsSuccessStatusCode ||
-            response.StatusCode == System.Net.HttpStatusCode.NoContent ||
-            response.StatusCode == System.Net.HttpStatusCode.NotFound) return true;
+            response.StatusCode == System.Net.HttpStatusCode.NoContent) return true;
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {body}");
         return false;

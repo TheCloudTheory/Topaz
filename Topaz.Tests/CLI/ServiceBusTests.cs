@@ -68,6 +68,8 @@ public class ServiceBusTests
             NamespaceName,
             "--resource-group",
             ResourceGroupName,
+            "--location",
+            "westeurope",
             "--subscription-id",
             SubscriptionId.ToString()
         ]);

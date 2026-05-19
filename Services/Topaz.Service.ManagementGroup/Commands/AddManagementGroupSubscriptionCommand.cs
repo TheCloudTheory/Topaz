@@ -17,7 +17,7 @@ public sealed class AddManagementGroupSubscriptionCommand(HttpClient httpClient)
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
         var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.GroupId}/subscriptions/{settings.SubscriptionId}";
-        var (success, body) = await PostAsync(url, new { });
+        var (success, body) = await PutAsync(url, new { });
         if (!success) return 1;
         AnsiConsole.WriteLine(body);
         return 0;

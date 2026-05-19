@@ -14,6 +14,15 @@ public class CreateManagedIdentityCommand(HttpClient httpClient) : TopazHttpComm
     public override async Task<int> ExecuteAsync(CommandContext context, CreateManagedIdentityCommandSettings settings)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{settings.Name}";
+
+        // Fail early if the identity already exists
+        var (exists, _) = await GetAsync(url);
+        if (exists)
+        {
+            await Console.Error.WriteLineAsync($"Error: Managed identity '{settings.Name}' already exists.");
+            return 1;
+        }
+
         var (success, body) = await PutAsync(url, new
         {
             location = settings.Location,

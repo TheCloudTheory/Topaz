@@ -186,8 +186,14 @@ public sealed class ServiceBusServiceEndpoint(Pipeline eventPipeline, ITopazLogg
             response.StatusCode = HttpStatusCode.InternalServerError;
             return;
         }
-        
-        var operation = _controlPlane.CreateOrUpdateNamespace(subscriptionIdentifier, resourceGroupIdentifier, request.Location!, @namespaceIdentifier, request);
+
+        if (string.IsNullOrWhiteSpace(request.Location))
+        {
+            response.CreateErrorResponse("MissingLocationProperty", "The 'location' property is required.");
+            return;
+        }
+
+        var operation = _controlPlane.CreateOrUpdateNamespace(subscriptionIdentifier, resourceGroupIdentifier, request.Location, @namespaceIdentifier, request);
         if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated || operation.Resource == null)
         {
             response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode, $"Unknown error when performing CreateOrUpdate operation.");

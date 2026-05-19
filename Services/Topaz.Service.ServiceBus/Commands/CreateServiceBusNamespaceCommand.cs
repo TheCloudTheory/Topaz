@@ -14,7 +14,7 @@ public sealed class CreateServiceBusNamespaceCommand(HttpClient httpClient) : To
     public override async Task<int> ExecuteAsync(CommandContext context, CreateServiceBusNamespaceCommandSettings settings)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ServiceBus/namespaces/{settings.Name}";
-        var (success, body) = await PutAsync(url, new { properties = new { } });
+        var (success, body) = await PutAsync(url, new { location = settings.Location, properties = new { } });
         if (!success) return 1;
         AnsiConsole.WriteLine(body);
         return 0;
@@ -31,7 +31,12 @@ public sealed class CreateServiceBusNamespaceCommand(HttpClient httpClient) : To
         {
             return ValidationResult.Error("Service Bus namespace resource group can't be null.");
         }
-        
+
+        if(string.IsNullOrEmpty(settings.Location))
+        {
+            return ValidationResult.Error("Service Bus namespace location can't be null.");
+        }
+
         if(string.IsNullOrEmpty(settings.SubscriptionId))
         {
             return ValidationResult.Error("Service Bus subscription ID can't be null.");
@@ -59,5 +64,9 @@ public sealed class CreateServiceBusNamespaceCommand(HttpClient httpClient) : To
         [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-g|--resource-group")]
         public string? ResourceGroup { get; set; }
+
+        [CommandOptionDefinition("(Required) Azure region for the namespace.", required: true)]
+        [CommandOption("-l|--location")]
+        public string? Location { get; set; }
     }
 }

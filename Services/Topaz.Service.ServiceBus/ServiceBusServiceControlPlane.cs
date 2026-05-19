@@ -92,7 +92,8 @@ internal sealed class ServiceBusServiceControlPlane(
                 serviceBusNamespaceIdentifier.Value);
         if (existingNamespace == null)
         {
-            return new ControlPlaneOperationResult(OperationResult.NotFound, ServiceBusNamespaceNotFoundMessageTemplate,
+            return new ControlPlaneOperationResult(OperationResult.NotFound,
+                string.Format(ServiceBusNamespaceNotFoundMessageTemplate, serviceBusNamespaceIdentifier),
                 ServiceBusNamespaceNotFoundCode);
         }
 
@@ -112,7 +113,7 @@ internal sealed class ServiceBusServiceControlPlane(
 
         return existingNamespace == null
             ? new ControlPlaneOperationResult<ServiceBusNamespaceResource>(OperationResult.NotFound, null,
-                ServiceBusNamespaceNotFoundMessageTemplate, ServiceBusNamespaceNotFoundCode)
+                string.Format(ServiceBusNamespaceNotFoundMessageTemplate, namespaceIdentifier), ServiceBusNamespaceNotFoundCode)
             : new ControlPlaneOperationResult<ServiceBusNamespaceResource>(OperationResult.Success, existingNamespace,
                 null, null);
     }

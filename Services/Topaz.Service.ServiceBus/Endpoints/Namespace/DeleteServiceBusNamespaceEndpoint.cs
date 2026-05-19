@@ -36,7 +36,7 @@ internal sealed class DeleteServiceBusNamespaceEndpoint(Pipeline eventPipeline, 
         var operation = _controlPlane.DeleteNamespace(subscriptionIdentifier, resourceGroupIdentifier, serviceBusNamespaceIdentifier);
         if (operation.Result == OperationResult.NotFound)
         {
-            response.CreateErrorResponse(operation.Code!, operation.Reason!, operation.Result);
+            response.CreateErrorResponse(operation.Code!, operation.Reason!, HttpStatusCode.NotFound);
             return;
         }
 

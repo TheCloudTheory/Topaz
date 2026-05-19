@@ -27,7 +27,7 @@ internal sealed class DeleteManagementGroupEndpoint(ITopazLogger logger) : IEndp
         }
 
         var operation = _controlPlane.Delete(groupId);
-        response.StatusCode = operation.Result switch
+        var statusCode = operation.Result switch
         {
             OperationResult.Deleted => HttpStatusCode.NoContent,
             OperationResult.NotFound => HttpStatusCode.NotFound,
@@ -37,10 +37,11 @@ internal sealed class DeleteManagementGroupEndpoint(ITopazLogger logger) : IEndp
         if (operation.Result != OperationResult.Deleted)
         {
             response.CreateJsonContentResponse(
-                new { error = new { code = operation.Code, message = operation.Reason } });
+                new { error = new { code = operation.Code, message = operation.Reason } }, statusCode);
         }
         else
         {
+            response.StatusCode = statusCode;
             response.Content = new ByteArrayContent([]);
             response.Content.Headers.ContentType = null;
         }
