@@ -112,12 +112,15 @@ internal sealed partial class TopazClient
             .GetSubscriptionResource(new ResourceIdentifier($"/subscriptions/{subscriptionId:D}"))
             .GetAsync(cancellationToken);
 
+        var tags = subscription.Value.Data.Tags is null
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string>(subscription.Value.Data.Tags, StringComparer.OrdinalIgnoreCase);
+        tags[tagName] = tagValue;
+
         var payload = new
         {
             SubscriptionName = subscription.Value.Data.DisplayName,
-            Tags = subscription.Value.Data.Tags is null
-                ? new Dictionary<string, string> { { tagName, tagValue } }
-                : new Dictionary<string, string>(subscription.Value.Data.Tags, StringComparer.OrdinalIgnoreCase) { { tagName, tagValue } }
+            Tags = tags
         };
 
         using var resp =
