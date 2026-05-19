@@ -66,6 +66,8 @@ Services live under `Services/Topaz.Service.*`. Each service has:
 1. Implement `Deploy()` — never `throw new NotImplementedException()`. Follow the KeyVault pattern: cast `GenericResource` → `resource.As<TResource, TProperties>()`, map fields, delegate to `CreateOrUpdate`.
 2. Register in `TemplateDeploymentOrchestrator.RouteDeployment()` with `case "Microsoft.X/y":`.
 3. Add `<ProjectReference>` in `Topaz.Service.ResourceManager.csproj`.
+4. Add new tool in `Topaz.MCP` project. Follow the conventions found in `Tools` folder.
+5. Add Terraform and PowerShell tests in `Topaz.Tests.Terraform` and `Topaz.Tests.AzurePowerShell`
 
 ### Backlog / Roadmap
 
