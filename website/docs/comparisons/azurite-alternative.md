@@ -35,8 +35,12 @@ For Azure Storage specifically, the two tools have different coverage and design
 | **Blob: copy operations** | ✅ | ✅ |
 | **Blob: snapshots** | ✅ | ✅ |
 | **Blob: authentication** | Not enforced | Optional (enforced with `--oauth`) |
+| **Blob / Table / Queue: SAS token validation** (Account SAS, Service SAS) | ✅ | ✅ |
+| **Blob / Table / Queue: stored access policy enforcement** | ✅ | ✅ |
+| **Blob: public-access anonymous reads** | ✅ | ✅ |
 | **Table: create, delete, query** | ✅ (stable) | ✅ (preview) |
 | **Table: entities** (insert, upsert, merge, delete, query) | ✅ (stable) | ✅ (preview) |
+| **Table: OData queries** ($filter, $select, $top, $skiptoken) | ✅ | ✅ |
 | **Table: ACL** (stored access policies) | ✅ | ✅ |
 | **Table: SharedKeyLite + SharedKey auth** | Always enforced | Optional |
 | **Table: Entra ID / Bearer auth** | ✅ | Optional (with `--oauth`) |
@@ -46,9 +50,9 @@ For Azure Storage specifically, the two tools have different coverage and design
 | **Queue: messages** (enqueue, dequeue, peek, update, delete, clear) | ✅ | ✅ |
 | **Queue: SharedKey auth** | Always enforced | Optional |
 | **Queue: Entra ID / Bearer auth** | ✅ | Optional (with `--oauth`) |
-| **RA-GRS (secondary endpoints)** | Partial (roadmap) | ✅ |
+| **RA-GRS (secondary endpoints)** | Partial — DNS registration, `GetServiceStats`, and read-only enforcement ✅ (v1.4); general reads on secondary ❌ (v1.6) | ✅ |
 
-Topaz and Azurite are at full parity for Azure Storage data-plane operations. The main gaps in Topaz are RA-GRS secondary endpoint support (in the roadmap) and Blob authentication enforcement. Azurite's Table Storage is still in preview; Topaz's Table implementation is stable.
+Topaz and Azurite are at near parity for Azure Storage data-plane operations. SAS token validation (Account SAS, Service SAS), stored access policy enforcement, and public-access Blob reads were added in v1.4. RA-GRS secondary endpoint DNS registration, `GetServiceStats`, and read-only enforcement are in place as of v1.4; general data reads through secondary endpoints follow in v1.6. Blob authentication is still not fully enforced — unauthenticated requests to private containers are permitted. Azurite's Table Storage is still in preview; Topaz's Table implementation is stable and includes full OData query support ($filter, $select, $top, $skiptoken).
 
 ## Endpoint and URL format
 
@@ -106,8 +110,13 @@ Both emulators support SharedKey authentication. The difference is in how strict
 | Table auth enforcement | Always enforced | Optional |
 | Queue auth enforcement | Always enforced | Optional |
 | Entra ID Bearer tokens (Table, Queue) | ✅ | Optional (`--oauth` flag) |
+| SAS token validation (Blob, Table, Queue) | ✅ | ✅ |
+| Stored access policy enforcement | ✅ | ✅ |
+| Public-access anonymous Blob reads | ✅ | ✅ |
 
 Topaz always validates Table and Queue request signatures. If an application sends an incorrectly signed request that Azurite silently accepts in default mode, it will fail against Topaz. This makes Topaz stricter by default — which catches auth bugs earlier.
+
+As of v1.4, SAS token validation is enforced across all three services — Account SAS and Service SAS query strings are validated against the account key, stored access policies can be revoked, and containers configured with public access correctly permit unauthenticated reads.
 
 ## Azure Storage Explorer
 
@@ -146,7 +155,7 @@ Azurite is scoped entirely to Azure Storage. Topaz emulates the broader Azure pl
 Azurite is the right choice if:
 
 - Your application uses only Azure Storage and a single account is sufficient
-- You need RA-GRS secondary endpoint support
+- You need complete RA-GRS secondary endpoint support including general data reads through secondary endpoints (Topaz has partial RA-GRS support as of v1.4; general reads are on the v1.6 roadmap)
 - You need a mature, Microsoft-maintained emulator with high compatibility guarantees
 - Your toolchain is already built around Azurite and migration is not worth the effort
 

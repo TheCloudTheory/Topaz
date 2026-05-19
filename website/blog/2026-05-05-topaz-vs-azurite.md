@@ -11,9 +11,13 @@ If you have ever written a line of Azure code on a laptop, you have used Azurite
 
 The problem is that real applications stop at Azure Storage roughly never. The moment you reach for a secret in Key Vault, publish a message to Service Bus, push an image to a Container Registry, or want a `DefaultAzureCredential` chain that does not silently fall back to interactive browser auth, Azurite has nothing to offer. You are left bolting together a Service Bus emulator from a community Docker image, mocking the Key Vault SDK in tests, and hoping that the way your CI fakes Entra tokens does not drift away from how production behaves.
 
-Topaz is a single .NET 8 (and when 1.3 version is released - .NET 10) binary that emulates Azure Storage, Key Vault, Service Bus, Event Hubs, Container Registry, Managed Identity, RBAC, ARM, and a working Entra ID layer in one process. This post is an honest comparison between the two, focused on what developers who already know Azurite actually run into.
+Topaz is a single .NET 10 binary that emulates Azure Storage, Key Vault, Service Bus, Event Hubs, Container Registry, Managed Identity, RBAC, ARM, and a working Entra ID layer in one process. This post is an honest comparison between the two, focused on what developers who already know Azurite actually run into.
 
 {/* truncate */}
+
+:::note[Updated — v1.4 released (19 May 2026)]
+Several Storage gaps described in this post were addressed in v1.4: **SAS token validation** (Account SAS, Service SAS, stored access policies), **public-access Blob reads**, and **RA-GRS secondary endpoint** DNS registration, stats, and read-only enforcement are all live. See the Update section below and the [roadmap](/roadmap) for current status.
+:::
 
 ## Where Topaz and Azurite agree
 
@@ -31,12 +35,13 @@ For Blob, Queue, and Table data plane operations, the two emulators are at full 
 | Container and blob leases (acquire / renew / change / release / break) | Yes | Yes |
 | Blob copy and snapshots | Yes | Yes |
 | Table create / delete / query / entity CRUD | Yes (stable) | Yes (preview) |
+| Table OData queries ($filter, $select, $top, $skiptoken) | Yes | Yes |
 | Table ACL (stored access policies) | Yes | Yes |
 | Queue messages (enqueue, dequeue, peek, update, delete, clear) | Yes | Yes |
 | Queue ACL | Yes | Yes |
-| RA-GRS secondary endpoints | Partial (roadmap) | Yes |
+| RA-GRS secondary endpoints | Partial — DNS, stats, read-only enforcement ✅ (v1.4); general reads on secondary (v1.6) | Yes |
 
-The two practical Storage gaps in Topaz today are Account / Service SAS token validation on the data plane (the ARM endpoints that *generate* SAS strings exist; the data plane providers do not yet recognise the `?sv=...&sig=...` parameters in incoming requests) and full RA-GRS secondary endpoint emulation. Both are scheduled — SAS validation is on the v1.4-beta milestone, RA-GRS is on v1.4-beta as well. More on that further down.
+As of v1.4, SAS token validation (Account SAS and Service SAS), stored access policy enforcement, and public-access Blob reads have shipped on the data plane. RA-GRS secondary endpoint DNS registration, `GetServiceStats`, and read-only enforcement are also live; general data reads through secondary endpoints follow in v1.6. See the Update section at the end of this post for a full summary.
 
 The Storage feature that Azurite still does not have is *multiple named storage accounts as a first-class concept*. Azurite's default account is `devstoreaccount1`. Adding more requires editing your hosts file, exporting `AZURITE_ACCOUNTS` with `name:key1:key2;name:key1:key2`, and restarting the emulator. Topaz has a real ARM control plane: `az storage account create --name sa-orders --resource-group rg-local` works the same way it works against Azure, registers a DNS entry automatically, and gives you a real connection string you can paste into Azure Storage Explorer or hand to Terraform.
 
@@ -58,11 +63,11 @@ What works today on the data plane:
 |---|---|
 | **Secrets** | Set, Get (by name and version), List, Update, Delete, Get Versions, Backup, Restore, full soft-delete surface (Get Deleted, List Deleted, Recover, Purge) |
 | **Keys** | Create, Import (RSA + EC), Get, List, Update, Delete, Backup, Restore, Rotate, Get/Update Rotation Policy, full soft-delete surface, `encrypt`, `decrypt`, `sign`, `verify`, `wrapKey`, `unwrapKey`, `release`, `Get Random Bytes`, `Get Key Attestation` |
-| **Certificates** | Not yet — full surface scheduled for v1.3-beta |
+| **Certificates** | Full surface — create, import, get, update, delete, list, versions, backup/restore, contacts, issuers, pending operations, merge, and soft-delete (implemented in v1.3) |
 
 The soft-delete and recovery surface deserves a specific call-out because it is what most teams accidentally depend on. If your application catches `KeyVaultErrorException` on a soft-deleted secret, recovers it, and continues — that code path is unreachable in any other local emulator. Topaz exercises it end-to-end. Tokens are real signed JWTs. The vault URL works with `DefaultAzureCredential` exactly as in production.
 
-What is not there yet is the certificates data plane (CRUD, soft-delete surface, issuers, contacts, merge — all scheduled for v1.3-beta). If your application reads certificates from Key Vault — for example, an ASP.NET Core app loading its TLS cert via the Key Vault provider — that path is not yet covered. For secrets and keys, including the cryptographic operations, it is.
+The full certificate surface was implemented in v1.3 — CRUD, soft-delete, issuers, contacts, pending operations, and merge are all covered. As of v1.4, AES symmetric key (`oct`) cryptographic operations (AES-GCM and AES-CBC) are also supported.
 
 ## Where Azurite stops: Service Bus
 
@@ -133,7 +138,7 @@ The Azure CLI works the same way: register Topaz as a cloud environment with `az
 A genuinely honest post needs this section. Azurite is not strictly worse — it is narrower, more mature in its narrow scope, and the right call for some workloads.
 
 - **Microsoft maintenance.** Azurite is shipped and supported by Microsoft. Topaz is open source and maintained by an independent team. If your organisation requires vendor-supported software for local development tooling, that distinction matters.
-- **RA-GRS secondary endpoints.** Azurite emulates the read-access geo-redundant secondary URL pattern today. Topaz has partial support; full secondary endpoint semantics — secondary DNS hostnames, `GeoReplicationStats` payloads, and read-only enforcement — are scheduled for v1.4-beta.
+- **RA-GRS secondary endpoints.** Azurite emulates the full RA-GRS secondary URL pattern. Topaz added partial RA-GRS support in v1.4 — secondary DNS hostnames, `GeoReplicationStats` payloads, and read-only enforcement are live; general data reads through secondary endpoints are on the v1.6 roadmap.
 - **The `UseDevelopmentStorage=true` shortcut.** Azurite is hardcoded to the Azure SDK's `UseDevelopmentStorage=true` connection string. Topaz uses real connection strings — the same format Azure issues — which is more flexible but loses the one-line shortcut.
 - **Visual Studio integration.** Azurite ships with Visual Studio and Storage Explorer has a built-in "Local Emulator" entry. Topaz works with Storage Explorer, but you connect via a connection string rather than the dedicated emulator option.
 - **Maturity.** Azurite has been in production CI pipelines for years. Topaz is in beta as of v1.0 and is moving fast — that is also the reason this post needs to list which surfaces are not yet covered.
@@ -142,20 +147,20 @@ If your application uses only Storage, a single account is enough, and you do no
 
 ## What is coming for Storage in Topaz
 
-The Storage roadmap is publicly tracked in [`BACKLOG.md`](https://github.com/TheCloudTheory/Topaz/blob/main/BACKLOG.md) and mirrored on the [website roadmap](/roadmap). The near-term Storage work in flight:
+The Storage roadmap is publicly tracked in [`BACKLOG.md`](https://github.com/TheCloudTheory/Topaz/blob/main/BACKLOG.md) and mirrored on the [website roadmap](/roadmap). The v1.4 items below have shipped — see the [roadmap](/roadmap) for current milestone status.
 
-**v1.4-beta — SAS token validation on the data plane.**
+**✅ v1.4 — SAS token validation on the data plane.** _(shipped)_
 The control plane already generates SAS tokens via `ListAccountSas` and `ListServiceSas`. The data-plane security providers (Blob, Queue, Table) currently only recognise the `Authorization:` header — incoming requests with `?sv=...&sig=...` query strings hit the missing-header path and return `401`. The work in progress adds:
 
 - Account SAS validation: detects `sv`, `ss`, `srt`, `sp`, `se`, `st`, `spr`, `sip`, `sig`, builds the canonical Account SAS string-to-sign, HMAC-SHA256 against the account key, validates expiry / service / resource type / HTTP method.
 - Service SAS validation: per-service string-to-sign, including the canonicalized resource and the response-header overrides (`rscc`, `rscd`, etc.), with stored access policy lookup when `si=<policyId>` is present.
 - Stored access policy enforcement: the Container ACL / Queue ACL / Table ACL endpoints already round-trip `<SignedIdentifiers>` XML to disk; v1.4 wires them into the SAS validation path so revoking a named policy actually revokes the tokens that reference it.
 
-**v1.4-beta — anonymous / public-access reads for Blob containers.**
+**✅ v1.4 — anonymous / public-access reads for Blob containers.** _(shipped)_
 Real Azure allows containers created with `x-ms-blob-public-access: container` (list + read) or `blob` (read only) to permit unauthenticated reads. Topaz currently rejects every request without an `Authorization` header. The fix is to store the public-access level on the container, look it up in the security provider when no auth is present, and permit the request when the level allows the operation.
 
-**v1.4-beta — RA-GRS secondary endpoint semantics.**
-Secondary DNS hostnames (`{accountName}-secondary.*`), `secondaryEndpoints.blob/.table/.queue/.file` in the storage account ARM response, the `?restype=service&comp=stats` endpoint returning a realistic `GeoReplicationStats` payload, and read-only enforcement that returns `403 WriteOperationNotSupportedOnSecondary` on mutating requests against a secondary endpoint.
+**✅ v1.4 — RA-GRS secondary endpoint semantics.** _(partial, shipped)_
+Secondary DNS hostnames (`{accountName}-secondary.*`), `secondaryEndpoints.blob/.table/.queue/.file` in the storage account ARM response, the `?restype=service&comp=stats` endpoint returning a realistic `GeoReplicationStats` payload, and read-only enforcement that returns `403 WriteOperationNotSupportedOnSecondary` on mutating requests against a secondary endpoint. General data reads through secondary endpoints follow in v1.6.
 
 **v1.5-beta — User Delegation SAS for Blob.**
 The Entra-derived SAS variant. Two coordinated pieces: an ARM endpoint that mints a user delegation key bounded by `(start, expiry, oid, tid)`, and Blob data-plane validation that recomputes the key from the stored fields and validates the signed token. This is the only SAS variant that needs the local Entra layer to be coherent with the storage layer — which is part of why Topaz is built as one process rather than five.
@@ -219,7 +224,7 @@ Azurite has a Docker image too. The difference is what the image emulates — To
 ## When to keep Azurite
 
 - Your application uses only Azure Storage and a single account is sufficient.
-- You need RA-GRS secondary endpoint emulation today.
+- You need complete RA-GRS secondary endpoint support including general data reads through secondary endpoints (Topaz has partial RA-GRS support as of v1.4; general reads are on the v1.6 roadmap).
 - You need a Microsoft-supported emulator with vendor backing.
 - Your toolchain is built around Azurite and migration is not worth the effort.
 
@@ -240,9 +245,23 @@ For Storage specifically, Topaz implements the same data-plane APIs Azurite does
 
 Beyond Storage, the [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/) list which operations are implemented per service. If you hit something that is not yet supported, [open an issue](https://github.com/TheCloudTheory/Topaz/issues) — the backlog is publicly tracked and feedback shapes priorities.
 
+## Update — v1.4 (19 May 2026)
+
+The following gaps described in this post were addressed in the v1.4 release.
+
+**SAS token validation.** Account SAS and Service SAS query strings (`?sv=…&sig=…`) are now validated on Blob, Queue, and Table data-plane endpoints. Stored access policies are honoured — revoking a named `<SignedIdentifier>` immediately blocks tokens referencing it via `si=`.
+
+**Public-access Blob reads.** Containers created with `x-ms-blob-public-access: container` or `blob` now allow unauthenticated GET/HEAD requests. The public-access level is stored on the container and checked when no `Authorization` header is present.
+
+**RA-GRS secondary endpoints (partial).** Secondary DNS hostnames (`{accountName}-secondary.*`), `secondaryEndpoints` in the ARM response, `GetServiceStats` on secondary endpoints, and `403 WriteOperationNotSupportedOnSecondary` on mutating secondary requests are all live. General data reads through secondary endpoints follow in v1.6.
+
+**Table Storage OData queries.** `$filter`, `$select`, `$top`, and `$skiptoken` are now supported on Table entity query endpoints.
+
+---
+
 ## Summary
 
-Azurite is a good Storage emulator. Topaz is a Storage emulator that also covers Key Vault, Service Bus, Event Hubs, Container Registry, Managed Identity, RBAC, ARM, and Entra ID — in one binary, with one log stream, one working directory, and one Docker image. The Storage parity is essentially complete; the gaps that remain (SAS validation, RA-GRS, public-access reads) are scheduled and tracked in the open backlog.
+Azurite is a good Storage emulator. Topaz is a Storage emulator that also covers Key Vault, Service Bus, Event Hubs, Container Registry, Managed Identity, RBAC, ARM, and Entra ID — in one binary, with one log stream, one working directory, and one Docker image. The Storage parity is essentially complete; the only remaining Storage gap is general data reads through RA-GRS secondary endpoints, scheduled for v1.6.
 
 If your application is Storage-only, stay on Azurite. If it is anything else — and most real Azure applications are — Topaz exists to remove the orchestration tax of running five different local emulators that were never designed to work together.
 

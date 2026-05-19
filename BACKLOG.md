@@ -734,6 +734,29 @@ TODO: Topaz CLI — configurable defaults
 
 ---
 
+## v1.8-beta
+
+### Azure Storage — Blob authentication enforcement
+
+<!--
+TODO: Azure Blob Storage: enforce authentication on private containers
+  Unauthenticated requests (no Authorization header and no SAS query string) to Blob
+  endpoints where the container's public-access level is `none` (the default) currently
+  succeed. Real Azure returns 401 with a WWW-Authenticate challenge in this case.
+  Required changes:
+  - In the Blob data-plane security provider, after SAS and Bearer-token checks,
+    check whether the container's stored public-access level is `none`.
+  - If the request is unauthenticated and the container is private, return 401 with
+    header: WWW-Authenticate: Bearer authorization_uri="https://login.microsoftonline.com"
+  - This applies to all data-plane GET/HEAD/PUT/DELETE/POST Blob endpoint paths that
+    operate on objects within a named container.
+  - Shared container operations (e.g. `?comp=list` on the account root) are not affected.
+  milestone: v1.8-beta
+  labels: enhancement, storage, good first issue
+-->
+
+---
+
 ## Unplanned / Ideas
 
 _Rough ideas not yet tied to a specific version._
