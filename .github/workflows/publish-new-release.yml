@@ -8,7 +8,7 @@ on:
         required: true
         type: string
   workflow_run:
-    workflows: [Build_Test_And_Publish]
+    workflows: [Build_Test_And_Publish, Build_Test_And_Publish_Quick]
     types: [completed]
 
 permissions:
