@@ -13,7 +13,7 @@ converted to a GitHub Issue by CI when new lines are committed.
 TODO: VirtualNetwork — Network Interface (NIC) CRUD
   Implement PUT/GET/DELETE/LIST NIC endpoints under /networkInterfaces/{nicName}.
   Required to support `az vm create` (which creates a NIC and wires it into the VM payload).
-  milestone: v1.4-beta
+  milestone: v1.5-beta
   labels: enhancement, good first issue
 -->
 
@@ -112,7 +112,7 @@ TODO: Topaz Portal: Edit existing tag values inline
   The TagsPanel component should gain an edit mode per row — clicking an Edit button
   makes the Value cell an input, with Save / Cancel buttons. Saving calls the existing
   CreateOrUpdateXxxTag method (upsert semantics) and reloads the tag list.
-  milestone: v1.4-beta
+  milestone: v1.5-beta
   labels: enhancement, portal
 -->
 

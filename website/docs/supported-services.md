@@ -29,7 +29,7 @@ Azure Resource Manager|🚧|N/A
 Managed Identity|✅|N/A
 Container Registry|✅|🚧
 Azure SQL|🔜|🔜
-Azure Virtual Machines|�|N/A
+Azure Virtual Machines|🚧|N/A
 Entra ID|N/A|🚧
 RBAC|🚧|N/A
 Monitor|🚧|:x:
