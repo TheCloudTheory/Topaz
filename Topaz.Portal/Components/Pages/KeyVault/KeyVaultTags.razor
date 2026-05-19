@@ -29,7 +29,8 @@
     {
         <TagsPanel Tags="_tags"
                    OnAdd="AddTagAsync"
-                   OnRemove="RemoveTagAsync" />
+                   OnRemove="RemoveTagAsync"
+                   OnEdit="EditTagAsync" />
     }
 </KeyVaultDetailsShell>
 
@@ -99,6 +100,21 @@
         try
         {
             await TopazClient.DeleteKeyVaultTag(SubscriptionId, DecodedRg, DecodedKv, key);
+            await LoadKeyVaultAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> EditTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateKeyVaultTag(SubscriptionId, DecodedRg, DecodedKv, tag, value);
             await LoadKeyVaultAsync();
             StateHasChanged();
             return null;

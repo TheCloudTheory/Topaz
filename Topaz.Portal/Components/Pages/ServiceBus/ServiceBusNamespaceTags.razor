@@ -27,7 +27,8 @@
     {
         <TagsPanel Tags="_tags"
                    OnAdd="AddTagAsync"
-                   OnRemove="RemoveTagAsync" />
+                   OnRemove="RemoveTagAsync"
+                   OnEdit="EditTagAsync" />
     }
 </ServiceBusNamespaceDetailsShell>
 
@@ -97,6 +98,21 @@
         try
         {
             await TopazClient.DeleteServiceBusNamespaceTag(SubscriptionId, DecodedRg, DecodedName, key);
+            await LoadAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> EditTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateServiceBusNamespaceTag(SubscriptionId, DecodedRg, DecodedName, tag, value);
             await LoadAsync();
             StateHasChanged();
             return null;

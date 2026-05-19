@@ -30,7 +30,8 @@
     {
         <TagsPanel Tags="_tags"
                    OnAdd="AddTagAsync"
-                   OnRemove="RemoveTagAsync" />
+                   OnRemove="RemoveTagAsync"
+                   OnEdit="EditTagAsync" />
     }
 </ResourceGroupDetailsShell>
 
@@ -99,6 +100,21 @@
         try
         {
             await TopazClient.DeleteResourceGroupTag(SubscriptionId, DecodedName, key);
+            await LoadResourceGroupAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> EditTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateResourceGroupTag(SubscriptionId, DecodedName, tag, value);
             await LoadResourceGroupAsync();
             StateHasChanged();
             return null;

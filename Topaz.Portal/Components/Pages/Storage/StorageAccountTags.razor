@@ -29,7 +29,8 @@
     {
         <TagsPanel Tags="_tags"
                    OnAdd="AddTagAsync"
-                   OnRemove="RemoveTagAsync" />
+                   OnRemove="RemoveTagAsync"
+                   OnEdit="EditTagAsync" />
     }
 </StorageAccountDetailsShell>
 
@@ -99,6 +100,21 @@
         try
         {
             await TopazClient.DeleteStorageAccountTag(SubscriptionId, DecodedRg, DecodedSa, key);
+            await LoadStorageAccountAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> EditTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateStorageAccountTag(SubscriptionId, DecodedRg, DecodedSa, tag, value);
             await LoadStorageAccountAsync();
             StateHasChanged();
             return null;

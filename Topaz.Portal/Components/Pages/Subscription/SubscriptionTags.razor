@@ -26,7 +26,8 @@
     {
         <TagsPanel Tags="_tags"
                    OnAdd="AddTagAsync"
-                   OnRemove="RemoveTagAsync" />
+                   OnRemove="RemoveTagAsync"
+                   OnEdit="EditTagAsync" />
     }
 </SubscriptionDetailsShell>
 
@@ -95,6 +96,21 @@
         try
         {
             await TopazClient.DeleteSubscriptionTag(SubscriptionId, key);
+            await LoadSubscriptionAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> EditTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateSubscriptionTag(SubscriptionId, tag, value);
             await LoadSubscriptionAsync();
             StateHasChanged();
             return null;
