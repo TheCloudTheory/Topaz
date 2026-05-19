@@ -210,10 +210,10 @@ internal sealed class ResourceManagerControlPlane(
             var metadataInsensitive =
                 metadata.ToInsensitiveDictionary(meta => meta.Key, meta => meta.Value);
 
+            var wifParams = request.Properties?.GetParameterValues();
             _templateEngineFacade.ProcessTemplate(subscriptionIdentifier, resourceGroupIdentifier, template,
                 metadataInsensitive,
-                request.Properties?.Parameters == null ? null
-                    : BinaryData.FromObjectAsJson(request.Properties.Parameters, GlobalSettings.JsonOptions));
+                wifParams == null ? null : BinaryData.FromObjectAsJson(wifParams, GlobalSettings.JsonOptions));
 
             foreach (var resource in template.Resources)
             {
@@ -258,10 +258,10 @@ internal sealed class ResourceManagerControlPlane(
             var metadataInsensitive =
                 metadata.ToInsensitiveDictionary(meta => meta.Key, meta => meta.Value);
 
+            var wifSubParams = request.Properties?.GetParameterValues();
             _templateEngineFacade.ProcessTemplateAtSubscriptionScope(subscriptionIdentifier, template,
                 metadataInsensitive,
-                request.Properties?.Parameters == null ? null
-                    : BinaryData.FromObjectAsJson(request.Properties.Parameters, GlobalSettings.JsonOptions));
+                wifSubParams == null ? null : BinaryData.FromObjectAsJson(wifSubParams, GlobalSettings.JsonOptions));
 
             foreach (var resource in template.Resources)
             {

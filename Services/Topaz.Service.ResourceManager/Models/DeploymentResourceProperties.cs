@@ -54,7 +54,7 @@ public sealed class DeploymentResourceProperties
             Mode = request.Properties?.Mode ?? "Incremental",
             ProvisioningState = ResourcesProvisioningState.Succeeded.ToString(),
             Timestamp = DateTimeOffset.UtcNow,
-            Parameters = request.Properties?.Parameters is { } parameters
+            Parameters = request.Properties?.GetParameterValues() is { } parameters
                 ? BinaryData.FromObjectAsJson(parameters, GlobalSettings.JsonOptions)
                 : BinaryData.Empty
         };
