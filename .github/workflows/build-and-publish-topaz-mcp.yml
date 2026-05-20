@@ -51,6 +51,10 @@ jobs:
       run: dotnet publish ${{ github.workspace }}/Topaz.MCP/Topaz.MCP.csproj -c Release -r linux-x64 -o ./publish/linux-x64
     - name: Publish Arm64
       run: dotnet publish ${{ github.workspace }}/Topaz.MCP/Topaz.MCP.csproj -c Release -r linux-arm64 -o ./publish/linux-arm64
+    - name: Copy certificate to artifact directories
+      run: |
+        cp certificate/topaz.crt ./publish/linux-x64/topaz.crt
+        cp certificate/topaz.crt ./publish/linux-arm64/topaz.crt
     - name: Upload Linux artifact
       uses: actions/upload-artifact@v4
       with:
