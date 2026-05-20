@@ -36,6 +36,8 @@ jobs:
       run: dotnet test --no-build --verbosity normal --filter "FullyQualifiedName~Topaz.Tests.MCP"
     - name: Publish Linux (interim)
       run: dotnet publish ${{ github.workspace }}/Topaz.MCP/Topaz.MCP.csproj -c Release -r linux-x64 -o ./publish
+    - name: Copy certificate to publish directory
+      run: cp certificate/topaz.crt ./publish/topaz.crt
     - name: Build interim Docker image
       id: push
       uses: docker/build-push-action@v6.18.0
