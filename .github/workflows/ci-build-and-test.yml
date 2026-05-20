@@ -98,6 +98,8 @@ jobs:
             - 'Services/Topaz.Service.ResourceManager/**'
           subscription:
             - 'Services/Topaz.Service.Subscription/**'
+          appservice:
+            - 'Services/Topaz.Service.AppService/**'
           virtualnetwork:
             - 'Services/Topaz.Service.VirtualNetwork/**'
           virtualmachine:
@@ -150,6 +152,7 @@ jobs:
 
         # Build a per-service vstest filter expression
         PARTS=()
+        [[ "${{ steps.changes.outputs.appservice }}"      == "true" ]] && PARTS+=("FullyQualifiedName~AppService")
         [[ "${{ steps.changes.outputs.keyvault }}"        == "true" ]] && PARTS+=("FullyQualifiedName~KeyVault")
         [[ "${{ steps.changes.outputs.acr }}"             == "true" ]] && PARTS+=("FullyQualifiedName~ContainerRegistry")
         [[ "${{ steps.changes.outputs.storage }}"         == "true" ]] && PARTS+=("FullyQualifiedName~Storage")
@@ -175,6 +178,7 @@ jobs:
 
         # Build AzurePowerShell test filter (only the 4 services covered by PS tests)
         PS_PARTS=()
+        [[ "${{ steps.changes.outputs.appservice }}"     == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.AppService")
         [[ "${{ steps.changes.outputs.keyvault }}"       == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.KeyVault")
         [[ "${{ steps.changes.outputs.acr }}"            == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.ContainerRegistry")
         [[ "${{ steps.changes.outputs.storage }}"        == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.Storage")
@@ -197,6 +201,7 @@ jobs:
 
         # Build AzureCLI test filter
         CLI_PARTS=()
+        [[ "${{ steps.changes.outputs.appservice }}"      == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.AppService")
         [[ "${{ steps.changes.outputs.keyvault }}"        == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.KeyVault")
         [[ "${{ steps.changes.outputs.acr }}"             == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.ContainerRegistry")
         [[ "${{ steps.changes.outputs.storage }}"         == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.Storage")
