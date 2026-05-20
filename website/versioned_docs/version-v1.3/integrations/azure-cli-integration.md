@@ -69,13 +69,12 @@ The script is idempotent — safe to run multiple times. It will prompt you befo
 
 If you prefer not to run the script, follow the [official Azure CLI guide](https://learn.microsoft.com/en-gb/cli/azure/use-azure-cli-successfully-troubleshooting?view=azure-cli-latest#work-behind-a-proxy) to set `REQUESTS_CA_BUNDLE` to a bundle file that includes the Topaz certificate.
 
-## Step 2 — Start the emulator with a tenant ID
+## Step 2 — Start the emulator
 
-Azure CLI needs to resolve Entra ID metadata endpoints when you log in. Topaz intercepts these, but only when started with the `--tenant-id` option pointing at your real Entra ID tenant:
+Topaz emulates Entra ID itself — no real Azure tenant is required. Start the host with an optional default subscription ID so it is created automatically:
 
 ```bash
-topaz-host start \
-  --tenant-id <your-entra-tenant-id> \
+topaz-host \
   --default-subscription 00000000-0000-0000-0000-000000000001 \
   --log-level Information
 ```
@@ -228,5 +227,5 @@ Resources created in Topaz are unaffected — they remain available the next tim
 | `az login` hangs / no browser | Running in WSL headless | Use `az login --use-device-code` |
 | `InteractionRequiredAuthError` | Conditional Access policy on tenant | Use a dedicated test tenant (see Prerequisites) |
 | `az` commands return 404 | Wrong cloud active | Run `az cloud show` to confirm `Topaz` is selected |
-| Subscription not found | No subscription created | Add `--default-subscription` to `topaz-host start` |
+| Subscription not found | No subscription created | Add `--default-subscription` to `topaz-host` |
 

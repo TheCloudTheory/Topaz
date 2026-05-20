@@ -67,7 +67,7 @@ If you prefer not to run the script, follow the [official Azure CLI guide](https
 Topaz emulates Entra ID itself — no real Azure tenant is required. Start the host with an optional default subscription ID so it is created automatically:
 
 ```bash
-topaz-host start \
+topaz-host \
   --default-subscription 00000000-0000-0000-0000-000000000001 \
   --log-level Information
 ```
@@ -220,5 +220,5 @@ Resources created in Topaz are unaffected — they remain available the next tim
 | `az login` hangs / no browser | Running in WSL headless | Use `az login --use-device-code` |
 | `InteractionRequiredAuthError` | Conditional Access policy on tenant | Use a dedicated test tenant (see Prerequisites) |
 | `az` commands return 404 | Wrong cloud active | Run `az cloud show` to confirm `Topaz` is selected |
-| Subscription not found | No subscription created | Add `--default-subscription` to `topaz-host start` |
+| Subscription not found | No subscription created | Add `--default-subscription` to `topaz-host` |
 

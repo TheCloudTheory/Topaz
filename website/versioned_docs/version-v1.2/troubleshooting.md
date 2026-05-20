@@ -131,7 +131,7 @@ Or use the `--port` flag (if supported by the service) to start on an alternate 
 Topaz auto-generates a certificate on first run if neither file is found. If you want to supply your own:
 
 ```bash
-topaz-host start --certificate-file ./my.crt --certificate-key ./my.key
+topaz-host --certificate-file ./my.crt --certificate-key ./my.key
 ```
 
 The certificate files must be PEM-encoded. Use the bundled generation script to create a compatible self-signed pair:
@@ -172,7 +172,7 @@ This happens when the Azure AD tenant has Conditional Access policies that block
 
 If `az` returns errors about missing subscriptions, Topaz was started without a default subscription. Restart with:
 ```bash
-topaz-host start --default-subscription 00000000-0000-0000-0000-000000000000
+topaz-host --default-subscription 00000000-0000-0000-0000-000000000000
 ```
 
 Or create the subscription manually after starting:
@@ -295,14 +295,14 @@ Pass it with `--parameters @file.parameters.json` (Azure CLI) or via `ArmDeploym
 
 ### State is lost between runs
 
-By default Topaz persists state to the `.topaz/` directory in the working directory where `topaz-host start` is run. Ensure you always run from the same directory, or specify a consistent path.
+By default Topaz persists state to the `.topaz/` directory in the working directory where `topaz-host` is run. Ensure you always run from the same directory, or specify a consistent path.
 
 ### Resetting all state
 
 Delete the `.topaz/` directory to wipe all persisted resources and restart from a clean slate:
 ```bash
 rm -rf .topaz/
-topaz-host start
+topaz-host
 ```
 
 ---
@@ -312,7 +312,7 @@ topaz-host start
 ### Enabling verbose logging
 
 ```bash
-topaz-host start --verbosity debug
+topaz-host --log-level Debug
 ```
 
 Verbose mode prints every request, response code, and resource operation to stdout.
@@ -325,7 +325,7 @@ When running as a background process or inside Docker, redirect stdout to a file
 docker logs topaz
 
 # Bare process
-topaz-host start > topaz.log 2>&1 &
+topaz-host > topaz.log 2>&1 &
 tail -f topaz.log
 ```
 

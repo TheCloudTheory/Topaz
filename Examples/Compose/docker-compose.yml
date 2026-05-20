@@ -48,7 +48,7 @@ services:
     networks:
       - topaz-net
     environment:
-      # Topaz superadmin object ID — grants unrestricted access during local development
+      # Topaz default tenant ID — used for local auth flows
       AZURE_TENANT_ID: "50717675-3E5E-4A1E-8CB5-C62D8BE8CA48"
 
     extra_hosts:

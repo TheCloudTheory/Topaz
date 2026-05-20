@@ -60,7 +60,7 @@ Service Name|Port|Protocol
 ------------|----|--------
 Resource Manager|8899, 443|HTTPS
 Table Storage|8890|HTTPS
-Blob Storage|8891|HTTP
+Blob Storage|8891|HTTPS
 Queue Storage|8893|HTTPS
 Azure Key Vault|8898, 443|HTTPS
 Azure Event Hub|8897|HTTPS
@@ -93,7 +93,7 @@ brew install topaz
 Or pull the Docker image:
 
 ```bash
-docker pull ghcr.io/thecloudtheory/topaz:latest
+docker pull thecloudtheory/topaz-host:latest
 ```
 
 See the [Getting Started guide](/docs/intro) for full setup instructions, including certificate installation and Azure CLI integration.

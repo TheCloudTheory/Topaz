@@ -40,8 +40,7 @@ Before you start:
 Start Topaz with a stable subscription ID and your Entra tenant ID:
 
 ```bash
-topaz-host start \
-  --tenant-id <your-entra-tenant-id> \
+topaz-host \
   --default-subscription 00000000-0000-0000-0000-000000000001 \
   --log-level Information
 ```
@@ -49,7 +48,6 @@ topaz-host start \
 Why this matters:
 
 - `--default-subscription` makes Terraform runs repeatable.
-- `--tenant-id` is needed for local auth flows that rely on Entra metadata.
 
 Keep Topaz running for the rest of this tutorial.
 
