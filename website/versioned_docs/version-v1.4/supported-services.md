@@ -93,7 +93,7 @@ brew install topaz
 Or pull the Docker image:
 
 ```bash
-docker pull ghcr.io/thecloudtheory/topaz:latest
+docker pull thecloudtheory/topaz-host:latest
 ```
 
 See the [Getting Started guide](/docs/intro) for full setup instructions, including certificate installation and Azure CLI integration.

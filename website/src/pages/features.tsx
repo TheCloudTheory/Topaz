@@ -100,8 +100,7 @@ const SNIPPETS: Record<string, Snippet> = {
     label: 'Azure CLI',
     language: 'bash',
     code: `# 1. Start Topaz
-topaz start --tenant-id <your-entra-tenant-id> \\
-            --default-subscription 36a28ebb-9370-46d8-981c-84efe02048ae
+topaz-host --default-subscription 36a28ebb-9370-46d8-981c-84efe02048ae
 
 # 2. Register Topaz as a cloud environment (one-time setup)
 az cloud register -n Topaz --cloud-config @"cloud.json"
