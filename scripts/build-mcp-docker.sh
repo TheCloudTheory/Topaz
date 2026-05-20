@@ -21,4 +21,5 @@ echo "Building for platform: $PLATFORM (dotnet RID: $DOTNET_RID)"
 
 rm -rf ./publish
 dotnet publish ./Topaz.MCP/Topaz.MCP.csproj -c Release -r $DOTNET_RID -o ./publish
+cp certificate/topaz.crt ./publish/topaz.crt
 docker build -f ./Topaz.MCP/Dockerfile -t topaz/mcp --platform linux/$PLATFORM --no-cache --build-arg TARGETPLATFORM=linux/$PLATFORM .
