@@ -23,15 +23,17 @@ The server uses the Testcontainers library to pull and manage the Topaz containe
 
 | Tool | Description |
 |---|---|
-| `RunTopazAsContainer` | Pulls and starts the Topaz emulator as a local Docker container, binding all common service ports |
-| `StopTopazContainer` | Gracefully stops and removes the container that was started by `RunTopazAsContainer` |
+| `RunTopazAsContainer` | Creates a shared `topaz-net` Docker network, starts a lightweight DNS resolver (`topaz-dns`) that handles all `*.topaz.local.dev` wildcard subdomains, then pulls and starts the Topaz emulator container at a fixed IP on that network |
+| `ConnectMcpToTopazNetwork` | Returns a `docker network connect` command to attach an already-running MCP container to `topaz-net`. Use this when the MCP container was started before `RunTopazAsContainer` was called. Note: full wildcard subdomain DNS support requires `--dns 172.28.0.53` at container creation time; connecting a running container only restores base ARM connectivity |
+| `StopTopazContainer` | Gracefully stops and removes the Topaz emulator container, the DNS resolver container, and the `topaz-net` Docker network |
 
-`RunTopazAsContainer` accepts two optional parameters:
+`RunTopazAsContainer` accepts the following optional parameters:
 
 | Parameter | Default | Description |
 |---|---|---|
 | `logLevel` | `Information` | Emulator log verbosity (`Debug`, `Information`, `Warning`, `Error`) |
-| `version` | latest alpha | Docker image tag to use (e.g. `v1.0.299-alpha`) |
+| `version` | latest stable | Docker image tag to use (e.g. `v1.4.101-beta`) |
+| `platform` | `linux/amd64` | Docker platform: `linux/arm64` for Apple Silicon / ARM64 hosts, `linux/amd64` for Intel/AMD hosts |
 
 The following ports are bound automatically when the container starts:
 
@@ -371,6 +373,14 @@ The MCP server is distributed as a Docker image (`thecloudtheory/topaz-mcp`). Ad
 
 ### VS Code (GitHub Copilot)
 
+Before adding the MCP server, create the shared Docker network once:
+
+```bash
+docker network create --subnet 172.28.0.0/16 topaz-net
+```
+
+This is a one-time step. The network persists across reboots until you remove it manually.
+
 Create or update `.vscode/mcp.json` in your workspace:
 
 ```json
@@ -383,7 +393,8 @@ Create or update `.vscode/mcp.json` in your workspace:
         "run",
         "--rm",
         "-i",
-        "--network", "host",
+        "--network", "topaz-net",
+        "--dns", "172.28.0.53",
         "thecloudtheory/topaz-mcp:<version>"
       ]
     }
@@ -391,11 +402,11 @@ Create or update `.vscode/mcp.json` in your workspace:
 }
 ```
 
-Replace `<version>` with the image tag matching your Topaz release (e.g. `v1.0.299-alpha`). All available tags are listed on the [topaz-mcp Docker Hub page](https://hub.docker.com/r/thecloudtheory/topaz-mcp/tags). Tags follow the same versioning scheme as the `topaz-host` image.
+Replace `<version>` with the image tag matching your Topaz release (e.g. `v1.4.101-beta`). All available tags are listed on the [topaz-mcp Docker Hub page](https://hub.docker.com/r/thecloudtheory/topaz-mcp/tags). Tags follow the same versioning scheme as the `topaz-host` image.
 
-:::tip[`--network host`]
+:::tip[Network and DNS setup]
 
-The `--network host` flag lets the MCP container reach the Topaz emulator container on `localhost`. Without it, the two containers are isolated in different Docker networks and subscription/resource operations will fail to connect.
+The `--network topaz-net` flag places the MCP container on the same Docker network as the Topaz emulator. The `--dns 172.28.0.53` flag points DNS at the lightweight `topaz-dns` resolver (started automatically by `RunTopazAsContainer`) which resolves all `*.topaz.local.dev` wildcard subdomains — including Key Vault, Storage, Service Bus, and Event Hub data-plane hostnames — to the Topaz container. Both flags are required for full connectivity.
 
 :::
 
@@ -403,10 +414,10 @@ After saving the file, VS Code will prompt you to start the server. Once running
 
 ### Other editors / AI tools
 
-Any MCP-compatible client can use the server. The command to invoke it is:
+Any MCP-compatible client can use the server. Create the shared network once (see above), then invoke the server with:
 
 ```bash
-docker run --rm -i --network host thecloudtheory/topaz-mcp:<version>
+docker run --rm -i --network topaz-net --dns 172.28.0.53 thecloudtheory/topaz-mcp:<version>
 ```
 
 Refer to your tool's documentation for how to register a `stdio`-based MCP server.
