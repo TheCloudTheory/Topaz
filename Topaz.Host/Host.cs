@@ -14,6 +14,7 @@ using Topaz.Dns;
 using Topaz.EventPipeline;
 using Topaz.Host.AMQP;
 using Topaz.Service.Authorization;
+using Topaz.Service.AppService;
 using Topaz.Service.ContainerRegistry;
 using Topaz.Service.Entra;
 using Topaz.Service.EventHub;
@@ -113,7 +114,9 @@ public class Host
             new RoleAssignmentService(_eventPipeline, _logger),
             new InsightsService(),
             new EntraService(_eventPipeline, _logger),
-            new ContainerRegistryService(_eventPipeline, _logger)
+            new ContainerRegistryService(_eventPipeline, _logger),
+            new AppServicePlanService(_eventPipeline, _logger),
+            new AppServiceSiteService(_eventPipeline, _logger)
         };
 
         _logger.ConfigureIdFactory(idFactory);

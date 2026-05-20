@@ -5,6 +5,7 @@ using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
 using Newtonsoft.Json.Linq;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
+using Topaz.Service.AppService;
 using Topaz.Service.ContainerRegistry;
 using Topaz.Service.EventHub;
 using Topaz.Service.KeyVault;
@@ -204,6 +205,12 @@ public sealed class TemplateDeploymentOrchestrator(
                     break;
                 case "Microsoft.Storage/storageAccounts":
                     controlPlane = AzureStorageControlPlane.New(logger);
+                    break;
+                case "Microsoft.Web/serverfarms":
+                    controlPlane = AppServicePlanControlPlane.New(eventPipeline, logger);
+                    break;
+                case "Microsoft.Web/sites":
+                    controlPlane = AppServiceSiteControlPlane.New(eventPipeline, logger);
                     break;
                 default:
                     logger.LogWarning($"Deployment of resource type {resource.Type} is not yet supported.");

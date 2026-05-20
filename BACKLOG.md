@@ -277,29 +277,6 @@ TODO: Virtual Networks: IP address allocation registry
 ### Azure App Service — initial control plane
 
 <!--
-TODO: Azure App Service: New service scaffold
-  Create Topaz.Service.AppService following the existing service conventions:
-  - Project file with references to Topaz.ResourceManager, Topaz.Service.Shared,
-    Topaz.Service.ResourceGroup, Topaz.Service.Subscription
-  - AppServicePlanResourceProperties + AppServicePlanResource (ArmResource<T>)
-  - AppServiceSiteResourceProperties + AppServiceSiteResource (ArmResource<T>),
-    including embedded SiteConfigProperties (appSettings, connectionStrings,
-    linuxFxVersion, netFrameworkVersion, alwaysOn, ftpsState, minTlsVersion, etc.)
-  - AppServicePlanResourceProvider and AppServiceSiteResourceProvider
-    (ResourceProviderBase<T> thin wrappers)
-  - AppServicePlanControlPlane and AppServiceSiteControlPlane implementing IControlPlane
-    with Deploy() for both Microsoft.Web/serverfarms and Microsoft.Web/sites
-  - Two IServiceDefinition classes: AppServicePlanService (LocalDirectoryPath .azure-web-plans)
-    and AppServiceSiteService (LocalDirectoryPath .azure-web-sites)
-  - Register both services in Topaz.Host/Host.cs
-  - Add case "Microsoft.Web/serverfarms" and case "Microsoft.Web/sites" to
-    TemplateDeploymentOrchestrator.RouteDeployment()
-  - Add ProjectReference to Topaz.Service.ResourceManager.csproj
-  milestone: v1.5-beta
-  labels: enhancement, app-service, good first issue
--->
-
-<!--
 TODO: Azure App Service: App Service Plan control plane endpoints
   Implement the ARM-level App Service Plan resource surface (Microsoft.Web/serverfarms):
   - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/serverfarms/{name}  – create or update
