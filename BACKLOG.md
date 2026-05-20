@@ -700,9 +700,38 @@ TODO: Topaz CLI — configurable defaults
   labels: enhancement, cli, good first issue
 -->
 
+### Azure App Service — Kudu / SCM data plane
+
+<!--
+TODO: Azure App Service: Kudu SCM data-plane endpoints (zip deploy + deployment list)
+  Implement a minimal Kudu/SCM data-plane for Microsoft.Web/sites on a dedicated
+  port (GlobalSettings.DefaultAppServiceKuduPort, 8896).
+  Site identity is resolved from the Host header:
+    {siteName}.scm.azurewebsites.topaz.local.dev
+  New model: DeploymentRecord with Id (GUID string), Status ("succeeded"/"pending"/"failed"),
+  StartTime, EndTime (DateTimeOffset), Message (optional), Deployer ("topaz").
+  Endpoints (one file each under Services/Topaz.Service.AppService/Endpoints/Kudu/):
+  - POST /api/zipdeploy
+    Read the request body (zip archive), store it at
+    .topaz/{sub}/{rg}/.azure-web-sites/{name}/deployments/{id}.zip,
+    persist a DeploymentRecord at
+    .topaz/{sub}/{rg}/.azure-web-sites/{name}/deployments/{id}/metadata.json,
+    and return 202 Accepted with a Location: /api/deployments/{id} header.
+  - GET /api/deployments
+    List all DeploymentRecord metadata files for the resolved site and return them
+    as a JSON array.
+  Add a new AppServiceKuduService (IServiceDefinition) referencing both endpoints on
+  DefaultAppServiceKuduPort / Protocol.Https, and register it in Topaz.Host/Host.cs.
+  Prerequisite: port constant DefaultAppServiceKuduPort = 8896 and DNS suffix constant
+  AppServiceKuduDnsSuffix = "scm.azurewebsites.topaz.local.dev" must be added to
+  GlobalSettings as part of the v1.5-beta ARM control-plane work.
+  milestone: v1.7-beta
+  labels: enhancement, app-service
+-->
+
 ---
 
-## v1.8-beta
+## v1.8-preview
 
 ### Azure Storage — Blob authentication enforcement
 
@@ -719,8 +748,42 @@ TODO: Azure Blob Storage: enforce authentication on private containers
   - This applies to all data-plane GET/HEAD/PUT/DELETE/POST Blob endpoint paths that
     operate on objects within a named container.
   - Shared container operations (e.g. `?comp=list` on the account root) are not affected.
-  milestone: v1.8-beta
+  milestone: v1.8-preview
   labels: enhancement, storage, good first issue
+-->
+
+### Azure App Service — transparent request forwarding
+
+<!--
+TODO: Azure App Service: transparent HTTP request forwarding (data-plane hosting)
+  Implement a new data-plane forwarding endpoint on DefaultAppServicePort (8895) that
+  proxies all HTTP traffic to the user's actual application container, enabling Docker
+  Compose setups where Topaz emulates the App Service hosting layer.
+  Behaviour:
+  1. Extract the site name from the incoming Host header:
+       {siteName}.azurewebsites.topaz.local.dev:{8895}
+  2. Load the AppServiceSiteResource via AppServiceSiteResourceProvider and read the
+     WEBSITES_PORT app setting from SiteConfig.AppSettings (default: 80 if not set).
+     This mirrors real Azure App Service behaviour for custom-port containers.
+  3. Build the forwarding target URL:
+       http://{siteName}:{WEBSITES_PORT}{path}{query}
+     where {siteName} is assumed to be the Docker Compose service name (convention:
+     the Compose service must be named identically to the App Service site).
+  4. Forward the request (method, headers, body) via HttpClient and stream the response
+     (status code, headers, body) back to the caller verbatim.
+  5. Propagate X-Forwarded-For and X-Forwarded-Host headers.
+  Design notes:
+  - Register a named HttpClient / IHttpClientFactory in Topaz.Host for connection pooling.
+  - Add the forwarding endpoint to AppServiceSiteService.Endpoints on DefaultAppServicePort.
+  - IEndpointDefinition.GetResponse is currently synchronous; evaluate whether an async
+    overload should be introduced before beginning this work, or accept .GetAwaiter().GetResult()
+    as a temporary approach for the dev-emulator context.
+  Compose integration:
+  - Add port 8895 to Examples/Compose/docker-compose.yml.
+  - Add an extra_hosts entry mapping {siteName}.azurewebsites.topaz.local.dev to Topaz's IP.
+  - Document WEBSITES_PORT usage in the example.
+  milestone: v1.8-preview
+  labels: enhancement, app-service
 -->
 
 ---
