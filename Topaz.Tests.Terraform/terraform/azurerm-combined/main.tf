@@ -494,3 +494,31 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
 output "vm_name"     { value = azurerm_linux_virtual_machine.vm.name }
 output "vm_location" { value = azurerm_linux_virtual_machine.vm.location }
+
+# ── App Service Plan ───────────────────────────────────────────────────────────
+
+resource "azurerm_resource_group" "asp_rg" {
+  name     = "tf-rm-asp-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_service_plan" "asp_basic" {
+  name                = "tf-rm-asp-basic"
+  resource_group_name = azurerm_resource_group.asp_rg.name
+  location            = azurerm_resource_group.asp_rg.location
+  os_type             = "Linux"
+  sku_name            = "B1"
+}
+
+resource "azurerm_service_plan" "asp_standard" {
+  name                = "tf-rm-asp-standard"
+  resource_group_name = azurerm_resource_group.asp_rg.name
+  location            = azurerm_resource_group.asp_rg.location
+  os_type             = "Linux"
+  sku_name            = "S1"
+}
+
+output "asp_basic_name"      { value = azurerm_service_plan.asp_basic.name }
+output "asp_basic_sku"       { value = azurerm_service_plan.asp_basic.sku_name }
+output "asp_standard_name"   { value = azurerm_service_plan.asp_standard.name }
+output "asp_standard_sku"    { value = azurerm_service_plan.asp_standard.sku_name }

@@ -12,7 +12,7 @@ public class AppServicePlanTests : TopazFixture
             {
                 Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo("test-plan"));
                 Assert.That(response["sku"]!["name"]!.GetValue<string>(), Is.EqualTo("B1"));
-                Assert.That(response["properties"]!["provisioningState"]!.GetValue<string>(), Is.EqualTo("Succeeded"));
+                Assert.That(response["provisioningState"]!.GetValue<string>(), Is.EqualTo("Succeeded"));
             });
         await RunAzureCliCommand("az group delete -n rg-appservice-create --yes");
     }
