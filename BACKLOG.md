@@ -776,3 +776,16 @@ TODO: Azure App Service: transparent HTTP request forwarding (data-plane hosting
 ## Unplanned / Ideas
 
 _Rough ideas not yet tied to a specific version._
+
+<!--
+TODO: OpenTofu integration — verified compatibility and dedicated test suite
+  OpenTofu is the Linux Foundation fork of Terraform (BSL → MPL 2.0) with growing
+  enterprise adoption. The azurerm provider is 100% compatible with existing Topaz
+  Terraform infrastructure, so the implementation cost is low:
+  - Add a Topaz.Tests.OpenTofu project mirroring Topaz.Tests.Terraform (swap the
+    Terraform binary for the OpenTofu binary in the Testcontainers fixture).
+  - Add a build-opentofu-container.sh script.
+  - Add an OpenTofu integration guide to website/docs/integrations/.
+  - Flip the relevant cells in website/docs/api-coverage/ to note OpenTofu support.
+  labels: enhancement, good first issue
+-->

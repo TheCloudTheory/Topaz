@@ -252,6 +252,8 @@ Once started, Topaz logs the list of bound endpoints. The quickest way to confir
 topaz health
 ```
 
+![topaz health demo](/img/demos/verify-running.gif)
+
 If the host is up, you'll see something like:
 
 ```

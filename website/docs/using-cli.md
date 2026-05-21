@@ -47,6 +47,8 @@ If the host is not reachable the command exits with code `1` and prints a messag
 topaz-host --log-level Information
 ```
 
+![topaz-host startup demo](/img/demos/start-emulator.gif)
+
 When running as a Docker container use the `topaz-host` image:
 
 ```bash
@@ -139,12 +141,16 @@ topaz group create \
   --subscription-id 00000000-0000-0000-0000-000000000001
 ```
 
+![subscription and resource group creation demo](/img/demos/subscription-and-group.gif)
+
 ### Listing available commands
 
 ```bash
 topaz -h          # top-level help
 topaz <command> -h  # help for a specific command
 ```
+
+![topaz help output](/img/demos/cli-help.gif)
 
 ### Examples by service
 
@@ -166,6 +172,8 @@ topaz keyvault delete \
   --subscription-id 00000000-0000-0000-0000-000000000001
 ```
 
+![Key Vault create and delete demo](/img/demos/keyvault.gif)
+
 </TabItem>
 <TabItem value="servicebus" label="Service Bus">
 
@@ -179,11 +187,13 @@ topaz servicebus namespace create \
 
 # Create a queue inside it
 topaz servicebus queue create \
-  --name "my-queue" \
+  --queue-name "my-queue" \
   --namespace-name "sb-local" \
   --resource-group "rg-my-app" \
   --subscription-id 00000000-0000-0000-0000-000000000001
 ```
+
+![Service Bus namespace and queue creation demo](/img/demos/servicebus.gif)
 
 </TabItem>
 <TabItem value="eventhub" label="Event Hub">
@@ -203,6 +213,8 @@ topaz eventhubs eventhub create \
   --resource-group "rg-my-app" \
   --subscription-id 00000000-0000-0000-0000-000000000001
 ```
+
+![Event Hub namespace and eventhub creation demo](/img/demos/eventhub.gif)
 
 </TabItem>
 </Tabs>
