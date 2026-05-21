@@ -4,6 +4,7 @@ using System.Text.Json;
 using Spectre.Console.Cli;
 using Topaz.Documentation.Command;
 using Topaz.Documentation.Models;
+using Topaz.Service.AppService.Commands;
 using Topaz.Service.Authorization.Commands;
 using Topaz.Service.ContainerRegistry.Commands;
 using Topaz.Service.EventHub.Commands;
@@ -39,7 +40,8 @@ _ = new[]
     typeof(GenericSubscriptionCommand),
     typeof(GenericManagedIdentityCommand),
     typeof(GenericManagementGroupCommand),
-    typeof(GenericVirtualNetworkCommand)
+    typeof(GenericVirtualNetworkCommand),
+    typeof(GenericAppServiceCommand)
 };
 
 Console.WriteLine("Looking for commands...");

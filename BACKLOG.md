@@ -277,21 +277,6 @@ TODO: Virtual Networks: IP address allocation registry
 ### Azure App Service — initial control plane
 
 <!--
-TODO: Azure App Service: App Service Plan control plane endpoints
-  Implement the ARM-level App Service Plan resource surface (Microsoft.Web/serverfarms):
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/serverfarms/{name}  – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/serverfarms/{name}  – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/serverfarms/{name}  – delete
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/serverfarms          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.Web/serverfarms                             – list all in subscription
-  All endpoints run on DefaultResourceManagerPort (8899). SKU (name/tier/size/family/capacity)
-  is persisted and round-tripped. provisioningState is always "Succeeded"; status is "Ready".
-  Follow the one-file-per-operation convention under Endpoints/Plans/.
-  milestone: v1.5-beta
-  labels: enhancement, app-service
--->
-
-<!--
 TODO: Azure App Service: Web App and Function App (Sites) control plane endpoints
   Implement the ARM-level Web App / Function App resource surface (Microsoft.Web/sites):
   - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites/{name}  – create or update

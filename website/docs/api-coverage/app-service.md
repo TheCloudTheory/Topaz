@@ -24,11 +24,12 @@ This page tracks which Azure App Service REST API operations are implemented in 
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create Or Update | ❌ | |
-| Get | ❌ | |
-| Delete | ❌ | |
-| List By Resource Group | ❌ | |
-| List | ❌ | List all plans in subscription |
+| Create Or Update | ✅ | |
+| Get | ✅ | |
+| Delete | ✅ | |
+| List By Resource Group | ✅ | |
+| List | ✅ | List all plans in subscription |
+| Restart Web Apps | ✅ | Returns 200; no actual restart logic |
 
 ---
 

@@ -1,4 +1,5 @@
 using Topaz.EventPipeline;
+using Topaz.Service.AppService.Endpoints.Plans;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -14,5 +15,14 @@ public sealed class AppServicePlanService(Pipeline eventPipeline, ITopazLogger l
     public static IReadOnlyCollection<string>? Subresources => null;
     public static string UniqueName => "app-service-plan";
     public string Name => "Azure App Service Plan";
-    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [];
+
+    public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
+    [
+        new CreateOrUpdateAppServicePlanEndpoint(_eventPipeline, _logger),
+        new GetAppServicePlanEndpoint(_eventPipeline, _logger),
+        new DeleteAppServicePlanEndpoint(_eventPipeline, _logger),
+        new ListAppServicePlansByResourceGroupEndpoint(_eventPipeline, _logger),
+        new ListAppServicePlansBySubscriptionEndpoint(_eventPipeline, _logger),
+        new RestartAppServicePlanSitesEndpoint(_eventPipeline, _logger),
+    ];
 }
