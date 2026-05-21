@@ -54,4 +54,8 @@ public static class GlobalSettings
 
     public static string GetKeyVaultEndpoint(string vaultName) =>
         $"https://{GetKeyVaultHost(vaultName)}:{DefaultKeyVaultPort}";
+
+    public const string AzureWebsitesDnsSuffix = "azurewebsites.topaz.local.dev";
+
+    public static string GetWebSiteDefaultHostName(string siteName) => $"{siteName}.{AzureWebsitesDnsSuffix}";
 }

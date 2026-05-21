@@ -277,22 +277,6 @@ TODO: Virtual Networks: IP address allocation registry
 ### Azure App Service — initial control plane
 
 <!--
-TODO: Azure App Service: Web App and Function App (Sites) control plane endpoints
-  Implement the ARM-level Web App / Function App resource surface (Microsoft.Web/sites):
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites/{name}  – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites/{name}  – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites/{name}  – delete
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Web/sites          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.Web/sites                             – list all in subscription
-  The kind field distinguishes app (web app) from functionapp / functionapp,linux (Function Apps).
-  On create, compute defaultHostName as "{name}.azurewebsites.net", hostNames,
-  enabledHostNames, and hostNameSslStates. state is always "Running"; availabilityState is "Normal".
-  Follow the one-file-per-operation convention under Endpoints/Sites/.
-  milestone: v1.5-beta
-  labels: enhancement, app-service
--->
-
-<!--
 TODO: Azure App Service: Site Config sub-resource endpoints
   Implement the /config sub-resource surface for Microsoft.Web/sites:
   - GET  .../sites/{name}/config/web              – return siteConfig wrapped as

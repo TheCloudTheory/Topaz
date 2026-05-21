@@ -37,11 +37,11 @@ This page tracks which Azure App Service REST API operations are implemented in 
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create Or Update | ❌ | |
-| Get | ❌ | |
-| Delete | ❌ | |
-| List By Resource Group | ❌ | |
-| List | ❌ | List all sites in subscription |
+| Create Or Update | ✅ | `kind` field: `app`, `functionapp`, `functionapp,linux` |
+| Get | ✅ | |
+| Delete | ✅ | |
+| List By Resource Group | ✅ | |
+| List | ✅ | List all sites in subscription |
 
 ---
 

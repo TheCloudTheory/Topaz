@@ -18,6 +18,13 @@ public sealed class GenericAppServiceCommand : IEmulatorCommand
                 plan.AddCommand<ListAppServicePlansByResourceGroupCommand>("list");
                 plan.AddCommand<RestartAppServicePlanSitesCommand>("restart-sites");
             });
+            appService.AddBranch("site", site =>
+            {
+                site.AddCommand<CreateAppServiceSiteCommand>("create");
+                site.AddCommand<GetAppServiceSiteCommand>("get");
+                site.AddCommand<DeleteAppServiceSiteCommand>("delete");
+                site.AddCommand<ListAppServiceSitesByResourceGroupCommand>("list");
+            });
         });
     }
 }

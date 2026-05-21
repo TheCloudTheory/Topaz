@@ -1,7 +1,9 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Core;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
 
 namespace Topaz.Service.AppService.Models;
 
@@ -37,4 +39,6 @@ internal sealed class AppServiceSiteResource : ArmResource<AppServiceSiteResourc
     public override ResourceSku? Sku { get; init; }
     public override string? Kind { get; init; }
     public sealed override AppServiceSiteResourceProperties Properties { get; init; }
+
+    public override string ToString() => JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
 }

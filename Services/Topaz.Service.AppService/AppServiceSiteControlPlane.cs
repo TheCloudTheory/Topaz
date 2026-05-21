@@ -85,7 +85,7 @@ internal sealed class AppServiceSiteControlPlane(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier)
     {
-        var resources = provider.ListAs<AppServiceSiteResource>(subscriptionIdentifier, resourceGroupIdentifier, null, null);
+        var resources = provider.ListAs<AppServiceSiteResource>(subscriptionIdentifier, resourceGroupIdentifier, null, 8);
         return new ControlPlaneOperationResult<AppServiceSiteResource[]>(
             OperationResult.Success, resources.ToArray(), null, null);
     }
@@ -93,7 +93,7 @@ internal sealed class AppServiceSiteControlPlane(
     public ControlPlaneOperationResult<AppServiceSiteResource[]> ListBySubscription(
         SubscriptionIdentifier subscriptionIdentifier)
     {
-        var resources = provider.ListAs<AppServiceSiteResource>(subscriptionIdentifier, null, null, null);
+        var resources = provider.ListAs<AppServiceSiteResource>(subscriptionIdentifier, null, null, 8);
         return new ControlPlaneOperationResult<AppServiceSiteResource[]>(
             OperationResult.Success,
             resources.Where(r => r.IsInSubscription(subscriptionIdentifier)).ToArray(),

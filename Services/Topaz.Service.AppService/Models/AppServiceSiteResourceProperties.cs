@@ -1,4 +1,5 @@
 using Topaz.Service.AppService.Models.Requests;
+using Topaz.Shared;
 
 namespace Topaz.Service.AppService.Models;
 
@@ -8,19 +9,31 @@ internal sealed class AppServiceSiteResourceProperties
 
     private AppServiceSiteResourceProperties(string siteName)
     {
-        DefaultHostName = $"{siteName}.azurewebsites.net";
+        DefaultHostName = GlobalSettings.GetWebSiteDefaultHostName(siteName);
         HostNames = [DefaultHostName];
         EnabledHostNames = [DefaultHostName];
+        HostNameSslStates =
+        [
+            new HostNameSslState { Name = DefaultHostName, SslState = "Disabled", HostType = "Standard" }
+        ];
     }
 
     public string? DefaultHostName { get; set; }
     public string[]? HostNames { get; set; }
     public string[]? EnabledHostNames { get; set; }
+    public HostNameSslState[]? HostNameSslStates { get; set; }
     public string State { get; init; } = "Running";
     public string AvailabilityState { get; init; } = "Normal";
     public string ProvisioningState { get; init; } = "Succeeded";
     public string? ServerFarmId { get; set; }
     public SiteConfigProperties? SiteConfig { get; set; }
+
+    internal sealed class HostNameSslState
+    {
+        public string? Name { get; set; }
+        public string? SslState { get; set; }
+        public string? HostType { get; set; }
+    }
 
     public static AppServiceSiteResourceProperties FromRequest(string siteName, CreateOrUpdateAppServiceSiteRequest request)
     {
