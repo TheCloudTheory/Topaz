@@ -17,6 +17,7 @@ using Topaz.Service.ServiceBus.Commands;
 using Topaz.Service.Storage.Commands;
 using Topaz.Service.Subscription.Commands;
 using Topaz.Service.VirtualNetwork.Commands;
+using Topaz.Service.VirtualMachine.Commands;
 
 Console.WriteLine($"Topaz.Documentation.Generator {ThisAssembly.AssemblyInformationalVersion}");
 
@@ -41,7 +42,8 @@ _ = new[]
     typeof(GenericManagedIdentityCommand),
     typeof(GenericManagementGroupCommand),
     typeof(GenericVirtualNetworkCommand),
-    typeof(GenericAppServiceCommand)
+    typeof(GenericAppServiceCommand),
+    typeof(GenericVirtualMachineCommand)
 };
 
 Console.WriteLine("Looking for commands...");
