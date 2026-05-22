@@ -26,6 +26,7 @@ internal sealed class AppServiceSiteResourceProperties
     public string AvailabilityState { get; init; } = "Normal";
     public string ProvisioningState { get; init; } = "Succeeded";
     public string? ServerFarmId { get; set; }
+    public string PossibleOutboundIpAddresses { get; init; } = string.Empty;
     public SiteConfigProperties? SiteConfig { get; set; }
 
     internal sealed class HostNameSslState

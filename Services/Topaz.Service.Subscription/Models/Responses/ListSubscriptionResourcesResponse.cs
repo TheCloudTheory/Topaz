@@ -16,6 +16,7 @@ public record ListSubscriptionResourcesResponse
         public string? Id { get; init; }
         public string? Name { get; init; }
         public string? Type { get; init; }
+        public string? Kind { get; init; }
         public string? Location { get; init; }
         public Dictionary<string, string>? Tags { get; init; }
         public object? Properties { get; init; }
@@ -27,6 +28,7 @@ public record ListSubscriptionResourcesResponse
                 Id = resource.Id,
                 Name = resource.Name,
                 Type = resource.Type,
+                Kind = resource.Kind,
                 Location = resource.Location,
                 Tags = resource.Tags as Dictionary<string, string>,
                 Properties = resource.Properties,
