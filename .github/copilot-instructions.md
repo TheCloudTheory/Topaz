@@ -95,6 +95,8 @@ Code generation & edits: practical guidelines
 - Endpoint JSON responses: prefer `response.CreateJsonContentResponse(...)`. If using a response DTO with `CreateJsonContentResponse`, ensure the DTO overrides `ToString()` to serialize with `GlobalSettings.JsonOptions`.
 - Id handling: if you modify `Id` format, update `ArmResource.GetSubscription()` and `GetResourceGroup()` usages.
 - **Filesystem access via resource providers only**: Never access the filesystem directly from a control plane or endpoint class. All reads and writes must go through a `ResourceProviderBase<TService>` subclass (e.g., `FooResourceProvider`). See `ManagedIdentityResourceProvider` and `SystemAssignedIdentityResourceProvider` as examples. Breaking this rule re-introduces direct file I/O scattered across classes and makes persistence non-uniform.
+- **Model placement**: All model classes (resource models, request/response DTOs) **must** live in the service's `Models/` directory. Never define models as nested or private classes inside endpoint files.
+- **Model construction**: All object construction and default-value logic for a model belongs in `static` factory methods on the model class (e.g. `FromSite(...)`, `FromRequest(...)`). Neither endpoints nor control planes may construct model objects inline.
 - Patterns to copy: `FromRequest(...)` factory methods and `UpdateFromRequest(...)` mutators are common; mirror the null-checks and GetValueOrDefault() idioms used in `KeyVaultResourceProperties.FromRequest`.
 
 Where to look first (recommended reading order)
@@ -118,7 +120,8 @@ Tests & CI
 - Use `RunAzureCliCommand("az ...")` via `TopazFixture`.
 - Use `GlobalSettings.ContainerRegistryPort` directly for port references.
 - **DNS**: every new hostname used in a test (registry login server, vault URL, etc.) must be added as a `WithExtraHost(...)` entry in `TopazFixture.cs`. A missing entry causes a silent curl timeout (exit code 28), not a DNS error.
-- **Storage data-plane commands** (`az storage queue ...`, `az storage blob ...`) must use `--connection-string` rather than separate `--account-name`/`--account-key`/`--queue-endpoint` flags. The Python SDK only extracts the account name from `*.core.windows.net` and localhost URLs; Topaz's custom domain causes a client-side `ValueError: Unable to determine account name` before any network call is made. Connection string format: `"DefaultEndpointsProtocol=https;AccountName={account};AccountKey={key};QueueEndpoint=https://{account}.queue.storage.topaz.local.dev:8893;"`
+- **Never hardcode subscription IDs in test URLs** — Topaz generates a fresh subscription ID per test-container run. Use shell substitution instead: `$(az account show --query id -o tsv)` inside the URL string passed to `az rest`. Because `RunAzureCliCommand` executes via `/bin/sh -c`, `$(...)` expansion works inside double-quoted strings, e.g. `"https://topaz.local.dev:8899/subscriptions/$(az account show --query id -o tsv)/providers/..."`. 
+- **Storage data-plane commands**
 - **Rebuild before running**: `Topaz.Tests.AzureCLI` runs against the Docker image, not local binaries. Always rebuild with `./scripts/build-docker.sh arm64` (or `amd64`) after any code change before running these tests. Results from a stale image are not valid evidence.
 
 Terraform tests
@@ -170,6 +173,12 @@ When an azure-cli command returns unexpected JSON (e.g. missing fields that Topa
 4. **Known CLI behaviour — `az storage container show-permission`** always strips `signed_identifiers` via `transform_container_permission_output` and only returns `{"publicAccess": "..."}`. To read stored access policies use `az storage container policy list` instead.
 
 5. **ContentDecodePolicy skips deserialization when `stream=True`.** The policy's `on_response` returns early if `response.context.options.get("stream", True)` is truthy. Generated operation code explicitly sets `_stream = False` before calling the pipeline, which is the correct pattern.
+
+6. **`az webapp list` silently drops items where `kind` is absent** — `list_webapp` (azure-cli 2.84.0) filters: `return list(filter(lambda x: x.kind is not None and "function" not in x.kind.lower(), full_list))`. Any web app resource **must** include a non-null `kind` (e.g. `"app"`). Sites created without an explicit kind in the PUT request must default to `"app"` in the control plane.
+
+7. **`az webapp show` crashes when `possibleOutboundIpAddresses` is absent** — `show_app` calls `_remove_list_duplicates(app)` which does `webapp.possible_outbound_ip_addresses.split(',')`. If the field is absent the CLI throws `AttributeError: 'NoneType' object has no attribute 'split'`. Every App Service site resource must include `possibleOutboundIpAddresses` (empty string `""` is valid).
+
+8. **`GenericResourceExpanded.From` must propagate `Kind`** — The shared helper maps `Id`, `Name`, `Type`, `Location`, `Tags`, `Properties` but historically dropped `Kind`. This silently strips `kind` from all generic list responses, breaking CLI filters such as the one in point 6. Always verify that `GenericResourceExpanded` forwards every ARM field when extending it.
 
 `Topaz.Tests.Portal/` (Portal work definition of done)
 - Inherit from `BunitTestContext`.
