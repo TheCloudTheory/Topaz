@@ -1,0 +1,202 @@
+{
+  "value": [
+    {
+      "id": "/providers/Microsoft.Web/webAppStacks/dotnet",
+      "name": "dotnet",
+      "type": "Microsoft.Web/webAppStacks",
+      "properties": {
+        "displayText": ".NET",
+        "value": "dotnet",
+        "preferredOs": "Windows",
+        "majorVersions": [
+          {
+            "displayText": ".NET 9",
+            "value": "9",
+            "minorVersions": [
+              {
+                "displayText": ".NET 9",
+                "value": "9.0",
+                "stackSettings": {
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "v9.0",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "9.0.x" }
+                  },
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "DOTNETCORE|9.0",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "9.0.x" }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "displayText": ".NET 8",
+            "value": "8",
+            "minorVersions": [
+              {
+                "displayText": ".NET 8",
+                "value": "8.0",
+                "stackSettings": {
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "v8.0",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "8.0.x" }
+                  },
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "DOTNETCORE|8.0",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "8.0.x" }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "/providers/Microsoft.Web/webAppStacks/node",
+      "name": "node",
+      "type": "Microsoft.Web/webAppStacks",
+      "properties": {
+        "displayText": "Node",
+        "value": "node",
+        "preferredOs": "Linux",
+        "majorVersions": [
+          {
+            "displayText": "Node 22",
+            "value": "22",
+            "minorVersions": [
+              {
+                "displayText": "Node 22 LTS",
+                "value": "22-lts",
+                "stackSettings": {
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "~22",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "22.x" }
+                  },
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "NODE|22-lts",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "22.x" }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "displayText": "Node 20",
+            "value": "20",
+            "minorVersions": [
+              {
+                "displayText": "Node 20 LTS",
+                "value": "20-lts",
+                "stackSettings": {
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "~20",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "20.x" }
+                  },
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "NODE|20-lts",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": true },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "20.x" }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "/providers/Microsoft.Web/webAppStacks/python",
+      "name": "python",
+      "type": "Microsoft.Web/webAppStacks",
+      "properties": {
+        "displayText": "Python",
+        "value": "python",
+        "preferredOs": "Linux",
+        "majorVersions": [
+          {
+            "displayText": "Python 3",
+            "value": "3",
+            "minorVersions": [
+              {
+                "displayText": "Python 3.12",
+                "value": "3.12",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "PYTHON|3.12",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": false },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "3.12" }
+                  }
+                }
+              },
+              {
+                "displayText": "Python 3.11",
+                "value": "3.11",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "PYTHON|3.11",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": false },
+                    "gitHubActionSettings": { "isSupported": true, "supportedVersion": "3.11" }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "/providers/Microsoft.Web/webAppStacks/php",
+      "name": "php",
+      "type": "Microsoft.Web/webAppStacks",
+      "properties": {
+        "displayText": "PHP",
+        "value": "php",
+        "preferredOs": "Linux",
+        "majorVersions": [
+          {
+            "displayText": "PHP 8",
+            "value": "8",
+            "minorVersions": [
+              {
+                "displayText": "PHP 8.3",
+                "value": "8.3",
+                "stackSettings": {
+                  "linuxRuntimeSettings": {
+                    "runtimeVersion": "PHP|8.3",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": false },
+                    "gitHubActionSettings": { "isSupported": false }
+                  },
+                  "windowsRuntimeSettings": {
+                    "runtimeVersion": "8.3",
+                    "remoteDebuggingSupported": false,
+                    "appInsightsSettings": { "isSupported": false },
+                    "gitHubActionSettings": { "isSupported": false }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

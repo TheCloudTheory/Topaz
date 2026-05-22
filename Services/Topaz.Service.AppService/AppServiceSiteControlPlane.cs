@@ -1,8 +1,11 @@
+using System.Reflection;
 using Azure.Core;
+using Topaz.Dns;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.AppService.Models;
 using Topaz.Service.AppService.Models.Requests;
+using Topaz.Service.AppService.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -42,7 +45,7 @@ internal sealed class AppServiceSiteControlPlane(
             isCreate = true;
             var properties = AppServiceSiteResourceProperties.FromRequest(siteName, request);
             resource = new AppServiceSiteResource(subscriptionIdentifier, resourceGroupIdentifier, siteName, location,
-                request.Tags, request.Kind, properties);
+                request.Tags, request.Kind ?? "app", properties);
         }
         else
         {
@@ -67,6 +70,19 @@ internal sealed class AppServiceSiteControlPlane(
             ? new ControlPlaneOperationResult<AppServiceSiteResource>(OperationResult.NotFound, null,
                 string.Format(NotFoundMessageTemplate, siteName), NotFoundCode)
             : new ControlPlaneOperationResult<AppServiceSiteResource>(OperationResult.Success, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult<AppServiceSiteConfigResource> GetSiteConfig(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string siteName)
+    {
+        var resource = provider.GetAs<AppServiceSiteResource>(subscriptionIdentifier, resourceGroupIdentifier, siteName);
+        return resource == null
+            ? new ControlPlaneOperationResult<AppServiceSiteConfigResource>(OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, siteName), NotFoundCode)
+            : new ControlPlaneOperationResult<AppServiceSiteConfigResource>(OperationResult.Success,
+                AppServiceSiteConfigResource.FromSite(resource), null, null);
     }
 
     public OperationResult Delete(
@@ -97,6 +113,38 @@ internal sealed class AppServiceSiteControlPlane(
         return new ControlPlaneOperationResult<AppServiceSiteResource[]>(
             OperationResult.Success,
             resources.Where(r => r.IsInSubscription(subscriptionIdentifier)).ToArray(),
+            null, null);
+    }
+
+    public ControlPlaneOperationResult<CheckAppServiceSiteNameResponse> CheckNameAvailability(string siteName)
+    {
+        var dnsEntry = GlobalDnsEntries.GetEntry(AppServiceSiteService.UniqueName, siteName);
+        if (dnsEntry == null)
+            return new ControlPlaneOperationResult<CheckAppServiceSiteNameResponse>(
+                OperationResult.Success, new CheckAppServiceSiteNameResponse { NameAvailable = true }, null, null);
+
+        var existingSubId = SubscriptionIdentifier.From(dnsEntry.Value.subscription);
+        var existingRgId = dnsEntry.Value.resourceGroup != null
+            ? ResourceGroupIdentifier.From(dnsEntry.Value.resourceGroup)
+            : null;
+
+        if (existingRgId == null)
+            return new ControlPlaneOperationResult<CheckAppServiceSiteNameResponse>(
+                OperationResult.Success, new CheckAppServiceSiteNameResponse { NameAvailable = true }, null, null);
+
+        var existing = provider.GetAs<AppServiceSiteResource>(existingSubId, existingRgId, siteName);
+        if (existing == null)
+            return new ControlPlaneOperationResult<CheckAppServiceSiteNameResponse>(
+                OperationResult.Success, new CheckAppServiceSiteNameResponse { NameAvailable = true }, null, null);
+
+        return new ControlPlaneOperationResult<CheckAppServiceSiteNameResponse>(
+            OperationResult.Success,
+            new CheckAppServiceSiteNameResponse
+            {
+                NameAvailable = false,
+                Reason = CheckAppServiceSiteNameResponse.NoAvailabilityReason.AlreadyExists,
+                Message = $"The name '{siteName}' is already in use."
+            },
             null, null);
     }
 
@@ -147,5 +195,15 @@ internal sealed class AppServiceSiteControlPlane(
             logger.LogError(ex);
             return OperationResult.Failed;
         }
+    }
+
+    public ControlPlaneOperationResult<string> GetWebAppStacks()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        const string resourceName = "Topaz.Service.AppService.Data.webAppStacks.json";
+        using var stream = assembly.GetManifestResourceStream(resourceName)
+                           ?? throw new InvalidOperationException($"Embedded resource '{resourceName}' not found.");
+        using var reader = new StreamReader(stream);
+        return new ControlPlaneOperationResult<string>(OperationResult.Success, reader.ReadToEnd(), null, null);
     }
 }

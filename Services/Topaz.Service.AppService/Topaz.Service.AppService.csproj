@@ -21,4 +21,8 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Data/webAppStacks.json" />
+  </ItemGroup>
+
 </Project>

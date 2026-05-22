@@ -20,6 +20,7 @@ public sealed class GenericAppServiceCommand : IEmulatorCommand
             });
             appService.AddBranch("site", site =>
             {
+                site.AddCommand<CheckAppServiceSiteNameCommand>("check-name");
                 site.AddCommand<CreateAppServiceSiteCommand>("create");
                 site.AddCommand<GetAppServiceSiteCommand>("get");
                 site.AddCommand<DeleteAppServiceSiteCommand>("delete");

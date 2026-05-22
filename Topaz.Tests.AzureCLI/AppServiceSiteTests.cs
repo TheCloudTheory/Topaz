@@ -59,4 +59,32 @@ public class AppServiceSiteTests : TopazFixture
             });
         await RunAzureCliCommand("az group delete -n rg-webapp-list --yes");
     }
+
+    [Test]
+    public async Task AppServiceSiteTests_WhenCheckingNameAvailability_ItShouldReflectActualAvailability()
+    {
+        var checkUrl = "https://topaz.local.dev:8899/subscriptions/$(az account show --query id -o tsv)/providers/Microsoft.Web/checknameavailability";
+        var checkBody = "'{\"name\": \"test-webapp-checkname\", \"type\": \"Microsoft.Web/sites\"}'";
+
+        await RunAzureCliCommand(
+            $"az rest --method post --url \"{checkUrl}\" --body {checkBody} --headers \"Content-Type=application/json\"",
+            response =>
+            {
+                Assert.That(response["nameAvailable"]!.GetValue<bool>(), Is.True);
+            });
+
+        await RunAzureCliCommand("az group create -n rg-webapp-checkname -l westeurope");
+        await RunAzureCliCommand("az appservice plan create -n plan-webapp-checkname -g rg-webapp-checkname --sku B1 -l westeurope");
+        await RunAzureCliCommand("az webapp create -n test-webapp-checkname -g rg-webapp-checkname --plan plan-webapp-checkname");
+
+        await RunAzureCliCommand(
+            $"az rest --method post --url \"{checkUrl}\" --body {checkBody} --headers \"Content-Type=application/json\"",
+            response =>
+            {
+                Assert.That(response["nameAvailable"]!.GetValue<bool>(), Is.False);
+                Assert.That(response["reason"]!.GetValue<string>(), Is.EqualTo("AlreadyExists"));
+            });
+
+        await RunAzureCliCommand("az group delete -n rg-webapp-checkname --yes");
+    }
 }

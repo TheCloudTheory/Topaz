@@ -14,6 +14,7 @@ internal sealed class AppServicePlanResourceProperties
     public string? GeoRegion { get; set; }
     public bool HyperV { get; set; }
     public bool IsSpot { get; set; }
+    public bool Reserved { get; set; }
 
     public static AppServicePlanResourceProperties FromRequest(CreateOrUpdateAppServicePlanRequest request)
     {
@@ -25,6 +26,7 @@ internal sealed class AppServicePlanResourceProperties
             WorkerTierName = props?.WorkerTierName,
             HyperV = props?.HyperV.GetValueOrDefault(false) ?? false,
             IsSpot = props?.IsSpot.GetValueOrDefault(false) ?? false,
+            Reserved = props?.Reserved.GetValueOrDefault(false) ?? false,
         };
     }
 
@@ -38,5 +40,6 @@ internal sealed class AppServicePlanResourceProperties
         if (props.WorkerTierName != null) resource.Properties.WorkerTierName = props.WorkerTierName;
         if (props.HyperV.HasValue) resource.Properties.HyperV = props.HyperV.Value;
         if (props.IsSpot.HasValue) resource.Properties.IsSpot = props.IsSpot.Value;
+        if (props.Reserved.HasValue) resource.Properties.Reserved = props.Reserved.Value;
     }
 }

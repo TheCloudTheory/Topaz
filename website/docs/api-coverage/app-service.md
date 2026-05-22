@@ -33,6 +33,14 @@ This page tracks which Azure App Service REST API operations are implemented in 
 
 ---
 
+## Provider-level Operations (`Microsoft.Web`)
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| Check Name Availability | ✅ | `POST /subscriptions/{subscriptionId}/providers/Microsoft.Web/checknameavailability`; always returns available |
+
+---
+
 ## Control Plane — Web Apps / Function Apps (`Microsoft.Web/sites`)
 
 | Operation | Status | Notes |

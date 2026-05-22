@@ -17,8 +17,8 @@ internal sealed record CreateOrUpdateAppServiceSiteRequest
 
     internal sealed class SiteConfigRequest
     {
-        public Dictionary<string, string>? AppSettings { get; init; }
-        public Dictionary<string, string>? ConnectionStrings { get; init; }
+        public AppServiceNameValuePair[]? AppSettings { get; init; }
+        public AppServiceNameValuePair[]? ConnectionStrings { get; init; }
         public string? LinuxFxVersion { get; init; }
         public string? NetFrameworkVersion { get; init; }
         public bool? AlwaysOn { get; init; }

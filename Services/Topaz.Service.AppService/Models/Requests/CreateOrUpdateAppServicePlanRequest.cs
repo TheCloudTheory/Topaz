@@ -23,5 +23,6 @@ internal sealed record CreateOrUpdateAppServicePlanRequest
         public string? WorkerTierName { get; init; }
         public bool? HyperV { get; init; }
         public bool? IsSpot { get; init; }
+        public bool? Reserved { get; init; }
     }
 }
