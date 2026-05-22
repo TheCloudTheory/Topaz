@@ -153,4 +153,87 @@ public class AppServiceSiteTests
 
         Assert.That(sites.Any(s => s.Data.Name == "test-site-sub-list"), Is.True);
     }
+
+    [Test]
+    public void WebSiteConfig_GetWeb_ReturnsSiteConfig()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var resourceGroup = armClient.GetDefaultSubscription().GetResourceGroup(ResourceGroupName).Value;
+
+        var siteData = new WebSiteData(AzureLocation.WestEurope)
+        {
+            Kind = "app",
+            SiteConfig = new SiteConfigProperties { IsAlwaysOn = true }
+        };
+        resourceGroup.GetWebSites().CreateOrUpdate(WaitUntil.Completed, "test-site-config-get", siteData);
+
+        var site = resourceGroup.GetWebSite("test-site-config-get").Value;
+        var config = site.GetWebSiteConfig().Get().Value;
+
+        Assert.That(config.Data.IsAlwaysOn, Is.True);
+    }
+
+    [Test]
+    public void WebSiteConfig_UpdateWeb_MergesSiteConfig()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var resourceGroup = armClient.GetDefaultSubscription().GetResourceGroup(ResourceGroupName).Value;
+
+        var siteData = new WebSiteData(AzureLocation.WestEurope)
+        {
+            Kind = "app",
+            SiteConfig = new SiteConfigProperties { IsAlwaysOn = false, FtpsState = AppServiceFtpsState.Disabled }
+        };
+        resourceGroup.GetWebSites().CreateOrUpdate(WaitUntil.Completed, "test-site-config-update", siteData);
+
+        var site = resourceGroup.GetWebSite("test-site-config-update").Value;
+        site.GetWebSiteConfig().CreateOrUpdate(WaitUntil.Completed, new SiteConfigData { IsAlwaysOn = true });
+
+        var updatedConfig = site.GetWebSiteConfig().Get().Value;
+        Assert.That(updatedConfig.Data.IsAlwaysOn, Is.True);
+        Assert.That(updatedConfig.Data.FtpsState, Is.EqualTo(AppServiceFtpsState.Disabled));
+    }
+
+    [Test]
+    public void WebSiteConfig_UpdateAppSettings_ReplacesSettings()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var resourceGroup = armClient.GetDefaultSubscription().GetResourceGroup(ResourceGroupName).Value;
+
+        resourceGroup.GetWebSites().CreateOrUpdate(WaitUntil.Completed, "test-site-appsettings-update",
+            new WebSiteData(AzureLocation.WestEurope) { Kind = "app" });
+
+        var site = resourceGroup.GetWebSite("test-site-appsettings-update").Value;
+
+        var appSettings = new AppServiceConfigurationDictionary();
+        appSettings.Properties.Add("KEY1", "VALUE1");
+        appSettings.Properties.Add("KEY2", "VALUE2");
+        var updated = site.UpdateApplicationSettings(appSettings).Value;
+
+        Assert.That(updated.Properties["KEY1"], Is.EqualTo("VALUE1"));
+        Assert.That(updated.Properties["KEY2"], Is.EqualTo("VALUE2"));
+    }
+
+    [Test]
+    public void WebSiteConfig_ListAppSettings_ReturnsCurrentSettings()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var resourceGroup = armClient.GetDefaultSubscription().GetResourceGroup(ResourceGroupName).Value;
+
+        resourceGroup.GetWebSites().CreateOrUpdate(WaitUntil.Completed, "test-site-appsettings-list",
+            new WebSiteData(AzureLocation.WestEurope) { Kind = "app" });
+
+        var site = resourceGroup.GetWebSite("test-site-appsettings-list").Value;
+
+        var appSettings = new AppServiceConfigurationDictionary();
+        appSettings.Properties.Add("MYKEY", "MYVALUE");
+        site.UpdateApplicationSettings(appSettings);
+
+        var listed = site.GetApplicationSettings().Value;
+        Assert.That(listed.Properties["MYKEY"], Is.EqualTo("MYVALUE"));
+    }
 }

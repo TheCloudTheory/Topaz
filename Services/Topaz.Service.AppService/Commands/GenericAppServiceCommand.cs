@@ -25,6 +25,13 @@ public sealed class GenericAppServiceCommand : IEmulatorCommand
                 site.AddCommand<GetAppServiceSiteCommand>("get");
                 site.AddCommand<DeleteAppServiceSiteCommand>("delete");
                 site.AddCommand<ListAppServiceSitesByResourceGroupCommand>("list");
+                site.AddBranch("config", config =>
+                {
+                    config.AddCommand<GetSiteConfigWebCommand>("get-web");
+                    config.AddCommand<UpdateSiteConfigWebCommand>("update-web");
+                    config.AddCommand<UpdateAppSettingsCommand>("set-appsettings");
+                    config.AddCommand<ListAppSettingsCommand>("list-appsettings");
+                });
             });
         });
     }

@@ -87,4 +87,67 @@ public class AppServiceSiteTests : TopazFixture
 
         await RunAzureCliCommand("az group delete -n rg-webapp-checkname --yes");
     }
+
+    [Test]
+    public async Task AppServiceSiteTests_WhenConfigWebIsRead_ItShouldReturnSiteConfigProperties()
+    {
+        await RunAzureCliCommand("az group create -n rg-webapp-config-get -l westeurope");
+        await RunAzureCliCommand("az appservice plan create -n plan-webapp-config-get -g rg-webapp-config-get --sku B1 -l westeurope");
+        await RunAzureCliCommand("az webapp create -n test-webapp-config-get -g rg-webapp-config-get --plan plan-webapp-config-get");
+        await RunAzureCliCommand(
+            "az webapp config show -n test-webapp-config-get -g rg-webapp-config-get",
+            response =>
+            {
+                Assert.That(response["minTlsVersion"], Is.Not.Null);
+            });
+        await RunAzureCliCommand("az group delete -n rg-webapp-config-get --yes");
+    }
+
+    [Test]
+    public async Task AppServiceSiteTests_WhenConfigWebIsUpdated_ItShouldMergeFields()
+    {
+        await RunAzureCliCommand("az group create -n rg-webapp-config-set -l westeurope");
+        await RunAzureCliCommand("az appservice plan create -n plan-webapp-config-set -g rg-webapp-config-set --sku B1 -l westeurope");
+        await RunAzureCliCommand("az webapp create -n test-webapp-config-set -g rg-webapp-config-set --plan plan-webapp-config-set");
+        await RunAzureCliCommand(
+            "az webapp config set -n test-webapp-config-set -g rg-webapp-config-set --always-on true",
+            response =>
+            {
+                Assert.That(response["alwaysOn"]!.GetValue<bool>(), Is.True);
+            });
+        await RunAzureCliCommand("az group delete -n rg-webapp-config-set --yes");
+    }
+
+    [Test]
+    public async Task AppServiceSiteTests_WhenAppSettingsAreSet_ItShouldReturnDictionary()
+    {
+        await RunAzureCliCommand("az group create -n rg-webapp-appsettings-set -l westeurope");
+        await RunAzureCliCommand("az appservice plan create -n plan-webapp-appsettings-set -g rg-webapp-appsettings-set --sku B1 -l westeurope");
+        await RunAzureCliCommand("az webapp create -n test-webapp-appsettings-set -g rg-webapp-appsettings-set --plan plan-webapp-appsettings-set");
+        await RunAzureCliCommand(
+            "az webapp config appsettings set -n test-webapp-appsettings-set -g rg-webapp-appsettings-set --settings MYKEY=MYVALUE",
+            response =>
+            {
+                var settings = response.AsArray()!;
+                Assert.That(settings.Any(s => s!["name"]!.GetValue<string>() == "MYKEY"), Is.True);
+            });
+        await RunAzureCliCommand("az group delete -n rg-webapp-appsettings-set --yes");
+    }
+
+    [Test]
+    public async Task AppServiceSiteTests_WhenAppSettingsAreListed_ItShouldReturnCurrentSettings()
+    {
+        await RunAzureCliCommand("az group create -n rg-webapp-appsettings-list -l westeurope");
+        await RunAzureCliCommand("az appservice plan create -n plan-webapp-appsettings-list -g rg-webapp-appsettings-list --sku B1 -l westeurope");
+        await RunAzureCliCommand("az webapp create -n test-webapp-appsettings-list -g rg-webapp-appsettings-list --plan plan-webapp-appsettings-list");
+        await RunAzureCliCommand("az webapp config appsettings set -n test-webapp-appsettings-list -g rg-webapp-appsettings-list --settings LISTKEY=LISTVALUE");
+        await RunAzureCliCommand(
+            "az webapp config appsettings list -n test-webapp-appsettings-list -g rg-webapp-appsettings-list",
+            response =>
+            {
+                var settings = response.AsArray()!;
+                Assert.That(settings.Any(s => s!["name"]!.GetValue<string>() == "LISTKEY" && s["value"]!.GetValue<string>() == "LISTVALUE"), Is.True);
+            });
+        await RunAzureCliCommand("az group delete -n rg-webapp-appsettings-list --yes");
+    }
 }

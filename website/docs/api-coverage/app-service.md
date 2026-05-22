@@ -57,7 +57,7 @@ This page tracks which Azure App Service REST API operations are implemented in 
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Get Configuration | ❌ | `GET .../config/web` |
-| Update Configuration | ❌ | `PUT .../config/web` |
-| Update Application Settings | ❌ | `PUT .../config/appsettings` |
-| List Application Settings | ❌ | `POST .../config/appsettings/list` |
+| Get Configuration | ✅ | `GET .../config/web` |
+| Update Configuration | ✅ | `PUT .../config/web` |
+| Update Application Settings | ✅ | `PUT .../config/appsettings` |
+| List Application Settings | ✅ | `POST .../config/appsettings/list` |

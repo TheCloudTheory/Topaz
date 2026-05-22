@@ -197,6 +197,69 @@ internal sealed class AppServiceSiteControlPlane(
         }
     }
 
+    public ControlPlaneOperationResult<AppServiceSiteConfigResource> UpdateSiteConfig(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string siteName,
+        UpdateSiteConfigWebRequest request)
+    {
+        var resource = provider.GetAs<AppServiceSiteResource>(subscriptionIdentifier, resourceGroupIdentifier, siteName);
+        if (resource == null)
+            return new ControlPlaneOperationResult<AppServiceSiteConfigResource>(OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, siteName), NotFoundCode);
+
+        var props = request.Properties;
+        if (props != null)
+        {
+            var siteConfig = resource.Properties.SiteConfig ??= new SiteConfigProperties();
+            if (props.AppSettings != null) siteConfig.AppSettings = props.AppSettings;
+            if (props.ConnectionStrings != null) siteConfig.ConnectionStrings = props.ConnectionStrings;
+            if (props.LinuxFxVersion != null) siteConfig.LinuxFxVersion = props.LinuxFxVersion;
+            if (props.NetFrameworkVersion != null) siteConfig.NetFrameworkVersion = props.NetFrameworkVersion;
+            if (props.AlwaysOn.HasValue) siteConfig.AlwaysOn = props.AlwaysOn.Value;
+            if (props.FtpsState != null) siteConfig.FtpsState = props.FtpsState;
+            if (props.MinTlsVersion != null) siteConfig.MinTlsVersion = props.MinTlsVersion;
+        }
+
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, siteName, resource, false);
+        return new ControlPlaneOperationResult<AppServiceSiteConfigResource>(
+            OperationResult.Updated, AppServiceSiteConfigResource.FromSite(resource), null, null);
+    }
+
+    public ControlPlaneOperationResult<AppServiceAppSettingsConfigResource> UpdateAppSettings(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string siteName,
+        Dictionary<string, string> settings)
+    {
+        var resource = provider.GetAs<AppServiceSiteResource>(subscriptionIdentifier, resourceGroupIdentifier, siteName);
+        if (resource == null)
+            return new ControlPlaneOperationResult<AppServiceAppSettingsConfigResource>(OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, siteName), NotFoundCode);
+
+        var siteConfig = resource.Properties.SiteConfig ??= new SiteConfigProperties();
+        siteConfig.AppSettings = settings
+            .Select(pair => new AppServiceNameValuePair { Name = pair.Key, Value = pair.Value })
+            .ToArray();
+
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, siteName, resource, false);
+        return new ControlPlaneOperationResult<AppServiceAppSettingsConfigResource>(
+            OperationResult.Updated, AppServiceAppSettingsConfigResource.FromSite(resource), null, null);
+    }
+
+    public ControlPlaneOperationResult<AppServiceAppSettingsConfigResource> GetAppSettings(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string siteName)
+    {
+        var resource = provider.GetAs<AppServiceSiteResource>(subscriptionIdentifier, resourceGroupIdentifier, siteName);
+        return resource == null
+            ? new ControlPlaneOperationResult<AppServiceAppSettingsConfigResource>(OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, siteName), NotFoundCode)
+            : new ControlPlaneOperationResult<AppServiceAppSettingsConfigResource>(
+                OperationResult.Success, AppServiceAppSettingsConfigResource.FromSite(resource), null, null);
+    }
+
     public ControlPlaneOperationResult<string> GetWebAppStacks()
     {
         var assembly = Assembly.GetExecutingAssembly();
