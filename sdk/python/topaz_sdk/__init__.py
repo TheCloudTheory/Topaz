@@ -36,7 +36,7 @@ from topaz_sdk.identity import (
     ManagedIdentityLocalCredential,
     GLOBAL_ADMIN_ID,
 )
-from topaz_sdk.helpers import TopazResourceHelpers
+from topaz_sdk.helpers import TopazResourceHelpers, DEFAULT_RESOURCE_MANAGER_PORT
 from topaz_sdk.client import TopazArmClient
 from topaz_sdk.environment import TopazEnvironment
 
@@ -45,6 +45,7 @@ __all__ = [
     "ManagedIdentityLocalCredential",
     "GLOBAL_ADMIN_ID",
     "TopazResourceHelpers",
+    "DEFAULT_RESOURCE_MANAGER_PORT",
     "TopazArmClient",
     "TopazEnvironment",
 ]

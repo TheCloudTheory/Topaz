@@ -1,0 +1,6 @@
+topaz-sdk>=0.1.2
+azure-mgmt-keyvault>=10.3.0
+azure-mgmt-storage>=21.0.0
+azure-mgmt-resource>=23.0.0
+azure-keyvault-secrets>=4.7.0
+azure-data-tables>=12.5.0
