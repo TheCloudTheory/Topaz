@@ -3,6 +3,10 @@ name: Build and publish Python SDK
 on:
   workflow_dispatch:
 
+permissions:
+  id-token: write  # Required to request an OIDC token for PyPI Trusted Publisher
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,13 +19,11 @@ jobs:
       with:
         python-version: "3.12"
     - name: Install build tools
-      run: pip install build twine
+      run: pip install build
     - name: Build package
       working-directory: sdk/python
       run: python -m build
     - name: Publish to PyPI
-      working-directory: sdk/python
-      run: twine upload dist/* --skip-existing
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_KEY }}
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: sdk/python/dist/
