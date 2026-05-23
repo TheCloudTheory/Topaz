@@ -60,6 +60,7 @@ Evaluate upgrading to a newer version of AMQPNetLite that may have resolved thes
 
 ---
 
+## Storage SAS — `sip` (source IP) parameter not enforced
 
 **Affected services:** Blob Storage, Queue Storage, Table Storage (data plane)
 
@@ -235,7 +236,7 @@ Real Azure populates `availableIPAddresses` with a list of alternative free IPs 
 
 **Workaround:** if your test logic needs to locate a free IP, pick one explicitly within a known subnet CIDR. Any IP within a subnet is considered available in Topaz (no allocation tracking means no conflicts).
 
-### Planned fix — v1.5-beta
+### Planned fix — v1.6-beta
 
 Introduce an IP allocation registry in the VNet service so that NIC and private endpoint creation records their assigned IP address. This will enable real `availableIPAddresses` computation and bring the emulator's `available: false` branch into closer alignment with real Azure.
 
