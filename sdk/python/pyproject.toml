@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "topaz-sdk"
-version = "0.1.1"
+version = "0.1.2"
 description = "Python SDK for the Topaz Azure emulator"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"

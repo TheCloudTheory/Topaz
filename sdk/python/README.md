@@ -67,7 +67,7 @@ Point any `azure-mgmt-*` client at Topaz by overriding `base_url` and `credentia
 
 ## Requirements
 
-The SDK expects a running Topaz host. See the [Topaz quickstart](https://topaz.thecloudtheory.com/docs/quickstart) for installation instructions.
+The SDK expects a running Topaz host. See the [Topaz quickstart](https://topaz.thecloudtheory.com/docs/intro/) for installation instructions.
 
 SSL verification uses the `REQUESTS_CA_BUNDLE` environment variable. When running inside the Topaz test fixture container this is set automatically.
 

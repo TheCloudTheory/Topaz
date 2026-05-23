@@ -129,6 +129,8 @@ jobs:
           echo "ps_skip=false" >> "$GITHUB_OUTPUT"
           echo "cli_filter=" >> "$GITHUB_OUTPUT"
           echo "cli_skip=false" >> "$GITHUB_OUTPUT"
+          echo "py_filter=" >> "$GITHUB_OUTPUT"
+          echo "py_skip=false" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
@@ -140,6 +142,14 @@ jobs:
           echo "ps_filter=" >> "$GITHUB_OUTPUT"
           echo "cli_skip=true" >> "$GITHUB_OUTPUT"
           echo "cli_filter=" >> "$GITHUB_OUTPUT"
+          # Python tests still run when Python test files or SDK files changed
+          if [[ "${{ steps.changes.outputs.python }}" == "true" ]]; then
+            echo "py_skip=false" >> "$GITHUB_OUTPUT"
+            echo "py_filter=" >> "$GITHUB_OUTPUT"
+          else
+            echo "py_skip=true" >> "$GITHUB_OUTPUT"
+            echo "py_filter=" >> "$GITHUB_OUTPUT"
+          fi
           exit 0
         fi
 
@@ -152,6 +162,8 @@ jobs:
           echo "ps_skip=false" >> "$GITHUB_OUTPUT"
           echo "cli_filter=" >> "$GITHUB_OUTPUT"
           echo "cli_skip=false" >> "$GITHUB_OUTPUT"
+          echo "py_filter=" >> "$GITHUB_OUTPUT"
+          echo "py_skip=false" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
@@ -333,32 +345,32 @@ jobs:
           --filter "$FILTER"
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always() && steps.test_filter.outputs.skip != 'true'
+      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true')
       with:
         large_files: true
         files: |
           ${{ github.workspace }}/**/*.trx
     - name: ReportGenerator
-      if: always() && steps.test_filter.outputs.skip != 'true'
+      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true')
       uses: danielpalme/ReportGenerator-GitHub-Action@5.4.8
       with:
         reports: ./TestResults/**/coverage.cobertura.xml
         targetdir: coveragereport
         reporttypes: HtmlSummary;MarkdownSummaryGithub;Badges
     - name: Upload coverage report artifact
-      if: always() && steps.test_filter.outputs.skip != 'true'
+      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true')
       uses: actions/upload-artifact@v4
       with:
         name: CoverageReport        
         path: coveragereport
     - name: Add comment to PR
-      if: github.event_name == 'pull_request' && steps.test_filter.outputs.skip != 'true'
+      if: github.event_name == 'pull_request' && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true')
       run: gh pr comment $PR_NUMBER --body-file coveragereport/SummaryGithub.md
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PR_NUMBER: ${{ github.event.number }}
     - name: Publish coverage in build summary
-      if: always() && steps.test_filter.outputs.skip != 'true'
+      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true')
       run: |
         if [[ -f coveragereport/SummaryGithub.md ]]; then
           cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY

@@ -224,8 +224,14 @@ class TopazArmClient:
         ).json()
 
     def get_entities(self) -> dict:
-        """Gets all management group entities."""
-        return self._get("providers/Microsoft.Management/getEntities").json()
+        """Gets all management group entities, following @nextLink pagination."""
+        headers = {"Authorization": self._auth_header()}
+        result = self._get("providers/Microsoft.Management/getEntities").json()
+        all_values = list(result.get("value", []))
+        while "@nextLink" in result:
+            result = self._session.get(result["@nextLink"], headers=headers).json()
+            all_values.extend(result.get("value", []))
+        return {"value": all_values}
 
     def associate_subscription_with_management_group(
         self, group_id: str, subscription_id: str
