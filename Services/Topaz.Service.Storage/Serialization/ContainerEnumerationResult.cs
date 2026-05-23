@@ -51,6 +51,16 @@ public class ContainerEnumerationResult : IXmlSerializable
             {
                 writer.WriteStartElement("Container");
                 writer.WriteElementString("Name", container.Name);
+                writer.WriteStartElement("Properties");
+                writer.WriteElementString("Last-Modified",
+                    container.LastModified == default
+                        ? DateTimeOffset.UtcNow.ToString("R")
+                        : container.LastModified.ToString("R"));
+                writer.WriteElementString("Etag",
+                    string.IsNullOrEmpty(container.Etag) ? $"\"0\"" : container.Etag);
+                writer.WriteElementString("LeaseStatus", "unlocked");
+                writer.WriteElementString("LeaseState", "available");
+                writer.WriteEndElement();
                 writer.WriteEndElement();
             }
             

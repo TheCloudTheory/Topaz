@@ -50,12 +50,24 @@ class TopazResourceHelpers:
             f"https://{storage_account_name}.blob.storage.topaz.local.dev"
             f":{DEFAULT_BLOB_STORAGE_PORT}/"
         )
+        blob_secondary = (
+            f"https://{storage_account_name}-secondary.blob.storage.topaz.local.dev"
+            f":{DEFAULT_BLOB_STORAGE_PORT}/"
+        )
         queue = (
             f"https://{storage_account_name}.queue.storage.topaz.local.dev"
             f":{DEFAULT_QUEUE_STORAGE_PORT}/"
         )
+        queue_secondary = (
+            f"https://{storage_account_name}-secondary.queue.storage.topaz.local.dev"
+            f":{DEFAULT_QUEUE_STORAGE_PORT}/"
+        )
         table = (
             f"https://{storage_account_name}.table.storage.topaz.local.dev"
+            f":{DEFAULT_TABLE_STORAGE_PORT}"
+        )
+        table_secondary = (
+            f"https://{storage_account_name}-secondary.table.storage.topaz.local.dev"
             f":{DEFAULT_TABLE_STORAGE_PORT}"
         )
         return (
@@ -63,8 +75,11 @@ class TopazResourceHelpers:
             f"AccountName={storage_account_name};"
             f"AccountKey={account_key};"
             f"BlobEndpoint={blob};"
+            f"BlobSecondaryEndpoint={blob_secondary};"
             f"QueueEndpoint={queue};"
+            f"QueueSecondaryEndpoint={queue_secondary};"
             f"TableEndpoint={table};"
+            f"TableSecondaryEndpoint={table_secondary};"
         )
 
     @staticmethod

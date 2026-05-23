@@ -28,4 +28,25 @@ public class PythonTestRunner
     {
         await PythonFixture.RunPythonTests("test_storage_account.py");
     }
+
+    [Test]
+    public async Task Python_BlobStorageTests()
+    {
+        await PythonHostMapper.EnsureStorageHostsMapped("pyblobstoretest");
+        await PythonFixture.RunPythonTests("test_blob_storage.py");
+    }
+
+    [Test]
+    public async Task Python_TableStorageTests()
+    {
+        await PythonHostMapper.EnsureStorageHostsMapped("pytablestortest", "pytblragrstest");
+        await PythonFixture.RunPythonTests("test_table_storage.py");
+    }
+
+    [Test]
+    public async Task Python_QueueStorageTests()
+    {
+        await PythonHostMapper.EnsureStorageHostsMapped("pyqueuestortest");
+        await PythonFixture.RunPythonTests("test_queue_storage.py");
+    }
 }

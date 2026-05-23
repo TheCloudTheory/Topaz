@@ -18,9 +18,12 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
         if (provider.ContainerExists(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName))
             return new ControlPlaneOperationResult<Container>(OperationResult.Conflict, null, null, null);
 
+        var now = DateTimeOffset.UtcNow;
         var container = new Container
         {
-            Name = containerName
+            Name = containerName,
+            LastModified = now,
+            Etag = $"\"{now.Ticks}\""
         };
 
         provider.Create(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName, container);
