@@ -22,4 +22,10 @@ public class PythonTestRunner
         await PythonHostMapper.EnsureServiceBusHostsMapped("py-sb-test");
         await PythonFixture.RunPythonTests("test_service_bus.py");
     }
+
+    [Test]
+    public async Task Python_StorageAccountTests()
+    {
+        await PythonFixture.RunPythonTests("test_storage_account.py");
+    }
 }
