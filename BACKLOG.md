@@ -295,6 +295,36 @@ TODO: Azure App Service: Site Config sub-resource endpoints
   labels: enhancement, app-service
 -->
 
+### Event Hub — delete individual Event Hub
+
+<!--
+TODO: Event Hub: Delete individual Event Hub endpoint
+  Implement DELETE .../namespaces/{namespaceName}/eventhubs/{eventhubName}.
+  The Azure SDK EventHubsClient.delete() and Azure CLI az eventhubs eventhub delete
+  expect a 200 response when removing an individual Event Hub resource inside a namespace.
+  Currently only namespace deletion is supported; deleting a hub returns 404, forcing
+  clients to skip cleanup and leave orphaned resources.
+  Follow the one-file-per-operation convention under Services/Topaz.Service.EventHub/Endpoints/.
+  milestone: v1.5-beta
+  labels: enhancement, event-hub, good first issue
+-->
+
+### Virtual Machines — PATCH update endpoint
+
+<!--
+TODO: Virtual Machines: PATCH update endpoint
+  Implement PATCH .../virtualMachines/{vmName} to support partial updates such as
+  tag changes and hardware-profile modifications without requiring the caller to
+  supply a full VM body.
+  The Azure SDK VirtualMachinesClient.begin_update() (and the equivalent in .NET and
+  the Azure CLI az vm update) uses PATCH. Without this endpoint, clients must fall
+  back to a full PUT CreateOrUpdate, which requires re-supplying the OS profile,
+  storage profile, and NIC references.
+  Follow the one-file-per-operation convention under Services/Topaz.Service.VirtualMachine/Endpoints/.
+  milestone: v1.5-beta
+  labels: enhancement, virtual-machine, good first issue
+-->
+
 ---
 
 ## v1.6-beta

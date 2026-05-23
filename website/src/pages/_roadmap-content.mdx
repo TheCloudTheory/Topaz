@@ -62,6 +62,18 @@
 |--|---------|-------------|
 | <span class="badge--preview">Preview</span> | Inline tag value editing in portal | Edit button per tag row in the Tags panel turns the value cell into an input field; supports all tag-capable resources |
 
+### Event Hub — delete individual Event Hub
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Delete individual Event Hub | `DELETE .../namespaces/{namespaceName}/eventhubs/{eventhubName}` — remove a single Event Hub resource inside a namespace without deleting the namespace itself |
+
+### Virtual Machines — PATCH update endpoint
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | VM PATCH update | `PATCH .../virtualMachines/{vmName}` — partial update (tags, hardware profile) without requiring a full PUT body; needed by `begin_update()` in the Azure SDK and `az vm update` in the Azure CLI |
+
 ---
 
 ## v1.6-beta
