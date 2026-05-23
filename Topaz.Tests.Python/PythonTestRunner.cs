@@ -63,4 +63,52 @@ public class PythonTestRunner
         );
         await PythonFixture.RunPythonTests("test_acr.py");
     }
+
+    [Test]
+    public async Task Python_AuthorizationTests()
+    {
+        await PythonFixture.RunPythonTests("test_authorization.py");
+    }
+
+    [Test]
+    public async Task Python_EventHubTests()
+    {
+        await PythonFixture.RunPythonTests("test_event_hub.py");
+    }
+
+    [Test]
+    public async Task Python_ManagedIdentityTests()
+    {
+        await PythonFixture.RunPythonTests("test_managed_identity.py");
+    }
+
+    [Test]
+    public async Task Python_VirtualNetworkTests()
+    {
+        await PythonFixture.RunPythonTests("test_virtual_network.py");
+    }
+
+    [Test]
+    public async Task Python_VirtualMachineTests()
+    {
+        await PythonFixture.RunPythonTests("test_virtual_machine.py");
+    }
+
+    [Test]
+    public async Task Python_SubscriptionTests()
+    {
+        await PythonFixture.RunPythonTests("test_subscription.py");
+    }
+
+    [Test]
+    public async Task Python_AppServiceTests()
+    {
+        await PythonFixture.RunPythonTests("test_app_service.py");
+    }
+
+    [Test]
+    public async Task Python_ManagementGroupTests()
+    {
+        await PythonFixture.RunPythonTests("test_management_group.py");
+    }
 }

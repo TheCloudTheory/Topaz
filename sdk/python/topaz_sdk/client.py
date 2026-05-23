@@ -146,6 +146,226 @@ class TopazArmClient:
         except requests.RequestException:
             return False
 
+    def _patch(self, path: str, payload: dict | None = None) -> requests.Response:
+        headers = {"Authorization": self._auth_header(), "Content-Type": "application/json"}
+        body = json.dumps(payload or {}, separators=(",", ":"))
+        response = self._session.patch(_BASE_URL + path, data=body, headers=headers)
+        if not response.ok:
+            raise requests.HTTPError(response.text, response=response)
+        return response
+
+    # ------------------------------------------------------------------
+    # Subscription management
+    # ------------------------------------------------------------------
+
+    def update_subscription(
+        self,
+        subscription_id: str,
+        subscription_name: str,
+        tags: dict | None = None,
+    ) -> None:
+        """Updates subscription name and/or tags."""
+        self._patch(
+            f"subscriptions/{subscription_id}",
+            {"SubscriptionName": subscription_name, "Tags": tags or {}},
+        )
+
+    def cancel_subscription(self, subscription_id: str) -> None:
+        """Cancels (disables) a subscription."""
+        self._post(
+            f"subscriptions/{subscription_id}/providers/Microsoft.Subscription/cancel"
+        )
+
+    def enable_subscription(self, subscription_id: str) -> None:
+        """Re-enables a previously cancelled subscription."""
+        self._post(
+            f"subscriptions/{subscription_id}/providers/Microsoft.Subscription/enable"
+        )
+
+    # ------------------------------------------------------------------
+    # Management group operations
+    # ------------------------------------------------------------------
+
+    def create_management_group(self, group_id: str, display_name: str) -> None:
+        """Creates a management group."""
+        self._put(
+            f"providers/Microsoft.Management/managementGroups/{group_id}",
+            {"properties": {"displayName": display_name}},
+        )
+
+    def create_management_group_with_parent(
+        self, group_id: str, display_name: str, parent_id: str
+    ) -> None:
+        """Creates a management group under a parent management group."""
+        self._put(
+            f"providers/Microsoft.Management/managementGroups/{group_id}",
+            {
+                "properties": {
+                    "displayName": display_name,
+                    "details": {
+                        "parent": {
+                            "id": f"/providers/Microsoft.Management/managementGroups/{parent_id}"
+                        }
+                    },
+                }
+            },
+        )
+
+    def get_management_group(self, group_id: str) -> dict:
+        """Gets a management group by ID."""
+        return self._get(
+            f"providers/Microsoft.Management/managementGroups/{group_id}"
+        ).json()
+
+    def get_descendants(self, group_id: str) -> dict:
+        """Gets all descendants of a management group."""
+        return self._get(
+            f"providers/Microsoft.Management/managementGroups/{group_id}/descendants"
+        ).json()
+
+    def get_entities(self) -> dict:
+        """Gets all management group entities."""
+        return self._get("providers/Microsoft.Management/getEntities").json()
+
+    def associate_subscription_with_management_group(
+        self, group_id: str, subscription_id: str
+    ) -> dict:
+        """Associates a subscription with a management group."""
+        return self._put(
+            f"providers/Microsoft.Management/managementGroups/{group_id}"
+            f"/subscriptions/{subscription_id}"
+        ).json()
+
+    def disassociate_subscription_from_management_group(
+        self, group_id: str, subscription_id: str
+    ) -> None:
+        """Removes a subscription from a management group."""
+        self._delete(
+            f"providers/Microsoft.Management/managementGroups/{group_id}"
+            f"/subscriptions/{subscription_id}"
+        )
+
+    def get_subscription_under_management_group(
+        self, group_id: str, subscription_id: str
+    ) -> dict:
+        """Gets the association between a management group and subscription."""
+        return self._get(
+            f"providers/Microsoft.Management/managementGroups/{group_id}"
+            f"/subscriptions/{subscription_id}"
+        ).json()
+
+    # ------------------------------------------------------------------
+    # Hierarchy settings
+    # ------------------------------------------------------------------
+
+    def create_or_update_hierarchy_settings(
+        self,
+        group_id: str,
+        require_authorization_for_group_creation: bool | None = None,
+        default_management_group: str | None = None,
+    ) -> dict:
+        """Creates or updates hierarchy settings for a management group."""
+        props: dict = {}
+        if require_authorization_for_group_creation is not None:
+            props["requireAuthorizationForGroupCreation"] = require_authorization_for_group_creation
+        if default_management_group is not None:
+            props["defaultManagementGroup"] = default_management_group
+        return self._put(
+            f"providers/Microsoft.Management/managementGroups/{group_id}/settings/default",
+            {"properties": props},
+        ).json()
+
+    def get_hierarchy_settings(self, group_id: str) -> dict:
+        """Gets hierarchy settings for a management group."""
+        return self._get(
+            f"providers/Microsoft.Management/managementGroups/{group_id}/settings/default"
+        ).json()
+
+    def list_hierarchy_settings(self, group_id: str) -> dict:
+        """Lists all hierarchy settings for a management group."""
+        return self._get(
+            f"providers/Microsoft.Management/managementGroups/{group_id}/settings"
+        ).json()
+
+    def update_hierarchy_settings(
+        self,
+        group_id: str,
+        require_authorization_for_group_creation: bool | None = None,
+        default_management_group: str | None = None,
+    ) -> dict:
+        """Updates hierarchy settings for a management group."""
+        props: dict = {}
+        if require_authorization_for_group_creation is not None:
+            props["requireAuthorizationForGroupCreation"] = require_authorization_for_group_creation
+        if default_management_group is not None:
+            props["defaultManagementGroup"] = default_management_group
+        return self._patch(
+            f"providers/Microsoft.Management/managementGroups/{group_id}/settings/default",
+            {"properties": props},
+        ).json()
+
+    def delete_hierarchy_settings(self, group_id: str) -> None:
+        """Deletes hierarchy settings for a management group."""
+        response = self._session.delete(
+            _BASE_URL
+            + f"providers/Microsoft.Management/managementGroups/{group_id}/settings/default",
+            headers={"Authorization": self._auth_header()},
+        )
+        if not response.ok:
+            raise requests.HTTPError(response.text, response=response)
+
+    # ------------------------------------------------------------------
+    # Scoped role assignments
+    # ------------------------------------------------------------------
+
+    def create_resource_group_role_assignment(
+        self,
+        subscription_id: str,
+        resource_group_name: str,
+        assignment_name: str,
+        principal_id: str,
+        role_definition_id: str,
+    ) -> None:
+        """Creates a role assignment scoped to a resource group."""
+        self._put(
+            f"subscriptions/{subscription_id}/resourceGroups/{resource_group_name}"
+            f"/providers/Microsoft.Authorization/roleAssignments/{assignment_name}",
+            {"properties": {"principalId": principal_id, "roleDefinitionId": role_definition_id}},
+        )
+
+    def create_resource_role_assignment(
+        self,
+        subscription_id: str,
+        resource_group_name: str,
+        provider_namespace: str,
+        resource_type: str,
+        resource_name: str,
+        assignment_name: str,
+        principal_id: str,
+        role_definition_id: str,
+    ) -> None:
+        """Creates a role assignment scoped to a specific resource."""
+        self._put(
+            f"subscriptions/{subscription_id}/resourceGroups/{resource_group_name}"
+            f"/providers/{provider_namespace}/{resource_type}/{resource_name}"
+            f"/providers/Microsoft.Authorization/roleAssignments/{assignment_name}",
+            {"properties": {"principalId": principal_id, "roleDefinitionId": role_definition_id}},
+        )
+
+    def create_management_group_role_assignment(
+        self,
+        management_group_id: str,
+        assignment_name: str,
+        principal_id: str,
+        role_definition_id: str,
+    ) -> None:
+        """Creates a role assignment scoped to a management group."""
+        self._put(
+            f"providers/Microsoft.Management/managementGroups/{management_group_id}"
+            f"/providers/Microsoft.Authorization/roleAssignments/{assignment_name}",
+            {"properties": {"principalId": principal_id, "roleDefinitionId": role_definition_id}},
+        )
+
     # ------------------------------------------------------------------
     # Context-manager support
     # ------------------------------------------------------------------

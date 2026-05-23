@@ -21,7 +21,15 @@ RUN pip install --no-cache-dir \
     azure-storage-blob>=12.22.0 \
     azure-storage-queue>=12.11.0 \
     azure-data-tables>=12.5.0 \
-    azure-servicebus>=7.12.0
+    azure-servicebus>=7.12.0 \
+    azure-mgmt-authorization>=4.0.0 \
+    azure-mgmt-eventhub>=11.0.0 \
+    azure-mgmt-msi>=7.0.0 \
+    azure-mgmt-compute>=33.0.0 \
+    azure-mgmt-network>=26.0.0 \
+    azure-mgmt-web>=7.3.0 \
+    azure-mgmt-resource>=23.1.0 \
+    azure-mgmt-subscription>=3.1.0
 
 # Copy Python test sources
 COPY Topaz.Tests.Python/tests /tests
