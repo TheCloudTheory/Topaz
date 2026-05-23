@@ -112,6 +112,11 @@ jobs:
             - 'Topaz.Tests.AzurePowerShell/**'
           azurecli:
             - 'Topaz.Tests.AzureCLI/**'
+          python:
+            - 'Topaz.Tests.Python/**'
+            - 'sdk/python/**'
+          managementgroup:
+            - 'Services/Topaz.Service.ManagementGroup/**'
     - name: Build test filter
       id: test_filter
       shell: bash
@@ -167,6 +172,7 @@ jobs:
         [[ "${{ steps.changes.outputs.virtualnetwork }}"  == "true" ]] && PARTS+=("FullyQualifiedName~VirtualNetwork")
         [[ "${{ steps.changes.outputs.virtualmachine }}"  == "true" ]] && PARTS+=("FullyQualifiedName~VirtualMachine")
         [[ "${{ steps.changes.outputs.portal }}"          == "true" ]] && PARTS+=("FullyQualifiedName~Tests.Portal")
+        [[ "${{ steps.changes.outputs.managementgroup }}" == "true" ]] && PARTS+=("FullyQualifiedName~ManagementGroup")
 
         if [[ ${#PARTS[@]} -eq 0 ]]; then
           # Untracked code path changed (e.g. Topaz.CLI): run all tests as safety fallback
@@ -225,11 +231,44 @@ jobs:
           CLI_JOINED=$(IFS='|'; echo "${CLI_PARTS[*]}")
           echo "cli_filter=$CLI_JOINED" >> "$GITHUB_OUTPUT"
         fi
+
+        # Build Python test filter
+        PY_PARTS=()
+        [[ "${{ steps.changes.outputs.keyvault }}"        == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_KeyVault")
+        [[ "${{ steps.changes.outputs.acr }}"             == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_ContainerRegistry")
+        [[ "${{ steps.changes.outputs.storage }}"         == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_BlobStorage")
+        [[ "${{ steps.changes.outputs.storage }}"         == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_TableStorage")
+        [[ "${{ steps.changes.outputs.storage }}"         == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_QueueStorage")
+        [[ "${{ steps.changes.outputs.storage }}"         == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_StorageAccount")
+        [[ "${{ steps.changes.outputs.servicebus }}"      == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_ServiceBus")
+        [[ "${{ steps.changes.outputs.eventhub }}"        == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_EventHub")
+        [[ "${{ steps.changes.outputs.authorization }}"   == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_Authorization")
+        [[ "${{ steps.changes.outputs.managedidentity }}" == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_ManagedIdentity")
+        [[ "${{ steps.changes.outputs.resourcegroup }}"   == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_Subscription")
+        [[ "${{ steps.changes.outputs.subscription }}"    == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_Subscription")
+        [[ "${{ steps.changes.outputs.appservice }}"      == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_AppService")
+        [[ "${{ steps.changes.outputs.virtualnetwork }}"  == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_VirtualNetwork")
+        [[ "${{ steps.changes.outputs.virtualmachine }}"  == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_VirtualMachine")
+        [[ "${{ steps.changes.outputs.managementgroup }}" == "true" ]] && PY_PARTS+=("FullyQualifiedName~Python_ManagementGroup")
+
+        if [[ "${{ steps.changes.outputs.python }}" == "true" ]]; then
+          # Python test files or SDK changed: run all Python tests
+          echo "py_skip=false" >> "$GITHUB_OUTPUT"
+          echo "py_filter=" >> "$GITHUB_OUTPUT"
+        elif [[ ${#PY_PARTS[@]} -eq 0 ]]; then
+          # No Python-related service or test files changed
+          echo "py_skip=true" >> "$GITHUB_OUTPUT"
+          echo "py_filter=" >> "$GITHUB_OUTPUT"
+        else
+          echo "py_skip=false" >> "$GITHUB_OUTPUT"
+          PY_JOINED=$(IFS='|'; echo "${PY_PARTS[*]}")
+          echo "py_filter=$PY_JOINED" >> "$GITHUB_OUTPUT"
+        fi
     - name: Test
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.skip != 'true'
       run: |
         FILTER="${{ steps.test_filter.outputs.filter }}"
-        EXCLUDE="FullyQualifiedName!~Topaz.Tests.Terraform&FullyQualifiedName!~Topaz.Tests.AzurePowerShell&FullyQualifiedName!~Topaz.Tests.AzureCLI"
+        EXCLUDE="FullyQualifiedName!~Topaz.Tests.Terraform&FullyQualifiedName!~Topaz.Tests.AzurePowerShell&FullyQualifiedName!~Topaz.Tests.AzureCLI&FullyQualifiedName!~Topaz.Tests.Python"
         if [[ -n "$FILTER" ]]; then
           # Apply exclusions to each OR branch individually so that & (higher precedence
           # than |) correctly scopes every branch, not just the last one.
@@ -253,6 +292,9 @@ jobs:
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "FullyQualifiedName~Topaz.Tests.Terraform"
+    - name: Build Python container
+      if: steps.build.outcome == 'success' && steps.test_filter.outputs.py_skip != 'true'
+      run: ./scripts/build-python-container.sh
     - name: Build PowerShell container
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.ps_skip != 'true'
       run: ./scripts/build-powershell-container.sh
@@ -273,6 +315,17 @@ jobs:
         FILTER="${{ steps.test_filter.outputs.cli_filter }}"
         if [[ -z "$FILTER" ]]; then
           FILTER="FullyQualifiedName~Topaz.Tests.AzureCLI"
+        fi
+        dotnet test -m:1 --no-build --verbosity normal --logger trx \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ${{ github.workspace }}/TestResults \
+          --filter "$FILTER"
+    - name: Python Tests
+      if: steps.build.outcome == 'success' && steps.test_filter.outputs.py_skip != 'true'
+      run: |
+        FILTER="${{ steps.test_filter.outputs.py_filter }}"
+        if [[ -z "$FILTER" ]]; then
+          FILTER="FullyQualifiedName~Topaz.Tests.Python"
         fi
         dotnet test -m:1 --no-build --verbosity normal --logger trx \
           --collect:"XPlat Code Coverage" \
