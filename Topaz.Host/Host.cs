@@ -247,7 +247,6 @@ public class Host
         listener.Listeners[0].SASL.EnableAnonymousMechanism = true;
         listener.Listeners[0].AMQP.MaxFrameSize = 262144;
 
-        listener.RegisterRequestProcessor("$cbs", new CbsProcessor());
         listener.RegisterRequestProcessor("$management", new ManagementProcessor());
         listener.RegisterLinkProcessor(new LinkProcessor(_logger));
 

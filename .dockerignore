@@ -10,3 +10,13 @@ LICENSE
 README.md
 todo.js
 **/node_modules/**
+website
+publish
+Documentation
+Examples
+Topaz.Tests.AzureCLI
+Topaz.Tests.Terraform
+Topaz.Tests.Portal
+Topaz.Tests.MCP
+Topaz.Tests.Isolated
+Topaz.Tests.AzurePowerShell

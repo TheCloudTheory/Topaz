@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "topaz-sdk"
+version = "0.1.0"
+description = "Python SDK for the Topaz Azure emulator"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["azure", "emulator", "local-development", "topaz"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+]
+dependencies = [
+    "azure-identity>=1.15.0",
+    "azure-mgmt-resource>=23.0.0",
+    "azure-mgmt-keyvault>=10.3.0",
+    "azure-mgmt-storage>=21.0.0",
+    "azure-mgmt-servicebus>=8.2.0",
+    "azure-mgmt-eventhub>=11.0.0",
+    "azure-mgmt-containerregistry>=10.3.0",
+    "PyJWT>=2.8.0",
+    "cryptography>=42.0.0",
+    "requests>=2.31.0",
+]
+
+[project.urls]
+Homepage = "https://topaz.thecloudtheory.com"
+Repository = "https://github.com/thecloudtheory/topaz"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["topaz_sdk*"]

@@ -17,3 +17,4 @@ website/build/*
 Topaz.Tests.Terraform/TestResults/terraform-eventhub.trx
 GROWTH.md
 .plausible/*
+DEVELOPMENT.md
