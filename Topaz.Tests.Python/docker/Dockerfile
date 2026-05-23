@@ -17,6 +17,7 @@ RUN pip install --no-cache-dir \
     azure-keyvault-secrets>=4.8.0 \
     azure-keyvault-keys>=4.9.0 \
     azure-keyvault-certificates>=4.8.0 \
+    azure-mgmt-containerregistry>=10.3.0 \
     azure-storage-blob>=12.22.0 \
     azure-storage-queue>=12.11.0 \
     azure-data-tables>=12.5.0 \

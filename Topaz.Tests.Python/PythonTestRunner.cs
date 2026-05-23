@@ -49,4 +49,18 @@ public class PythonTestRunner
         await PythonHostMapper.EnsureStorageHostsMapped("pyqueuestortest");
         await PythonFixture.RunPythonTests("test_queue_storage.py");
     }
+
+    [Test]
+    public async Task Python_ContainerRegistryTests()
+    {
+        await PythonHostMapper.EnsureContainerRegistryHostsMapped(
+            "pyacrtest01", "pyacrmgid01",
+            "pyacrempty", "pyacrpush",
+            "pyacrtags01", "pyacrpaginate",
+            "pyacrdelmfst", "pyacrdeldgst", "pyacrdelnotfnd",
+            "pyacrhead01", "pyacrheaddig", "pyacrheadnf",
+            "pyacrblob01"
+        );
+        await PythonFixture.RunPythonTests("test_acr.py");
+    }
 }

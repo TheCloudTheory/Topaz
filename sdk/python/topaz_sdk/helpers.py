@@ -32,6 +32,11 @@ class TopazResourceHelpers:
     """Static helpers that return correct endpoint URLs and connection strings."""
 
     @staticmethod
+    def get_container_registry_login_server(registry_name: str) -> str:
+        """Returns the Container Registry login server host:port string."""
+        return f"{registry_name.lower()}.cr.topaz.local.dev:{CONTAINER_REGISTRY_PORT}"
+
+    @staticmethod
     def get_key_vault_endpoint(vault_name: str) -> str:
         """
         Returns the Key Vault HTTPS endpoint for the given vault name.

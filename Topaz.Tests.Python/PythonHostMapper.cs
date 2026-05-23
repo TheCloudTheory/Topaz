@@ -51,4 +51,17 @@ internal static class PythonHostMapper
                 $"{namespaceName.ToLowerInvariant()}.servicebus.topaz.local.dev");
         }
     }
+
+    /// <summary>
+    /// Ensures the Container Registry subdomain is mapped inside the
+    /// Python container.
+    /// </summary>
+    public static async Task EnsureContainerRegistryHostsMapped(params string[] registryNames)
+    {
+        foreach (var registryName in registryNames)
+        {
+            await PythonFixture.EnsureHostMapping(
+                $"{registryName.ToLowerInvariant()}.cr.topaz.local.dev");
+        }
+    }
 }
