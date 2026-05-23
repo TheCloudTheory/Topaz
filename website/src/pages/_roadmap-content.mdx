@@ -66,6 +66,18 @@
 
 ## v1.6-beta
 
+### Key Vault — correct challenge resource in `WWW-Authenticate`
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Accurate challenge resource | Replace the hard-coded `resource="https://vault.azure.net"` in `WWW-Authenticate` with the vault's actual request URL so non-.NET SDKs (Python, JavaScript, etc.) that verify the challenge resource work without client-side workarounds |
+
+### AMQP — AMQPNetLite spec-compliance for non-.NET clients
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Spec-compliant AMQP performative encoding | Evaluate upgrading AMQPNetLite to a version that encodes all performative fields up to the defined AMQP 1.0 count, or replace it with a fully spec-compliant server implementation, so that Service Bus and Event Hubs work with standard Python, JavaScript, and Go clients without client-side frame-padding patches |
+
 ### Azure Storage — secondary endpoint general reads
 
 | | Feature | Description |

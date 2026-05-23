@@ -299,6 +299,56 @@ TODO: Azure App Service: Site Config sub-resource endpoints
 
 ## v1.6-beta
 
+### Key Vault — correct challenge resource in `WWW-Authenticate`
+
+<!--
+TODO: Key Vault: Return accurate challenge resource in WWW-Authenticate
+  Topaz currently returns resource="https://vault.azure.net" in the WWW-Authenticate
+  header on 401 responses from Key Vault endpoints. Non-.NET Azure SDK clients (Python,
+  JavaScript, etc.) verify that this resource matches the domain used to reach the vault.
+  Because Topaz is accessed at a custom domain (e.g. pytest-kv.vault.topaz.local.dev),
+  the mismatch causes those clients to reject the challenge and raise an exception before
+  issuing any authenticated request.
+
+  Fix: replace the hard-coded "https://vault.azure.net" with the vault's actual request
+  URL (derived from the incoming request's Host header). This removes the domain mismatch
+  so clients that verify the challenge resource work without any workaround.
+
+  See also: website/docs/known-limitations.md — "Key Vault — WWW-Authenticate challenge
+  resource does not match emulator domain".
+  milestone: v1.6-beta
+  labels: enhancement, key-vault
+-->
+
+### AMQP — spec-compliant performative encoding for non-.NET clients
+
+<!--
+TODO: AMQP: Fix AMQPNetLite protocol deviations that break non-.NET clients
+  AMQPNetLite 2.5.1 exhibits two spec deviations that prevent non-.NET AMQP clients
+  (Python azure-servicebus, Go, JavaScript) from working without client-side patches:
+
+  1. Trailing null fields are omitted in encoded performatives (Attach, Transfer, Flow,
+     Disposition, etc.). The AMQP 1.0 spec allows this, but several clients access fields
+     by fixed numeric index and raise IndexError / panic when the frame is shorter than
+     expected.
+
+  2. Error composites are encoded with two fields [condition, description] instead of
+     three [condition, description, info]. Clients that unconditionally access error[2]
+     crash when receiving any Detach or Close frame that carries an error.
+
+  Investigation required:
+  - Check whether a newer version of AMQPNetLite (> 2.5.1) has resolved both issues.
+  - If not, evaluate replacing AMQPNetLite with a fully spec-compliant server
+    implementation (e.g. Apache Qpid Proton .NET or a custom minimal AMQP 1.0 server).
+  - Validate that the replacement works with .NET, Python, JavaScript, and Go Azure SDK
+    clients for Service Bus and Event Hubs without any client-side frame-padding patches.
+
+  See also: website/docs/known-limitations.md — "AMQP — AMQPNetLite protocol deviations
+  break non-.NET clients".
+  milestone: v1.6-beta
+  labels: enhancement, service-bus, event-hub, amqp
+-->
+
 ### ARM Deployments — mid-flight cancellation
 
 <!--
