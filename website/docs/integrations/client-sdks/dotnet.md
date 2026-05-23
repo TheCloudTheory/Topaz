@@ -16,12 +16,6 @@ Two NuGet packages bridge your .NET test code and local development applications
 
 `Topaz.ResourceManager` depends on `Topaz.Identity` — installing it brings `Topaz.Identity` along automatically.
 
-:::info[Future language support]
-
-Equivalent packages for Java, Python, Go, and Node.js are planned. The credential and helper concepts described here will map directly to each language SDK.
-
-:::
-
 ---
 
 ## Topaz.Identity
