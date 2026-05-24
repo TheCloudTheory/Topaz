@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.ResourceGroup;
@@ -13,6 +14,7 @@ namespace Topaz.Service.VirtualNetwork;
 internal sealed class NetworkInterfaceControlPlane(
     Pipeline eventPipeline,
     NetworkInterfaceResourceProvider provider,
+    IpAllocationRegistry ipAllocationRegistry,
     ITopazLogger logger) : IControlPlane
 {
     private const string NicNotFoundCode = "NetworkInterfaceNotFound";
@@ -25,7 +27,8 @@ internal sealed class NetworkInterfaceControlPlane(
             SubscriptionControlPlane.New(eventPipeline, logger), logger);
 
     public static NetworkInterfaceControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
-        new(eventPipeline, new NetworkInterfaceResourceProvider(logger), logger);
+        new(eventPipeline, new NetworkInterfaceResourceProvider(logger),
+            new IpAllocationRegistry(new VirtualNetworkResourceProvider(logger)), logger);
 
     public OperationResult Deploy(GenericResource resource)
     {
@@ -105,6 +108,9 @@ internal sealed class NetworkInterfaceControlPlane(
             properties = NetworkInterfaceResourceProperties.FromRequest(request);
         }
 
+        var nicId = $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}/providers/Microsoft.Network/networkInterfaces/{name}";
+        ProcessIpAllocations(nicId, properties, existing);
+
         var resource = new NetworkInterfaceResource(
             subscriptionIdentifier,
             resourceGroupIdentifier,
@@ -133,6 +139,7 @@ internal sealed class NetworkInterfaceControlPlane(
                 NicNotFoundCode);
         }
 
+        UnregisterNicIps(resource.Properties);
         provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, name);
         return new ControlPlaneOperationResult(OperationResult.Deleted, null, null);
     }
@@ -173,5 +180,68 @@ internal sealed class NetworkInterfaceControlPlane(
         resource.Tags = request.Tags ?? new Dictionary<string, string>();
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, name, resource);
         return new ControlPlaneOperationResult<NetworkInterfaceResource>(OperationResult.Updated, resource, null, null);
+    }
+
+    private void ProcessIpAllocations(
+        string nicId,
+        NetworkInterfaceResourceProperties properties,
+        NetworkInterfaceResource? existingNic)
+    {
+        if (existingNic != null)
+            UnregisterNicIps(existingNic.Properties);
+
+        if (!properties.IpConfigurations.HasValue) return;
+
+        var configs = JsonSerializer.Deserialize<List<NicIpConfiguration>>(
+            properties.IpConfigurations.Value.GetRawText(), GlobalSettings.JsonOptions) ?? [];
+
+        var modified = false;
+
+        foreach (var config in configs)
+        {
+            var subnetId = config.Properties?.Subnet?.Id;
+            if (string.IsNullOrEmpty(subnetId)) continue;
+
+            var isStatic = string.Equals(
+                config.Properties?.PrivateIPAllocationMethod, "Static",
+                StringComparison.OrdinalIgnoreCase);
+
+            if (isStatic)
+            {
+                var staticIp = config.Properties?.PrivateIPAddress;
+                if (!string.IsNullOrEmpty(staticIp))
+                    ipAllocationRegistry.Register(subnetId, staticIp, nicId);
+            }
+            else
+            {
+                var assignedIp = ipAllocationRegistry.FindNextAvailableIp(subnetId);
+                if (assignedIp != null && config.Properties != null)
+                {
+                    config.Properties.PrivateIPAddress = assignedIp;
+                    config.Properties.PrivateIPAllocationMethod ??= "Dynamic";
+                    ipAllocationRegistry.Register(subnetId, assignedIp, nicId);
+                    modified = true;
+                }
+            }
+        }
+
+        if (modified)
+            properties.IpConfigurations = JsonSerializer.SerializeToElement(configs, GlobalSettings.JsonOptions);
+    }
+
+    private void UnregisterNicIps(NetworkInterfaceResourceProperties properties)
+    {
+        if (!properties.IpConfigurations.HasValue) return;
+
+        var configs = JsonSerializer.Deserialize<List<NicIpConfiguration>>(
+            properties.IpConfigurations.Value.GetRawText(), GlobalSettings.JsonOptions) ?? [];
+
+        foreach (var config in configs)
+        {
+            var subnetId = config.Properties?.Subnet?.Id;
+            var ipAddress = config.Properties?.PrivateIPAddress;
+            if (!string.IsNullOrEmpty(subnetId) && !string.IsNullOrEmpty(ipAddress))
+                ipAllocationRegistry.Unregister(subnetId, ipAddress);
+        }
     }
 }

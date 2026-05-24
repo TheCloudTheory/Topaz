@@ -260,20 +260,6 @@ TODO: Azure SQL: Database control plane endpoints
   labels: enhancement, azure-sql, good first issue
 -->
 
-### Virtual Network — IP address allocation registry
-
-<!--
-TODO: Virtual Networks: IP address allocation registry
-  Introduce an IP allocation registry in the VNet service so that NIC and private endpoint
-  creation records the assigned IP address. This enables:
-  - Real `availableIPAddresses` computation in the CheckIPAddressAvailability endpoint
-    (currently always returns `[]` — see known-limitations.md).
-  - More accurate `available: false` responses when an IP within a subnet is already
-    assigned to a resource.
-  milestone: v1.5-beta
-  labels: enhancement, virtual-network
--->
-
 ### Azure App Service — initial control plane
 
 ### Event Hub — delete individual Event Hub
@@ -587,6 +573,19 @@ TODO: Azure Disks: SAS access endpoints
 ---
 
 ## v1.7-beta
+
+### Virtual Network — Private Endpoint IP tracking
+
+<!--
+TODO: Virtual Networks: Private Endpoint IP tracking
+  Extend the IP allocation registry (introduced in v1.5-beta for NICs) to also record
+  IP addresses assigned to Private Endpoints on creation. This requires implementing the
+  Private Endpoint control plane (PUT/GET/DELETE/LIST for Microsoft.Network/privateEndpoints)
+  and hooking it into IpAllocationRegistry.Register on create and IpAllocationRegistry.Unregister
+  on delete, using the same subnetId → vnet resolution already used for NICs.
+  milestone: v1.7-beta
+  labels: enhancement, virtual-network, good first issue
+-->
 
 ### Storage — Service SAS permission enforcement
 

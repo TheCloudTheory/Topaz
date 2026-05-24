@@ -403,4 +403,160 @@ public class VirtualNetworkTests
             Assert.That(updated.Value.Data.Tags["owner"], Is.EqualTo("topaz"));
         });
     }
+
+    [Test]
+    public async Task VirtualNetwork_CheckIPAddressAvailability_WhenIpIsAllocatedToNIC_ReturnsNotAvailable()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string virtualNetworkName = "vnet-checkip-allocated";
+        const string subnetName = "subnet-alloc";
+        const string staticIp = "10.70.1.10";
+
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
+                new VirtualNetworkData
+                {
+                    Location = Azure.Core.AzureLocation.WestEurope,
+                    AddressPrefixes = { "10.70.0.0/16" },
+                    Subnets = { new SubnetData { Name = subnetName, AddressPrefixes = { "10.70.1.0/24" } } }
+                }, CancellationToken.None);
+
+        var subnetId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}");
+
+        await resourceGroup.Value.GetNetworkInterfaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "nic-alloc-test",
+                new NetworkInterfaceData
+                {
+                    Location = Azure.Core.AzureLocation.WestEurope,
+                    IPConfigurations =
+                    {
+                        new NetworkInterfaceIPConfigurationData
+                        {
+                            Name = "ipconfig1",
+                            PrivateIPAllocationMethod = NetworkIPAllocationMethod.Static,
+                            PrivateIPAddress = staticIp,
+                            Subnet = new SubnetData { Id = subnetId }
+                        }
+                    }
+                }, CancellationToken.None);
+
+        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+
+        // Act
+        var result = await vnet.CheckIPAddressAvailabilityAsync(staticIp);
+
+        // Assert
+        Assert.That(result.Value.Available, Is.False);
+    }
+
+    [Test]
+    public async Task VirtualNetwork_CheckIPAddressAvailability_AfterNICRegistered_AvailableIPAddressesArePopulated()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string virtualNetworkName = "vnet-checkip-availlist";
+        const string subnetName = "subnet-availlist";
+        const string staticIp = "10.71.1.4";
+
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
+                new VirtualNetworkData
+                {
+                    Location = Azure.Core.AzureLocation.WestEurope,
+                    AddressPrefixes = { "10.71.0.0/16" },
+                    Subnets = { new SubnetData { Name = subnetName, AddressPrefixes = { "10.71.1.0/24" } } }
+                }, CancellationToken.None);
+
+        var subnetId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}");
+
+        await resourceGroup.Value.GetNetworkInterfaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "nic-availlist-test",
+                new NetworkInterfaceData
+                {
+                    Location = Azure.Core.AzureLocation.WestEurope,
+                    IPConfigurations =
+                    {
+                        new NetworkInterfaceIPConfigurationData
+                        {
+                            Name = "ipconfig1",
+                            PrivateIPAllocationMethod = NetworkIPAllocationMethod.Static,
+                            PrivateIPAddress = staticIp,
+                            Subnet = new SubnetData { Id = subnetId }
+                        }
+                    }
+                }, CancellationToken.None);
+
+        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+
+        // Act — check a different IP in the same subnet
+        var result = await vnet.CheckIPAddressAvailabilityAsync("10.71.1.5");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Value.Available, Is.True);
+            Assert.That(result.Value.AvailableIPAddresses, Is.Not.Empty);
+            Assert.That(result.Value.AvailableIPAddresses, Does.Not.Contain(staticIp));
+        });
+    }
+
+    [Test]
+    public async Task VirtualNetwork_CheckIPAddressAvailability_DynamicNIC_AssignsAndRegistersIP()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string virtualNetworkName = "vnet-checkip-dynamic";
+        const string subnetName = "subnet-dynamic";
+
+        await resourceGroup.Value.GetVirtualNetworks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, virtualNetworkName,
+                new VirtualNetworkData
+                {
+                    Location = Azure.Core.AzureLocation.WestEurope,
+                    AddressPrefixes = { "10.72.0.0/16" },
+                    Subnets = { new SubnetData { Name = subnetName, AddressPrefixes = { "10.72.1.0/24" } } }
+                }, CancellationToken.None);
+
+        var subnetId = new ResourceIdentifier(
+            $"/subscriptions/{SubscriptionId}/resourceGroups/{ResourceGroupName}/providers/Microsoft.Network/virtualNetworks/{virtualNetworkName}/subnets/{subnetName}");
+
+        // Act — create NIC with Dynamic allocation
+        var createResult = await resourceGroup.Value.GetNetworkInterfaces()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "nic-dynamic-test",
+                new NetworkInterfaceData
+                {
+                    Location = Azure.Core.AzureLocation.WestEurope,
+                    IPConfigurations =
+                    {
+                        new NetworkInterfaceIPConfigurationData
+                        {
+                            Name = "ipconfig1",
+                            PrivateIPAllocationMethod = NetworkIPAllocationMethod.Dynamic,
+                            Subnet = new SubnetData { Id = subnetId }
+                        }
+                    }
+                }, CancellationToken.None);
+
+        var assignedIp = createResult.Value.Data.IPConfigurations.FirstOrDefault()?.PrivateIPAddress;
+
+        // Assert — IP was assigned and is now unavailable
+        Assert.That(assignedIp, Is.Not.Null.And.Not.Empty, "Dynamic NIC should have an assigned IP address");
+
+        var vnet = resourceGroup.Value.GetVirtualNetwork(virtualNetworkName).Value;
+        var availabilityResult = await vnet.CheckIPAddressAvailabilityAsync(assignedIp!);
+        Assert.That(availabilityResult.Value.Available, Is.False,
+            "Dynamically assigned IP should be recorded as unavailable");
+    }
 }

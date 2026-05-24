@@ -26,6 +26,8 @@ internal sealed class VirtualNetworkControlPlane(
         new(new ResourceGroupResourceProvider(logger),
             SubscriptionControlPlane.New(eventPipeline, logger), logger);
 
+    private readonly IpAllocationRegistry _ipAllocationRegistry = new(provider);
+
     public static VirtualNetworkControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
         new(eventPipeline, new VirtualNetworkResourceProvider(logger), logger);
 
@@ -137,7 +139,8 @@ internal sealed class VirtualNetworkControlPlane(
         var subnetsOperation = subnetsControlPlane.List(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName);
         var subnets = subnetsOperation.Resource ?? [];
 
-        var available = subnets.Any(subnet =>
+        string? matchingCidr = null;
+        foreach (var subnet in subnets)
         {
             var prefixes = new List<string?>();
             if (subnet.Properties?.AddressPrefix != null)
@@ -145,17 +148,35 @@ internal sealed class VirtualNetworkControlPlane(
             if (subnet.Properties?.AddressPrefixes != null)
                 prefixes.AddRange(subnet.Properties.AddressPrefixes);
 
-            return prefixes.Any(prefix =>
+            foreach (var prefix in prefixes)
             {
-                if (string.IsNullOrWhiteSpace(prefix)) return false;
-                try { return IPNetwork.Parse(prefix).Contains(ip); }
-                catch { return false; }
-            });
-        });
+                if (string.IsNullOrWhiteSpace(prefix)) continue;
+                try
+                {
+                    if (IPNetwork.Parse(prefix).Contains(ip))
+                    {
+                        matchingCidr = prefix;
+                        break;
+                    }
+                }
+                catch { }
+            }
+
+            if (matchingCidr != null) break;
+        }
+
+        var isInSubnet = matchingCidr != null;
+        var isAllocated = isInSubnet &&
+            _ipAllocationRegistry.IsAllocated(subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName, ipAddress);
+        var available = isInSubnet && !isAllocated;
+
+        IReadOnlyList<string> availableIPs = matchingCidr != null
+            ? _ipAllocationRegistry.GetAvailableIps(matchingCidr, subscriptionIdentifier, resourceGroupIdentifier, virtualNetworkName)
+            : [];
 
         return new ControlPlaneOperationResult<IpAddressAvailabilityResult>(
             OperationResult.Success,
-            new IpAddressAvailabilityResult { Available = available },
+            new IpAddressAvailabilityResult { Available = available, AvailableIPAddresses = [..availableIPs] },
             null, null);
     }
 

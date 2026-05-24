@@ -156,4 +156,19 @@ public class VirtualNetworkTests : TopazFixture
                 });
             }, 0);
     }
+
+    [Test]
+    public async Task VirtualNetwork_CheckIpAddressAvailability_WhenIpAllocatedToNIC_ReturnsNotAvailable()
+    {
+        await RunAzureCliCommand("az group create -l westeurope -n rg-nic-checkip", null, 0);
+        await RunAzureCliCommand("az network vnet create --location westeurope --name vnet-nic-checkip --resource-group rg-nic-checkip --address-prefixes 10.80.0.0/16", null, 0);
+        await RunAzureCliCommand("az network vnet subnet create --vnet-name vnet-nic-checkip --name subnet-nic-checkip --address-prefixes 10.80.1.0/24 --resource-group rg-nic-checkip", null, 0);
+        await RunAzureCliCommand("az network nic create -n nic-checkip-cli -g rg-nic-checkip --vnet-name vnet-nic-checkip --subnet subnet-nic-checkip --private-ip-address 10.80.1.10", null, 0);
+        await RunAzureCliCommand(
+            "az network vnet check-ip-address-space --resource-group rg-nic-checkip --vnet-name vnet-nic-checkip --ip-address 10.80.1.10",
+            response =>
+            {
+                Assert.That(response["available"]!.GetValue<bool>(), Is.False);
+            }, 0);
+    }
 }

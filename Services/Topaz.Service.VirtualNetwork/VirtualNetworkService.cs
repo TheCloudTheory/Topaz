@@ -12,7 +12,7 @@ public sealed class VirtualNetworkService(Pipeline eventPipeline, ITopazLogger l
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".azure-virtual-network");
     
-    public static IReadOnlyCollection<string> Subresources => ["subnets"];
+    public static IReadOnlyCollection<string> Subresources => ["subnets", "ipallocations"];
     public static string UniqueName => "virtual-network";
 
     public string Name => "Virtual Network";
