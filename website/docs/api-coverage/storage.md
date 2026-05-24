@@ -98,6 +98,7 @@ Blob Storage is served on port **8891** (HTTP) in Topaz.
 | Operation | Status | Notes |
 |-----------|--------|-------|
 | Get Blob Service Stats | ✅ | `GET /?restype=service&comp=stats` — secondary endpoint only; returns 403 for non-RA-GRS accounts |
+| Generate User Delegation Key | ✅ | `POST /?restype=service&comp=userdelegationkey` — requires Bearer auth; key bytes derived deterministically from account key + caller OID/TID |
 
 ---
 

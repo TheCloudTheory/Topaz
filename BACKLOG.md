@@ -17,6 +17,15 @@ TODO: VirtualNetwork — Network Interface (NIC) CRUD
   labels: enhancement, good first issue
 -->
 
+<!--
+TODO: Storage — Revoke User Delegation Keys
+  Implement POST .../storageAccounts/{name}/revokeUserDelegationKeys ARM endpoint.
+  Should persist a per-account revocation timestamp; User Delegation SAS validation must reject
+  keys whose skt (signed key start) predates the revocation timestamp.
+  milestone: v1.8-preview
+  labels: enhancement
+-->
+
 ---
 
 ## Format reference

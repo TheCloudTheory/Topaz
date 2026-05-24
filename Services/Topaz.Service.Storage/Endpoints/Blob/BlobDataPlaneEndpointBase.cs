@@ -52,8 +52,13 @@ internal abstract class BlobDataPlaneEndpointBase(Pipeline eventPipeline, ITopaz
 
         if (!authorized)
         {
+            const string errorXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+                                    "<Error><Code>AuthenticationFailed</Code>" +
+                                    "<Message>Server failed to authenticate the request. " +
+                                    "Make sure the value of the Authorization header is formed correctly including the signature.</Message></Error>";
             response.StatusCode = System.Net.HttpStatusCode.Unauthorized;
             response.Headers.TryAddWithoutValidation("WWW-Authenticate", StorageDataPlaneAuthorizationChecker.WwwAuthenticateChallenge);
+            response.Content = new StringContent(errorXml, Encoding.UTF8, "application/xml");
         }
 
         return authorized;

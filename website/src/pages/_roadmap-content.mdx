@@ -179,6 +179,7 @@
 | | Feature | Description |
 |--|---------|-------------|
 | <span class="badge--preview">Preview</span> | Reject unauthenticated requests to private containers | Return `401 + WWW-Authenticate` when a Blob data-plane request has no `Authorization` header and no valid SAS query string, and the target container's public-access level is `none` |
+| <span class="badge--preview">Preview</span> | Revoke User Delegation Keys | ARM `POST .../revokeUserDelegationKeys` — persist a per-account revocation timestamp and reject User Delegation SAS tokens whose `skt` predates it |
 
 ### Azure App Service — transparent request forwarding
 
