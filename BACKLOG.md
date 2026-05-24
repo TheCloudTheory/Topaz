@@ -276,25 +276,6 @@ TODO: Virtual Networks: IP address allocation registry
 
 ### Azure App Service — initial control plane
 
-<!--
-TODO: Azure App Service: Site Config sub-resource endpoints
-  Implement the /config sub-resource surface for Microsoft.Web/sites:
-  - GET  .../sites/{name}/config/web              – return siteConfig wrapped as
-    {"id": ".../config/web", "name": "web", "type": "Microsoft.Web/sites/config",
-     "properties": {<full SiteConfigProperties>}}
-  - PUT  .../sites/{name}/config/web              – merge request.properties into the stored
-    siteConfig and return 200 with the same envelope
-  - PUT  .../sites/{name}/config/appsettings       – replace the appSettings name/value list;
-    return 200 with {"id": ".../config/appsettings", "name": "appsettings",
-    "type": "Microsoft.Web/sites/config", "properties": {"KEY": "VALUE", ...}}
-  - POST .../sites/{name}/config/appsettings/list  – return the current app settings dictionary
-    in the same envelope (used by Azure CLI az webapp config appsettings list)
-  siteConfig is stored embedded in AppServiceSiteResourceProperties (same persistence file as
-  the site resource). No separate subresource file is needed for initial support.
-  milestone: v1.5-beta
-  labels: enhancement, app-service
--->
-
 ### Event Hub — delete individual Event Hub
 
 <!--
