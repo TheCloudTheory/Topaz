@@ -15,8 +15,8 @@ Topaz is a single .NET 10 binary that emulates Azure Storage, Key Vault, Service
 
 {/* truncate */}
 
-:::note[Updated — v1.4 released (19 May 2026)]
-Several Storage gaps described in this post were addressed in v1.4: **SAS token validation** (Account SAS, Service SAS, stored access policies), **public-access Blob reads**, and **RA-GRS secondary endpoint** DNS registration, stats, and read-only enforcement are all live. See the Update section below and the [roadmap](/roadmap) for current status.
+:::note[Updated — v1.4 released (19 May 2026) · v1.5 User Delegation SAS]
+Several Storage gaps described in this post were addressed in v1.4: **SAS token validation** (Account SAS, Service SAS, stored access policies), **public-access Blob reads**, and **RA-GRS secondary endpoint** DNS registration, stats, and read-only enforcement are all live. In v1.5, **User Delegation SAS** for Blob Storage shipped — `generateUserDelegationKey` requires Bearer (Entra) auth, derives the delegation key deterministically from the account key and the caller's OID/TID, and the data plane validates User Delegation SAS tokens end-to-end. See the Update sections below and the [roadmap](/roadmap) for current status.
 :::
 
 ## Where Topaz and Azurite agree
@@ -162,7 +162,7 @@ Real Azure allows containers created with `x-ms-blob-public-access: container` (
 **✅ v1.4 — RA-GRS secondary endpoint semantics.** _(partial, shipped)_
 Secondary DNS hostnames (`{accountName}-secondary.*`), `secondaryEndpoints.blob/.table/.queue/.file` in the storage account ARM response, the `?restype=service&comp=stats` endpoint returning a realistic `GeoReplicationStats` payload, and read-only enforcement that returns `403 WriteOperationNotSupportedOnSecondary` on mutating requests against a secondary endpoint. General data reads through secondary endpoints follow in v1.6.
 
-**v1.5-beta — User Delegation SAS for Blob.**
+**✅ v1.5 — User Delegation SAS for Blob.** _(shipped)_
 The Entra-derived SAS variant. Two coordinated pieces: an ARM endpoint that mints a user delegation key bounded by `(start, expiry, oid, tid)`, and Blob data-plane validation that recomputes the key from the stored fields and validates the signed token. This is the only SAS variant that needs the local Entra layer to be coherent with the storage layer — which is part of why Topaz is built as one process rather than five.
 
 **v1.6-beta — unified data-plane port.**
@@ -256,6 +256,12 @@ The following gaps described in this post were addressed in the v1.4 release.
 **RA-GRS secondary endpoints (partial).** Secondary DNS hostnames (`{accountName}-secondary.*`), `secondaryEndpoints` in the ARM response, `GetServiceStats` on secondary endpoints, and `403 WriteOperationNotSupportedOnSecondary` on mutating secondary requests are all live. General data reads through secondary endpoints follow in v1.6.
 
 **Table Storage OData queries.** `$filter`, `$select`, `$top`, and `$skiptoken` are now supported on Table entity query endpoints.
+
+---
+
+## Update — v1.5
+
+**User Delegation SAS for Blob Storage.** The `POST /?restype=service&comp=userdelegationkey` data-plane endpoint is now implemented and requires a Bearer (Entra ID) token — SharedKey callers receive `403 AuthenticationFailed`, matching real Azure behaviour. The delegation key is derived deterministically from the storage account key and the caller's Entra OID and tenant ID via HMAC-SHA256, so no key material needs to be persisted. The data plane validates incoming User Delegation SAS tokens by re-deriving the same key at request time and comparing the signature, covering both per-blob (`sr=b`) and per-container (`sr=c`) resource scopes. Revocation of user delegation keys (`POST .../revokeUserDelegationKeys`) is tracked on the v1.8 roadmap.
 
 ---
 

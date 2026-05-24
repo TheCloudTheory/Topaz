@@ -36,6 +36,7 @@ For Azure Storage specifically, the two tools have different coverage and design
 | **Blob: snapshots** | ✅ | ✅ |
 | **Blob: authentication** | Not enforced | Optional (enforced with `--oauth`) |
 | **Blob / Table / Queue: SAS token validation** (Account SAS, Service SAS) | ✅ | ✅ |
+| **Blob: User Delegation Key + User Delegation SAS** | ✅ | ✅ |
 | **Blob / Table / Queue: stored access policy enforcement** | ✅ | ✅ |
 | **Blob: public-access anonymous reads** | ✅ | ✅ |
 | **Table: create, delete, query** | ✅ (stable) | ✅ (preview) |
@@ -52,7 +53,7 @@ For Azure Storage specifically, the two tools have different coverage and design
 | **Queue: Entra ID / Bearer auth** | ✅ | Optional (with `--oauth`) |
 | **RA-GRS (secondary endpoints)** | Partial — DNS registration, `GetServiceStats`, and read-only enforcement ✅ (v1.4); general reads on secondary ❌ (v1.6) | ✅ |
 
-Topaz and Azurite are at near parity for Azure Storage data-plane operations. SAS token validation (Account SAS, Service SAS), stored access policy enforcement, and public-access Blob reads were added in v1.4. RA-GRS secondary endpoint DNS registration, `GetServiceStats`, and read-only enforcement are in place as of v1.4; general data reads through secondary endpoints follow in v1.6. Blob authentication is still not fully enforced — unauthenticated requests to private containers are permitted. Azurite's Table Storage is still in preview; Topaz's Table implementation is stable and includes full OData query support ($filter, $select, $top, $skiptoken).
+Topaz and Azurite are at near parity for Azure Storage data-plane operations. SAS token validation (Account SAS, Service SAS), stored access policy enforcement, and public-access Blob reads were added in v1.4. User Delegation Key issuance (`POST /?restype=service&comp=userdelegationkey`) and User Delegation SAS token validation for Blob were added in the current release — the endpoint requires a Bearer token and derives the delegation key deterministically from the account key and the caller's Entra OID/TID, matching real Azure behaviour. RA-GRS secondary endpoint DNS registration, `GetServiceStats`, and read-only enforcement are in place as of v1.4; general data reads through secondary endpoints follow in v1.6. Blob authentication is still not fully enforced — unauthenticated requests to private containers are permitted. Azurite's Table Storage is still in preview; Topaz's Table implementation is stable and includes full OData query support ($filter, $select, $top, $skiptoken).
 
 ## Endpoint and URL format
 
@@ -116,7 +117,7 @@ Both emulators support SharedKey authentication. The difference is in how strict
 
 Topaz always validates Table and Queue request signatures. If an application sends an incorrectly signed request that Azurite silently accepts in default mode, it will fail against Topaz. This makes Topaz stricter by default — which catches auth bugs earlier.
 
-As of v1.4, SAS token validation is enforced across all three services — Account SAS and Service SAS query strings are validated against the account key, stored access policies can be revoked, and containers configured with public access correctly permit unauthenticated reads.
+As of v1.4, SAS token validation is enforced across all three services — Account SAS and Service SAS query strings are validated against the account key, stored access policies can be revoked, and containers configured with public access correctly permit unauthenticated reads. User Delegation SAS is also validated for Blob Storage: the delegation key is derived from the account key and the caller's Entra OID/TID, so no key persistence is required.
 
 ## Azure Storage Explorer
 
