@@ -145,34 +145,7 @@ _Implemented: DELETE, List by resource group, List by subscription, and Update T
 
 ### Azure Storage — User Delegation SAS for Blob
 
-<!--
-TODO: Storage: User Delegation SAS for Blob data-plane
-  User Delegation SAS tokens are signed with a time-bounded user delegation key derived
-  from an Entra ID identity rather than the storage account key. They are scoped to Blob
-  only. Implementation requires two coordinated pieces:
-
-  1. ARM endpoint — POST generateUserDelegationKey:
-     Add `POST /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Storage/
-     storageAccounts/{name}/providers/Microsoft.Storage/userDelegationKey` (or the
-     direct ARM route used by the SDK) that accepts a JSON body with `keyInfo.start`
-     and `keyInfo.expiry` and returns a `StorageServiceProperties`-style response
-     with the fields `signedOid`, `signedTid`, `signedStart`, `signedExpiry`,
-     `signedService` ("b"), `signedVersion`, and `value` (base64 key bytes). Topaz
-     can derive the key bytes deterministically from the account key + signed fields
-     via HMAC-SHA256.
-
-  2. Blob data-plane validation:
-     Detect User Delegation SAS query parameters (sv, sr, sp, se, st, spr, sip,
-     skoid, sktid, skt, ske, sks, skv, sig) and validate them in
-     BlobStorageSecurityProvider:
-     - Recompute the user delegation key from the stored account key + (skoid, sktid,
-       skt, ske, sks, skv) fields using the same HMAC chain used during issuance.
-     - Build the StringToSign (identical to Service SAS but uses the user delegation
-       key bytes rather than the raw account key).
-     - Validate signature, expiry, IP/protocol restrictions, and scope (sr=b/c/d).
-  milestone: v1.5-beta
-  labels: enhancement, storage, security
--->
+_Implemented in v1.5-beta: `POST /?restype=service&comp=userdelegationkey` data-plane endpoint issues user delegation keys derived deterministically from the account key and the caller's Entra OID/TID via HMAC-SHA256; requires Bearer auth (SharedKey callers receive `403 AuthenticationFailed`). `UserDelegationSasValidator` re-derives the key at validation time and validates incoming User Delegation SAS tokens for blob (`sr=b`) and container (`sr=c`) scopes. Revocation (`revokeUserDelegationKeys`) is tracked separately in v1.8-preview._
 
 ### ARM Deployments — full tenant-scope surface
 
