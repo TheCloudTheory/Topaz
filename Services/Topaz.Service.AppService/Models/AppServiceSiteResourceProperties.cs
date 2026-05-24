@@ -27,6 +27,7 @@ internal sealed class AppServiceSiteResourceProperties
     public string ProvisioningState { get; init; } = "Succeeded";
     public string? ServerFarmId { get; set; }
     public string PossibleOutboundIpAddresses { get; init; } = string.Empty;
+    public string Sku { get; set; } = "Standard";
     public SiteConfigProperties? SiteConfig { get; set; }
 
     internal sealed class HostNameSslState
@@ -50,7 +51,7 @@ internal sealed class AppServiceSiteResourceProperties
                 NetFrameworkVersion = props.SiteConfig.NetFrameworkVersion,
                 AlwaysOn = props.SiteConfig.AlwaysOn.GetValueOrDefault(false),
                 FtpsState = props.SiteConfig.FtpsState,
-                MinTlsVersion = props.SiteConfig.MinTlsVersion,
+                MinTlsVersion = props.SiteConfig.MinTlsVersion ?? "1.2",
             },
         };
     }

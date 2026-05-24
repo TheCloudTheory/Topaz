@@ -8,5 +8,5 @@ internal sealed class SiteConfigProperties
     public string? NetFrameworkVersion { get; set; }
     public bool AlwaysOn { get; set; }
     public string? FtpsState { get; set; }
-    public string? MinTlsVersion { get; set; }
+    public string MinTlsVersion { get; set; } = "1.2";
 }

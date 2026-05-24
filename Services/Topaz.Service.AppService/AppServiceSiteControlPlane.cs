@@ -260,6 +260,19 @@ internal sealed class AppServiceSiteControlPlane(
                 OperationResult.Success, AppServiceAppSettingsConfigResource.FromSite(resource), null, null);
     }
 
+    public ControlPlaneOperationResult<AppServiceSlotConfigNamesResource> GetSlotConfigNames(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string siteName)
+    {
+        var resource = provider.GetAs<AppServiceSiteResource>(subscriptionIdentifier, resourceGroupIdentifier, siteName);
+        return resource == null
+            ? new ControlPlaneOperationResult<AppServiceSlotConfigNamesResource>(OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, siteName), NotFoundCode)
+            : new ControlPlaneOperationResult<AppServiceSlotConfigNamesResource>(
+                OperationResult.Success, AppServiceSlotConfigNamesResource.FromSite(resource), null, null);
+    }
+
     public ControlPlaneOperationResult<string> GetWebAppStacks()
     {
         var assembly = Assembly.GetExecutingAssembly();

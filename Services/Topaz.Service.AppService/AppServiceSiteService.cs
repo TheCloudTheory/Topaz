@@ -29,6 +29,7 @@ public sealed class AppServiceSiteService(Pipeline eventPipeline, ITopazLogger l
         new UpdateSiteConfigWebEndpoint(_eventPipeline, _logger),
         new UpdateAppSettingsEndpoint(_eventPipeline, _logger),
         new ListAppSettingsEndpoint(_eventPipeline, _logger),
+        new GetSlotConfigNamesEndpoint(_eventPipeline, _logger),
         new DeleteAppServiceSiteEndpoint(_eventPipeline, _logger),
         new PostPublishXmlEndpoint(_logger)
     ];
