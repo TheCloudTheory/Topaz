@@ -13,6 +13,28 @@ internal sealed class ManagementProcessor : IRequestProcessor
 {
     public void Process(RequestContext requestContext)
     {
+        var operation = requestContext.Message.ApplicationProperties?["operation"] as string;
+
+        if (operation == "com.microsoft:renew-lock")
+        {
+            var renewProperties = new ApplicationProperties
+            {
+                Map =
+                {
+                    ["status-code"] = 200,
+                    ["status-description"] = "OK"
+                }
+            };
+
+            var renewBody = new Map
+            {
+                ["expiration"] = new[] { DateTime.UtcNow.AddMinutes(5) }
+            };
+
+            requestContext.Complete(new Message(renewBody) { ApplicationProperties = renewProperties });
+            return;
+        }
+
         var p = new ApplicationProperties
         {
             Map =
@@ -30,9 +52,7 @@ internal sealed class ManagementProcessor : IRequestProcessor
             [ResponseMap.PartitionIdentifiers] = new[] { Guid.Empty.ToString() }
         };
 
-        var reply = new Message(body) { ApplicationProperties = p, };
-
-        requestContext.Complete(reply);
+        requestContext.Complete(new Message(body) { ApplicationProperties = p });
     }
 
     public int Credit => 10;
