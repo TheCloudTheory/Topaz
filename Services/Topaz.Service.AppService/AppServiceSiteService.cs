@@ -10,8 +10,6 @@ namespace Topaz.Service.AppService;
 [UsedImplicitly]
 public sealed class AppServiceSiteService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
 {
-    private readonly Pipeline _eventPipeline = eventPipeline;
-    private readonly ITopazLogger _logger = logger;
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".azure-web-sites");
     public static IReadOnlyCollection<string>? Subresources => null;
@@ -19,18 +17,18 @@ public sealed class AppServiceSiteService(Pipeline eventPipeline, ITopazLogger l
     public string Name => "Azure App Service Site";
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new CheckAppServiceNameAvailabilityEndpoint(_eventPipeline, _logger),
-        new GetWebAppStacksEndpoint(_eventPipeline, _logger),
-        new ListAppServiceSitesByResourceGroupEndpoint(_eventPipeline, _logger),
-        new ListAppServiceSitesBySubscriptionEndpoint(_eventPipeline, _logger),
-        new CreateOrUpdateAppServiceSiteEndpoint(_eventPipeline, _logger),
-        new GetAppServiceSiteEndpoint(_eventPipeline, _logger),
-        new GetSiteConfigWebEndpoint(_eventPipeline, _logger),
-        new UpdateSiteConfigWebEndpoint(_eventPipeline, _logger),
-        new UpdateAppSettingsEndpoint(_eventPipeline, _logger),
-        new ListAppSettingsEndpoint(_eventPipeline, _logger),
-        new GetSlotConfigNamesEndpoint(_eventPipeline, _logger),
-        new DeleteAppServiceSiteEndpoint(_eventPipeline, _logger),
-        new PostPublishXmlEndpoint(_logger)
+        new CheckAppServiceNameAvailabilityEndpoint(eventPipeline, logger),
+        new GetWebAppStacksEndpoint(eventPipeline, logger),
+        new ListAppServiceSitesByResourceGroupEndpoint(eventPipeline, logger),
+        new ListAppServiceSitesBySubscriptionEndpoint(eventPipeline, logger),
+        new CreateOrUpdateAppServiceSiteEndpoint(eventPipeline, logger),
+        new GetAppServiceSiteEndpoint(eventPipeline, logger),
+        new GetSiteConfigWebEndpoint(eventPipeline, logger),
+        new UpdateSiteConfigWebEndpoint(eventPipeline, logger),
+        new UpdateAppSettingsEndpoint(eventPipeline, logger),
+        new ListAppSettingsEndpoint(eventPipeline, logger),
+        new GetSlotConfigNamesEndpoint(eventPipeline, logger),
+        new DeleteAppServiceSiteEndpoint(eventPipeline, logger),
+        new PostPublishXmlEndpoint(logger)
     ];
 }

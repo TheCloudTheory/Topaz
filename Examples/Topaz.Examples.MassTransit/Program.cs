@@ -33,7 +33,7 @@ if (builder.Environment.IsDevelopment())
         .WithName("topaz.local.dev")
         .WithResourceMapping(Encoding.UTF8.GetBytes(certificateFile), "/app/topaz.crt")
         .WithResourceMapping(Encoding.UTF8.GetBytes(certificateKey), "/app/topaz.key")
-        .WithCommand("start", "--certificate-file", "topaz.crt", "--certificate-key", "topaz.key", "--log-level",
+        .WithCommand("--certificate-file", "topaz.crt", "--certificate-key", "topaz.key", "--log-level",
             "Debug")
         .Build();
 

@@ -30,7 +30,7 @@ internal class Program
             .WithPortBinding(8897)
             .WithPortBinding(8891)
             .WithName("topaz.local.dev")
-            .WithCommand("start", "--log-level", "Debug")
+            .WithCommand("--log-level", "Debug")
             .Build();
         
         try
