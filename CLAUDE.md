@@ -13,7 +13,7 @@ dotnet run --project Topaz.CLI    # interacts with a running host
 
 ## Architecture
 
-Topaz emulates Azure services in a single .NET 8 solution. The host process (`Topaz.Host/Host.cs`) composes services and exposes HTTP/AMQP endpoints.
+Topaz emulates Azure services in a single .NET 10 solution. The host process (`Topaz.Host/Host.cs`) composes services and exposes HTTP/AMQP endpoints.
 
 Services live under `Services/Topaz.Service.*`. Each service has:
 - Control plane (`*ServiceControlPlane`) — CRUD, resource listing

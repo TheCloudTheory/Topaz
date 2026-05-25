@@ -14,7 +14,7 @@ The CLA grants TheCloudTheory the right to include your contribution in both the
 
 ## Getting started
 
-**Prerequisites:** .NET 8 SDK, Docker (for integration tests).
+**Prerequisites:** .NET 10 SDK, Docker (for integration tests).
 
 ```bash
 git clone https://github.com/TheCloudTheory/Topaz

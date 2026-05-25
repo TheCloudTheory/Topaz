@@ -12,7 +12,7 @@ If you're using Azurite today and running into its limitations, Topaz is a drop-
 
 [Azurite](https://github.com/Azure/Azurite) is Microsoft's official local emulator for Azure Storage. It covers Blob, Queue, and Table storage and is widely used in CI pipelines and local development. It is a solid tool for storage-only workloads, but it is scoped to a single service and runs on Node.js.
 
-Topaz is written in .NET 8 and ships as a single self-contained binary or Docker image. It emulates Azure Storage and the broader Azure platform — Key Vault, Service Bus, Event Hubs, Container Registry, Managed Identity, and more — all in one process.
+Topaz is written in .NET 10 and ships as a single self-contained binary or Docker image. It emulates Azure Storage and the broader Azure platform — Key Vault, Service Bus, Event Hubs, Container Registry, Managed Identity, and more — all in one process.
 
 ## Storage feature comparison
 
@@ -24,7 +24,7 @@ For Azure Storage specifically, the two tools have different coverage and design
 | **Accounts** | Multiple named accounts via ARM | One fixed account; extras via env var + hosts file |
 | **Connection strings** | Real Azure format | `UseDevelopmentStorage=true` shortcut |
 | **Azure Storage Explorer** | Via connection string | Built-in emulator shortcut |
-| **Runtime** | .NET 8, single binary or Docker | Node.js |
+| **Runtime** | .NET 10, single binary or Docker | Node.js |
 | **Blob: basic operations** (put, get, delete, head, list) | ✅ | ✅ |
 | **Blob: metadata** (container get/set, blob get/set) | ✅ | ✅ |
 | **Blob: container ACLs** | ✅ | ✅ |
