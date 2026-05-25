@@ -364,7 +364,7 @@ jobs:
         name: CoverageReport        
         path: coveragereport
     - name: Add comment to PR
-      if: github.event_name == 'pull_request' && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true')
+      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true')
       run: gh pr comment $PR_NUMBER --body-file coveragereport/SummaryGithub.md
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
