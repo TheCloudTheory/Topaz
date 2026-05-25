@@ -149,22 +149,7 @@ _Implemented in v1.5-beta: `POST /?restype=service&comp=userdelegationkey` data-
 
 ### ARM Deployments — full tenant-scope surface
 
-<!--
-TODO: ARM Deployments: Full tenant-scope surface
-  Implement all remaining tenant-scope deployment operations:
-  - PUT    /providers/Microsoft.Resources/deployments/{name}                       – create or update
-  - GET    /providers/Microsoft.Resources/deployments/{name}                       – get
-  - DELETE /providers/Microsoft.Resources/deployments/{name}                       – delete
-  - POST   /providers/Microsoft.Resources/deployments/{name}/validate              – validate
-  - POST   /providers/Microsoft.Resources/deployments/{name}/cancel                – cancel
-  - HEAD   /providers/Microsoft.Resources/deployments/{name}                       – check existence
-  - POST   /providers/Microsoft.Resources/deployments/{name}/exportTemplate        – export template
-  - POST   /providers/Microsoft.Resources/deployments/{name}/whatif               – what-if
-  List at tenant scope is already implemented (v1.2). All other operations follow the
-  subscription-scope pattern but without a subscriptionId segment in the path.
-  milestone: v1.5-beta
-  labels: enhancement, resource-manager, good first issue
--->
+_Implemented in v1.5-beta: `PUT`, `GET`, `DELETE`, `HEAD`, `validate`, `cancel`, `exportTemplate`, and `whatif` at tenant scope. All eight operations follow the subscription-scope pattern without a `subscriptionId` segment. Includes MCP tools (`CreateOrUpdateTenantDeployment`, `GetTenantDeployment`, `DeleteTenantDeployment`), E2E SDK tests, and Azure CLI tests._
 
 ### Container Registry — ACR Tasks
 
