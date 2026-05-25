@@ -17,7 +17,8 @@
       <ProjectReference Include="..\Topaz.Service.Subscription\Topaz.Service.Subscription.csproj" />
       <ProjectReference Include="..\Topaz.Service.VirtualMachine\Topaz.Service.VirtualMachine.csproj" />
       <ProjectReference Include="..\Topaz.Service.AppService\Topaz.Service.AppService.csproj" />
-      <ProjectReference Include="..\Topaz.Service.VirtualNetwork\Topaz.Service.VirtualNetwork.csproj" />      <ProjectReference Include="..\..\Topaz.CLI.Infrastructure\Topaz.CLI.Infrastructure.csproj" />    </ItemGroup>
+      <ProjectReference Include="..\Topaz.Service.VirtualNetwork\Topaz.Service.VirtualNetwork.csproj" />
+      <ProjectReference Include="..\Topaz.Service.ManagementGroup\Topaz.Service.ManagementGroup.csproj" />      <ProjectReference Include="..\..\Topaz.CLI.Infrastructure\Topaz.CLI.Infrastructure.csproj" />    </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Azure.Deployments.Templates" Version="1.590.0" />

@@ -848,4 +848,95 @@ public class ResourceManagerTests
         var value = result["value"]!.AsArray();
         Assert.That(value, Is.Empty);
     }
+
+    [Test]
+    public async Task TenantDeployment_Create_ReturnsTenantScopedId()
+    {
+        // Arrange
+        const string deploymentName = "tenant-deployment-create-test";
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        var templateJson = await File.ReadAllTextAsync("templates/empty-deployment.json");
+
+        // Act
+        var result = await topaz.CreateDeploymentAtTenantScopeAsync(
+            deploymentName, "westeurope", templateJson);
+
+        // Assert
+        var id = result["id"]!.GetValue<string>();
+        Assert.That(id, Is.EqualTo($"/providers/Microsoft.Resources/deployments/{deploymentName}"));
+    }
+
+    [Test]
+    public async Task TenantDeployment_Get_ReturnsResource()
+    {
+        // Arrange
+        const string deploymentName = "tenant-deployment-get-test";
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        var templateJson = await File.ReadAllTextAsync("templates/empty-deployment.json");
+
+        await topaz.CreateDeploymentAtTenantScopeAsync(deploymentName, "westeurope", templateJson);
+
+        // Act
+        var result = await topaz.GetDeploymentAtTenantScopeAsync(deploymentName);
+
+        // Assert
+        Assert.That(result["name"]!.GetValue<string>(), Is.EqualTo(deploymentName));
+    }
+
+    [Test]
+    public async Task TenantDeployment_Delete_ReturnsNoContent()
+    {
+        // Arrange
+        const string deploymentName = "tenant-deployment-delete-test";
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        var templateJson = await File.ReadAllTextAsync("templates/empty-deployment.json");
+
+        await topaz.CreateDeploymentAtTenantScopeAsync(deploymentName, "westeurope", templateJson);
+
+        // Act
+        var response = await topaz.DeleteDeploymentAtTenantScopeAsync(deploymentName);
+
+        // Assert
+        Assert.That((int)response.StatusCode, Is.EqualTo(204));
+    }
+
+    [Test]
+    public async Task TenantDeployment_CheckExistence_Returns204()
+    {
+        // Arrange
+        const string deploymentName = "tenant-deployment-head-test";
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        var templateJson = await File.ReadAllTextAsync("templates/empty-deployment.json");
+
+        await topaz.CreateDeploymentAtTenantScopeAsync(deploymentName, "westeurope", templateJson);
+
+        // Act
+        var response = await topaz.CheckExistenceAtTenantScopeAsync(deploymentName);
+
+        // Assert
+        Assert.That((int)response.StatusCode, Is.EqualTo(204));
+    }
+
+    [Test]
+    public async Task TenantDeployment_Validate_ReturnsSucceeded()
+    {
+        // Arrange
+        const string deploymentName = "tenant-deployment-validate-test";
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        var templateJson = await File.ReadAllTextAsync("templates/empty-deployment.json");
+
+        // Act
+        var result = await topaz.ValidateDeploymentAtTenantScopeAsync(
+            deploymentName, "westeurope", templateJson);
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        var properties = result["properties"];
+        Assert.That(properties, Is.Not.Null);
+    }
 }

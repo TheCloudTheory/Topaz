@@ -5,9 +5,15 @@ using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup;
 
-internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
-    : ResourceProviderBase<ManagementGroupService>(logger)
+public sealed class ManagementGroupResourceProvider : ResourceProviderBase<ManagementGroupService>
 {
+    private readonly ITopazLogger _logger;
+
+    public ManagementGroupResourceProvider(ITopazLogger logger) : base(logger)
+    {
+        _logger = logger;
+    }
+
     private static string BasePath =>
         Path.Combine(GlobalSettings.MainEmulatorDirectory, ".management-group");
 
@@ -25,7 +31,7 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
         return groupId;
     }
 
-    public Models.ManagementGroup? GetManagementGroup(string groupId)
+    internal Models.ManagementGroup? GetManagementGroup(string groupId)
     {
         var id = ValidateGroupId(groupId);
         var path = ResolveMetadataPath(id);
@@ -35,7 +41,7 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
         return JsonSerializer.Deserialize<Models.ManagementGroup>(content, GlobalSettings.JsonOptions);
     }
 
-    public void SaveManagementGroup(string groupId, Models.ManagementGroup model)
+    internal void SaveManagementGroup(string groupId, Models.ManagementGroup model)
     {
         var id = ValidateGroupId(groupId);
         var dir = Path.Combine(BasePath, id);
@@ -44,7 +50,7 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
             JsonSerializer.Serialize(model, GlobalSettings.JsonOptions));
     }
 
-    public IEnumerable<Models.ManagementGroup> ListManagementGroups()
+    internal IEnumerable<Models.ManagementGroup> ListManagementGroups()
     {
         if (!Directory.Exists(BasePath)) return [];
 
@@ -55,7 +61,7 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
                 File.ReadAllText(path), GlobalSettings.JsonOptions)!);
     }
 
-    public void DeleteManagementGroup(string groupId)
+    internal void DeleteManagementGroup(string groupId)
     {
         var id = ValidateGroupId(groupId);
         var dir = Path.Combine(BasePath, id);
@@ -64,7 +70,7 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
         Directory.Delete(dir, recursive: true);
     }
 
-    public ManagementGroupSubscription? GetSubscriptionAssociation(string groupId, string subscriptionId)
+    internal ManagementGroupSubscription? GetSubscriptionAssociation(string groupId, string subscriptionId)
     {
         var id = ValidateGroupId(groupId);
         var path = ResolveSubscriptionPath(id, subscriptionId);
@@ -74,7 +80,7 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
         return JsonSerializer.Deserialize<ManagementGroupSubscription>(content, GlobalSettings.JsonOptions);
     }
 
-    public void SaveSubscriptionAssociation(string groupId, string subscriptionId,
+    internal void SaveSubscriptionAssociation(string groupId, string subscriptionId,
         ManagementGroupSubscription model)
     {
         var id = ValidateGroupId(groupId);
@@ -84,7 +90,7 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
             JsonSerializer.Serialize(model, GlobalSettings.JsonOptions));
     }
 
-    public void DeleteSubscriptionAssociation(string groupId, string subscriptionId)
+    internal void DeleteSubscriptionAssociation(string groupId, string subscriptionId)
     {
         var id = ValidateGroupId(groupId);
         var path = ResolveSubscriptionPath(id, subscriptionId);
@@ -94,7 +100,7 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
     }
 
     /// <summary>Returns all subscription associations for a specific management group.</summary>
-    public IEnumerable<Models.ManagementGroupSubscription> ListSubscriptionAssociationsForGroup(string groupId)
+    internal IEnumerable<Models.ManagementGroupSubscription> ListSubscriptionAssociationsForGroup(string groupId)
     {
         var id = ValidateGroupId(groupId);
         var subsDir = Path.Combine(BasePath, id, "subscriptions");
@@ -107,7 +113,7 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
     }
 
     /// <summary>Returns all subscription associations across every management group, deduplicated by subscription ID.</summary>
-    public IEnumerable<Models.ManagementGroupSubscription> ListAllSubscriptionAssociations()
+    internal IEnumerable<Models.ManagementGroupSubscription> ListAllSubscriptionAssociations()
     {
         if (!Directory.Exists(BasePath)) return [];
 
@@ -131,7 +137,7 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
         return result;
     }
 
-    public HierarchySettings? GetHierarchySettings(string groupId)
+    internal HierarchySettings? GetHierarchySettings(string groupId)
     {
         var id = ValidateGroupId(groupId);
         var path = ResolveHierarchySettingsPath(id);
@@ -140,7 +146,7 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
         return JsonSerializer.Deserialize<HierarchySettings>(File.ReadAllText(path), GlobalSettings.JsonOptions);
     }
 
-    public void SaveHierarchySettings(string groupId, HierarchySettings settings)
+    internal void SaveHierarchySettings(string groupId, HierarchySettings settings)
     {
         var id = ValidateGroupId(groupId);
         var dir = Path.Combine(BasePath, id);
@@ -149,7 +155,7 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
             JsonSerializer.Serialize(settings, GlobalSettings.JsonOptions));
     }
 
-    public void DeleteHierarchySettings(string groupId)
+    internal void DeleteHierarchySettings(string groupId)
     {
         var id = ValidateGroupId(groupId);
         var path = ResolveHierarchySettingsPath(id);
@@ -161,7 +167,7 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
         Path.Combine(BasePath, groupId, "settings.json");
 
     /// <summary>Returns true if any persisted management group references this group as its parent.</summary>
-    public bool HasChildren(string groupId)
+    internal bool HasChildren(string groupId)
     {
         return ListManagementGroups().Any(mg =>
             mg.Properties.Details.Parent != null &&
@@ -172,6 +178,31 @@ internal sealed class ManagementGroupResourceProvider(ITopazLogger logger)
     private static string ResolveSubscriptionPath(string groupId, string subscriptionId)
     {
         return Path.Combine(BasePath, groupId, "subscriptions", $"{subscriptionId}.json");
+    }
+
+    public IEnumerable<string> ListAsGenericResources()
+    {
+        if (!Directory.Exists(BasePath))
+            return [];
+
+        return Directory.EnumerateDirectories(BasePath)
+            .Select(dir => Path.Combine(dir, "metadata.json"))
+            .Where(File.Exists)
+            .Select(path =>
+            {
+                try
+                {
+                    return File.ReadAllText(path);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(nameof(ManagementGroupResourceProvider), nameof(ListAsGenericResources),
+                        "Failed to read management group resource from '{0}': {1}", path, ex.Message);
+                    return null;
+                }
+            })
+            .Where(json => json != null)
+            .Select(json => json!);
     }
 
     private static string ResolveMetadataPath(string groupId)

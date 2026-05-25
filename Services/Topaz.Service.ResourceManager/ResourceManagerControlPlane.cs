@@ -1,6 +1,7 @@
 using Azure.Deployments.Core.Definitions.Schema;
 using Azure.Deployments.Core.Entities;
 using Azure.ResourceManager.Resources.Models;
+using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
 using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using Newtonsoft.Json.Linq;
 using System.Text;
@@ -11,6 +12,8 @@ using Topaz.Service.ContainerRegistry;
 using Topaz.Service.EventHub;
 using Topaz.Service.KeyVault;
 using Topaz.Service.ManagedIdentity;
+using Topaz.Service.ManagementGroup;
+using Topaz.Service.ResourceGroup;
 using Topaz.Service.ResourceGroup.Models;
 using Topaz.Service.ResourceManager.Deployment;
 using Topaz.Service.ResourceManager.Models;
@@ -267,7 +270,7 @@ internal sealed class ResourceManagerControlPlane(
             {
                 resource.Id = new TemplateGenericProperty<string>
                 {
-                    Value = $"/subscriptions/{subscriptionIdentifier}/providers/{resource.Type.Value}/{resource.Name.Value}"
+                    Value = BuildSubscriptionScopeId(subscriptionIdentifier, resource.Type.Value, resource.Name.Value)
                 };
             }
 
@@ -281,6 +284,75 @@ internal sealed class ResourceManagerControlPlane(
         catch (Exception ex)
         {
             logger.LogDebug(nameof(ResourceManagerControlPlane), nameof(WhatIfDeploymentAtSubscriptionScope),
+                "What-If analysis failed: {0}", ex.Message);
+
+            return new ControlPlaneOperationResult<WhatIfOperationResult>(
+                OperationResult.Failed, null, ex.Message, "WhatIfFailed");
+        }
+    }
+
+    public ControlPlaneOperationResult<WhatIfOperationResult> WhatIfDeploymentAtTenantScope(
+        string deploymentName,
+        CreateDeploymentRequest request)
+    {
+        try
+        {
+            var template = request.ToTemplate();
+            var mode = request.Properties?.Mode ?? "Incremental";
+
+            var tenantParams = request.Properties?.GetParameterValues();
+            _templateEngineFacade.ProcessTemplateAtTenantScope(template,
+                InsensitiveDictionary<JToken>.Empty,
+                tenantParams == null ? null : BinaryData.FromObjectAsJson(tenantParams, GlobalSettings.JsonOptions));
+
+            var afterNodes = new Dictionary<string, JsonNode>(StringComparer.OrdinalIgnoreCase);
+            foreach (var r in template.Resources)
+            {
+                var id = $"/providers/{r.Type.Value}/{r.Name.Value}";
+                var node = JsonNode.Parse(r.ToJson());
+                if (node == null) continue;
+                StripArmExpressionsFromNode(node);
+                afterNodes[id] = node;
+            }
+
+            var beforeResources = CollectResourcesAtTenantScope()
+                .Where(r => r.Id != null)
+                .ToDictionary(r => r.Id, StringComparer.OrdinalIgnoreCase);
+
+            var changes = new List<WhatIfChange>();
+            foreach (var (id, afterNode) in afterNodes)
+            {
+                if (!beforeResources.TryGetValue(id, out var before))
+                {
+                    changes.Add(WhatIfChange.ForCreate(id, afterNode));
+                }
+                else
+                {
+                    var beforeJson = JsonSerializer.Serialize(before, GlobalSettings.JsonOptions);
+                    var beforeNode = NormalizeStoredJsonForComparison(JsonNode.Parse(beforeJson)!);
+                    var delta = WhatIfEngine.ComputeDelta(beforeNode, afterNode);
+
+                    changes.Add(delta.Count == 0
+                        ? WhatIfChange.ForNoChange(id, beforeNode)
+                        : WhatIfChange.ForModify(id, beforeNode, afterNode, delta));
+                }
+            }
+
+            if (mode.Equals("Complete", StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (var (id, before) in beforeResources.Where(kv => !afterNodes.ContainsKey(kv.Key)))
+                {
+                    var beforeJson = JsonSerializer.Serialize(before, GlobalSettings.JsonOptions);
+                    changes.Add(WhatIfChange.ForDelete(id, JsonNode.Parse(beforeJson)!));
+                }
+            }
+
+            return new ControlPlaneOperationResult<WhatIfOperationResult>(
+                OperationResult.Success, WhatIfOperationResult.From(changes), null, null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(nameof(ResourceManagerControlPlane), nameof(WhatIfDeploymentAtTenantScope),
                 "What-If analysis failed: {0}", ex.Message);
 
             return new ControlPlaneOperationResult<WhatIfOperationResult>(
@@ -302,7 +374,7 @@ internal sealed class ResourceManagerControlPlane(
         foreach (var r in template.Resources)
         {
             var id = isSubscriptionScope
-                ? $"/subscriptions/{subscriptionIdentifier}/providers/{r.Type.Value}/{r.Name.Value}"
+                ? BuildSubscriptionScopeId(subscriptionIdentifier, r.Type.Value, r.Name.Value)
                 : $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}/providers/{r.Type.Value}/{r.Name.Value}";
 
             var node = JsonNode.Parse(r.ToJson());
@@ -315,7 +387,9 @@ internal sealed class ResourceManagerControlPlane(
         }
 
         var beforeResources = isSubscriptionScope
-            ? new Dictionary<string, GenericResource>(StringComparer.OrdinalIgnoreCase)
+            ? CollectResourcesAtSubscriptionScope(subscriptionIdentifier)
+                .Where(r => r.Id != null)
+                .ToDictionary(r => r.Id, StringComparer.OrdinalIgnoreCase)
             : CollectResourcesFromGroup(subscriptionIdentifier, resourceGroupIdentifier!)
                 .Where(r => r.Id != null)
                 .ToDictionary(r => r.Id, StringComparer.OrdinalIgnoreCase);
@@ -448,6 +522,41 @@ internal sealed class ResourceManagerControlPlane(
         };
 
         return new ExportTemplateResult { Template = template };
+    }
+
+    private static string BuildSubscriptionScopeId(
+        SubscriptionIdentifier subscriptionIdentifier, string type, string name) =>
+        type.Equals("Microsoft.Resources/resourceGroups", StringComparison.OrdinalIgnoreCase)
+            ? $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{name}"
+            : $"/subscriptions/{subscriptionIdentifier}/providers/{type}/{name}";
+
+    private IEnumerable<GenericResource> CollectResourcesAtSubscriptionScope(
+        SubscriptionIdentifier subscriptionIdentifier)
+    {
+        return new ResourceGroupResourceProvider(logger)
+            .ListAs<GenericResource>(subscriptionIdentifier, null, null, 6)
+            .Where(r => r.Id != null);
+    }
+
+    private IEnumerable<GenericResource> CollectResourcesAtTenantScope()
+    {
+        return new ManagementGroupResourceProvider(logger)
+            .ListAsGenericResources()
+            .Select(json =>
+            {
+                try
+                {
+                    return JsonSerializer.Deserialize<GenericResource>(json, GlobalSettings.JsonOptions);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogDebug(nameof(ResourceManagerControlPlane), nameof(CollectResourcesAtTenantScope),
+                        "Failed to deserialize management group resource: {0}", ex.Message);
+                    return null;
+                }
+            })
+            .Where(r => r?.Id != null)
+            .Select(r => r!);
     }
 
     private IEnumerable<GenericResource> CollectResourcesFromGroup(

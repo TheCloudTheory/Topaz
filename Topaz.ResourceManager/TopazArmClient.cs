@@ -425,6 +425,100 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         return JsonNode.Parse(content)!;
     }
 
+    public async Task<JsonNode> CreateDeploymentAtTenantScopeAsync(
+        string deploymentName, string location, string templateJson)
+    {
+        var body = new
+        {
+            location,
+            properties = new
+            {
+                mode = "Incremental",
+                template = System.Text.Json.JsonSerializer.Deserialize<object>(templateJson)
+            }
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Put,
+            $"providers/Microsoft.Resources/deployments/{deploymentName}")
+        {
+            Content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(body),
+                System.Text.Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonNode.Parse(content)!;
+    }
+
+    public async Task<JsonNode> GetDeploymentAtTenantScopeAsync(string deploymentName)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            $"providers/Microsoft.Resources/deployments/{deploymentName}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonNode.Parse(content)!;
+    }
+
+    public async Task<HttpResponseMessage> DeleteDeploymentAtTenantScopeAsync(string deploymentName)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete,
+            $"providers/Microsoft.Resources/deployments/{deploymentName}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        return await _httpClient.SendAsync(request);
+    }
+
+    public async Task<HttpResponseMessage> CheckExistenceAtTenantScopeAsync(string deploymentName)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Head,
+            $"providers/Microsoft.Resources/deployments/{deploymentName}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        return await _httpClient.SendAsync(request);
+    }
+
+    public async Task<JsonNode> ValidateDeploymentAtTenantScopeAsync(
+        string deploymentName, string location, string templateJson)
+    {
+        var body = new
+        {
+            location,
+            properties = new
+            {
+                mode = "Incremental",
+                template = System.Text.Json.JsonSerializer.Deserialize<object>(templateJson)
+            }
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post,
+            $"providers/Microsoft.Resources/deployments/{deploymentName}/validate")
+        {
+            Content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(body),
+                System.Text.Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonNode.Parse(content)!;
+    }
+
     public async Task<JsonNode> ListDeploymentsAtManagementGroupScopeAsync(string groupId)
     {
         var request = new HttpRequestMessage(HttpMethod.Get,

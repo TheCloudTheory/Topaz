@@ -8,7 +8,7 @@ namespace Topaz.Service.ResourceManager.Endpoints;
 public sealed class ListDeploymentsAtTenantScopeEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
     private readonly TenantDeploymentControlPlane _controlPlane =
-        new(new TenantDeploymentResourceProvider(logger), logger);
+        new(new TenantDeploymentResourceProvider(logger), null!, logger);
 
     public string[] Endpoints =>
     [

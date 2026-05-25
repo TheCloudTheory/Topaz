@@ -61,6 +61,24 @@ internal sealed class ArmTemplateEngineFacade
                 .ToInsensitiveDictionary(meta => meta.Key, meta => JToken.Parse(meta.Value.ToString()));
     }
 
+    /// <summary>
+    /// Processes ARM template language expressions at tenant scope.
+    /// Only tenant-scoped functions such as <c>tenant()</c> are evaluated;
+    /// <c>subscription()</c> and <c>resourceGroup()</c> are not available at this scope.
+    /// </summary>
+    public void ProcessTemplateAtTenantScope(
+        Template template, InsensitiveDictionary<JToken> metadataInsensitive, BinaryData? propertiesParameters)
+    {
+        var inputParameters = BuildInputParameters(propertiesParameters);
+
+        TemplateEngine.ProcessTemplateLanguageExpressions("topaz", "",
+            "", template, "", inputParameters!,
+            metadataInsensitive,
+            new PreprocessingTemplateExtensionResolver(template, null, null,
+                new FactBasedExtensionConfigSchemaDirectoryFactory().GetOrCreateDirectory()),
+            new TemplateMetricsRecorder(), InsensitiveDictionary<JToken>.Empty);
+    }
+
     public void Validate(Template template)
     {
         TemplateEngine.ValidateTemplate(template, "apiVersion", TemplateDeploymentScope.ResourceGroup);

@@ -26,6 +26,7 @@ public sealed class TemplateDeploymentOrchestrator(
     Pipeline eventPipeline,
     ResourceManagerResourceProvider rgProvider,
     SubscriptionDeploymentResourceProvider subProvider,
+    TenantDeploymentResourceProvider tenantProvider,
     ITopazLogger logger)
 {
     private static readonly List<TemplateDeployment> DeploymentQueue = [];
@@ -88,6 +89,32 @@ public sealed class TemplateDeploymentOrchestrator(
             fail: deploymentResource.FailDeployment,
             persist: () => subProvider.CreateOrUpdate(subscriptionIdentifier, null,
                 deploymentResource.Name, deploymentResource));
+
+        lock (QueueLock) { DeploymentQueue.Add(job); }
+    }
+
+    public void EnqueueTenantDeployment(
+        Template template,
+        TenantDeploymentResource deploymentResource,
+        InsensitiveDictionary<JToken> metadataInsensitive)
+    {
+        _armTemplateEngineFacade.ProcessTemplateAtTenantScope(template,
+            metadataInsensitive, deploymentResource.Properties.Parameters);
+
+        foreach (var resource in template.Resources)
+        {
+            resource.Id = new TemplateGenericProperty<string>
+            {
+                Value = $"/providers/{resource.Type}/{resource.Name}"
+            };
+        }
+
+        var job = new TemplateDeployment(
+            deploymentResource.Id, deploymentResource.Name, template,
+            complete: deploymentResource.CompleteDeployment,
+            cancel: deploymentResource.CancelDeployment,
+            fail: deploymentResource.FailDeployment,
+            persist: () => tenantProvider.CreateOrUpdateDeployment(deploymentResource.Name, deploymentResource));
 
         lock (QueueLock) { DeploymentQueue.Add(job); }
     }

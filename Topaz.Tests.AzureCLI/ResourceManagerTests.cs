@@ -249,4 +249,73 @@ public class ResourceManagerTests : TopazFixture
             Assert.That(response.AsArray(), Is.Empty);
         });
     }
+
+    [Test]
+    public async Task WhenTenantDeploymentIsCreated_ItShouldBeListed()
+    {
+        const string deploymentName = "tenant-cli-create-test";
+
+        await RunAzureCliCommand(
+            $"az deployment tenant create --name {deploymentName} --location westeurope --template-file \"/templates/empty-deployment.json\"",
+            response =>
+            {
+                var id = response["id"]!.GetValue<string>();
+                Assert.That(id, Is.EqualTo($"/providers/Microsoft.Resources/deployments/{deploymentName}"));
+            });
+
+        await RunAzureCliCommand("az deployment tenant list", response =>
+        {
+            var array = response.AsArray();
+            Assert.That(array, Is.Not.Empty);
+            var found = array.Any(item => item!["name"]!.GetValue<string>() == deploymentName);
+            Assert.That(found, Is.True);
+        });
+
+        await RunAzureCliCommand($"az deployment tenant delete --name {deploymentName}");
+    }
+
+    [Test]
+    public async Task WhenTenantDeploymentIsDeleted_ItShouldNotBeListed()
+    {
+        const string deploymentName = "tenant-cli-delete-test";
+
+        await RunAzureCliCommand(
+            $"az deployment tenant create --name {deploymentName} --location westeurope --template-file \"/templates/empty-deployment.json\"");
+
+        await RunAzureCliCommand($"az deployment tenant delete --name {deploymentName}");
+
+        await RunAzureCliCommand("az deployment tenant list", response =>
+        {
+            var array = response.AsArray();
+            var found = array.Any(item => item!["name"]!.GetValue<string>() == deploymentName);
+            Assert.That(found, Is.False);
+        });
+    }
+
+    [Test]
+    public async Task WhenTenantDeploymentValidateIsCalledAtTenantScope_ItShouldSucceed()
+    {
+        const string deploymentName = "tenant-cli-validate-test";
+
+        await RunAzureCliCommand(
+            $"az deployment tenant validate --name {deploymentName} --location westeurope --template-file \"/templates/empty-deployment.json\"",
+            response =>
+            {
+                var properties = response["properties"]?.AsObject();
+                Assert.That(properties, Is.Not.Null);
+            });
+    }
+
+    [Test]
+    public async Task WhenTenantDeploymentWhatIfIsCalledAtTenantScope_ItShouldSucceed()
+    {
+        const string deploymentName = "tenant-cli-whatif-test";
+
+        await RunAzureCliCommand(
+            $"az deployment tenant what-if --name {deploymentName} --location westeurope --template-file \"/templates/empty-deployment.json\" --no-pretty-print",
+            response =>
+            {
+                Assert.That(response, Is.Not.Null);
+            });
+    }
 }
