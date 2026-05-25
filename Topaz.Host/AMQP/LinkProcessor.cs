@@ -36,11 +36,11 @@ internal sealed class LinkProcessor(ITopazLogger logger) : ILinkProcessor
 
         if (attachContext.Attach.Role)
         {
-            attachContext.Complete(new OutgoingLinkEndpoint(logger), 300);
+            attachContext.Complete(new OutgoingLinkEndpoint(address ?? string.Empty, logger), 300);
         }
         else
         {
-            attachContext.Complete(new IncomingLinkEndpoint(logger), 300);
+            attachContext.Complete(new IncomingLinkEndpoint(address ?? string.Empty, logger), 300);
         }
     }
 

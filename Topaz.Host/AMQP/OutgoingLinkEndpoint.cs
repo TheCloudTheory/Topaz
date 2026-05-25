@@ -7,7 +7,7 @@ using Topaz.Shared;
 
 namespace Topaz.Host.AMQP;
 
-public class OutgoingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
+public class OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger) : LinkEndpoint
 {
     // The Azure SDK (AmqpMessageConverter) reads LockTokenGuid from the AMQP Transfer delivery tag,
     // but only if it is exactly 16 bytes (GuidUtilities.TryParseGuidBytes requires length == 16).
@@ -39,12 +39,19 @@ public class OutgoingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
         typeof(ListenerLink).Assembly.GetTypes().First(t => t.Name == "Session")
             .GetMethod("SendDelivery", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
-    // Protects _pendingLink and _pendingCredit, and all accesses to IncomingLinkEndpoint.Messages.
+    // Protects _queueEndpoints, per-instance _pendingLink/_pendingCredit, and IncomingLinkEndpoint.Messages.
     internal static readonly object DeliveryLock = new();
 
-    // Saved when OnFlow fires with credit > 0 but the queue is empty; consumed by NotifyMessageEnqueued.
-    private static ListenerLink? _pendingLink;
-    private static int _pendingCredit;
+    // Registry of active OutgoingLinkEndpoint instances that serve real queue/topic addresses
+    // (source address starts with "/"). Management links (e.g. "sbqueue/$management") are
+    // excluded so their FLOW frames cannot hijack the shared delivery state.
+    private static readonly List<OutgoingLinkEndpoint> _queueEndpoints = [];
+
+    // Per-instance state — was static, which caused FLOW from any receiver link (including
+    // AMQP management response links) to overwrite the single shared _pendingLink and steal
+    // all subsequent deliveries away from the real queue consumer.
+    private ListenerLink? _pendingLink;
+    private int _pendingCredit;
 
     // Called by IncomingLinkEndpoint after a message is added to the queue.
     internal static void NotifyMessageEnqueued()
@@ -58,23 +65,26 @@ public class OutgoingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
 
         lock (DeliveryLock)
         {
-            while (_pendingCredit > 0 && IncomingLinkEndpoint.Messages.Count > 0 && _pendingLink != null)
+            foreach (var ep in _queueEndpoints)
             {
-                var message = IncomingLinkEndpoint.Messages[0];
-                message.Header ??= new Header();
-                // AMQPNetLite only writes a field into the encoded list when the backing store has been
-                // explicitly set via the property setter — it does NOT encode fields whose backing store
-                // is null even when the getter returns the default (0). Re-assigning DeliveryCount
-                // through the setter forces the value into the backing store so it appears as
-                // delivery-count=0 (0x43) in the binary. Microsoft.Azure.Amqp decodes that as
-                // Nullable<uint> with HasValue=true, which AmqpMessageToSBReceivedMessage requires in
-                // order to populate ServiceBusReceivedMessage.DeliveryCount without throwing.
-                message.Header.DeliveryCount = message.Header.DeliveryCount;
-                message.MessageAnnotations[new Symbol("x-opt-offset")] = IncomingLinkEndpoint.Messages.IndexOf(message).ToString();
-                message.MessageAnnotations[new Symbol("x-opt-locked-until")] = DateTime.UtcNow.AddMinutes(5);
-                IncomingLinkEndpoint.Messages.RemoveAt(0);
-                _pendingCredit--;
-                deliveries.Add((_pendingLink, message));
+                while (ep._pendingCredit > 0 && IncomingLinkEndpoint.Messages.Count > 0 && ep._pendingLink != null)
+                {
+                    var message = IncomingLinkEndpoint.Messages[0];
+                    message.Header ??= new Header();
+                    // AMQPNetLite only writes a field into the encoded list when the backing store has been
+                    // explicitly set via the property setter — it does NOT encode fields whose backing store
+                    // is null even when the getter returns the default (0). Re-assigning DeliveryCount
+                    // through the setter forces the value into the backing store so it appears as
+                    // delivery-count=0 (0x43) in the binary. Microsoft.Azure.Amqp decodes that as
+                    // Nullable<uint> with HasValue=true, which AmqpMessageToSBReceivedMessage requires in
+                    // order to populate ServiceBusReceivedMessage.DeliveryCount without throwing.
+                    message.Header.DeliveryCount = message.Header.DeliveryCount;
+                    message.MessageAnnotations[new Symbol("x-opt-offset")] = IncomingLinkEndpoint.Messages.IndexOf(message).ToString();
+                    message.MessageAnnotations[new Symbol("x-opt-locked-until")] = DateTime.UtcNow.AddMinutes(5);
+                    IncomingLinkEndpoint.Messages.RemoveAt(0);
+                    ep._pendingCredit--;
+                    deliveries.Add((ep._pendingLink, message));
+                }
             }
         }
 
@@ -94,6 +104,21 @@ public class OutgoingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
         {
             _pendingLink = flowContext.Link;
             _pendingCredit = flowContext.Messages;
+
+            // Register this endpoint in the queue-delivery registry on first FLOW,
+            // but only for real queue/topic addresses (source starts with "/").
+            // AMQP management links (e.g. "sbqueue/$management") send FLOW with
+            // link-credit:50 at startup. Before this fix those flows overwrote the
+            // single shared static _pendingLink, redirecting all subsequent deliveries
+            // to the management response link instead of the queue consumer.
+            if (sourceAddress.StartsWith("/") && !_queueEndpoints.Contains(this))
+            {
+                _queueEndpoints.Add(this);
+                flowContext.Link.Closed += (_, _) =>
+                {
+                    lock (DeliveryLock) { _queueEndpoints.Remove(this); }
+                };
+            }
         }
 
         DeliverMessages();

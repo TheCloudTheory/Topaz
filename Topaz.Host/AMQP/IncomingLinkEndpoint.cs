@@ -6,7 +6,7 @@ using Topaz.Shared;
 
 namespace Topaz.Host.AMQP;
 
-public class IncomingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
+public class IncomingLinkEndpoint(string targetAddress, ITopazLogger logger) : LinkEndpoint
 {
     private const uint BatchFormat = 0x80013700;
     public static readonly List<Message> Messages = [];
@@ -24,6 +24,15 @@ public class IncomingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
             logger.LogDebug(nameof(IncomingLinkEndpoint), nameof(OnMessage), $"Processing message: {data}");
         }
 
+        // Management endpoints use addresses like "sbqueue/$management" (no leading slash).
+        // Adding their request messages to the shared queue would route them to queue
+        // consumers instead of the management response link. Skip them here.
+        if (!targetAddress.StartsWith("/"))
+        {
+            messageContext.Complete();
+            return;
+        }
+
         // TODO: Add support for messages sent as a batch
         if (messageContext.Message.Format == BatchFormat)
         {
@@ -37,8 +46,21 @@ public class IncomingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
             Messages.Add(messageContext.Message);
         }
 
-        OutgoingLinkEndpoint.NotifyMessageEnqueued();
+        // Complete (send DISPOSITION to producer) BEFORE NotifyMessageEnqueued.
+        // NotifyMessageEnqueued → SendMessageWithGuidTag sets delivery.Message on the new
+        // outgoing Delivery object.  AMQPNetLite's Delivery.set_Message back-patches
+        // message.Delivery to point at the outgoing delivery (link = consumer link).
+        // If Complete() runs after that, ListenerLink.DisposeMessage finds
+        // delivery.Link != this (the incoming producer link) and returns early without
+        // sending any DISPOSITION frame.  The producer then waits 60 s for a DISPOSITION
+        // that never arrives, releases the delivery, and retries — causing one publish
+        // per minute instead of one per second.
+        // Calling Complete() here, while message.Delivery still references the original
+        // incoming delivery, ensures the DISPOSITION(accepted) is sent to the producer
+        // immediately, matching real Azure Service Bus broker behaviour.
         messageContext.Complete();
+
+        OutgoingLinkEndpoint.NotifyMessageEnqueued();
 
         logger.LogDebug(nameof(IncomingLinkEndpoint), nameof(OnMessage),
             $"Executing {nameof(IncomingLinkEndpoint)}.{nameof(OnMessage)}: Finished processing a message.");
