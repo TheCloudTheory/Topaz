@@ -15,6 +15,7 @@ public sealed class Subscription
     }
     
     public string SubscriptionId { get; init; }
+    public string TenantId { get; init; } = GlobalSettings.DefaultTenantId;
     public string? DisplayName { get; set; }
     public string State { get; set; } = "Enabled";
     public IDictionary<string, string> Tags { get; set; }
@@ -31,6 +32,7 @@ public sealed class Subscription
     {
         Id = $"/subscriptions/{subscriptionIdentifier}";
         SubscriptionId = subscriptionIdentifier.ToString();
+        TenantId = GlobalSettings.DefaultTenantId;
         DisplayName = displayName;
         Tags = tags ?? new Dictionary<string, string>();
     }

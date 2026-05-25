@@ -2,6 +2,7 @@ using Topaz.CLI;
 using Azure.ResourceManager;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -44,6 +45,40 @@ public class SubscriptionTests
             Assert.That(subscription.Data.SubscriptionId, Is.EqualTo(Guid.Empty.ToString()));
             Assert.That(subscription.Data.DisplayName, Is.EqualTo("sub-test"));
         });
+    }
+
+    [Test]
+    public async Task SubscriptionTests_WhenSubscriptionIsRequested_TenantIdShouldBeAvailable()
+    {
+        // Arrange
+        var subscriptionId = Guid.NewGuid().ToString();
+        await Program.RunAsync(
+        [
+            "subscription",
+            "delete",
+            "--id",
+            subscriptionId
+        ]);
+
+        await Program.RunAsync(
+        [
+            "subscription",
+            "create",
+            "--id",
+            subscriptionId,
+            "--name",
+            "sub-test"
+        ]);
+
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId, ArmClientOptions);
+
+        // Act
+        var subscription = await armClient.GetSubscriptions().GetAsync(subscriptionId);
+
+        // Assert
+        Assert.That(subscription.Value.Data.TenantId,
+            Is.EqualTo(Guid.Parse(GlobalSettings.DefaultTenantId)));
     }
 
     [Test]

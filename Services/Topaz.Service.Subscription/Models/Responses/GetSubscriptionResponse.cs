@@ -11,6 +11,7 @@ internal sealed class GetSubscriptionResponse
         {
             Id = subscription.Id,
             SubscriptionId = subscription.SubscriptionId,
+            TenantId = subscription.TenantId,
             DisplayName = subscription.DisplayName,
             State = subscription.State,
             Tags = subscription.Tags
@@ -19,6 +20,7 @@ internal sealed class GetSubscriptionResponse
 
     public string? Id { get; set; }
     public string? SubscriptionId { get; set; }
+    public string? TenantId { get; set; }
     public string? DisplayName { get; set; }
     public string? State { get; set; }
     public IDictionary<string, string>? Tags { get; set; }
