@@ -34,7 +34,7 @@ public sealed class ServiceBusServiceAdditionalEndpoint(Pipeline eventPipeline, 
     public string[] Permissions => ["*"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.AmqpTlsConnectionPort, GlobalSettings.AdditionalServiceBusPort], Protocol.Https);
+        ([GlobalSettings.AmqpTlsConnectionPort, GlobalSettings.AdditionalServiceBusPort, GlobalSettings.HttpsPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
