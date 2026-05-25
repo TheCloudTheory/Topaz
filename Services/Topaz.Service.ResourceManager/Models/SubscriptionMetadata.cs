@@ -8,12 +8,14 @@ public record SubscriptionMetadata
 {
     public string Id { get; init; }
     public string SubscriptionId { get; init; }
+    public string TenantId { get; init; }
     public string DisplayName { get; init; }
 
     public SubscriptionMetadata(SubscriptionIdentifier subscriptionIdentifier, string displayName = "")
     {
         Id = $"/subscriptions/{subscriptionIdentifier.Value}";
         SubscriptionId = subscriptionIdentifier.Value.ToString();
+        TenantId = GlobalSettings.DefaultTenantId;
         DisplayName = displayName;
     }
 
