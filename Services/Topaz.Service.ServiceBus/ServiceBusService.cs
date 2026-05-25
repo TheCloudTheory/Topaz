@@ -1,6 +1,7 @@
 ﻿using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.ServiceBus.Endpoints;
+using Topaz.Service.ServiceBus.Endpoints.DataPlane;
 using Topaz.Service.ServiceBus.Endpoints.Namespace;
 using Topaz.Service.ServiceBus.Endpoints.Queue;
 using Topaz.Service.ServiceBus.Endpoints.Topic;
@@ -26,7 +27,17 @@ public sealed class ServiceBusService(Pipeline eventPipeline, ITopazLogger logge
     [
         new ServiceBusEndpoint(),
         new ServiceBusServiceEndpoint(eventPipeline, logger),
-        new ServiceBusServiceAdditionalEndpoint(eventPipeline, logger),
+        new GetEntityDataPlaneEndpoint(eventPipeline, logger),
+        new CreateOrUpdateEntityDataPlaneEndpoint(eventPipeline, logger),
+        new DeleteEntityDataPlaneEndpoint(eventPipeline, logger),
+        new GetTopicDataPlaneEndpoint(eventPipeline, logger),
+        new CreateOrUpdateTopicDataPlaneEndpoint(eventPipeline, logger),
+        new GetSubscriptionDataPlaneEndpoint(eventPipeline, logger),
+        new CreateOrUpdateSubscriptionDataPlaneEndpoint(eventPipeline, logger),
+        new DeleteSubscriptionDataPlaneEndpoint(eventPipeline, logger),
+        new GetTopicSubscriptionDataPlaneEndpoint(eventPipeline, logger),
+        new CreateOrUpdateTopicSubscriptionDataPlaneEndpoint(eventPipeline, logger),
+        new DeleteTopicSubscriptionDataPlaneEndpoint(eventPipeline, logger),
         new ListServiceBusNamespacesEndpoint(eventPipeline, logger),
         new ListServiceBusNamespacesBySubscriptionEndpoint(eventPipeline, logger),
         new DeleteServiceBusNamespaceEndpoint(eventPipeline, logger),

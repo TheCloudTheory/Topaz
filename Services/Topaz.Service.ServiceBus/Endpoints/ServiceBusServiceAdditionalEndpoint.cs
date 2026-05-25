@@ -28,13 +28,15 @@ public sealed class ServiceBusServiceAdditionalEndpoint(Pipeline eventPipeline, 
         "GET /{entity}/Subscriptions/{subscription}",
         "PUT /{entity}/Subscriptions/{subscription}",
         "DELETE /{entity}/Subscriptions/{subscription}",
-        "PUT /{entity}/{messageType}/Subscriptions/{subscription}"
+        "GET /{entity}/{messageType}/Subscriptions/{subscription}",
+        "PUT /{entity}/{messageType}/Subscriptions/{subscription}",
+        "DELETE /{entity}/{messageType}/Subscriptions/{subscription}"
     ];
 
     public string[] Permissions => ["*"];
 
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.AmqpTlsConnectionPort, GlobalSettings.AdditionalServiceBusPort, GlobalSettings.HttpsPort], Protocol.Https);
+        ([GlobalSettings.AdditionalServiceBusPort, GlobalSettings.HttpsPort], Protocol.Https);
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
@@ -72,7 +74,16 @@ public sealed class ServiceBusServiceAdditionalEndpoint(Pipeline eventPipeline, 
             var content = reader.ReadToEnd();
         
             logger.LogDebug(nameof(ServiceBusServiceAdditionalEndpoint), nameof(GetResponse), "Received payload: {0}", content);
-            
+
+            // Paths containing /Subscriptions always represent subscription operations.
+            // Routing via GetEntityType is unreliable for GET requests (empty body) because
+            // the subscription name may shadow a queue with the same name.
+            if (context.Request.Path.Value.Contains("/Subscriptions"))
+            {
+                HandleSubscriptionRequest(context.Request.Path.Value, context.Request.Method, content, response, namespaceIdentifier);
+                return;
+            }
+
             var entityType = _controlPlane.GetEntityType(identifiersOperation.subscriptionIdentifier!, identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, entityName!, content);
             logger.LogDebug(nameof(ServiceBusServiceAdditionalEndpoint), nameof(GetResponse), "Detected entity type: `{0}`", entityType);
             switch (entityType)

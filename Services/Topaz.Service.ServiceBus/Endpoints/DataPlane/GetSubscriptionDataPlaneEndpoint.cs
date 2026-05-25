@@ -1,0 +1,43 @@
+using System.Net;
+using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
+using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
+using Topaz.Shared.Extensions;
+
+namespace Topaz.Service.ServiceBus.Endpoints.DataPlane;
+
+internal sealed class GetSubscriptionDataPlaneEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+{
+    private readonly ServiceBusServiceControlPlane _controlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
+
+    public string? ProviderNamespace => "Microsoft.ServiceBus";
+    public string[] Endpoints => ["GET /{entity}/Subscriptions/{subscription}"];
+    public string[] Permissions => ["Microsoft.ServiceBus/namespaces/topics/subscriptions/read"];
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.AdditionalServiceBusPort, GlobalSettings.HttpsPort], Protocol.Https);
+
+    public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    {
+        var namespaceName = ServiceBusNamespaceIdentifier.From(context.Request.Headers["Host"].ToString().Split(".")[0]);
+        var (result, subscriptionId, resourceGroupId) = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceName);
+        if (result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
+        var subscriptionName = context.Request.Path.Value.ExtractValueFromPath(3);
+        var operation = _controlPlane.GetSubscription(subscriptionId!, resourceGroupId!, namespaceName, subscriptionName!);
+        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
+        response.Content = new StringContent(operation.Resource.ToXmlString());
+        response.StatusCode = HttpStatusCode.OK;
+    }
+}
