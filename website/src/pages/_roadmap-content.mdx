@@ -170,6 +170,22 @@
 | <span class="badge--preview">Preview</span> | Kudu zip deploy | `POST /api/zipdeploy` on `*.scm.azurewebsites.topaz.local.dev:8896` — accepts a zip archive, stores it to disk, persists a `DeploymentRecord`, returns `202 Accepted` with a `Location` header |
 | <span class="badge--preview">Preview</span> | Deployment list | `GET /api/deployments` — returns the persisted deployment records for the site as a JSON array |
 
+### Azure Load Balancer — initial control plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.LoadBalancer` project with models (`LoadBalancerResource`, `LoadBalancerResourceProperties`), resource provider, control plane (including `Deploy()`), host registration, and `RouteDeployment()` case for `Microsoft.Network/loadBalancers` |
+| <span class="badge--preview">Preview</span> | Load Balancer CRUD | Create, get, update tags, delete, list by resource group, and list by subscription for `Microsoft.Network/loadBalancers`; all structural properties (frontend IP configurations, backend pools, LB rules, probes, inbound NAT rules, outbound rules) persisted and round-tripped; `provisioningState` always `Succeeded` |
+
+### Service Bus — advanced messaging features
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Dead letter queues | Move messages exceeding `MaxDeliveryCount` or explicitly dead-lettered to `<entity>/$DeadLetterQueue`; expose as an addressable AMQP entity so SDK receivers can consume it |
+| <span class="badge--preview">Preview</span> | Message sessions | Session-based messaging (`requiresSession = true`) for queues and subscriptions; session-filtered AMQP Attach frames; per-session lock enforcement; `RenewSessionLock`, `GetSessionState`, and `SetSessionState` via AMQP management link |
+| <span class="badge--preview">Preview</span> | Topic filters and rules | Full ARM CRUD for subscription rules (`CorrelationRuleFilter`, `SqlRuleFilter`, `SqlRuleAction`); message routing at publish time evaluates active rules and only forwards matching messages to each subscription |
+| <span class="badge--preview">Preview</span> | Authorization rules and SAS keys | Per-namespace, per-queue, and per-topic authorization rule CRUD; `listKeys` and `regenerateKeys` actions; 256-bit SAS key pairs persisted and rotatable |
+
 ---
 
 ## v1.8-preview

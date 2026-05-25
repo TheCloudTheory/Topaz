@@ -135,7 +135,7 @@ For applications that rely on advanced messaging features, the current gaps in T
 - **Topic filters and rules** (correlation filters, SQL filters): not yet implemented
 - **Authorization rules and SAS keys per entity**: not yet implemented
 
-These features are planned. The [roadmap](/roadmap) tracks the current status. If your application depends on any of these, the Azure Service Bus Emulator may be the better choice until they are available.
+These features are planned for v1.7. The [roadmap](/roadmap) tracks the current status. If your application depends on any of these, the Azure Service Bus Emulator may be the better choice until they are available.
 
 ## Beyond Service Bus
 
@@ -185,4 +185,4 @@ Topaz implements the AMQP 1.0 messaging protocol. For send and receive operation
 
 For entity management, replace config.json-based setup with ARM API calls — either through `az servicebus` or Terraform. Topaz does not have a `config.json` equivalent; all entities are created through the standard ARM control plane.
 
-Before migrating, verify that your application does not rely on dead letter queues, message sessions, or topic filters and rules — these are not yet available in Topaz. See the [roadmap](/roadmap) for planned additions.
+Before migrating, verify that your application does not rely on dead letter queues, message sessions, or topic filters and rules — these are planned for v1.7 and not yet available. See the [roadmap](/roadmap) for the full list.

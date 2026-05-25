@@ -725,6 +725,120 @@ TODO: Azure App Service: Kudu SCM data-plane endpoints (zip deploy + deployment 
   labels: enhancement, app-service
 -->
 
+### Azure Load Balancer — initial control plane
+
+<!--
+TODO: Azure Load Balancer: New service project scaffold
+  Create Topaz.Service.LoadBalancer following the existing service conventions:
+  - LoadBalancerResourceProperties + LoadBalancerResource (ArmResource<T>) with fields:
+    sku (name: Basic/Standard, tier: Regional/Global), frontendIPConfigurations,
+    backendAddressPools, loadBalancingRules, probes, inboundNatRules, outboundRules,
+    provisioningState (always Succeeded).
+  - LoadBalancerResourceProvider (ResourceProviderBase<T>) for filesystem persistence.
+  - LoadBalancerServiceControlPlane implementing IControlPlane with a working Deploy()
+    that maps GenericResource → LoadBalancerResource via resource.As<T,TProps>().
+  - IServiceDefinition registration and wiring in Topaz.Host.
+  - ProjectReference in Topaz.Service.ResourceManager.csproj.
+  - case "Microsoft.Network/loadBalancers": entry in TemplateDeploymentOrchestrator.RouteDeployment().
+  See: https://learn.microsoft.com/en-us/rest/api/load-balancer/load-balancers?view=rest-load-balancer-2025-05-01
+  milestone: v1.7-beta
+  labels: enhancement, good first issue
+-->
+
+<!--
+TODO: Azure Load Balancer: Control plane endpoints
+  Implement the ARM-level Load Balancer resource surface (Microsoft.Network/loadBalancers):
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/loadBalancers/{name}  – create or update
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/loadBalancers/{name}  – get
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/loadBalancers/{name}  – delete
+  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/loadBalancers/{name}  – update tags
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/loadBalancers          – list by resource group
+  - GET    /subscriptions/{sub}/providers/Microsoft.Network/loadBalancers                              – list all in subscription
+  The emulated load balancer does not route real traffic. All structural properties
+  (frontendIPConfigurations, backendAddressPools, loadBalancingRules, probes,
+  inboundNatRules, outboundRules) are stored and round-tripped as-is.
+  provisioningState is always Succeeded.
+  milestone: v1.7-beta
+  labels: enhancement
+-->
+
+### Service Bus — dead letter queues
+
+<!--
+TODO: Service Bus: Dead letter queue support
+  Implement dead-letter queue semantics for queues and topic subscriptions.
+  When a message's delivery count exceeds MaxDeliveryCount, or when a subscriber
+  explicitly dead-letters a message, move it to the entity's dead-letter sub-queue
+  (<queue>/$DeadLetterQueue or <topic>/Subscriptions/<sub>/$DeadLetterQueue).
+  Required AMQP changes:
+  - Handle Rejected and Released dispositions by incrementing the delivery count.
+  - When MaxDeliveryCount is exceeded, route the message to the dead-letter sub-queue
+    instead of returning it to the main queue.
+  - Expose the dead-letter sub-queue as an addressable AMQP entity so SDK callers can
+    create a receiver for <queue>/$DeadLetterQueue.
+  milestone: v1.7-beta
+  labels: enhancement, service-bus
+-->
+
+### Service Bus — message sessions
+
+<!--
+TODO: Service Bus: Message session support
+  Implement AMQP session-based messaging for queues and subscriptions with
+  requiresSession = true.
+  - Allow setting requiresSession on queue/subscription create or update (persist the flag).
+  - On the AMQP layer, accept session-filtered Attach frames (filter map containing
+    com.microsoft:session-filter with a string or null session ID).
+  - Track active session locks per entity; enforce at most one active receiver per session.
+  - Expose RenewSessionLock and GetSessionState/SetSessionState via AMQP management link.
+  milestone: v1.7-beta
+  labels: enhancement, service-bus
+-->
+
+### Service Bus — topic filters and rules
+
+<!--
+TODO: Service Bus: Topic subscription filters and rules
+  Implement correlation filters, SQL filters, and rule actions for topic subscriptions.
+  ARM control plane:
+  - PUT    .../topics/{topicName}/subscriptions/{subscriptionName}/rules/{ruleName}  – create or update
+  - GET    .../topics/{topicName}/subscriptions/{subscriptionName}/rules/{ruleName}  – get
+  - DELETE .../topics/{topicName}/subscriptions/{subscriptionName}/rules/{ruleName}  – delete
+  - GET    .../topics/{topicName}/subscriptions/{subscriptionName}/rules             – list
+  Data plane:
+  - On message publish to a topic, evaluate each subscription's active rules against
+    the message's system properties and application properties.
+  - CorrelationRuleFilter: match on ContentType, CorrelationId, MessageId, ReplyTo,
+    ReplyToSessionId, SessionId, Subject, To, and user application properties.
+  - SqlRuleFilter: evaluate SQL-92 predicate against system and user properties.
+  - SqlRuleAction: apply property mutations (SET, REMOVE) after filter match.
+  - Only forward messages to a subscription when at least one rule matches (or the
+    subscription's only rule is TrueRuleFilter).
+  Also implement the Atom XML data-plane rule endpoints on ServiceBusServiceAdditionalEndpoint
+  to support ServiceBusAdministrationClient rule CRUD from the .NET SDK.
+  milestone: v1.7-beta
+  labels: enhancement, service-bus
+-->
+
+### Service Bus — authorization rules and SAS keys
+
+<!--
+TODO: Service Bus: Authorization rules and SAS key management
+  Implement per-namespace, per-queue, and per-topic authorization rules and key endpoints.
+  Namespace-level endpoints:
+  - PUT    .../namespaces/{name}/authorizationRules/{ruleName}              – create or update
+  - GET    .../namespaces/{name}/authorizationRules/{ruleName}              – get
+  - DELETE .../namespaces/{name}/authorizationRules/{ruleName}              – delete
+  - GET    .../namespaces/{name}/authorizationRules                         – list
+  - POST   .../namespaces/{name}/authorizationRules/{ruleName}/listKeys     – list keys
+  - POST   .../namespaces/{name}/authorizationRules/{ruleName}/regenerateKeys – regenerate
+  Queue and Topic level: same pattern under /queues/{name}/... and /topics/{name}/...
+  Persist SAS key pairs inside the authorization rule model; generate 256-bit random
+  primary and secondary key pairs on rule creation.
+  milestone: v1.7-beta
+  labels: enhancement, service-bus
+-->
+
 ---
 
 ## v1.8-preview
