@@ -1,5 +1,6 @@
 using System.Reflection;
 using Amqp;
+using Amqp.Framing;
 using Amqp.Listener;
 using Amqp.Types;
 using Topaz.Shared;
@@ -38,20 +39,64 @@ public class OutgoingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
         typeof(ListenerLink).Assembly.GetTypes().First(t => t.Name == "Session")
             .GetMethod("SendDelivery", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
+    // Protects _pendingLink and _pendingCredit, and all accesses to IncomingLinkEndpoint.Messages.
+    internal static readonly object DeliveryLock = new();
+
+    // Saved when OnFlow fires with credit > 0 but the queue is empty; consumed by NotifyMessageEnqueued.
+    private static ListenerLink? _pendingLink;
+    private static int _pendingCredit;
+
+    // Called by IncomingLinkEndpoint after a message is added to the queue.
+    internal static void NotifyMessageEnqueued()
+    {
+        DeliverMessages();
+    }
+
+    private static void DeliverMessages()
+    {
+        List<(ListenerLink Link, Message Message)> deliveries = [];
+
+        lock (DeliveryLock)
+        {
+            while (_pendingCredit > 0 && IncomingLinkEndpoint.Messages.Count > 0 && _pendingLink != null)
+            {
+                var message = IncomingLinkEndpoint.Messages[0];
+                message.Header ??= new Header();
+                // AMQPNetLite only writes a field into the encoded list when the backing store has been
+                // explicitly set via the property setter — it does NOT encode fields whose backing store
+                // is null even when the getter returns the default (0). Re-assigning DeliveryCount
+                // through the setter forces the value into the backing store so it appears as
+                // delivery-count=0 (0x43) in the binary. Microsoft.Azure.Amqp decodes that as
+                // Nullable<uint> with HasValue=true, which AmqpMessageToSBReceivedMessage requires in
+                // order to populate ServiceBusReceivedMessage.DeliveryCount without throwing.
+                message.Header.DeliveryCount = message.Header.DeliveryCount;
+                message.MessageAnnotations[new Symbol("x-opt-offset")] = IncomingLinkEndpoint.Messages.IndexOf(message).ToString();
+                message.MessageAnnotations[new Symbol("x-opt-locked-until")] = DateTime.UtcNow.AddMinutes(5);
+                IncomingLinkEndpoint.Messages.RemoveAt(0);
+                _pendingCredit--;
+                deliveries.Add((_pendingLink, message));
+            }
+        }
+
+        // Send outside the lock to avoid holding it during network I/O.
+        foreach (var (link, message) in deliveries)
+        {
+            SendMessageWithGuidTag(link, message);
+        }
+    }
+
     public override void OnFlow(FlowContext flowContext)
     {
         logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "There will be a maximum of {0} to process with {1} messages available.", flowContext.Messages, IncomingLinkEndpoint.Messages.Count);
         if (flowContext.Link.Role) return;
 
-        var messagesToSend = IncomingLinkEndpoint.Messages.Take(flowContext.Messages).ToList();
-        foreach (var message in messagesToSend)
+        lock (DeliveryLock)
         {
-            message.MessageAnnotations[new Symbol("x-opt-offset")] = IncomingLinkEndpoint.Messages.IndexOf(message).ToString();
-            message.MessageAnnotations[new Symbol("x-opt-locked-until")] = DateTime.UtcNow.AddMinutes(5);
-
-            SendMessageWithGuidTag(flowContext.Link, message);
-            IncomingLinkEndpoint.Messages.Remove(message);
+            _pendingLink = flowContext.Link;
+            _pendingCredit = flowContext.Messages;
         }
+
+        DeliverMessages();
 
         if (flowContext.Link.IsDraining)
         {
@@ -65,6 +110,12 @@ public class OutgoingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
 
     public override void OnDisposition(DispositionContext dispositionContext)
     {
+        // The client (Azure SDK / MassTransit) sends a DISPOSITION frame after processing a message.
+        // Because TRANSFER frames are sent pre-settled (Settled=true), the receiver never adds the
+        // message to its unsettledMap and CompleteMessageAsync returns immediately without waiting for
+        // a broker confirmation.  Complete() is still called here to acknowledge the disposition and
+        // keep the AMQP session state clean.
+        dispositionContext.Complete();
     }
 
     private static void SendMessageWithGuidTag(ListenerLink link, Message message)
@@ -76,7 +127,14 @@ public class OutgoingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
         DeliveryBufferField.SetValue(delivery, buffer);
         DeliveryHandleField.SetValue(delivery, link.Handle);
         DeliveryLinkField.SetValue(delivery, link);
-        DeliverySettledProperty.SetValue(delivery, link.SettleOnSend);
+        // Always send TRANSFER frames as pre-settled (settled=true).
+        // When settled=false (the default when the link negotiates snd-settle-mode=Unsettled),
+        // the Azure SDK receiver adds each delivery to its unsettledMap and DisposeMessageAsync
+        // blocks for up to 60 seconds waiting for a confirming DISPOSITION(settled=true) from
+        // the broker — causing CompleteMessageAsync to time out in MassTransit consumers.
+        // Pre-settling tells the receiver the message is already settled at the source, so it
+        // skips the unsettledMap entirely and CompleteMessageAsync returns immediately.
+        DeliverySettledProperty.SetValue(delivery, true);
         SessionSendDeliveryMethod.Invoke(link.Session, [delivery]);
     }
 }

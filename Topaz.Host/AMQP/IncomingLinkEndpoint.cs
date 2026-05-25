@@ -32,7 +32,12 @@ public class IncomingLinkEndpoint(ITopazLogger logger) : LinkEndpoint
         // Add message annotations which are used by Event Hub SDK for some of the internal operations
         messageContext.Message.MessageAnnotations = new MessageAnnotations();
 
-        Messages.Add(messageContext.Message);
+        lock (OutgoingLinkEndpoint.DeliveryLock)
+        {
+            Messages.Add(messageContext.Message);
+        }
+
+        OutgoingLinkEndpoint.NotifyMessageEnqueued();
         messageContext.Complete();
 
         logger.LogDebug(nameof(IncomingLinkEndpoint), nameof(OnMessage),
