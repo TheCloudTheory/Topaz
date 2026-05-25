@@ -80,6 +80,18 @@ This tool is useful for debugging a setup that fails partway through — ask the
 
 ### Resource tools
 
+#### Tenant-scope deployments
+
+| Tool | Description |
+|---|---|
+| `CreateOrUpdateTenantDeployment` | Creates or updates a tenant-scope ARM template deployment and polls until the orchestrator finishes |
+| `GetTenantDeployment` | Returns a tenant-scope deployment by name |
+| `DeleteTenantDeployment` | Deletes a tenant-scope deployment by name |
+
+All three tools accept an `objectId` parameter. `CreateOrUpdateTenantDeployment` also requires `deploymentName`, `location`, and `templateJson` (ARM template as a JSON string). `GetTenantDeployment` and `DeleteTenantDeployment` require only `deploymentName` and `objectId`.
+
+`CreateOrUpdateTenantDeployment` returns a `TenantDeploymentResult` with `Name`, `Id`, and `ProvisioningState` fields. It polls Topaz until the provisioning state leaves `Created` or `Running`, so the caller always receives a terminal state.
+
 #### Provisioning
 
 | Tool | Description |
