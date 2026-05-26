@@ -117,6 +117,8 @@ jobs:
             - 'sdk/python/**'
           managementgroup:
             - 'Services/Topaz.Service.ManagementGroup/**'
+          sql:
+            - 'Services/Topaz.Service.Sql/**'
     - name: Build test filter
       id: test_filter
       shell: bash
@@ -185,6 +187,7 @@ jobs:
         [[ "${{ steps.changes.outputs.virtualmachine }}"  == "true" ]] && PARTS+=("FullyQualifiedName~VirtualMachine")
         [[ "${{ steps.changes.outputs.portal }}"          == "true" ]] && PARTS+=("FullyQualifiedName~Tests.Portal")
         [[ "${{ steps.changes.outputs.managementgroup }}" == "true" ]] && PARTS+=("FullyQualifiedName~ManagementGroup")
+        [[ "${{ steps.changes.outputs.sql }}"             == "true" ]] && PARTS+=("FullyQualifiedName~SqlServer")
 
         if [[ ${#PARTS[@]} -eq 0 ]]; then
           # Untracked code path changed (e.g. Topaz.CLI): run all tests as safety fallback
@@ -202,6 +205,7 @@ jobs:
         [[ "${{ steps.changes.outputs.storage }}"        == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.Storage")
         [[ "${{ steps.changes.outputs.resourcegroup }}"  == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.ResourceGroup")
         [[ "${{ steps.changes.outputs.virtualmachine }}"   == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.VirtualMachine")
+        [[ "${{ steps.changes.outputs.sql }}"              == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.SqlServer")
 
         if [[ "${{ steps.changes.outputs.azurepowershell }}" == "true" ]]; then
           # PS test files themselves changed: run all PS tests
@@ -230,6 +234,7 @@ jobs:
         [[ "${{ steps.changes.outputs.resourcegroup }}"   == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.ResourceGroup")
         [[ "${{ steps.changes.outputs.resourcemanager }}" == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.ResourceManager")
         [[ "${{ steps.changes.outputs.virtualnetwork }}"  == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.VirtualNetwork")        [[ "${{ steps.changes.outputs.virtualmachine }}"   == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.VirtualMachine")
+        [[ "${{ steps.changes.outputs.sql }}"              == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.SqlServer")
         if [[ "${{ steps.changes.outputs.azurecli }}" == "true" ]]; then
           # CLI test files themselves changed: run all CLI tests
           echo "cli_skip=false" >> "$GITHUB_OUTPUT"
