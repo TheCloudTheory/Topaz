@@ -242,6 +242,7 @@ internal sealed class ManagementGroupControlPlane(ManagementGroupResourceProvide
                 string.Format(NotFoundMessageTemplate, groupId), NotFoundCode);
 
         var model = Models.ManagementGroupSubscription.Create(groupId, subscriptionId, displayName ?? subscriptionId);
+        provider.RemoveSubscriptionFromAllOtherGroups(groupId, subscriptionId);
         provider.SaveSubscriptionAssociation(groupId, subscriptionId, model);
 
         logger.LogDebug(nameof(ManagementGroupControlPlane), nameof(AssociateSubscription),

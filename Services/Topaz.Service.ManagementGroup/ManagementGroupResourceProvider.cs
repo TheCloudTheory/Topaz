@@ -99,6 +99,24 @@ public sealed class ManagementGroupResourceProvider : ResourceProviderBase<Manag
         File.Delete(path);
     }
 
+    /// <summary>Removes a subscription association from every management group except the specified target group.
+    /// Used when moving a subscription to a new group so it does not remain in its previous parent.</summary>
+    internal void RemoveSubscriptionFromAllOtherGroups(string targetGroupId, string subscriptionId)
+    {
+        if (!Directory.Exists(BasePath)) return;
+
+        var normalizedTarget = ValidateGroupId(targetGroupId);
+        foreach (var groupDir in Directory.EnumerateDirectories(BasePath))
+        {
+            var groupName = Path.GetFileName(groupDir);
+            if (string.Equals(groupName, normalizedTarget, StringComparison.OrdinalIgnoreCase)) continue;
+
+            var path = Path.Combine(groupDir, "subscriptions", $"{subscriptionId}.json");
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
     /// <summary>Returns all subscription associations for a specific management group.</summary>
     internal IEnumerable<Models.ManagementGroupSubscription> ListSubscriptionAssociationsForGroup(string groupId)
     {
