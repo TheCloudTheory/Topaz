@@ -123,6 +123,51 @@ public class ServiceBusTests
         await RunTest(ConnectionStringTls);
     }
 
+    [Test]
+    public async Task ServiceBusTests_WhenMultipleMessagesAreReceivedAndCompleted_ItShouldConsumeEveryMessage()
+    {
+        var expectedMessages = new[]
+        {
+            "test message 1",
+            "test message 2",
+            "test message 3"
+        };
+
+        var client = new ServiceBusClient(ConnectionString);
+        var sender = client.CreateSender(QueueName);
+        var receiver = client.CreateReceiver(QueueName);
+        var receivedMessages = new List<string>();
+
+        try
+        {
+            foreach (var body in expectedMessages)
+            {
+                await sender.SendMessageAsync(new ServiceBusMessage(body));
+            }
+
+            foreach (var expectedBody in expectedMessages)
+            {
+                var received = await receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(10));
+
+                Assert.That(received, Is.Not.Null, $"Expected to receive '{expectedBody}'.");
+
+                receivedMessages.Add(received!.Body.ToString());
+                await receiver.CompleteMessageAsync(received);
+            }
+
+            var extraMessage = await receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(2));
+            Assert.That(extraMessage, Is.Null);
+        }
+        finally
+        {
+            await sender.DisposeAsync();
+            await receiver.DisposeAsync();
+            await client.DisposeAsync();
+        }
+
+        Assert.That(receivedMessages, Is.EqualTo(expectedMessages));
+    }
+
     private static async Task RunTest(string connectionString)
     {
         // Arrange
