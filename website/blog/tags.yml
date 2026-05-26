@@ -58,6 +58,26 @@ networking:
   permalink: /networking
   description: Azure Networking related posts
 
+service-bus:
+  label: Azure Service Bus
+  permalink: /service-bus
+  description: Azure Service Bus related posts
+
+appservice:
+  label: Azure App Service
+  permalink: /appservice
+  description: Azure App Service related posts
+
+virtualmachines:
+  label: Virtual Machines
+  permalink: /virtualmachines
+  description: Azure Virtual Machines related posts
+
+ai:
+  label: AI
+  permalink: /ai
+  description: AI and machine learning related posts
+
 devcontainers:
   label: Dev Containers
   permalink: /devcontainers
