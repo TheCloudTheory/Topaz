@@ -12,7 +12,8 @@ public class Worker(IBus bus) : BackgroundService
             try
             {
                 var message = new ExampleMessage(DateTimeOffset.Now);
-                await bus.Publish(message, stoppingToken);
+                var endpoint = await bus.GetSendEndpoint(new Uri("queue:sbqueue"));
+                await endpoint.Send(message, stoppingToken);
                 await Task.Delay(1000, stoppingToken);
                 
                 Console.WriteLine($"Message dispatched: {JsonSerializer.Serialize(message)}");

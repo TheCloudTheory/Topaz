@@ -14,6 +14,13 @@ internal sealed class LinkProcessor(ITopazLogger logger) : ILinkProcessor
     private readonly ConcurrentDictionary<Session, ListenerLink> _cbsResponseLinks
         = new(ReferenceEqualityComparer.Instance);
 
+    // Maps AMQP session (by reference) → queue $management response link (server-side sender).
+    // Populated when a client opens a ReceiverLink at "{queue}/$management"; consumed when the
+    // matching SenderLink's QueueManagementRequestEndpoint processes a management request
+    // (e.g. com.microsoft:complete, com.microsoft:renew-lock).
+    private readonly ConcurrentDictionary<Session, ListenerLink> _queueManagementResponseLinks
+        = new(ReferenceEqualityComparer.Instance);
+
     public void Process(AttachContext attachContext)
     {
         // Setting MaxMessageSize is required for the Azure SDK: the default value
@@ -31,6 +38,12 @@ internal sealed class LinkProcessor(ITopazLogger logger) : ILinkProcessor
         if (address == "$cbs")
         {
             HandleCbsLink(attachContext);
+            return;
+        }
+
+        if (address != null && address.EndsWith("/$management", StringComparison.OrdinalIgnoreCase))
+        {
+            HandleQueueManagementLink(attachContext);
             return;
         }
 
@@ -62,6 +75,27 @@ internal sealed class LinkProcessor(ITopazLogger logger) : ILinkProcessor
             // CBS request link.  Pass the session registry so OnMessage can send
             // the response directly.
             attachContext.Complete(new CbsRequestEndpoint(_cbsResponseLinks), 300);
+        }
+    }
+
+    private void HandleQueueManagementLink(AttachContext attachContext)
+    {
+        if (attachContext.Attach.Role)
+        {
+            // Client opens a ReceiverLink to "{queue}/$management" → server is the sender →
+            // this is the management RESPONSE link.  Register it by session so that
+            // QueueManagementRequestEndpoint can look it up and send 200 OK replies.
+            var session = attachContext.Link.Session;
+            _queueManagementResponseLinks[session] = attachContext.Link;
+            attachContext.Link.AddClosedCallback((_, _) => _queueManagementResponseLinks.TryRemove(session, out _));
+            attachContext.Complete(new QueueManagementResponseEndpoint(), 300);
+        }
+        else
+        {
+            // Client opens a SenderLink to "{queue}/$management" → server is the receiver →
+            // this is the management REQUEST link.  Pass the session registry so OnMessage
+            // can send responses (200 OK) for com.microsoft:complete, renew-lock, etc.
+            attachContext.Complete(new QueueManagementRequestEndpoint(_queueManagementResponseLinks), 300);
         }
     }
 }
