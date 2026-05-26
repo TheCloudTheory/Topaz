@@ -185,19 +185,6 @@ TODO: ACR Tasks: Task Run CRUD and trigger operations
 
 ### Azure SQL — initial control plane
 
-<!--
-TODO: Azure SQL: Database control plane endpoints
-  Implement the ARM-level SQL Database resource surface under a server:
-  - PUT    .../servers/{server}/databases/{database}  – create or update
-  - GET    .../servers/{server}/databases/{database}  – get
-  - DELETE .../servers/{server}/databases/{database}  – delete
-  - GET    .../servers/{server}/databases              – list
-  - PATCH  .../servers/{server}/databases/{database}  – update
-  Databases are persisted as child resources of their server via the resource provider.
-  milestone: v1.5-beta
-  labels: enhancement, azure-sql, good first issue
--->
-
 ### Azure App Service — initial control plane
 
 ### Event Hub — delete individual Event Hub

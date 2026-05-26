@@ -541,3 +541,11 @@ resource "azurerm_mssql_server" "sql" {
 
 output "sql_server_name"  { value = azurerm_mssql_server.sql.name }
 output "sql_server_fqdn"  { value = azurerm_mssql_server.sql.fully_qualified_domain_name }
+
+resource "azurerm_mssql_database" "sqldb" {
+  name      = "tf-rm-sql-db"
+  server_id = azurerm_mssql_server.sql.id
+}
+
+output "sql_db_name"      { value = azurerm_mssql_database.sqldb.name }
+output "sql_db_collation" { value = azurerm_mssql_database.sqldb.collation }

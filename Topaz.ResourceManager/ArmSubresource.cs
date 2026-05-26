@@ -24,6 +24,6 @@ public abstract class ArmSubresource<T>
 
     public override string ToString()
     {
-        return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
+        return JsonSerializer.Serialize(this, GetType(), GlobalSettings.JsonOptions);
     }
 }

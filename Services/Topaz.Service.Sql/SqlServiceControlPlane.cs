@@ -10,6 +10,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Sql;
 
+
 internal sealed class SqlServiceControlPlane(
     Pipeline eventPipeline,
     SqlServerResourceProvider provider,
@@ -17,6 +18,8 @@ internal sealed class SqlServiceControlPlane(
 {
     private const string SqlServerNotFoundCode = "ResourceNotFound";
     private const string SqlServerNotFoundMessageTemplate = "SQL server '{0}' could not be found";
+    private const string SqlDatabaseNotFoundCode = "ResourceNotFound";
+    private const string SqlDatabaseNotFoundMessageTemplate = "SQL database '{0}' could not be found on server '{1}'";
 
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
@@ -159,5 +162,109 @@ internal sealed class SqlServiceControlPlane(
     {
         return provider.ListAs<SqlServerResource>(subscriptionIdentifier, null,
             lookForNoOfSegments: 8);
+    }
+
+    public ControlPlaneOperationResult<SqlDatabaseResource> CreateOrUpdateDatabase(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string serverName,
+        string databaseName,
+        CreateOrUpdateSqlDatabaseRequest request)
+    {
+        var serverOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, serverName);
+        if (serverOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<SqlDatabaseResource>(
+                OperationResult.NotFound,
+                null,
+                serverOperation.Reason,
+                serverOperation.Code);
+        }
+
+        var subresource = nameof(Subresource.Databases).ToLowerInvariant();
+        var existing = provider.GetSubresourceAs<SqlDatabaseResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, databaseName, serverName, subresource);
+
+        if (existing != null)
+        {
+            existing.Location = request.Location ?? existing.Location;
+            existing.Tags = request.Tags ?? existing.Tags;
+            SqlDatabaseResourceProperties.UpdateFromRequest(existing.Properties, request);
+            provider.CreateOrUpdateSubresource(
+                subscriptionIdentifier, resourceGroupIdentifier, databaseName, serverName, subresource, existing);
+
+            return new ControlPlaneOperationResult<SqlDatabaseResource>(OperationResult.Updated, existing, null, null);
+        }
+
+        var location = request.Location ?? serverOperation.Resource!.Location!;
+        var properties = SqlDatabaseResourceProperties.FromRequest(request);
+        var database = new SqlDatabaseResource(
+            subscriptionIdentifier,
+            resourceGroupIdentifier,
+            serverName,
+            databaseName,
+            location,
+            request.Tags,
+            request.Sku,
+            properties);
+
+        provider.CreateOrUpdateSubresource(
+            subscriptionIdentifier, resourceGroupIdentifier, databaseName, serverName, subresource, database);
+
+        return new ControlPlaneOperationResult<SqlDatabaseResource>(OperationResult.Created, database, null, null);
+    }
+
+    public ControlPlaneOperationResult<SqlDatabaseResource> GetDatabase(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string serverName,
+        string databaseName)
+    {
+        var subresource = nameof(Subresource.Databases).ToLowerInvariant();
+        var database = provider.GetSubresourceAs<SqlDatabaseResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, databaseName, serverName, subresource);
+
+        return database == null
+            ? new ControlPlaneOperationResult<SqlDatabaseResource>(
+                OperationResult.NotFound,
+                null,
+                string.Format(SqlDatabaseNotFoundMessageTemplate, databaseName, serverName),
+                SqlDatabaseNotFoundCode)
+            : new ControlPlaneOperationResult<SqlDatabaseResource>(OperationResult.Success, database, null, null);
+    }
+
+    public ControlPlaneOperationResult<SqlDatabaseResource> DeleteDatabase(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string serverName,
+        string databaseName)
+    {
+        var subresource = nameof(Subresource.Databases).ToLowerInvariant();
+        var existing = provider.GetSubresourceAs<SqlDatabaseResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, databaseName, serverName, subresource);
+
+        if (existing == null)
+        {
+            return new ControlPlaneOperationResult<SqlDatabaseResource>(
+                OperationResult.NotFound,
+                null,
+                string.Format(SqlDatabaseNotFoundMessageTemplate, databaseName, serverName),
+                SqlDatabaseNotFoundCode);
+        }
+
+        provider.DeleteSubresource(
+            subscriptionIdentifier, resourceGroupIdentifier, databaseName, serverName, subresource);
+
+        return new ControlPlaneOperationResult<SqlDatabaseResource>(OperationResult.Deleted, existing, null, null);
+    }
+
+    public IEnumerable<SqlDatabaseResource> ListDatabases(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string serverName)
+    {
+        var subresource = nameof(Subresource.Databases).ToLowerInvariant();
+        return provider.ListSubresourcesAs<SqlDatabaseResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, serverName, subresource);
     }
 }

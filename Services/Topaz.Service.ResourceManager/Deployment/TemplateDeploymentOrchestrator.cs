@@ -243,6 +243,9 @@ public sealed class TemplateDeploymentOrchestrator(
                 case "Microsoft.Sql/servers":
                     controlPlane = SqlServiceControlPlane.New(eventPipeline, logger);
                     break;
+                case "Microsoft.Sql/servers/databases":
+                    controlPlane = SqlServiceControlPlane.New(eventPipeline, logger);
+                    break;
                 default:
                     logger.LogWarning($"Deployment of resource type {resource.Type} is not yet supported.");
                     break;

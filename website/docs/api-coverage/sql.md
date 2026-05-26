@@ -27,11 +27,11 @@ sidebar_position: 15
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create Or Update | ❌ | `PUT .../servers/{server}/databases/{database}` |
-| Get | ❌ | `GET .../servers/{server}/databases/{database}` |
-| Delete | ❌ | `DELETE .../servers/{server}/databases/{database}` |
-| Update | ❌ | `PATCH .../servers/{server}/databases/{database}` |
-| List By Server | ❌ | `GET .../servers/{server}/databases` |
+| Create Or Update | ✅ | `PUT .../servers/{server}/databases/{database}` |
+| Get | ✅ | `GET .../servers/{server}/databases/{database}` |
+| Delete | ✅ | `DELETE .../servers/{server}/databases/{database}` |
+| Update | ✅ | `PATCH .../servers/{server}/databases/{database}` |
+| List By Server | ✅ | `GET .../servers/{server}/databases` |
 | Export | ❌ | |
 | Import | ❌ | |
 | Rename | ❌ | |

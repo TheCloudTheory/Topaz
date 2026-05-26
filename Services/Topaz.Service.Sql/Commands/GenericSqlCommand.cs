@@ -13,6 +13,13 @@ public sealed class GenericSqlCommand : IEmulatorCommand
             sql.AddCommand<GetSqlServerCommand>("show");
             sql.AddCommand<DeleteSqlServerCommand>("delete");
             sql.AddCommand<ListSqlServersCommand>("list");
+            sql.AddBranch("db", db =>
+            {
+                db.AddCommand<CreateSqlDatabaseCommand>("create");
+                db.AddCommand<GetSqlDatabaseCommand>("show");
+                db.AddCommand<DeleteSqlDatabaseCommand>("delete");
+                db.AddCommand<ListSqlDatabasesCommand>("list");
+            });
         });
     }
 }
