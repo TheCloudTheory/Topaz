@@ -106,12 +106,14 @@ public class OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger) : L
             _pendingCredit = flowContext.Messages;
 
             // Register this endpoint in the queue-delivery registry on first FLOW,
-            // but only for real queue/topic addresses (source starts with "/").
+            // but only for real queue/topic addresses (not management links).
             // AMQP management links (e.g. "sbqueue/$management") send FLOW with
             // link-credit:50 at startup. Before this fix those flows overwrote the
             // single shared static _pendingLink, redirecting all subsequent deliveries
             // to the management response link instead of the queue consumer.
-            if (sourceAddress.StartsWith("/") && !_queueEndpoints.Contains(this))
+            // Note: regular queue addresses are plain names like "py-queue-test" (no
+            // leading slash), so $management is the correct discriminator — NOT "/".
+            if (!sourceAddress.Contains("$management", StringComparison.OrdinalIgnoreCase) && !_queueEndpoints.Contains(this))
             {
                 _queueEndpoints.Add(this);
                 flowContext.Link.Closed += (_, _) =>

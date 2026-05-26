@@ -24,10 +24,12 @@ public class IncomingLinkEndpoint(string targetAddress, ITopazLogger logger) : L
             logger.LogDebug(nameof(IncomingLinkEndpoint), nameof(OnMessage), $"Processing message: {data}");
         }
 
-        // Management endpoints use addresses like "sbqueue/$management" (no leading slash).
+        // Management endpoints use addresses like "sbqueue/$management".
         // Adding their request messages to the shared queue would route them to queue
         // consumers instead of the management response link. Skip them here.
-        if (!targetAddress.StartsWith("/"))
+        // Note: regular queue addresses are plain names like "py-queue-test" (no leading slash),
+        // so $management is the correct discriminator — NOT a leading "/".
+        if (targetAddress.Contains("$management", StringComparison.OrdinalIgnoreCase))
         {
             messageContext.Complete();
             return;
