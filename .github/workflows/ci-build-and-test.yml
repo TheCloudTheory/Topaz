@@ -24,6 +24,9 @@ jobs:
       contents: write
       checks: write
       pull-requests: write
+    outputs:
+      cli_skip: ${{ steps.test_filter.outputs.cli_skip }}
+      cli_filter: ${{ steps.test_filter.outputs.cli_filter }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -52,6 +55,14 @@ jobs:
         mv ./publish/Topaz.Host ./publish/topaz-host-linux-x64
     - name: Build interim Docker image
       run: docker build -t topaz/host -f ./Topaz.Host/Dockerfile .
+    - name: Save Docker image
+      run: docker save topaz/host | gzip > /tmp/topaz-host.tar.gz
+    - name: Upload Docker image artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: topaz-host-image
+        path: /tmp/topaz-host.tar.gz
+        retention-days: 1
     - name: Detect changed paths
       id: changes
       uses: dorny/paths-filter@v3
@@ -326,17 +337,6 @@ jobs:
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
-    - name: AzureCLI Tests
-      if: steps.build.outcome == 'success' && steps.test_filter.outputs.cli_skip != 'true'
-      run: |
-        FILTER="${{ steps.test_filter.outputs.cli_filter }}"
-        if [[ -z "$FILTER" ]]; then
-          FILTER="FullyQualifiedName~Topaz.Tests.AzureCLI"
-        fi
-        dotnet test -m:1 --no-build --verbosity normal --logger trx \
-          --collect:"XPlat Code Coverage" \
-          --results-directory ${{ github.workspace }}/TestResults \
-          --filter "$FILTER"
     - name: Python Tests
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.py_skip != 'true'
       run: |
@@ -408,4 +408,57 @@ jobs:
           # Push the changes back to the repository
           git push
         fi
+
+  cli-matrix:
+    needs: build
+    if: needs.build.outputs.cli_skip != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        cli_version: ['2.84.0', '2.85.0', '2.86.0']
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+    - name: Install nbgv
+      run: dotnet tool install -g nbgv
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Download Docker image artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: topaz-host-image
+        path: /tmp
+    - name: Load Docker image
+      run: docker load < /tmp/topaz-host.tar.gz
+    - name: AzureCLI Tests (${{ matrix.cli_version }})
+      env:
+        AZURE_CLI_CONTAINER_IMAGE: mcr.microsoft.com/azure-cli:${{ matrix.cli_version }}
+      run: |
+        FILTER="${{ needs.build.outputs.cli_filter }}"
+        if [[ -z "$FILTER" ]]; then
+          FILTER="FullyQualifiedName~Topaz.Tests.AzureCLI"
+        fi
+        dotnet test -m:1 --no-build --verbosity normal --logger trx \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ${{ github.workspace }}/TestResults \
+          --filter "$FILTER"
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        large_files: true
+        check_name: AzureCLI Tests (${{ matrix.cli_version }})
+        files: |
+          ${{ github.workspace }}/**/*.trx
 

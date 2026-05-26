@@ -8,7 +8,8 @@ namespace Topaz.Tests.AzureCLI;
 
 public class TopazFixture
 {
-    private const string AzureCliContainerImage = "mcr.microsoft.com/azure-cli:2.84.0";
+    private static readonly string AzureCliContainerImage =
+        Environment.GetEnvironmentVariable("AZURE_CLI_CONTAINER_IMAGE") ?? "mcr.microsoft.com/azure-cli:2.84.0";
 
     private const string CloudEnvironmentConfiguration = """
 {
