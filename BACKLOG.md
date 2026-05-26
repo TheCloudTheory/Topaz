@@ -537,6 +537,34 @@ TODO: Azure Disks: SAS access endpoints
   labels: enhancement
 -->
 
+<!--
+TODO: Entra — AuthorizeEndpoint does not handle response_mode=form_post
+  Azure CLI 2.86.0 (MSAL) sends response_mode=form_post in the authorization request.
+  AuthorizeEndpoint currently ignores response_mode entirely and always issues a 302
+  redirect with code and state as query parameters. The MSAL listener on the loopback
+  redirect_uri expects a form POST, so it rejects the redirect with
+  "response_mode=query is not supported". Fix: read response_mode from the query string;
+  when form_post is requested, return 200 with an HTML auto-submit form that POSTs
+  code and state to redirect_uri instead of issuing a 302.
+  milestone: v1.6-beta
+  labels: bug, entra
+-->
+
+<!--
+TODO: Entra — ROPC login fails on non-container installs with azure-cli 2.86.0
+  MSAL 2.86.0 added a user-realm discovery pre-flight to the ROPC flow:
+  GET https://{instance}/common/userrealm/{username}?api-version=1.0
+  It constructs the URL using only the bare hostname (no custom port), so on a local
+  install the request goes to port 443. Topaz already implements GetUserRealmEndpoint
+  and registers it on port 443, but Host.cs explicitly skips port 443 when not running
+  inside a container. As a result the request gets Connection refused and az login
+  --username --password fails entirely. Investigate whether Topaz can bind to port 443
+  outside containers (e.g. via a capability or a user-space proxy), or redirect the
+  request to port 8899, so that ROPC works on non-Docker local installs.
+  milestone: v1.6-beta
+  labels: bug, entra
+-->
+
 ---
 
 ## v1.7-beta
