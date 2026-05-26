@@ -15,6 +15,7 @@ using Topaz.Service.ServiceBus;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage;
+using Topaz.Service.Sql;
 using Topaz.Service.VirtualMachine;
 using Topaz.Service.VirtualNetwork;
 using Topaz.Shared;
@@ -238,6 +239,9 @@ public sealed class TemplateDeploymentOrchestrator(
                     break;
                 case "Microsoft.Web/sites":
                     controlPlane = AppServiceSiteControlPlane.New(eventPipeline, logger);
+                    break;
+                case "Microsoft.Sql/servers":
+                    controlPlane = SqlServiceControlPlane.New(eventPipeline, logger);
                     break;
                 default:
                     logger.LogWarning($"Deployment of resource type {resource.Type} is not yet supported.");

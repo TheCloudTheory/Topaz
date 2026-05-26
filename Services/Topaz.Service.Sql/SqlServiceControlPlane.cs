@@ -1,0 +1,161 @@
+using Topaz.EventPipeline;
+using Topaz.ResourceManager;
+using Topaz.Service.ResourceGroup;
+using Topaz.Service.Shared;
+using Topaz.Service.Shared.Domain;
+using Topaz.Service.Sql.Models;
+using Topaz.Service.Sql.Models.Requests;
+using Topaz.Service.Subscription;
+using Topaz.Shared;
+
+namespace Topaz.Service.Sql;
+
+internal sealed class SqlServiceControlPlane(
+    Pipeline eventPipeline,
+    SqlServerResourceProvider provider,
+    ITopazLogger logger) : IControlPlane
+{
+    private const string SqlServerNotFoundCode = "ResourceNotFound";
+    private const string SqlServerNotFoundMessageTemplate = "SQL server '{0}' could not be found";
+
+    private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
+        new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
+
+    public static SqlServiceControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
+        new(eventPipeline, new SqlServerResourceProvider(logger), logger);
+
+    public OperationResult Deploy(GenericResource resource)
+    {
+        var server = resource.As<SqlServerResource, SqlServerResourceProperties>();
+        if (server == null)
+        {
+            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a SQL Server instance.");
+            return OperationResult.Failed;
+        }
+
+        if (string.IsNullOrWhiteSpace(server.Location))
+        {
+            logger.LogError($"SQL server resource `{resource.Id}` is missing required location.");
+            return OperationResult.Failed;
+        }
+
+        try
+        {
+            var result = CreateOrUpdate(
+                server.GetSubscription(),
+                server.GetResourceGroup(),
+                server.Name,
+                new CreateOrUpdateSqlServerRequest
+                {
+                    Location = server.Location,
+                    Tags = server.Tags,
+                    Properties = new CreateOrUpdateSqlServerRequest.CreateOrUpdateSqlServerRequestProperties
+                    {
+                        AdministratorLogin = server.Properties.AdministratorLogin,
+                        AdministratorLoginPassword = server.Properties.AdministratorLoginPassword,
+                        Version = server.Properties.Version,
+                        PublicNetworkAccess = server.Properties.PublicNetworkAccess
+                    }
+                });
+
+            return result.Result;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex);
+            return OperationResult.Failed;
+        }
+    }
+
+    public ControlPlaneOperationResult<SqlServerResource> Get(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string serverName)
+    {
+        var resource = provider.GetAs<SqlServerResource>(subscriptionIdentifier, resourceGroupIdentifier, serverName);
+
+        return resource == null
+            ? new ControlPlaneOperationResult<SqlServerResource>(
+                OperationResult.NotFound,
+                null,
+                string.Format(SqlServerNotFoundMessageTemplate, serverName),
+                SqlServerNotFoundCode)
+            : new ControlPlaneOperationResult<SqlServerResource>(OperationResult.Success, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult<SqlServerResource> CreateOrUpdate(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string serverName,
+        CreateOrUpdateSqlServerRequest request)
+    {
+        var resourceGroupOperation = _resourceGroupControlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier);
+        if (resourceGroupOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<SqlServerResource>(
+                OperationResult.NotFound,
+                null,
+                resourceGroupOperation.Reason,
+                resourceGroupOperation.Code);
+        }
+
+        var existing = provider.GetAs<SqlServerResource>(subscriptionIdentifier, resourceGroupIdentifier, serverName);
+
+        if (existing != null)
+        {
+            existing.Location = request.Location ?? existing.Location;
+            existing.Tags = request.Tags ?? existing.Tags;
+            SqlServerResourceProperties.UpdateFromRequest(existing.Properties, request);
+            provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, serverName, existing);
+
+            return new ControlPlaneOperationResult<SqlServerResource>(OperationResult.Updated, existing, null, null);
+        }
+
+        var location = request.Location ?? resourceGroupOperation.Resource!.Location!;
+        var properties = SqlServerResourceProperties.FromRequest(serverName, request);
+        var resource = new SqlServerResource(
+            subscriptionIdentifier,
+            resourceGroupIdentifier,
+            serverName,
+            location,
+            request.Tags,
+            properties);
+
+        provider.Create(subscriptionIdentifier, resourceGroupIdentifier, serverName, resource);
+
+        return new ControlPlaneOperationResult<SqlServerResource>(OperationResult.Created, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult<SqlServerResource> Delete(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string serverName)
+    {
+        var existing = provider.GetAs<SqlServerResource>(subscriptionIdentifier, resourceGroupIdentifier, serverName);
+
+        if (existing == null)
+        {
+            return new ControlPlaneOperationResult<SqlServerResource>(
+                OperationResult.NotFound,
+                null,
+                string.Format(SqlServerNotFoundMessageTemplate, serverName),
+                SqlServerNotFoundCode);
+        }
+
+        provider.Delete(subscriptionIdentifier, resourceGroupIdentifier, serverName);
+
+        return new ControlPlaneOperationResult<SqlServerResource>(OperationResult.Deleted, existing, null, null);
+    }
+
+    public IEnumerable<SqlServerResource> ListByResourceGroup(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier)
+    {
+        return provider.ListAs<SqlServerResource>(subscriptionIdentifier, resourceGroupIdentifier);
+    }
+
+    public IEnumerable<SqlServerResource> ListBySubscription(SubscriptionIdentifier subscriptionIdentifier)
+    {
+        return provider.ListAs<SqlServerResource>(subscriptionIdentifier, null);
+    }
+}

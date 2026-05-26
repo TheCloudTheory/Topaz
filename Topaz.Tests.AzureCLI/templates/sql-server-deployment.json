@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2023-08-01",
+      "name": "topaz-sql-server-cli",
+      "location": "westeurope",
+      "properties": {
+        "administratorLogin": "sqladmin",
+        "administratorLoginPassword": "P@ssw0rd1234!",
+        "version": "12.0",
+        "publicNetworkAccess": "Enabled"
+      }
+    }
+  ]
+}

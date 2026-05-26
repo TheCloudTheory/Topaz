@@ -31,6 +31,7 @@ using Topaz.Service.Storage.Services;
 using Topaz.Service.Subscription;
 using Topaz.Service.VirtualMachine;
 using Topaz.Service.VirtualNetwork;
+using Topaz.Service.Sql;
 using Spectre.Console;
 using Topaz.Shared;
 
@@ -116,7 +117,8 @@ public class Host
             new EntraService(_eventPipeline, _logger),
             new ContainerRegistryService(_eventPipeline, _logger),
             new AppServicePlanService(_eventPipeline, _logger),
-            new AppServiceSiteService(_eventPipeline, _logger)
+            new AppServiceSiteService(_eventPipeline, _logger),
+            new SqlService(_eventPipeline, _logger)
         };
 
         _logger.ConfigureIdFactory(idFactory);

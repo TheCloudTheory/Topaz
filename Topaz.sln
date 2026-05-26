@@ -98,6 +98,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.AzurePowerShell
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.VirtualMachine", "Services\Topaz.Service.VirtualMachine\Topaz.Service.VirtualMachine.csproj", "{6D6C476A-C333-4A28-B4D8-FEA3659B3FB2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Sql", "Services\Topaz.Service.Sql\Topaz.Service.Sql.csproj", "{E4F52B3A-7C1D-4F2B-83A6-95E0D2F8C3B1}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.MCP", "Topaz.Tests.MCP\Topaz.Tests.MCP.csproj", "{2BB22730-FB64-460D-B37F-3D706F65DC91}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TopazComposeApp", "Examples\Compose\app\TopazComposeApp.csproj", "{DF6F5CB6-BCCE-4D66-84DA-2BD7CE5082DE}"

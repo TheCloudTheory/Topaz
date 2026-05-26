@@ -9,3 +9,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Topaz.Service.VirtualMachine")]
 [assembly: InternalsVisibleTo("Topaz.Service.ManagedIdentity")]
 [assembly: InternalsVisibleTo("Topaz.Service.ContainerRegistry")]
+[assembly: InternalsVisibleTo("Topaz.Service.Sql")]

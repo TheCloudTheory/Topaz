@@ -186,19 +186,6 @@ TODO: ACR Tasks: Task Run CRUD and trigger operations
 ### Azure SQL — initial control plane
 
 <!--
-TODO: Azure SQL: New service project scaffold
-  Create Topaz.Service.Sql following the existing service conventions:
-  - Project file with references to Topaz.ResourceManager and Topaz.Service.Shared
-  - SqlServerResourceProperties + SqlServerResource (ArmResource<T>)
-  - SqlServerResourceProvider (ResourceProviderBase<T>) for filesystem persistence
-  - SqlServiceControlPlane implementing IControlPlane with Deploy()
-  - IServiceDefinition registration and wiring in Topaz.Host
-  - ProjectReference in Topaz.Service.ResourceManager for template deployment routing
-  milestone: v1.5-beta
-  labels: enhancement, azure-sql, good first issue
--->
-
-<!--
 TODO: Azure SQL: Server control plane endpoints
   Implement the ARM-level SQL Server resource surface:
   - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}  – create or update

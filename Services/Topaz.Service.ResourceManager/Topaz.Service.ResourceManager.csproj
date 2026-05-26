@@ -16,6 +16,7 @@
       <ProjectReference Include="..\Topaz.Service.Storage\Topaz.Service.Storage.csproj" />
       <ProjectReference Include="..\Topaz.Service.Subscription\Topaz.Service.Subscription.csproj" />
       <ProjectReference Include="..\Topaz.Service.VirtualMachine\Topaz.Service.VirtualMachine.csproj" />
+      <ProjectReference Include="..\Topaz.Service.Sql\Topaz.Service.Sql.csproj" />
       <ProjectReference Include="..\Topaz.Service.AppService\Topaz.Service.AppService.csproj" />
       <ProjectReference Include="..\Topaz.Service.VirtualNetwork\Topaz.Service.VirtualNetwork.csproj" />
       <ProjectReference Include="..\Topaz.Service.ManagementGroup\Topaz.Service.ManagementGroup.csproj" />      <ProjectReference Include="..\..\Topaz.CLI.Infrastructure\Topaz.CLI.Infrastructure.csproj" />    </ItemGroup>
