@@ -522,3 +522,22 @@ output "asp_basic_name"      { value = azurerm_service_plan.asp_basic.name }
 output "asp_basic_sku"       { value = azurerm_service_plan.asp_basic.sku_name }
 output "asp_standard_name"   { value = azurerm_service_plan.asp_standard.name }
 output "asp_standard_sku"    { value = azurerm_service_plan.asp_standard.sku_name }
+
+# ── SQL Server ────────────────────────────────────────────────────────────────
+
+resource "azurerm_resource_group" "sql_rg" {
+  name     = "tf-rm-sql-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_mssql_server" "sql" {
+  name                         = "tf-rm-sql"
+  resource_group_name          = azurerm_resource_group.sql_rg.name
+  location                     = azurerm_resource_group.sql_rg.location
+  version                      = "12.0"
+  administrator_login          = "sqladmin"
+  administrator_login_password = "SqlAdmin1234!@#"
+}
+
+output "sql_server_name"  { value = azurerm_mssql_server.sql.name }
+output "sql_server_fqdn"  { value = azurerm_mssql_server.sql.fully_qualified_domain_name }

@@ -186,22 +186,6 @@ TODO: ACR Tasks: Task Run CRUD and trigger operations
 ### Azure SQL — initial control plane
 
 <!--
-TODO: Azure SQL: Server control plane endpoints
-  Implement the ARM-level SQL Server resource surface:
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}  – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}  – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}  – delete
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.Sql/servers                              – list all
-  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}  – update
-  The emulated server does not run a real SQL engine. provisioningState is reported
-  as Succeeded immediately. fullyQualifiedDomainName follows the pattern
-  {name}.database.topaz.local.dev.
-  milestone: v1.5-beta
-  labels: enhancement, azure-sql, good first issue
--->
-
-<!--
 TODO: Azure SQL: Database control plane endpoints
   Implement the ARM-level SQL Database resource surface under a server:
   - PUT    .../servers/{server}/databases/{database}  – create or update

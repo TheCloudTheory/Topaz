@@ -14,12 +14,12 @@ sidebar_position: 15
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create Or Update | ❌ | `PUT /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}` |
-| Get | ❌ | `GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}` |
-| Delete | ❌ | `DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}` |
-| Update | ❌ | `PATCH /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}` |
-| List By Resource Group | ❌ | `GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers` |
-| List | ❌ | `GET /subscriptions/{sub}/providers/Microsoft.Sql/servers` |
+| Create Or Update | ✅ | `PUT /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}` |
+| Get | ✅ | `GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}` |
+| Delete | ✅ | `DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}` |
+| Update | ✅ | `PATCH /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers/{name}` |
+| List By Resource Group | ✅ | `GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Sql/servers` |
+| List | ✅ | `GET /subscriptions/{sub}/providers/Microsoft.Sql/servers` |
 | Check Name Availability | ❌ | |
 | Import Database | ❌ | |
 

@@ -151,11 +151,13 @@ internal sealed class SqlServiceControlPlane(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier)
     {
-        return provider.ListAs<SqlServerResource>(subscriptionIdentifier, resourceGroupIdentifier);
+        return provider.ListAs<SqlServerResource>(subscriptionIdentifier, resourceGroupIdentifier,
+            lookForNoOfSegments: 8);
     }
 
     public IEnumerable<SqlServerResource> ListBySubscription(SubscriptionIdentifier subscriptionIdentifier)
     {
-        return provider.ListAs<SqlServerResource>(subscriptionIdentifier, null);
+        return provider.ListAs<SqlServerResource>(subscriptionIdentifier, null,
+            lookForNoOfSegments: 8);
     }
 }

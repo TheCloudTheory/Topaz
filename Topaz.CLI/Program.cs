@@ -20,6 +20,7 @@ using Topaz.Service.Storage.Commands;
 using Topaz.Service.Subscription.Commands;
 using Topaz.Service.AppService.Commands;
 using Topaz.Service.VirtualMachine.Commands;
+using Topaz.Service.Sql.Commands;
 using Topaz.Shared;
 
 namespace Topaz.CLI;
@@ -132,7 +133,8 @@ internal class Program
             typeof(GenericContainerRegistryCommand),
             typeof(GenericVirtualNetworkCommand),
             typeof(GenericAppServiceCommand),
-            typeof(GenericVirtualMachineCommand)
+            typeof(GenericVirtualMachineCommand),
+            typeof(GenericSqlCommand)
         };
 
         var commands = Assembly.GetExecutingAssembly()

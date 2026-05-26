@@ -1,6 +1,7 @@
 using Topaz.EventPipeline;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
+using Topaz.Service.Sql.Endpoints;
 using Topaz.Shared;
 
 namespace Topaz.Service.Sql;
@@ -16,7 +17,15 @@ public sealed class SqlService(Pipeline eventPipeline, ITopazLogger logger) : IS
 
     public string Name => "Azure SQL";
 
-    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [];
+    public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
+    [
+        new CreateOrUpdateSqlServerEndpoint(_eventPipeline, _logger),
+        new GetSqlServerEndpoint(_eventPipeline, _logger),
+        new DeleteSqlServerEndpoint(_eventPipeline, _logger),
+        new UpdateSqlServerEndpoint(_eventPipeline, _logger),
+        new ListSqlServersByResourceGroupEndpoint(_eventPipeline, _logger),
+        new ListSqlServersBySubscriptionEndpoint(_eventPipeline, _logger)
+    ];
 
     public void Bootstrap() { }
 }
