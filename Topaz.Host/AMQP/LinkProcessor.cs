@@ -80,11 +80,17 @@ internal sealed class LinkProcessor(ITopazLogger logger) : ILinkProcessor
 
     private void HandleQueueManagementLink(AttachContext attachContext)
     {
+        var address = attachContext.Attach.Role
+            ? ((Source?)attachContext.Attach.Source)?.Address
+            : ((Target?)attachContext.Attach.Target)?.Address;
+
         if (attachContext.Attach.Role)
         {
             // Client opens a ReceiverLink to "{queue}/$management" → server is the sender →
             // this is the management RESPONSE link.  Register it by session so that
             // QueueManagementRequestEndpoint can look it up and send 200 OK replies.
+            logger.LogInformation($"[{nameof(LinkProcessor)}.{nameof(HandleQueueManagementLink)}] Registering queue management response link for address '{address}'.");
+
             var session = attachContext.Link.Session;
             _queueManagementResponseLinks[session] = attachContext.Link;
             attachContext.Link.AddClosedCallback((_, _) => _queueManagementResponseLinks.TryRemove(session, out _));
@@ -95,7 +101,9 @@ internal sealed class LinkProcessor(ITopazLogger logger) : ILinkProcessor
             // Client opens a SenderLink to "{queue}/$management" → server is the receiver →
             // this is the management REQUEST link.  Pass the session registry so OnMessage
             // can send responses (200 OK) for com.microsoft:complete, renew-lock, etc.
-            attachContext.Complete(new QueueManagementRequestEndpoint(_queueManagementResponseLinks), 300);
+            logger.LogInformation($"[{nameof(LinkProcessor)}.{nameof(HandleQueueManagementLink)}] Registering queue management request link for address '{address}'.");
+
+            attachContext.Complete(new QueueManagementRequestEndpoint(_queueManagementResponseLinks, logger), 300);
         }
     }
 }

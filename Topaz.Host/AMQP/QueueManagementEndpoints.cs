@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
+using System.Text;
 using Amqp;
 using Amqp.Framing;
 using Amqp.Listener;
 using Amqp.Types;
+using Topaz.Shared;
 
 namespace Topaz.Host.AMQP;
 
@@ -24,17 +26,27 @@ internal sealed class QueueManagementResponseEndpoint : LinkEndpoint
 /// paired response link so that the Azure SDK's RequestResponseAmqpLink does not time out.
 /// </summary>
 internal sealed class QueueManagementRequestEndpoint(
-    ConcurrentDictionary<Session, ListenerLink> responseLinks) : LinkEndpoint
+    ConcurrentDictionary<Session, ListenerLink> responseLinks,
+    ITopazLogger logger) : LinkEndpoint
 {
     public override void OnMessage(MessageContext messageContext)
     {
+        var operation = messageContext.Message.ApplicationProperties?["operation"]?.ToString() ?? "<missing>";
+        var statusCode = 200;
+        var requestBody = DescribeBody(messageContext.Message.Body);
+
+        logger.LogInformation($"[{nameof(QueueManagementRequestEndpoint)}.{nameof(OnMessage)}] Received queue management request: operation='{operation}', session='{messageContext.Link.Session}', hasResponseLink='{responseLinks.ContainsKey(messageContext.Link.Session)}'.");
+        logger.LogInformation($"[{nameof(QueueManagementRequestEndpoint)}.{nameof(OnMessage)}] Queue management request body: {requestBody}");
+
         // Settle the incoming delivery immediately.
         messageContext.Complete();
 
         if (!responseLinks.TryGetValue(messageContext.Link.Session, out var responseLink))
+        {
+            logger.LogError(nameof(QueueManagementRequestEndpoint), nameof(OnMessage),
+                $"No queue management response link registered for session '{messageContext.Link.Session}'.");
             return;
-
-        var operation = messageContext.Message.ApplicationProperties?["operation"] as string;
+        }
 
         ApplicationProperties responseProperties;
         Message reply;
@@ -45,8 +57,8 @@ internal sealed class QueueManagementRequestEndpoint(
             {
                 Map =
                 {
-                    ["status-code"] = 200,
-                    ["status-description"] = "OK"
+                    ["statusCode"] = 200,
+                    ["statusDescription"] = "OK"
                 }
             };
 
@@ -64,12 +76,15 @@ internal sealed class QueueManagementRequestEndpoint(
             {
                 Map =
                 {
-                    ["status-code"] = 200,
-                    ["status-description"] = "OK"
+                    ["statusCode"] = 200,
+                    ["statusDescription"] = "OK"
                 }
             };
 
-            reply = new Message { ApplicationProperties = responseProperties };
+            // Management replies are expected to be real AMQP management responses,
+            // not a header-only message. Use an empty map body rather than a body-less
+            // message so the client-side response parser does not treat it as malformed.
+            reply = new Message(new Map()) { ApplicationProperties = responseProperties };
         }
 
         reply.Properties = new Properties();
@@ -80,9 +95,39 @@ internal sealed class QueueManagementRequestEndpoint(
         if (msgId != null)
             reply.Properties.SetCorrelationId(msgId);
 
+        logger.LogInformation($"[{nameof(QueueManagementRequestEndpoint)}.{nameof(OnMessage)}] Sending queue management response: operation='{operation}', statusCode='{statusCode}', correlationId='{msgId ?? "<missing>"}'.");
+
         responseLink.SendMessage(reply);
     }
 
     public override void OnFlow(FlowContext flowContext) { }
     public override void OnDisposition(DispositionContext dispositionContext) { }
+
+    private static string DescribeBody(object? body)
+    {
+        if (body is null)
+            return "<null>";
+
+        if (body is Map map)
+        {
+            var builder = new StringBuilder();
+            builder.Append('{');
+            var first = true;
+            foreach (var key in map.Keys)
+            {
+                if (!first)
+                    builder.Append(", ");
+
+                builder.Append(key);
+                builder.Append('=');
+                builder.Append(map[key]);
+                first = false;
+            }
+
+            builder.Append('}');
+            return builder.ToString();
+        }
+
+        return body.ToString() ?? body.GetType().FullName ?? "<unknown>";
+    }
 }

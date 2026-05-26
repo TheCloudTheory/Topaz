@@ -21,8 +21,8 @@ internal sealed class ManagementProcessor : IRequestProcessor
             {
                 Map =
                 {
-                    ["status-code"] = 200,
-                    ["status-description"] = "OK"
+                    ["statusCode"] = 200,
+                    ["statusDescription"] = "OK"
                 }
             };
 
@@ -39,8 +39,8 @@ internal sealed class ManagementProcessor : IRequestProcessor
         {
             Map =
             {
-                ["status-code"] = 202,
-                ["status-description"] = "Accepted"
+                ["statusCode"] = 202,
+                ["statusDescription"] = "Accepted"
             }
         };
 

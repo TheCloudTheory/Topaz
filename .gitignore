@@ -20,3 +20,4 @@ GROWTH.md
 DEVELOPMENT.md
 sdk/python/topaz_sdk/__pycache__/**
 sdk/python/topaz_sdk.egg-info/**
+.tools/**

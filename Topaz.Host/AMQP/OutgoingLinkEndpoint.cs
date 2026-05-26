@@ -154,14 +154,12 @@ public class OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger) : L
         DeliveryBufferField.SetValue(delivery, buffer);
         DeliveryHandleField.SetValue(delivery, link.Handle);
         DeliveryLinkField.SetValue(delivery, link);
-        // Always send TRANSFER frames as pre-settled (settled=true).
-        // When settled=false (the default when the link negotiates snd-settle-mode=Unsettled),
-        // the Azure SDK receiver adds each delivery to its unsettledMap and DisposeMessageAsync
-        // blocks for up to 60 seconds waiting for a confirming DISPOSITION(settled=true) from
-        // the broker — causing CompleteMessageAsync to time out in MassTransit consumers.
-        // Pre-settling tells the receiver the message is already settled at the source, so it
-        // skips the unsettledMap entirely and CompleteMessageAsync returns immediately.
-        DeliverySettledProperty.SetValue(delivery, true);
+        // Service Bus queue receivers operate in PeekLock mode and expect normal unsettled
+        // transfers. Sender-settled deliveries consume the initial credit but do not appear to
+        // trigger credit replenishment in the MassTransit/Azure Service Bus receive path, which
+        // leaves the consumer stuck after the first message. Use unsettled transfers and let the
+        // receiver settle explicitly.
+        DeliverySettledProperty.SetValue(delivery, false);
         SessionSendDeliveryMethod.Invoke(link.Session, [delivery]);
     }
 }
