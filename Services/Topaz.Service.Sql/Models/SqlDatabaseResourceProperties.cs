@@ -18,7 +18,9 @@ public sealed class SqlDatabaseResourceProperties
     public static SqlDatabaseResourceProperties FromRequest(CreateOrUpdateSqlDatabaseRequest request) =>
         new()
         {
-            Collation = request.Properties?.Collation ?? "SQL_Latin1_General_CP1_CI_AS",
+            Collation = string.IsNullOrEmpty(request.Properties?.Collation)
+                ? "SQL_Latin1_General_CP1_CI_AS"
+                : request.Properties.Collation,
             MaxSizeBytes = request.Properties?.MaxSizeBytes ?? 2147483648,
             ZoneRedundant = request.Properties?.ZoneRedundant ?? false,
             LicenseType = request.Properties?.LicenseType,
@@ -29,7 +31,7 @@ public sealed class SqlDatabaseResourceProperties
     public static void UpdateFromRequest(SqlDatabaseResourceProperties properties,
         CreateOrUpdateSqlDatabaseRequest request)
     {
-        if (request.Properties?.Collation != null)
+        if (!string.IsNullOrEmpty(request.Properties?.Collation))
             properties.Collation = request.Properties.Collation;
 
         if (request.Properties?.MaxSizeBytes != null)
