@@ -482,18 +482,9 @@ TODO: Azure Disks: SAS access endpoints
   labels: enhancement
 -->
 
-<!--
-TODO: Entra — AuthorizeEndpoint does not handle response_mode=form_post
-  Azure CLI 2.86.0 (MSAL) sends response_mode=form_post in the authorization request.
-  AuthorizeEndpoint currently ignores response_mode entirely and always issues a 302
-  redirect with code and state as query parameters. The MSAL listener on the loopback
-  redirect_uri expects a form POST, so it rejects the redirect with
-  "response_mode=query is not supported". Fix: read response_mode from the query string;
-  when form_post is requested, return 200 with an HTML auto-submit form that POSTs
-  code and state to redirect_uri instead of issuing a 302.
-  milestone: v1.6-beta
-  labels: bug, entra
--->
+### Entra — AuthorizeEndpoint `response_mode=form_post`
+
+_Implemented in v1.6-beta: `AuthorizeEndpoint` now reads `response_mode` from the query string. When `form_post` is requested, it returns `200 OK` with an HTML auto-submit form that POSTs `code` and `state` to `redirect_uri` instead of issuing a `302` redirect. This fixes compatibility with Azure CLI 2.86.0 (MSAL), which sets `response_mode=form_post` and rejects redirect responses with "response_mode=query is not supported"._
 
 <!--
 TODO: Entra — ROPC login fails on non-container installs with azure-cli 2.86.0

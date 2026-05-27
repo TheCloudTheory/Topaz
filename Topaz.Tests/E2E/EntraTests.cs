@@ -313,4 +313,42 @@ public class EntraTests
             }
         }
     }
+
+    [Test]
+    public async Task AuthorizeEndpoint_DefaultMode_Returns302Redirect()
+    {
+        using var http = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false });
+
+        var url = "https://topaz.local.dev:8899/organizations/oauth2/v2.0/authorize" +
+                  "?state=test-state&redirect_uri=http%3A%2F%2Flocalhost%3A8400";
+        var response = await http.GetAsync(url);
+
+        Assert.That((int)response.StatusCode, Is.EqualTo(302));
+        Assert.That(response.Headers.Location, Is.Not.Null);
+        Assert.That(response.Headers.Location!.Query, Does.Contain("code="));
+        Assert.That(response.Headers.Location!.Query, Does.Contain("state=test-state"));
+    }
+
+    [Test]
+    public async Task AuthorizeEndpoint_FormPostMode_Returns200WithAutoSubmitForm()
+    {
+        using var http = new HttpClient();
+
+        var url = "https://topaz.local.dev:8899/organizations/oauth2/v2.0/authorize" +
+                  "?state=test-state&redirect_uri=http%3A%2F%2Flocalhost%3A8400&response_mode=form_post";
+        var response = await http.GetAsync(url);
+
+        Assert.That((int)response.StatusCode, Is.EqualTo(200));
+        Assert.That(response.Content.Headers.ContentType?.MediaType, Is.EqualTo("text/html"));
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Multiple(() =>
+        {
+            Assert.That(body, Does.Contain("<form"));
+            Assert.That(body, Does.Contain("name=\"code\""));
+            Assert.That(body, Does.Contain("name=\"state\""));
+            Assert.That(body, Does.Contain("test-state"));
+            Assert.That(body, Does.Contain("document.forms[0].submit()"));
+        });
+    }
 }

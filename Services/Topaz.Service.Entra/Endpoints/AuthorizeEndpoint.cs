@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net;
+using System.Text;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -51,21 +52,43 @@ public class AuthorizeEndpoint(ITopazLogger logger) : IEndpointDefinition
         
         logger.LogDebug(nameof(AuthorizeEndpoint), nameof(GetResponse), "Generated auth code: {0}", code);
 
-        var uri = context.Request.Query.TryGetValueForKey("redirect_uri", out var redirectUri)
-            ? new Uri(redirectUri! + $"?code={code}&state={state}")
-            : null;
-        
-        logger.LogDebug(nameof(AuthorizeEndpoint), nameof(GetResponse), "Redirecting to: {0}", uri);
-
-        if (uri == null)
+        if (!context.Request.Query.TryGetValueForKey("redirect_uri", out var redirectUri))
         {
             logger.LogWarning("Missing redirect_uri parameter in authorize request.");
-            
+
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
 
-        response.StatusCode = HttpStatusCode.Redirect;
-        response.Headers.Location = uri;
+        context.Request.Query.TryGetValueForKey("response_mode", out var responseMode);
+
+        if (string.Equals(responseMode, "form_post", StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogDebug(nameof(AuthorizeEndpoint), nameof(GetResponse), "Using form_post response mode for redirect_uri: {0}", redirectUri);
+
+            var html = $"""
+                <!DOCTYPE html>
+                <html>
+                <head><title>Redirecting...</title></head>
+                <body>
+                <form method="POST" action="{WebUtility.HtmlEncode(redirectUri)}">
+                  <input type="hidden" name="code" value="{WebUtility.HtmlEncode(code)}" />
+                  <input type="hidden" name="state" value="{WebUtility.HtmlEncode(state!)}" />
+                </form>
+                <script>document.forms[0].submit();</script>
+                </body>
+                </html>
+                """;
+
+            response.Content = new StringContent(html, Encoding.UTF8, "text/html");
+            response.StatusCode = HttpStatusCode.OK;
+        }
+        else
+        {
+            var uri = new Uri(redirectUri! + $"?code={code}&state={state}");
+            logger.LogDebug(nameof(AuthorizeEndpoint), nameof(GetResponse), "Redirecting to: {0}", uri);
+            response.StatusCode = HttpStatusCode.Redirect;
+            response.Headers.Location = uri;
+        }
     }
 }
