@@ -138,6 +138,14 @@
 
 ## v1.7-beta
 
+### Entra — `/devicelogin` interactive sign-in page
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | `GET /devicelogin` page | Serve an HTML form that accepts a `user_code` and a username; completing the form marks the corresponding device code as authorized for the submitted user |
+| <span class="badge--preview">Preview</span> | `POST /devicelogin` handler | Look up the device code by `user_code`, write into `DeviceCodeEndpoint.AuthorizedDeviceCodes`, and redirect to a confirmation page |
+| <span class="badge--preview">Preview</span> | Proper `authorization_pending` polling | Token polling returns `{"error":"authorization_pending"}` until the `/devicelogin` form is submitted, matching real Azure device code flow semantics |
+
 ### Virtual Network — Private Endpoint IP tracking
 
 | | Feature | Description |

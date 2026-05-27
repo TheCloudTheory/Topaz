@@ -486,6 +486,26 @@ TODO: Azure Disks: SAS access endpoints
 
 _Implemented in v1.6-beta: `AuthorizeEndpoint` now reads `response_mode` from the query string. When `form_post` is requested, it returns `200 OK` with an HTML auto-submit form that POSTs `code` and `state` to `redirect_uri` instead of issuing a `302` redirect. This fixes compatibility with Azure CLI 2.86.0 (MSAL), which sets `response_mode=form_post` and rejects redirect responses with "response_mode=query is not supported"._
 
+### Entra — Device Code flow (`POST /devicecode` + `grant_type=device_code`)
+
+_Implemented in v1.6-beta: `DeviceCodeEndpoint` handles `POST /organizations|{tenantId}|common/oauth2/v2.0/devicecode` and returns a valid RFC 8628 device-authorization response (`device_code`, `user_code`, `verification_uri`, `expires_in`, `interval`, `message`). `TokenEndpoint` now handles `grant_type=urn:ietf:params:oauth:grant-type:device_code`. When a `login_hint` is present in the device code request the matching user is resolved; otherwise the global admin is used as a placeholder (see TODO below)._
+
+<!--
+TODO: Entra — implement /devicelogin for real device code browser sign-in
+  DeviceCodeEndpoint currently pre-binds the device code to the global admin when no
+  login_hint is provided, so token polling succeeds immediately. Real Azure keeps the
+  code in "authorization_pending" state until the user visits verification_uri, enters
+  the user_code, and signs in. Topaz could support this properly:
+    1. GET /devicelogin — serves an HTML form that asks for user_code + username
+    2. POST /devicelogin — looks up the device code by user_code, marks it authorized
+       for the submitted user (writes into DeviceCodeEndpoint.AuthorizedDeviceCodes)
+    3. Token polling returns authorization_pending until step 2 completes
+  This would make the device code flow fully Azure-compatible and allow specifying any
+  registered user when logging in via az login --use-device-code.
+  milestone: v1.7-beta
+  labels: enhancement, entra
+-->
+
 <!--
 TODO: Entra — ROPC login fails on non-container installs with azure-cli 2.86.0
   MSAL 2.86.0 added a user-realm discovery pre-flight to the ROPC flow:

@@ -256,6 +256,32 @@ public class TokenEndpoint(ITopazLogger logger) : IEndpointDefinition
                 username = spOperation.Resource.AppId; // az account show reports user.name as the appId
                 break;
             }
+            case "urn:ietf:params:oauth:grant-type:device_code":
+            {
+                logger.LogDebug(nameof(TokenEndpoint), nameof(GetResponse),
+                    "device_code grant — resolving device code.");
+
+                var deviceCode = ExtractValueForToken(context, form, "device_code", null);
+                if (deviceCode == null ||
+                    !DeviceCodeEndpoint.AuthorizedDeviceCodes.TryRemove(deviceCode, out var deviceObjectId))
+                {
+                    response.CreateJsonContentResponse(
+                        ErrorResponse.Create("authorization_pending",
+                            "The device has not been authorized yet. Please wait and try again."),
+                        HttpStatusCode.BadRequest);
+                    return;
+                }
+
+                objectId = deviceObjectId;
+                var deviceUserOperation = _userDataPlane.Get(UserIdentifier.From(objectId));
+                if (deviceUserOperation.Resource != null &&
+                    deviceUserOperation.Result == OperationResult.Success)
+                {
+                    username = deviceUserOperation.Resource.UserPrincipalName;
+                }
+
+                break;
+            }
         }
 
         if (objectId == null)

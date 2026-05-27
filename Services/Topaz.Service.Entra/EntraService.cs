@@ -66,6 +66,7 @@ public class EntraService(Pipeline eventPipeline, ITopazLogger logger) : IServic
         new UpdateGroupEndpoint(logger),
         new DeleteGroupEndpoint(logger),
         new OidcEndpoint(),
+        new DeviceCodeEndpoint(logger),
         new AuthorizeEndpoint(logger),
         new TokenEndpoint(logger)
     ];

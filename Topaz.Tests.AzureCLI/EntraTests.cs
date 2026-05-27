@@ -178,4 +178,32 @@ public class EntraTests : TopazFixture
 			}
 		}
 	}
+
+	[Test]
+	public async Task DeviceCode_Post_And_TokenExchange_ReturnsAccessToken()
+	{
+		// az login --use-device-code is inherently interactive and cannot be automated.
+		// Drive the underlying HTTP flow with curl: POST to the device code endpoint, capture
+		// the device_code, then immediately exchange it for a token.  The emulator pre-authorizes
+		// the code on issuance when no login_hint is provided, so the first poll succeeds without
+		// any browser interaction.
+		var command =
+			"DEVICE_CODE=$(curl -sf --cacert /tmp/topaz.crt " +
+				"-X POST https://topaz.local.dev:8899/organizations/oauth2/v2.0/devicecode " +
+				"-H 'Content-Type: application/x-www-form-urlencoded' " +
+				"-d 'client_id=00000000-0000-0000-0000-000000000001&scope=https%3A%2F%2Fmanagement.azure.com%2F.default' " +
+				"| python3 -c 'import sys,json;print(json.load(sys.stdin)[\"device_code\"])') " +
+			"&& curl -sf --cacert /tmp/topaz.crt " +
+				"-X POST https://topaz.local.dev:8899/organizations/oauth2/v2.0/token " +
+				"-H 'Content-Type: application/x-www-form-urlencoded' " +
+				"--data-urlencode 'grant_type=urn:ietf:params:oauth:grant-type:device_code' " +
+				"--data-urlencode \"device_code=${DEVICE_CODE}\" " +
+				"--data-urlencode 'client_id=00000000-0000-0000-0000-000000000001'";
+
+		await RunAzureCliCommand(command, resp =>
+		{
+			Assert.That(resp["access_token"], Is.Not.Null);
+			Assert.That(resp["access_token"]!.GetValue<string>(), Is.Not.Empty);
+		});
+	}
 }

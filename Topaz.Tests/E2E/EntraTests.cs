@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.Graph;
 using Microsoft.Graph.Applications.Item.AddPassword;
 using Microsoft.Graph.Models;
@@ -350,5 +351,79 @@ public class EntraTests
             Assert.That(body, Does.Contain("test-state"));
             Assert.That(body, Does.Contain("document.forms[0].submit()"));
         });
+    }
+
+    [Test]
+    public async Task DeviceCodeEndpoint_Post_ReturnsDeviceCodeResponse()
+    {
+        using var http = new HttpClient();
+
+        var response = await http.PostAsync(
+            "https://topaz.local.dev:8899/organizations/oauth2/v2.0/devicecode",
+            new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("client_id", "00000000-0000-0000-0000-000000000001"),
+                new KeyValuePair<string, string>("scope", "https://management.azure.com/.default"),
+            }));
+
+        Assert.That((int)response.StatusCode, Is.EqualTo(200));
+
+        var body = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(body);
+        var root = doc.RootElement;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(root.TryGetProperty("device_code", out var deviceCode) &&
+                        !string.IsNullOrEmpty(deviceCode.GetString()), Is.True,
+                        "Response must contain a non-empty device_code");
+            Assert.That(root.TryGetProperty("user_code", out var userCode) &&
+                        !string.IsNullOrEmpty(userCode.GetString()), Is.True,
+                        "Response must contain a non-empty user_code");
+            Assert.That(root.TryGetProperty("verification_uri", out _), Is.True,
+                        "Response must contain verification_uri");
+            Assert.That(root.TryGetProperty("expires_in", out _), Is.True,
+                        "Response must contain expires_in");
+            Assert.That(root.TryGetProperty("interval", out _), Is.True,
+                        "Response must contain interval");
+        });
+    }
+
+    [Test]
+    public async Task DeviceCodeEndpoint_TokenExchange_ReturnsAccessToken()
+    {
+        using var http = new HttpClient();
+
+        // Step 1: obtain device_code
+        var deviceCodeResponse = await http.PostAsync(
+            "https://topaz.local.dev:8899/organizations/oauth2/v2.0/devicecode",
+            new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("client_id", "00000000-0000-0000-0000-000000000001"),
+                new KeyValuePair<string, string>("scope", "https://management.azure.com/.default"),
+            }));
+
+        var dcBody = await deviceCodeResponse.Content.ReadAsStringAsync();
+        using var dcDoc = JsonDocument.Parse(dcBody);
+        var deviceCode = dcDoc.RootElement.GetProperty("device_code").GetString()!;
+
+        // Step 2: exchange device_code for an access token
+        var tokenResponse = await http.PostAsync(
+            "https://topaz.local.dev:8899/organizations/oauth2/v2.0/token",
+            new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("grant_type", "urn:ietf:params:oauth:grant-type:device_code"),
+                new KeyValuePair<string, string>("device_code", deviceCode),
+                new KeyValuePair<string, string>("client_id", "00000000-0000-0000-0000-000000000001"),
+            }));
+
+        Assert.That((int)tokenResponse.StatusCode, Is.EqualTo(200));
+
+        var tokenBody = await tokenResponse.Content.ReadAsStringAsync();
+        using var tokenDoc = JsonDocument.Parse(tokenBody);
+
+        Assert.That(tokenDoc.RootElement.TryGetProperty("access_token", out var accessToken) &&
+                    !string.IsNullOrEmpty(accessToken.GetString()), Is.True,
+                    "Token response must contain a non-empty access_token");
     }
 }
