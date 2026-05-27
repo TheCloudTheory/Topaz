@@ -422,6 +422,8 @@ public class KeyVaultTests
         var signatureBase64Url = Base64UrlEncodeLocal(signature);
 
         // Act — verify via CLI
+        // Use --signature=<base64url> syntax: RSA signatures may start with '-',
+        // which Spectre.Console.Cli would misinterpret as a new option flag.
         var verifyResult = await Program.RunAsync([
             "keyvault", "key", "verify",
             "--vault-name", VaultName,
@@ -429,7 +431,7 @@ public class KeyVaultTests
             "--version", version,
             "--algorithm", "RS256",
             "--value", digestBase64Url,
-            "--signature", signatureBase64Url,
+            $"--signature={signatureBase64Url}",
             "-g", ResourceGroupName,
             "-s", SubscriptionId.ToString()
         ]);
@@ -469,13 +471,15 @@ public class KeyVaultTests
         var keyMaterialBase64Url = Base64UrlEncodeLocal(keyMaterial);
 
         // Act — wrap via CLI
+        // Use --value=<base64url> syntax: a random base64url value may start with
+        // '-', which Spectre.Console.Cli would misinterpret as a new option flag.
         var wrapResult = await Program.RunAsync([
             "keyvault", "key", "wrap",
             "--vault-name", VaultName,
             "--name", "cli-wrap-key",
             "--version", version,
             "--algorithm", "RSA-OAEP-256",
-            "--value", keyMaterialBase64Url,
+            $"--value={keyMaterialBase64Url}",
             "-g", ResourceGroupName,
             "-s", SubscriptionId.ToString()
         ]);
@@ -520,13 +524,15 @@ public class KeyVaultTests
         var wrappedBase64Url = Base64UrlEncodeLocal(wrapped);
 
         // Act — unwrap via CLI
+        // Use --value=<base64url> syntax: RSA ciphertext may start with '-',
+        // which Spectre.Console.Cli would misinterpret as a new option flag.
         var unwrapResult = await Program.RunAsync([
             "keyvault", "key", "unwrap",
             "--vault-name", VaultName,
             "--name", "cli-unwrap-key",
             "--version", version,
             "--algorithm", "RSA-OAEP-256",
-            "--value", wrappedBase64Url,
+            $"--value={wrappedBase64Url}",
             "-g", ResourceGroupName,
             "-s", SubscriptionId.ToString()
         ]);
