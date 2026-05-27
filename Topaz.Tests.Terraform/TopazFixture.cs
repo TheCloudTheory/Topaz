@@ -21,12 +21,38 @@ public class TopazFixture
 
     // Persisted on the host so providers and the Terraform binary are downloaded only once
     // across all test-class fixture setups, regardless of how many containers are created.
-    // Override with TOPAZ_TERRAFORM_CACHE_DIR to use a different path (e.g. when running under
-    // Colima or another container runtime that does not expose the home directory).
+    // Override with TOPAZ_TERRAFORM_CACHE_DIR to use a different path.
     // Default: /tmp/topaz-test-cache — accessible to both Docker Desktop and Colima.
+    // The path is resolved to its real filesystem path (no symlinks) so that the Docker daemon
+    // receives a path it can validate against its virtiofs mounts. On macOS /tmp is a symlink
+    // to /private/tmp; passing the symlink path to the Docker API causes a BadRequest error.
     private static readonly string TerraformCacheDir =
-        Environment.GetEnvironmentVariable("TOPAZ_TERRAFORM_CACHE_DIR")
-        ?? "/tmp/topaz-test-cache";
+        ResolveSymlinks(
+            Environment.GetEnvironmentVariable("TOPAZ_TERRAFORM_CACHE_DIR")
+            ?? "/tmp/topaz-test-cache");
+
+    /// <summary>
+    /// Resolves every symlink component in <paramref name="path"/> and returns the
+    /// canonical real path. This is necessary because the Docker daemon validates bind-mount
+    /// sources against the paths exposed by the container runtime (e.g. virtiofs in Colima),
+    /// which requires the real path rather than a symlink alias.
+    /// </summary>
+    private static string ResolveSymlinks(string path)
+    {
+        Directory.CreateDirectory(path);
+        var separator = Path.DirectorySeparatorChar;
+        var parts = Path.GetFullPath(path).TrimStart(separator).Split(separator);
+        var current = separator.ToString();
+        foreach (var part in parts)
+        {
+            current = Path.Combine(current, part);
+            if (!Directory.Exists(current)) break;
+            var link = Directory.ResolveLinkTarget(current, returnFinalTarget: false);
+            if (link is not null)
+                current = link.FullName;
+        }
+        return current;
+    }
 
     // Pre-initialized provider workspaces — each provider is initialized once in OneTimeSetUp
     // and then copied (cp -a) into every test workspace, eliminating the 30–90 s per-test
@@ -80,8 +106,6 @@ public class TopazFixture
                 return;
 
             _subscriptionId = Guid.NewGuid().ToString();
-
-            Directory.CreateDirectory(TerraformCacheDir);
 
             RemoveBlockingTopazContainerIfPresent();
 

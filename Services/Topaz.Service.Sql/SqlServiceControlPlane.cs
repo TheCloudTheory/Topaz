@@ -267,4 +267,149 @@ internal sealed class SqlServiceControlPlane(
         return provider.ListSubresourcesAs<SqlDatabaseResource>(
             subscriptionIdentifier, resourceGroupIdentifier, serverName, subresource);
     }
+
+    public ControlPlaneOperationResult<SqlServerConnectionPolicySubresource> GetConnectionPolicy(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string serverName,
+        string policyName)
+    {
+        var serverOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, serverName);
+        if (serverOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<SqlServerConnectionPolicySubresource>(
+                OperationResult.NotFound,
+                null,
+                serverOperation.Reason,
+                serverOperation.Code);
+        }
+
+        var subresource = nameof(Subresource.ConnectionPolicies).ToLowerInvariant();
+        var policy = provider.GetSubresourceAs<SqlServerConnectionPolicySubresource>(
+            subscriptionIdentifier, resourceGroupIdentifier, policyName, serverName, subresource);
+
+        if (policy == null)
+        {
+            policy = new SqlServerConnectionPolicySubresource(
+                subscriptionIdentifier, resourceGroupIdentifier, serverName, policyName,
+                SqlServerConnectionPolicySubresourceProperties.Default());
+        }
+
+        return new ControlPlaneOperationResult<SqlServerConnectionPolicySubresource>(
+            OperationResult.Success, policy, null, null);
+    }
+
+    public ControlPlaneOperationResult<SqlServerConnectionPolicySubresource> CreateOrUpdateConnectionPolicy(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string serverName,
+        string policyName,
+        SqlServerConnectionPolicySubresourceProperties properties)
+    {
+        var serverOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, serverName);
+        if (serverOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<SqlServerConnectionPolicySubresource>(
+                OperationResult.NotFound,
+                null,
+                serverOperation.Reason,
+                serverOperation.Code);
+        }
+
+        var subresource = nameof(Subresource.ConnectionPolicies).ToLowerInvariant();
+        var existing = provider.GetSubresourceAs<SqlServerConnectionPolicySubresource>(
+            subscriptionIdentifier, resourceGroupIdentifier, policyName, serverName, subresource);
+
+        if (existing != null)
+        {
+            existing.Properties.ConnectionType = properties.ConnectionType;
+            provider.CreateOrUpdateSubresource(
+                subscriptionIdentifier, resourceGroupIdentifier, policyName, serverName, subresource, existing);
+
+            return new ControlPlaneOperationResult<SqlServerConnectionPolicySubresource>(
+                OperationResult.Updated, existing, null, null);
+        }
+
+        var policy = new SqlServerConnectionPolicySubresource(
+            subscriptionIdentifier, resourceGroupIdentifier, serverName, policyName, properties);
+
+        provider.CreateOrUpdateSubresource(
+            subscriptionIdentifier, resourceGroupIdentifier, policyName, serverName, subresource, policy);
+
+        return new ControlPlaneOperationResult<SqlServerConnectionPolicySubresource>(
+            OperationResult.Created, policy, null, null);
+    }
+
+    public ControlPlaneOperationResult<SqlServerVulnerabilityAssessmentSubresource> GetVulnerabilityAssessment(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string serverName,
+        string assessmentName)
+    {
+        var serverOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, serverName);
+        if (serverOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<SqlServerVulnerabilityAssessmentSubresource>(
+                OperationResult.NotFound,
+                null,
+                serverOperation.Reason,
+                serverOperation.Code);
+        }
+
+        var subresource = nameof(Subresource.VulnerabilityAssessments).ToLowerInvariant();
+        var assessment = provider.GetSubresourceAs<SqlServerVulnerabilityAssessmentSubresource>(
+            subscriptionIdentifier, resourceGroupIdentifier, assessmentName, serverName, subresource);
+
+        if (assessment == null)
+        {
+            assessment = new SqlServerVulnerabilityAssessmentSubresource(
+                subscriptionIdentifier, resourceGroupIdentifier, serverName, assessmentName,
+                SqlServerVulnerabilityAssessmentSubresourceProperties.Default());
+        }
+
+        return new ControlPlaneOperationResult<SqlServerVulnerabilityAssessmentSubresource>(
+            OperationResult.Success, assessment, null, null);
+    }
+
+    public ControlPlaneOperationResult<SqlServerVulnerabilityAssessmentSubresource> CreateOrUpdateVulnerabilityAssessment(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string serverName,
+        string assessmentName,
+        SqlServerVulnerabilityAssessmentSubresourceProperties properties)
+    {
+        var serverOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, serverName);
+        if (serverOperation.Result == OperationResult.NotFound)
+        {
+            return new ControlPlaneOperationResult<SqlServerVulnerabilityAssessmentSubresource>(
+                OperationResult.NotFound,
+                null,
+                serverOperation.Reason,
+                serverOperation.Code);
+        }
+
+        var subresource = nameof(Subresource.VulnerabilityAssessments).ToLowerInvariant();
+        var existing = provider.GetSubresourceAs<SqlServerVulnerabilityAssessmentSubresource>(
+            subscriptionIdentifier, resourceGroupIdentifier, assessmentName, serverName, subresource);
+
+        if (existing != null)
+        {
+            existing.Properties.StorageContainerPath = properties.StorageContainerPath;
+            existing.Properties.RecurringScans = properties.RecurringScans;
+            provider.CreateOrUpdateSubresource(
+                subscriptionIdentifier, resourceGroupIdentifier, assessmentName, serverName, subresource, existing);
+
+            return new ControlPlaneOperationResult<SqlServerVulnerabilityAssessmentSubresource>(
+                OperationResult.Updated, existing, null, null);
+        }
+
+        var assessment = new SqlServerVulnerabilityAssessmentSubresource(
+            subscriptionIdentifier, resourceGroupIdentifier, serverName, assessmentName, properties);
+
+        provider.CreateOrUpdateSubresource(
+            subscriptionIdentifier, resourceGroupIdentifier, assessmentName, serverName, subresource, assessment);
+
+        return new ControlPlaneOperationResult<SqlServerVulnerabilityAssessmentSubresource>(
+            OperationResult.Created, assessment, null, null);
+    }
 }

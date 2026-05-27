@@ -2,5 +2,7 @@ namespace Topaz.Service.Sql;
 
 internal enum Subresource
 {
-    Databases
+    Databases,
+    ConnectionPolicies,
+    VulnerabilityAssessments
 }

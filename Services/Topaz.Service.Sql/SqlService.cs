@@ -12,7 +12,12 @@ public sealed class SqlService(Pipeline eventPipeline, ITopazLogger logger) : IS
     private readonly ITopazLogger _logger = logger;
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".azure-sql");
-    public static IReadOnlyCollection<string>? Subresources => [nameof(Subresource.Databases).ToLowerInvariant()];
+    public static IReadOnlyCollection<string>? Subresources =>
+    [
+        nameof(Subresource.Databases).ToLowerInvariant(),
+        nameof(Subresource.ConnectionPolicies).ToLowerInvariant(),
+        nameof(Subresource.VulnerabilityAssessments).ToLowerInvariant()
+    ];
     public static string UniqueName => "sql";
 
     public string Name => "Azure SQL";
@@ -29,7 +34,20 @@ public sealed class SqlService(Pipeline eventPipeline, ITopazLogger logger) : IS
         new GetSqlDatabaseEndpoint(_eventPipeline, _logger),
         new DeleteSqlDatabaseEndpoint(_eventPipeline, _logger),
         new UpdateSqlDatabaseEndpoint(_eventPipeline, _logger),
-        new ListSqlDatabasesByServerEndpoint(_eventPipeline, _logger)
+        new ListSqlDatabasesByServerEndpoint(_eventPipeline, _logger),
+        new CreateOrUpdateSqlServerConnectionPolicyEndpoint(_eventPipeline, _logger),
+        new GetSqlServerConnectionPolicyEndpoint(_eventPipeline, _logger),
+        new CreateOrUpdateSqlServerVulnerabilityAssessmentEndpoint(_eventPipeline, _logger),
+        new GetSqlServerVulnerabilityAssessmentEndpoint(_eventPipeline, _logger),
+        new ListRestorableDroppedDatabasesByServerEndpoint(),
+        new GetTransparentDataEncryptionEndpoint(),
+        new CreateOrUpdateTransparentDataEncryptionEndpoint(),
+        new GetDatabaseSecurityAlertPolicyEndpoint(),
+        new CreateOrUpdateDatabaseSecurityAlertPolicyEndpoint(),
+        new GetDatabaseBackupLongTermRetentionPolicyEndpoint(),
+        new CreateOrUpdateDatabaseBackupLongTermRetentionPolicyEndpoint(),
+        new GetDatabaseBackupShortTermRetentionPolicyEndpoint(),
+        new CreateOrUpdateDatabaseBackupShortTermRetentionPolicyEndpoint()
     ];
 
     public void Bootstrap() { }
