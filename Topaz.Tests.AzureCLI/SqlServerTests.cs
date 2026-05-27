@@ -19,9 +19,9 @@ public class SqlServerTests : TopazFixture
                     Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo(ServerName));
                     Assert.That(response["type"]!.GetValue<string>(),
                         Is.EqualTo("Microsoft.Sql/servers").IgnoreCase);
-                    Assert.That(response["properties"]!["state"]!.GetValue<string>(),
+                    Assert.That(response["state"]!.GetValue<string>(),
                         Is.EqualTo("Ready").IgnoreCase);
-                    Assert.That(response["properties"]!["fullyQualifiedDomainName"]!.GetValue<string>(),
+                    Assert.That(response["fullyQualifiedDomainName"]!.GetValue<string>(),
                         Does.Contain(".database.topaz.local.dev"));
                 });
             }, 0);

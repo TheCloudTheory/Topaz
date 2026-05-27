@@ -28,7 +28,7 @@ public sealed class SqlDatabaseResource : ArmSubresource<SqlDatabaseResourceProp
         Name = name;
         Location = location;
         Tags = tags ?? new Dictionary<string, string>();
-        Sku = sku;
+        Sku = sku ?? new ResourceSku { Name = "Basic", Tier = "Basic" };
         Properties = properties;
     }
 

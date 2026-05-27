@@ -28,7 +28,7 @@ public class SqlDatabaseTests : TopazFixture
                     Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo(DatabaseName));
                     Assert.That(response["type"]!.GetValue<string>(),
                         Is.EqualTo("Microsoft.Sql/servers/databases").IgnoreCase);
-                    Assert.That(response["properties"]!["status"]!.GetValue<string>(),
+                    Assert.That(response["status"]!.GetValue<string>(),
                         Is.EqualTo("Online").IgnoreCase);
                 });
             }, 0);
@@ -88,9 +88,9 @@ public class SqlDatabaseTests : TopazFixture
                 Assert.Multiple(() =>
                 {
                     Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo(dbShow));
-                    Assert.That(response["properties"]!["status"]!.GetValue<string>(),
+                    Assert.That(response["status"]!.GetValue<string>(),
                         Is.EqualTo("Online").IgnoreCase);
-                    Assert.That(response["properties"]!["collation"]!.GetValue<string>(),
+                    Assert.That(response["collation"]!.GetValue<string>(),
                         Is.EqualTo("SQL_Latin1_General_CP1_CI_AS").IgnoreCase);
                 });
             }, 0);
