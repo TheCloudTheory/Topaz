@@ -153,20 +153,7 @@ _Implemented in v1.5-beta: `PUT`, `GET`, `DELETE`, `HEAD`, `validate`, `cancel`,
 
 ### Container Registry — ACR Tasks
 
-<!--
-TODO: ACR Tasks: Task CRUD control plane
-  Implement the ARM-level task management surface under the ACR Tasks API (2019-04-01):
-  - PUT    .../registries/{registry}/tasks/{task}  – create or update task
-  - GET    .../registries/{registry}/tasks/{task}  – get task
-  - DELETE .../registries/{registry}/tasks/{task}  – delete task
-  - GET    .../registries/{registry}/tasks          – list tasks
-  - PATCH  .../registries/{registry}/tasks/{task}  – update task
-  Follow the existing ContainerRegistry service conventions. Add TaskResourceProperties
-  and TaskResource (ArmResource<T>) with fields matching the Azure REST API schema:
-  https://learn.microsoft.com/en-us/rest/api/container-registry-tasks/tasks?view=rest-container-registry-tasks-2019-04-01
-  milestone: v1.5-beta
-  labels: enhancement, container-registry, good first issue
--->
+_Implemented in v1.5-beta: ARM-level task management surface (Create, Get, Get Details, List, Update, Delete) under the ACR Tasks API (2019-04-01). Tasks are persisted as subresources of the registry. Complex fields (platform, step, trigger, agentConfiguration, credentials) are stored and round-tripped verbatim as JSON._
 
 <!--
 TODO: ACR Tasks: Task Run CRUD and trigger operations

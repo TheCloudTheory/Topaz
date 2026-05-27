@@ -4,6 +4,7 @@ using Topaz.ResourceManager;
 using Topaz.Service.ContainerRegistry.Models;
 using Topaz.Service.ContainerRegistry.Models.Requests;
 using Topaz.Service.ManagedIdentity;
+using Topaz.Service.ContainerRegistry.Models.Responses;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -369,5 +370,167 @@ internal sealed class ContainerRegistryControlPlane(
 
         var usages = ContainerRegistryResourceProperties.GetUsagesForSku(result.Resource!.Sku?.Name);
         return new ControlPlaneOperationResult<RegistryUsage[]>(OperationResult.Success, usages, null, null);
+    }
+
+    private const string TasksSubresource = "tasks";
+
+    private const string TaskNotFoundCode = "TaskNotFound";
+    private const string TaskNotFoundMessageTemplate = "ACR task '{0}' could not be found in registry '{1}'";
+
+    public ControlPlaneOperationResult<AcrTaskResource> CreateOrUpdateTask(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string registryName,
+        string taskName,
+        CreateOrUpdateAcrTaskRequest request)
+    {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(CreateOrUpdateTask),
+            "Executing {0}: registry={1}, task={2}", nameof(CreateOrUpdateTask), registryName, taskName);
+
+        var registryOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        if (registryOperation.Result == OperationResult.NotFound)
+            return new ControlPlaneOperationResult<AcrTaskResource>(
+                OperationResult.NotFound, null, registryOperation.Reason, registryOperation.Code);
+
+        var existing = provider.GetSubresourceAs<AcrTaskResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, taskName, registryName, TasksSubresource);
+
+        AcrTaskResource resource;
+        if (existing == null)
+        {
+            var location = request.Location ?? registryOperation.Resource!.Location ?? "eastus";
+            var properties = AcrTaskResourceProperties.FromRequest(request);
+            resource = new AcrTaskResource(
+                subscriptionIdentifier, resourceGroupIdentifier, registryName, taskName,
+                location, request.Tags, request.Identity, properties);
+        }
+        else
+        {
+            AcrTaskResourceProperties.UpdateFromRequest(existing, new UpdateAcrTaskRequest
+            {
+                Tags = request.Tags ?? existing.Tags,
+                Identity = request.Identity ?? existing.Identity,
+                Properties = request.Properties == null ? null : new UpdateAcrTaskRequest.UpdateAcrTaskRequestProperties
+                {
+                    Status = request.Properties.Status,
+                    Timeout = request.Properties.Timeout,
+                    Platform = request.Properties.Platform,
+                    AgentConfiguration = request.Properties.AgentConfiguration,
+                    Step = request.Properties.Step,
+                    Trigger = request.Properties.Trigger,
+                    Credentials = request.Properties.Credentials
+                }
+            });
+            resource = existing;
+        }
+
+        provider.CreateOrUpdateSubresource(
+            subscriptionIdentifier, resourceGroupIdentifier, taskName, registryName, TasksSubresource, resource);
+
+        var result = existing == null ? OperationResult.Created : OperationResult.Updated;
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(CreateOrUpdateTask),
+            "Executing {0}: task '{1}' {2}.", nameof(CreateOrUpdateTask), taskName,
+            existing == null ? "created" : "updated");
+        return new ControlPlaneOperationResult<AcrTaskResource>(result, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult<AcrTaskResource> GetTask(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string registryName,
+        string taskName)
+    {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(GetTask),
+            "Executing {0}: registry={1}, task={2}", nameof(GetTask), registryName, taskName);
+
+        var registryOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        if (registryOperation.Result == OperationResult.NotFound)
+            return new ControlPlaneOperationResult<AcrTaskResource>(
+                OperationResult.NotFound, null, registryOperation.Reason, registryOperation.Code);
+
+        var resource = provider.GetSubresourceAs<AcrTaskResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, taskName, registryName, TasksSubresource);
+
+        return resource == null
+            ? new ControlPlaneOperationResult<AcrTaskResource>(
+                OperationResult.NotFound, null,
+                string.Format(TaskNotFoundMessageTemplate, taskName, registryName),
+                TaskNotFoundCode)
+            : new ControlPlaneOperationResult<AcrTaskResource>(OperationResult.Success, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult DeleteTask(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string registryName,
+        string taskName)
+    {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(DeleteTask),
+            "Executing {0}: registry={1}, task={2}", nameof(DeleteTask), registryName, taskName);
+
+        var existing = provider.GetSubresourceAs<AcrTaskResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, taskName, registryName, TasksSubresource);
+
+        if (existing == null)
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound,
+                string.Format(TaskNotFoundMessageTemplate, taskName, registryName),
+                TaskNotFoundCode);
+
+        provider.DeleteSubresource(
+            subscriptionIdentifier, resourceGroupIdentifier, taskName, registryName, TasksSubresource);
+
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(DeleteTask),
+            "Executing {0}: task '{1}' deleted.", nameof(DeleteTask), taskName);
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
+    }
+
+    public ControlPlaneOperationResult<AcrTaskResource[]> ListTasks(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string registryName)
+    {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ListTasks),
+            "Executing {0}: registry={1}", nameof(ListTasks), registryName);
+
+        var registryOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        if (registryOperation.Result == OperationResult.NotFound)
+            return new ControlPlaneOperationResult<AcrTaskResource[]>(
+                OperationResult.NotFound, null, registryOperation.Reason, registryOperation.Code);
+
+        var tasks = provider.ListSubresourcesAs<AcrTaskResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, registryName, TasksSubresource);
+
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ListTasks),
+            "Executing {0}: Found {1} tasks.", nameof(ListTasks), tasks.Length);
+        return new ControlPlaneOperationResult<AcrTaskResource[]>(OperationResult.Success, tasks, null, null);
+    }
+
+    public ControlPlaneOperationResult<AcrTaskResource> UpdateTask(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string registryName,
+        string taskName,
+        UpdateAcrTaskRequest request)
+    {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(UpdateTask),
+            "Executing {0}: registry={1}, task={2}", nameof(UpdateTask), registryName, taskName);
+
+        var existing = provider.GetSubresourceAs<AcrTaskResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, taskName, registryName, TasksSubresource);
+
+        if (existing == null)
+            return new ControlPlaneOperationResult<AcrTaskResource>(
+                OperationResult.NotFound, null,
+                string.Format(TaskNotFoundMessageTemplate, taskName, registryName),
+                TaskNotFoundCode);
+
+        AcrTaskResourceProperties.UpdateFromRequest(existing, request);
+        provider.CreateOrUpdateSubresource(
+            subscriptionIdentifier, resourceGroupIdentifier, taskName, registryName, TasksSubresource, existing);
+
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(UpdateTask),
+            "Executing {0}: task '{1}' updated.", nameof(UpdateTask), taskName);
+        return new ControlPlaneOperationResult<AcrTaskResource>(OperationResult.Updated, existing, null, null);
     }
 }

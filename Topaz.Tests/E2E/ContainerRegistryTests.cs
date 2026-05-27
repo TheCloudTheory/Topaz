@@ -1125,4 +1125,120 @@ public class ContainerRegistryTests
             new HttpRequestMessage(HttpMethod.Head, $"https://{host}/v2/{repoName}/blobs/{digest}"));
         Assert.That((int)headResp.StatusCode, Is.EqualTo(404));
     }
+
+    [Test]
+    public async Task ContainerRegistryTask_CreateAndGet_ShouldSucceed()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Standard));
+        var registryLro = await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var tasks = registryLro.Value.GetContainerRegistryTasks();
+        var taskData = new ContainerRegistryTaskData(new AzureLocation("westeurope"))
+        {
+            Platform = new ContainerRegistryPlatformProperties(ContainerRegistryOS.Linux),
+            Step = new ContainerRegistryDockerBuildStep("Dockerfile")
+            {
+                ContextPath = "https://github.com/Azure-Samples/acr-build-helloworld-node"
+            }
+        };
+
+        var createLro = await tasks.CreateOrUpdateAsync(WaitUntil.Completed, "mytask", taskData);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(createLro.Value.Data.Name, Is.EqualTo("mytask"));
+            Assert.That(createLro.Value.Data.ProvisioningState.ToString(), Is.EqualTo("Succeeded"));
+        });
+
+        var fetched = await tasks.GetAsync("mytask");
+        Assert.That(fetched.Value.Data.Name, Is.EqualTo("mytask"));
+    }
+
+    [Test]
+    public async Task ContainerRegistryTask_List_ShouldReturnCreatedTask()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Standard));
+        var registryLro = await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var tasks = registryLro.Value.GetContainerRegistryTasks();
+        var taskData = new ContainerRegistryTaskData(new AzureLocation("westeurope"))
+        {
+            Platform = new ContainerRegistryPlatformProperties(ContainerRegistryOS.Linux),
+            Step = new ContainerRegistryDockerBuildStep("Dockerfile")
+        };
+        await tasks.CreateOrUpdateAsync(WaitUntil.Completed, "listtask", taskData);
+
+        var listed = new List<ContainerRegistryTaskResource>();
+        await foreach (var t in tasks.GetAllAsync())
+            listed.Add(t);
+
+        Assert.That(listed, Has.Some.Matches<ContainerRegistryTaskResource>(t => t.Data.Name == "listtask"));
+    }
+
+    [Test]
+    public async Task ContainerRegistryTask_Update_ShouldModifyStatus()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Standard));
+        var registryLro = await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var tasks = registryLro.Value.GetContainerRegistryTasks();
+        var taskData = new ContainerRegistryTaskData(new AzureLocation("westeurope"))
+        {
+            Platform = new ContainerRegistryPlatformProperties(ContainerRegistryOS.Linux),
+            Step = new ContainerRegistryDockerBuildStep("Dockerfile")
+        };
+        var createLro = await tasks.CreateOrUpdateAsync(WaitUntil.Completed, "updatetask", taskData);
+
+        var patch = new ContainerRegistryTaskPatch { Status = ContainerRegistryTaskStatus.Disabled };
+        var updateLro = await createLro.Value.UpdateAsync(WaitUntil.Completed, patch);
+
+        Assert.That(updateLro.Value.Data.Status, Is.EqualTo(ContainerRegistryTaskStatus.Disabled));
+    }
+
+    [Test]
+    public async Task ContainerRegistryTask_Delete_ShouldRemoveTask()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var registries = resourceGroup.Value.GetContainerRegistries();
+
+        var registryData = new ContainerRegistryData(new AzureLocation("westeurope"), new ContainerRegistrySku(ContainerRegistrySkuName.Standard));
+        var registryLro = await registries.CreateOrUpdateAsync(WaitUntil.Completed, RegistryName, registryData);
+
+        var tasks = registryLro.Value.GetContainerRegistryTasks();
+        var taskData = new ContainerRegistryTaskData(new AzureLocation("westeurope"))
+        {
+            Platform = new ContainerRegistryPlatformProperties(ContainerRegistryOS.Linux),
+            Step = new ContainerRegistryDockerBuildStep("Dockerfile")
+        };
+        var createLro = await tasks.CreateOrUpdateAsync(WaitUntil.Completed, "deletetask", taskData);
+
+        await createLro.Value.DeleteAsync(WaitUntil.Completed);
+
+        var allTasks = new List<ContainerRegistryTaskResource>();
+        await foreach (var t in tasks.GetAllAsync())
+            allTasks.Add(t);
+
+        Assert.That(allTasks, Has.None.Matches<ContainerRegistryTaskResource>(t => t.Data.Name == "deletetask"));
+    }
 }

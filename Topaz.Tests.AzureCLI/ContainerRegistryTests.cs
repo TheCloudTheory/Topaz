@@ -453,4 +453,49 @@ public class ContainerRegistryTests : TopazFixture
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
 
+    [Test]
+    public async Task AcrTask_CreateShowListDelete_ShouldSucceed()
+    {
+        const string registryName = "topazacrtask01";
+        const string resourceGroup = "test-acr-task-rg";
+        const string taskName = "my-build-task";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az acr create --name {registryName} --resource-group {resourceGroup} --sku Standard --location westeurope");
+
+        await RunAzureCliCommand(
+            $"az acr task create --name {taskName} --registry {registryName} " +
+            $"--resource-group {resourceGroup} --cmd \"echo hello\" --no-push --context /dev/null");
+
+        await RunAzureCliCommand(
+            $"az acr task show --name {taskName} --registry {registryName} --resource-group {resourceGroup}",
+            resp =>
+            {
+                Assert.That(resp["name"]!.GetValue<string>(), Is.EqualTo(taskName));
+            });
+
+        await RunAzureCliCommand(
+            $"az acr task list --registry {registryName} --resource-group {resourceGroup}",
+            resp =>
+            {
+                var names = resp.AsArray().Select(t => t!["name"]!.GetValue<string>()).ToList();
+                Assert.That(names, Does.Contain(taskName));
+            });
+
+        await RunAzureCliCommand(
+            $"az acr task delete --name {taskName} --registry {registryName} --resource-group {resourceGroup} --yes");
+
+        await RunAzureCliCommand(
+            $"az acr task list --registry {registryName} --resource-group {resourceGroup}",
+            resp =>
+            {
+                var names = resp.AsArray().Select(t => t!["name"]!.GetValue<string>()).ToList();
+                Assert.That(names, Does.Not.Contain(taskName));
+            });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
 }

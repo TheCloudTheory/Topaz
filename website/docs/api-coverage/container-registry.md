@@ -204,7 +204,7 @@ The data plane covers the [OCI Distribution Spec](https://github.com/opencontain
 
 ---
 
-## Tasks API (planned for 1.5-beta)
+## Tasks API
 
 :::info[Azure REST API reference]
 [Azure Container Registry Tasks REST API · 2019-04-01](https://learn.microsoft.com/en-us/rest/api/container-registry-tasks/operation-groups?view=rest-container-registry-tasks-2019-04-01)
@@ -239,9 +239,9 @@ This section tracks task-oriented ARM operations for building and running contai
 
 | Operation | Status |
 |-----------|--------|
-| Create | ❌ |
-| Delete | ❌ |
-| Get | ❌ |
-| Get Details | ❌ |
-| List | ❌ |
-| Update | ❌ |
+| Create | ✅ |
+| Delete | ✅ |
+| Get | ✅ |
+| Get Details | ✅ |
+| List | ✅ |
+| Update | ✅ |
