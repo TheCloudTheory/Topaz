@@ -183,6 +183,31 @@ Or create the subscription manually after starting:
 topaz subscription create --name "Default" --subscription-id 00000000-0000-0000-0000-000000000000
 ```
 
+### `az login` fails with azure-cli 2.86.0
+
+Two authentication flows are broken in azure-cli 2.86.0 against a non-Docker local Topaz install:
+
+- **Interactive login** — MSAL 2.86.0 sends `response_mode=form_post` in the authorization
+  request. Topaz always redirects with query parameters, so the MSAL loopback listener
+  rejects the response with *"response_mode=query is not supported"*.
+- **Username/password login** — MSAL 2.86.0 added a user-realm discovery pre-flight
+  (`GET /common/userrealm/{username}`) that it directs to port 443. Topaz skips port 443
+  on non-container installs, so the connection is refused before any token is issued.
+
+**Workaround:** downgrade to azure-cli 2.84.0 until both issues are resolved in Topaz:
+
+```bash
+# macOS (Homebrew)
+brew install azure-cli@2.84.0
+
+# pip
+pip install azure-cli==2.84.0
+```
+
+Both flows work correctly with azure-cli 2.84.0, which is also the version used by Topaz's own test suite.
+
+---
+
 ### Switching back to real Azure
 
 ```bash
