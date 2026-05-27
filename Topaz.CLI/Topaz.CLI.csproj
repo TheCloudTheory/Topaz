@@ -27,7 +27,9 @@
     <ProjectReference Include="../Services/Topaz.Service.AppService/Topaz.Service.AppService.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.VirtualMachine/Topaz.Service.VirtualMachine.csproj" />
     <ProjectReference Include="../Services/Topaz.Service.Sql/Topaz.Service.Sql.csproj" />
-    <ProjectReference Include="..\Documentation\Topaz.Documentation\Topaz.Documentation.csproj" />    <ProjectReference Include="../Topaz.CLI.Infrastructure/Topaz.CLI.Infrastructure.csproj" />  </ItemGroup>
+    <ProjectReference Include="..\Documentation\Topaz.Documentation\Topaz.Documentation.csproj" />    
+    <ProjectReference Include="../Topaz.CLI.Infrastructure/Topaz.CLI.Infrastructure.csproj" />  
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
