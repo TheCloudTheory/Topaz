@@ -194,6 +194,12 @@
 | <span class="badge--preview">Preview</span> | Topic filters and rules | Full ARM CRUD for subscription rules (`CorrelationRuleFilter`, `SqlRuleFilter`, `SqlRuleAction`); message routing at publish time evaluates active rules and only forwards matching messages to each subscription |
 | <span class="badge--preview">Preview</span> | Authorization rules and SAS keys | Per-namespace, per-queue, and per-topic authorization rule CRUD; `listKeys` and `regenerateKeys` actions; 256-bit SAS key pairs persisted and rotatable |
 
+### Container Registry — Real Docker build-and-push execution
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Real Docker execution for ACR Tasks | Upgrade the ACR run emulation from immediate-Succeeded to real container workloads: detect Docker at host startup, git clone the contextPath, spawn `docker build` + `docker push` to the local OCI registry, drive real status transitions (`Queued` → `Running` → `Succeeded` / `Failed`), and stream actual build output to the log endpoint |
+
 ---
 
 ## v1.8-preview

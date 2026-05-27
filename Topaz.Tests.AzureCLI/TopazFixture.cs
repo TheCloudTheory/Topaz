@@ -108,6 +108,7 @@ public class TopazFixture
             .WithExtraHost("topazstortblshow01.table.storage.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazstortblprops01.table.storage.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazstortblqry01.table.storage.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("topazacrrun01.cr.topaz.local.dev", _containerTopaz.IpAddress)
             .Build();
         
         // Act

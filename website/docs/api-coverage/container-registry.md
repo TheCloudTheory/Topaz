@@ -219,7 +219,7 @@ This section tracks task-oriented ARM operations for building and running contai
 | Operation | Status |
 |-----------|--------|
 | Get Build Source Upload Url | ❌ |
-| Schedule Run | ❌ |
+| Schedule Run | ✅ |
 
 ### Runs
 
@@ -228,10 +228,10 @@ This section tracks task-oriented ARM operations for building and running contai
 | Operation | Status |
 |-----------|--------|
 | Cancel | ❌ |
-| Get | ❌ |
-| Get Log Sas Url | ❌ |
-| List | ❌ |
-| Update | ❌ |
+| Get | ✅ |
+| Get Log Sas Url | ✅ |
+| List | ✅ |
+| Update | ✅ |
 
 ### Tasks
 
@@ -244,4 +244,5 @@ This section tracks task-oriented ARM operations for building and running contai
 | Get | ✅ |
 | Get Details | ✅ |
 | List | ✅ |
+| Run | ✅ |
 | Update | ✅ |

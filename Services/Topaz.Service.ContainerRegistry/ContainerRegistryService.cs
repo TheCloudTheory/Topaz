@@ -6,6 +6,7 @@ using Topaz.Service.ContainerRegistry.Endpoints.Manifests;
 using Topaz.Service.ContainerRegistry.Endpoints.Repositories;
 using Topaz.Service.ContainerRegistry.Endpoints.Registry;
 using Topaz.Service.ContainerRegistry.Endpoints.Tags;
+using Topaz.Service.ContainerRegistry.Endpoints.Runs;
 using Topaz.Service.ContainerRegistry.Endpoints.Tasks;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
@@ -17,13 +18,20 @@ public sealed class ContainerRegistryService(Pipeline eventPipeline, ITopazLogge
 {
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".container-registry");
-    public static IReadOnlyCollection<string>? Subresources => ["tasks"];
+    public static IReadOnlyCollection<string>? Subresources => ["tasks", "runs"];
     public static string UniqueName => "container-registry";
 
     public string Name => "Azure Container Registry";
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
+        new RunAcrTaskEndpoint(eventPipeline, logger),
+        new GetAcrRunEndpoint(eventPipeline, logger),
+        new ListAcrRunsEndpoint(eventPipeline, logger),
+        new UpdateAcrRunEndpoint(eventPipeline, logger),
+        new GetAcrRunLogSasUrlEndpoint(eventPipeline, logger),
+        new ScheduleAcrRunEndpoint(eventPipeline, logger),
+        new GetAcrRunLogContentEndpoint(),
         new CreateOrUpdateAcrTaskEndpoint(eventPipeline, logger),
         new GetAcrTaskEndpoint(eventPipeline, logger),
         new GetAcrTaskDetailsEndpoint(eventPipeline, logger),

@@ -373,9 +373,13 @@ internal sealed class ContainerRegistryControlPlane(
     }
 
     private const string TasksSubresource = "tasks";
+    private const string RunsSubresource = "runs";
 
     private const string TaskNotFoundCode = "TaskNotFound";
     private const string TaskNotFoundMessageTemplate = "ACR task '{0}' could not be found in registry '{1}'";
+
+    private const string RunNotFoundCode = "RunNotFound";
+    private const string RunNotFoundMessageTemplate = "ACR run '{0}' could not be found in registry '{1}'";
 
     public ControlPlaneOperationResult<AcrTaskResource> CreateOrUpdateTask(
         SubscriptionIdentifier subscriptionIdentifier,
@@ -532,5 +536,140 @@ internal sealed class ContainerRegistryControlPlane(
         logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(UpdateTask),
             "Executing {0}: task '{1}' updated.", nameof(UpdateTask), taskName);
         return new ControlPlaneOperationResult<AcrTaskResource>(OperationResult.Updated, existing, null, null);
+    }
+
+    public ControlPlaneOperationResult<AcrRunResource> TriggerTaskRun(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string registryName,
+        string taskName,
+        RunAcrTaskRequest request)
+    {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(TriggerTaskRun),
+            "Executing {0}: registry={1}, task={2}", nameof(TriggerTaskRun), registryName, taskName);
+
+        var registryOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        if (registryOperation.Result == OperationResult.NotFound)
+            return new ControlPlaneOperationResult<AcrRunResource>(
+                OperationResult.NotFound, null, registryOperation.Reason, registryOperation.Code);
+
+        var taskResource = provider.GetSubresourceAs<AcrTaskResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, taskName, registryName, TasksSubresource);
+        if (taskResource == null)
+            return new ControlPlaneOperationResult<AcrRunResource>(
+                OperationResult.NotFound, null,
+                string.Format(TaskNotFoundMessageTemplate, taskName, registryName),
+                TaskNotFoundCode);
+
+        var runId = Guid.NewGuid().ToString("N")[..8];
+        var properties = AcrRunResourceProperties.FromTaskRun(taskName, runId, request);
+        var resource = new AcrRunResource(subscriptionIdentifier, resourceGroupIdentifier, registryName, runId, properties);
+
+        provider.CreateOrUpdateSubresource(
+            subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource, resource);
+
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(TriggerTaskRun),
+            "Executing {0}: run '{1}' created for task '{2}'.", nameof(TriggerTaskRun), runId, taskName);
+        return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult<AcrRunResource> ScheduleRun(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string registryName,
+        ScheduleAcrRunRequest request)
+    {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ScheduleRun),
+            "Executing {0}: registry={1}", nameof(ScheduleRun), registryName);
+
+        var registryOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        if (registryOperation.Result == OperationResult.NotFound)
+            return new ControlPlaneOperationResult<AcrRunResource>(
+                OperationResult.NotFound, null, registryOperation.Reason, registryOperation.Code);
+
+        var runId = Guid.NewGuid().ToString("N")[..8];
+        var properties = AcrRunResourceProperties.FromScheduleRun(runId, request);
+        var resource = new AcrRunResource(subscriptionIdentifier, resourceGroupIdentifier, registryName, runId, properties);
+
+        provider.CreateOrUpdateSubresource(
+            subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource, resource);
+
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ScheduleRun),
+            "Executing {0}: run '{1}' created.", nameof(ScheduleRun), runId);
+        return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Created, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult<AcrRunResource> GetRun(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string registryName,
+        string runId)
+    {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(GetRun),
+            "Executing {0}: registry={1}, run={2}", nameof(GetRun), registryName, runId);
+
+        var registryOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        if (registryOperation.Result == OperationResult.NotFound)
+            return new ControlPlaneOperationResult<AcrRunResource>(
+                OperationResult.NotFound, null, registryOperation.Reason, registryOperation.Code);
+
+        var resource = provider.GetSubresourceAs<AcrRunResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource);
+
+        return resource == null
+            ? new ControlPlaneOperationResult<AcrRunResource>(
+                OperationResult.NotFound, null,
+                string.Format(RunNotFoundMessageTemplate, runId, registryName),
+                RunNotFoundCode)
+            : new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Success, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult<AcrRunResource[]> ListRuns(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string registryName)
+    {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ListRuns),
+            "Executing {0}: registry={1}", nameof(ListRuns), registryName);
+
+        var registryOperation = Get(subscriptionIdentifier, resourceGroupIdentifier, registryName);
+        if (registryOperation.Result == OperationResult.NotFound)
+            return new ControlPlaneOperationResult<AcrRunResource[]>(
+                OperationResult.NotFound, null, registryOperation.Reason, registryOperation.Code);
+
+        var runs = provider.ListSubresourcesAs<AcrRunResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, registryName, RunsSubresource);
+
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(ListRuns),
+            "Executing {0}: Found {1} runs.", nameof(ListRuns), runs.Length);
+        return new ControlPlaneOperationResult<AcrRunResource[]>(OperationResult.Success, runs, null, null);
+    }
+
+    public ControlPlaneOperationResult<AcrRunResource> UpdateRun(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string registryName,
+        string runId,
+        UpdateAcrRunRequest request)
+    {
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(UpdateRun),
+            "Executing {0}: registry={1}, run={2}", nameof(UpdateRun), registryName, runId);
+
+        var existing = provider.GetSubresourceAs<AcrRunResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource);
+
+        if (existing == null)
+            return new ControlPlaneOperationResult<AcrRunResource>(
+                OperationResult.NotFound, null,
+                string.Format(RunNotFoundMessageTemplate, runId, registryName),
+                RunNotFoundCode);
+
+        AcrRunResourceProperties.UpdateFromRequest(existing, request);
+        provider.CreateOrUpdateSubresource(
+            subscriptionIdentifier, resourceGroupIdentifier, runId, registryName, RunsSubresource, existing);
+
+        logger.LogDebug(nameof(ContainerRegistryControlPlane), nameof(UpdateRun),
+            "Executing {0}: run '{1}' updated.", nameof(UpdateRun), runId);
+        return new ControlPlaneOperationResult<AcrRunResource>(OperationResult.Updated, existing, null, null);
     }
 }

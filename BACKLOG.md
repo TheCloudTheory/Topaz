@@ -155,18 +155,17 @@ _Implemented in v1.5-beta: `PUT`, `GET`, `DELETE`, `HEAD`, `validate`, `cancel`,
 
 _Implemented in v1.5-beta: ARM-level task management surface (Create, Get, Get Details, List, Update, Delete) under the ACR Tasks API (2019-04-01). Tasks are persisted as subresources of the registry. Complex fields (platform, step, trigger, agentConfiguration, credentials) are stored and round-tripped verbatim as JSON._
 
+_Implemented in v1.5-beta: Task Run lifecycle surface — POST .../tasks/{task}/run, GET/PATCH .../runs/{run}, GET .../runs, POST .../runs/{run}/listLogSasUrl, POST .../scheduleRun. Runs report provisioningState: Succeeded immediately with a static log body. Real Docker execution deferred to v1.7-beta._
+
 <!--
-TODO: ACR Tasks: Task Run CRUD and trigger operations
-  Implement the run lifecycle endpoints:
-  - POST   .../registries/{registry}/tasks/{task}/run        – manually trigger a task run
-  - GET    .../registries/{registry}/runs/{run}              – get run details
-  - PATCH  .../registries/{registry}/runs/{run}              – update run (cancel)
-  - GET    .../registries/{registry}/runs                    – list runs
-  - POST   .../registries/{registry}/runs/{run}/listLogSasUrl – get log SAS URL
-  - POST   .../registries/{registry}/scheduleRun             – schedule an ad-hoc run
-  Runs do not execute real container workloads; report provisioningState as Succeeded
-  immediately and return a static log body from the log SAS URL endpoint.
-  milestone: v1.5-beta
+TODO: ACR Tasks: Real Docker build-and-push execution
+  Upgrade the ACR run emulation from immediate-Succeeded to real container workload execution:
+  - Detect Docker availability at host startup; log a warning if absent.
+  - For DockerBuildRequest step type: git clone contextPath, run `docker build`, `docker push` to the local OCI registry.
+  - Drive real status transitions: Queued → Running → Succeeded / Failed.
+  - Stream actual build output from the docker build process to the log content endpoint (GET /v2/runs/{runId}/log).
+  - For non-DockerBuildRequest step types (FileTaskRunRequest, EncodedTaskRunRequest, TaskRunRequest): keep immediate-Succeeded behaviour as a no-op.
+  milestone: v1.7-beta
   labels: enhancement, container-registry
 -->
 

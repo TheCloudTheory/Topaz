@@ -498,4 +498,125 @@ public class ContainerRegistryTests : TopazFixture
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
 
+    [Test]
+    public async Task AcrTaskRun_TriggerAndListRuns_ShouldSucceed()
+    {
+        const string registryName = "topazacrrun01";
+        const string resourceGroup = "test-acr-run-rg";
+        const string taskName = "run-task";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az acr create --name {registryName} --resource-group {resourceGroup} --sku Standard --location westeurope");
+        await RunAzureCliCommand(
+            $"az acr task create --name {taskName} --registry {registryName} " +
+            $"--resource-group {resourceGroup} --cmd \"echo hello\" --no-push --context /dev/null");
+
+        string? runId = null;
+        await RunAzureCliCommand(
+            $"az acr task run --name {taskName} --registry {registryName} --resource-group {resourceGroup} --no-wait",
+            resp =>
+            {
+                runId = resp["runId"]?.GetValue<string>();
+                Assert.That(runId, Is.Not.Null.And.Not.Empty);
+                Assert.That(resp["status"]?.GetValue<string>(), Is.EqualTo("Succeeded"));
+            });
+
+        await RunAzureCliCommand(
+            $"az acr task list-runs --registry {registryName} --resource-group {resourceGroup}",
+            resp =>
+            {
+                var ids = resp.AsArray().Select(r => r!["runId"]?.GetValue<string>()).ToList();
+                Assert.That(ids, Does.Contain(runId));
+            });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task AcrTaskRun_ShowRun_ShouldReturnRunDetails()
+    {
+        const string registryName = "topazacrrun01";
+        const string resourceGroup = "test-acr-run-rg";
+        const string taskName = "run-task";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az acr create --name {registryName} --resource-group {resourceGroup} --sku Standard --location westeurope");
+        await RunAzureCliCommand(
+            $"az acr task create --name {taskName} --registry {registryName} " +
+            $"--resource-group {resourceGroup} --cmd \"echo hello\" --no-push --context /dev/null");
+
+        string? runId = null;
+        await RunAzureCliCommand(
+            $"az acr task run --name {taskName} --registry {registryName} --resource-group {resourceGroup} --no-wait",
+            resp => { runId = resp["runId"]?.GetValue<string>(); });
+
+        await RunAzureCliCommand(
+            $"az acr task show-run --run-id {runId} --registry {registryName} --resource-group {resourceGroup}",
+            resp =>
+            {
+                Assert.That(resp["runId"]?.GetValue<string>(), Is.EqualTo(runId));
+                Assert.That(resp["status"]?.GetValue<string>(), Is.EqualTo("Succeeded"));
+            });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task AcrTaskRun_UpdateRun_ShouldModifyArchiveEnabled()
+    {
+        const string registryName = "topazacrrun01";
+        const string resourceGroup = "test-acr-run-rg";
+        const string taskName = "run-task";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az acr create --name {registryName} --resource-group {resourceGroup} --sku Standard --location westeurope");
+        await RunAzureCliCommand(
+            $"az acr task create --name {taskName} --registry {registryName} " +
+            $"--resource-group {resourceGroup} --cmd \"echo hello\" --no-push --context /dev/null");
+
+        string? runId = null;
+        await RunAzureCliCommand(
+            $"az acr task run --name {taskName} --registry {registryName} --resource-group {resourceGroup} --no-wait",
+            resp => { runId = resp["runId"]?.GetValue<string>(); });
+
+        await RunAzureCliCommand(
+            $"az acr task update-run --run-id {runId} --registry {registryName} --resource-group {resourceGroup} --no-archive false",
+            resp =>
+            {
+                Assert.That(resp["runId"]?.GetValue<string>(), Is.EqualTo(runId));
+            });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task AcrTaskRun_ScheduleRun_ShouldReturnRun()
+    {
+        const string registryName = "topazacrrun01";
+        const string resourceGroup = "test-acr-run-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az acr create --name {registryName} --resource-group {resourceGroup} --sku Standard --location westeurope");
+
+        await RunAzureCliCommand(
+            $"az rest --method post " +
+            $"--url \"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/subscriptions/$(az account show --query id -o tsv)/resourceGroups/{resourceGroup}/providers/Microsoft.ContainerRegistry/registries/{registryName}/scheduleRun?api-version=2019-04-01\" " +
+            $"--body '{{\"type\":\"DockerBuildRequest\",\"dockerFilePath\":\"Dockerfile\",\"platform\":{{\"os\":\"Linux\"}},\"isPushEnabled\":false}}'",
+            resp =>
+            {
+                Assert.That(resp["properties"]?["runId"]?.GetValue<string>() ?? resp["runId"]?.GetValue<string>(), Is.Not.Null.And.Not.Empty);
+                Assert.That(resp["properties"]?["status"]?.GetValue<string>() ?? resp["status"]?.GetValue<string>(), Is.EqualTo("Succeeded"));
+            });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
 }
