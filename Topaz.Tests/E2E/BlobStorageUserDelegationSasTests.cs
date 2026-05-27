@@ -58,8 +58,10 @@ public class BlobStorageUserDelegationSasTests
         var blobServiceClient = new BlobServiceClient(serviceUri, credential);
 
         var response = await blobServiceClient.GetUserDelegationKeyAsync(
-            DateTimeOffset.UtcNow.AddSeconds(-5),
-            DateTimeOffset.UtcNow.AddHours(1));
+            new BlobGetUserDelegationKeyOptions(DateTimeOffset.UtcNow.AddHours(1))
+            {
+                StartsOn = DateTimeOffset.UtcNow.AddSeconds(-5)
+            });
 
         Assert.That(response.Value, Is.Not.Null);
         Assert.That(response.Value.SignedObjectId, Is.EqualTo(Globals.GlobalAdminId));
@@ -77,8 +79,10 @@ public class BlobStorageUserDelegationSasTests
 
         var keyExpiry = DateTimeOffset.UtcNow.AddHours(1);
         var userDelegationKey = await blobServiceClient.GetUserDelegationKeyAsync(
-            DateTimeOffset.UtcNow.AddSeconds(-5),
-            keyExpiry);
+            new BlobGetUserDelegationKeyOptions(keyExpiry)
+            {
+                StartsOn = DateTimeOffset.UtcNow.AddSeconds(-5)
+            });
 
         var sasBuilder = new BlobSasBuilder
         {
@@ -108,8 +112,10 @@ public class BlobStorageUserDelegationSasTests
 
         var keyExpiry = DateTimeOffset.UtcNow.AddHours(1);
         var userDelegationKey = await blobServiceClient.GetUserDelegationKeyAsync(
-            DateTimeOffset.UtcNow.AddSeconds(-5),
-            keyExpiry);
+            new BlobGetUserDelegationKeyOptions(keyExpiry)
+            {
+                StartsOn = DateTimeOffset.UtcNow.AddSeconds(-5)
+            });
 
         var sasBuilder = new BlobSasBuilder
         {
@@ -141,8 +147,10 @@ public class BlobStorageUserDelegationSasTests
 
         // Issue a key with a past expiry.
         var userDelegationKey = await blobServiceClient.GetUserDelegationKeyAsync(
-            DateTimeOffset.UtcNow.AddHours(-2),
-            DateTimeOffset.UtcNow.AddHours(-1));
+            new BlobGetUserDelegationKeyOptions(DateTimeOffset.UtcNow.AddHours(-1))
+            {
+                StartsOn = DateTimeOffset.UtcNow.AddHours(-2)
+            });
 
         var sasBuilder = new BlobSasBuilder
         {

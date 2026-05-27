@@ -62,9 +62,11 @@ internal sealed class UserDelegationSasValidator(AzureStorageControlPlane contro
         var ske   = parsed["ske"]   ?? string.Empty;
         var sks   = parsed["sks"]   ?? string.Empty;
         var skv   = parsed["skv"]   ?? string.Empty;
-        var saoid = parsed["saoid"] ?? string.Empty;
-        var suoid = parsed["suoid"] ?? string.Empty;
-        var scid  = parsed["scid"]  ?? string.Empty;
+        var saoid  = parsed["saoid"]  ?? string.Empty;
+        var suoid  = parsed["suoid"]  ?? string.Empty;
+        var scid   = parsed["scid"]   ?? string.Empty;
+        var skdtid = parsed["skdtid"] ?? string.Empty; // SignedDelegatedUserTenantId (added in service version 2025-07-05)
+        var soid   = parsed["soid"]   ?? string.Empty; // DelegatedUserObjectId (added in service version 2025-07-05)
 
         // Response-header overrides (Blob only)
         var rscc = parsed["rscc"] ?? string.Empty;
@@ -100,16 +102,64 @@ internal sealed class UserDelegationSasValidator(AzureStorageControlPlane contro
 
         var canonicalizedResource = BuildCanonicalizedResource(storageAccountName, absolutePath, sr);
 
-        // User Delegation SAS StringToSign (API version 2020-12-06+):
-        // sp\nst\nse\ncanonicalized_resource\nskoid\nsktid\nskt\nske\nsks\nskv\nsaoid\nsuoid\nscid\nsip\nspr\nsv\nsr\n\n\nrscc\nrscd\nrsce\nrscl\nrsct
-        var stringToSign = string.Join("\n",
-            sp, st, se, canonicalizedResource,
-            skoid, sktid, skt, ske, sks, skv,
-            saoid, suoid, scid,
-            sip, spr, sv, sr,
-            string.Empty, // signedSnapshotTime
-            string.Empty, // signedEncryptionScope
-            rscc, rscd, rsce, rscl, rsct);
+        // The User Delegation SAS string-to-sign format evolved across service versions.
+        // Service version is encoded in the sv= query parameter and determines which format to use.
+        //
+        //  sv >= 2026-04-06 (Azure.Storage.Blobs >= 12.28.0 — Dynamic User Delegation SAS):
+        //    sp\nst\nse\nresource\nskoid\nsktid\nskt\nske\nsks\nskv\nsaoid\nsuoid\nscid\nskdtid\nsoid\nsip\nspr\nsv\nsr\n\n\n\n\nrscc\nrscd\nrsce\nrscl\nrsct
+        //
+        //  sv >= 2026-02-06 (Azure.Storage.Blobs 12.27.x — Principal-Bound User Delegation SAS):
+        //    sp\nst\nse\nresource\nskoid\nsktid\nskt\nske\nsks\nskv\nsaoid\nsuoid\nscid\n(empty skdtid)\nsoid\nsip\nspr\nsv\nsr\n\n\nrscc\nrscd\nrsce\nrscl\nrsct
+        //
+        //  sv <  2026-02-06 (Azure.Storage.Blobs <= 12.26.x — legacy format):
+        //    sp\nst\nse\nresource\nskoid\nsktid\nskt\nske\nsks\nskv\nsaoid\nsuoid\nscid\nsip\nspr\nsv\nsr\n\n\nrscc\nrscd\nrsce\nrscl\nrsct
+        string stringToSign;
+        if (string.Compare(sv, "2026-04-06", StringComparison.Ordinal) >= 0)
+        {
+            // 2026-04-06+ format: includes skdtid + soid and two extra empty slots for
+            // canonicalizedSignedRequestHeaders / canonicalizedSignedRequestQueryParameters
+            // (Dynamic User Delegation SAS, Azure.Storage.Blobs >= 12.28.0).
+            stringToSign = string.Join("\n",
+                sp, st, se, canonicalizedResource,
+                skoid, sktid, skt, ske, sks, skv,
+                saoid, suoid, scid,
+                skdtid, soid,
+                sip, spr, sv, sr,
+                string.Empty, // signedSnapshotTime
+                string.Empty, // signedEncryptionScope
+                string.Empty, // canonicalizedSignedRequestHeaders
+                string.Empty, // canonicalizedSignedRequestQueryParameters
+                rscc, rscd, rsce, rscl, rsct);
+        }
+        else if (string.Compare(sv, "2026-02-06", StringComparison.Ordinal) >= 0)
+        {
+            // 2026-02-06 format: skdtid position exists but is always empty (placeholder added
+            // as null in Azure.Storage.Blobs 12.27.x); soid may be populated for
+            // Principal-Bound User Delegation SAS.  No request-headers/params slots yet.
+            stringToSign = string.Join("\n",
+                sp, st, se, canonicalizedResource,
+                skoid, sktid, skt, ske, sks, skv,
+                saoid, suoid, scid,
+                string.Empty, // skdtid — always null/empty placeholder in this version
+                soid,
+                sip, spr, sv, sr,
+                string.Empty, // signedSnapshotTime
+                string.Empty, // signedEncryptionScope
+                rscc, rscd, rsce, rscl, rsct);
+        }
+        else
+        {
+            // Legacy format (sv <= 2025-11-05, Azure.Storage.Blobs <= 12.26.x):
+            // no skdtid / soid positions.
+            stringToSign = string.Join("\n",
+                sp, st, se, canonicalizedResource,
+                skoid, sktid, skt, ske, sks, skv,
+                saoid, suoid, scid,
+                sip, spr, sv, sr,
+                string.Empty, // signedSnapshotTime
+                string.Empty, // signedEncryptionScope
+                rscc, rscd, rsce, rscl, rsct);
+        }
 
         logger.LogDebug(nameof(UserDelegationSasValidator), nameof(Validate),
             "sr='{0}' CanonicalizedResource='{1}' StringToSign='{2}'",

@@ -102,6 +102,8 @@ If you need emulation for a single Azure service, these official Microsoft tools
 
 If you need multiple services, RBAC, or ARM deployments locally, that's where Topaz fits.
 
+If you're coming from AWS and already use [LocalStack](https://github.com/localstack/localstack), Topaz fills the equivalent role for Azure — one process, multiple services, no account required.
+
 ## Privacy
 
 All state is local. Topaz never makes outbound calls and never transmits credentials or resource data to external services.

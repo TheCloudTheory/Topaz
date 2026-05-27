@@ -541,7 +541,7 @@ public class KeyVaultKeyTests
         var updated = client.UpdateKeyProperties(props);
 
         // Assert
-        Assert.That(updated.Value.Properties.UpdatedOn, Is.GreaterThan(originalUpdated));
+        Assert.That(updated.Value.Properties.UpdatedOn, Is.GreaterThan(originalUpdated!.Value));
     }
 
     [Test]
@@ -1175,7 +1175,7 @@ public class KeyVaultKeyTests
         Assert.Multiple(() =>
         {
             Assert.That(secondResult.Value.CreatedOn, Is.EqualTo(createdAfterFirst));
-            Assert.That(secondResult.Value.UpdatedOn, Is.GreaterThanOrEqualTo(createdAfterFirst));
+            Assert.That(secondResult.Value.UpdatedOn, Is.GreaterThanOrEqualTo(createdAfterFirst!.Value));
         });
     }
 
