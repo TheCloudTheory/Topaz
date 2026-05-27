@@ -1,7 +1,7 @@
 ---
 slug: amqp-compatibility-local-azure-emulator
-title: "What AMQP compatibility means for a local Azure emulator"
-description: Getting AMQP 1.0 right in a local Azure emulator is harder than it looks. This post covers what real AMQP compatibility means — lock settlement, receive credit, management links — and how Topaz handles it well enough to run MassTransit end-to-end.
+title: "What AMQP compatibility means for a local Azure emulator (.NET / MassTransit)"
+description: Getting AMQP 1.0 right in a local Azure emulator is harder than it looks. This post covers what real AMQP compatibility means — lock settlement, receive credit, management links — and how Topaz handles it well enough to run MassTransit end-to-end. Examples use C# and MassTransit.
 keywords: [amqp azure emulator, service bus local development, masstransit local emulator, masstransit azure service bus local, amqp 1.0 emulator, azure service bus emulator alternative, topaz service bus]
 authors: kamilmrzyglod
 tags: [general, service-bus]
@@ -10,6 +10,8 @@ tags: [general, service-bus]
 "Supports AMQP" covers a lot of ground. A broker that accepts a TCP connection on port 5671 and exchanges OPEN/BEGIN frames with the client technically speaks AMQP. So does a broker that handles hundreds of thousands of messages per second with full PeekLock semantics, dead-letter routing, and session state. When an emulator claims AMQP compatibility, the interesting question is how far that compatibility actually goes — and specifically, whether it is deep enough for a real message-processing framework to drive it.
 
 This post is about what that means in practice, and why we know Topaz passes the test: because we got it wrong first and had to fix it.
+
+The concrete examples use MassTransit and the Azure Service Bus SDK for .NET. The AMQP behaviour described applies to any framework driving PeekLock, but the code is C#. If you are not working in .NET, the protocol sections may still be useful context for evaluating any AMQP emulator.
 
 {/* truncate */}
 
@@ -34,7 +36,7 @@ MassTransit's Azure Service Bus transport (`MassTransit.Azure.ServiceBus.Core`) 
 3. Sends an AMQP `FLOW` frame on the receiver link with initial link credit, indicating how many messages it is prepared to accept.
 4. For every message it processes, sends a `DISPOSITION` frame to complete or abandon it, then expects the broker to update the session's delivery state and replenish credit.
 
-Step 2 is where most partial AMQP implementations break down. The Azure Service Bus SDK does not surface queue-level `$management` directly to callers; it is an internal transport detail. The root `$management` link is handled by `IRequestProcessor` in most AMQP server implementations, but queue-scoped `$management` links are distinct — they attach to the queue's link processor, not the root processor. An emulator that routes all `$management` traffic to one handler will complete the CBS authentication but silently drop every queue management request, causing MassTransit's `CompleteAsync` to wait 60 seconds for a response that never arrives.
+Step 2 is where most partial AMQP implementations break down. The Azure Service Bus SDK does not surface queue-level `$management` directly to callers; it is an internal transport detail. The root `$management` link is handled by `IRequestProcessor` in most AMQP server implementations, but queue-scoped `$management` links are distinct. They attach to the queue's link processor, not the root processor. An emulator that routes all `$management` traffic to one handler will complete the CBS authentication but silently drop every queue management request, causing MassTransit's `CompleteAsync` to wait 60 seconds for a response that never arrives.
 
 Step 4 is where the second class of failures appears. If the broker sends transfers as sender-settled (the `settled` bit set in the TRANSFER frame), the receiver never adds the delivery to its unsettled map. When MassTransit calls `CompleteAsync`, the SDK sees no pending delivery with that lock token, settlement happens locally without waiting for broker confirmation, and no `DISPOSITION` frame is sent. The broker never gets the acknowledgement it expects. Credit is consumed but never replenished. After the first message, the consumer stops receiving.
 
@@ -44,7 +46,7 @@ Running MassTransit against an early version of Topaz exposed exactly these two 
 
 **Bug 1: Missing queue `$management` handler.** Topaz already handled the root `$management` link for CBS token validation. Queue-scoped management links were being attached to the link processor without a handler. MassTransit's `CompleteAsync` calls timed out after 60 seconds with an `amqp:internal-error`.
 
-The fix required intercepting `ATTACH` frames addressed to `<anything>/$management` inside `LinkProcessor` and routing them to a dedicated request-response endpoint — separate from the root management handler. On the sender side, the endpoint registers a request processor that reads the `operation` property from incoming application properties, builds the appropriate response (status code, correlation ID, operation-specific payload for `com.microsoft:renew-lock`), and sends it back on the paired response link.
+The fix required intercepting `ATTACH` frames addressed to `<anything>/$management` inside `LinkProcessor` and routing them to a dedicated request-response endpoint, separate from the root management handler. On the sender side, the endpoint registers a request processor that reads the `operation` property from incoming application properties, builds the appropriate response (status code, correlation ID, operation-specific payload for `com.microsoft:renew-lock`), and sends it back on the paired response link.
 
 **Bug 2: Wrong management response property names.** Once queue management requests were being answered, MassTransit's completion path started working — but threw `amqp:internal-error (GeneralError)` instead of returning. Decompiling the Azure SDK revealed the issue:
 
@@ -91,7 +93,7 @@ builder.Services.AddMassTransit(x =>
 });
 ```
 
-MassTransit uses the TLS endpoint (port 5671) because it expects a standard Azure Service Bus connection string without `UseDevelopmentEmulator=true`. The non-TLS endpoint (port 8889) uses pre-settled receive-and-delete semantics — compatible with the Azure SDK's development emulator mode, but not with how MassTransit drives the receive path. For any framework that manages its own PeekLock cycle, the TLS endpoint is the right choice.
+MassTransit uses the TLS endpoint (port 5671) because it expects a standard Azure Service Bus connection string without `UseDevelopmentEmulator=true`. The non-TLS endpoint (port 8889) uses pre-settled receive-and-delete semantics, which is compatible with the Azure SDK's development emulator mode but not with how MassTransit drives the receive path. For any framework that manages its own PeekLock cycle, the TLS endpoint is the right choice.
 
 The worker sends one message per second. With the three bugs above fixed, the output is exactly one `Message dispatched` and one `Message consumed` per second — sustained indefinitely:
 
@@ -118,9 +120,9 @@ What this does **not** guarantee: dead-letter queues, message sessions, topic su
 
 The Microsoft emulator ships as two Docker containers (emulator plus SQL Server), configures entities via a static `config.json` at startup, and does not implement the ARM control plane. What it does have is a more complete messaging feature set at the moment: dead-letter queues, message sessions, and topic filters work today.
 
-The trade-off is concrete. If you need `az servicebus queue create` to work locally, Terraform `azurerm_servicebus_queue` to apply locally, or multiple namespaces in the same environment, the emulator cannot help — it has no ARM API. If you need dead-letter queues or message sessions, Topaz cannot yet help.
+The trade-off is concrete. If you need `az servicebus queue create` to work locally, Terraform `azurerm_servicebus_queue` to apply locally, or multiple namespaces in the same environment, the Microsoft emulator cannot help. It has no ARM API. If you need dead-letter queues or message sessions, Topaz cannot yet help.
 
-For teams in between — who need a real PeekLock consumer with sustained receive throughput and ARM-level infrastructure tooling in the same local process — Topaz is the current answer.
+For teams who need a real PeekLock consumer with sustained receive throughput and ARM-level infrastructure tooling in the same local process, Topaz is the current answer.
 
 :::tip[Try it]
 The `Topaz.Examples.MassTransit` example is in the repository. Run it with:
