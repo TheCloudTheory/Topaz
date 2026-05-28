@@ -167,7 +167,11 @@ TODO: ACR Tasks: Real Docker build-and-push execution
 
 ### Azure SQL — initial control plane
 
+_Implemented in v1.5-beta: server CRUD (Create/Update, Get, Delete, List by resource group, List by subscription, PATCH update) and database CRUD (Create/Update, Get, Delete, List by server, PATCH update) for `Microsoft.Sql/servers` and `Microsoft.Sql/servers/databases`. Also includes read-only companion endpoints: Transparent Data Encryption (Get/CreateOrUpdate), Connection Policy (Get/CreateOrUpdate), Vulnerability Assessment (Get/CreateOrUpdate), Database Security Alert Policy (Get), Database Backup Short-Term and Long-Term Retention Policies (Get), and Restorable Dropped Databases (List)._
+
 ### Azure App Service — initial control plane
+
+_Implemented in v1.5-beta: App Service Plan CRUD (Create/Update, Get, Delete, List by resource group, List by subscription, Restart Sites) and Web App/Site CRUD (Create/Update, Get, Delete, List by resource group, List by subscription) for `Microsoft.Web/serverfarms` and `Microsoft.Web/sites`. Additional site-level endpoints: Get/Update Site Config Web, Get/Update App Settings, List App Settings, Get Slot Config Names, Post Publish XML, Check Name Availability, and Get Web App Stacks._
 
 ### Event Hub — delete individual Event Hub
 
