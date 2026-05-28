@@ -2,6 +2,11 @@
 
 Project-specific knowledge for AI coding agents working in this repository.
 
+# General rules
+Every response must follow the rules:
+- If you don't know something, you must say "I don't know".
+- If you're reasoning about an issue or a problem, you must back your reasoning by real sources
+
 ## Quick commands
 
 ```bash
@@ -159,6 +164,9 @@ Always use `GlobalSettings.*Port` constants:
 ## Tests
 
 Both suites are required for every endpoint or control-plane change.
+
+### `Topaz.Tests/CLI/`
+- Every new endpoint, which has a corresponding Azure CLI command, must have Topaz CLI command as well
 
 ### `Topaz.Tests/E2E/`
 - Use Azure SDK (`ArmClient`, service-specific clients) against the in-process host started by `E2EFixture`.
