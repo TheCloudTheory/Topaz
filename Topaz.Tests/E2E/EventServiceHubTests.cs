@@ -169,6 +169,27 @@ public class EventServiceHubTests
     }
 
     [Test]
+    public async Task EventHub_DeleteEventHub_WhenHubExists_DeletesSuccessfully()
+    {
+        // Arrange
+        const string hubName = "eh-delete-test";
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var @namespace = await resourceGroup.Value.GetEventHubsNamespaceAsync(EventHubNamespaceName);
+        await @namespace.Value.GetEventHubs().CreateOrUpdateAsync(WaitUntil.Completed, hubName, new EventHubData());
+
+        // Act
+        var hub = @namespace.Value.GetEventHub(hubName);
+        await hub.Value.DeleteAsync(WaitUntil.Completed);
+
+        // Assert
+        Assert.ThrowsAsync<RequestFailedException>(async () =>
+            await @namespace.Value.GetEventHubAsync(hubName));
+    }
+
+    [Test]
     public async Task EventHubTests_WhenNewHubIsRequestedViaTemplate_ItShouldBeCreated()
     {
         // Arrange

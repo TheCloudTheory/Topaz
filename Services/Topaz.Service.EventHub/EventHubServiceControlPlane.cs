@@ -176,17 +176,25 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
         return new ControlPlaneOperationResult<EventHubResource>(OperationResult.Updated, existingHub, null, null);
     }
 
-    public ControlPlaneOperationResult<EventHubNamespaceResource> Delete(string name, EventHubNamespaceIdentifier namespaceName)
+    public ControlPlaneOperationResult<EventHubNamespaceResource> Delete(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string name,
+        EventHubNamespaceIdentifier namespaceName)
     {
         logger.LogDebug(nameof(EventHubServiceControlPlane), nameof(Delete), "Executing {0}: {1} {2}", nameof(Delete), name, namespaceName);
 
-        if (!provider.EventHubExists(namespaceName.Value, name))
+        var existingHub = provider.GetSubresourceAs<EventHubResource>(subscriptionIdentifier, resourceGroupIdentifier,
+            name, namespaceName.Value, nameof(Subresource.Hubs).ToLowerInvariant());
+
+        if (existingHub == null)
         {
             return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.NotFound, null, string.Format(EventHubNotFoundMessageTemplate, name),
                 EventHubNotFoundCode);
         }
 
-        provider.DeleteEventHub(name, namespaceName.Value);
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, name, namespaceName.Value,
+            nameof(Subresource.Hubs).ToLowerInvariant());
         return new ControlPlaneOperationResult<EventHubNamespaceResource>(OperationResult.Deleted, null, null, null);
     }
     

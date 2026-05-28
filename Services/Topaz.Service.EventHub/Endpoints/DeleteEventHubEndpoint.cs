@@ -25,13 +25,15 @@ public class DeleteEventHubEndpoint(ITopazLogger logger) : IEndpointDefinition
 
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
+        var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
+        var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
         var namespaceIdentifier = EventHubNamespaceIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(8));
         var eventHubName = context.Request.Path.Value.ExtractValueFromPath(10);
 
         logger.LogDebug(nameof(DeleteEventHubEndpoint), nameof(GetResponse),
             "Deleting event hub {0} from namespace {1}", eventHubName, namespaceIdentifier.Value);
 
-        var operation = _controlPlane.Delete(eventHubName!, namespaceIdentifier);
+        var operation = _controlPlane.Delete(subscriptionIdentifier, resourceGroupIdentifier, eventHubName!, namespaceIdentifier);
 
         response.StatusCode = operation.Result switch
         {

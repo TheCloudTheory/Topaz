@@ -171,17 +171,7 @@ TODO: ACR Tasks: Real Docker build-and-push execution
 
 ### Event Hub — delete individual Event Hub
 
-<!--
-TODO: Event Hub: Delete individual Event Hub endpoint
-  Implement DELETE .../namespaces/{namespaceName}/eventhubs/{eventhubName}.
-  The Azure SDK EventHubsClient.delete() and Azure CLI az eventhubs eventhub delete
-  expect a 200 response when removing an individual Event Hub resource inside a namespace.
-  Currently only namespace deletion is supported; deleting a hub returns 404, forcing
-  clients to skip cleanup and leave orphaned resources.
-  Follow the one-file-per-operation convention under Services/Topaz.Service.EventHub/Endpoints/.
-  milestone: v1.5-beta
-  labels: enhancement, event-hub, good first issue
--->
+_Implemented in v1.5-beta: `DELETE .../namespaces/{namespaceName}/eventhubs/{eventHubName}` returns `200 OK` on success and `404` when the hub does not exist. Follows the one-file-per-operation convention (`DeleteEventHubEndpoint`). Includes E2E SDK test and Azure CLI tests._
 
 ### Virtual Machines — PATCH update endpoint
 
