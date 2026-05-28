@@ -20,14 +20,14 @@ internal sealed class EventHubResource
         string name,
         EventHubResourceProperties properties)
     {
-        Id = $"/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.EventHub/namespaces/{namespaceIdentifier}/hubs/{name}";
+        Id = $"/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.EventHub/namespaces/{namespaceIdentifier}/eventhubs/{name}";
         Name = name;
         Properties = properties;
     }
     
     public override string Id { get; init; }
     public override string Name { get; init; }
-    public override string Type => "Microsoft.EventHub/namespaces/hubs";
+    public override string Type => "Microsoft.EventHub/namespaces/eventhubs";
     public override EventHubResourceProperties Properties { get; init; }
     
     public void UpdateProperties(EventHubResourceProperties properties)

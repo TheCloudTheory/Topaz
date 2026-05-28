@@ -32,6 +32,7 @@ public sealed class ContainerRegistryService(Pipeline eventPipeline, ITopazLogge
         new GetAcrRunLogSasUrlEndpoint(eventPipeline, logger),
         new ScheduleAcrRunEndpoint(eventPipeline, logger),
         new GetAcrRunLogContentEndpoint(),
+        new HeadAcrRunLogEndpoint(),
         new CreateOrUpdateAcrTaskEndpoint(eventPipeline, logger),
         new GetAcrTaskEndpoint(eventPipeline, logger),
         new GetAcrTaskDetailsEndpoint(eventPipeline, logger),

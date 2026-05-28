@@ -514,7 +514,7 @@ public class ContainerRegistryTests : TopazFixture
 
         string? runId = null;
         await RunAzureCliCommand(
-            $"az acr task run --name {taskName} --registry {registryName} --resource-group {resourceGroup} --no-wait",
+            $"az acr task run --name {taskName} --registry {registryName} --resource-group {resourceGroup} --no-logs",
             resp =>
             {
                 runId = resp["runId"]?.GetValue<string>();
@@ -550,7 +550,7 @@ public class ContainerRegistryTests : TopazFixture
 
         string? runId = null;
         await RunAzureCliCommand(
-            $"az acr task run --name {taskName} --registry {registryName} --resource-group {resourceGroup} --no-wait",
+            $"az acr task run --name {taskName} --registry {registryName} --resource-group {resourceGroup} --no-logs",
             resp => { runId = resp["runId"]?.GetValue<string>(); });
 
         await RunAzureCliCommand(
@@ -581,7 +581,7 @@ public class ContainerRegistryTests : TopazFixture
 
         string? runId = null;
         await RunAzureCliCommand(
-            $"az acr task run --name {taskName} --registry {registryName} --resource-group {resourceGroup} --no-wait",
+            $"az acr task run --name {taskName} --registry {registryName} --resource-group {resourceGroup} --no-logs",
             resp => { runId = resp["runId"]?.GetValue<string>(); });
 
         await RunAzureCliCommand(

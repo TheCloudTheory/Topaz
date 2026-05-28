@@ -25,7 +25,7 @@ public class EventHubTests : TopazFixture
                     Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo(HubName));
                     Assert.That(response["type"]!.GetValue<string>(),
                         Is.EqualTo("Microsoft.EventHub/namespaces/eventhubs").IgnoreCase);
-                    Assert.That(response["properties"]!["status"]!.GetValue<string>(),
+                    Assert.That(response["status"]!.GetValue<string>(),
                         Is.EqualTo("Active"));
                 });
             }, 0);
