@@ -16,6 +16,8 @@ public class BlobStorageService(Pipeline eventPipeline, ITopazLogger logger) : I
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         new GenerateUserDelegationKeyEndpoint(eventPipeline, logger),
+        new GetBlobServicePropertiesEndpoint(eventPipeline, logger),
+        new SetBlobServicePropertiesEndpoint(eventPipeline, logger),
         new GetBlobServiceStatsEndpoint(eventPipeline, logger),
         new ListBlobsEndpoint(eventPipeline, logger),
         new SetContainerMetadataEndpoint(eventPipeline, logger),

@@ -109,6 +109,36 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
             containerName, blobSubpathKey);
     }
 
+    public ControlPlaneOperationResult<string> GetBlobServicePropertiesXml(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName)
+    {
+        var path = provider.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        var propertiesFilePath = Path.Combine(path, "blob-service-properties.xml");
+
+        if (!File.Exists(propertiesFilePath))
+            return new ControlPlaneOperationResult<string>(OperationResult.Success, DefaultBlobServicePropertiesXml,
+                null, null);
+
+        return new ControlPlaneOperationResult<string>(OperationResult.Success,
+            File.ReadAllText(propertiesFilePath), null, null);
+    }
+
+    public ControlPlaneOperationResult SetBlobServiceProperties(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, Stream input)
+    {
+        var path = provider.GetServiceInstancePath(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        var propertiesFilePath = Path.Combine(path, "blob-service-properties.xml");
+
+        var document = XDocument.Load(input, LoadOptions.PreserveWhitespace);
+
+        if (document.Root?.Element("Cors") == null)
+            document.Root?.Add(new XElement("Cors"));
+
+        document.Save(propertiesFilePath);
+        return new ControlPlaneOperationResult(OperationResult.Success);
+    }
+
     public static string GetBlobServiceStatsXml()
     {
         var lastSyncTime = DateTimeOffset.UtcNow.ToString("R");
@@ -122,6 +152,20 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
                 </StorageServiceStats>
                 """;
     }
+
+    private const string DefaultBlobServicePropertiesXml =
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+        "<StorageServiceProperties>" +
+        "<Logging><Version>1.0</Version><Delete>false</Delete><Read>false</Read><Write>false</Write>" +
+        "<RetentionPolicy><Enabled>false</Enabled></RetentionPolicy></Logging>" +
+        "<HourMetrics><Version>1.0</Version><Enabled>false</Enabled>" +
+        "<RetentionPolicy><Enabled>false</Enabled></RetentionPolicy></HourMetrics>" +
+        "<MinuteMetrics><Version>1.0</Version><Enabled>false</Enabled>" +
+        "<RetentionPolicy><Enabled>false</Enabled></RetentionPolicy></MinuteMetrics>" +
+        "<Cors />" +
+        "<DeleteRetentionPolicy><Enabled>false</Enabled></DeleteRetentionPolicy>" +
+        "<StaticWebsite><Enabled>false</Enabled></StaticWebsite>" +
+        "</StorageServiceProperties>";
 
     public string? GetContainerPublicAccess(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, string containerName)
