@@ -25,6 +25,7 @@ Key Vault|✅|🚧
 Event Hub|🚧|🚧
 Service Bus|🚧|🚧
 Virtual Network|🚧|N/A
+Network Interface|✅|N/A
 Azure Resource Manager|🚧|N/A
 Managed Identity|✅|N/A
 Container Registry|✅|🚧

@@ -10,14 +10,6 @@ converted to a GitHub Issue by CI when new lines are committed.
 ---
 
 <!--
-TODO: VirtualNetwork — Network Interface (NIC) CRUD
-  Implement PUT/GET/DELETE/LIST NIC endpoints under /networkInterfaces/{nicName}.
-  Required to support `az vm create` (which creates a NIC and wires it into the VM payload).
-  milestone: v1.5-beta
-  labels: enhancement, good first issue
--->
-
-<!--
 TODO: Storage — Revoke User Delegation Keys
   Implement POST .../storageAccounts/{name}/revokeUserDelegationKeys ARM endpoint.
   Should persist a per-account revocation timestamp; User Delegation SAS validation must reject
@@ -142,6 +134,10 @@ _Implemented: DELETE, List by resource group, List by subscription, and Update T
 ---
 
 ## v1.5-beta
+
+### VirtualNetwork — Network Interface (NIC) CRUD
+
+_Implemented in v1.5-beta: six control-plane endpoints (Create/Update, Get, Delete, List by resource group, List by subscription, Update Tags) for `Microsoft.Network/networkInterfaces`. Static and dynamic private IP allocation via `IpAllocationRegistry` with automatic address assignment from subnet CIDR ranges. Full `Deploy()` support for ARM template deployments. Includes E2E SDK tests and Azure CLI tests._
 
 ### Azure Storage — User Delegation SAS for Blob
 
