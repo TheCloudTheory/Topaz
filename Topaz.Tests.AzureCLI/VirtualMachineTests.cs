@@ -75,4 +75,25 @@ public class VirtualMachineTests : TopazFixture
                 });
             }, 0);
     }
+
+    [Test]
+    public async Task VirtualMachineTests_WhenVMIsUpdatedWithPatch_TagsShouldPersist()
+    {
+        await RunAzureCliCommand($"az group create -l westeurope -n {ResourceGroup}-patch", null, 0);
+        await RunAzureCliCommand(
+            $"az resource create --resource-type Microsoft.Compute/virtualMachines --api-version 2024-07-01 " +
+            $"--resource-group {ResourceGroup}-patch --name {VmName}-patch --location westeurope " +
+            $"--properties '{{\"hardwareProfile\":{{\"vmSize\":\"Standard_D2s_v3\"}},\"osProfile\":{{\"computerName\":\"{VmName}-patch\",\"adminUsername\":\"adminuser\"}}}}'",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az vm update --resource-group {ResourceGroup}-patch --name {VmName}-patch --set tags.env=staging tags.team=platform",
+            response =>
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(response["tags"]!["env"]!.GetValue<string>(), Is.EqualTo("staging"));
+                    Assert.That(response["tags"]!["team"]!.GetValue<string>(), Is.EqualTo("platform"));
+                });
+            }, 0);
+    }
 }

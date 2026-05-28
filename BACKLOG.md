@@ -175,19 +175,7 @@ _Implemented in v1.5-beta: `DELETE .../namespaces/{namespaceName}/eventhubs/{eve
 
 ### Virtual Machines — PATCH update endpoint
 
-<!--
-TODO: Virtual Machines: PATCH update endpoint
-  Implement PATCH .../virtualMachines/{vmName} to support partial updates such as
-  tag changes and hardware-profile modifications without requiring the caller to
-  supply a full VM body.
-  The Azure SDK VirtualMachinesClient.begin_update() (and the equivalent in .NET and
-  the Azure CLI az vm update) uses PATCH. Without this endpoint, clients must fall
-  back to a full PUT CreateOrUpdate, which requires re-supplying the OS profile,
-  storage profile, and NIC references.
-  Follow the one-file-per-operation convention under Services/Topaz.Service.VirtualMachine/Endpoints/.
-  milestone: v1.5-beta
-  labels: enhancement, virtual-machine, good first issue
--->
+_Implemented in v1.5-beta: `PATCH .../virtualMachines/{vmName}` for partial updates — tags and hardware/storage/network profiles can be updated without supplying a full VM body. `OsProfile` is intentionally excluded (matches real Azure behaviour). The `az vm update` and Azure SDK `begin_update()` flows are fully supported. Includes E2E SDK test and Azure CLI test._
 
 ---
 

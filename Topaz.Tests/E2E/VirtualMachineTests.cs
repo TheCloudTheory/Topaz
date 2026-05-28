@@ -268,4 +268,40 @@ public class VirtualMachineTests
             Assert.That(names, Does.Contain("test-vm-sub-b"));
         });
     }
+
+    [Test]
+    public async Task VirtualMachineTests_WhenVMIsUpdatedWithPatch_TagsAndHardwareProfileShouldPersist()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string vmName = "test-vm-patch";
+
+        await resourceGroup.Value.GetVirtualMachines()
+            .CreateOrUpdateAsync(WaitUntil.Completed, vmName, MinimalVmData(vmName));
+
+        var patch = new VirtualMachinePatch();
+        patch.Tags.Add("env", "staging");
+        patch.Tags.Add("team", "platform");
+        patch.HardwareProfile = new VirtualMachineHardwareProfile
+        {
+            VmSize = VirtualMachineSizeType.StandardD4SV3
+        };
+
+        // Act
+        var vm = resourceGroup.Value.GetVirtualMachine(vmName);
+        var updateResult = await vm.Value.UpdateAsync(WaitUntil.Completed, patch);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(updateResult.Value.Data.Tags, Does.ContainKey("env").WithValue("staging"));
+            Assert.That(updateResult.Value.Data.Tags, Does.ContainKey("team").WithValue("platform"));
+            Assert.That(updateResult.Value.Data.HardwareProfile.VmSize, Is.EqualTo(VirtualMachineSizeType.StandardD4SV3));
+            Assert.That(updateResult.Value.Data.OSProfile, Is.Not.Null);
+            Assert.That(updateResult.Value.Data.NetworkProfile, Is.Not.Null);
+        });
+    }
 }

@@ -40,7 +40,7 @@ sidebar_position: 11
 | Run Command | ❌ | |
 | Simulate Eviction | ❌ | |
 | Start | ❌ | |
-| Update | ❌ | `PATCH` variant — use Create Or Update (`PUT`) instead |
+| Update | ✅ | `PATCH /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/virtualMachines/{name}` — partial update of tags and hardware/storage/network profiles without requiring a full PUT body |
 
 ### Virtual Machine Images
 

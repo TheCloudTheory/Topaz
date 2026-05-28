@@ -18,6 +18,7 @@ public sealed class VirtualMachineService(Pipeline eventPipeline, ITopazLogger l
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         new CreateOrUpdateVirtualMachineEndpoint(eventPipeline, logger),
+        new UpdateVirtualMachineEndpoint(eventPipeline, logger),
         new GetVirtualMachineEndpoint(eventPipeline, logger),
         new DeleteVirtualMachineEndpoint(eventPipeline, logger),
         new ListVirtualMachinesByResourceGroupEndpoint(eventPipeline, logger),

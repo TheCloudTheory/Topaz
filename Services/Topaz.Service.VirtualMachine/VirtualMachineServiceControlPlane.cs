@@ -147,6 +147,33 @@ internal sealed class VirtualMachineServiceControlPlane(
         return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 
+    public ControlPlaneOperationResult<VirtualMachineResource> Update(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string virtualMachineName,
+        UpdateVirtualMachineRequest request)
+    {
+        var existing = provider.GetAs<VirtualMachineResource>(subscriptionIdentifier, resourceGroupIdentifier,
+            virtualMachineName);
+
+        if (existing == null)
+        {
+            return new ControlPlaneOperationResult<VirtualMachineResource>(
+                OperationResult.NotFound,
+                null,
+                string.Format(VirtualMachineNotFoundMessageTemplate, virtualMachineName),
+                VirtualMachineNotFoundCode);
+        }
+
+        if (request.Tags != null)
+            existing.Tags = request.Tags;
+
+        VirtualMachineResourceProperties.UpdateFromPatchRequest(existing.Properties, request);
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, virtualMachineName, existing);
+
+        return new ControlPlaneOperationResult<VirtualMachineResource>(OperationResult.Updated, existing, null, null);
+    }
+
     public ControlPlaneOperationResult<VirtualMachineResource[]> ListByResourceGroup(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier)

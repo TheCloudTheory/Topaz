@@ -32,6 +32,16 @@ public sealed class VirtualMachineResourceProperties
         properties.OsProfile = request.Properties?.OsProfile;
         properties.NetworkProfile = request.Properties?.NetworkProfile;
     }
+
+    public static void UpdateFromPatchRequest(VirtualMachineResourceProperties properties, UpdateVirtualMachineRequest request)
+    {
+        if (request.Properties?.HardwareProfile != null)
+            properties.HardwareProfile = request.Properties.HardwareProfile;
+        if (request.Properties?.StorageProfile != null)
+            properties.StorageProfile = request.Properties.StorageProfile;
+        if (request.Properties?.NetworkProfile != null)
+            properties.NetworkProfile = request.Properties.NetworkProfile;
+    }
 }
 
 public sealed class VirtualMachineInstanceView
