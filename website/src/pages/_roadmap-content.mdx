@@ -139,6 +139,47 @@
 |--|---------|-------------|
 | <span class="badge--preview">Preview</span> | HTTP request forwarding | Data-plane endpoint on `*.azurewebsites.topaz.local.dev:8895` that proxies all traffic to the user's Docker Compose container; target port read from the `WEBSITES_PORT` app setting (default 80), container resolved by matching the Compose service name to the App Service site name |
 
+### Chaos Engineering — controllable fault injection
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Chaos mode toggle and CLI | `topaz chaos enable/disable/status` CLI commands and corresponding REST control-plane endpoints (`POST /topaz/chaos/enable`, `POST /topaz/chaos/disable`, `GET /topaz/chaos/status`); state is in-memory |
+| <span class="badge--preview">Preview</span> | Fault rule configuration | Per-service (or global `*`) fault rules with fields: `serviceNamespace`, `faultType` (`Timeout` \| `TransientError` \| `Throttle` \| `ServiceUnavailable`), `faultRate` (0–1), and optional `httpStatusCode`; CRUD via `PUT/GET/DELETE /topaz/chaos/rules/{ruleId}` |
+| <span class="badge--preview">Preview</span> | Router-level fault injection middleware | When chaos mode is enabled, the router evaluates active rules before dispatching: injects configurable delays, 429/500/503 responses, or connection drops at the configured probability; every injected fault is logged |
+
+### Azure App Configuration — initial control plane and data plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.AppConfiguration` project with `ConfigurationStoreResource`, `ConfigurationStoreResourceProperties`, resource provider, control plane (including `Deploy()`), host registration, and `RouteDeployment()` case for `Microsoft.AppConfiguration/configurationStores` |
+| <span class="badge--preview">Preview</span> | ConfigurationStore CRUD | Create, get, update (tags, SKU, publicNetworkAccess), delete, list by resource group, and list by subscription; `endpoint` field emitted as `https://{name}.azconfig.topaz.local.dev:<port>/` |
+| <span class="badge--stable">Stable</span> | Access key management | `listKeys` and `regenerateKey` ARM actions; two read-write and two read-only key pairs persisted and rotatable |
+| <span class="badge--preview">Preview</span> | Data plane — key-value API | `GET/PUT/DELETE /kv/{key}` and `GET /kv` (list with `?key=`, `?label=`, `$select=` filtering); `GET /labels`; `PUT/DELETE /locks/{key}`; HMAC-SHA256 credential authentication; ETag / If-Match concurrency |
+| <span class="badge--preview">Preview</span> | Feature flag support | Key-values with content type `application/vnd.microsoft.appconfig.ff+json` under the `.appconfig.featureflag/` key prefix; compatible with the Azure SDK `FeatureFlagConfigurationSetting` model |
+| <span class="badge--stable">Stable</span> | MCP Server tool | `CreateAppConfigurationStore` tool; `GetConnectionStrings` extended with App Configuration connection string |
+
+---
+
+## v1.9-preview
+
+### Application Insights — initial control plane and ingestion
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.ApplicationInsights` project with models, resource provider, control plane (including `Deploy()`), host registration, and `RouteDeployment()` case for `microsoft.insights/components` |
+| <span class="badge--preview">Preview</span> | Component CRUD | Create, get, update (tags, retentionInDays), delete, list `microsoft.insights/components`; `instrumentationKey` and `connectionString` generated on creation and stable across updates |
+| <span class="badge--preview">Preview</span> | Telemetry ingestion | `POST /v2/track` accepts JSON arrays of Application Insights telemetry envelopes (`RequestData`, `TraceData`, `ExceptionData`, `EventData`, `MetricData`, `DependencyData`); persists to disk per instrumentation key |
+| <span class="badge--preview">Preview</span> | Basic query API | `POST /v1/apps/{instrumentationKey}/query` — minimal KQL subset over persisted telemetry; supports `requests`, `traces`, `exceptions`, `customEvents`, `customMetrics`, `dependencies` tables; `where`, `project`, `summarize count()`, `order by`, `take` operators; returns standard `{"tables":[...]}` schema |
+
+### Log Analytics — initial control plane and ingestion
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.LogAnalytics` project with `WorkspaceResource`, `WorkspaceResourceProperties`, resource provider, control plane (including `Deploy()`), host registration, and `RouteDeployment()` case for `Microsoft.OperationalInsights/workspaces` |
+| <span class="badge--preview">Preview</span> | Workspace CRUD | Create, get, update (tags, retentionInDays, SKU), delete, list `Microsoft.OperationalInsights/workspaces`; `workspaceId` / `customerId` generated as stable GUIDs on creation |
+| <span class="badge--preview">Preview</span> | Logs Ingestion API | `POST https://{workspaceId}.ods.opinsights.topaz.local.dev/api/logs` — accepts JSON log arrays with `Log-Type` header; persists records per custom table name; returns `200` with empty body |
+| <span class="badge--preview">Preview</span> | KQL query API | `POST /v1/workspaces/{workspaceId}/query` — minimal KQL subset over ingested custom tables; `where`, `project`, `extend`, `summarize`, `order by`, `take`, `union` operators; returns standard `{"tables":[...]}` schema |
+
 ---
 
 ## ✅ Completed

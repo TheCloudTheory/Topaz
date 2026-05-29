@@ -857,6 +857,272 @@ TODO: Azure App Service: transparent HTTP request forwarding (data-plane hosting
   labels: enhancement, app-service
 -->
 
+### Chaos Engineering — controllable fault injection
+
+<!--
+TODO: Chaos Engineering: Global chaos mode toggle and CLI command
+  Add a global chaos-mode on/off switch to Topaz that can be toggled at runtime via the
+  `topaz chaos` CLI command and via a REST control-plane endpoint:
+  - `topaz chaos enable`  — activate chaos mode
+  - `topaz chaos disable` — deactivate chaos mode
+  - `topaz chaos status`  — print current mode and active fault rules as a table
+  REST endpoint (on DefaultResourceManagerPort):
+  - POST /topaz/chaos/enable
+  - POST /topaz/chaos/disable
+  - GET  /topaz/chaos/status  — returns {"enabled": true, "rules": [...]}
+  Chaos state is held in-memory (not persisted across restarts).
+  milestone: v1.8-preview
+  labels: enhancement, chaos-engineering, good first issue
+-->
+
+<!--
+TODO: Chaos Engineering: Fault rule configuration
+  Allow users to define per-service (or global) fault rules that are evaluated on each
+  incoming request when chaos mode is enabled.
+  A fault rule has the following fields:
+  - serviceNamespace (e.g. "Microsoft.Storage", "Microsoft.KeyVault", or "*" for all)
+  - faultType: one of Timeout | TransientError | Throttle | ServiceUnavailable
+  - faultRate: 0.0–1.0 (probability of injecting the fault for a matching request)
+  - httpStatusCode: override for the response status code (e.g. 429, 500, 503)
+  REST endpoints (on DefaultResourceManagerPort):
+  - PUT  /topaz/chaos/rules/{ruleId} — create or replace a rule
+  - GET  /topaz/chaos/rules/{ruleId} — get a rule
+  - DELETE /topaz/chaos/rules/{ruleId} — delete a rule
+  - GET  /topaz/chaos/rules — list all rules
+  Rules are evaluated in registration order; first matching rule wins.
+  milestone: v1.8-preview
+  labels: enhancement, chaos-engineering
+-->
+
+<!--
+TODO: Chaos Engineering: Router-level fault injection middleware
+  Integrate fault injection into the Topaz router pipeline so that when chaos mode is
+  enabled and a fault rule matches an incoming request, the router injects the configured
+  fault before dispatching to the endpoint handler:
+  - Timeout fault: delay the response by a configurable duration (default 30 s) before
+    returning 408 Request Timeout or simply dropping the connection.
+  - TransientError fault: return 500 Internal Server Error with a stock Azure-style JSON
+    error body ({ "error": { "code": "InternalServerError", "message": "..." } }).
+  - Throttle fault: return 429 Too Many Requests with a Retry-After header (default 5 s).
+  - ServiceUnavailable fault: return 503 Service Unavailable.
+  The faultRate field is respected: generate a random float per request; only inject
+  the fault when the value is below faultRate (so 0.1 = 10% of requests are faulted).
+  Log every injected fault at Information level so tests can observe it.
+  milestone: v1.8-preview
+  labels: enhancement, chaos-engineering
+-->
+
+### Azure App Configuration — initial control plane and data plane
+
+<!--
+TODO: Azure App Configuration: New service project scaffold
+  Create Topaz.Service.AppConfiguration following existing service conventions:
+  - ConfigurationStoreResourceProperties + ConfigurationStoreResource (ArmResource<T>)
+    capturing: sku (Free/Standard), provisioningState (always Succeeded), endpoint
+    (https://{name}.azconfig.topaz.local.dev:<AppConfigPort>/), publicNetworkAccess,
+    disableLocalAuth, createMode, softDeleteRetentionInDays, enablePurgeProtection.
+  - ConfigurationStoreResourceProvider (ResourceProviderBase<T>) for filesystem persistence
+    under .topaz/app-configuration/{subscriptionId}/{resourceGroup}/{storeName}/.
+  - AppConfigurationServiceControlPlane implementing IControlPlane with a working Deploy()
+    that maps GenericResource → ConfigurationStoreResource via resource.As<T,TProps>().
+  - IServiceDefinition registration and wiring in Topaz.Host.
+  - ProjectReference in Topaz.Service.ResourceManager.csproj and a
+    case "Microsoft.AppConfiguration/configurationStores": entry in
+    TemplateDeploymentOrchestrator.RouteDeployment().
+  - Add GlobalSettings.DefaultAppConfigurationPort constant (8896).
+  See: https://learn.microsoft.com/en-us/rest/api/appconfiguration/
+  milestone: v1.8-preview
+  labels: enhancement, app-configuration, good first issue
+-->
+
+<!--
+TODO: Azure App Configuration: ConfigurationStore control plane endpoints
+  Implement the ARM-level ConfigurationStore resource surface
+  (Microsoft.AppConfiguration/configurationStores):
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.AppConfiguration/configurationStores/{name}  – create or update
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.AppConfiguration/configurationStores/{name}  – get
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.AppConfiguration/configurationStores/{name}  – delete
+  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.AppConfiguration/configurationStores/{name}  – update (tags, sku, publicNetworkAccess)
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.AppConfiguration/configurationStores          – list by resource group
+  - GET    /subscriptions/{sub}/providers/Microsoft.AppConfiguration/configurationStores                              – list all
+  Also implement access key management:
+  - POST .../configurationStores/{name}/listKeys              – return primary and secondary read-write and read-only keys
+  - POST .../configurationStores/{name}/regenerateKey         – regenerate one key by id
+  Generate and persist two read-write and two read-only key pairs (id, value, connectionString)
+  on first creation.
+  milestone: v1.8-preview
+  labels: enhancement, app-configuration, good first issue
+-->
+
+<!--
+TODO: Azure App Configuration: Data plane — key-value store API
+  Implement the App Configuration data-plane REST API on DefaultAppConfigurationPort (8896).
+  Authentication: validate the HMAC-SHA256 credential scheme used by the Azure SDK
+  (Authorization: HMAC-SHA256 Credential={keyId}&SignedHeaders=...&Signature=...).
+  Endpoints:
+  - GET    /kv                          – list key-values; support ?key=, ?label=, ?after= (pagination), $select= (field projection)
+  - GET    /kv/{key}                    – get a single key-value (optional ?label= qualifier)
+  - PUT    /kv/{key}                    – create or update a key-value (body: {"value":"...","contentType":"...","tags":{}})
+  - DELETE /kv/{key}                    – delete a key-value (optional ?label=)
+  - GET    /labels                      – list all labels in the store
+  - GET    /revisions                   – list key-value change history (simplified: return current values only)
+  - PUT    /locks/{key}                 – lock (read-only) a key-value
+  - DELETE /locks/{key}                 – unlock a key-value
+  Key-values are persisted as JSON files under the store's data directory.
+  Support content types: plain string, application/json, application/vnd.microsoft.appconfig.ff+json
+  (feature flags). Feature flag key-values use the key prefix .appconfig.featureflag/.
+  Return ETag and Last-Modified headers on every key-value response.
+  milestone: v1.8-preview
+  labels: enhancement, app-configuration
+-->
+
+<!--
+TODO: Azure App Configuration: MCP Server provisioning tool
+  Extend Topaz.MCP with an App Configuration provisioning tool:
+  - CreateAppConfigurationStore — create a ConfigurationStore in a resource group and
+    return the endpoint URL and primary read-write connection string.
+  Extend GetConnectionStrings to include the App Configuration connection string for
+  provisioned stores.
+  milestone: v1.8-preview
+  labels: enhancement, app-configuration, mcp
+-->
+
+---
+
+## v1.9-preview
+
+### Application Insights — initial control plane and ingestion
+
+<!--
+TODO: Application Insights: New service project scaffold
+  Create Topaz.Service.ApplicationInsights following existing service conventions:
+  - ApplicationInsightsComponentResourceProperties + ApplicationInsightsComponentResource
+    (ArmResource<T>) capturing: applicationType (web/other), kind (web/ios/other),
+    flowType, requestSource, instrumentationKey (generated GUID), connectionString
+    (InstrumentationKey=...;IngestionEndpoint=...;LiveEndpoint=...),
+    provisioningState (always Succeeded), ingestionMode.
+  - ApplicationInsightsResourceProvider (ResourceProviderBase<T>) for filesystem persistence.
+  - ApplicationInsightsServiceControlPlane implementing IControlPlane with a working Deploy().
+  - IServiceDefinition registration and wiring in Topaz.Host.
+  - ProjectReference in Topaz.Service.ResourceManager.csproj and a
+    case "microsoft.insights/components": entry in TemplateDeploymentOrchestrator.RouteDeployment().
+  - Add GlobalSettings.DefaultApplicationInsightsPort constant (8897).
+  See: https://learn.microsoft.com/en-us/rest/api/application-insights/
+  milestone: v1.9-preview
+  labels: enhancement, application-insights, good first issue
+-->
+
+<!--
+TODO: Application Insights: Component control plane endpoints
+  Implement the ARM-level component resource surface (microsoft.insights/components):
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/microsoft.insights/components/{name}  – create or update
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/microsoft.insights/components/{name}  – get
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/microsoft.insights/components/{name}  – delete
+  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/microsoft.insights/components/{name}  – update (tags, RetentionInDays, publicNetworkAccessForIngestion)
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/microsoft.insights/components          – list by resource group
+  - GET    /subscriptions/{sub}/providers/microsoft.insights/components                              – list all
+  The instrumentationKey and connectionString fields are generated on first creation and
+  persisted; they remain stable across updates.
+  milestone: v1.9-preview
+  labels: enhancement, application-insights, good first issue
+-->
+
+<!--
+TODO: Application Insights: Telemetry ingestion endpoint
+  Implement the Application Insights ingestion endpoint on DefaultApplicationInsightsPort
+  (8897) that accepts telemetry items from the Azure Monitor OpenTelemetry SDK and the
+  classic Application Insights SDK:
+  - POST /v2/track — accepts a JSON array of telemetry envelopes (RequestData, TraceData,
+    ExceptionData, EventData, MetricData, DependencyData); responds 200 with
+    {"itemsReceived":N,"itemsAccepted":N,"errors":[]}.
+  Received envelopes are persisted to disk under
+  .topaz/application-insights/{instrumentationKey}/telemetry/{date}/{type}/{id}.json so
+  they can be queried via the query endpoint.
+  Map the incoming instrumentationKey (from the iKey field or the Authorization header)
+  to the correct component resource.
+  milestone: v1.9-preview
+  labels: enhancement, application-insights
+-->
+
+<!--
+TODO: Application Insights: Basic query API
+  Implement a minimal subset of the Application Insights Query API so that
+  `az monitor app-insights query` and the Azure SDK QueryClient work against Topaz:
+  - POST /v1/apps/{instrumentationKey}/query — accepts {"query":"...","timespan":"..."};
+    evaluates a simplified KQL-like query over the persisted telemetry envelopes.
+  Supported table names: requests, traces, exceptions, customEvents, customMetrics,
+  dependencies.
+  Supported operators: where (equality, contains, startswith), project, summarize count(),
+  order by timestamp desc, take N.
+  Return the standard {"tables":[{"name":"PrimaryResult","columns":[...],"rows":[...]}]}
+  schema.
+  milestone: v1.9-preview
+  labels: enhancement, application-insights
+-->
+
+### Log Analytics — initial control plane and ingestion
+
+<!--
+TODO: Log Analytics: New service project scaffold
+  Create Topaz.Service.LogAnalytics following existing service conventions:
+  - WorkspaceResourceProperties + WorkspaceResource (ArmResource<T>) capturing:
+    sku (PerGB2018/Free/CapacityReservation), retentionInDays, workspaceId (GUID),
+    customerId (same GUID, used for querying), provisioningState (always Succeeded),
+    publicNetworkAccessForIngestion, publicNetworkAccessForQuery.
+  - WorkspaceResourceProvider (ResourceProviderBase<T>) for filesystem persistence.
+  - LogAnalyticsServiceControlPlane implementing IControlPlane with a working Deploy().
+  - IServiceDefinition registration and wiring in Topaz.Host.
+  - ProjectReference in Topaz.Service.ResourceManager.csproj and a
+    case "Microsoft.OperationalInsights/workspaces": entry in
+    TemplateDeploymentOrchestrator.RouteDeployment().
+  See: https://learn.microsoft.com/en-us/rest/api/loganalytics/
+  milestone: v1.9-preview
+  labels: enhancement, log-analytics, good first issue
+-->
+
+<!--
+TODO: Log Analytics: Workspace control plane endpoints
+  Implement the ARM-level workspace resource surface
+  (Microsoft.OperationalInsights/workspaces):
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces/{name}  – create or update
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces/{name}  – get
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces/{name}  – delete
+  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces/{name}  – update (tags, retentionInDays, sku)
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.OperationalInsights/workspaces          – list by resource group
+  - GET    /subscriptions/{sub}/providers/Microsoft.OperationalInsights/workspaces                              – list all
+  The workspaceId and customerId fields are generated as GUIDs on first creation and
+  persist across updates.
+  milestone: v1.9-preview
+  labels: enhancement, log-analytics, good first issue
+-->
+
+<!--
+TODO: Log Analytics: Data Collection (Logs Ingestion API)
+  Implement the Logs Ingestion API endpoint (Azure Monitor Data Collection):
+  - POST https://{workspaceId}.ods.opinsights.topaz.local.dev/api/logs?api-version=2016-04-01
+    Body: JSON array of log records; header Log-Type sets the custom table name.
+  Persists each batch of records to .topaz/log-analytics/{workspaceId}/{tableName}/{date}/{id}.json.
+  Respond 200 with an empty body on success, matching real Azure behaviour.
+  milestone: v1.9-preview
+  labels: enhancement, log-analytics
+-->
+
+<!--
+TODO: Log Analytics: Query API
+  Implement a minimal KQL query endpoint so that `az monitor log-analytics query` and the
+  Azure SDK LogsQueryClient work against Topaz:
+  - POST /v1/workspaces/{workspaceId}/query — body: {"query":"...","timespan":"..."}
+  Supported tables: custom tables ingested via the Logs Ingestion API, plus built-in
+  aliases: AzureActivity, AzureDiagnostics (both always return empty results for
+  resources not linked to the workspace).
+  Supported KQL operators: where (==, contains, startswith, between), project, extend,
+  summarize count()/sum()/avg()/min()/max() by, order by, take, union.
+  Return the standard {"tables":[{"name":"PrimaryResult","columns":[...],"rows":[...]}]}
+  schema matching the Log Analytics REST contract.
+  milestone: v1.9-preview
+  labels: enhancement, log-analytics
+-->
+
 ---
 
 ## Unplanned / Ideas
