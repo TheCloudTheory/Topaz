@@ -39,6 +39,7 @@ public sealed class SqlDatabaseResource : ArmSubresource<SqlDatabaseResourceProp
     public string? Location { get; set; }
     public IDictionary<string, string>? Tags { get; set; }
     public ResourceSku? Sku { get; init; }
+    public string Kind { get; init; } = "v12.0,user";
 
     public string GetServer() => Id.Split("/")[8];
 }

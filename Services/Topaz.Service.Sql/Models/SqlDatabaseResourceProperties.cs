@@ -14,6 +14,7 @@ public sealed class SqlDatabaseResourceProperties
     public string RequestedBackupStorageRedundancy { get; set; } = "Geo";
     public string ProvisioningState => "Succeeded";
     public string CurrentSkuName { get; set; } = "Basic";
+    public string ReadScale { get; set; } = "Disabled";
 
     public static SqlDatabaseResourceProperties FromRequest(CreateOrUpdateSqlDatabaseRequest request) =>
         new()
