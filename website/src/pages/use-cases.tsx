@@ -42,7 +42,7 @@ function WindowChrome({ title }: { title: string }) {
 function CiPipelineVisual() {
   const steps = [
     { icon: '📦', label: 'Build & unit tests', sub: 'dotnet test --filter Unit', status: 'PASS', statusClass: styles.statusPass },
-    { icon: '🟦', label: 'Start Topaz', sub: 'docker run thecloudtheory/topaz:latest', status: 'RUN', statusClass: styles.statusRun },
+    { icon: '🟦', label: 'Start Topaz', sub: 'docker run thecloudtheory/topaz-host', status: 'RUN', statusClass: styles.statusRun },
     { icon: '🔗', label: 'Provision resources', sub: 'az group create / az storage account create', status: 'PASS', statusClass: styles.statusPass },
     { icon: '🧪', label: 'Integration tests', sub: 'dotnet test --filter Integration', status: 'PASS', statusClass: styles.statusPass },
     { icon: '🚀', label: 'Deploy to staging', sub: 'Only runs on main branch', status: 'SKIP', statusClass: styles.statusSkip },
@@ -186,6 +186,10 @@ function MicroservicesVisual() {
           <div className={clsx(styles.topoBox, styles.topoBoxGreen)}>🔐 Key Vault</div>
           <div className={clsx(styles.topoBox, styles.topoBoxOrange)}>🆔 Managed Identity</div>
         </div>
+        <div className={styles.topologyRow}>
+          <div className={clsx(styles.topoBox, styles.topoBoxBlue)}>🌐 App Service</div>
+          <div className={clsx(styles.topoBox, styles.topoBoxBlue)}>🗄️ Azure SQL</div>
+        </div>
 
         <div className={styles.topoConnector}>↓</div>
 
@@ -216,16 +220,16 @@ const SCENARIOS: Scenario[] = [
     visual: <CiPipelineVisual />,
   },
   {
-    tag: '.NET · Python · any SDK',
+    tag: '.NET · Python · JavaScript · any SDK',
     icon: '⚡',
     title: 'Point your Azure SDK at Topaz, keep your code unchanged',
     description:
-      'Topaz implements the same REST and AMQP protocols as Azure. Swap the endpoint URL and credential, and your BlobServiceClient, SecretClient, ServiceBusClient — everything — works as-is. A single NuGet helper package handles the credential wiring for .NET projects.',
+      'Topaz implements the same REST and AMQP protocols as Azure. Swap the endpoint URL and credential, and your BlobServiceClient, SecretClient, ServiceBusClient — everything — works as-is. A NuGet helper handles credential wiring for .NET; the official topaz-sdk package on PyPI provides the same for Python.',
     benefits: [
       'No application code changes — only connection strings differ',
-      'Supports Key Vault, Blob Storage, Service Bus, Event Hub and more',
-      'AzureLocalCredential mirrors DefaultAzureCredential behaviour',
-      'Hot-reload friendly: restart Topaz without touching your app',
+      'Supports Key Vault, Blob Storage, Service Bus, Event Hub, SQL and more',
+      'Python: pip install topaz-sdk — AzureLocalCredential and TopazArmClient included',
+      'AzureLocalCredential mirrors DefaultAzureCredential behaviour across all SDKs',
     ],
     visual: <DotnetVisual />,
     reverse: true,
@@ -299,6 +303,18 @@ const MORE_USE_CASES: UseCase[] = [
     title: 'Migration & refactoring',
     description:
       'Safely refactor how your application interacts with Azure services. Regression-test against Topaz before running against the real cloud.',
+  },
+  {
+    icon: '🤖',
+    title: 'AI-assisted provisioning',
+    description:
+      'The built-in MCP server lets GitHub Copilot, Claude, and other AI assistants provision and inspect Topaz resources through natural language. Create resource groups, storage accounts, and key vaults without writing a single CLI command — a capability no other Azure emulator offers.',
+  },
+  {
+    icon: '🗄️',
+    title: 'Full-stack app testing',
+    description:
+      'With Azure SQL, App Service, Key Vault and Blob Storage all running locally, you can test the complete application stack end-to-end — web tier, database, secrets, and file storage — without a cloud subscription. Not possible with single-service emulators like Azurite.',
   },
 ];
 

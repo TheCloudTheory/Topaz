@@ -34,7 +34,8 @@ const SERVICES: Service[] = [
   { abbr: 'VNet', bg: '#1B63EB', name: 'Virtual Network',         description: 'VNet and subnet emulation' },
   { abbr: 'VM',   bg: '#1B63EB', name: 'Virtual Machines',        description: 'VM lifecycle management (no-op emulation)', preview: true },
   { abbr: 'NSG',  bg: '#07A560', name: 'Network Security Groups', description: 'NSG rules and associations', preview: true },
-  { abbr: 'SQL',  bg: '#CC2927', name: 'Azure SQL',               description: 'SQL Server and Database emulation', comingSoon: true },
+  { abbr: 'AS',   bg: '#0078D4', name: 'Azure App Service',        description: 'App Service Plans, Web Apps and Function Apps', preview: true },
+  { abbr: 'SQL',  bg: '#CC2927', name: 'Azure SQL',               description: 'SQL Server and Database emulation', preview: true },
   { abbr: 'CDB',  bg: '#0078D4', name: 'Azure Cosmos DB',         description: 'NoSQL multi-model database emulation', comingSoon: true },
 ];
 
@@ -44,7 +45,7 @@ const TOOLING: Service[] = [
   { abbr: '.NET', bg: '#512BD4', name: '.NET SDK',               description: 'Azure SDK for .NET — first-class support' },
   { abbr: 'TF',   bg: '#7B42BC', name: 'Terraform',              description: 'AzureRM, AzAPI, and Entra ID provider support', preview: true },
   { abbr: 'MCP',  bg: '#8661C5', name: 'MCP Server',             description: 'AI assistant integration via Model Context Protocol', preview: true },
-  { abbr: 'PY',   bg: '#3776AB', name: 'Python SDK',             description: 'Azure SDK for Python', comingSoon: true },
+  { abbr: 'PY',   bg: '#3776AB', name: 'Python SDK',             description: 'Azure SDK for Python — topaz-sdk on PyPI', preview: true },
   { abbr: 'JS',   bg: '#F7DF1E', name: 'JavaScript / TS SDK',    description: 'Azure SDK for JavaScript and TypeScript', comingSoon: true },
   { abbr: 'JV',   bg: '#E76F00', name: 'Java SDK',               description: 'Azure SDK for Java', comingSoon: true },
 ];
@@ -156,7 +157,7 @@ await storageClient.CreateBlobContainerAsync("uploads");`,
     code: `# docker-compose.yml — run Topaz as a local sidecar
 services:
   topaz:
-    image: thecloudtheory/topaz:latest
+    image: thecloudtheory/topaz-host
     ports:
       - "8899:8899"   # Azure Resource Manager
       - "8898:8898"   # Azure Key Vault
@@ -206,6 +207,16 @@ const PORTAL_FEATURES: Capability[] = [
     icon: '🆔',
     title: 'Entra ID tenant',
     body: 'Manage users, groups, applications and service principals directly from the browser — no API calls needed.',
+  },
+  {
+    icon: '🏷',
+    title: 'Tag editing',
+    body: 'Edit resource tags inline across all tag-capable resource types — Event Hub namespaces, Key Vaults, Storage Accounts, VMs, and more.',
+  },
+  {
+    icon: '⌨️',
+    title: 'In-browser CLI terminal',
+    body: 'A live terminal powered by the Topaz CLI engine, with command history and contextual suggestions — run Topaz commands without leaving the browser.',
   },
 ];
 
