@@ -1,81 +1,3 @@
-## v1.5-beta
-
-### Azure Storage — User Delegation SAS for Blob
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | `generateUserDelegationKey` ARM endpoint | `POST .../storageAccounts/{name}/providers/Microsoft.Storage/userDelegationKey` — returns a time-bounded user delegation key signed with Topaz's account-key HMAC chain |
-| <span class="badge--preview">Preview</span> | User Delegation SAS validation on Blob | Validate `skoid/sktid/skt/ske/sks/skv/sig` SAS query parameters on Blob endpoints; recompute the delegation key and verify signature, expiry, and scope |
-
-### ARM Deployments — full tenant-scope surface
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Create Or Update At Tenant Scope | `PUT /providers/Microsoft.Resources/deployments/{name}` — deploy resources at tenant scope |
-| <span class="badge--preview">Preview</span> | Get At Tenant Scope | `GET /providers/Microsoft.Resources/deployments/{name}` |
-| <span class="badge--preview">Preview</span> | Delete At Tenant Scope | `DELETE /providers/Microsoft.Resources/deployments/{name}` |
-| <span class="badge--preview">Preview</span> | Validate At Tenant Scope | `POST /providers/Microsoft.Resources/deployments/{name}/validate` |
-| <span class="badge--preview">Preview</span> | Cancel At Tenant Scope | `POST /providers/Microsoft.Resources/deployments/{name}/cancel` |
-| <span class="badge--preview">Preview</span> | Check Existence At Tenant Scope | `HEAD /providers/Microsoft.Resources/deployments/{name}` |
-| <span class="badge--preview">Preview</span> | Export Template At Tenant Scope | `POST /providers/Microsoft.Resources/deployments/{name}/exportTemplate` |
-| <span class="badge--preview">Preview</span> | What If At Tenant Scope | `POST /providers/Microsoft.Resources/deployments/{name}/whatif` |
-
-### Container Registry — ACR Tasks
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Task CRUD control plane | Create, get, update, delete, and list ACR tasks via the ARM surface (`Microsoft.ContainerRegistry/registries/tasks`) |
-| <span class="badge--preview">Preview</span> | Task runs and triggers | Manually trigger runs, list and get run details, cancel runs, retrieve log URL — runs complete immediately without executing real workloads |
-
-### Azure SQL — initial control plane
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.Sql` project with models, resource provider, control plane, and host registration |
-| <span class="badge--preview">Preview</span> | SQL Server control plane | Create, get, update, delete, and list SQL Server resources; emulated server with `{name}.database.topaz.local.dev` as FQDN |
-| <span class="badge--preview">Preview</span> | SQL Database control plane | Create, get, update, delete, and list databases under a server — persisted as child resources on disk |
-
-### Virtual Network — IP address allocation registry
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | IP allocation registry | Track IPs assigned to NICs and private endpoints so `CheckIPAddressAvailability` can return real `availableIPAddresses` suggestions instead of `[]` |
-
-### Azure App Service — initial control plane
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.AppService` with `AppServicePlanService` and `AppServiceSiteService` definitions, resource providers, control planes (including `Deploy()`), host registration, and `RouteDeployment()` cases for `Microsoft.Web/serverfarms` and `Microsoft.Web/sites` |
-| <span class="badge--stable">Stable</span> | App Service Plan control plane | Create, get, delete, and list `Microsoft.Web/serverfarms` by resource group and subscription; SKU and all plan properties persisted and round-tripped; Restart Web Apps action |
-| <span class="badge--preview">Preview</span> | Web App & Function App control plane | Create, get, delete, and list `Microsoft.Web/sites`; `kind` field distinguishes `app` from `functionapp` / `functionapp,linux`; `defaultHostName` computed as `{name}.azurewebsites.net` |
-| <span class="badge--preview">Preview</span> | Site Config sub-resource | GET/PUT `/config/web` (full `SiteConfig`), PUT `/config/appsettings` (write), and POST `/config/appsettings/list` (read) — siteConfig persisted embedded in the site resource |
-
-### Virtual Network — Network Interface (NIC) CRUD
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Network Interface (NIC) CRUD | PUT/GET/DELETE/LIST network interfaces (`/networkInterfaces/{nicName}`) so `az vm create` can be used without manual ARM calls |
-
-### Topaz Portal — tag editing
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Inline tag value editing in portal | Edit button per tag row in the Tags panel turns the value cell into an input field; supports all tag-capable resources |
-
-### Event Hub — delete individual Event Hub
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Delete individual Event Hub | `DELETE .../namespaces/{namespaceName}/eventhubs/{eventhubName}` — remove a single Event Hub resource inside a namespace without deleting the namespace itself |
-
-### Virtual Machines — PATCH update endpoint
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | VM PATCH update | `PATCH .../virtualMachines/{vmName}` — partial update (tags, hardware profile) without requiring a full PUT body; needed by `begin_update()` in the Azure SDK and `az vm update` in the Azure CLI |
-
----
-
 ## v1.6-beta
 
 ### Key Vault — correct challenge resource in `WWW-Authenticate`
@@ -220,6 +142,107 @@
 ---
 
 ## ✅ Completed
+
+### v1.5
+
+_Released on 29 May 2026._
+
+#### Azure Storage — User Delegation SAS for Blob
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | `generateUserDelegationKey` ARM endpoint | `POST .../storageAccounts/{name}/providers/Microsoft.Storage/userDelegationKey` — returns a time-bounded user delegation key signed with Topaz's account-key HMAC chain |
+| <span class="badge--preview">Preview</span> | User Delegation SAS validation on Blob | Validate `skoid/sktid/skt/ske/sks/skv/sig` SAS query parameters on Blob endpoints; recompute the delegation key and verify signature, expiry, and scope |
+
+#### ARM Deployments — full tenant-scope surface
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Create Or Update At Tenant Scope | `PUT /providers/Microsoft.Resources/deployments/{name}` — deploy resources at tenant scope |
+| <span class="badge--preview">Preview</span> | Get At Tenant Scope | `GET /providers/Microsoft.Resources/deployments/{name}` |
+| <span class="badge--preview">Preview</span> | Delete At Tenant Scope | `DELETE /providers/Microsoft.Resources/deployments/{name}` |
+| <span class="badge--preview">Preview</span> | Validate At Tenant Scope | `POST /providers/Microsoft.Resources/deployments/{name}/validate` |
+| <span class="badge--preview">Preview</span> | Cancel At Tenant Scope | `POST /providers/Microsoft.Resources/deployments/{name}/cancel` |
+| <span class="badge--preview">Preview</span> | Check Existence At Tenant Scope | `HEAD /providers/Microsoft.Resources/deployments/{name}` |
+| <span class="badge--preview">Preview</span> | Export Template At Tenant Scope | `POST /providers/Microsoft.Resources/deployments/{name}/exportTemplate` |
+| <span class="badge--preview">Preview</span> | What If At Tenant Scope | `POST /providers/Microsoft.Resources/deployments/{name}/whatif` |
+
+#### Container Registry — ACR Tasks and Runs
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Task CRUD control plane | Create, get, update, delete, and list ACR tasks via the ARM surface (`Microsoft.ContainerRegistry/registries/tasks`) |
+| <span class="badge--preview">Preview</span> | Task runs and triggers | Manually trigger runs, list and get run details, cancel runs, retrieve log URL — runs complete immediately without executing real workloads |
+
+#### Azure SQL — initial control plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.Sql` project with models, resource provider, control plane, and host registration |
+| <span class="badge--preview">Preview</span> | SQL Server control plane | Create, get, update, delete, and list SQL Server resources; emulated server with `{name}.database.topaz.local.dev` as FQDN |
+| <span class="badge--preview">Preview</span> | SQL Database control plane | Create, get, update, delete, and list databases under a server — persisted as child resources on disk |
+
+#### Virtual Network — IP address allocation registry
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | IP allocation registry | NIC and private endpoint creation now records assigned IP addresses; `CheckIPAddressAvailability` returns real `availableIPAddresses` suggestions instead of `[]` |
+
+#### Azure App Service — initial control plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.AppService` with `AppServicePlanService` and `AppServiceSiteService` definitions, resource providers, control planes (including `Deploy()`), host registration, and `RouteDeployment()` cases for `Microsoft.Web/serverfarms` and `Microsoft.Web/sites` |
+| <span class="badge--stable">Stable</span> | App Service Plan control plane | Create, get, delete, and list `Microsoft.Web/serverfarms` by resource group and subscription; SKU and all plan properties persisted and round-tripped; Restart Web Apps action |
+| <span class="badge--preview">Preview</span> | Web App & Function App control plane | Create, get, delete, and list `Microsoft.Web/sites`; `kind` field distinguishes `app` from `functionapp` / `functionapp,linux`; `defaultHostName` computed as `{name}.azurewebsites.net` |
+| <span class="badge--preview">Preview</span> | Site Config sub-resource | GET/PUT `/config/web` (full `SiteConfig`), PUT `/config/appsettings` (write), and POST `/config/appsettings/list` (read) — siteConfig persisted embedded in the site resource |
+
+#### Virtual Network — Network Interface (NIC) CRUD
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Network Interface (NIC) CRUD | PUT/GET/DELETE/LIST network interfaces (`/networkInterfaces/{nicName}`) so `az vm create` can be used without manual ARM calls |
+
+#### Topaz Portal — tag editing and CLI terminal
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Inline tag value editing in portal | Edit button per tag row in the Tags panel turns the value cell into an input field; supports all tag-capable resources |
+| <span class="badge--preview">Preview</span> | Live in-browser CLI terminal | Terminal backed by `CliExecutionService` with command history and contextual suggestions |
+
+#### Event Hub — delete individual Event Hub
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Delete individual Event Hub | `DELETE .../namespaces/{namespaceName}/eventhubs/{eventhubName}` — remove a single Event Hub resource inside a namespace without deleting the namespace itself |
+
+#### Virtual Machines — PATCH update endpoint
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | VM PATCH update | `PATCH .../virtualMachines/{vmName}` — partial update (tags, hardware profile) without requiring a full PUT body; needed by `begin_update()` in the Azure SDK and `az vm update` in the Azure CLI |
+
+#### Service Bus — AMQP data plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Queue management over AMQP | PUT/DELETE queues via the AMQP management link; configurable `IncomingLinkEndpoint` and `OutgoingLinkEndpoint` |
+| <span class="badge--preview">Preview</span> | Send, receive, and renew lock | Producers deliver messages; consumers drain in FIFO order; `com.microsoft:renew-message-lock` resets lock expiry |
+
+#### Entra ID — Device Code flow and `form_post`
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Device Code flow | `POST /devicecode` + polling `POST /token?grant_type=urn:ietf:params:oauth:grant-type:device_code` — matches Azure AD device-code polling contract |
+| <span class="badge--preview">Preview</span> | `form_post` response mode | `response_mode=form_post` returns a self-submitting HTML form carrying `code` and `state` |
+
+#### Python SDK — `topaz-sdk`
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | `topaz-sdk` on PyPI | `TopazArmClient` (subscription/RG lifecycle, Bearer token injection, `REQUESTS_CA_BUNDLE` support), `AzureLocalCredential` (token caching), `TopazEnvironment` (endpoint resolution from env vars) |
+
+---
 
 ### v1.4
 

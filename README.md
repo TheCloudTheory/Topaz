@@ -55,6 +55,8 @@ See the [roadmap](https://topaz.thecloudtheory.com/docs/roadmap) for what's comi
 | Azure Virtual Network | ✅ | — | Preview |
 | Azure Resource Manager | ✅ | — | Preview |
 | Microsoft Entra ID | ✅ | — | Preview |
+| Azure App Service | ✅ | — | Preview |
+| Azure SQL | ✅ | — | Preview |
 
 See the [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/) for the full operation-level breakdown per service.
 
