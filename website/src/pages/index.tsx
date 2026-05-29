@@ -30,6 +30,8 @@ const SERVICES = [
   {name: 'Azure Service Bus', sub: 'Queues · Topics · Subscriptions'},
   {name: 'Azure Event Hub', sub: 'Namespaces · Event Hubs'},
   {name: 'Container Registry', sub: 'Images · Tags · Manifests'},
+  {name: 'Azure App Service', sub: 'Plans · Web Apps · Function Apps'},
+  {name: 'Azure SQL', sub: 'Servers · Databases'},
   {name: 'Virtual Machines', sub: 'Control Plane'},
   {name: 'Virtual Network', sub: 'VNets · Subnets · NICs'},
   {name: 'Resource Manager', sub: 'ARM · Bicep · Terraform'},
@@ -42,6 +44,7 @@ const INTEGRATIONS = [
   'Azure PowerShell',
   'Terraform',
   '.NET SDK',
+  'Python SDK',
   'GitHub Actions',
   'Docker Compose',
 ];
@@ -60,7 +63,7 @@ function HomepageHeader() {
         <p className={styles.heroTagline}>One binary. Multiple Azure services. No cloud required.</p>
         <p className={styles.heroSubtitle}>
           Stop juggling Azurite, manual mocks, and disconnected emulators.
-          Topaz runs Storage, Key Vault, Service Bus, Event Hub, Container Registry, RBAC, and more —
+          Topaz runs Storage, Key Vault, Service Bus, Event Hub, Container Registry, App Service, SQL, RBAC, and more —
           with ARM template deployment support — from a single process.
         </p>
         <div className={styles.buttons}>
