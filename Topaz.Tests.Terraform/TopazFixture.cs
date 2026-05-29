@@ -178,6 +178,11 @@ public class TopazFixture
                 // Table Storage data-plane: azurerm_storage_table/azurerm_storage_table_entity need
                 // to connect to the table endpoint directly.
                 .WithExtraHost("tfrmstortableacct.table.storage.topaz.local.dev", _containerTopaz.IpAddress)
+                // Blob Storage data-plane: azurerm_storage_account read-back calls
+                // GET /?comp=properties&restype=service on the account-specific blob subdomain.
+                .WithExtraHost("tfrmstorageacct.blob.storage.topaz.local.dev", _containerTopaz.IpAddress)
+                .WithExtraHost("tfrmstoretls.blob.storage.topaz.local.dev", _containerTopaz.IpAddress)
+                .WithExtraHost("tfrmstortableacct.blob.storage.topaz.local.dev", _containerTopaz.IpAddress)
                 // Bind-mount host cache: providers + terraform binary are downloaded once and reused
                 // across all 17 fixture setups rather than re-downloaded for every test class.
                 .WithBindMount(TerraformCacheDir, "/tf-cache")
