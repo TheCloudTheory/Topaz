@@ -7,3 +7,10 @@ kamilmrzyglod:
   socials:
     linkedin: kamil-mrzygłód-31470376
     github: kamil-mrzyglod
+
+topaz:
+  name: Topaz
+  title: Topaz Maintainer Bot
+  url: https://topaz.thecloudtheory.com/
+  image_url: /img/topaz-logo.png
+  page: false
