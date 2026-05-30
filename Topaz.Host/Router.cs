@@ -293,7 +293,9 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
 
     private async Task CreateNotFoundResponse(HttpContext context, string method, string path)
     {
-        logger.LogError($"Request {method} {path} has no corresponding endpoint assigned.");
+        var host = context.Request.Headers.TryGetValue("Host", out var hostValue) ? hostValue.ToString() : "(unknown)";
+        var query = context.Request.QueryString.HasValue ? context.Request.QueryString.Value : string.Empty;
+        logger.LogError($"Request {method} {host}{path}{query} has no corresponding endpoint assigned.");
 
         var failedResponse = new HttpResponseMessage();
         failedResponse.CreateErrorResponse(
