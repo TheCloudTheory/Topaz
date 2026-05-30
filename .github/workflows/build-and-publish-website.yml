@@ -6,6 +6,9 @@ on:
     paths:
       - 'website/**'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build website
