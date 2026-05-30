@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,3 +32,4 @@ jobs:
         with:
           LANGUAGES: "${{ github.workspace }}/todo.json"
           IGNORE: "website/"
+          INSERT_ISSUE_URLS: true
