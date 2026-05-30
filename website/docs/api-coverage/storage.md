@@ -98,6 +98,7 @@ Blob Storage is served on port **8891** (HTTP) in Topaz.
 | Operation | Status | Notes |
 |-----------|--------|-------|
 | Get Blob Service Stats | ✅ | `GET /?restype=service&comp=stats` — secondary endpoint only; returns 403 for non-RA-GRS accounts |
+| List Containers (secondary) | ✅ | All blob read operations (List Containers, Get/List Blobs, etc.) are served from the primary data store when the request arrives on the `{account}-secondary.*` endpoint of an RA-GRS/RAGZRS account |
 | Get Blob Service Properties | ✅ | `GET /?restype=service&comp=properties` — includes static website configuration |
 | Set Blob Service Properties | ✅ | `PUT /?restype=service&comp=properties` |
 | Generate User Delegation Key | ✅ | `POST /?restype=service&comp=userdelegationkey` — requires Bearer auth; key bytes derived deterministically from account key + caller OID/TID |
@@ -114,7 +115,8 @@ Table Storage is served on port **8890** (HTTPS) in Topaz.
 |-----------|--------|-------|
 | Get Table Service Properties | ✅ | `GET /` |
 | Set Table Service Properties | ✅ | `PUT /?restype=service&comp=properties` |
-| Get Table Service Stats | ✅ | `GET /?restype=service&comp=stats` |
+| Get Table Service Stats | ✅ | `GET /?restype=service&comp=stats` — secondary endpoint only; returns 403 for non-RA-GRS accounts |
+| List/Read Tables & Entities (secondary) | ✅ | All table read operations (Query Tables, Get/Query Entities, etc.) are served from the primary data store when the request arrives on the `{account}-secondary.*` endpoint of an RA-GRS/RAGZRS account |
 | Preflight Table Request | ✅ | `OPTIONS /{resourcePath}` |
 
 ### Tables
@@ -152,6 +154,7 @@ Queue Storage is served on port **8893** (HTTPS) in Topaz.
 | Get Queue Service Properties | ✅ | `GET /?restype=service&comp=properties` |
 | Set Queue Service Properties | ✅ | `PUT /?restype=service&comp=properties` |
 | Get Queue Service Stats | ✅ | `GET /?restype=service&comp=stats` — secondary endpoint only; returns 403 for non-RA-GRS accounts |
+| List/Read Queues (secondary) | ✅ | All queue read operations (List Queues, Get Queue Metadata, Peek/Get Messages, etc.) are served from the primary data store when the request arrives on the `{account}-secondary.*` endpoint of an RA-GRS/RAGZRS account |
 
 ### Queues
 

@@ -1,3 +1,5 @@
+using Topaz.Shared;
+
 namespace Topaz.Tests.AzureCLI;
 
 public class StorageTests : TopazFixture
@@ -1446,6 +1448,94 @@ public class StorageTests : TopazFixture
             (resp) =>
             {
                 Assert.That(resp["queue"]!["retentionPolicy"]!["days"]!.GetValue<int>(), Is.EqualTo(7));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task StorageAccount_RAGRS_BlobList_OnSecondary_ReturnsData()
+    {
+        const string storageAccountName = "topazsecbloblist";
+        const string resourceGroup = "rg-sec-blob-list";
+        const string containerName = "sec-read-container";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_RAGRS");
+
+        var key = string.Empty;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            resp =>
+            {
+                key = resp.AsArray().First()!["value"]!.GetValue<string>();
+            });
+
+        var primaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={key};" +
+            $"BlobEndpoint=https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/";
+
+        // Create a container via primary
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --connection-string \"{primaryConnectionString}\"");
+
+        // List containers via the secondary endpoint
+        var secondaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={key};" +
+            $"BlobEndpoint=https://{storageAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/";
+
+        await RunAzureCliCommand(
+            $"az storage container list --connection-string \"{secondaryConnectionString}\"",
+            resp =>
+            {
+                var arr = resp.AsArray();
+                Assert.That(arr.Any(c => c!["name"]!.GetValue<string>() == containerName), Is.True);
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task StorageAccount_RAGRS_QueueList_OnSecondary_ReturnsData()
+    {
+        const string storageAccountName = "topazsecqueuelist";
+        const string resourceGroup = "rg-sec-queue-list";
+        const string queueName = "sec-read-queue";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_RAGRS");
+
+        var key = string.Empty;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            resp =>
+            {
+                key = resp.AsArray().First()!["value"]!.GetValue<string>();
+            });
+
+        var primaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={key};" +
+            $"QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/";
+
+        // Create a queue via primary
+        await RunAzureCliCommand(
+            $"az storage queue create --name {queueName} --connection-string \"{primaryConnectionString}\"");
+
+        // List queues via the secondary endpoint
+        var secondaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={key};" +
+            $"QueueEndpoint=https://{storageAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/";
+
+        await RunAzureCliCommand(
+            $"az storage queue list --connection-string \"{secondaryConnectionString}\"",
+            resp =>
+            {
+                var arr = resp.AsArray();
+                Assert.That(arr.Any(q => q!["name"]!.GetValue<string>() == queueName), Is.True);
             });
 
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");

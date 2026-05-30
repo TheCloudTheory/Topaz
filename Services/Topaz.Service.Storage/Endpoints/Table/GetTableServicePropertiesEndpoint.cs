@@ -84,12 +84,7 @@ internal sealed class GetTableServicePropertiesEndpoint(Pipeline eventPipeline, 
         response.StatusCode = HttpStatusCode.OK;
     }
 
-    private static bool IsRaGrsAccount(Models.StorageAccountResource storageAccount)
-    {
-        var skuName = storageAccount.Sku?.Name;
-        return string.Equals(skuName, StorageSkuName.StandardRagrs.ToString(), StringComparison.OrdinalIgnoreCase) ||
-               string.Equals(skuName, StorageSkuName.StandardRagzrs.ToString(), StringComparison.OrdinalIgnoreCase);
-    }
+
 
     private static void ThrowIfGetPropertiesRequestIsInvalid(QueryString query)
     {

@@ -287,4 +287,118 @@ public class StorageAccountGeoReplicationTests
         Assert.That(ex!.Status, Is.EqualTo(403));
         Assert.That(ex.ErrorCode, Is.EqualTo("WriteOperationNotSupportedOnSecondary"));
     }
+
+    [Test]
+    public async Task BlobStorage_ListContainers_OnSecondary_ReturnsData()
+    {
+        // Arrange
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        var primaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
+            $"BlobEndpoint=https://{RagrsAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+
+        var clientOptions = new BlobClientOptions();
+        clientOptions.Transport = new Azure.Core.Pipeline.HttpClientTransport(
+            new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            });
+
+        // Create a container via the primary endpoint
+        var primaryClient = new BlobServiceClient(primaryConnectionString, clientOptions);
+        await primaryClient.CreateBlobContainerAsync("secondary-read-test");
+
+        // Act — list containers via the secondary endpoint
+        var secondaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
+            $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+
+        var secondaryClient = new BlobServiceClient(secondaryConnectionString, clientOptions);
+        var containers = secondaryClient.GetBlobContainersAsync().ToBlockingEnumerable().ToList();
+
+        // Assert
+        Assert.That(containers.Any(c => c.Name == "secondary-read-test"), Is.True);
+    }
+
+    [Test]
+    public async Task QueueStorage_ListQueues_OnSecondary_ReturnsData()
+    {
+        // Arrange
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        var clientOptions = new QueueClientOptions();
+        clientOptions.Transport = new Azure.Core.Pipeline.HttpClientTransport(
+            new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            });
+
+        // Create a queue via the primary endpoint
+        var primaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
+            $"QueueEndpoint=https://{RagrsAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+
+        var primaryClient = new QueueServiceClient(primaryConnectionString, clientOptions);
+        await primaryClient.CreateQueueAsync("secondary-read-queue");
+
+        // Act — list queues via the secondary endpoint
+        var secondaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
+            $"QueueEndpoint=https://{RagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+
+        var secondaryClient = new QueueServiceClient(secondaryConnectionString, clientOptions);
+        var queues = secondaryClient.GetQueuesAsync().ToBlockingEnumerable().ToList();
+
+        // Assert
+        Assert.That(queues.Any(q => q.Name == "secondary-read-queue"), Is.True);
+    }
+
+    [Test]
+    public async Task TableStorage_QueryEntities_OnSecondary_ReturnsData()
+    {
+        // Arrange
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        var tableClientOptions = new TableClientOptions();
+        tableClientOptions.Transport = new Azure.Core.Pipeline.HttpClientTransport(
+            new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            });
+
+        // Create a table and insert an entity via the primary endpoint
+        var primaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
+            $"TableEndpoint=https://{RagrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/;";
+
+        var primaryServiceClient = new TableServiceClient(primaryConnectionString, tableClientOptions);
+        await primaryServiceClient.CreateTableAsync("secondaryreadtable");
+        var primaryTableClient = primaryServiceClient.GetTableClient("secondaryreadtable");
+        await primaryTableClient.AddEntityAsync(new Azure.Data.Tables.TableEntity("pk", "rk") { { "Value", "hello" } });
+
+        // Act — query entities via the secondary endpoint
+        var secondaryEndpoint =
+            $"https://{RagrsAccountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/";
+
+        var secondaryServiceClient = new TableServiceClient(
+            new Uri(secondaryEndpoint),
+            new TableSharedKeyCredential(RagrsAccountName, key),
+            tableClientOptions);
+
+        var secondaryTableClient = secondaryServiceClient.GetTableClient("secondaryreadtable");
+        var entities = secondaryTableClient.Query<Azure.Data.Tables.TableEntity>().ToList();
+
+        // Assert
+        Assert.That(entities.Any(e => e.PartitionKey == "pk" && e.RowKey == "rk"), Is.True);
+    }
 }

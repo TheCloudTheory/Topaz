@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
+using Azure.ResourceManager.Storage.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Topaz.Dns;
@@ -99,11 +100,38 @@ internal abstract class QueueDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
             return true;
         }
 
+        // Secondary endpoint fallback: strip "-secondary" suffix and resolve the primary account.
+        // Only RA-GRS/RAGZRS accounts expose a readable secondary endpoint.
+        const string secondarySuffix = "-secondary";
+        if (accountName!.EndsWith(secondarySuffix, StringComparison.OrdinalIgnoreCase))
+        {
+            var primaryName = accountName[..^secondarySuffix.Length];
+            var primaryIdentifiers = GlobalDnsEntries.GetEntry(AzureStorageService.UniqueName, primaryName);
+            if (primaryIdentifiers != null)
+            {
+                var primaryAccount = _storageResourceProvider.GetAs<StorageAccountResource>(
+                    SubscriptionIdentifier.From(primaryIdentifiers.Value.subscription),
+                    ResourceGroupIdentifier.From(primaryIdentifiers.Value.resourceGroup), primaryName);
+                if (primaryAccount != null && IsRaGrsAccount(primaryAccount))
+                {
+                    storageAccount = primaryAccount;
+                    return true;
+                }
+            }
+        }
+
         storageAccount = null;
         Logger.LogDebug(nameof(QueueDataPlaneEndpointBase), nameof(TryGetStorageAccount),
             "Storage account '{0}' doesn't exist.", accountName);
 
         return false;
+    }
+
+    protected static bool IsRaGrsAccount(StorageAccountResource storageAccount)
+    {
+        var skuName = storageAccount.Sku?.Name;
+        return string.Equals(skuName, StorageSkuName.StandardRagrs.ToString(), StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(skuName, StorageSkuName.StandardRagzrs.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
     protected string GetQueueName(string path)

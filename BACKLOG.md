@@ -114,22 +114,13 @@ _Implemented in v1.4-beta: inline per-row editing added to the shared `TagsPanel
 
 _Implemented in v1.4-beta: secondary endpoint DNS registration, ARM response `secondaryEndpoints` for RA-GRS/RA-GZRS, `GET ?restype=service&comp=stats` on blob/table/queue secondary endpoints, 403 FeatureNotSupported for non-RA-GRS stats, 403 WriteOperationNotSupportedOnSecondary for mutations on secondary._
 
-<!--
-TODO: Storage Account — secondary endpoint general reads
-  Allow standard GET operations (blob download, container listing, queue listing, table
-  entity reads) on `{accountName}-secondary.*` endpoints for RA-GRS/RA-GZRS accounts,
-  returning data from the same in-memory store as the primary endpoint.
-  milestone: v1.6-beta
-  labels: enhancement, storage
--->
+_Implemented in v1.6-beta: standard GET operations (blob container listing, queue listing, table entity reads) on `{accountName}-secondary.*` endpoints for RA-GRS/RA-GZRS accounts now return data from the same in-memory store as the primary endpoint. Note: secondary reads are always perfectly in sync with the primary — there is no replication lag simulation. `<LastSyncTime>` in stats responses still reflects wall-clock time rather than a scheduler tick. Replication lag simulation is tracked in the v1.9-preview backlog item below._
 
 ### Virtual Networks — full control plane
 
 _Implemented in v1.4-beta: `GET .../virtualNetworks/{name}/checkIPAddressAvailability?ipAddress={ip}`. Returns `available: true` when the IP falls within any subnet CIDR, `false` otherwise. `availableIPAddresses` is always `[]` (IP allocation tracking planned for v1.5-beta — see known-limitations.md)._
 
 _Implemented: DELETE, List by resource group, List by subscription, and Update Tags operations._
-
-
 
 ---
 
@@ -1121,6 +1112,23 @@ TODO: Log Analytics: Query API
   schema matching the Log Analytics REST contract.
   milestone: v1.9-preview
   labels: enhancement, log-analytics
+-->
+
+<!--
+TODO: Storage Account — geo-replication sync simulation
+  Simulate the RA-GRS/RA-GZRS secondary-region replication lag lifecycle with a background scheduler.
+  Work required:
+  - Add a LastGeoSyncTime (DateTimeOffset?) field to StorageAccountResourceProperties; set to
+    UtcNow - 30s on RA-GRS/RAGZRS account creation; null for non-geo-replicated SKUs.
+  - Implement GeoReplicationSyncScheduler : ITopazBackgroundService that iterates all RA-GRS/RAGZRS
+    accounts on a configurable periodic timer (default 30 s), updates LastGeoSyncTime = UtcNow,
+    and persists via StorageResourceProvider. Follow the KeyVaultSecretsSoftDeletePurgeScheduler pattern.
+  - Thread the persisted LastGeoSyncTime through GetBlobServiceStatsXml / GetQueueServiceStatsXml /
+    GetTableServiceStatsXml so the <LastSyncTime> element in stats responses reflects the scheduler
+    tick rather than the current wall-clock time.
+  - Register GeoReplicationSyncScheduler in Topaz.Host/Host.cs alongside other background services.
+  milestone: v1.9-preview
+  labels: enhancement, storage
 -->
 
 ---

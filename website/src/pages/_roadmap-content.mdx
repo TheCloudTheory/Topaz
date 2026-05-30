@@ -180,6 +180,12 @@
 | <span class="badge--preview">Preview</span> | Logs Ingestion API | `POST https://{workspaceId}.ods.opinsights.topaz.local.dev/api/logs` — accepts JSON log arrays with `Log-Type` header; persists records per custom table name; returns `200` with empty body |
 | <span class="badge--preview">Preview</span> | KQL query API | `POST /v1/workspaces/{workspaceId}/query` — minimal KQL subset over ingested custom tables; `where`, `project`, `extend`, `summarize`, `order by`, `take`, `union` operators; returns standard `{"tables":[...]}` schema |
 
+### Azure Storage — geo-replication sync simulation
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Geo-replication sync scheduler | Background service (`GeoReplicationSyncScheduler`) that periodically updates `LastGeoSyncTime` on RA-GRS/RAGZRS accounts; stats endpoints return the persisted timestamp instead of wall-clock time, simulating realistic replication lag |
+
 ---
 
 ## ✅ Completed
