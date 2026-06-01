@@ -14,12 +14,12 @@ sidebar_position: 16
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create Or Update | ❌ | `PUT /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}` |
-| Get | ❌ | `GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}` |
-| Delete | ❌ | `DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}` |
-| Update | ❌ | `PATCH /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}` |
-| List By Resource Group | ❌ | `GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts` |
-| List | ❌ | `GET /subscriptions/{sub}/providers/Microsoft.DocumentDB/databaseAccounts` |
+| Create Or Update | ✅ | `PUT /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}` |
+| Get | ✅ | `GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}` |
+| Delete | ✅ | `DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}` |
+| Update | ✅ | `PATCH /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}` |
+| List By Resource Group | ✅ | `GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts` |
+| List | ✅ | `GET /subscriptions/{sub}/providers/Microsoft.DocumentDB/databaseAccounts` |
 | List Keys | ❌ | `POST .../databaseAccounts/{name}/listKeys` |
 | List Read-Only Keys | ❌ | `POST .../databaseAccounts/{name}/readonlykeys` |
 | Regenerate Key | ❌ | `POST .../databaseAccounts/{name}/regenerateKey` |

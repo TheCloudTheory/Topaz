@@ -310,23 +310,6 @@ TODO: ACE Integration: Cost Analysis page in Topaz Portal
 
 ### Azure Cosmos DB — initial control plane
 
-<!--
-TODO: Azure Cosmos DB: DatabaseAccount control plane endpoints
-  Implement the ARM-level DatabaseAccount resource surface (Microsoft.DocumentDB/databaseAccounts):
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}  – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}  – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}  – delete
-  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}  – update (tags, consistencyPolicy)
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.DocumentDB/databaseAccounts                              – list all
-  The emulated account does not run a real Cosmos DB engine. provisioningState is reported
-  as Succeeded immediately. documentEndpoint follows the pattern
-  https://{name}.documents.topaz.local.dev:<CosmosDbPort>/.
-  AccountKind defaults to GlobalDocumentDB (SQL API). Generate and persist 2 read-write
-  and 2 read-only master keys (base64url-encoded random 64-byte blobs) on first creation.
-  milestone: v1.6-beta
-  labels: enhancement, cosmos-db, good first issue
--->
 
 <!--
 TODO: Azure Cosmos DB: Key and connection string management endpoints

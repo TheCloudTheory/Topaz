@@ -1,4 +1,6 @@
+using System.Security.Cryptography;
 using Topaz.Service.CosmosDb.Models.Requests;
+using Topaz.Shared;
 
 namespace Topaz.Service.CosmosDb.Models;
 
@@ -46,8 +48,13 @@ public sealed class DatabaseAccountResourceProperties
     public bool EnableAnalyticalStorage { get; set; }
     public ApiProperties? ApiProperties { get; set; }
     public string ProvisioningState => "Succeeded";
+    public string? DocumentEndpoint { get; set; }
+    public string? PrimaryMasterKey { get; set; }
+    public string? SecondaryMasterKey { get; set; }
+    public string? PrimaryReadonlyMasterKey { get; set; }
+    public string? SecondaryReadonlyMasterKey { get; set; }
 
-    public static DatabaseAccountResourceProperties FromRequest(CreateOrUpdateDatabaseAccountRequest request)
+    public static DatabaseAccountResourceProperties FromRequest(string accountName, CreateOrUpdateDatabaseAccountRequest request)
     {
         return new DatabaseAccountResourceProperties
         {
@@ -62,7 +69,12 @@ public sealed class DatabaseAccountResourceProperties
             PublicNetworkAccess = request.Properties?.PublicNetworkAccess ?? "Enabled",
             EnableFreeTier = request.Properties?.EnableFreeTier.GetValueOrDefault(false) ?? false,
             EnableAnalyticalStorage = request.Properties?.EnableAnalyticalStorage.GetValueOrDefault(false) ?? false,
-            ApiProperties = request.Properties?.ApiProperties
+            ApiProperties = request.Properties?.ApiProperties,
+            DocumentEndpoint = $"https://{accountName}.{GlobalSettings.DocumentsDnsSuffix}:{GlobalSettings.DefaultCosmosDbPort}/",
+            PrimaryMasterKey = GenerateMasterKey(),
+            SecondaryMasterKey = GenerateMasterKey(),
+            PrimaryReadonlyMasterKey = GenerateMasterKey(),
+            SecondaryReadonlyMasterKey = GenerateMasterKey()
         };
     }
 
@@ -93,4 +105,7 @@ public sealed class DatabaseAccountResourceProperties
         if (request.Properties?.ApiProperties != null)
             properties.ApiProperties = request.Properties.ApiProperties;
     }
+
+    private static string GenerateMasterKey() =>
+        Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
 }

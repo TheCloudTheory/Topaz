@@ -35,6 +35,6 @@ public sealed class DatabaseAccountResource : ArmResource<DatabaseAccountResourc
     public sealed override string? Location { get; set; }
     public sealed override IDictionary<string, string>? Tags { get; set; }
     public override ResourceSku? Sku { get; init; }
-    public override string? Kind { get; init; }
+    public override string? Kind { get; init; } = "GlobalDocumentDB";
     public sealed override DatabaseAccountResourceProperties Properties { get; init; }
 }

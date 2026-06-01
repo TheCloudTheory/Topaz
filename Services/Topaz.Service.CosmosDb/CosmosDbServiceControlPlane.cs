@@ -102,7 +102,7 @@ internal sealed class CosmosDbServiceControlPlane(
         }
 
         var location = new AzureLocation(request.Location ?? resourceGroupOperation.Resource!.Location!);
-        var properties = DatabaseAccountResourceProperties.FromRequest(request);
+        var properties = DatabaseAccountResourceProperties.FromRequest(accountName, request);
         var resource = new DatabaseAccountResource(subscriptionIdentifier, resourceGroupIdentifier, accountName, location, request.Tags, properties);
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, accountName, resource, createOperation: true);

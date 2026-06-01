@@ -35,6 +35,7 @@ public static class GlobalSettings
     public const ushort DefaultBlobStoragePort = 8891;
     public const ushort DefaultQueueStoragePort = 8893;
     public const ushort DefaultFileStoragePort = 8894;
+    public const ushort DefaultCosmosDbPort = 8895;
     public const ushort DefaultEventHubPort = 8897;
     public const ushort DefaultKeyVaultPort = 8898;
     public const ushort DefaultResourceManagerPort = 8899;
@@ -55,6 +56,7 @@ public static class GlobalSettings
     public static string GetKeyVaultEndpoint(string vaultName) =>
         $"https://{GetKeyVaultHost(vaultName)}:{DefaultKeyVaultPort}";
 
+    public const string DocumentsDnsSuffix = "documents.topaz.local.dev";
     public const string AzureWebsitesDnsSuffix = "azurewebsites.topaz.local.dev";
 
     public static string GetWebSiteDefaultHostName(string siteName) => $"{siteName}.{AzureWebsitesDnsSuffix}";

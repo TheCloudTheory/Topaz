@@ -1,4 +1,5 @@
 using Topaz.EventPipeline;
+using Topaz.Service.CosmosDb.Endpoints;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -18,7 +19,15 @@ public sealed class CosmosDbService(Pipeline eventPipeline, ITopazLogger logger)
 
     public string Name => "Azure Cosmos DB";
 
-    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [];
+    public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
+    [
+        new CreateOrUpdateDatabaseAccountEndpoint(_eventPipeline, _logger),
+        new GetDatabaseAccountEndpoint(_eventPipeline, _logger),
+        new DeleteDatabaseAccountEndpoint(_eventPipeline, _logger),
+        new UpdateDatabaseAccountEndpoint(_eventPipeline, _logger),
+        new ListDatabaseAccountsByResourceGroupEndpoint(_eventPipeline, _logger),
+        new ListDatabaseAccountsBySubscriptionEndpoint(_eventPipeline, _logger)
+    ];
 
     public void Bootstrap() { }
 }
