@@ -75,7 +75,6 @@ def _secret_client() -> SecretClient:
     return SecretClient(
         vault_url=_VAULT_URL,
         credential=AzureLocalCredential(GLOBAL_ADMIN_ID),
-        verify_challenge_resource=False,
     )
 
 

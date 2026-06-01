@@ -74,7 +74,6 @@ public class PythonFixture
             .WithEnvironment("REQUESTS_CA_BUNDLE", "/tmp/topaz.crt")
             .WithEnvironment("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt")
             .WithEnvironment("AZURE_CORE_INSTANCE_DISCOVERY", "false")
-            .WithEnvironment("AZURE_KEYVAULT_DISABLE_CHALLENGE_RESOURCE_VERIFICATION", "true")
             .WithExtraHost("topaz.local.dev", _containerTopaz.IpAddress)
             .WithOutputConsumer(Consume.RedirectStdoutAndStderrToConsole())
             .Build();

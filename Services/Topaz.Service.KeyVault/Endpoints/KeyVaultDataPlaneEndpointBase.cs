@@ -58,7 +58,7 @@ internal abstract class KeyVaultDataPlaneEndpointBase(Pipeline eventPipeline, IT
         if (string.IsNullOrEmpty(authHeader))
         {
             response.StatusCode = HttpStatusCode.Unauthorized;
-            response.Headers.Add("WWW-Authenticate", KeyVaultAuthorizationChecker.WwwAuthenticateChallenge);
+            response.Headers.Add("WWW-Authenticate", KeyVaultAuthorizationChecker.BuildWwwAuthenticateChallenge(context.Request.Host.Value));
             // Real Azure Key Vault always returns a parseable JSON error body on 401.
             // Old go-autorest (azurerm Terraform provider) calls azure.WithErrorUnlessStatusCode()
             // which tries to decode the response body; an empty body causes an EOF error that

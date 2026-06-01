@@ -8,34 +8,6 @@ keywords: [topaz limitations, azure emulator limitations, storage ports, topaz k
 
 This page documents deliberate design trade-offs in the current version of Topaz that differ from real Azure behaviour. Each entry notes the impact and the milestone where the limitation is expected to be resolved.
 
-## Key Vault — `WWW-Authenticate` challenge resource does not match emulator domain
-
-**Affected services:** Key Vault data plane (secrets, keys, certificates)
-
-When a Key Vault request is made without a bearer token, Topaz returns a `401 Unauthorized` response whose `WWW-Authenticate` header includes a `resource` claim of `https://vault.azure.net` — the same resource identifier used by real Azure. Some Azure SDK client libraries (including the Python `azure-keyvault-*` packages) verify that this resource matches the domain they used to reach the vault. Because the Topaz emulator is reached at a custom domain (e.g. `https://pytest-kv.vault.topaz.local.dev:8898`) the resource `vault.azure.net` does not match, and the SDK rejects the challenge with a `ValueError`.
-
-### Impact
-
-Python clients (and potentially other non-.NET SDK clients) that verify the challenge resource will raise an exception before issuing any authenticated Key Vault request. The `.NET` Azure SDK does not perform this verification and is unaffected.
-
-**Workaround:** pass `verify_challenge_resource=False` to the Key Vault client constructor (Python SDK ≥ 4.11.0). Earlier SDK versions expose a module-level `verify_challenge_resource` function that can be replaced with a no-op before instantiating the client.
-
-```python
-from azure.keyvault.secrets import SecretClient
-
-client = SecretClient(
-    vault_url="https://my-vault.vault.topaz.local.dev:8898",
-    credential=credential,
-    verify_challenge_resource=False,   # required against Topaz
-)
-```
-
-### Planned fix — v1.6-beta
-
-Change the `WWW-Authenticate` header that Topaz emits to use the vault's actual request URL as the resource identifier instead of the hard-coded `vault.azure.net` value. This removes the domain mismatch and means clients that verify the challenge resource will work without any code change.
-
----
-
 ## AMQP — AMQPNetLite protocol deviations break non-.NET clients
 
 **Affected services:** Service Bus, Event Hubs (AMQP data plane)

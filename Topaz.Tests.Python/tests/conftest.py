@@ -17,38 +17,6 @@ from topaz_sdk import AzureLocalCredential, TopazArmClient, GLOBAL_ADMIN_ID
 
 
 # ---------------------------------------------------------------------------
-# Patch Key Vault ChallengeAuthPolicy to always skip challenge resource
-# verification. Topaz returns resource="https://vault.azure.net" in
-# WWW-Authenticate, which the SDK would reject because it doesn't match the
-# topaz.local.dev domain.  The test clients already pass
-# verify_challenge_resource=False explicitly; this patch is a safety net for
-# any client created without that kwarg.
-# ---------------------------------------------------------------------------
-try:
-    import importlib as _il
-
-    def _make_kv_init_patch(orig_init):
-        def _patched_init(self, *args, **kwargs):
-            kwargs["verify_challenge_resource"] = False
-            orig_init(self, *args, **kwargs)
-        return _patched_init
-
-    for _kv_mod_name in (
-        "azure.keyvault.secrets._shared.challenge_auth_policy",
-        "azure.keyvault.keys._shared.challenge_auth_policy",
-        "azure.keyvault.certificates._shared.challenge_auth_policy",
-    ):
-        try:
-            _kv_cap_mod = _il.import_module(_kv_mod_name)
-            _KvCap = _kv_cap_mod.ChallengeAuthPolicy
-            _KvCap.__init__ = _make_kv_init_patch(_KvCap.__init__)
-        except Exception:
-            pass
-except Exception:
-    pass
-
-
-# ---------------------------------------------------------------------------
 # Patch pyamqp Transfer frame decoding for AMQPNetLite compatibility.
 # AMQPNetLite (used by Topaz) omits trailing null optional fields in every
 # AMQP performative. pyamqp accesses performative fields by fixed index

@@ -16,14 +16,28 @@ internal sealed class KeyVaultAuthorizationChecker(Pipeline eventPipeline, ITopa
     private readonly AzureAuthorizationAdapter _authAdapter = new(eventPipeline, logger);
 
     /// <summary>
-    /// WWW-Authenticate challenge header value used when a request arrives without a Bearer token.
+    /// Builds the WWW-Authenticate challenge header value for a request that arrived without a Bearer token.
     /// The Azure SDK uses this to discover the token endpoint and then retries with a token.
     /// The authorization URL points to Topaz's ARM token endpoint (port 8899) so that
     /// both MSAL v2 and old go-autorest v1 clients can acquire a token and retry.
+    /// The resource is set to the BASE vault domain (vault name prefix stripped), matching
+    /// real Azure's pattern where resource="https://vault.azure.net" rather than
+    /// "https://myvault.vault.azure.net". The Python SDK verifies via
+    ///   request_domain.endswith("." + resource_domain)
+    /// so the resource must be a parent domain of the request host:
+    ///   request_domain  = "myvault.vault.topaz.local.dev:8898"
+    ///   resource_domain = "vault.topaz.local.dev:8898"   ← first label stripped
+    ///   check: "myvault.vault.topaz.local.dev:8898".endswith(".vault.topaz.local.dev:8898") → true
     /// </summary>
-    public static string WwwAuthenticateChallenge =>
-        $"Bearer authorization=\"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/{GlobalSettings.DefaultTenantId}\"," +
-        $" resource=\"https://vault.azure.net\"";
+    /// <param name="host">The Host header value from the incoming request (e.g. "myvault.vault.topaz.local.dev:8898").</param>
+    public static string BuildWwwAuthenticateChallenge(string host)
+    {
+        // Strip the vault-name label: "myvault.vault.topaz.local.dev:8898" → "vault.topaz.local.dev:8898"
+        var firstDot = host.IndexOf('.');
+        var baseDomain = firstDot >= 0 ? host[(firstDot + 1)..] : host;
+        return $"Bearer authorization=\"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/{GlobalSettings.DefaultTenantId}\"," +
+               $" resource=\"https://{baseDomain}\"";
+    }
 
     /// <summary>
     /// Returns true when the caller identified by <paramref name="authHeader"/> is allowed to perform

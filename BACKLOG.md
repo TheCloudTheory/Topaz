@@ -178,24 +178,7 @@ _Implemented in v1.5-beta: `PATCH .../virtualMachines/{vmName}` for partial upda
 
 ### Key Vault — correct challenge resource in `WWW-Authenticate`
 
-<!--
-TODO: Key Vault: Return accurate challenge resource in WWW-Authenticate
-  Topaz currently returns resource="https://vault.azure.net" in the WWW-Authenticate
-  header on 401 responses from Key Vault endpoints. Non-.NET Azure SDK clients (Python,
-  JavaScript, etc.) verify that this resource matches the domain used to reach the vault.
-  Because Topaz is accessed at a custom domain (e.g. pytest-kv.vault.topaz.local.dev),
-  the mismatch causes those clients to reject the challenge and raise an exception before
-  issuing any authenticated request.
-
-  Fix: replace the hard-coded "https://vault.azure.net" with the vault's actual request
-  URL (derived from the incoming request's Host header). This removes the domain mismatch
-  so clients that verify the challenge resource work without any workaround.
-
-  See also: website/docs/known-limitations.md — "Key Vault — WWW-Authenticate challenge
-  resource does not match emulator domain".
-  milestone: v1.6-beta
-  labels: enhancement, key-vault
--->
+_Implemented in v1.6-beta: `KeyVaultAuthorizationChecker.BuildWwwAuthenticateChallenge` now derives `resource` from the incoming request's `Host` header instead of the hard-coded `https://vault.azure.net`. Python and other non-.NET SDK clients that verify the challenge resource against the vault URL now work without any `verify_challenge_resource=False` workaround._
 
 ### AMQP — spec-compliant performative encoding for non-.NET clients
 

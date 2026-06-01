@@ -39,7 +39,7 @@ internal sealed class SetSecretEndpoint(Pipeline eventPipeline, ITopazLogger log
 
             if (operation.Result == OperationResult.Failed)
             {
-                response.Headers.Add("WWW-Authenticate", KeyVaultAuthorizationChecker.WwwAuthenticateChallenge);
+                response.Headers.Add("WWW-Authenticate", KeyVaultAuthorizationChecker.BuildWwwAuthenticateChallenge(context.Request.Host.Value));
                 response.StatusCode = HttpStatusCode.Unauthorized;
                 return;
             }
