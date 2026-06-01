@@ -311,25 +311,6 @@ TODO: ACE Integration: Cost Analysis page in Topaz Portal
 ### Azure Cosmos DB — initial control plane
 
 <!--
-TODO: Azure Cosmos DB: New service project scaffold
-  Create Topaz.Service.CosmosDb following existing service conventions:
-  - Project file with references to Topaz.ResourceManager and Topaz.Service.Shared
-  - DatabaseAccountResourceProperties + DatabaseAccountResource (ArmResource<T>) capturing
-    the full ARM body: kind, consistencyPolicy, locations, databaseAccountOfferType,
-    ipRules, isVirtualNetworkFilterEnabled, enableAutomaticFailover, capabilities,
-    publicNetworkAccess, enableFreeTier, enableAnalyticalStorage, apiProperties.
-  - DatabaseAccountResourceProvider (ResourceProviderBase<T>) for filesystem persistence
-    under .topaz/cosmos-db/{subscriptionId}/{resourceGroup}/{accountName}/.
-  - CosmosDbServiceControlPlane implementing IControlPlane with a working Deploy()
-    that maps GenericResource → DatabaseAccountResource via resource.As<T,TProps>().
-  - IServiceDefinition registration and wiring in Topaz.Host.
-  - ProjectReference in Topaz.Service.ResourceManager.csproj and a
-    case "Microsoft.DocumentDB/databaseAccounts": entry in TemplateDeploymentOrchestrator.RouteDeployment().
-  milestone: v1.6-beta
-  labels: enhancement, cosmos-db, good first issue
--->
-
-<!--
 TODO: Azure Cosmos DB: DatabaseAccount control plane endpoints
   Implement the ARM-level DatabaseAccount resource surface (Microsoft.DocumentDB/databaseAccounts):
   - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}  – create or update

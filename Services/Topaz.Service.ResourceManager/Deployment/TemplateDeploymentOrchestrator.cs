@@ -16,6 +16,7 @@ using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Storage;
 using Topaz.Service.Sql;
+using Topaz.Service.CosmosDb;
 using Topaz.Service.VirtualMachine;
 using Topaz.Service.VirtualNetwork;
 using Topaz.Shared;
@@ -245,6 +246,9 @@ public sealed class TemplateDeploymentOrchestrator(
                     break;
                 case "Microsoft.Sql/servers/databases":
                     controlPlane = SqlServiceControlPlane.New(eventPipeline, logger);
+                    break;
+                case "Microsoft.DocumentDB/databaseAccounts":
+                    controlPlane = CosmosDbServiceControlPlane.New(eventPipeline, logger);
                     break;
                 default:
                     logger.LogWarning($"Deployment of resource type {resource.Type} is not yet supported.");
