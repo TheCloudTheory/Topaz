@@ -36,14 +36,7 @@ public sealed class PrettyTopazLogger : ITopazLogger
         string formatted;
         if (parameters.Length > 0)
         {
-            try
-            {
-                formatted = string.Format(template, parameters);
-            }
-            catch (FormatException)
-            {
-                formatted = $"{template} [{string.Join(", ", parameters)}]";
-            }
+            formatted = $"{template} [{string.Join(", ", parameters)}]";
         }
         else
         {
