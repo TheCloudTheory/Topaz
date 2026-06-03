@@ -54,7 +54,7 @@ public class CosmosDbTests : PowerShellTestBase
             "-Location westeurope -Confirm:$false | Out-Null\n" +
             "Remove-AzCosmosDBAccount -ResourceGroupName ps-cosmos-del-rg -Name 'ps-cosmos-account-03' -AsJob | Out-Null\n" +
             "Remove-AzResourceGroup -Name ps-cosmos-del-rg -Force | Out-Null\n" +
-            "$true",
+            "$true | ConvertTo-Json",
             response =>
             {
                 Assert.That(response.GetValue<bool>(), Is.True);
