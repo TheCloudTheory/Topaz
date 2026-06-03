@@ -332,7 +332,7 @@ function Hero() {
           and ship Azure-backed applications faster — without a subscription.
         </p>
         <div className={styles.heroCta}>
-          <Link className="button button--primary button--lg" to="/docs/intro">
+          <Link className="button button--primary button--lg" to="/docs/intro/">
             Get started
           </Link>
           <Link
@@ -437,7 +437,7 @@ function Cta() {
           Topaz is free and open source. Get it running in under two minutes.
         </p>
         <div className={styles.ctaButtons}>
-          <Link className="button button--primary button--lg" to="/docs/intro">
+          <Link className="button button--primary button--lg" to="/docs/intro/">
             Read the docs
           </Link>
           <Link

@@ -70,7 +70,7 @@ function HomepageHeader() {
           <Link
             className="button button--lg"
             style={{background: 'white', color: '#1B63EB', fontWeight: 700}}
-            to="/docs/intro">
+            to="/docs/intro/">
             Get Started →
           </Link>
           <Link
@@ -122,7 +122,7 @@ function HomepageInstall() {
         </div>
         <p className={styles.installNote}>
           Then verify with <code>topaz health</code> — or jump straight to the{' '}
-          <Link to="/docs/intro">Getting Started guide</Link>.
+          <Link to="/docs/intro/">Getting Started guide</Link>.
         </p>
       </div>
     </section>
@@ -184,7 +184,7 @@ function HomepageCta() {
           <code>brew tap thecloudtheory/topaz && brew install topaz && topaz-host</code>
         </div>
         <div className={styles.ctaButtons}>
-          <Link className="button button--lg" style={{background: 'white', color: '#1B63EB', fontWeight: 700}} to="/docs/intro">
+          <Link className="button button--lg" style={{background: 'white', color: '#1B63EB', fontWeight: 700}} to="/docs/intro/">
             Read the docs →
           </Link>
           <Link

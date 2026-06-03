@@ -13,7 +13,7 @@ Topaz solves this by shipping a full Entra ID emulation layer out of the box.
 
 ## A pre-configured local tenant
 
-When Topaz starts, it automatically provisions a local Entra tenant called `topaz.local.dev` with a tenant ID of `50717675-3E5E-4A1E-8CB5-C62D8BE8CA48`. There is nothing to configure — the tenant, its OIDC discovery document, and a built-in superadmin user (`topazadmin@topaz.local.dev` / `admin`) are all ready the moment the host is running. See the [getting started guide](/docs/intro) for installation and one-time DNS / certificate setup.
+When Topaz starts, it automatically provisions a local Entra tenant called `topaz.local.dev` with a tenant ID of `50717675-3E5E-4A1E-8CB5-C62D8BE8CA48`. There is nothing to configure — the tenant, its OIDC discovery document, and a built-in superadmin user (`topazadmin@topaz.local.dev` / `admin`) are all ready the moment the host is running. See the [getting started guide](/docs/intro/) for installation and one-time DNS / certificate setup.
 
 All authentication requests that SDKs normally send to `https://login.microsoftonline.com` are intercepted by Topaz and handled locally. Your application code does not need to change.
 
@@ -70,5 +70,5 @@ brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
 curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
 ```
 
-[Getting started →](https://topaz.thecloudtheory.com/docs/intro) · Not ready to install? [Star the repo →](https://github.com/TheCloudTheory/Topaz)
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro/) · Not ready to install? [Star the repo →](https://github.com/TheCloudTheory/Topaz)
 :::

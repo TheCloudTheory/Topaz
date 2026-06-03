@@ -17,7 +17,7 @@ brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
 curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
 ```
 
-[Getting started →](https://topaz.thecloudtheory.com/docs/intro)
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro/)
 :::
 
 Table Storage is secured using one of the configured authorization mechanism:

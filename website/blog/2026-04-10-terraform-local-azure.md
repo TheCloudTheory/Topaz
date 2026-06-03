@@ -19,7 +19,7 @@ brew tap thecloudtheory/topaz && brew install topaz && topaz-host   # macOS
 curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash   # Linux
 ```
 
-[Getting started →](https://topaz.thecloudtheory.com/docs/intro) · [Star on GitHub →](https://github.com/TheCloudTheory/Topaz)
+[Getting started →](https://topaz.thecloudtheory.com/docs/intro/) · [Star on GitHub →](https://github.com/TheCloudTheory/Topaz)
 :::
 
 ## Why the standard AzureRM provider works at all
@@ -40,7 +40,7 @@ Two settings are doing the work here. `metadata_host` redirects endpoint discove
 
 ## DNS setup
 
-The hostname `topaz.local.dev` needs to resolve to `127.0.0.1` on your machine. Topaz ships install scripts that configure this using `dnsmasq`, which handles the wildcard subdomains that services like Container Registry depend on. The [getting started guide](https://topaz.thecloudtheory.com/docs/intro) covers installation and the one-time DNS and certificate setup.
+The hostname `topaz.local.dev` needs to resolve to `127.0.0.1` on your machine. Topaz ships install scripts that configure this using `dnsmasq`, which handles the wildcard subdomains that services like Container Registry depend on. The [getting started guide](https://topaz.thecloudtheory.com/docs/intro/) covers installation and the one-time DNS and certificate setup.
 
 For containerised environments, the same configuration can be handled at the container network level — the [Terraform integration guide](https://topaz.thecloudtheory.com/docs/terraform-integration) covers that path as well.
 

@@ -193,7 +193,7 @@ function Cta() {
         <div className={styles.ctaButtons}>
           <Link
             className="button button--primary button--lg"
-            to="/docs/intro"
+            to="/docs/intro/"
           >
             Get started →
           </Link>

@@ -129,7 +129,7 @@ const config: Config = {
         { to: '/features', label: 'Features', position: 'left' },
         { to: '/use-cases', label: 'Use Cases', position: 'left' },
         {
-          to: '/docs/intro',
+          to: '/docs/intro/',
           label: 'Documentation',
           position: 'left',
           activeBaseRegex: '/docs/',
@@ -175,7 +175,7 @@ const config: Config = {
           items: [
             {
               label: 'Getting started',
-              to: '/docs/intro',
+              to: '/docs/intro/',
             },
             {
               label: 'Supported services',

@@ -14,6 +14,7 @@ public sealed class ConsistencyPolicySettings
 
 public sealed class DatabaseAccountLocation
 {
+    public string? Id { get; set; }
     public string? LocationName { get; set; }
     public int? FailoverPriority { get; set; }
     public bool? IsZoneRedundant { get; set; }
@@ -23,6 +24,7 @@ public sealed class DatabaseAccountLocation
 
 public sealed class FailoverPolicy
 {
+    public string? Id { get; set; }
     public string? LocationName { get; set; }
     public int FailoverPriority { get; set; }
 }
@@ -42,6 +44,19 @@ public sealed class ApiProperties
     public string? ServerVersion { get; set; }
 }
 
+public sealed class PeriodicModeProperties
+{
+    public int BackupIntervalInMinutes { get; set; } = 240;
+    public int BackupRetentionIntervalInHours { get; set; } = 8;
+    public string BackupStorageRedundancy { get; set; } = "Geo";
+}
+
+public sealed class BackupPolicyModel
+{
+    public string Type { get; set; } = "Periodic";
+    public PeriodicModeProperties? PeriodicModeProperties { get; set; }
+}
+
 public sealed class DatabaseAccountResourceProperties
 {
     public string Kind { get; set; } = "GlobalDocumentDB";
@@ -56,12 +71,15 @@ public sealed class DatabaseAccountResourceProperties
     public bool EnableFreeTier { get; set; }
     public bool EnableAnalyticalStorage { get; set; }
     public ApiProperties? ApiProperties { get; set; }
+    public BackupPolicyModel BackupPolicy { get; set; } = new BackupPolicyModel { PeriodicModeProperties = new PeriodicModeProperties() };
     public string ProvisioningState => "Succeeded";
     public string? DocumentEndpoint { get; set; }
+    public string? AccountName { get; set; }
 
     public DatabaseAccountLocation[] ReadLocations => Locations
         .Select(l => new DatabaseAccountLocation
         {
+            Id = $"{AccountName}-{l.LocationName?.ToLowerInvariant().Replace(" ", "")}",
             LocationName = l.LocationName,
             FailoverPriority = l.FailoverPriority,
             IsZoneRedundant = l.IsZoneRedundant ?? false,
@@ -73,6 +91,7 @@ public sealed class DatabaseAccountResourceProperties
         .Where(l => (l.FailoverPriority ?? 0) == 0)
         .Select(l => new DatabaseAccountLocation
         {
+            Id = $"{AccountName}-{l.LocationName?.ToLowerInvariant().Replace(" ", "")}",
             LocationName = l.LocationName,
             FailoverPriority = l.FailoverPriority,
             IsZoneRedundant = l.IsZoneRedundant ?? false,
@@ -83,6 +102,7 @@ public sealed class DatabaseAccountResourceProperties
     public FailoverPolicy[] FailoverPolicies => Locations
         .Select(l => new FailoverPolicy
         {
+            Id = $"{AccountName}-{l.LocationName?.ToLowerInvariant().Replace(" ", "")}",
             LocationName = l.LocationName,
             FailoverPriority = l.FailoverPriority ?? 0
         }).ToArray();
@@ -107,6 +127,8 @@ public sealed class DatabaseAccountResourceProperties
             EnableFreeTier = request.Properties?.EnableFreeTier.GetValueOrDefault(false) ?? false,
             EnableAnalyticalStorage = request.Properties?.EnableAnalyticalStorage.GetValueOrDefault(false) ?? false,
             ApiProperties = request.Properties?.ApiProperties,
+            BackupPolicy = new BackupPolicyModel { PeriodicModeProperties = new PeriodicModeProperties() },
+            AccountName = accountName,
             DocumentEndpoint = $"https://{accountName}.{GlobalSettings.DocumentsDnsSuffix}:{GlobalSettings.DefaultCosmosDbPort}/",
             PrimaryMasterKey = GenerateMasterKey(),
             SecondaryMasterKey = GenerateMasterKey(),

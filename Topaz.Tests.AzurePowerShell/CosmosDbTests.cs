@@ -18,8 +18,8 @@ public class CosmosDbTests : PowerShellTestBase
                 Assert.Multiple(() =>
                 {
                     Assert.That(response["Name"]!.GetValue<string>(), Is.EqualTo("ps-cosmos-account-01"));
-                    Assert.That(response["ResourceGroupName"]!.GetValue<string>(),
-                        Is.EqualTo("ps-cosmos-create-rg").IgnoreCase);
+                    Assert.That(response["Id"]!.GetValue<string>(),
+                        Does.Contain("ps-cosmos-create-rg").IgnoreCase);
                     Assert.That(response["Location"]!.GetValue<string>(),
                         Is.EqualTo("westeurope").IgnoreCase);
                     Assert.That(response["DocumentEndpoint"]!.GetValue<string>(),

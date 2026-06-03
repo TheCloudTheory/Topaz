@@ -363,7 +363,7 @@ export default function FeaturesPage(): ReactNode {
             <Link
               className="button button--lg"
               style={{background: 'white', color: '#1B63EB', fontWeight: 700}}
-              to="/docs/intro">
+              to="/docs/intro/">
               Read the docs →
             </Link>
             <Link
