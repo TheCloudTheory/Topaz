@@ -38,7 +38,7 @@ Most Azure emulators cover a single service. Topaz covers the full stack:
 * **Seamless Azure SDK integration** — no code changes; point your SDK at Topaz
 * **Full portability** — single executable or Docker container, runs anywhere
 
-See the [roadmap](https://topaz.thecloudtheory.com/docs/roadmap) for what's coming next.
+See the [roadmap](https://topaz.thecloudtheory.com/docs/roadmap/) for what's coming next.
 
 ## Supported services
 
@@ -70,21 +70,21 @@ topaz health
 
 Then connect your tooling — no code changes required:
 
-- **Azure CLI** — [Azure CLI integration guide](https://topaz.thecloudtheory.com/azure-cli-integration)
-- **Azure PowerShell** — [Azure PowerShell integration guide](https://topaz.thecloudtheory.com/azure-powershell-integration)
-- **Azure SDKs (.NET, Python, Java, JS)** — [Getting started](https://topaz.thecloudtheory.com/docs/intro)
+- **Azure CLI** — [Azure CLI integration guide](https://topaz.thecloudtheory.com/azure-cli-integration/)
+- **Azure PowerShell** — [Azure PowerShell integration guide](https://topaz.thecloudtheory.com/azure-powershell-integration/)
+- **Azure SDKs (.NET, Python, Java, JS)** — [Getting started](https://topaz.thecloudtheory.com/docs/intro/)
 
 See the [documentation](https://topaz.thecloudtheory.com/) for connection strings, DNS setup, and service-specific quickstarts.
 
 ## CI/CD integration
 
-Topaz runs as a service step in any pipeline — no Azure subscription, service principal, or network access required. See the [CI/CD integration guide](https://topaz.thecloudtheory.com/docs/ecosystem/ci-cd) for GitHub Actions and Azure DevOps examples.
+Topaz runs as a service step in any pipeline — no Azure subscription, service principal, or network access required. See the [CI/CD integration guide](https://topaz.thecloudtheory.com/docs/ecosystem/ci-cd/) for GitHub Actions and Azure DevOps examples.
 
 For a ready-to-copy, manual-only GitHub Actions workflow, use [.github/workflows/topaz-ci.yml](.github/workflows/topaz-ci.yml).
 
 ## Terraform integration
 
-Topaz supports local Terraform workflows with both the AzureRM and AzAPI providers — no real Azure subscription required. See the [Terraform integration guide](https://topaz.thecloudtheory.com/docs/terraform-integration) for setup instructions, including DNS configuration and provider examples.
+Topaz supports local Terraform workflows with both the AzureRM and AzAPI providers — no real Azure subscription required. See the [Terraform integration guide](https://topaz.thecloudtheory.com/docs/terraform-integration/) for setup instructions, including DNS configuration and provider examples.
 
 ## Licensing
 
