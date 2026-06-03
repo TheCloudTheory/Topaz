@@ -26,7 +26,11 @@ public sealed class CosmosDbService(Pipeline eventPipeline, ITopazLogger logger)
         new DeleteDatabaseAccountEndpoint(_eventPipeline, _logger),
         new UpdateDatabaseAccountEndpoint(_eventPipeline, _logger),
         new ListDatabaseAccountsByResourceGroupEndpoint(_eventPipeline, _logger),
-        new ListDatabaseAccountsBySubscriptionEndpoint(_eventPipeline, _logger)
+        new ListDatabaseAccountsBySubscriptionEndpoint(_eventPipeline, _logger),
+        new ListKeysDatabaseAccountEndpoint(_eventPipeline, _logger),
+        new ListReadOnlyKeysDatabaseAccountEndpoint(_eventPipeline, _logger),
+        new ListConnectionStringsDatabaseAccountEndpoint(_eventPipeline, _logger),
+        new CheckNameAvailabilityEndpoint(_eventPipeline, _logger)
     ];
 
     public void Bootstrap() { }

@@ -7,6 +7,7 @@ using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
+using Topaz.Dns;
 using Topaz.Shared;
 
 namespace Topaz.Service.CosmosDb;
@@ -151,5 +152,49 @@ internal sealed class CosmosDbServiceControlPlane(
             .ToArray();
 
         return new ControlPlaneOperationResult<DatabaseAccountResource[]>(OperationResult.Success, resources, null, null);
+    }
+
+    public DatabaseAccountNameAvailabilityResponse CheckNameAvailability(string accountName)
+    {
+        var dnsEntry = GlobalDnsEntries.GetEntry(CosmosDbService.UniqueName, accountName);
+        if (dnsEntry == null)
+        {
+            return new DatabaseAccountNameAvailabilityResponse { NameAvailable = true };
+        }
+
+        return new DatabaseAccountNameAvailabilityResponse
+        {
+            NameAvailable = false,
+            Reason = "AlreadyExists",
+            Message = $"The database account name '{accountName}' is already in use."
+        };
+    }
+
+    public ControlPlaneOperationResult<DatabaseAccountConnectionStringsResponse> GetConnectionStrings(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string accountName)
+    {
+        var resource = provider.GetAs<DatabaseAccountResource>(subscriptionIdentifier, resourceGroupIdentifier, accountName);
+
+        if (resource == null)
+        {
+            return new ControlPlaneOperationResult<DatabaseAccountConnectionStringsResponse>(
+                OperationResult.NotFound,
+                null,
+                string.Format(DatabaseAccountNotFoundMessageTemplate, accountName),
+                DatabaseAccountNotFoundCode);
+        }
+
+        var props = resource.Properties;
+        var endpoint = props?.DocumentEndpoint ?? string.Empty;
+        var primaryKey = props?.PrimaryMasterKey ?? string.Empty;
+        var secondaryKey = props?.SecondaryMasterKey ?? string.Empty;
+        var primaryRoKey = props?.PrimaryReadonlyMasterKey ?? string.Empty;
+        var secondaryRoKey = props?.SecondaryReadonlyMasterKey ?? string.Empty;
+
+        var result = DatabaseAccountConnectionStringsResponse.FromKeys(endpoint, primaryKey, secondaryKey, primaryRoKey, secondaryRoKey);
+
+        return new ControlPlaneOperationResult<DatabaseAccountConnectionStringsResponse>(OperationResult.Success, result, null, null);
     }
 }

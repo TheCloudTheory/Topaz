@@ -10,7 +10,7 @@ public class CosmosDbTests : TopazFixture
     {
         await RunAzureCliCommand($"az group create -l westeurope -n {ResourceGroup}", null, 0);
         await RunAzureCliCommand(
-            $"az cosmosdb create --name {AccountName} --resource-group {ResourceGroup} --location westeurope",
+            $"az cosmosdb create --name {AccountName} --resource-group {ResourceGroup} --locations regionName=westeurope failoverPriority=0 isZoneRedundant=False",
             response =>
             {
                 Assert.Multiple(() =>
@@ -31,7 +31,7 @@ public class CosmosDbTests : TopazFixture
         var accountDel = $"{AccountName}-del";
         await RunAzureCliCommand($"az group create -l westeurope -n {rgDel}", null, 0);
         await RunAzureCliCommand(
-            $"az cosmosdb create --name {accountDel} --resource-group {rgDel} --location westeurope",
+            $"az cosmosdb create --name {accountDel} --resource-group {rgDel} --locations regionName=westeurope failoverPriority=0 isZoneRedundant=False",
             null, 0);
         await RunAzureCliCommand(
             $"az cosmosdb delete --name {accountDel} --resource-group {rgDel} --yes",
@@ -47,10 +47,10 @@ public class CosmosDbTests : TopazFixture
         var rgList = $"{ResourceGroup}-list";
         await RunAzureCliCommand($"az group create -l westeurope -n {rgList}", null, 0);
         await RunAzureCliCommand(
-            $"az cosmosdb create --name {AccountName}-list-a --resource-group {rgList} --location westeurope",
+            $"az cosmosdb create --name {AccountName}-list-a --resource-group {rgList} --locations regionName=westeurope failoverPriority=0 isZoneRedundant=False",
             null, 0);
         await RunAzureCliCommand(
-            $"az cosmosdb create --name {AccountName}-list-b --resource-group {rgList} --location westeurope",
+            $"az cosmosdb create --name {AccountName}-list-b --resource-group {rgList} --locations regionName=westeurope failoverPriority=0 isZoneRedundant=False",
             null, 0);
         await RunAzureCliCommand(
             $"az cosmosdb list --resource-group {rgList}",

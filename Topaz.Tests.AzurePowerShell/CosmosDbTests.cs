@@ -9,7 +9,7 @@ public class CosmosDbTests : PowerShellTestBase
         await RunAzurePowerShellCommand(
             "New-AzResourceGroup -Name ps-cosmos-create-rg -Location westeurope -Force | Out-Null\n" +
             "$result = New-AzCosmosDBAccount -ResourceGroupName ps-cosmos-create-rg -Name 'ps-cosmos-account-01' " +
-            "-Location westeurope | ConvertTo-Json -Depth 10\n" +
+            "-Location westeurope -Confirm:$false | ConvertTo-Json -Depth 10\n" +
             "Remove-AzCosmosDBAccount -ResourceGroupName ps-cosmos-create-rg -Name 'ps-cosmos-account-01' -AsJob | Out-Null\n" +
             "Remove-AzResourceGroup -Name ps-cosmos-create-rg -Force | Out-Null\n" +
             "$result",
@@ -34,7 +34,7 @@ public class CosmosDbTests : PowerShellTestBase
         await RunAzurePowerShellCommand(
             "New-AzResourceGroup -Name ps-cosmos-get-rg -Location westeurope -Force | Out-Null\n" +
             "New-AzCosmosDBAccount -ResourceGroupName ps-cosmos-get-rg -Name 'ps-cosmos-account-02' " +
-            "-Location westeurope | Out-Null\n" +
+            "-Location westeurope -Confirm:$false | Out-Null\n" +
             "$result = Get-AzCosmosDBAccount -ResourceGroupName ps-cosmos-get-rg -Name 'ps-cosmos-account-02' | ConvertTo-Json -Depth 10\n" +
             "Remove-AzCosmosDBAccount -ResourceGroupName ps-cosmos-get-rg -Name 'ps-cosmos-account-02' -AsJob | Out-Null\n" +
             "Remove-AzResourceGroup -Name ps-cosmos-get-rg -Force | Out-Null\n" +
@@ -51,7 +51,7 @@ public class CosmosDbTests : PowerShellTestBase
         await RunAzurePowerShellCommand(
             "New-AzResourceGroup -Name ps-cosmos-del-rg -Location westeurope -Force | Out-Null\n" +
             "New-AzCosmosDBAccount -ResourceGroupName ps-cosmos-del-rg -Name 'ps-cosmos-account-03' " +
-            "-Location westeurope | Out-Null\n" +
+            "-Location westeurope -Confirm:$false | Out-Null\n" +
             "Remove-AzCosmosDBAccount -ResourceGroupName ps-cosmos-del-rg -Name 'ps-cosmos-account-03' -AsJob | Out-Null\n" +
             "Remove-AzResourceGroup -Name ps-cosmos-del-rg -Force | Out-Null\n" +
             "$true",

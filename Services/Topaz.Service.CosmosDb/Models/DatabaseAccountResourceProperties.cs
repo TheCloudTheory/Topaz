@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Security.Cryptography;
 using Topaz.Service.CosmosDb.Models.Requests;
 using Topaz.Shared;
@@ -16,6 +17,14 @@ public sealed class DatabaseAccountLocation
     public string? LocationName { get; set; }
     public int? FailoverPriority { get; set; }
     public bool? IsZoneRedundant { get; set; }
+    public string? ProvisioningState { get; set; }
+    public string? DocumentEndpoint { get; set; }
+}
+
+public sealed class FailoverPolicy
+{
+    public string? LocationName { get; set; }
+    public int FailoverPriority { get; set; }
 }
 
 public sealed class IpAddressOrRange
@@ -49,6 +58,34 @@ public sealed class DatabaseAccountResourceProperties
     public ApiProperties? ApiProperties { get; set; }
     public string ProvisioningState => "Succeeded";
     public string? DocumentEndpoint { get; set; }
+
+    public DatabaseAccountLocation[] ReadLocations => Locations
+        .Select(l => new DatabaseAccountLocation
+        {
+            LocationName = l.LocationName,
+            FailoverPriority = l.FailoverPriority,
+            IsZoneRedundant = l.IsZoneRedundant ?? false,
+            ProvisioningState = "Succeeded",
+            DocumentEndpoint = DocumentEndpoint
+        }).ToArray();
+
+    public DatabaseAccountLocation[] WriteLocations => Locations
+        .Where(l => (l.FailoverPriority ?? 0) == 0)
+        .Select(l => new DatabaseAccountLocation
+        {
+            LocationName = l.LocationName,
+            FailoverPriority = l.FailoverPriority,
+            IsZoneRedundant = l.IsZoneRedundant ?? false,
+            ProvisioningState = "Succeeded",
+            DocumentEndpoint = DocumentEndpoint
+        }).ToArray();
+
+    public FailoverPolicy[] FailoverPolicies => Locations
+        .Select(l => new FailoverPolicy
+        {
+            LocationName = l.LocationName,
+            FailoverPriority = l.FailoverPriority ?? 0
+        }).ToArray();
     public string? PrimaryMasterKey { get; set; }
     public string? SecondaryMasterKey { get; set; }
     public string? PrimaryReadonlyMasterKey { get; set; }

@@ -19,11 +19,10 @@ sidebar_position: 16
 | Delete | ✅ | `DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}` |
 | Update | ✅ | `PATCH /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts/{name}` |
 | List By Resource Group | ✅ | `GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.DocumentDB/databaseAccounts` |
-| List | ✅ | `GET /subscriptions/{sub}/providers/Microsoft.DocumentDB/databaseAccounts` |
-| List Keys | ❌ | `POST .../databaseAccounts/{name}/listKeys` |
-| List Read-Only Keys | ❌ | `POST .../databaseAccounts/{name}/readonlykeys` |
+| List | ✅ | `GET /subscriptions/{sub}/providers/Microsoft.DocumentDB/databaseAccounts` || Check Name Availability | ✅ | `HEAD /providers/Microsoft.DocumentDB/databaseAccountNames/{name}` || List Keys | ✅ | `POST .../databaseAccounts/{name}/listKeys` |
+| List Read-Only Keys | ✅ | `POST .../databaseAccounts/{name}/readonlykeys` |
 | Regenerate Key | ❌ | `POST .../databaseAccounts/{name}/regenerateKey` |
-| List Connection Strings | ❌ | `POST .../databaseAccounts/{name}/listConnectionStrings` |
+| List Connection Strings | ✅ | `POST .../databaseAccounts/{name}/listConnectionStrings` |
 
 ### SQL Databases
 
