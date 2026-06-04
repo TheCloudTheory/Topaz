@@ -14,7 +14,7 @@ public sealed class CosmosDbService(Pipeline eventPipeline, ITopazLogger logger)
 
     public static bool IsGlobalService => true;
     public static string LocalDirectoryPath => Path.Combine(ResourceGroupService.LocalDirectoryPath, ".azure-cosmos-db");
-    public static IReadOnlyCollection<string>? Subresources => ["sqldatabases"];
+    public static IReadOnlyCollection<string>? Subresources => ["sqldatabases", "sqlcontainers"];
     public static string UniqueName => "cosmos-db";
 
     public string Name => "Azure Cosmos DB";
@@ -37,7 +37,13 @@ public sealed class CosmosDbService(Pipeline eventPipeline, ITopazLogger logger)
         new DeleteSqlDatabaseEndpoint(_eventPipeline, _logger),
         new ListSqlDatabasesEndpoint(_eventPipeline, _logger),
         new GetSqlDatabaseThroughputEndpoint(_eventPipeline, _logger),
-        new UpdateSqlDatabaseThroughputEndpoint(_eventPipeline, _logger)
+        new UpdateSqlDatabaseThroughputEndpoint(_eventPipeline, _logger),
+        new CreateOrUpdateSqlContainerEndpoint(_eventPipeline, _logger),
+        new GetSqlContainerEndpoint(_eventPipeline, _logger),
+        new DeleteSqlContainerEndpoint(_eventPipeline, _logger),
+        new ListSqlContainersEndpoint(_eventPipeline, _logger),
+        new GetSqlContainerThroughputEndpoint(_eventPipeline, _logger),
+        new UpdateSqlContainerThroughputEndpoint(_eventPipeline, _logger)
     ];
 
     public void Bootstrap() { }

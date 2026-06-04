@@ -39,12 +39,12 @@ sidebar_position: 16
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create Or Update | ❌ | `PUT .../sqlDatabases/{database}/containers/{container}` |
-| Get | ❌ | `GET .../sqlDatabases/{database}/containers/{container}` |
-| Delete | ❌ | `DELETE .../sqlDatabases/{database}/containers/{container}` |
-| List | ❌ | `GET .../sqlDatabases/{database}/containers` |
-| Get Throughput | ❌ | `GET .../containers/{container}/throughputSettings/default` |
-| Update Throughput | ❌ | `PUT .../containers/{container}/throughputSettings/default` |
+| Create Or Update | ✅ | `PUT .../sqlDatabases/{database}/containers/{container}` |
+| Get | ✅ | `GET .../sqlDatabases/{database}/containers/{container}` |
+| Delete | ✅ | `DELETE .../sqlDatabases/{database}/containers/{container}` |
+| List | ✅ | `GET .../sqlDatabases/{database}/containers` |
+| Get Throughput | ✅ | `GET .../containers/{container}/throughputSettings/default` |
+| Update Throughput | ✅ | `PUT .../containers/{container}/throughputSettings/default` |
 
 ## Data Plane
 

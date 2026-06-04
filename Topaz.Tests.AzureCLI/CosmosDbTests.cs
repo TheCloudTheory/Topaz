@@ -162,4 +162,85 @@ public class CosmosDbTests : TopazFixture
                 Assert.That(primaryKeyAfter, Is.Not.EqualTo(primaryKeyBefore));
             }, 0);
     }
+
+    [Test]
+    public async Task SqlContainer_WhenCreated_ItShouldBeAvailable()
+    {
+        var rgCtr = $"{ResourceGroup}-sqlctr-create";
+        var accountCtr = $"{AccountName}-sqlctr-create";
+        const string databaseName = "cli-db-for-ctr";
+        const string containerName = "cli-mycontainer";
+        await RunAzureCliCommand($"az group create -l westeurope -n {rgCtr}", null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb create --name {accountCtr} --resource-group {rgCtr} --locations regionName=westeurope failoverPriority=0 isZoneRedundant=False",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql database create --account-name {accountCtr} --resource-group {rgCtr} --name {databaseName}",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql container create --account-name {accountCtr} --resource-group {rgCtr} --database-name {databaseName} --name {containerName} --partition-key-path \"/pk\"",
+            response =>
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo(containerName));
+                    Assert.That(response["type"]!.GetValue<string>(),
+                        Is.EqualTo("Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers").IgnoreCase);
+                });
+            }, 0);
+    }
+
+    [Test]
+    public async Task SqlContainer_WhenDeleted_ItShouldNotBeAvailable()
+    {
+        var rgCtr = $"{ResourceGroup}-sqlctr-delete";
+        var accountCtr = $"{AccountName}-sqlctr-delete";
+        const string databaseName = "cli-db-for-ctr-del";
+        const string containerName = "cli-deletecontainer";
+        await RunAzureCliCommand($"az group create -l westeurope -n {rgCtr}", null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb create --name {accountCtr} --resource-group {rgCtr} --locations regionName=westeurope failoverPriority=0 isZoneRedundant=False",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql database create --account-name {accountCtr} --resource-group {rgCtr} --name {databaseName}",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql container create --account-name {accountCtr} --resource-group {rgCtr} --database-name {databaseName} --name {containerName} --partition-key-path \"/pk\"",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql container delete --account-name {accountCtr} --resource-group {rgCtr} --database-name {databaseName} --name {containerName} --yes",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql container show --account-name {accountCtr} --resource-group {rgCtr} --database-name {databaseName} --name {containerName}",
+            null, 3);
+    }
+
+    [Test]
+    public async Task SqlContainer_WhenListed_AllShouldAppear()
+    {
+        var rgCtr = $"{ResourceGroup}-sqlctr-list";
+        var accountCtr = $"{AccountName}-sqlctr-list";
+        const string databaseName = "cli-db-for-ctr-list";
+        await RunAzureCliCommand($"az group create -l westeurope -n {rgCtr}", null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb create --name {accountCtr} --resource-group {rgCtr} --locations regionName=westeurope failoverPriority=0 isZoneRedundant=False",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql database create --account-name {accountCtr} --resource-group {rgCtr} --name {databaseName}",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql container create --account-name {accountCtr} --resource-group {rgCtr} --database-name {databaseName} --name cli-ctr-a --partition-key-path \"/pk\"",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql container create --account-name {accountCtr} --resource-group {rgCtr} --database-name {databaseName} --name cli-ctr-b --partition-key-path \"/pk\"",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql container list --account-name {accountCtr} --resource-group {rgCtr} --database-name {databaseName}",
+            response =>
+            {
+                var names = response.AsArray()!.Select(n => n!["name"]!.GetValue<string>()).ToList();
+                Assert.That(names, Does.Contain("cli-ctr-a"));
+                Assert.That(names, Does.Contain("cli-ctr-b"));
+            }, 0);
+    }
 }

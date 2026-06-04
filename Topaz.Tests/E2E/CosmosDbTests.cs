@@ -402,4 +402,245 @@ public class CosmosDbTests
             Assert.That(keysAfter.Value.SecondaryMasterKey, Is.EqualTo(secondaryKeyBefore));
         });
     }
+
+    [Test]
+    public async Task SqlContainer_WhenCreated_HasCorrectProperties()
+    {
+        // Arrange
+        var armClient = CreateArmClient();
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string accountName = "test-cosmos-sqlctr-create";
+        const string databaseName = "mydb-ctr";
+        const string containerName = "mycontainer";
+
+        var accountResult = await resourceGroup.Value.GetCosmosDBAccounts()
+            .CreateOrUpdateAsync(WaitUntil.Completed, accountName, MinimalAccountContent());
+
+        await accountResult.Value.GetCosmosDBSqlDatabases()
+            .CreateOrUpdateAsync(WaitUntil.Completed, databaseName,
+                new CosmosDBSqlDatabaseCreateOrUpdateContent(AzureLocation.WestEurope, new CosmosDBSqlDatabaseResourceInfo(databaseName)));
+
+        var createContent = new CosmosDBSqlContainerCreateOrUpdateContent(
+            AzureLocation.WestEurope,
+            new CosmosDBSqlContainerResourceInfo(containerName)
+            {
+                PartitionKey = new CosmosDBContainerPartitionKey
+                {
+                    Kind = CosmosDBPartitionKind.Hash,
+                    Paths = { "/pk" }
+                }
+            })
+        {
+            Options = new CosmosDBCreateUpdateConfig { Throughput = 400 }
+        };
+
+        // Act
+        var database = await accountResult.Value.GetCosmosDBSqlDatabaseAsync(databaseName);
+        var containerResult = await database.Value.GetCosmosDBSqlContainers()
+            .CreateOrUpdateAsync(WaitUntil.Completed, containerName, createContent);
+
+        // Assert
+        Assert.That(containerResult.Value, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(containerResult.Value.Data.Name, Is.EqualTo(containerName));
+            Assert.That(containerResult.Value.Data.ResourceType.ToString(),
+                Is.EqualTo("Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers").IgnoreCase);
+            Assert.That(containerResult.Value.Data.Resource.ContainerName, Is.EqualTo(containerName));
+        });
+    }
+
+    [Test]
+    public async Task SqlContainer_WhenRetrieved_IsFound()
+    {
+        // Arrange
+        var armClient = CreateArmClient();
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string accountName = "test-cosmos-sqlctr-get";
+        const string databaseName = "getdb-ctr";
+        const string containerName = "getcontainer";
+
+        var accountResult = await resourceGroup.Value.GetCosmosDBAccounts()
+            .CreateOrUpdateAsync(WaitUntil.Completed, accountName, MinimalAccountContent());
+
+        await accountResult.Value.GetCosmosDBSqlDatabases()
+            .CreateOrUpdateAsync(WaitUntil.Completed, databaseName,
+                new CosmosDBSqlDatabaseCreateOrUpdateContent(AzureLocation.WestEurope, new CosmosDBSqlDatabaseResourceInfo(databaseName)));
+
+        var database = await accountResult.Value.GetCosmosDBSqlDatabaseAsync(databaseName);
+        await database.Value.GetCosmosDBSqlContainers()
+            .CreateOrUpdateAsync(WaitUntil.Completed, containerName,
+                new CosmosDBSqlContainerCreateOrUpdateContent(AzureLocation.WestEurope,
+                    new CosmosDBSqlContainerResourceInfo(containerName)
+                    {
+                        PartitionKey = new CosmosDBContainerPartitionKey { Kind = CosmosDBPartitionKind.Hash, Paths = { "/pk" } }
+                    }));
+
+        // Act
+        var getResult = await database.Value.GetCosmosDBSqlContainerAsync(containerName);
+
+        // Assert
+        Assert.That(getResult.Value.Data.Name, Is.EqualTo(containerName));
+    }
+
+    [Test]
+    public async Task SqlContainer_WhenDeleted_ReturnsNotFound()
+    {
+        // Arrange
+        var armClient = CreateArmClient();
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string accountName = "test-cosmos-sqlctr-delete";
+        const string databaseName = "deletedb-ctr";
+        const string containerName = "deletecontainer";
+
+        var accountResult = await resourceGroup.Value.GetCosmosDBAccounts()
+            .CreateOrUpdateAsync(WaitUntil.Completed, accountName, MinimalAccountContent());
+
+        await accountResult.Value.GetCosmosDBSqlDatabases()
+            .CreateOrUpdateAsync(WaitUntil.Completed, databaseName,
+                new CosmosDBSqlDatabaseCreateOrUpdateContent(AzureLocation.WestEurope, new CosmosDBSqlDatabaseResourceInfo(databaseName)));
+
+        var database = await accountResult.Value.GetCosmosDBSqlDatabaseAsync(databaseName);
+        var containerResult = await database.Value.GetCosmosDBSqlContainers()
+            .CreateOrUpdateAsync(WaitUntil.Completed, containerName,
+                new CosmosDBSqlContainerCreateOrUpdateContent(AzureLocation.WestEurope,
+                    new CosmosDBSqlContainerResourceInfo(containerName)
+                    {
+                        PartitionKey = new CosmosDBContainerPartitionKey { Kind = CosmosDBPartitionKind.Hash, Paths = { "/pk" } }
+                    }));
+
+        // Act
+        await containerResult.Value.DeleteAsync(WaitUntil.Completed);
+
+        // Assert
+        var notFound = Assert.ThrowsAsync<RequestFailedException>(async () =>
+            await database.Value.GetCosmosDBSqlContainerAsync(containerName));
+        Assert.That(notFound!.Status, Is.EqualTo(404));
+    }
+
+    [Test]
+    public async Task SqlContainer_WhenListed_ReturnsAll()
+    {
+        // Arrange
+        var armClient = CreateArmClient();
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string accountName = "test-cosmos-sqlctr-list";
+        const string databaseName = "listdb-ctr";
+
+        var accountResult = await resourceGroup.Value.GetCosmosDBAccounts()
+            .CreateOrUpdateAsync(WaitUntil.Completed, accountName, MinimalAccountContent());
+
+        await accountResult.Value.GetCosmosDBSqlDatabases()
+            .CreateOrUpdateAsync(WaitUntil.Completed, databaseName,
+                new CosmosDBSqlDatabaseCreateOrUpdateContent(AzureLocation.WestEurope, new CosmosDBSqlDatabaseResourceInfo(databaseName)));
+
+        var database = await accountResult.Value.GetCosmosDBSqlDatabaseAsync(databaseName);
+
+        foreach (var name in new[] { "ctr-a", "ctr-b" })
+        {
+            await database.Value.GetCosmosDBSqlContainers()
+                .CreateOrUpdateAsync(WaitUntil.Completed, name,
+                    new CosmosDBSqlContainerCreateOrUpdateContent(AzureLocation.WestEurope,
+                        new CosmosDBSqlContainerResourceInfo(name)
+                        {
+                            PartitionKey = new CosmosDBContainerPartitionKey { Kind = CosmosDBPartitionKind.Hash, Paths = { "/pk" } }
+                        }));
+        }
+
+        // Act
+        var containers = database.Value.GetCosmosDBSqlContainers().GetAllAsync();
+        var names = new List<string>();
+        await foreach (var ctr in containers)
+        {
+            names.Add(ctr.Data.Name);
+        }
+
+        // Assert
+        Assert.That(names, Does.Contain("ctr-a"));
+        Assert.That(names, Does.Contain("ctr-b"));
+    }
+
+    [Test]
+    public async Task SqlContainer_WhenThroughputUpdated_ReflectsNewValue()
+    {
+        // Arrange
+        var armClient = CreateArmClient();
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string accountName = "test-cosmos-sqlctr-throughput";
+        const string databaseName = "throughputdb-ctr";
+        const string containerName = "throughputcontainer";
+
+        var accountResult = await resourceGroup.Value.GetCosmosDBAccounts()
+            .CreateOrUpdateAsync(WaitUntil.Completed, accountName, MinimalAccountContent());
+
+        await accountResult.Value.GetCosmosDBSqlDatabases()
+            .CreateOrUpdateAsync(WaitUntil.Completed, databaseName,
+                new CosmosDBSqlDatabaseCreateOrUpdateContent(AzureLocation.WestEurope, new CosmosDBSqlDatabaseResourceInfo(databaseName)));
+
+        var database = await accountResult.Value.GetCosmosDBSqlDatabaseAsync(databaseName);
+        var containerResult = await database.Value.GetCosmosDBSqlContainers()
+            .CreateOrUpdateAsync(WaitUntil.Completed, containerName,
+                new CosmosDBSqlContainerCreateOrUpdateContent(AzureLocation.WestEurope,
+                    new CosmosDBSqlContainerResourceInfo(containerName)
+                    {
+                        PartitionKey = new CosmosDBContainerPartitionKey { Kind = CosmosDBPartitionKind.Hash, Paths = { "/pk" } }
+                    })
+                {
+                    Options = new CosmosDBCreateUpdateConfig { Throughput = 400 }
+                });
+
+        // Act
+        var updateContent = new ThroughputSettingsUpdateData(
+            AzureLocation.WestEurope,
+            new ThroughputSettingsResourceInfo { Throughput = 800 });
+        var throughputResult = await containerResult.Value.GetCosmosDBSqlContainerThroughputSetting()
+            .CreateOrUpdateAsync(WaitUntil.Completed, updateContent);
+
+        // Assert
+        Assert.That(throughputResult.Value.Data.Resource.Throughput, Is.EqualTo(800));
+    }
+
+    [Test]
+    public async Task SqlContainer_WhenThroughputFetched_ReturnsThroughputSettings()
+    {
+        // Arrange
+        var armClient = CreateArmClient();
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string accountName = "test-cosmos-sqlctr-getthroughput";
+        const string databaseName = "getthroughputdb-ctr";
+        const string containerName = "getthroughputcontainer";
+
+        var accountResult = await resourceGroup.Value.GetCosmosDBAccounts()
+            .CreateOrUpdateAsync(WaitUntil.Completed, accountName, MinimalAccountContent());
+
+        await accountResult.Value.GetCosmosDBSqlDatabases()
+            .CreateOrUpdateAsync(WaitUntil.Completed, databaseName,
+                new CosmosDBSqlDatabaseCreateOrUpdateContent(AzureLocation.WestEurope, new CosmosDBSqlDatabaseResourceInfo(databaseName)));
+
+        var database = await accountResult.Value.GetCosmosDBSqlDatabaseAsync(databaseName);
+        await database.Value.GetCosmosDBSqlContainers()
+            .CreateOrUpdateAsync(WaitUntil.Completed, containerName,
+                new CosmosDBSqlContainerCreateOrUpdateContent(AzureLocation.WestEurope,
+                    new CosmosDBSqlContainerResourceInfo(containerName)
+                    {
+                        PartitionKey = new CosmosDBContainerPartitionKey { Kind = CosmosDBPartitionKind.Hash, Paths = { "/pk" } }
+                    })
+                {
+                    Options = new CosmosDBCreateUpdateConfig { Throughput = 600 }
+                });
+
+        var container = await database.Value.GetCosmosDBSqlContainerAsync(containerName);
+
+        // Act
+        var throughputResult = await container.Value.GetCosmosDBSqlContainerThroughputSetting().GetAsync();
+
+        // Assert
+        Assert.That(throughputResult.Value.Data.Resource.Throughput, Is.EqualTo(600));
+    }
 }

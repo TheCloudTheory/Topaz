@@ -302,6 +302,168 @@ internal sealed class CosmosDbServiceControlPlane(
             OperationResult.Success, SqlDatabaseThroughputSettingsResponse.From(database), null, null);
     }
 
+    private static string SqlContainerParentId(string accountName, string databaseName) =>
+        $"{accountName}/{nameof(Subresource.SqlDatabases).ToLowerInvariant()}/{databaseName}";
+
+    public ControlPlaneOperationResult<SqlContainerResource> CreateOrUpdateSqlContainer(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string accountName,
+        string databaseName,
+        string containerName,
+        CreateOrUpdateSqlContainerRequest request)
+    {
+        var account = provider.GetAs<DatabaseAccountResource>(subscriptionIdentifier, resourceGroupIdentifier, accountName);
+        if (account == null)
+        {
+            return new ControlPlaneOperationResult<SqlContainerResource>(
+                OperationResult.NotFound, null,
+                string.Format(DatabaseAccountNotFoundMessageTemplate, accountName),
+                DatabaseAccountNotFoundCode);
+        }
+
+        var parentId = SqlContainerParentId(accountName, databaseName);
+        var existing = provider.GetSubresourceAs<SqlContainerResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, containerName, parentId,
+            nameof(Subresource.SqlContainers).ToLowerInvariant());
+
+        if (existing != null)
+        {
+            SqlContainerResourceProperties.UpdateFromRequest(existing.Properties, request);
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, containerName,
+                parentId, nameof(Subresource.SqlContainers).ToLowerInvariant(), existing);
+            return new ControlPlaneOperationResult<SqlContainerResource>(OperationResult.Updated, existing, null, null);
+        }
+
+        var properties = SqlContainerResourceProperties.FromRequest(containerName, request);
+        var resource = new SqlContainerResource(subscriptionIdentifier, resourceGroupIdentifier, accountName, databaseName, containerName, properties);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, containerName,
+            parentId, nameof(Subresource.SqlContainers).ToLowerInvariant(), resource);
+        return new ControlPlaneOperationResult<SqlContainerResource>(OperationResult.Created, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult<SqlContainerResource> GetSqlContainer(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string accountName,
+        string databaseName,
+        string containerName)
+    {
+        var parentId = SqlContainerParentId(accountName, databaseName);
+        var container = provider.GetSubresourceAs<SqlContainerResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, containerName, parentId,
+            nameof(Subresource.SqlContainers).ToLowerInvariant());
+
+        return container == null
+            ? new ControlPlaneOperationResult<SqlContainerResource>(
+                OperationResult.NotFound, null,
+                $"SQL container '{containerName}' could not be found under database '{databaseName}'.",
+                "SqlContainerNotFound")
+            : new ControlPlaneOperationResult<SqlContainerResource>(OperationResult.Success, container, null, null);
+    }
+
+    public ControlPlaneOperationResult DeleteSqlContainer(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string accountName,
+        string databaseName,
+        string containerName)
+    {
+        var parentId = SqlContainerParentId(accountName, databaseName);
+        var container = provider.GetSubresourceAs<SqlContainerResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, containerName, parentId,
+            nameof(Subresource.SqlContainers).ToLowerInvariant());
+
+        if (container == null)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound,
+                $"SQL container '{containerName}' could not be found under database '{databaseName}'.",
+                "SqlContainerNotFound");
+        }
+
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, containerName,
+            parentId, nameof(Subresource.SqlContainers).ToLowerInvariant());
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
+    }
+
+    public ControlPlaneOperationResult<SqlContainerResource[]> ListSqlContainers(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string accountName,
+        string databaseName)
+    {
+        var account = provider.GetAs<DatabaseAccountResource>(subscriptionIdentifier, resourceGroupIdentifier, accountName);
+        if (account == null)
+        {
+            return new ControlPlaneOperationResult<SqlContainerResource[]>(
+                OperationResult.NotFound, null,
+                string.Format(DatabaseAccountNotFoundMessageTemplate, accountName),
+                DatabaseAccountNotFoundCode);
+        }
+
+        var parentId = SqlContainerParentId(accountName, databaseName);
+        var containers = provider.ListSubresourcesAs<SqlContainerResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, parentId,
+            nameof(Subresource.SqlContainers).ToLowerInvariant());
+
+        return new ControlPlaneOperationResult<SqlContainerResource[]>(OperationResult.Success, containers, null, null);
+    }
+
+    public ControlPlaneOperationResult<SqlContainerThroughputSettingsResponse> GetSqlContainerThroughput(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string accountName,
+        string databaseName,
+        string containerName)
+    {
+        var parentId = SqlContainerParentId(accountName, databaseName);
+        var container = provider.GetSubresourceAs<SqlContainerResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, containerName, parentId,
+            nameof(Subresource.SqlContainers).ToLowerInvariant());
+
+        if (container == null)
+        {
+            return new ControlPlaneOperationResult<SqlContainerThroughputSettingsResponse>(
+                OperationResult.NotFound, null,
+                $"SQL container '{containerName}' could not be found under database '{databaseName}'.",
+                "SqlContainerNotFound");
+        }
+
+        return new ControlPlaneOperationResult<SqlContainerThroughputSettingsResponse>(
+            OperationResult.Success, SqlContainerThroughputSettingsResponse.From(container), null, null);
+    }
+
+    public ControlPlaneOperationResult<SqlContainerThroughputSettingsResponse> UpdateSqlContainerThroughput(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string accountName,
+        string databaseName,
+        string containerName,
+        UpdateSqlContainerThroughputRequest request)
+    {
+        var parentId = SqlContainerParentId(accountName, databaseName);
+        var container = provider.GetSubresourceAs<SqlContainerResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, containerName, parentId,
+            nameof(Subresource.SqlContainers).ToLowerInvariant());
+
+        if (container == null)
+        {
+            return new ControlPlaneOperationResult<SqlContainerThroughputSettingsResponse>(
+                OperationResult.NotFound, null,
+                $"SQL container '{containerName}' could not be found under database '{databaseName}'.",
+                "SqlContainerNotFound");
+        }
+
+        SqlContainerResourceProperties.UpdateThroughputFromRequest(container.Properties, request);
+
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, containerName,
+            parentId, nameof(Subresource.SqlContainers).ToLowerInvariant(), container);
+
+        return new ControlPlaneOperationResult<SqlContainerThroughputSettingsResponse>(
+            OperationResult.Success, SqlContainerThroughputSettingsResponse.From(container), null, null);
+    }
+
     public DatabaseAccountNameAvailabilityResponse CheckNameAvailability(string accountName)
     {
         var dnsEntry = GlobalDnsEntries.GetEntry(CosmosDbService.UniqueName, accountName);

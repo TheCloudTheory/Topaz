@@ -310,20 +310,22 @@ TODO: ACE Integration: Cost Analysis page in Topaz Portal
 
 ### Azure Cosmos DB — initial control plane
 
+Implemented: SQL container control plane endpoints (Create/Update, Get, Delete, List, Get Throughput, Update Throughput) with partition key, indexing policy, unique key policy and throughput support.
 
 <!--
-TODO: Azure Cosmos DB: SQL API — Container control plane endpoints
-  Implement the ARM-level SQL container resource surface:
-  - PUT    .../sqlDatabases/{database}/containers/{container}                            – create or update (body: resource.id, resource.partitionKey, resource.indexingPolicy, resource.uniqueKeyPolicy, resource.defaultTtl, options.throughput)
-  - GET    .../sqlDatabases/{database}/containers/{container}                            – get
-  - DELETE .../sqlDatabases/{database}/containers/{container}                            – delete
-  - GET    .../sqlDatabases/{database}/containers                                        – list
-  - GET    .../sqlDatabases/{database}/containers/{container}/throughputSettings/default – get throughput
-  - PUT    .../sqlDatabases/{database}/containers/{container}/throughputSettings/default – update throughput
-  Persist containers as child subresources of their SQL database.
-  Store the partitionKey path, indexingPolicy, uniqueKeyPolicy, and defaultTtl.
-  milestone: v1.6-beta
-  labels: enhancement, cosmos-db, good first issue
+TODO: Azure Cosmos DB: SQL Container — TTL enforcement
+  Background scheduler that purges expired documents from SQL containers where defaultTtl is set.
+  Prerequisite: data-plane document store (v1.7-beta).
+  milestone: v1.9-preview
+  labels: enhancement, cosmos-db
+-->
+
+<!--
+TODO: Azure Cosmos DB: SQL Container — container-level RBAC
+  Per-container access policy enforcement integrated with the data-plane auth layer.
+  Prerequisite: data-plane authentication surface (v1.7-beta).
+  milestone: v1.9-preview
+  labels: enhancement, cosmos-db
 -->
 
 ### Azure Disks — initial control plane

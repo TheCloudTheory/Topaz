@@ -186,6 +186,13 @@
 |--|---------|-------------|
 | <span class="badge--preview">Preview</span> | Geo-replication sync scheduler | Background service (`GeoReplicationSyncScheduler`) that periodically updates `LastGeoSyncTime` on RA-GRS/RAGZRS accounts; stats endpoints return the persisted timestamp instead of wall-clock time, simulating realistic replication lag |
 
+### Azure Cosmos DB — SQL Container advanced features
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | TTL enforcement | Background scheduler that purges expired documents from SQL containers where `defaultTtl` is set; prerequisite: data-plane document store (v1.7-beta) |
+| <span class="badge--preview">Preview</span> | Container-level RBAC | Per-container access policy enforcement integrated with the data-plane auth layer; prerequisite: data-plane authentication surface (v1.7-beta) |
+
 ---
 
 ## ✅ Completed

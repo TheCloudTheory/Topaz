@@ -2,5 +2,6 @@ namespace Topaz.Service.CosmosDb;
 
 internal enum Subresource
 {
-    SqlDatabases
+    SqlDatabases,
+    SqlContainers
 }
