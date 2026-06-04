@@ -65,7 +65,6 @@ internal sealed class CreateOrUpdateSqlDatabaseEndpoint(Pipeline eventPipeline, 
             return;
         }
 
-        var statusCode = operation.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
-        response.CreateJsonContentResponse(operation.Resource, statusCode);
+        response.CreateJsonContentResponse(operation.Resource, HttpStatusCode.OK);
     }
 }
