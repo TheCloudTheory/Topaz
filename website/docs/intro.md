@@ -143,6 +143,28 @@ When running Topaz as a Docker container you can expose only the HTTP data-plane
 ## Step 3 — Run the emulator
 
 <Tabs groupId="runtime">
+<TabItem value="homebrew" label="Homebrew">
+
+```bash
+topaz-host --log-level Information
+```
+
+The `topaz-host` and `topaz` binaries are already on your `PATH`. Open a second terminal and use `topaz` to manage resources.
+
+### ROPC authentication (`az login --username --password`)
+
+When the host starts, it also launches a built-in HTTP CONNECT proxy on port **44380**. This proxy is required for `az login --username --password` (Resource Owner Password Credentials).
+
+Set the `HTTPS_PROXY` environment variable **once** before running any `az` commands that require authentication:
+
+```bash
+export HTTPS_PROXY=http://127.0.0.1:44380
+az login --username alice@mytenant.onmicrosoft.com --password P@ssw0rd!
+```
+
+The proxy passes all non-Topaz `CONNECT` requests through to the real internet unchanged. Topaz prints a reminder with the correct command when it starts.
+
+</TabItem>
 <TabItem value="executable" label="Standalone executable">
 
 <Tabs groupId="os">
