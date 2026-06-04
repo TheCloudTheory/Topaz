@@ -397,20 +397,9 @@ TODO: Entra — implement /devicelogin for real device code browser sign-in
   labels: enhancement, entra
 -->
 
-<!--
-TODO: Entra — ROPC login fails on non-container installs with azure-cli 2.86.0
-  MSAL 2.86.0 added a user-realm discovery pre-flight to the ROPC flow:
-  GET https://{instance}/common/userrealm/{username}?api-version=1.0
-  It constructs the URL using only the bare hostname (no custom port), so on a local
-  install the request goes to port 443. Topaz already implements GetUserRealmEndpoint
-  and registers it on port 443, but Host.cs explicitly skips port 443 when not running
-  inside a container. As a result the request gets Connection refused and az login
-  --username --password fails entirely. Investigate whether Topaz can bind to port 443
-  outside containers (e.g. via a capability or a user-space proxy), or redirect the
-  request to port 8899, so that ROPC works on non-Docker local installs.
-  milestone: v1.6-beta
-  labels: bug, entra
--->
+### Entra — ROPC login on non-container installs
+
+_Implemented in v1.6-beta: a built-in HTTP CONNECT proxy starts on port 44380 alongside the Topaz host. MSAL's user-realm discovery pre-flight (`GET .../common/userrealm/{user}?api-version=1.0`) targets port 443 (stripped by MSAL from the authority URL); the proxy remaps the tunnel to port 8899 where Kestrel handles it. Set `HTTPS_PROXY=http://127.0.0.1:44380` before running `az login --username --password` on non-Docker local installs. Docker installs continue to bind port 443 directly and do not require the proxy._
 
 ---
 

@@ -162,6 +162,30 @@ public class Host
 
         httpEndpoints.Add(new GetHealthEndpoint());
 
+        // Start the built-in HTTP CONNECT proxy. This remaps port-443 CONNECT tunnels
+        // targeting Topaz hostnames to the resource-manager port so that MSAL's user-realm
+        // discovery pre-flight works on non-Docker local installs without root privileges.
+        var proxy = new ConnectProxy(_topazIpAddress, _logger);
+        _ = Task.Run(() => proxy.RunAsync(cancellationToken), cancellationToken);
+
+        if (!IsRunningInsideContainer())
+        {
+            Console.WriteLine();
+            Console.WriteLine("  Topaz HTTPS proxy started.");
+            Console.WriteLine("  To use ROPC authentication (az login --username --password),");
+            Console.WriteLine("  set the following environment variable before running Azure CLI commands:");
+            Console.WriteLine();
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                Console.WriteLine($"    set HTTPS_PROXY=http://127.0.0.1:{GlobalSettings.ConnectProxyPort}");
+            }
+            else
+            {
+                Console.WriteLine($"    export HTTPS_PROXY=http://127.0.0.1:{GlobalSettings.ConnectProxyPort}");
+            }
+            Console.WriteLine();
+        }
+
         await CreateWebserverForHttpEndpointsAsync([.. httpEndpoints], idFactory, cancellationToken);
         CreateAmqpListenersForAmpqEndpoints([.. amqpEndpoints]);
 

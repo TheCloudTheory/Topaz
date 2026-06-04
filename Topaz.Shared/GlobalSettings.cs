@@ -42,6 +42,11 @@ public static class GlobalSettings
     public const ushort HttpsPort = 443;
     public const ushort ContainerRegistryPort = 8892;
     public const ushort AmqpTlsConnectionPort = 5671;
+    // Unprivileged port for the built-in HTTP CONNECT proxy. Chosen above the registered
+    // service port range (1–1023) and unlikely to conflict with common development tools.
+    // Follows the same port-constant convention as the other Topaz ports (8887–8899).
+    public const ushort ConnectProxyPort = 44380;
+    public const string TopazHostname = "topaz.local.dev";
     public const string MainEmulatorDirectory = ".topaz";
     public const string KeyVaultDnsSuffix = "vault.topaz.local.dev";
     public const string LegacyKeyVaultDnsSuffix = "keyvault.topaz.local.dev";
