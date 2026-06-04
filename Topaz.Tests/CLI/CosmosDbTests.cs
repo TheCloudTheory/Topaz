@@ -244,4 +244,18 @@ public class CosmosDbTests
             Assert.That(File.Exists(DatabaseMetadataPath), Is.False);
         });
     }
+
+    [Test]
+    public async Task CosmosDb_WhenKeyIsRegenerated_CommandShouldSucceed()
+    {
+        var code = await Program.RunAsync([
+            "cosmosdb", "account", "regenerate-key",
+            "--name", AccountName,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString(),
+            "--key-kind", "primary"
+        ]);
+
+        Assert.That(code, Is.EqualTo(0));
+    }
 }

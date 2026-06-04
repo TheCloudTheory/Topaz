@@ -130,4 +130,36 @@ public class CosmosDbTests : TopazFixture
                 Assert.That(names, Does.Contain("cli-listdb-b"));
             }, 0);
     }
+
+    [Test]
+    public async Task CosmosDbTests_WhenKeyIsRegenerated_NewKeyIsDifferent()
+    {
+        var rgRegen = $"{ResourceGroup}-regen-key";
+        var accountRegen = $"{AccountName}-regen";
+        await RunAzureCliCommand($"az group create -l westeurope -n {rgRegen}", null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb create --name {accountRegen} --resource-group {rgRegen} --locations regionName=westeurope failoverPriority=0 isZoneRedundant=False",
+            null, 0);
+
+        string? primaryKeyBefore = null;
+        await RunAzureCliCommand(
+            $"az cosmosdb keys list --name {accountRegen} --resource-group {rgRegen} --type keys",
+            response =>
+            {
+                primaryKeyBefore = response["primaryMasterKey"]!.GetValue<string>();
+                Assert.That(primaryKeyBefore, Is.Not.Null.And.Not.Empty);
+            }, 0);
+
+        await RunAzureCliCommand(
+            $"az cosmosdb keys regenerate --name {accountRegen} --resource-group {rgRegen} --key-kind primary",
+            null, 0);
+
+        await RunAzureCliCommand(
+            $"az cosmosdb keys list --name {accountRegen} --resource-group {rgRegen} --type keys",
+            response =>
+            {
+                var primaryKeyAfter = response["primaryMasterKey"]!.GetValue<string>();
+                Assert.That(primaryKeyAfter, Is.Not.EqualTo(primaryKeyBefore));
+            }, 0);
+    }
 }

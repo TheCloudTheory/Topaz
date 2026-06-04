@@ -371,4 +371,35 @@ public class CosmosDbTests
         // Assert
         Assert.That(throughputResult.Value.Data.Resource.Throughput, Is.EqualTo(600));
     }
+
+    [Test]
+    public async Task DatabaseAccount_WhenPrimaryKeyRegenerated_PrimaryKeyChanges()
+    {
+        // Arrange
+        var armClient = CreateArmClient();
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string accountName = "test-cosmos-regen-key";
+
+        var createResult = await resourceGroup.Value.GetCosmosDBAccounts()
+            .CreateOrUpdateAsync(WaitUntil.Completed, accountName, MinimalAccountContent());
+        var account = createResult.Value;
+
+        var keysBefore = await account.GetKeysAsync();
+        var primaryKeyBefore = keysBefore.Value.PrimaryMasterKey;
+        var secondaryKeyBefore = keysBefore.Value.SecondaryMasterKey;
+
+        // Act
+        await account.RegenerateKeyAsync(
+            WaitUntil.Completed,
+            new CosmosDBAccountRegenerateKeyContent(CosmosDBAccountKeyKind.Primary));
+
+        // Assert
+        var keysAfter = await account.GetKeysAsync();
+        Assert.Multiple(() =>
+        {
+            Assert.That(keysAfter.Value.PrimaryMasterKey, Is.Not.EqualTo(primaryKeyBefore));
+            Assert.That(keysAfter.Value.SecondaryMasterKey, Is.EqualTo(secondaryKeyBefore));
+        });
+    }
 }

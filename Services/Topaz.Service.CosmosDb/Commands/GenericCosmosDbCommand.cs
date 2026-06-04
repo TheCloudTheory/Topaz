@@ -20,6 +20,7 @@ public sealed class GenericCosmosDbCommand : IEmulatorCommand
                 account.AddCommand<ListKeysDatabaseAccountCommand>("list-keys");
                 account.AddCommand<ListReadOnlyKeysDatabaseAccountCommand>("list-readonly-keys");
                 account.AddCommand<ListConnectionStringsDatabaseAccountCommand>("list-connection-strings");
+                account.AddCommand<RegenerateKeyDatabaseAccountCommand>("regenerate-key");
             });
             cosmosDb.AddBranch("sql-database", sqlDatabase =>
             {

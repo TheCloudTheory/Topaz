@@ -312,18 +312,6 @@ TODO: ACE Integration: Cost Analysis page in Topaz Portal
 
 
 <!--
-TODO: Azure Cosmos DB: Key and connection string management endpoints
-  Implement the ARM-level key/connection-string surface:
-  - POST   .../databaseAccounts/{name}/listKeys               – return primaryMasterKey, secondaryMasterKey, primaryReadonlyMasterKey, secondaryReadonlyMasterKey
-  - POST   .../databaseAccounts/{name}/readonlykeys           – return read-only keys only
-  - POST   .../databaseAccounts/{name}/regenerateKey          – regenerate one of the four keys by keyKind (primary|secondary|primaryReadonly|secondaryReadonly)
-  - POST   .../databaseAccounts/{name}/listConnectionStrings  – return AccountEndpoint=...;AccountKey=... connection strings for both primary and secondary keys
-  Keys are persisted in the DatabaseAccountResourceProperties and updated by regenerateKey.
-  milestone: v1.6-beta
-  labels: enhancement, cosmos-db, good first issue
--->
-
-<!--
 TODO: Azure Cosmos DB: SQL API — Container control plane endpoints
   Implement the ARM-level SQL container resource surface:
   - PUT    .../sqlDatabases/{database}/containers/{container}                            – create or update (body: resource.id, resource.partitionKey, resource.indexingPolicy, resource.uniqueKeyPolicy, resource.defaultTtl, options.throughput)

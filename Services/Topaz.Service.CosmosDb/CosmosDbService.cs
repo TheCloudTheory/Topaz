@@ -30,6 +30,7 @@ public sealed class CosmosDbService(Pipeline eventPipeline, ITopazLogger logger)
         new ListKeysDatabaseAccountEndpoint(_eventPipeline, _logger),
         new ListReadOnlyKeysDatabaseAccountEndpoint(_eventPipeline, _logger),
         new ListConnectionStringsDatabaseAccountEndpoint(_eventPipeline, _logger),
+        new RegenerateKeyDatabaseAccountEndpoint(_eventPipeline, _logger),
         new CheckNameAvailabilityEndpoint(_eventPipeline, _logger),
         new CreateOrUpdateSqlDatabaseEndpoint(_eventPipeline, _logger),
         new GetSqlDatabaseEndpoint(_eventPipeline, _logger),

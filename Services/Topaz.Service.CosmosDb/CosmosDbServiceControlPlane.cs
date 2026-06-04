@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Azure.Core;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
@@ -315,6 +316,48 @@ internal sealed class CosmosDbServiceControlPlane(
             Reason = "AlreadyExists",
             Message = $"The database account name '{accountName}' is already in use."
         };
+    }
+
+    public ControlPlaneOperationResult RegenerateKey(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string accountName,
+        string keyKind)
+    {
+        var resource = provider.GetAs<DatabaseAccountResource>(subscriptionIdentifier, resourceGroupIdentifier, accountName);
+
+        if (resource == null)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound,
+                string.Format(DatabaseAccountNotFoundMessageTemplate, accountName),
+                DatabaseAccountNotFoundCode);
+        }
+
+        var props = resource.Properties;
+        var newKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+
+        switch (keyKind.ToLowerInvariant())
+        {
+            case "primary":
+                props.PrimaryMasterKey = newKey;
+                break;
+            case "secondary":
+                props.SecondaryMasterKey = newKey;
+                break;
+            case "primaryreadonly":
+                props.PrimaryReadonlyMasterKey = newKey;
+                break;
+            case "secondaryreadonly":
+                props.SecondaryReadonlyMasterKey = newKey;
+                break;
+            default:
+                return new ControlPlaneOperationResult(OperationResult.Failed, $"Unknown keyKind '{keyKind}'.", "InvalidKeyKind");
+        }
+
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, accountName, resource);
+
+        return new ControlPlaneOperationResult(OperationResult.Success);
     }
 
     public ControlPlaneOperationResult<DatabaseAccountConnectionStringsResponse> GetConnectionStrings(
