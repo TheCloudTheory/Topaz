@@ -324,20 +324,6 @@ TODO: Azure Cosmos DB: Key and connection string management endpoints
 -->
 
 <!--
-TODO: Azure Cosmos DB: SQL API — Database control plane endpoints
-  Implement the ARM-level SQL database resource surface:
-  - PUT    .../databaseAccounts/{name}/sqlDatabases/{database}                           – create or update (body: resource.id, options.throughput / options.autoscaleSettings)
-  - GET    .../databaseAccounts/{name}/sqlDatabases/{database}                           – get (returns resource including _rid, _self, _etag, _colls, _users)
-  - DELETE .../databaseAccounts/{name}/sqlDatabases/{database}                           – delete
-  - GET    .../databaseAccounts/{name}/sqlDatabases                                      – list
-  - GET    .../databaseAccounts/{name}/sqlDatabases/{database}/throughputSettings/default – get throughput (RU/s or autoscale)
-  - PUT    .../databaseAccounts/{name}/sqlDatabases/{database}/throughputSettings/default – update throughput
-  Persist SQL databases as subresources under the account directory.
-  milestone: v1.6-beta
-  labels: enhancement, cosmos-db, good first issue
--->
-
-<!--
 TODO: Azure Cosmos DB: SQL API — Container control plane endpoints
   Implement the ARM-level SQL container resource surface:
   - PUT    .../sqlDatabases/{database}/containers/{container}                            – create or update (body: resource.id, resource.partitionKey, resource.indexingPolicy, resource.uniqueKeyPolicy, resource.defaultTtl, options.throughput)

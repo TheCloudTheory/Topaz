@@ -61,4 +61,73 @@ public class CosmosDbTests : TopazFixture
                 Assert.That(names, Does.Contain($"{AccountName}-list-b"));
             }, 0);
     }
+
+    [Test]
+    public async Task SqlDatabase_WhenCreated_ItShouldBeAvailable()
+    {
+        var rgDb = $"{ResourceGroup}-sqldb-create";
+        var accountDb = $"{AccountName}-sqldb-create";
+        const string databaseName = "cli-mydb";
+        await RunAzureCliCommand($"az group create -l westeurope -n {rgDb}", null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb create --name {accountDb} --resource-group {rgDb} --locations regionName=westeurope failoverPriority=0 isZoneRedundant=False",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql database create --account-name {accountDb} --resource-group {rgDb} --name {databaseName}",
+            response =>
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo(databaseName));
+                    Assert.That(response["type"]!.GetValue<string>(),
+                        Is.EqualTo("Microsoft.DocumentDB/databaseAccounts/sqlDatabases").IgnoreCase);
+                });
+            }, 0);
+    }
+
+    [Test]
+    public async Task SqlDatabase_WhenDeleted_ItShouldNotBeAvailable()
+    {
+        var rgDb = $"{ResourceGroup}-sqldb-delete";
+        var accountDb = $"{AccountName}-sqldb-delete";
+        const string databaseName = "cli-deletedb";
+        await RunAzureCliCommand($"az group create -l westeurope -n {rgDb}", null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb create --name {accountDb} --resource-group {rgDb} --locations regionName=westeurope failoverPriority=0 isZoneRedundant=False",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql database create --account-name {accountDb} --resource-group {rgDb} --name {databaseName}",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql database delete --account-name {accountDb} --resource-group {rgDb} --name {databaseName} --yes",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql database show --account-name {accountDb} --resource-group {rgDb} --name {databaseName}",
+            null, 3);
+    }
+
+    [Test]
+    public async Task SqlDatabase_WhenListed_AllShouldAppear()
+    {
+        var rgDb = $"{ResourceGroup}-sqldb-list";
+        var accountDb = $"{AccountName}-sqldb-list";
+        await RunAzureCliCommand($"az group create -l westeurope -n {rgDb}", null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb create --name {accountDb} --resource-group {rgDb} --locations regionName=westeurope failoverPriority=0 isZoneRedundant=False",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql database create --account-name {accountDb} --resource-group {rgDb} --name cli-listdb-a",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql database create --account-name {accountDb} --resource-group {rgDb} --name cli-listdb-b",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az cosmosdb sql database list --account-name {accountDb} --resource-group {rgDb}",
+            response =>
+            {
+                var names = response.AsArray()!.Select(n => n!["name"]!.GetValue<string>()).ToList();
+                Assert.That(names, Does.Contain("cli-listdb-a"));
+                Assert.That(names, Does.Contain("cli-listdb-b"));
+            }, 0);
+    }
 }

@@ -154,6 +154,153 @@ internal sealed class CosmosDbServiceControlPlane(
         return new ControlPlaneOperationResult<DatabaseAccountResource[]>(OperationResult.Success, resources, null, null);
     }
 
+    public ControlPlaneOperationResult<SqlDatabaseResource> CreateOrUpdateSqlDatabase(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string accountName,
+        string databaseName,
+        CreateOrUpdateSqlDatabaseRequest request)
+    {
+        var account = provider.GetAs<DatabaseAccountResource>(subscriptionIdentifier, resourceGroupIdentifier, accountName);
+        if (account == null)
+        {
+            return new ControlPlaneOperationResult<SqlDatabaseResource>(
+                OperationResult.NotFound, null,
+                string.Format(DatabaseAccountNotFoundMessageTemplate, accountName),
+                DatabaseAccountNotFoundCode);
+        }
+
+        var existing = provider.GetSubresourceAs<SqlDatabaseResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, databaseName, accountName,
+            nameof(Subresource.SqlDatabases).ToLowerInvariant());
+
+        if (existing != null)
+        {
+            SqlDatabaseResourceProperties.UpdateFromRequest(existing.Properties, request);
+            provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, databaseName,
+                accountName, nameof(Subresource.SqlDatabases).ToLowerInvariant(), existing);
+            return new ControlPlaneOperationResult<SqlDatabaseResource>(OperationResult.Updated, existing, null, null);
+        }
+
+        var properties = SqlDatabaseResourceProperties.FromRequest(databaseName, request);
+        var resource = new SqlDatabaseResource(subscriptionIdentifier, resourceGroupIdentifier, accountName, databaseName, properties);
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, databaseName,
+            accountName, nameof(Subresource.SqlDatabases).ToLowerInvariant(), resource);
+        return new ControlPlaneOperationResult<SqlDatabaseResource>(OperationResult.Created, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult<SqlDatabaseResource> GetSqlDatabase(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string accountName,
+        string databaseName)
+    {
+        var database = provider.GetSubresourceAs<SqlDatabaseResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, databaseName, accountName,
+            nameof(Subresource.SqlDatabases).ToLowerInvariant());
+
+        return database == null
+            ? new ControlPlaneOperationResult<SqlDatabaseResource>(
+                OperationResult.NotFound, null,
+                $"SQL database '{databaseName}' could not be found under account '{accountName}'.",
+                "SqlDatabaseNotFound")
+            : new ControlPlaneOperationResult<SqlDatabaseResource>(OperationResult.Success, database, null, null);
+    }
+
+    public ControlPlaneOperationResult DeleteSqlDatabase(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string accountName,
+        string databaseName)
+    {
+        var database = provider.GetSubresourceAs<SqlDatabaseResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, databaseName, accountName,
+            nameof(Subresource.SqlDatabases).ToLowerInvariant());
+
+        if (database == null)
+        {
+            return new ControlPlaneOperationResult(
+                OperationResult.NotFound,
+                $"SQL database '{databaseName}' could not be found under account '{accountName}'.",
+                "SqlDatabaseNotFound");
+        }
+
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, databaseName,
+            accountName, nameof(Subresource.SqlDatabases).ToLowerInvariant());
+        return new ControlPlaneOperationResult(OperationResult.Deleted);
+    }
+
+    public ControlPlaneOperationResult<SqlDatabaseResource[]> ListSqlDatabases(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string accountName)
+    {
+        var account = provider.GetAs<DatabaseAccountResource>(subscriptionIdentifier, resourceGroupIdentifier, accountName);
+        if (account == null)
+        {
+            return new ControlPlaneOperationResult<SqlDatabaseResource[]>(
+                OperationResult.NotFound, null,
+                string.Format(DatabaseAccountNotFoundMessageTemplate, accountName),
+                DatabaseAccountNotFoundCode);
+        }
+
+        var databases = provider.ListSubresourcesAs<SqlDatabaseResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, accountName,
+            nameof(Subresource.SqlDatabases).ToLowerInvariant());
+
+        return new ControlPlaneOperationResult<SqlDatabaseResource[]>(OperationResult.Success, databases, null, null);
+    }
+
+    public ControlPlaneOperationResult<SqlDatabaseThroughputSettingsResponse> GetSqlDatabaseThroughput(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string accountName,
+        string databaseName)
+    {
+        var database = provider.GetSubresourceAs<SqlDatabaseResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, databaseName, accountName,
+            nameof(Subresource.SqlDatabases).ToLowerInvariant());
+
+        if (database == null)
+        {
+            return new ControlPlaneOperationResult<SqlDatabaseThroughputSettingsResponse>(
+                OperationResult.NotFound, null,
+                $"SQL database '{databaseName}' could not be found under account '{accountName}'.",
+                "SqlDatabaseNotFound");
+        }
+
+        return new ControlPlaneOperationResult<SqlDatabaseThroughputSettingsResponse>(
+            OperationResult.Success, SqlDatabaseThroughputSettingsResponse.From(database), null, null);
+    }
+
+    public ControlPlaneOperationResult<SqlDatabaseThroughputSettingsResponse> UpdateSqlDatabaseThroughput(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string accountName,
+        string databaseName,
+        UpdateSqlDatabaseThroughputRequest request)
+    {
+        var database = provider.GetSubresourceAs<SqlDatabaseResource>(
+            subscriptionIdentifier, resourceGroupIdentifier, databaseName, accountName,
+            nameof(Subresource.SqlDatabases).ToLowerInvariant());
+
+        if (database == null)
+        {
+            return new ControlPlaneOperationResult<SqlDatabaseThroughputSettingsResponse>(
+                OperationResult.NotFound, null,
+                $"SQL database '{databaseName}' could not be found under account '{accountName}'.",
+                "SqlDatabaseNotFound");
+        }
+
+        SqlDatabaseResourceProperties.UpdateThroughputFromRequest(database.Properties, request);
+
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, databaseName,
+            accountName, nameof(Subresource.SqlDatabases).ToLowerInvariant(), database);
+
+        return new ControlPlaneOperationResult<SqlDatabaseThroughputSettingsResponse>(
+            OperationResult.Success, SqlDatabaseThroughputSettingsResponse.From(database), null, null);
+    }
+
     public DatabaseAccountNameAvailabilityResponse CheckNameAvailability(string accountName)
     {
         var dnsEntry = GlobalDnsEntries.GetEntry(CosmosDbService.UniqueName, accountName);

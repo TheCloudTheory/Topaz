@@ -574,5 +574,12 @@ resource "azurerm_cosmosdb_account" "cosmos" {
   }
 }
 
+resource "azurerm_cosmosdb_sql_database" "cosmos_db" {
+  name                = "tf-rm-cosmos-db"
+  resource_group_name = azurerm_resource_group.cosmos_rg.name
+  account_name        = azurerm_cosmosdb_account.cosmos.name
+}
+
 output "cosmos_account_name"     { value = azurerm_cosmosdb_account.cosmos.name }
 output "cosmos_account_endpoint" { value = azurerm_cosmosdb_account.cosmos.endpoint }
+output "cosmos_sql_db_name"      { value = azurerm_cosmosdb_sql_database.cosmos_db.name }

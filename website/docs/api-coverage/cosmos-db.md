@@ -28,12 +28,12 @@ sidebar_position: 16
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create Or Update | ❌ | `PUT .../databaseAccounts/{name}/sqlDatabases/{database}` |
-| Get | ❌ | `GET .../databaseAccounts/{name}/sqlDatabases/{database}` |
-| Delete | ❌ | `DELETE .../databaseAccounts/{name}/sqlDatabases/{database}` |
-| List | ❌ | `GET .../databaseAccounts/{name}/sqlDatabases` |
-| Get Throughput | ❌ | `GET .../sqlDatabases/{database}/throughputSettings/default` |
-| Update Throughput | ❌ | `PUT .../sqlDatabases/{database}/throughputSettings/default` |
+| Create Or Update | ✅ | `PUT .../databaseAccounts/{name}/sqlDatabases/{database}` |
+| Get | ✅ | `GET .../databaseAccounts/{name}/sqlDatabases/{database}` |
+| Delete | ✅ | `DELETE .../databaseAccounts/{name}/sqlDatabases/{database}` |
+| List | ✅ | `GET .../databaseAccounts/{name}/sqlDatabases` |
+| Get Throughput | ✅ | `GET .../sqlDatabases/{database}/throughputSettings/default` |
+| Update Throughput | ✅ | `PUT .../sqlDatabases/{database}/throughputSettings/default` |
 
 ### SQL Containers
 
