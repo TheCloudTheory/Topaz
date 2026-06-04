@@ -8,6 +8,34 @@ keywords: [topaz limitations, azure emulator limitations, storage ports, topaz k
 
 This page documents deliberate design trade-offs in the current version of Topaz that differ from real Azure behaviour. Each entry notes the impact and the milestone where the limitation is expected to be resolved.
 
+## Entra — ROPC login requires `HTTPS_PROXY` on non-Docker installs
+
+**Affected services:** Entra ID authentication (`az login --username --password`)
+
+MSAL (the authentication library used by Azure CLI and the Azure SDKs) performs a user-realm discovery pre-flight request (`GET https://{authority}/common/userrealm/{username}?api-version=1.0`) before issuing a Resource Owner Password Credentials (ROPC) token. MSAL **always strips the port** from the authority URL when building this discovery URL, so the request is always sent to port **443** regardless of the authority you configured.
+
+On non-Docker installs Topaz does not bind port 443 because doing so requires root/admin privileges. The discovery request therefore hits a port that nothing listens on and fails with `ECONNREFUSED`.
+
+Topaz includes a built-in HTTP CONNECT proxy (port **44380**) that intercepts `CONNECT topaz.local.dev:443` tunnels and forwards them to port 8899, where Topaz's HTTPS endpoint listens. Setting `HTTPS_PROXY` redirects MSAL's discovery request through this proxy and resolves the failure. Non-Topaz `CONNECT` requests (for example Azure CLI telemetry) pass through to the real internet unchanged.
+
+### Impact
+
+Running `az login --username <user> --password <pass>` without `HTTPS_PROXY` set fails on standalone-executable and Homebrew installs with an authentication error or a connection-refused message. Docker users are unaffected — port 443 is bound directly inside the container.
+
+**Workaround:** set `HTTPS_PROXY` before running any `az login --username` command. Topaz prints the exact command when the host starts.
+
+```bash
+# macOS / Linux / WSL
+export HTTPS_PROXY=http://127.0.0.1:44380
+az login --username alice@mytenant.onmicrosoft.com --password P@ssw0rd!
+```
+
+### No fix planned
+
+Binding port 443 on Linux and macOS requires elevated privileges (`CAP_NET_BIND_SERVICE` or `sudo`). Requiring root at runtime is a non-goal for Topaz. The built-in CONNECT proxy is the permanent solution for non-Docker installs.
+
+---
+
 ## AMQP — AMQPNetLite protocol deviations break non-.NET clients
 
 **Affected services:** Service Bus, Event Hubs (AMQP data plane)

@@ -205,6 +205,35 @@ source ~/.zshrc   # or ~/.bashrc
 
 After this you can run `topaz-host --log-level Information` to start the emulator and `topaz` in a second terminal to manage resources.
 
+### ROPC authentication (`az login --username --password`)
+
+When the host starts, it also launches a built-in HTTP CONNECT proxy on port **44380**. This proxy is required for `az login --username --password` (Resource Owner Password Credentials) on non-Docker installs.
+
+The Azure CLI uses MSAL, which performs a user-realm discovery request (`GET .../common/userrealm/{username}?api-version=1.0`) before the actual login. MSAL always targets port **443** for this request regardless of the authority URL you configured. Because Topaz binds port 443 only inside Docker (where root is available), the request fails with `ECONNREFUSED` on a local install. The built-in proxy solves this by intercepting the `CONNECT topaz.local.dev:443` tunnel and forwarding it to port 8899 where Topaz listens.
+
+Set the `HTTPS_PROXY` environment variable **once** before running any `az` commands that require authentication:
+
+<Tabs groupId="os">
+<TabItem value="macos" label="macOS / Linux / WSL">
+
+```bash
+export HTTPS_PROXY=http://127.0.0.1:44380
+az login --username alice@mytenant.onmicrosoft.com --password P@ssw0rd!
+```
+
+</TabItem>
+<TabItem value="windows" label="Windows (cmd / PowerShell)">
+
+```cmd
+set HTTPS_PROXY=http://127.0.0.1:44380
+az login --username alice@mytenant.onmicrosoft.com --password P@ssw0rd!
+```
+
+</TabItem>
+</Tabs>
+
+The proxy passes all non-Topaz `CONNECT` requests (for example Azure CLI telemetry to `dc.services.visualstudio.com`) through to the real internet unchanged. Topaz prints a reminder with the correct command when it starts.
+
 </TabItem>
 <TabItem value="docker" label="Docker">
 
