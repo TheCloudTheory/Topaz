@@ -18,6 +18,7 @@ using Topaz.Service.Storage.Commands;
 using Topaz.Service.Subscription.Commands;
 using Topaz.Service.VirtualNetwork.Commands;
 using Topaz.Service.VirtualMachine.Commands;
+using Topaz.Service.CosmosDb.Commands;
 
 Console.WriteLine($"Topaz.Documentation.Generator {ThisAssembly.AssemblyInformationalVersion}");
 
@@ -43,7 +44,8 @@ _ = new[]
     typeof(GenericManagementGroupCommand),
     typeof(GenericVirtualNetworkCommand),
     typeof(GenericAppServiceCommand),
-    typeof(GenericVirtualMachineCommand)
+    typeof(GenericVirtualMachineCommand),
+    typeof(GenericCosmosDbCommand)
 };
 
 Console.WriteLine("Looking for commands...");

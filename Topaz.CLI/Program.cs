@@ -21,6 +21,7 @@ using Topaz.Service.Subscription.Commands;
 using Topaz.Service.AppService.Commands;
 using Topaz.Service.VirtualMachine.Commands;
 using Topaz.Service.Sql.Commands;
+using Topaz.Service.CosmosDb.Commands;
 using Topaz.Shared;
 
 namespace Topaz.CLI;
@@ -134,7 +135,8 @@ internal class Program
             typeof(GenericVirtualNetworkCommand),
             typeof(GenericAppServiceCommand),
             typeof(GenericVirtualMachineCommand),
-            typeof(GenericSqlCommand)
+            typeof(GenericSqlCommand),
+            typeof(GenericCosmosDbCommand)
         };
 
         var commands = Assembly.GetExecutingAssembly()
