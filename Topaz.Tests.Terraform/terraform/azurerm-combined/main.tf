@@ -580,6 +580,18 @@ resource "azurerm_cosmosdb_sql_database" "cosmos_db" {
   account_name        = azurerm_cosmosdb_account.cosmos.name
 }
 
-output "cosmos_account_name"     { value = azurerm_cosmosdb_account.cosmos.name }
-output "cosmos_account_endpoint" { value = azurerm_cosmosdb_account.cosmos.endpoint }
-output "cosmos_sql_db_name"      { value = azurerm_cosmosdb_sql_database.cosmos_db.name }
+resource "azurerm_cosmosdb_sql_container" "cosmos_container" {
+  name                = "tf-rm-cosmos-container"
+  resource_group_name = azurerm_resource_group.cosmos_rg.name
+  account_name        = azurerm_cosmosdb_account.cosmos.name
+  database_name       = azurerm_cosmosdb_sql_database.cosmos_db.name
+  partition_key_paths = ["/pk"]
+  throughput          = 400
+}
+
+output "cosmos_account_name"          { value = azurerm_cosmosdb_account.cosmos.name }
+output "cosmos_account_endpoint"      { value = azurerm_cosmosdb_account.cosmos.endpoint }
+output "cosmos_sql_db_name"           { value = azurerm_cosmosdb_sql_database.cosmos_db.name }
+output "cosmos_sql_container_name"    { value = azurerm_cosmosdb_sql_container.cosmos_container.name }
+output "cosmos_sql_container_pk"      { value = tostring(azurerm_cosmosdb_sql_container.cosmos_container.partition_key_paths[0]) }
+output "cosmos_sql_container_throughput" { value = azurerm_cosmosdb_sql_container.cosmos_container.throughput }

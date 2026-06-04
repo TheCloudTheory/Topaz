@@ -492,7 +492,9 @@ public class TopazFixture
             || message.Contains("timeout while waiting for plugin to start", StringComparison.OrdinalIgnoreCase)
             || message.Contains("Unrecognized remote plugin message", StringComparison.OrdinalIgnoreCase)
             || message.Contains("Failed to read any lines from plugin's stdout", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("failed to instantiate provider", StringComparison.OrdinalIgnoreCase);
+            || message.Contains("failed to instantiate provider", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("text file busy", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("Failed to install provider", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task<(string Stdout, string Stderr)> ExecTerraformWithOutput(string command)

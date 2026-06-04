@@ -20,4 +20,22 @@ public class CosmosDbTests : AzureRmBatchFixture
     {
         Assert.That(GetOutput<string>("cosmos_sql_db_name"), Is.EqualTo("tf-rm-cosmos-db"));
     }
+
+    [Test]
+    public void CosmosDbSqlContainer_CreateAndDestroy_Succeeds()
+    {
+        Assert.That(GetOutput<string>("cosmos_sql_container_name"), Is.EqualTo("tf-rm-cosmos-container"));
+    }
+
+    [Test]
+    public void CosmosDbSqlContainer_PartitionKey_IsCorrect()
+    {
+        Assert.That(GetOutput<string>("cosmos_sql_container_pk"), Is.EqualTo("/pk"));
+    }
+
+    [Test]
+    public void CosmosDbSqlContainer_Throughput_IsCorrect()
+    {
+        Assert.That(GetOutput<int>("cosmos_sql_container_throughput"), Is.EqualTo(400));
+    }
 }
