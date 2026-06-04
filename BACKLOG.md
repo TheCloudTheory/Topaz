@@ -431,6 +431,26 @@ TODO: Storage: Service SAS permission-letter enforcement (sp → HTTP verb mappi
   labels: enhancement, storage, security
 -->
 
+### Storage — SAS source IP (`sip`) enforcement
+
+<!--
+TODO: Storage: Service SAS sip (source IP) parameter enforcement
+  Real Azure validates the `sip` parameter in a Service SAS token against the source IP
+  of the incoming request, rejecting out-of-range callers with 403 AuthorizationSourceIPMismatch.
+  Topaz currently detects the `sip` parameter and logs it at debug level but does not block
+  any requests based on it.
+  Required changes:
+  - Extract the remote IP from HttpContext in the SAS validation layer (ServiceSasValidator).
+  - Parse the `sip` value: support single IPv4/IPv6 addresses and hyphenated ranges
+    (e.g. "192.168.0.1-192.168.0.255").
+  - Compare the request source IP against the declared range; if it falls outside the range,
+    return 403 with error code AuthorizationSourceIPMismatch.
+  - Applies to all three storage services: Blob, Queue, and Table.
+  See also: website/docs/known-limitations.md — "Storage SAS — sip (source IP) parameter not enforced".
+  milestone: v1.7-beta
+  labels: enhancement, storage, security
+-->
+
 ### Azure Cosmos DB — SQL API data plane
 
 <!--

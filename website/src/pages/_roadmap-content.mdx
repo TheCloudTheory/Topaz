@@ -79,6 +79,7 @@
 | | Feature | Description |
 |--|---------|-------------|
 | <span class="badge--preview">Preview</span> | Service SAS permission-letter enforcement | Map `sp=` letters to HTTP verb; return 403 `AuthorizationPermissionMismatch` on mismatch for Blob, Queue, and Table |
+| <span class="badge--preview">Preview</span> | SAS source IP (`sip`) enforcement | Parse single-address and hyphenated-range `sip=` values; return 403 `AuthorizationSourceIPMismatch` when the request source IP falls outside the declared range; applies to Blob, Queue, and Table |
 
 ### Azure Cosmos DB — SQL API data plane
 
