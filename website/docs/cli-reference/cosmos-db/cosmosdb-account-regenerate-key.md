@@ -1,23 +1,23 @@
 ---
-sidebar_position: 15
+sidebar_position: 14
 ---
 
-# cosmosdb account update
-Updates tags on an Azure Cosmos DB account.
+# cosmosdb account regenerate-key
+Regenerates an access key for an Azure Cosmos DB account.
 
 ## Options
 * `-s, --subscription-id` - (Required) (Required) Subscription ID.
 * `-n, --name` - (Required) (Required) Cosmos DB account name.
 * `-g, --resource-group` - (Required) (Required) Resource group name.
-* `--tags` - (Optional) Space-separated tags in key=value format.
+* `-k, --key-kind` - (Required) (Required) Key kind to regenerate: primary, secondary, primaryReadonly, secondaryReadonly.
 
 ## Examples
 
-### Update tags on a Cosmos DB account
+### Regenerate the primary key for a Cosmos DB account
 ```bash
-$ topaz cosmosdb account update \
+$ topaz cosmosdb account regenerate-key \
     --subscription-id "00000000-0000-0000-0000-000000000000" \
     --resource-group "rg-local" \
     --name "my-cosmos-account" \
-    --tags "env=dev team=platform"
+    --key-kind "primary"
 ```
