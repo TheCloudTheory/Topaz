@@ -114,11 +114,6 @@ internal sealed class ResourceManagerControlPlane(
         if (deploymentOp.Result == OperationResult.NotFound)
             return OperationResult.NotFound;
 
-        // Only Created (queued-but-not-started) deployments can be cancelled
-        var provisioningState = deploymentOp.Resource!.Properties.ProvisioningState;
-        if (provisioningState != ResourcesProvisioningState.Created.ToString())
-            return OperationResult.Conflict;
-
         return templateDeploymentOrchestrator.CancelDeployment(
             $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}/providers/Microsoft.Resources/deployments/{deploymentName}");
     }

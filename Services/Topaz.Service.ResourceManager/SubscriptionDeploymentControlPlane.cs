@@ -60,10 +60,6 @@ internal sealed class SubscriptionDeploymentControlPlane(
         if (deploymentOp.Result == OperationResult.NotFound)
             return OperationResult.NotFound;
 
-        var provisioningState = deploymentOp.Resource!.Properties.ProvisioningState;
-        if (provisioningState != Azure.ResourceManager.Resources.Models.ResourcesProvisioningState.Created.ToString())
-            return OperationResult.Conflict;
-
         return orchestrator.CancelDeployment(
             $"/subscriptions/{subscriptionIdentifier}/providers/Microsoft.Resources/deployments/{deploymentName}");
     }

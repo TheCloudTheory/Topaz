@@ -211,21 +211,7 @@ TODO: AMQP: Fix AMQPNetLite protocol deviations that break non-.NET clients
 
 ### ARM Deployments — mid-flight cancellation
 
-<!--
-TODO: ARM Deployments: Cancel running deployments mid-flight
-  The current orchestrator processes deployments on a single background thread with no
-  interruption mechanism. A cancel request against a Running deployment returns 409 Conflict.
-  Introduce cooperative cancellation so that:
-  - A CancellationTokenSource is created per deployment when it is dequeued.
-  - CancelDeployment signals the token when the deployment is Running.
-  - RouteDeployment checks the token between resource provisions and stops early if signalled,
-    leaving already-provisioned resources in place.
-  - The deployment's provisioningState transitions to Canceled after the current resource
-    completes, matching real Azure mid-flight cancellation semantics.
-  See also: website/docs/known-limitations.md — "ARM Deployments — running deployments cannot be cancelled".
-  milestone: v1.6-beta
-  labels: enhancement, resource-manager
--->
+_Implemented in v1.6-beta: cooperative cancellation via `CancellationTokenSource` per deployment. `CancelDeployment` now signals the token when the deployment is `Running`; `RouteDeployment` checks it after each resource provision and transitions `provisioningState` to `Canceled`, leaving already-provisioned resources in place. All four ARM scopes (resource group, subscription, tenant, management group) support mid-flight cancel. Existing 409 behaviour for already-completed deployments is preserved._
 
 ### Azure Storage — unified data-plane port
 

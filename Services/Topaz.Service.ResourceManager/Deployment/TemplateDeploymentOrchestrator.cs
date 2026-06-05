@@ -34,6 +34,7 @@ public sealed class TemplateDeploymentOrchestrator(
     private static readonly List<TemplateDeployment> DeploymentQueue = [];
     private static readonly Lock QueueLock = new();
     private static string? _currentDeploymentId;
+    private static CancellationTokenSource? _currentCts;
     private static Thread? OrchestratorThread { get; set; }
 
     private readonly ArmTemplateEngineFacade _armTemplateEngineFacade = new();
@@ -127,7 +128,12 @@ public sealed class TemplateDeploymentOrchestrator(
         lock (QueueLock)
         {
             if (_currentDeploymentId == deploymentId)
-                return OperationResult.Conflict;
+            {
+                // Signal the running deployment's CancellationToken; RouteDeployment will
+                // detect it after the current resource completes and transition to Canceled.
+                _currentCts?.Cancel();
+                return OperationResult.Success;
+            }
 
             toCancel = DeploymentQueue.FirstOrDefault(d => d.Id == deploymentId);
             if (toCancel == null)
@@ -171,13 +177,22 @@ public sealed class TemplateDeploymentOrchestrator(
                 logger.LogDebug(nameof(TemplateDeploymentOrchestrator), nameof(Start),
                     "Fetched deployment: {0}", deployment.Id);
 
+                var cts = new CancellationTokenSource();
+                deployment.SetCancellationTokenSource(cts);
+                lock (QueueLock) { _currentCts = cts; }
+
                 try
                 {
                     RouteDeployment(deployment);
                 }
                 finally
                 {
-                    lock (QueueLock) { _currentDeploymentId = null; }
+                    lock (QueueLock)
+                    {
+                        _currentDeploymentId = null;
+                        _currentCts = null;
+                    }
+                    cts.Dispose();
                 }
             }
         });
@@ -260,6 +275,14 @@ public sealed class TemplateDeploymentOrchestrator(
 
             if (result == OperationResult.Failed)
                 hasProvisioningFailed = true;
+
+            if (templateDeployment.CancellationToken.IsCancellationRequested)
+            {
+                templateDeployment.Cancel();
+                templateDeployment.Persist();
+                logger.LogInformation($"Deployment {templateDeployment.Id} was cancelled mid-flight after provisioning {genericResource.Id}.");
+                return;
+            }
         }
 
         if (!hasProvisioningFailed)

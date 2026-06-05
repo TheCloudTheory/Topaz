@@ -64,4 +64,20 @@ internal sealed class ManagementGroupDeploymentResourceProvider(ITopazLogger log
             if (resource != null) yield return resource;
         }
     }
+
+    public ManagementGroupDeploymentResource? GetDeployment(string groupId, string deploymentName)
+    {
+        ValidateGroupId(groupId);
+
+        var mgDir = ResolveManagementGroupDirectory(groupId);
+        if (mgDir == null) return null;
+
+        var metadataFile = Path.Combine(mgDir, DeploymentsSubDir, deploymentName, "metadata.json");
+        if (!File.Exists(metadataFile)) return null;
+
+        var content = File.ReadAllText(metadataFile);
+        if (string.IsNullOrWhiteSpace(content)) return null;
+
+        return JsonSerializer.Deserialize<ManagementGroupDeploymentResource>(content, GlobalSettings.JsonOptions);
+    }
 }

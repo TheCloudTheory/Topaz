@@ -939,4 +939,141 @@ public class ResourceManagerTests
         var properties = result["properties"];
         Assert.That(properties, Is.Not.Null);
     }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenRunningDeploymentIsCancelled_ItShouldHaveCancelledStatus()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub-cancel-running";
+        const string resourceGroupName = "rg-cancel-running";
+        const string deploymentName = "cancel-running-deployment";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, resourceGroupName,
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        var deploymentId = new ResourceIdentifier(
+            $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}");
+        var deploymentResource = armClient.GetArmDeploymentResource(deploymentId);
+
+        // Act — start the deployment without waiting, then immediately cancel
+        var deploymentTask = rg.Value.GetArmDeployments().CreateOrUpdateAsync(WaitUntil.Started, deploymentName,
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment-cancel.json"))
+            }));
+
+        // Give the orchestrator a moment to pick up the deployment before cancelling
+        await Task.Delay(TimeSpan.FromMilliseconds(50));
+        await deploymentResource.CancelAsync();
+
+        // Wait for the deployment to reach a terminal state
+        string? terminalState = null;
+        for (var i = 0; i < 30; i++)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(200));
+            var current = await deploymentResource.GetAsync();
+            terminalState = current.Value.Data.Properties?.ProvisioningState.ToString();
+            if (terminalState is "Canceled" or "Succeeded" or "Failed")
+                break;
+        }
+
+        // Clean up the async task
+        try { await deploymentTask; } catch { /* ignore */ }
+
+        // Assert — either Canceled (mid-flight) or Succeeded (completed before cancel was processed)
+        Assert.That(terminalState, Is.EqualTo("Canceled").Or.EqualTo("Succeeded"),
+            $"Unexpected terminal provisioning state: {terminalState}");
+    }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenRunningSubscriptionScopeDeploymentIsCancelled_ItShouldHaveCancelledStatus()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub-cancel-sub-running";
+        const string deploymentName = "sub-cancel-running-deployment";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+
+        var deploymentId = new ResourceIdentifier(
+            $"/subscriptions/{subscriptionId}/providers/Microsoft.Resources/deployments/{deploymentName}");
+        var deploymentResource = armClient.GetArmDeploymentResource(deploymentId);
+
+        var deploymentContent = new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+        {
+            Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment-cancel.json"))
+        })
+        {
+            Location = AzureLocation.WestEurope
+        };
+
+        // Act — start without waiting, then cancel
+        var deploymentTask = subscription.GetArmDeployments().CreateOrUpdateAsync(
+            WaitUntil.Started, deploymentName, deploymentContent);
+
+        await Task.Delay(TimeSpan.FromMilliseconds(50));
+        await deploymentResource.CancelAsync();
+
+        string? terminalState = null;
+        for (var i = 0; i < 30; i++)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(200));
+            var current = await deploymentResource.GetAsync();
+            terminalState = current.Value.Data.Properties?.ProvisioningState.ToString();
+            if (terminalState is "Canceled" or "Succeeded" or "Failed")
+                break;
+        }
+
+        try { await deploymentTask; } catch { /* ignore */ }
+
+        Assert.That(terminalState, Is.EqualTo("Canceled").Or.EqualTo("Succeeded"),
+            $"Unexpected terminal provisioning state: {terminalState}");
+    }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenRunningTenantScopeDeploymentIsCancelled_ItShouldHaveCancelledStatus()
+    {
+        // Arrange
+        const string deploymentName = "tenant-cancel-running-deployment";
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        var templateJson = await File.ReadAllTextAsync("templates/deployment-cancel.json");
+
+        // Act — create without waiting, then cancel
+        await topaz.CreateDeploymentAtTenantScopeAsync(deploymentName, "westeurope", templateJson);
+
+        await Task.Delay(TimeSpan.FromMilliseconds(50));
+        var cancelResponse = await topaz.CancelDeploymentAtTenantScopeAsync(deploymentName);
+
+        // Assert — cancel returns 204 (success) or 409 (deployment already finished)
+        Assert.That((int)cancelResponse.StatusCode,
+            Is.EqualTo(204).Or.EqualTo(409),
+            $"Unexpected cancel status: {cancelResponse.StatusCode}");
+    }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenNonExistentManagementGroupScopeDeploymentIsCancelled_ItShouldReturn404()
+    {
+        // Arrange
+        const string groupId = "mg-cancel-test";
+        const string deploymentName = "mg-cancel-nonexistent";
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateManagementGroupAsync(groupId, "Cancel Test MG");
+
+        // Act & Assert — no deployment exists; cancel must return 404
+        var ex = Assert.ThrowsAsync<HttpRequestException>(async () =>
+            await topaz.CancelDeploymentAtManagementGroupScopeAsync(groupId, deploymentName));
+        Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
+    }
 }

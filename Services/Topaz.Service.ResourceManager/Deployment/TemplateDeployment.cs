@@ -13,6 +13,9 @@ internal sealed class TemplateDeployment
     public string Name { get; }
     public Template Template { get; }
     public DeploymentStatus Status { get; private set; } = DeploymentStatus.New;
+    public CancellationToken CancellationToken => _cts?.Token ?? CancellationToken.None;
+
+    private CancellationTokenSource? _cts;
 
     private readonly Action _complete;
     private readonly Action _cancel;
@@ -36,6 +39,8 @@ internal sealed class TemplateDeployment
         _fail = fail;
         _persist = persist;
     }
+
+    public void SetCancellationTokenSource(CancellationTokenSource cts) => _cts = cts;
 
     public void Start() => Status = DeploymentStatus.Running;
 

@@ -519,8 +519,34 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         return JsonNode.Parse(content)!;
     }
 
-    public async Task<JsonNode> ListDeploymentsAtManagementGroupScopeAsync(string groupId)
+    public async Task<HttpResponseMessage> CancelDeploymentAtTenantScopeAsync(string deploymentName)
     {
+        var request = new HttpRequestMessage(HttpMethod.Post,
+            $"providers/Microsoft.Resources/deployments/{deploymentName}/cancel");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+        request.Content = new ByteArrayContent([]);
+        return await _httpClient.SendAsync(request);
+    }
+
+    public async Task<HttpResponseMessage> CancelDeploymentAtManagementGroupScopeAsync(string groupId, string deploymentName)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post,
+            $"providers/Microsoft.Management/managementGroups/{groupId}/providers/Microsoft.Resources/deployments/{deploymentName}/cancel");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+        request.Content = new ByteArrayContent([]);
+        var response = await _httpClient.SendAsync(request);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(
+                $"Deployment or management group not found: {message}", null, HttpStatusCode.NotFound);
+        }
+        return response;
+    }
+
+    public async Task<JsonNode> ListDeploymentsAtManagementGroupScopeAsync(string groupId)    {
         var request = new HttpRequestMessage(HttpMethod.Get,
             $"providers/Microsoft.Management/managementGroups/{groupId}/providers/Microsoft.Resources/deployments");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",

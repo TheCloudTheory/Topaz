@@ -1,5 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
+using Topaz.Service.ResourceManager.Deployment;
 using Topaz.Service.ResourceManager.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -7,10 +8,10 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ResourceManager.Endpoints;
 
-public sealed class ListDeploymentsAtManagementGroupScopeEndpoint(ITopazLogger logger) : IEndpointDefinition
+public sealed class ListDeploymentsAtManagementGroupScopeEndpoint(ITopazLogger logger, TemplateDeploymentOrchestrator orchestrator) : IEndpointDefinition
 {
     private readonly ManagementGroupDeploymentControlPlane _controlPlane =
-        new(new ManagementGroupDeploymentResourceProvider(logger), logger);
+        new(new ManagementGroupDeploymentResourceProvider(logger), orchestrator, logger);
 
     public string[] Endpoints =>
     [

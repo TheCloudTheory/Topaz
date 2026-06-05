@@ -318,4 +318,55 @@ public class ResourceManagerTests : TopazFixture
                 Assert.That(response, Is.Not.Null);
             });
     }
+
+    [Test]
+    public async Task ResourceManagerTests_WhenCancellingRunningDeployment_ItShouldSucceed()
+    {
+        await RunAzureCliCommand("az group create -n rg-cancel-running-cli -l westeurope");
+        try
+        {
+            // Start the deployment without waiting so we can attempt to cancel it
+            await RunAzureCliCommand(
+                "az deployment group create --name cancel-running-cli -g rg-cancel-running-cli " +
+                "--template-file \"/templates/deployment-cancel.json\" --no-wait");
+
+            // Cancel the deployment — succeeds (204) whether running or already completed
+            await RunAzureCliCommand(
+                "az deployment group cancel --name cancel-running-cli -g rg-cancel-running-cli");
+        }
+        finally
+        {
+            await RunAzureCliCommand("az group delete -n rg-cancel-running-cli --yes");
+        }
+    }
+
+    [Test]
+    public async Task ResourceManagerTests_WhenCancellingRunningSubscriptionScopeDeployment_ItShouldSucceed()
+    {
+        // Start the subscription-scope deployment without waiting
+        await RunAzureCliCommand(
+            "az deployment sub create --name sub-cancel-running-cli --location westeurope " +
+            "--template-file \"/templates/deployment-cancel.json\" --no-wait");
+
+        // Cancel immediately — succeeds whether running or already completed
+        await RunAzureCliCommand(
+            "az deployment sub cancel --name sub-cancel-running-cli");
+
+        await RunAzureCliCommand("az deployment sub delete --name sub-cancel-running-cli");
+    }
+
+    [Test]
+    public async Task ResourceManagerTests_WhenCancellingRunningTenantScopeDeployment_ItShouldSucceed()
+    {
+        const string deploymentName = "tenant-cancel-running-cli";
+
+        await RunAzureCliCommand(
+            $"az deployment tenant create --name {deploymentName} --location westeurope " +
+            "--template-file \"/templates/deployment-cancel.json\" --no-wait");
+
+        await RunAzureCliCommand(
+            $"az deployment tenant cancel --name {deploymentName}");
+
+        await RunAzureCliCommand($"az deployment tenant delete --name {deploymentName}");
+    }
 }

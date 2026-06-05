@@ -92,10 +92,6 @@ internal sealed class TenantDeploymentControlPlane(
         if (deploymentOp.Result == OperationResult.NotFound)
             return OperationResult.NotFound;
 
-        var provisioningState = deploymentOp.Resource!.Properties.ProvisioningState;
-        if (provisioningState != ResourcesProvisioningState.Created.ToString())
-            return OperationResult.Conflict;
-
         return orchestrator.CancelDeployment(
             $"/providers/Microsoft.Resources/deployments/{deploymentName}");
     }
