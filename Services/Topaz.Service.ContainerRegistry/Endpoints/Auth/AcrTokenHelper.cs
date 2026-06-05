@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Http;
+using System.Net.Http.Headers;
 using Topaz.Dns;
 using Topaz.Identity;
 using Topaz.Service.ContainerRegistry.Models;
@@ -51,29 +52,44 @@ internal static class AcrTokenHelper
             }
         }
 
-        var authorization = context.Request.Headers["Authorization"].ToString();
-        if (!string.IsNullOrWhiteSpace(authorization) &&
-            authorization.StartsWith("Basic ", StringComparison.OrdinalIgnoreCase))
-        {
-            return ValidateBasicAuth(authorization, context, controlPlane, logger);
-        }
-
-        logger.LogDebug(nameof(AcrTokenHelper), nameof(ResolveObjectId),
-            "No credentials supplied — issuing 401.");
-        return null;
+        return ResolveObjectIdFromAuthorization(context, controlPlane, logger);
     }
 
-    private static string? ValidateBasicAuth(
-        string authorization,
+    private static string? ResolveObjectIdFromAuthorization(
         HttpContext context,
         ContainerRegistryControlPlane controlPlane,
         ITopazLogger logger)
     {
-        var encoded = authorization["Basic ".Length..].Trim();
+        var authorization = context.Request.Headers["Authorization"].ToString();
+        if (string.IsNullOrWhiteSpace(authorization))
+        {
+            logger.LogDebug(nameof(AcrTokenHelper), nameof(ResolveObjectId),
+                "No credentials supplied — issuing 401.");
+            return null;
+        }
+
+        if (!AuthenticationHeaderValue.TryParse(authorization, out var parsedAuthorization) ||
+            !string.Equals(parsedAuthorization.Scheme, "Basic", StringComparison.OrdinalIgnoreCase) ||
+            string.IsNullOrWhiteSpace(parsedAuthorization.Parameter))
+        {
+            logger.LogDebug(nameof(AcrTokenHelper), nameof(ResolveObjectId),
+                "Unsupported or malformed Authorization header — issuing 401.");
+            return null;
+        }
+
+        return ValidateBasicAuth(parsedAuthorization.Parameter, context, controlPlane, logger);
+    }
+
+    private static string? ValidateBasicAuth(
+        string encodedCredentials,
+        HttpContext context,
+        ContainerRegistryControlPlane controlPlane,
+        ITopazLogger logger)
+    {
         string decoded;
         try
         {
-            decoded = Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
+            decoded = Encoding.UTF8.GetString(Convert.FromBase64String(encodedCredentials));
         }
         catch
         {
