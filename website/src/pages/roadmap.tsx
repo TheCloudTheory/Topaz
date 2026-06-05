@@ -4,6 +4,7 @@ import Link from '@docusaurus/Link';
 import clsx from 'clsx';
 import styles from './roadmap.module.css';
 import RoadmapContent from './_roadmap-content.mdx';
+import RoadmapFeatureMap from './RoadmapFeatureMap';
 
 function Hero() {
   return (
@@ -53,6 +54,7 @@ export default function RoadmapPage(): JSX.Element {
       description="Topaz release roadmap — planned features and milestones across upcoming beta versions."
     >
       <Hero />
+      <RoadmapFeatureMap />
       <section className={styles.content}>
         <div className="container">
           <RoadmapContent />

@@ -106,3 +106,141 @@
   border-color: var(--ifm-color-primary);
   color: var(--ifm-color-primary);
 }
+
+/* ── Feature Map ────────────────────────────────────────────────── */
+.featureMap {
+  background: var(--ifm-color-emphasis-100);
+  padding: 3.5rem 0;
+}
+
+.featureMapTitle {
+  font-size: 1.6rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.015em;
+  text-align: center;
+  margin-bottom: 0.5rem !important;
+}
+
+.featureMapSubtitle {
+  text-align: center;
+  color: var(--ifm-color-secondary-darkest);
+  margin-bottom: 2rem;
+}
+
+.milestoneGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 1100px) {
+  .milestoneGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .milestoneGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.milestoneCard {
+  background: var(--ifm-background-surface-color);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+.milestoneHeader {
+  padding: 0.65rem 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.milestoneVersion {
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  color: #fff;
+}
+
+.milestoneBlue   { background: #3b7dd8; }
+.milestonePurple { background: #7c50d6; }
+.milestoneOrange { background: #d97706; }
+.milestoneGreen  { background: #1a8a5a; }
+
+.featureList {
+  list-style: none;
+  margin: 0;
+  padding: 0.6rem 0;
+  flex: 1;
+}
+
+.featureItem {
+  padding: 0.45rem 1rem;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.featureItem:last-child {
+  border-bottom: none;
+}
+
+.featureService {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--ifm-font-color-base);
+}
+
+.featureSummary {
+  font-size: 0.78rem;
+  color: var(--ifm-color-secondary-darkest);
+  line-height: 1.4;
+}
+
+/* ── Collapsible released versions ──────────────────────────────── */
+.content details {
+  margin-top: 2.5rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.content details summary {
+  cursor: pointer;
+  padding: 0.9rem 1.25rem;
+  background: var(--ifm-color-emphasis-100);
+  font-weight: 600;
+  font-size: 1rem;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-bottom: 1px solid transparent;
+}
+
+.content details[open] summary {
+  border-bottom-color: var(--ifm-color-emphasis-300);
+}
+
+.content details summary::before {
+  content: '▶';
+  font-size: 0.7rem;
+  transition: transform 0.2s ease;
+  display: inline-block;
+  color: var(--ifm-color-secondary-darkest);
+}
+
+.content details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.content details > *:not(summary) {
+  padding: 0 1.25rem;
+}
