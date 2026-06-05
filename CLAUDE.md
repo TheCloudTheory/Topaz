@@ -5,7 +5,8 @@ Project-specific knowledge for AI coding agents working in this repository.
 # General rules
 Every response must follow the rules:
 - If you don't know something, you must say "I don't know".
-- If you're reasoning about an issue or a problem, you must back your reasoning by real sources
+- If you're reasoning about an issue or a problem, you must back your reasoning by real sources.
+- Always favor simple solution rather than complex ideas. 
 
 ## Quick commands
 
@@ -25,6 +26,7 @@ Services live under `Services/Topaz.Service.*`. Each service has:
 - Data plane (e.g. `AcrDataPlane`) — runtime/protocol behaviour
 - `Endpoints/` — one file per HTTP operation
 - `Models/` — resource models (`ArmResource<T>` + `*ResourceProperties`)
+- `Commands/` - Topaz CLI commands, one per HTTP endpoint 
 
 ## Key paths
 
@@ -36,6 +38,8 @@ Services live under `Services/Topaz.Service.*`. Each service has:
 | Container Registry service | `Services/Topaz.Service.ContainerRegistry/` |
 | E2E tests (Azure SDK) | `Topaz.Tests/E2E/` |
 | E2E tests (Azure CLI) | `Topaz.Tests.AzureCLI/` |
+| Terraform tests | `Topaz.Tests.Terraform/` |
+| PowerShell tests | `Topaz.Tests.AzurePowerShell/` |
 | Portal tests | `Topaz.Tests.Portal/` |
 | API coverage docs | `website/docs/api-coverage/` |
 | Backlog | `BACKLOG.md` (root) + `website/docs/roadmap.md` |
@@ -65,6 +69,7 @@ Services live under `Services/Topaz.Service.*`. Each service has:
 3. Update `website/docs/api-coverage/<service>.md` — flip ❌ → ✅ for implemented operations.
 4. Add tests in **both** suites (see Tests section).
 5. For ARM-manageable nested objects (for example network rule sets), model them as `ArmSubresource<T>` and persist them via `CreateOrUpdateSubresource` / `GetSubresourceAs` instead of building ad-hoc response DTOs in endpoints.
+6. Create or update a corresponding Topaz CLI command from `Commands/` directory.
 
 ### Every new service (control plane)
 

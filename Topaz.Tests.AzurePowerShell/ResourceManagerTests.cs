@@ -5,7 +5,7 @@ public class ResourceManagerTests : PowerShellTestBase
 {
     // Build the template as a PowerShell hashtable to avoid JSON quoting issues in C# string literals.
     private const string BuildCancelTemplate =
-        "$tmpl = @{ `$schema = 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#'; " +
+        "$tmpl = @{ '$schema' = 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#'; " +
         "contentVersion = '1.0.0.0'; " +
         "resources = @(" +
         "@{ type = 'Microsoft.ManagedIdentity/userAssignedIdentities'; apiVersion = '2023-01-31'; name = 'ps-cancel-01'; location = 'westeurope' }," +
