@@ -579,7 +579,7 @@ public class ResourceManagerTests
     }
 
     [Test]
-    public async Task ResourceManagerTest_WhenDeploymentIsCancelled_ItShouldHaveCancelledStatus()
+    public async Task ResourceManagerTest_WhenCompletedDeploymentIsCancelled_ItShouldReturn409Conflict()
     {
         // Arrange
         const string subscriptionName = "test-sub";
@@ -697,7 +697,7 @@ public class ResourceManagerTests
     }
 
     [Test]
-    public async Task ResourceManagerTest_WhenSubscriptionScopeDeploymentIsCancelled_ItShouldReturn409WhenAlreadyCompleted()
+    public async Task ResourceManagerTest_WhenCompletedSubscriptionScopeDeploymentIsCancelled_ItShouldReturn409Conflict()
     {
         // Arrange
         const string subscriptionName = "test-sub-cancel";

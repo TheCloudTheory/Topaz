@@ -41,6 +41,7 @@ public sealed class CancelDeploymentEndpoint(
         response.StatusCode = result switch
         {
             OperationResult.NotFound => HttpStatusCode.NotFound,
+            OperationResult.Conflict => HttpStatusCode.Conflict,
             _ => HttpStatusCode.NoContent
         };
 

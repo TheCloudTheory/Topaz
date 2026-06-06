@@ -85,7 +85,7 @@ public class ConnectionStringsToolTests
             Assert.That(entry.ConnectionString, Does.Contain($"AccountName={StorageAccountName}"));
             Assert.That(entry.ConnectionString, Does.Contain("DefaultEndpointsProtocol=http"));
             Assert.That(entry.BlobServiceUri, Does.Contain($"{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}"));
-            Assert.That(entry.QueueServiceUri, Does.Contain($"{StorageAccountName}.queue.storage.topaz.local.dev:8893"));
+            Assert.That(entry.QueueServiceUri, Does.Contain($"{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}"));
             Assert.That(entry.TableServiceUri, Does.Contain($"{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}"));
         });
     }

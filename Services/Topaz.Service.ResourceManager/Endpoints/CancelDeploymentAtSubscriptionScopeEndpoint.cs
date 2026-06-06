@@ -40,6 +40,7 @@ public sealed class CancelDeploymentAtSubscriptionScopeEndpoint(
         response.StatusCode = result switch
         {
             OperationResult.NotFound => HttpStatusCode.NotFound,
+            OperationResult.Conflict => HttpStatusCode.Conflict,
             _ => HttpStatusCode.NoContent
         };
 
