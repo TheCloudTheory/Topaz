@@ -61,9 +61,10 @@ You can find which service uses which port below:
 Service Name|Port|Protocol
 ------------|----|--------
 Resource Manager|8899, 443|HTTPS
-Table Storage|8890|HTTPS
 Blob Storage|8891|HTTPS
-Queue Storage|8893|HTTPS
+Table Storage|8891|HTTPS
+Queue Storage|8891|HTTPS
+File Storage|8891|HTTPS
 Azure Key Vault|8898, 443|HTTPS
 Azure Event Hub|8897|HTTPS
 Azure Event Hub (AMQP)|8888|AMQP
@@ -71,6 +72,12 @@ Azure Service Bus|8887, 8899|HTTPS
 Azure Service Bus (AMQP)|8889, 5671|AMQP, AMQP/TLS
 Container Registry (control plane)|8899|HTTPS
 Container Registry (data plane)|8892|HTTPS
+
+:::note[Unified storage port]
+
+All Azure Storage sub-services (Blob, Table, Queue, File) share a single port (`8891`). Requests are routed to the correct sub-service by the second DNS label in the `Host` header (e.g. `{account}.**blob**.storage.topaz.local.dev`, `{account}.**table**.storage.topaz.local.dev`).
+
+:::
 
 For HTTPS endpoints, if you're running Topaz as a standalone application, you need to install and trust the certificates provided along with the main package.
 
