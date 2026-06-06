@@ -115,7 +115,6 @@ public class TopazFixture
 
             _containerTopaz = new ContainerBuilder()
                 .WithImage(TopazContainerImage)
-                .WithPortBinding(8890)
                 .WithPortBinding(8899)
                 .WithPortBinding(8898)
                 .WithPortBinding(8897)

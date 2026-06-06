@@ -19,9 +19,6 @@ internal sealed class SetContainerAclEndpoint(Pipeline eventPipeline, ITopazLogg
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/write"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultBlobStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;

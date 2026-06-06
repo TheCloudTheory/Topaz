@@ -24,6 +24,11 @@ internal abstract class BlobDataPlaneEndpointBase(Pipeline eventPipeline, ITopaz
     private readonly BlobStorageSecurityProvider _securityProvider = new(eventPipeline, logger);
     protected readonly ITopazLogger Logger = logger;
 
+    public string RequiredHostServiceLabel => "blob";
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultStoragePort], Protocol.Https);
+
     /// <summary>
     /// Blob storage data-plane endpoints manage their own auth via <see cref="IsRequestAuthorized"/>.
     /// The router's default ARM RBAC check is bypassed here.

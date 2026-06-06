@@ -19,6 +19,16 @@ public interface IEndpointDefinition
     public string? ProviderNamespace => null;
 
     /// <summary>
+    /// The second DNS label that must appear in the incoming <c>Host</c> header for this endpoint
+    /// to be selected by the Router. For example, a Blob Storage endpoint sets this to
+    /// <c>"blob"</c> so that requests to <c>{account}.blob.storage.topaz.local.dev</c> are
+    /// routed correctly even though Table and Queue endpoints share the same port.
+    /// Leave <c>null</c> (the default) for endpoints whose hostname does not carry a
+    /// service-discriminating label (ARM, Key Vault, ACR, etc.).
+    /// </summary>
+    public string? RequiredHostServiceLabel => null;
+
+    /// <summary>
     /// Determines whether the incoming request is authorized to invoke this endpoint.
     /// The default implementation delegates to the Router's ARM RBAC adapter via
     /// Data-plane endpoints (Key Vault, Storage) override this method to perform their own

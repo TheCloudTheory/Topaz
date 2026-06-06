@@ -16,9 +16,6 @@ internal sealed class PatchTableEntityEndpoint(Pipeline eventPipeline, ITopazLog
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/write"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultTableStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;

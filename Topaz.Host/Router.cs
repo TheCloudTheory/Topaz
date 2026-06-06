@@ -48,7 +48,10 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         IEndpointDefinition? endpoint = null;
         var pathParts = path.Split('/');
         
-        foreach (var httpEndpoint in httpEndpoints.Where(e => e.PortsAndProtocol.Ports.Any(p => p == port)))
+        foreach (var httpEndpoint in httpEndpoints.Where(e =>
+                     e.PortsAndProtocol.Ports.Any(p => p == port) &&
+                     (e.RequiredHostServiceLabel == null ||
+                      IsHostServiceLabelMatch(context.Request.Headers["Host"].ToString(), e.RequiredHostServiceLabel))))
         {
             foreach (var endpointUrl in httpEndpoint.Endpoints)
             {
@@ -326,6 +329,25 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
     /// <returns>
     /// True if the path segment matches the endpoint segment's regular expression; otherwise, false.
     /// </returns>
+    /// <summary>
+    /// Returns true when the second DNS label of <paramref name="host"/> equals
+    /// <paramref name="requiredLabel"/> (case-insensitive).  Used to disambiguate
+    /// storage sub-service endpoints (blob / table / queue) that share the same port
+    /// but differ in the Host header subdomain structure:
+    ///   {account}.<b>blob</b>.storage.topaz.local.dev:8891
+    /// When the host string does not contain at least two dot-separated labels the
+    /// method returns false, which prevents false-positive matches on bare hostnames.
+    /// </summary>
+    private static bool IsHostServiceLabelMatch(string host, string requiredLabel)
+    {
+        var firstDot = host.IndexOf('.');
+        if (firstDot < 0) return false;
+        var remainder = host[(firstDot + 1)..];
+        var secondDot = remainder.IndexOf('.');
+        var serviceLabel = secondDot >= 0 ? remainder[..secondDot] : remainder;
+        return string.Equals(serviceLabel, requiredLabel, StringComparison.OrdinalIgnoreCase);
+    }
+
     private bool MatchesRegexExpressionForEndpoint(string endpointSegment, string pathSegment)
     {
         if(string.IsNullOrEmpty(endpointSegment) || string.IsNullOrEmpty(pathSegment)) return false;

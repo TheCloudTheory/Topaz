@@ -23,6 +23,11 @@ internal abstract class QueueDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
     protected readonly ITopazLogger Logger = logger;
 
     /// <summary>
+    public string RequiredHostServiceLabel => "queue";
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultStoragePort], Protocol.Https);
+
     /// Queue storage data-plane endpoints manage their own auth via <see cref="IsRequestAuthorized"/>.
     /// The router's default ARM RBAC check is bypassed here.
     /// </summary>

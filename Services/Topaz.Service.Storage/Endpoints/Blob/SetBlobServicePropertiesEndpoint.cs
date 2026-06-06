@@ -17,9 +17,6 @@ internal sealed class SetBlobServicePropertiesEndpoint(Pipeline eventPipeline, I
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/write"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultBlobStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;

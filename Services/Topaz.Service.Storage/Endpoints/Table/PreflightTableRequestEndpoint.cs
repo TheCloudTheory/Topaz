@@ -20,9 +20,6 @@ internal sealed class PreflightTableRequestEndpoint(Pipeline eventPipeline, ITop
 
     public string[] Permissions => [];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultTableStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         var origin = context.Request.Headers["Origin"].ToString();

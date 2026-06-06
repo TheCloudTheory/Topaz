@@ -24,9 +24,6 @@ internal sealed class PutBlobEndpoint(Pipeline eventPipeline, ITopazLogger logge
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultBlobStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;

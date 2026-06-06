@@ -28,9 +28,6 @@ internal sealed class SendMessageEndpoint(Pipeline eventPipeline, ITopazLogger l
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/queues/messages/write"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultQueueStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         Logger.LogInformation($"[SendMessageEndpoint] GetResponse called with path: {context.Request.Path} method: {context.Request.Method}");

@@ -22,9 +22,6 @@ internal sealed class QueryTableEntitiesEndpoint(Pipeline eventPipeline, ITopazL
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/read"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultTableStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))

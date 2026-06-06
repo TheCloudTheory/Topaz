@@ -18,9 +18,6 @@ internal sealed class GetBlobServiceStatsEndpoint(Pipeline eventPipeline, ITopaz
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/read"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultBlobStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (!TryGetStorageAccountFromSecondaryHost(context.Request.Headers, out var storageAccount))

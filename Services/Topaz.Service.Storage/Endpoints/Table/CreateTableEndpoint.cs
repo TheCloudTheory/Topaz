@@ -18,9 +18,6 @@ internal sealed class CreateTableEndpoint(Pipeline eventPipeline, ITopazLogger l
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/write"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultTableStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;

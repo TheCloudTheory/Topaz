@@ -19,9 +19,6 @@ internal sealed class GetQueuePropertiesEndpoint(Pipeline eventPipeline, ITopazL
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/queues/read"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultQueueStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))

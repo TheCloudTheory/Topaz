@@ -30,9 +30,6 @@ internal sealed class GenerateUserDelegationKeyEndpoint(Pipeline eventPipeline, 
 
     public string[] Permissions => [];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultBlobStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         // This operation requires Bearer (OAuth) authentication.

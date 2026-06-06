@@ -19,9 +19,6 @@ internal sealed class GetTableServicePropertiesEndpoint(Pipeline eventPipeline, 
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/read"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultTableStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (context.Request.Query.HasQueryKeyWithValue("comp", "stats"))

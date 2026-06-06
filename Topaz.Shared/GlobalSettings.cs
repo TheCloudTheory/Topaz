@@ -31,10 +31,13 @@ public static class GlobalSettings
     public const ushort DefaultEventHubAmqpPort = 8888;
     public const ushort DefaultServiceBusAmqpPort = 8889;
     public const ushort AdditionalServiceBusPort = 8887;
-    public const ushort DefaultTableStoragePort = 8890;
-    public const ushort DefaultBlobStoragePort = 8891;
-    public const ushort DefaultQueueStoragePort = 8893;
-    public const ushort DefaultFileStoragePort = 8894;
+    public const ushort DefaultStoragePort = 8891;
+    // Legacy per-sub-service constants kept as aliases while callers are migrated.
+    // All storage data-plane sub-services now share DefaultStoragePort.
+    public const ushort DefaultTableStoragePort = DefaultStoragePort;
+    public const ushort DefaultBlobStoragePort = DefaultStoragePort;
+    public const ushort DefaultQueueStoragePort = DefaultStoragePort;
+    public const ushort DefaultFileStoragePort = DefaultStoragePort;
     public const ushort DefaultCosmosDbPort = 8895;
     public const ushort DefaultEventHubPort = 8897;
     public const ushort DefaultKeyVaultPort = 8898;

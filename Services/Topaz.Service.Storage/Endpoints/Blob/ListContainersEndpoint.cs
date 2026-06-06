@@ -20,9 +20,6 @@ internal sealed class ListContainersEndpoint(Pipeline eventPipeline, ITopazLogge
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/blobServices/containers/read"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultBlobStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))

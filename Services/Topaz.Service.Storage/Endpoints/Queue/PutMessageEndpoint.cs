@@ -26,9 +26,6 @@ internal sealed class PutMessageEndpoint(Pipeline eventPipeline, ITopazLogger lo
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/queues/messages/write"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultQueueStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;

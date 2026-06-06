@@ -25,6 +25,11 @@ internal abstract class TableDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
     protected readonly TableServiceControlPlane ControlPlane = new(new TableResourceProvider(logger), logger);
     protected readonly TableServiceDataPlane DataPlane = new(new TableResourceProvider(logger), logger);
 
+    public string RequiredHostServiceLabel => "table";
+
+    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
+        ([GlobalSettings.DefaultStoragePort], Protocol.Https);
+
     /// <summary>
     /// Storage data-plane endpoints manage their own authentication via <see cref="IsRequestAuthorized"/>.
     /// The router's default ARM RBAC check is bypassed here.

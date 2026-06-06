@@ -19,9 +19,6 @@ internal sealed class CreateQueueEndpoint(Pipeline eventPipeline, ITopazLogger l
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/queues/write"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultQueueStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;

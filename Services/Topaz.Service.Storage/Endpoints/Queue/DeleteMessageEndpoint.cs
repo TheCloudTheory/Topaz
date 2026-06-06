@@ -22,9 +22,6 @@ internal sealed class DeleteMessageEndpoint(Pipeline eventPipeline, ITopazLogger
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/queues/messages/delete"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultQueueStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;

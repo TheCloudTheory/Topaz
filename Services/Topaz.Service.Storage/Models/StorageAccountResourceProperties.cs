@@ -16,12 +16,12 @@ internal record StorageAccountPrimaryEndpoints
 
     public static StorageAccountPrimaryEndpoints For(string accountName) => new()
     {
-        Blob = $"https://{accountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
-        Queue = $"https://{accountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/",
-        Table = $"https://{accountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/",
-        File = $"https://{accountName}.file.storage.topaz.local.dev:{GlobalSettings.DefaultFileStoragePort}/",
-        Web = $"https://{accountName}.web.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
-        Dfs = $"https://{accountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
+        Blob = $"https://{accountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/",
+        Queue = $"https://{accountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/",
+        Table = $"https://{accountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/",
+        File = $"https://{accountName}.file.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/",
+        Web = $"https://{accountName}.web.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/",
+        Dfs = $"https://{accountName}.dfs.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/",
     };
 }
 
@@ -35,10 +35,10 @@ internal record StorageAccountSecondaryEndpoints
 
     public static StorageAccountSecondaryEndpoints For(string accountName) => new()
     {
-        Blob = $"https://{accountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/",
-        Queue = $"https://{accountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/",
-        Table = $"https://{accountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/",
-        File = $"https://{accountName}-secondary.file.storage.topaz.local.dev:{GlobalSettings.DefaultFileStoragePort}/",
+        Blob = $"https://{accountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/",
+        Queue = $"https://{accountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/",
+        Table = $"https://{accountName}-secondary.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/",
+        File = $"https://{accountName}-secondary.file.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/",
     };
 }
 

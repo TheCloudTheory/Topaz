@@ -18,9 +18,6 @@ internal sealed class GetQueueServiceStatsEndpoint(Pipeline eventPipeline, ITopa
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/read"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultQueueStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (!TryGetStorageAccountFromSecondaryHost(context.Request.Headers, out var storageAccount))

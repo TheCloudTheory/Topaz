@@ -24,7 +24,7 @@ public static class TopazResourceHelpers
     /// Blob endpoint uses plain HTTP. Queue and Table Storage endpoints use HTTPS (the Topaz certificate covers *.queue.storage.topaz.local.dev and *.table.storage.topaz.local.dev).
     /// </remarks>
     public static string GetAzureStorageConnectionString(string storageAccountName, string accountKey) =>
-        $"DefaultEndpointsProtocol=http;AccountName={storageAccountName};AccountKey={accountKey};BlobEndpoint=https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;TableEndpoint=https://{storageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort};";
+        $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={accountKey};BlobEndpoint=https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;QueueEndpoint=https://{storageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;TableEndpoint=https://{storageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/;";
 
     /// <summary>
     /// Gets the Service Bus connection string for the local development emulator.
@@ -82,19 +82,19 @@ public static class TopazResourceHelpers
     /// </summary>
     /// <param name="storageAccountName">The name of the storage account.</param>
     /// <returns>A URI string for the local Blob service endpoint.</returns>
-    public static string GetBlobServiceUri(string storageAccountName) => $"https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/";
+    public static string GetBlobServiceUri(string storageAccountName) => $"https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
     
     /// <summary>
     /// Gets the Queue service URI for a specified storage account.
     /// </summary>
     /// <param name="storageAccountName">The name of the storage account.</param>
     /// <returns>A URI string for the local Queue service endpoint.</returns>
-    public static string GetQueueServiceUri(string storageAccountName) => $"https://{storageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/";
+    public static string GetQueueServiceUri(string storageAccountName) => $"https://{storageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
     
     /// <summary>
     /// Gets the Table service URI for a specified storage account.
     /// </summary>
     /// <param name="storageAccountName">The name of the storage account.</param>
     /// <returns>A URI string for the local Table service endpoint.</returns>
-    public static string GetTableServiceUri(string storageAccountName) => $"https://{storageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/";
+    public static string GetTableServiceUri(string storageAccountName) => $"https://{storageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
 }

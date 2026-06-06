@@ -18,9 +18,6 @@ internal sealed class SetQueueServicePropertiesEndpoint(Pipeline eventPipeline, 
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/queueServices/write"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultQueueStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (RejectIfSecondaryHostForMutation(context.Request.Headers, response)) return;

@@ -18,9 +18,6 @@ internal sealed class GetTableEndpoint(Pipeline eventPipeline, ITopazLogger logg
 
     public string[] Permissions => ["Microsoft.Storage/storageAccounts/tableServices/tables/read"];
 
-    public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
-        ([GlobalSettings.DefaultTableStoragePort], Protocol.Https);
-
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
         if (!TryGetStorageAccount(context.Request.Headers, out var storageAccount))
