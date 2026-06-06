@@ -171,6 +171,7 @@
 .milestonePurple { background: #7c50d6; }
 .milestoneOrange { background: #d97706; }
 .milestoneGreen  { background: #1a8a5a; }
+.milestoneRed    { background: #c0392b; }
 
 .featureList {
   list-style: none;

@@ -65,6 +65,14 @@ const MILESTONES: Milestone[] = [
       { service: 'Cosmos DB', summary: 'TTL enforcement · container-level RBAC' },
     ],
   },
+  {
+    version: 'v1.10-preview',
+    label: 'v1.10 preview',
+    colorClass: styles.milestoneRed,
+    features: [
+      { service: 'API Management', summary: 'Initial control plane · APIs · Products · Backends · Policies' },
+    ],
+  },
 ];
 
 export default function RoadmapFeatureMap(): JSX.Element {

@@ -1061,6 +1061,102 @@ TODO: Storage Account — geo-replication sync simulation
 
 ---
 
+## v1.10-preview
+
+<!--
+TODO: Azure API Management: New service project scaffold
+  Create Topaz.Service.ApiManagement following existing service conventions:
+  - ApiManagementServiceResourceProperties + ApiManagementServiceResource (ArmResource<T>)
+    capturing: sku (Developer/Basic/Standard/Premium/Consumption), publisherEmail,
+    publisherName, gatewayUrl (https://{name}.azure-api.topaz.local.dev:<ApiManagementPort>/),
+    portalUrl, managementApiUrl, provisioningState (always Succeeded).
+  - ApiManagementResourceProvider (ResourceProviderBase<T>) for filesystem persistence.
+  - ApiManagementServiceControlPlane implementing IControlPlane with a working Deploy().
+  - IServiceDefinition registration and wiring in Topaz.Host.
+  - ProjectReference in Topaz.Service.ResourceManager.csproj and a
+    case "Microsoft.ApiManagement/service": entry in TemplateDeploymentOrchestrator.RouteDeployment().
+  - Add GlobalSettings.DefaultApiManagementPort constant (8900).
+  See: https://learn.microsoft.com/en-us/rest/api/apimanagement/
+  milestone: v1.10-preview
+  labels: enhancement, api-management, good first issue
+-->
+
+<!--
+TODO: Azure API Management: Service control plane endpoints
+  Implement the ARM-level ApiManagementService resource surface
+  (Microsoft.ApiManagement/service):
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{name}  – create or update
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{name}  – get
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{name}  – delete
+  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service/{name}  – update (tags, sku, publisherEmail)
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ApiManagement/service          – list by resource group
+  - GET    /subscriptions/{sub}/providers/Microsoft.ApiManagement/service                              – list all
+  provisioningState is always Succeeded. gatewayUrl, portalUrl, and managementApiUrl
+  are derived from the service name and persisted on creation.
+  milestone: v1.10-preview
+  labels: enhancement, api-management
+-->
+
+<!--
+TODO: Azure API Management: Data plane — APIs CRUD
+  Implement ARM-level API resource endpoints under the service instance:
+  - PUT    .../service/{name}/apis/{apiId}  – create or update an API definition
+  - GET    .../service/{name}/apis/{apiId}  – get
+  - DELETE .../service/{name}/apis/{apiId}  – delete
+  - GET    .../service/{name}/apis          – list APIs
+  An API definition includes: displayName, description, serviceUrl (backend target),
+  path, protocols (http/https), apiType (http/soap/websocket/graphql).
+  Persist API definitions as subresources. Includes E2E SDK tests and Azure CLI tests.
+  milestone: v1.10-preview
+  labels: enhancement, api-management
+-->
+
+<!--
+TODO: Azure API Management: Data plane — Products CRUD
+  Implement ARM-level Product resource endpoints:
+  - PUT    .../service/{name}/products/{productId}  – create or update
+  - GET    .../service/{name}/products/{productId}  – get
+  - DELETE .../service/{name}/products/{productId}  – delete
+  - GET    .../service/{name}/products              – list
+  Products group APIs and are the unit of subscription. Fields: displayName, description,
+  state (published/notPublished), subscriptionRequired, approvalRequired.
+  Also implement product-API association: PUT/DELETE/GET .../products/{productId}/apis/{apiId}.
+  milestone: v1.10-preview
+  labels: enhancement, api-management
+-->
+
+<!--
+TODO: Azure API Management: Data plane — Backends CRUD
+  Implement ARM-level Backend resource endpoints:
+  - PUT    .../service/{name}/backends/{backendId}  – create or update
+  - GET    .../service/{name}/backends/{backendId}  – get
+  - DELETE .../service/{name}/backends/{backendId}  – delete
+  - GET    .../service/{name}/backends              – list
+  A backend defines a target service URL and optional credentials/TLS settings.
+  Fields: url, protocol (http/soap), description, title, resourceId.
+  Backends are referenced by policy expressions and persisted as subresources.
+  milestone: v1.10-preview
+  labels: enhancement, api-management
+-->
+
+<!--
+TODO: Azure API Management: Data plane — Policies CRUD
+  Implement ARM-level Policy resource endpoints at service, API, and operation scope:
+  - PUT    .../service/{name}/policies/policy         – service-level policy
+  - GET    .../service/{name}/policies/policy
+  - DELETE .../service/{name}/policies/policy
+  - PUT    .../service/{name}/apis/{apiId}/policies/policy     – API-level policy
+  - GET    .../service/{name}/apis/{apiId}/policies/policy
+  - DELETE .../service/{name}/apis/{apiId}/policies/policy
+  Policies are stored as raw XML strings (APIM policy document format). No policy
+  execution is performed in v1.10; the emulator stores and returns the XML verbatim.
+  Policy execution (inbound/outbound/backend/on-error) is planned for a future version.
+  milestone: v1.10-preview
+  labels: enhancement, api-management
+-->
+
+---
+
 ## Unplanned / Ideas
 
 _Rough ideas not yet tied to a specific version._

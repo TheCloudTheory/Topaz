@@ -202,6 +202,21 @@
 | <span class="badge--preview">Preview</span> | TTL enforcement | Background scheduler that purges expired documents from SQL containers where `defaultTtl` is set; prerequisite: data-plane document store (v1.7-beta) |
 | <span class="badge--preview">Preview</span> | Container-level RBAC | Per-container access policy enforcement integrated with the data-plane auth layer; prerequisite: data-plane authentication surface (v1.7-beta) |
 
+## v1.10-preview
+
+### Azure API Management — initial control plane and data plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.ApiManagement` project with `ApiManagementServiceResource`, `ApiManagementServiceResourceProperties`, resource provider, control plane (including `Deploy()`), host registration, and `RouteDeployment()` case for `Microsoft.ApiManagement/service` |
+| <span class="badge--preview">Preview</span> | Service CRUD | Create, get, update (tags, SKU, publisherEmail), delete, list by resource group, and list by subscription for `Microsoft.ApiManagement/service`; `gatewayUrl`, `portalUrl`, and `managementApiUrl` derived from service name and persisted on creation |
+| <span class="badge--preview">Preview</span> | APIs CRUD | Create, get, update, delete, and list API definitions under a service instance; fields: `displayName`, `description`, `serviceUrl`, `path`, `protocols`, `apiType` (http/soap/websocket/graphql); persisted as subresources |
+| <span class="badge--preview">Preview</span> | Products CRUD | Create, get, update, delete, and list Products; product-to-API association via `PUT/DELETE/GET .../products/{id}/apis/{apiId}`; fields: `displayName`, `description`, `state`, `subscriptionRequired`, `approvalRequired` |
+| <span class="badge--preview">Preview</span> | Backends CRUD | Create, get, update, delete, and list Backends; fields: `url`, `protocol`, `description`, `title`, `resourceId`; backends are referenced by policy expressions and persisted as subresources |
+| <span class="badge--preview">Preview</span> | Policies CRUD | Service-level and API-level policy documents stored and returned as raw APIM XML; no policy execution in v1.10 — storage and round-trip only |
+
+---
+
 ## Future / Unplanned
 
 _Ideas not yet tied to a specific milestone._
