@@ -713,6 +713,42 @@ TODO: Service Bus: Authorization rules and SAS key management
 
 ## v1.8-preview
 
+### ARM Deployments — deployment operations tracking
+
+<!--
+TODO: ARM Deployments: Deployment Operations — Get at resource group and subscription scope
+  Implement the individual-operation GET endpoints for resource-group and subscription scopes:
+  - GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Resources/deployments/{name}/operations/{operationId}
+  - GET /subscriptions/{sub}/providers/Microsoft.Resources/deployments/{name}/operations/{operationId}
+  Requires per-resource operation tracking in TemplateDeploymentOrchestrator: generate a GUID
+  operationId per resource provision step and persist OperationRecord objects alongside the
+  deployment resource file. The existing list endpoints can then read from the same store.
+  milestone: v1.8-preview
+  labels: enhancement
+-->
+
+<!--
+TODO: ARM Deployments: Deployment Operations — List and Get at management group scope
+  Implement deployment operations endpoints for management-group-scope deployments:
+  - GET /providers/Microsoft.Management/managementGroups/{groupId}/providers/Microsoft.Resources/deployments/{name}/operations
+  - GET /providers/Microsoft.Management/managementGroups/{groupId}/providers/Microsoft.Resources/deployments/{name}/operations/{operationId}
+  Follows the same pattern as the existing resource-group and subscription scope list endpoints.
+  Prerequisite: operation tracking work from the resource-group/subscription scope item above.
+  milestone: v1.8-preview
+  labels: enhancement
+-->
+
+<!--
+TODO: ARM Deployments: Deployment Operations — List and Get at tenant scope
+  Implement deployment operations endpoints for tenant-scope deployments:
+  - GET /providers/Microsoft.Resources/deployments/{name}/operations
+  - GET /providers/Microsoft.Resources/deployments/{name}/operations/{operationId}
+  Follows the same pattern as the existing resource-group and subscription scope list endpoints.
+  Prerequisite: operation tracking work from the resource-group/subscription scope item above.
+  milestone: v1.8-preview
+  labels: enhancement
+-->
+
 ### Azure Storage — Blob authentication enforcement
 
 <!--
