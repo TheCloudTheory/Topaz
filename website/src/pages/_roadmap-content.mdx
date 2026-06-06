@@ -127,6 +127,14 @@
 
 ## v1.8-preview
 
+### ARM Deployments — deployment operations tracking
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Get deployment operation (resource group / subscription scope) | `GET .../deployments/{name}/operations/{operationId}` — requires per-resource operation tracking in the orchestrator |
+| <span class="badge--preview">Preview</span> | List / Get deployment operations at management group scope | `GET .../managementGroups/{id}/providers/Microsoft.Resources/deployments/{name}/operations[/{operationId}]` |
+| <span class="badge--preview">Preview</span> | List / Get deployment operations at tenant scope | `GET /providers/Microsoft.Resources/deployments/{name}/operations[/{operationId}]` |
+
 ### Azure Storage — Blob authentication enforcement
 
 | | Feature | Description |
