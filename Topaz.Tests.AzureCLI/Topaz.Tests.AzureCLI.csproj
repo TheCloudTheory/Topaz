@@ -45,6 +45,9 @@
       <None Update="templates\sql-server-deployment.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+      <None Update="templates\deployment-cancel.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
       <None Update="docker\Dockerfile">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
