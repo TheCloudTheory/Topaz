@@ -1,0 +1,338 @@
+.demoPage {
+  --demo-ink: #0d1b3e;
+  --demo-accent: #1b63eb;
+  --demo-accent-soft: rgba(27, 99, 235, 0.12);
+  --demo-surface: #f7faff;
+  --demo-surface-strong: #edf3ff;
+  --demo-border: #d5e2ff;
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 5.5rem 0 4.25rem;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(77, 133, 240, 0.18) 0%, transparent 34%),
+    radial-gradient(circle at 88% 2%, rgba(27, 99, 235, 0.2) 0%, transparent 40%),
+    linear-gradient(140deg, #f7faff 0%, #eef4ff 52%, #eaf1ff 100%);
+  border-bottom: 1px solid var(--demo-border);
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 0%, rgba(27, 99, 235, 0.08) 100%);
+  pointer-events: none;
+}
+
+.heroGrid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #b8cdfd;
+  background: rgba(255, 255, 255, 0.8);
+  color: #1e40af;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.42rem 0.85rem;
+}
+
+.heroTitle {
+  font-size: 3rem;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  margin: 1rem 0 0.9rem;
+  color: var(--demo-ink);
+}
+
+.heroTitle strong {
+  color: #1b63eb;
+}
+
+.heroLead {
+  font-size: 1.08rem;
+  line-height: 1.7;
+  max-width: 620px;
+  color: #2f4f8d;
+  margin: 0;
+}
+
+.heroHighlights {
+  margin-top: 1.5rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.heroHighlight {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #24457a;
+  font-size: 0.94rem;
+}
+
+.heroDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1b63eb 0%, #4d85f0 100%);
+  box-shadow: 0 0 0 3px rgba(27, 99, 235, 0.16);
+}
+
+.heroVisualWrap {
+  display: flex;
+  justify-content: center;
+}
+
+.heroVisual {
+  width: min(430px, 100%);
+  height: auto;
+  filter: drop-shadow(0 18px 38px rgba(2, 44, 34, 0.17));
+}
+
+.section {
+  padding: 4.4rem 0;
+}
+
+.sectionAlt {
+  background: var(--demo-surface);
+  border-top: 1px solid var(--demo-border);
+  border-bottom: 1px solid var(--demo-border);
+}
+
+.sectionTitle {
+  text-align: center;
+  color: var(--demo-ink);
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.55rem;
+}
+
+.sectionSubtitle {
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto 2.2rem;
+  color: #4b5f87;
+  line-height: 1.65;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid var(--demo-border);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(10, 50, 60, 0.06);
+}
+
+.cardIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  background: var(--demo-accent-soft);
+  color: var(--demo-accent);
+  margin-bottom: 0.75rem;
+}
+
+.cardTitle {
+  margin: 0 0 0.45rem;
+  color: #1b2f58;
+  font-size: 1.05rem;
+}
+
+.cardBody {
+  margin: 0;
+  color: #4f6288;
+  line-height: 1.65;
+  font-size: 0.94rem;
+}
+
+.timeline {
+  max-width: 850px;
+  margin: 0 auto;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.timelineItem {
+  background: #ffffff;
+  border: 1px solid var(--demo-border);
+  border-radius: 12px;
+  padding: 0.95rem 1rem;
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.timelineStep {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #1b63eb 0%, #2f5dcf 100%);
+  color: #ffffff;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timelineTitle {
+  margin: 0;
+  color: #1b2f58;
+  font-size: 0.98rem;
+}
+
+.timelineBody {
+  margin: 0.25rem 0 0;
+  color: #4f6288;
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.comingSoonBox {
+  max-width: 840px;
+  margin: 0 auto;
+  border: 1px solid #b8cdfd;
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5ff 100%);
+  border-radius: 16px;
+  padding: 1.4rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+}
+
+.comingSoonIcon {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: rgba(27, 99, 235, 0.15);
+  color: #1b63eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+}
+
+.comingSoonTitle {
+  margin: 0;
+  color: #1b2f58;
+}
+
+.comingSoonText {
+  margin: 0.4rem 0 0;
+  color: #4f6288;
+  line-height: 1.65;
+}
+
+.note {
+  margin-top: 0.6rem;
+  color: #3e5f96;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 996px) {
+  .hero {
+    padding: 4.2rem 0 3.2rem;
+  }
+
+  .heroGrid {
+    grid-template-columns: 1fr;
+    gap: 1.6rem;
+  }
+
+  .heroTitle {
+    font-size: 2.35rem;
+  }
+
+  .cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .section {
+    padding: 3.35rem 0;
+  }
+
+  .heroTitle {
+    font-size: 2rem;
+  }
+
+  .heroLead {
+    font-size: 1rem;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .comingSoonBox {
+    grid-template-columns: 1fr;
+  }
+}
+
+[data-theme='dark'] .demoPage {
+  --demo-ink: #dce9ff;
+  --demo-surface: #101a31;
+  --demo-surface-strong: #142243;
+  --demo-border: #273d6f;
+}
+
+[data-theme='dark'] .hero {
+  background:
+    radial-gradient(circle at 10% 16%, rgba(77, 133, 240, 0.2) 0%, transparent 35%),
+    radial-gradient(circle at 86% 0%, rgba(27, 99, 235, 0.22) 0%, transparent 42%),
+    linear-gradient(140deg, #0a1228 0%, #0f1d3d 55%, #0e1a35 100%);
+}
+
+[data-theme='dark'] .heroLead,
+[data-theme='dark'] .sectionSubtitle,
+[data-theme='dark'] .cardBody,
+[data-theme='dark'] .timelineBody,
+[data-theme='dark'] .comingSoonText,
+[data-theme='dark'] .note,
+[data-theme='dark'] .heroHighlight {
+  color: #a8bce0;
+}
+
+[data-theme='dark'] .card,
+[data-theme='dark'] .timelineItem,
+[data-theme='dark'] .comingSoonBox {
+  background: #142243;
+  border-color: #2e4c86;
+}
+
+[data-theme='dark'] .heroBadge {
+  background: rgba(20, 34, 67, 0.9);
+  border-color: #375b9f;
+  color: #9dc0ff;
+}
+
+[data-theme='dark'] .timelineTitle,
+[data-theme='dark'] .cardTitle,
+[data-theme='dark'] .comingSoonTitle {
+  color: #dce9ff;
+}
