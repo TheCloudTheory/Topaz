@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Azure;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
@@ -20,7 +21,7 @@ public sealed class DeploymentResourceProperties
     public IReadOnlyList<ResourceProviderData>? Providers { get; set;}
     public IReadOnlyList<ArmDependency>? Dependencies { get; set; }
     public ArmDeploymentTemplateLink? TemplateLink { get; set; }
-    public BinaryData? Parameters { get; set; }
+    public JsonElement? Parameters { get; set; }
     public ArmDeploymentParametersLink? ParametersLink { get; set; }
     public IReadOnlyList<ArmDeploymentExtensionDefinition>? Extensions { get; set; }
     public string? Mode { get; set; }
@@ -40,8 +41,8 @@ public sealed class DeploymentResourceProperties
             CorrelationId = Guid.NewGuid().ToString(),
             Mode = deploymentMode,
             TemplateHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(template)),
-            ProvisioningState = ResourcesProvisioningState.Created.ToString(),
-            Parameters = parameters == null ? BinaryData.Empty : BinaryData.FromObjectAsJson(parameters, GlobalSettings.JsonOptions),
+            ProvisioningState = ResourcesProvisioningState.Running.ToString(),
+            Parameters = parameters == null ? null : JsonSerializer.SerializeToElement(parameters, GlobalSettings.JsonOptions),
             Timestamp = DateTimeOffset.UtcNow,
         };
     }
@@ -55,8 +56,8 @@ public sealed class DeploymentResourceProperties
             ProvisioningState = ResourcesProvisioningState.Succeeded.ToString(),
             Timestamp = DateTimeOffset.UtcNow,
             Parameters = request.Properties?.GetParameterValues() is { } parameters
-                ? BinaryData.FromObjectAsJson(parameters, GlobalSettings.JsonOptions)
-                : BinaryData.Empty
+                ? JsonSerializer.SerializeToElement(parameters, GlobalSettings.JsonOptions)
+                : null
         };
     }
 }

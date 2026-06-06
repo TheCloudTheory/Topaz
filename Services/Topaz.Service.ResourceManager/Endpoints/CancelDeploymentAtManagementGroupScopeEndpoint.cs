@@ -49,7 +49,6 @@ public sealed class CancelDeploymentAtManagementGroupScopeEndpoint(
         response.StatusCode = result switch
         {
             OperationResult.NotFound => HttpStatusCode.NotFound,
-            OperationResult.Conflict => HttpStatusCode.Conflict,
             _ => HttpStatusCode.NoContent
         };
         response.Content = new ByteArrayContent([]);

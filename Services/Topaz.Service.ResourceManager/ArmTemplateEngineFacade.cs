@@ -6,6 +6,7 @@ using Azure.Deployments.Templates.Engines;
 using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
 using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using Newtonsoft.Json.Linq;
+using System.Text.Json;
 using Topaz.Service.ResourceManager.Models.Requests;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -22,7 +23,7 @@ internal sealed class ArmTemplateEngineFacade
 
     public void ProcessTemplate(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, Template template,
-        InsensitiveDictionary<JToken> metadataInsensitive, BinaryData? propertiesParameters)
+        InsensitiveDictionary<JToken> metadataInsensitive, JsonElement? propertiesParameters)
     {
         var inputParameters = BuildInputParameters(propertiesParameters);
 
@@ -40,7 +41,7 @@ internal sealed class ArmTemplateEngineFacade
     /// <c>resourceGroup()</c> is not available at this scope and will not be resolved.
     /// </summary>
     public void ProcessTemplateAtSubscriptionScope(SubscriptionIdentifier subscriptionIdentifier,
-        Template template, InsensitiveDictionary<JToken> metadataInsensitive, BinaryData? propertiesParameters)
+        Template template, InsensitiveDictionary<JToken> metadataInsensitive, JsonElement? propertiesParameters)
     {
         var inputParameters = BuildInputParameters(propertiesParameters);
 
@@ -52,13 +53,17 @@ internal sealed class ArmTemplateEngineFacade
             new TemplateMetricsRecorder(), InsensitiveDictionary<JToken>.Empty);
     }
 
-    private static InsensitiveDictionary<JToken> BuildInputParameters(BinaryData? propertiesParameters)
+    private static InsensitiveDictionary<JToken> BuildInputParameters(JsonElement? propertiesParameters)
     {
-        return propertiesParameters == null || propertiesParameters.IsEmpty
-            ? InsensitiveDictionary<JToken>.Empty
-            : propertiesParameters.ToObjectFromJson<Dictionary<string, CreateDeploymentRequest.ParameterValue>>(
-                    GlobalSettings.JsonOptions)
-                .ToInsensitiveDictionary(meta => meta.Key, meta => JToken.Parse(meta.Value.ToString()));
+        if (propertiesParameters == null ||
+            propertiesParameters.Value.ValueKind != JsonValueKind.Object)
+            return InsensitiveDictionary<JToken>.Empty;
+
+        var dict = propertiesParameters.Value.Deserialize<Dictionary<string, CreateDeploymentRequest.ParameterValue>>(GlobalSettings.JsonOptions);
+        if (dict == null || dict.Count == 0)
+            return InsensitiveDictionary<JToken>.Empty;
+
+        return dict.ToInsensitiveDictionary(meta => meta.Key, meta => JToken.Parse(meta.Value.ToString()));
     }
 
     /// <summary>
@@ -67,7 +72,7 @@ internal sealed class ArmTemplateEngineFacade
     /// <c>subscription()</c> and <c>resourceGroup()</c> are not available at this scope.
     /// </summary>
     public void ProcessTemplateAtTenantScope(
-        Template template, InsensitiveDictionary<JToken> metadataInsensitive, BinaryData? propertiesParameters)
+        Template template, InsensitiveDictionary<JToken> metadataInsensitive, JsonElement? propertiesParameters)
     {
         var inputParameters = BuildInputParameters(propertiesParameters);
 

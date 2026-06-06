@@ -39,10 +39,8 @@ public sealed class CancelDeploymentAtSubscriptionScopeEndpoint(
 
         response.StatusCode = result switch
         {
-            OperationResult.Success => HttpStatusCode.NoContent,
             OperationResult.NotFound => HttpStatusCode.NotFound,
-            OperationResult.Conflict => HttpStatusCode.Conflict,
-            _ => HttpStatusCode.InternalServerError
+            _ => HttpStatusCode.NoContent
         };
 
         response.Content = new ByteArrayContent([]);

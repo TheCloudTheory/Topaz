@@ -211,7 +211,7 @@ internal sealed class ResourceManagerControlPlane(
             var wifParams = request.Properties?.GetParameterValues();
             _templateEngineFacade.ProcessTemplate(subscriptionIdentifier, resourceGroupIdentifier, template,
                 metadataInsensitive,
-                wifParams == null ? null : BinaryData.FromObjectAsJson(wifParams, GlobalSettings.JsonOptions));
+                wifParams == null ? null : JsonSerializer.SerializeToElement(wifParams, GlobalSettings.JsonOptions));
 
             foreach (var resource in template.Resources)
             {
@@ -259,7 +259,7 @@ internal sealed class ResourceManagerControlPlane(
             var wifSubParams = request.Properties?.GetParameterValues();
             _templateEngineFacade.ProcessTemplateAtSubscriptionScope(subscriptionIdentifier, template,
                 metadataInsensitive,
-                wifSubParams == null ? null : BinaryData.FromObjectAsJson(wifSubParams, GlobalSettings.JsonOptions));
+                wifSubParams == null ? null : JsonSerializer.SerializeToElement(wifSubParams, GlobalSettings.JsonOptions));
 
             foreach (var resource in template.Resources)
             {
@@ -298,7 +298,7 @@ internal sealed class ResourceManagerControlPlane(
             var tenantParams = request.Properties?.GetParameterValues();
             _templateEngineFacade.ProcessTemplateAtTenantScope(template,
                 InsensitiveDictionary<JToken>.Empty,
-                tenantParams == null ? null : BinaryData.FromObjectAsJson(tenantParams, GlobalSettings.JsonOptions));
+                tenantParams == null ? null : JsonSerializer.SerializeToElement(tenantParams, GlobalSettings.JsonOptions));
 
             var afterNodes = new Dictionary<string, JsonNode>(StringComparer.OrdinalIgnoreCase);
             foreach (var r in template.Resources)

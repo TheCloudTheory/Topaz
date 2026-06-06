@@ -40,10 +40,8 @@ public sealed class CancelDeploymentEndpoint(
 
         response.StatusCode = result switch
         {
-            OperationResult.Success => HttpStatusCode.NoContent,
             OperationResult.NotFound => HttpStatusCode.NotFound,
-            OperationResult.Conflict => HttpStatusCode.Conflict,
-            _ => HttpStatusCode.InternalServerError
+            _ => HttpStatusCode.NoContent
         };
 
         response.Content = new ByteArrayContent([]);
