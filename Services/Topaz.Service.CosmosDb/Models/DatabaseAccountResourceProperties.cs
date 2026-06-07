@@ -111,13 +111,27 @@ public sealed class DatabaseAccountResourceProperties
     public string? PrimaryReadonlyMasterKey { get; set; }
     public string? SecondaryReadonlyMasterKey { get; set; }
 
+    private static DatabaseAccountLocation[] BuildLocations(string accountName, string documentEndpoint, DatabaseAccountLocation[]? locations)
+    {
+        return (locations ?? []).Select(l => new DatabaseAccountLocation
+        {
+            Id = $"{accountName}-{l.LocationName?.ToLowerInvariant().Replace(" ", "")}",
+            LocationName = l.LocationName,
+            FailoverPriority = l.FailoverPriority,
+            IsZoneRedundant = l.IsZoneRedundant ?? false,
+            ProvisioningState = "Succeeded",
+            DocumentEndpoint = documentEndpoint
+        }).ToArray();
+    }
+
     public static DatabaseAccountResourceProperties FromRequest(string accountName, CreateOrUpdateDatabaseAccountRequest request)
     {
+        var documentEndpoint = $"https://{accountName}.{GlobalSettings.DocumentsDnsSuffix}:{GlobalSettings.DefaultCosmosDbPort}/";
         return new DatabaseAccountResourceProperties
         {
             Kind = request.Kind ?? "GlobalDocumentDB",
             ConsistencyPolicy = request.Properties?.ConsistencyPolicy,
-            Locations = request.Properties?.Locations ?? [],
+            Locations = BuildLocations(accountName, documentEndpoint, request.Properties?.Locations),
             DatabaseAccountOfferType = request.Properties?.DatabaseAccountOfferType ?? "Standard",
             IpRules = request.Properties?.IpRules ?? [],
             IsVirtualNetworkFilterEnabled = request.Properties?.IsVirtualNetworkFilterEnabled.GetValueOrDefault(false) ?? false,
@@ -129,7 +143,7 @@ public sealed class DatabaseAccountResourceProperties
             ApiProperties = request.Properties?.ApiProperties,
             BackupPolicy = new BackupPolicyModel { PeriodicModeProperties = new PeriodicModeProperties() },
             AccountName = accountName,
-            DocumentEndpoint = $"https://{accountName}.{GlobalSettings.DocumentsDnsSuffix}:{GlobalSettings.DefaultCosmosDbPort}/",
+            DocumentEndpoint = documentEndpoint,
             PrimaryMasterKey = GenerateMasterKey(),
             SecondaryMasterKey = GenerateMasterKey(),
             PrimaryReadonlyMasterKey = GenerateMasterKey(),
@@ -144,7 +158,7 @@ public sealed class DatabaseAccountResourceProperties
         if (request.Properties?.ConsistencyPolicy != null)
             properties.ConsistencyPolicy = request.Properties.ConsistencyPolicy;
         if (request.Properties?.Locations != null)
-            properties.Locations = request.Properties.Locations;
+            properties.Locations = BuildLocations(properties.AccountName ?? string.Empty, properties.DocumentEndpoint ?? string.Empty, request.Properties.Locations);
         if (request.Properties?.DatabaseAccountOfferType != null)
             properties.DatabaseAccountOfferType = request.Properties.DatabaseAccountOfferType;
         if (request.Properties?.IpRules != null)
