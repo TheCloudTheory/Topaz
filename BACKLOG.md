@@ -683,6 +683,68 @@ TODO: Service Bus: Authorization rules and SAS key management
   labels: enhancement, service-bus
 -->
 
+### ARM Deployments — resource group creation via deployment template
+
+<!--
+TODO: ARM Deployments: Support Microsoft.Resources/resourceGroups as a template resource type
+  Subscription-scoped Bicep/ARM templates regularly declare resourceGroups inline (e.g. the
+  output of `az bicep build` for a subscription-scoped template).  Topaz's
+  TemplateDeploymentOrchestrator.RouteDeployment currently has no case for
+  "Microsoft.Resources/resourceGroups", so the resource group is silently skipped and the
+  deployment never creates the resource group before routing nested deployments into it.
+  Required changes:
+  - Add a `case "Microsoft.Resources/resourceGroups":` branch in RouteDeployment that calls
+    the existing resource-group control plane (CreateOrUpdate) using the template resource's
+    name and location.
+  - Ensure the resource group is created before any dependent resources (e.g. nested deployments)
+    are processed — respect the dependsOn graph or at minimum process resourceGroups first.
+  milestone: v1.7-beta
+  labels: bug, arm-deployments
+-->
+
+### ARM Deployments — nested deployment (Microsoft.Resources/deployments) support
+
+<!--
+TODO: ARM Deployments: Support Microsoft.Resources/deployments as a nested resource type
+  Subscription-scoped Bicep templates compiled by `az bicep build` always emit at least one
+  nested deployment resource of type "Microsoft.Resources/deployments" that carries the actual
+  resource-group-scoped template (Key Vault, Managed Identity, App Service, etc.) as an inline
+  `template` property.  Topaz's TemplateDeploymentOrchestrator.RouteDeployment has no case for
+  this type, so the entire nested payload is silently skipped and none of the inner resources
+  are provisioned.
+  Required changes:
+  - Add a `case "Microsoft.Resources/deployments":` branch in RouteDeployment.
+  - Extract the inline `template` from the resource's `properties.template` field.
+  - Recursively call the orchestrator (or a dedicated handler) with the inner template,
+    resolved against the nested deployment's `resourceGroup` scope.
+  - Persist the nested deployment as a child deployment resource so it is retrievable via
+    GET .../resourceGroups/{rg}/providers/Microsoft.Resources/deployments/{name}.
+  - Propagate the nested deployment's `outputs` back up to the parent deployment's `outputs`
+    when the parent template references them via `reference(...)`.
+  milestone: v1.7-beta
+  labels: bug, arm-deployments
+-->
+
+### ARM Deployments — outputs populated on completion
+
+<!--
+TODO: ARM Deployments: Populate deployment outputs field on successful completion
+  After TemplateDeploymentOrchestrator finishes provisioning all resources in a template,
+  the deployment's `properties.outputs` field is left as null.  Callers (az deployment sub create,
+  azure/arm-deploy GitHub Action, Terraform azurerm provider) all read outputs from the completed
+  deployment object to pass values between pipeline stages.
+  Required changes:
+  - Evaluate each output expression declared in the template's `outputs` block after all resources
+    have been provisioned.  At minimum, support literal string/object outputs and
+    `reference(resourceId(...)).property` patterns (read back the resource that was just created).
+  - For nested deployments, resolve cross-deployment `reference(extensionResourceId(...)).outputs.x.value`
+    expressions by reading the child deployment's own outputs once it has completed.
+  - Serialize the evaluated outputs map into DeploymentResourceProperties.Outputs and persist it.
+  - Return the populated outputs in every subsequent GET on the deployment resource.
+  milestone: v1.7-beta
+  labels: bug, arm-deployments
+-->
+
 ---
 
 ## v1.8-preview

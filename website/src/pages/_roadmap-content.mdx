@@ -117,6 +117,14 @@
 | <span class="badge--preview">Preview</span> | Topic filters and rules | Full ARM CRUD for subscription rules (`CorrelationRuleFilter`, `SqlRuleFilter`, `SqlRuleAction`); message routing at publish time evaluates active rules and only forwards matching messages to each subscription |
 | <span class="badge--preview">Preview</span> | Authorization rules and SAS keys | Per-namespace, per-queue, and per-topic authorization rule CRUD; `listKeys` and `regenerateKeys` actions; 256-bit SAS key pairs persisted and rotatable |
 
+### ARM Deployments — subscription-scoped Bicep support
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | `Microsoft.Resources/resourceGroups` template resource | Handle `resourceGroups` entries in subscription-scoped templates: create or update the resource group before processing dependent resources; required for any Bicep file compiled with `targetScope = 'subscription'` |
+| <span class="badge--preview">Preview</span> | `Microsoft.Resources/deployments` nested deployment | Execute inline nested deployment resources: extract the `properties.template` payload, resolve scope to the target resource group, and recursively provision all inner resources; persist the nested deployment as a child object retrievable via ARM GET |
+| <span class="badge--preview">Preview</span> | Deployment `outputs` populated on completion | After all template resources are provisioned, evaluate the `outputs` block and persist the result; return populated outputs on every subsequent GET so that `az deployment sub create`, `azure/arm-deploy`, and the Terraform `azurerm` provider can read cross-stage values |
+
 ### Container Registry — Real Docker build-and-push execution
 
 | | Feature | Description |
