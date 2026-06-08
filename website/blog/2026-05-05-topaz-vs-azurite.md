@@ -1,7 +1,7 @@
 ---
 slug: topaz-vs-azurite
 title: "Topaz vs Azurite: what actually works locally and what doesn't"
-description: An honest comparison of Topaz and Azurite for local Azure development. Storage parity, Key Vault soft-delete, Service Bus AMQP, Container Registry, Entra ID, RBAC, ARM templates, Terraform, MCP: what each tool emulates, what neither does yet, and when to pick which.
+description: "An honest comparison of Topaz and Azurite for local Azure development. Storage parity, Key Vault soft-delete, Service Bus AMQP, Container Registry, Entra ID, RBAC, ARM templates, Terraform, MCP: what each tool emulates, what neither does yet, and when to pick which."
 keywords: [topaz vs azurite, azurite alternative, local azure emulator, azure key vault local, service bus emulator, azure container registry local, azure entra id emulator, terraform azurerm local, azurite limitations]
 authors: kamilmrzyglod
 tags: [general, storage, entra, terraform]
