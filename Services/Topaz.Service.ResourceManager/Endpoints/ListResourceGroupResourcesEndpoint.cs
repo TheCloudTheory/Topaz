@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.ContainerRegistry;
+using Topaz.Service.Disk;
 using Topaz.Service.KeyVault;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -23,6 +24,7 @@ internal sealed class ListResourceGroupResourcesEndpoint(Pipeline eventPipeline,
     private readonly KeyVaultControlPlane _kvControlPlane = KeyVaultControlPlane.New(eventPipeline, logger);
     private readonly ContainerRegistryControlPlane _acrControlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
     private readonly VirtualMachineServiceControlPlane _vmControlPlane = VirtualMachineServiceControlPlane.New(eventPipeline, logger);
+    private readonly DiskServiceControlPlane _diskControlPlane = DiskServiceControlPlane.New(eventPipeline, logger);
 
     public string? ProviderNamespace => null;
 
@@ -56,6 +58,7 @@ internal sealed class ListResourceGroupResourcesEndpoint(Pipeline eventPipeline,
                     .Where(r => r.IsInResourceGroup(resourceGroupIdentifier))),
                 "Microsoft.ContainerRegistry/registries" => Map(_acrControlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier).Resource ?? []),
                 "Microsoft.Compute/virtualMachines" => Map(_vmControlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier).Resource ?? []),
+                "Microsoft.Compute/disks" => Map(_diskControlPlane.ListByResourceGroup(subscriptionIdentifier, resourceGroupIdentifier).Resource ?? []),
                 _ => []
             };
 
