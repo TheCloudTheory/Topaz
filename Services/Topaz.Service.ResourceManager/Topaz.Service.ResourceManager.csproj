@@ -20,8 +20,7 @@
       <ProjectReference Include="..\Topaz.Service.AppService\Topaz.Service.AppService.csproj" />
       <ProjectReference Include="..\Topaz.Service.VirtualNetwork\Topaz.Service.VirtualNetwork.csproj" />
       <ProjectReference Include="..\Topaz.Service.ManagementGroup\Topaz.Service.ManagementGroup.csproj" />
-      <ProjectReference Include="..\Topaz.Service.CosmosDb\Topaz.Service.CosmosDb.csproj" />
-      <ProjectReference Include="..\..\Topaz.CLI.Infrastructure\Topaz.CLI.Infrastructure.csproj" />
+      <ProjectReference Include="..\Topaz.Service.CosmosDb\Topaz.Service.CosmosDb.csproj" />      <ProjectReference Include=".\..\Topaz.Service.Disk\Topaz.Service.Disk.csproj" />      <ProjectReference Include="..\..\Topaz.CLI.Infrastructure\Topaz.CLI.Infrastructure.csproj" />
     </ItemGroup>
 
     <ItemGroup>

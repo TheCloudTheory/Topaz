@@ -11,3 +11,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Topaz.Service.ContainerRegistry")]
 [assembly: InternalsVisibleTo("Topaz.Service.Sql")]
 [assembly: InternalsVisibleTo("Topaz.Service.CosmosDb")]
+[assembly: InternalsVisibleTo("Topaz.Service.Disk")]

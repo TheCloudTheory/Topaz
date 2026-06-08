@@ -290,22 +290,7 @@ TODO: Azure Cosmos DB: SQL Container — container-level RBAC
 
 ### Azure Disks — initial control plane
 
-<!--
-TODO: Azure Disks: New service project scaffold
-  Create Topaz.Service.Disk following the existing service conventions:
-  - DiskResourceProperties + DiskResource (ArmResource<T>) with fields: diskSizeGB,
-    diskSizeBytes, diskIOPSReadWrite, diskMBpsReadWrite, osType, hyperVGeneration,
-    creationData (createOption, sourceResourceId, imageReference), diskState,
-    provisioningState (always Succeeded), timeCreated, uniqueId (GUID).
-  - DiskResourceProvider (ResourceProviderBase<T>) for filesystem persistence.
-  - DiskServiceControlPlane implementing IControlPlane with a working Deploy().
-  - IServiceDefinition registration and wiring in Topaz.Host.
-  - ProjectReference in Topaz.Service.ResourceManager.csproj.
-  - case "Microsoft.Compute/disks" in TemplateDeploymentOrchestrator.RouteDeployment().
-  See: https://learn.microsoft.com/en-us/rest/api/compute/disks?view=rest-compute-2025-11-01
-  milestone: v1.6-beta
-  labels: enhancement, good first issue
--->
+_Implemented in v1.6-beta: service scaffold — `DiskResourceProperties`, `DiskResource`, `DiskResourceProvider`, `DiskServiceControlPlane` (with working `Deploy()`), and `DiskService` registered in `Topaz.Host`. `Microsoft.Compute/disks` is wired into `TemplateDeploymentOrchestrator.RouteDeployment()`. Control-plane endpoints and SAS access endpoints are tracked separately below._
 
 <!--
 TODO: Azure Disks: Managed Disk control plane endpoints

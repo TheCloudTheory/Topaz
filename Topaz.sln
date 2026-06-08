@@ -106,6 +106,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TopazComposeApp", "Examples
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.CosmosDb", "Services\Topaz.Service.CosmosDb\Topaz.Service.CosmosDb.csproj", "{F9E3ABA5-55F8-4FD1-8A42-5EE77EA951D9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Disk", "Services\Topaz.Service.Disk\Topaz.Service.Disk.csproj", "{FC523BDC-4C36-459F-9902-F314A1CF479C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -626,6 +628,18 @@ Global
 		{F9E3ABA5-55F8-4FD1-8A42-5EE77EA951D9}.Release|x64.Build.0 = Release|Any CPU
 		{F9E3ABA5-55F8-4FD1-8A42-5EE77EA951D9}.Release|x86.ActiveCfg = Release|Any CPU
 		{F9E3ABA5-55F8-4FD1-8A42-5EE77EA951D9}.Release|x86.Build.0 = Release|Any CPU
+		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Debug|x64.Build.0 = Debug|Any CPU
+		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Debug|x86.Build.0 = Debug|Any CPU
+		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Release|x64.ActiveCfg = Release|Any CPU
+		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Release|x64.Build.0 = Release|Any CPU
+		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Release|x86.ActiveCfg = Release|Any CPU
+		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -663,6 +677,7 @@ Global
 		{2BB22730-FB64-460D-B37F-3D706F65DC91} = {5DCFF73A-7D3A-4162-8264-447FA524DBA0}
 		{DF6F5CB6-BCCE-4D66-84DA-2BD7CE5082DE} = {421A7F1B-9656-4A7E-B209-B1E8811D3E28}
 		{F9E3ABA5-55F8-4FD1-8A42-5EE77EA951D9} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
+		{FC523BDC-4C36-459F-9902-F314A1CF479C} = {F978EC06-C8DB-404C-95E2-99588BE42C85}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {76B3D1AF-3328-49A8-BFD0-ED7FA3933EB0}
