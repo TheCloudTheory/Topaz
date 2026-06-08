@@ -348,9 +348,14 @@ public class ResourceManagerTests : TopazFixture
             "az deployment sub create --name sub-cancel-running-cli --location westeurope " +
             "--template-file \"/templates/deployment-cancel.json\" --no-wait");
 
-        // Cancel immediately — succeeds whether running or already completed
+        // Cancel if still running; accept 409 if the deployment already completed before cancel arrived.
+        // This mirrors the lenient assertion used in E2E tests for the same race condition.
         await RunAzureCliCommand(
-            "az deployment sub cancel --name sub-cancel-running-cli");
+            "az deployment sub cancel --name sub-cancel-running-cli 2>/dev/null; " +
+            "code=$?; " +
+            "[ $code -eq 0 ] || " +
+            "az deployment sub show --name sub-cancel-running-cli --query 'properties.provisioningState' -o tsv | " +
+            "grep -qE '^(Succeeded|Failed|Canceled)$'");
 
         await RunAzureCliCommand("az deployment sub delete --name sub-cancel-running-cli");
     }
