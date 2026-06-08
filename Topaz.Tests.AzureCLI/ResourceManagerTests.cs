@@ -330,9 +330,13 @@ public class ResourceManagerTests : TopazFixture
                 "az deployment group create --name cancel-running-cli -g rg-cancel-running-cli " +
                 "--template-file \"/templates/deployment-cancel.json\" --no-wait");
 
-            // Cancel the deployment — succeeds (204) whether running or already completed
+            // Cancel if still running; accept 409 if the deployment already completed before cancel arrived.
             await RunAzureCliCommand(
-                "az deployment group cancel --name cancel-running-cli -g rg-cancel-running-cli");
+                "az deployment group cancel --name cancel-running-cli -g rg-cancel-running-cli 2>/dev/null; " +
+                "code=$?; " +
+                "[ $code -eq 0 ] || " +
+                "az deployment group show --name cancel-running-cli -g rg-cancel-running-cli --query 'properties.provisioningState' -o tsv | " +
+                "grep -qE '^(Succeeded|Failed|Canceled)$'");
         }
         finally
         {
@@ -369,8 +373,13 @@ public class ResourceManagerTests : TopazFixture
             $"az deployment tenant create --name {deploymentName} --location westeurope " +
             "--template-file \"/templates/deployment-cancel.json\" --no-wait");
 
+        // Cancel if still running; accept 409 if the deployment already completed before cancel arrived.
         await RunAzureCliCommand(
-            $"az deployment tenant cancel --name {deploymentName}");
+            $"az deployment tenant cancel --name {deploymentName} 2>/dev/null; " +
+            "code=$?; " +
+            "[ $code -eq 0 ] || " +
+            $"az deployment tenant show --name {deploymentName} --query 'properties.provisioningState' -o tsv | " +
+            "grep -qE '^(Succeeded|Failed|Canceled)$'");
 
         await RunAzureCliCommand($"az deployment tenant delete --name {deploymentName}");
     }
