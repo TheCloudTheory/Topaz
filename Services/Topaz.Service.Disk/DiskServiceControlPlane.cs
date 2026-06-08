@@ -8,6 +8,7 @@ using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription;
 using Topaz.Shared;
+using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.Disk;
 
@@ -204,5 +205,59 @@ internal sealed class DiskServiceControlPlane(
             .ToArray();
 
         return new ControlPlaneOperationResult<DiskResource[]>(OperationResult.Success, resources, null, null);
+    }
+
+    public ControlPlaneOperationResult<AccessUriResult> GrantAccess(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string diskName,
+        GrantAccessRequest request)
+    {
+        var resource = provider.GetAs<DiskResource>(subscriptionIdentifier, resourceGroupIdentifier, diskName);
+
+        if (resource == null)
+        {
+            return new ControlPlaneOperationResult<AccessUriResult>(
+                OperationResult.NotFound,
+                null,
+                string.Format(DiskNotFoundMessageTemplate, diskName),
+                DiskNotFoundCode);
+        }
+
+        if (resource.Properties.DiskState == "ActiveSAS")
+        {
+            return new ControlPlaneOperationResult<AccessUriResult>(
+                OperationResult.Conflict,
+                null,
+                $"Disk '{diskName}' already has an active SAS access grant.",
+                "OperationNotAllowed");
+        }
+
+        resource.Properties.DiskState = "ActiveSAS";
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, diskName, resource);
+
+        var sasUrl = $"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/disk-sas/{resource.Properties.UniqueId}";
+
+        return new ControlPlaneOperationResult<AccessUriResult>(
+            OperationResult.Success,
+            new AccessUriResult { AccessSAS = sasUrl },
+            null,
+            null);
+    }
+
+    public OperationResult RevokeAccess(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string diskName)
+    {
+        var resource = provider.GetAs<DiskResource>(subscriptionIdentifier, resourceGroupIdentifier, diskName);
+
+        if (resource == null)
+            return OperationResult.NotFound;
+
+        resource.Properties.DiskState = "Unattached";
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, diskName, resource);
+
+        return OperationResult.Success;
     }
 }

@@ -52,6 +52,7 @@ const MILESTONES: Milestone[] = [
       { service: 'App Service', summary: 'Transparent HTTP request forwarding to Docker containers' },
       { service: 'Chaos Engineering', summary: 'Fault injection middleware · rule configuration · CLI' },
       { service: 'App Configuration', summary: 'Initial control plane · data plane · feature flags' },
+      { service: 'Azure Disks', summary: 'SAS access LRO polling' },
     ],
   },
   {
@@ -61,6 +62,7 @@ const MILESTONES: Milestone[] = [
     features: [
       { service: 'Application Insights', summary: 'Initial control plane · telemetry ingestion · KQL query' },
       { service: 'Log Analytics', summary: 'Initial control plane · logs ingestion · KQL query' },
+      { service: 'Azure Disks', summary: 'Full azcopy-compatible disk streaming via SAS URL' },
       { service: 'Azure Storage', summary: 'Geo-replication sync simulation' },
       { service: 'Cosmos DB', summary: 'TTL enforcement · container-level RBAC' },
     ],

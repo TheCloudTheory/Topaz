@@ -202,4 +202,68 @@ public class DiskTests
         var names = disks.Select(d => d.Data.Name).ToList();
         Assert.That(names, Does.Contain("test-disk-sub-a"));
     }
+
+    [Test]
+    public async Task DiskTests_WhenAccessIsGranted_ItShouldReturnAccessSasUri()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string diskName = "test-disk-grant-access";
+
+        var createResult = await resourceGroup.Value.GetManagedDisks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, diskName, MinimalDiskData());
+        var disk = createResult.Value;
+
+        // Act
+        var grantResult = await disk.GrantAccessAsync(
+            WaitUntil.Completed,
+            new GrantAccessData(AccessLevel.Read, 3600));
+
+        // Assert
+        Assert.That(grantResult.Value.AccessSas, Is.Not.Null.And.Not.Empty);
+    }
+
+    [Test]
+    public async Task DiskTests_WhenAccessIsRevoked_ItShouldSucceed()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string diskName = "test-disk-revoke-access";
+
+        var createResult = await resourceGroup.Value.GetManagedDisks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, diskName, MinimalDiskData());
+        var disk = createResult.Value;
+
+        await disk.GrantAccessAsync(WaitUntil.Completed, new GrantAccessData(AccessLevel.Read, 3600));
+
+        // Act + Assert (no exception = success)
+        await disk.RevokeAccessAsync(WaitUntil.Completed);
+    }
+
+    [Test]
+    public async Task DiskTests_WhenAccessIsGrantedOnActiveSasDisk_ItShouldReturn409()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string diskName = "test-disk-double-grant";
+
+        var createResult = await resourceGroup.Value.GetManagedDisks()
+            .CreateOrUpdateAsync(WaitUntil.Completed, diskName, MinimalDiskData());
+        var disk = createResult.Value;
+
+        await disk.GrantAccessAsync(WaitUntil.Completed, new GrantAccessData(AccessLevel.Read, 3600));
+
+        // Act + Assert
+        Assert.ThrowsAsync<RequestFailedException>(async () =>
+            await disk.GrantAccessAsync(WaitUntil.Completed, new GrantAccessData(AccessLevel.Read, 3600)));
+    }
 }

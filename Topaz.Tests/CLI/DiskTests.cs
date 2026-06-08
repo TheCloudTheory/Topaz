@@ -100,4 +100,41 @@ public class DiskTests
 
         Assert.That(code, Is.EqualTo(0));
     }
+
+    [Test]
+    public async Task Disk_WhenAccessIsGranted_CommandShouldReturnAccessSasUri()
+    {
+        var code = await Program.RunAsync([
+            "disk", "grant-access",
+            "--name", DiskName,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString(),
+            "--access", "Read",
+            "--duration-in-seconds", "3600"
+        ]);
+
+        Assert.That(code, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task Disk_WhenAccessIsRevoked_CommandShouldSucceed()
+    {
+        await Program.RunAsync([
+            "disk", "grant-access",
+            "--name", DiskName,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString(),
+            "--access", "Read",
+            "--duration-in-seconds", "3600"
+        ]);
+
+        var code = await Program.RunAsync([
+            "disk", "revoke-access",
+            "--name", DiskName,
+            "--resource-group", ResourceGroupName,
+            "--subscription-id", SubscriptionId.ToString()
+        ]);
+
+        Assert.That(code, Is.EqualTo(0));
+    }
 }

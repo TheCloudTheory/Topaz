@@ -175,6 +175,12 @@
 | <span class="badge--preview">Preview</span> | Feature flag support | Key-values with content type `application/vnd.microsoft.appconfig.ff+json` under the `.appconfig.featureflag/` key prefix; compatible with the Azure SDK `FeatureFlagConfigurationSetting` model |
 | <span class="badge--stable">Stable</span> | MCP Server tool | `CreateAppConfigurationStore` tool; `GetConnectionStrings` extended with App Configuration connection string |
 
+### Azure Disks — SAS access LRO polling
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | LRO polling for `beginGetAccess` | Upgrade `beginGetAccess` to return `202 Accepted` + `Azure-AsyncOperation` polling URL; GET on the URL transitions `InProgress` → `Succeeded` with the `accessSAS` stub in `properties.output`; LRO state held in-memory per disk |
+
 ---
 
 ## v1.9-preview
@@ -196,6 +202,12 @@
 | <span class="badge--preview">Preview</span> | Workspace CRUD | Create, get, update (tags, retentionInDays, SKU), delete, list `Microsoft.OperationalInsights/workspaces`; `workspaceId` / `customerId` generated as stable GUIDs on creation |
 | <span class="badge--preview">Preview</span> | Logs Ingestion API | `POST https://{workspaceId}.ods.opinsights.topaz.local.dev/api/logs` — accepts JSON log arrays with `Log-Type` header; persists records per custom table name; returns `200` with empty body |
 | <span class="badge--preview">Preview</span> | KQL query API | `POST /v1/workspaces/{workspaceId}/query` — minimal KQL subset over ingested custom tables; `where`, `project`, `extend`, `summarize`, `order by`, `take`, `union` operators; returns standard `{"tables":[...]}` schema |
+
+### Azure Disks — full disk data streaming (azcopy)
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Full azcopy-compatible disk streaming | Upgrade the SAS endpoint from empty-body to a fully streamable sparse disk image: `GET /disk-sas/{uniqueId}` honours `Range` requests; `PUT` accepts page-blob byte-range uploads; `HEAD` reports `Content-Length = diskSizeGB * 1073741824`; large disks use an on-disk `.topaz/disks/{uniqueId}.vhd` sparse file |
 
 ### Azure Storage — geo-replication sync simulation
 

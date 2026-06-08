@@ -294,16 +294,7 @@ _Implemented in v1.6-beta: service scaffold — `DiskResourceProperties`, `DiskR
 
 _Implemented in v1.6-beta: six control-plane HTTP endpoints (Create/Update, Get, Delete, PATCH update, List by resource group, List by subscription), five Topaz CLI commands (`topaz disk create/show/delete/update/list`), E2E SDK tests, Azure CLI tests, Azure PowerShell tests, and Terraform tests._
 
-<!--
-TODO: Azure Disks: SAS access endpoints
-  Implement the SAS URI access operations:
-  - POST .../disks/{name}/beginGetAccess  – grant read or readwrite access, returning an accessSAS URI stub
-  - POST .../disks/{name}/endGetAccess    – revoke access (returns 200 with empty body)
-  The SAS URI value is a stub (no actual data streaming required); return a plausible
-  https://md-{uniqueId}.blob.core.windows.net/... URL so SDK/CLI callers do not error.
-  milestone: v1.6-beta
-  labels: enhancement
--->
+_Implemented in v1.6-beta: `beginGetAccess` and `endGetAccess` endpoints with Topaz-hosted SAS stub URL (`https://topaz.local.dev:8899/disk-sas/{uniqueId}`), `GrantDiskAccessCommand` and `RevokeDiskAccessCommand` CLI commands, E2E SDK tests, Azure CLI tests, and Topaz CLI tests._
 
 ### Entra — AuthorizeEndpoint `response_mode=form_post`
 
@@ -940,6 +931,20 @@ TODO: Azure App Configuration: MCP Server provisioning tool
   labels: enhancement, app-configuration, mcp
 -->
 
+### Azure Disks — SAS access LRO polling
+
+<!--
+TODO: Azure Disks: SAS access — LRO polling for beginGetAccess
+  Upgrade beginGetAccess from synchronous 200 OK to a proper long-running operation:
+  - POST .../disks/{name}/beginGetAccess returns 202 Accepted with Azure-AsyncOperation header.
+  - GET on polling URL returns {"status":"InProgress"} then {"status":"Succeeded","properties":{"output":{"accessSAS":"..."}}}
+  - Implement polling URL as new endpoint on DefaultResourceManagerPort.
+  - Store pending LRO state in-memory per disk; garbage-collect after completion.
+  - The accessSAS value remains the Topaz-hosted stub URL.
+  milestone: v1.8-preview
+  labels: enhancement
+-->
+
 ---
 
 ## v1.9-preview
@@ -1076,9 +1081,22 @@ TODO: Log Analytics: Query API
   labels: enhancement, log-analytics
 -->
 
+### Azure Disks — full disk data streaming (azcopy)
+
+<!--
+TODO: Azure Disks: Full azcopy-compatible disk streaming via SAS URL
+  - On beginGetAccess, Topaz stores sparse byte store keyed by uniqueId.
+  - GET /disk-sas/{uniqueId} honours HTTP Range requests.
+  - PUT to same URL accepts byte-range uploads with page-blob headers.
+  - HEAD reports Content-Length = diskSizeGB * 1024^3.
+  - endGetAccess clears the byte store and sets diskState back to Unattached.
+  - Large disks use on-disk .topaz/disks/{uniqueId}.vhd sparse file.
+  milestone: v1.9-preview
+  labels: enhancement
+-->
+
 <!--
 TODO: Storage Account — geo-replication sync simulation
-  Simulate the RA-GRS/RA-GZRS secondary-region replication lag lifecycle with a background scheduler.
   Work required:
   - Add a LastGeoSyncTime (DateTimeOffset?) field to StorageAccountResourceProperties; set to
     UtcNow - 30s on RA-GRS/RAGZRS account creation; null for non-geo-replicated SKUs.

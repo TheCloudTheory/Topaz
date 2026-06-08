@@ -20,5 +20,5 @@ sidebar_position: 12
 | Update | ✅ | `PATCH /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}` — update tags, diskSizeGB, SKU |
 | List By Resource Group | ✅ | `GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks` |
 | List | ✅ | `GET /subscriptions/{sub}/providers/Microsoft.Compute/disks` |
-| Grant Access | ❌ | `POST .../disks/{name}/beginGetAccess` — returns accessSAS URI stub |
-| Revoke Access | ❌ | `POST .../disks/{name}/endGetAccess` |
+| Grant Access | ✅ | `POST .../disks/{name}/beginGetAccess` — returns accessSAS URI stub |
+| Revoke Access | ✅ | `POST .../disks/{name}/endGetAccess` |

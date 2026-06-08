@@ -96,4 +96,46 @@ public class DiskTests : TopazFixture
                 Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo($"{DiskName}-patch"));
             }, 0);
     }
+
+    [Test]
+    public async Task DiskTests_WhenAccessIsGranted_ItShouldReturnAccessSasUri()
+    {
+        const string rg = "rg-cli-disk-sas";
+        const string disk = "my-cli-disk-sas";
+
+        await RunAzureCliCommand($"az group create -l westeurope -n {rg}", null, 0);
+        await RunAzureCliCommand(
+            $"az resource create --resource-type Microsoft.Compute/disks --api-version 2025-11-01 " +
+            $"--resource-group {rg} --name {disk} --location westeurope " +
+            $"--properties '{{\"diskSizeGB\":32,\"creationData\":{{\"createOption\":\"Empty\"}}}}'",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az disk grant-access --resource-group {rg} --name {disk} " +
+            $"--duration-in-seconds 3600 --access Read",
+            response =>
+            {
+                Assert.That(response["accessSAS"]!.GetValue<string>(), Is.Not.Null.And.Not.Empty);
+            }, 0);
+    }
+
+    [Test]
+    public async Task DiskTests_WhenAccessIsRevoked_ItShouldSucceed()
+    {
+        const string rg = "rg-cli-disk-revoke";
+        const string disk = "my-cli-disk-revoke";
+
+        await RunAzureCliCommand($"az group create -l westeurope -n {rg}", null, 0);
+        await RunAzureCliCommand(
+            $"az resource create --resource-type Microsoft.Compute/disks --api-version 2025-11-01 " +
+            $"--resource-group {rg} --name {disk} --location westeurope " +
+            $"--properties '{{\"diskSizeGB\":32,\"creationData\":{{\"createOption\":\"Empty\"}}}}'",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az disk grant-access --resource-group {rg} --name {disk} " +
+            $"--duration-in-seconds 3600 --access Read",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az disk revoke-access --resource-group {rg} --name {disk}",
+            null, 0);
+    }
 }

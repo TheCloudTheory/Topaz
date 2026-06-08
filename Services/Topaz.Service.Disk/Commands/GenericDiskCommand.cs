@@ -14,6 +14,8 @@ public sealed class GenericDiskCommand : IEmulatorCommand
             disk.AddCommand<DeleteDiskCommand>("delete");
             disk.AddCommand<UpdateDiskCommand>("update");
             disk.AddCommand<ListDisksCommand>("list");
+            disk.AddCommand<GrantDiskAccessCommand>("grant-access");
+            disk.AddCommand<RevokeDiskAccessCommand>("revoke-access");
         });
     }
 }

@@ -24,7 +24,10 @@ public sealed class DiskService(Pipeline eventPipeline, ITopazLogger logger) : I
         new DeleteDiskEndpoint(_eventPipeline, _logger),
         new UpdateDiskEndpoint(_eventPipeline, _logger),
         new ListDisksByResourceGroupEndpoint(_eventPipeline, _logger),
-        new ListDisksBySubscriptionEndpoint(_eventPipeline, _logger)
+        new ListDisksBySubscriptionEndpoint(_eventPipeline, _logger),
+        new GrantDiskAccessEndpoint(_eventPipeline, _logger),
+        new RevokeDiskAccessEndpoint(_eventPipeline, _logger),
+        new DiskSasEndpoint()
     ];
 
     public void Bootstrap() { }
