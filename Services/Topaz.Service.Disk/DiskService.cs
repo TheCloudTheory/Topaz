@@ -1,4 +1,5 @@
 using Topaz.EventPipeline;
+using Topaz.Service.Disk.Endpoints;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -16,7 +17,15 @@ public sealed class DiskService(Pipeline eventPipeline, ITopazLogger logger) : I
 
     public string Name => "Azure Managed Disks";
 
-    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [];
+    public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
+    [
+        new CreateOrUpdateDiskEndpoint(_eventPipeline, _logger),
+        new GetDiskEndpoint(_eventPipeline, _logger),
+        new DeleteDiskEndpoint(_eventPipeline, _logger),
+        new UpdateDiskEndpoint(_eventPipeline, _logger),
+        new ListDisksByResourceGroupEndpoint(_eventPipeline, _logger),
+        new ListDisksBySubscriptionEndpoint(_eventPipeline, _logger)
+    ];
 
     public void Bootstrap() { }
 }

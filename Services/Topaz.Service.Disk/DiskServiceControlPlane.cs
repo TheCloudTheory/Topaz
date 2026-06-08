@@ -141,8 +141,50 @@ internal sealed class DiskServiceControlPlane(
         return new ControlPlaneOperationResult(OperationResult.Deleted);
     }
 
-    public ControlPlaneOperationResult<DiskResource[]> ListByResourceGroup(
+    public ControlPlaneOperationResult<DiskResource> Update(
         SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string diskName,
+        UpdateDiskRequest request)
+    {
+        var existing = provider.GetAs<DiskResource>(subscriptionIdentifier, resourceGroupIdentifier, diskName);
+
+        if (existing == null)
+        {
+            return new ControlPlaneOperationResult<DiskResource>(
+                OperationResult.NotFound,
+                null,
+                string.Format(DiskNotFoundMessageTemplate, diskName),
+                DiskNotFoundCode);
+        }
+
+        if (request.Tags != null)
+            existing.Tags = request.Tags;
+
+        if (request.Properties?.DiskSizeGB.HasValue == true)
+            existing.Properties.DiskSizeGB = request.Properties.DiskSizeGB;
+
+        if (request.Sku?.Name != null)
+        {
+            var updatedSku = new ResourceSku { Name = request.Sku.Name };
+            var updated = new DiskResource(
+                subscriptionIdentifier,
+                resourceGroupIdentifier,
+                diskName,
+                new AzureLocation(existing.Location!),
+                existing.Tags,
+                updatedSku,
+                existing.Properties);
+            provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, diskName, updated);
+            return new ControlPlaneOperationResult<DiskResource>(OperationResult.Updated, updated, null, null);
+        }
+
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, diskName, existing);
+
+        return new ControlPlaneOperationResult<DiskResource>(OperationResult.Updated, existing, null, null);
+    }
+
+    public ControlPlaneOperationResult<DiskResource[]> ListByResourceGroup(        SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier)
     {
         var resources = provider.ListAs<DiskResource>(subscriptionIdentifier, resourceGroupIdentifier,

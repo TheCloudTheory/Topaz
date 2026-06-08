@@ -292,20 +292,7 @@ TODO: Azure Cosmos DB: SQL Container — container-level RBAC
 
 _Implemented in v1.6-beta: service scaffold — `DiskResourceProperties`, `DiskResource`, `DiskResourceProvider`, `DiskServiceControlPlane` (with working `Deploy()`), and `DiskService` registered in `Topaz.Host`. `Microsoft.Compute/disks` is wired into `TemplateDeploymentOrchestrator.RouteDeployment()`. Control-plane endpoints and SAS access endpoints are tracked separately below._
 
-<!--
-TODO: Azure Disks: Managed Disk control plane endpoints
-  Implement the ARM-level Disk resource surface (Microsoft.Compute/disks):
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}  – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}  – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}  – delete
-  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}  – update (tags, diskSizeGB, SKU)
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.Compute/disks                              – list all in subscription
-  Follow the one-file-per-operation convention under Endpoints/. Return 200 for get/update,
-  201 for create, 204 for delete. provisioningState is always Succeeded.
-  milestone: v1.6-beta
-  labels: enhancement
--->
+_Implemented in v1.6-beta: six control-plane HTTP endpoints (Create/Update, Get, Delete, PATCH update, List by resource group, List by subscription), five Topaz CLI commands (`topaz disk create/show/delete/update/list`), E2E SDK tests, Azure CLI tests, Azure PowerShell tests, and Terraform tests._
 
 <!--
 TODO: Azure Disks: SAS access endpoints

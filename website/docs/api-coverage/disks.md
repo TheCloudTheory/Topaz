@@ -14,11 +14,11 @@ sidebar_position: 12
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create Or Update | ❌ | `PUT /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}` |
-| Get | ❌ | `GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}` |
-| Delete | ❌ | `DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}` |
-| Update | ❌ | `PATCH /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}` — update tags, diskSizeGB, SKU |
-| List By Resource Group | ❌ | `GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks` |
-| List | ❌ | `GET /subscriptions/{sub}/providers/Microsoft.Compute/disks` |
+| Create Or Update | ✅ | `PUT /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}` |
+| Get | ✅ | `GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}` |
+| Delete | ✅ | `DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}` |
+| Update | ✅ | `PATCH /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks/{name}` — update tags, diskSizeGB, SKU |
+| List By Resource Group | ✅ | `GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/disks` |
+| List | ✅ | `GET /subscriptions/{sub}/providers/Microsoft.Compute/disks` |
 | Grant Access | ❌ | `POST .../disks/{name}/beginGetAccess` — returns accessSAS URI stub |
 | Revoke Access | ❌ | `POST .../disks/{name}/endGetAccess` |

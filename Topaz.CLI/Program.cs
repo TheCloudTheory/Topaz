@@ -20,6 +20,7 @@ using Topaz.Service.Storage.Commands;
 using Topaz.Service.Subscription.Commands;
 using Topaz.Service.AppService.Commands;
 using Topaz.Service.VirtualMachine.Commands;
+using Topaz.Service.Disk.Commands;
 using Topaz.Service.Sql.Commands;
 using Topaz.Service.CosmosDb.Commands;
 using Topaz.Shared;
@@ -136,7 +137,8 @@ internal class Program
             typeof(GenericAppServiceCommand),
             typeof(GenericVirtualMachineCommand),
             typeof(GenericSqlCommand),
-            typeof(GenericCosmosDbCommand)
+            typeof(GenericCosmosDbCommand),
+            typeof(GenericDiskCommand)
         };
 
         var commands = Assembly.GetExecutingAssembly()

@@ -18,6 +18,7 @@ using Topaz.Service.Storage.Commands;
 using Topaz.Service.Subscription.Commands;
 using Topaz.Service.VirtualNetwork.Commands;
 using Topaz.Service.VirtualMachine.Commands;
+using Topaz.Service.Disk.Commands;
 using Topaz.Service.CosmosDb.Commands;
 using Topaz.Service.Sql.Commands;
 
@@ -47,7 +48,8 @@ _ = new[]
     typeof(GenericAppServiceCommand),
     typeof(GenericVirtualMachineCommand),
     typeof(GenericCosmosDbCommand),
-    typeof(GenericSqlCommand)
+    typeof(GenericSqlCommand),
+    typeof(GenericDiskCommand)
 };
 
 Console.WriteLine("Looking for commands...");

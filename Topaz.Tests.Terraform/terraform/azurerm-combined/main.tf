@@ -495,6 +495,25 @@ resource "azurerm_linux_virtual_machine" "vm" {
 output "vm_name"     { value = azurerm_linux_virtual_machine.vm.name }
 output "vm_location" { value = azurerm_linux_virtual_machine.vm.location }
 
+# ── Managed Disk ───────────────────────────────────────────────────────────────
+
+resource "azurerm_resource_group" "disk_rg" {
+  name     = "tf-rm-disk-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_managed_disk" "disk" {
+  name                 = "tf-rm-disk"
+  resource_group_name  = azurerm_resource_group.disk_rg.name
+  location             = azurerm_resource_group.disk_rg.location
+  storage_account_type = "Premium_LRS"
+  create_option        = "Empty"
+  disk_size_gb         = 32
+}
+
+output "disk_name" { value = azurerm_managed_disk.disk.name }
+output "disk_sku"  { value = azurerm_managed_disk.disk.storage_account_type }
+
 # ── App Service Plan ───────────────────────────────────────────────────────────
 
 resource "azurerm_resource_group" "asp_rg" {
