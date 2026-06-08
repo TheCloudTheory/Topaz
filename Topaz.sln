@@ -108,6 +108,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.CosmosDb", "S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.Disk", "Services\Topaz.Service.Disk\Topaz.Service.Disk.csproj", "{FC523BDC-4C36-459F-9902-F314A1CF479C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.FinOps", "Topaz.FinOps\Topaz.FinOps.csproj", "{40157531-0E75-4FA6-8184-E471CCA4F49B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -640,6 +642,18 @@ Global
 		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Release|x64.Build.0 = Release|Any CPU
 		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Release|x86.ActiveCfg = Release|Any CPU
 		{FC523BDC-4C36-459F-9902-F314A1CF479C}.Release|x86.Build.0 = Release|Any CPU
+		{40157531-0E75-4FA6-8184-E471CCA4F49B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40157531-0E75-4FA6-8184-E471CCA4F49B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40157531-0E75-4FA6-8184-E471CCA4F49B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{40157531-0E75-4FA6-8184-E471CCA4F49B}.Debug|x64.Build.0 = Debug|Any CPU
+		{40157531-0E75-4FA6-8184-E471CCA4F49B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{40157531-0E75-4FA6-8184-E471CCA4F49B}.Debug|x86.Build.0 = Debug|Any CPU
+		{40157531-0E75-4FA6-8184-E471CCA4F49B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40157531-0E75-4FA6-8184-E471CCA4F49B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{40157531-0E75-4FA6-8184-E471CCA4F49B}.Release|x64.ActiveCfg = Release|Any CPU
+		{40157531-0E75-4FA6-8184-E471CCA4F49B}.Release|x64.Build.0 = Release|Any CPU
+		{40157531-0E75-4FA6-8184-E471CCA4F49B}.Release|x86.ActiveCfg = Release|Any CPU
+		{40157531-0E75-4FA6-8184-E471CCA4F49B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

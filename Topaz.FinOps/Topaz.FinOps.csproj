@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="TheCloudTheory.AzureCostEstimator.Core" Version="1.7.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Services\Topaz.Service.Shared\Topaz.Service.Shared.csproj" />
+        <ProjectReference Include="..\Topaz.Shared\Topaz.Shared.csproj" />
+        <ProjectReference Include="..\Topaz.ResourceManager\Topaz.ResourceManager.csproj" />
+    </ItemGroup>
+
+</Project>

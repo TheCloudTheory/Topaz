@@ -30,6 +30,7 @@
     <ProjectReference Include="..\Services\Topaz.Service.VirtualMachine\Topaz.Service.VirtualMachine.csproj" />
     <ProjectReference Include="..\Services\Topaz.Service.Sql\Topaz.Service.Sql.csproj" />
     <ProjectReference Include="..\Services\Topaz.Service.CosmosDb\Topaz.Service.CosmosDb.csproj" />
+    <ProjectReference Include="..\Topaz.FinOps\Topaz.FinOps.csproj" />
   </ItemGroup>
 
   <ItemGroup>
