@@ -34,10 +34,8 @@ public class PythonFixture
 
         _containerTopaz = new ContainerBuilder()
             .WithImage(TopazContainerImage)
-            .WithPortBinding(8890)
             .WithPortBinding(8891)
             .WithPortBinding(8892)
-            .WithPortBinding(8893)
             .WithPortBinding(8897)
             .WithPortBinding(8898)
             .WithPortBinding(8899)
@@ -55,7 +53,10 @@ public class PythonFixture
             .Build();
 
         await _containerTopaz.StartAsync().ConfigureAwait(false);
-        await Task.Delay(TimeSpan.FromSeconds(3));
+
+        // Wait until the resource manager port is accepting connections before
+        // proceeding, instead of relying on a fixed delay.
+        await WaitForContainerReady(_containerTopaz, 8899).ConfigureAwait(false);
 
         _pythonImage = new ImageFromDockerfileBuilder()
             .WithDockerfileDirectory(repoRoot)
@@ -64,6 +65,8 @@ public class PythonFixture
             .Build();
 
         await _pythonImage.CreateAsync().ConfigureAwait(false);
+
+        var topazIp = _containerTopaz.IpAddress;
 
         var pythonContainer = new ContainerBuilder()
             .WithImage(_pythonImage)
@@ -74,7 +77,7 @@ public class PythonFixture
             .WithEnvironment("REQUESTS_CA_BUNDLE", "/tmp/topaz.crt")
             .WithEnvironment("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt")
             .WithEnvironment("AZURE_CORE_INSTANCE_DISCOVERY", "false")
-            .WithExtraHost("topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("topaz.local.dev", topazIp)
             .WithOutputConsumer(Consume.RedirectStdoutAndStderrToConsole())
             .Build();
 
@@ -154,6 +157,33 @@ public class PythonFixture
     }
 
     // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Polls the Topaz container's mapped host port until it accepts a TCP
+    /// connection, or throws after the timeout expires.
+    /// </summary>
+    private static async Task WaitForContainerReady(IContainer container, ushort containerPort, int timeoutSeconds = 60)
+    {
+        var hostPort = container.GetMappedPublicPort(containerPort);
+        var deadline = DateTime.UtcNow.AddSeconds(timeoutSeconds);
+
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                using var tcp = new System.Net.Sockets.TcpClient();
+                await tcp.ConnectAsync("localhost", hostPort).ConfigureAwait(false);
+                return;
+            }
+            catch
+            {
+                await Task.Delay(500).ConfigureAwait(false);
+            }
+        }
+
+        throw new TimeoutException(
+            $"Topaz container did not become ready on port {containerPort} within {timeoutSeconds} seconds.");
+    }
 
     private static string FindRepoRoot()
     {
