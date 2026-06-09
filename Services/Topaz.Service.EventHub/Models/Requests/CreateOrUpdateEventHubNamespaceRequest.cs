@@ -1,10 +1,12 @@
 using JetBrains.Annotations;
+using Topaz.ResourceManager;
 
 namespace Topaz.Service.EventHub.Models.Requests;
 
 public class CreateOrUpdateEventHubNamespaceRequest
 {
     public string? Location { get; init; }
+    public ResourceSku? Sku { get; init; }
     public CreateOrUpdateEventHubNamespaceRequestProperties?  Properties { get; init; }
 
     [UsedImplicitly]

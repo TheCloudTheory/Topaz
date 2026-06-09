@@ -19,12 +19,14 @@ internal sealed class EventHubNamespaceResource
         ResourceGroupIdentifier resourceGroup,
         AzureLocation location,
         EventHubNamespaceIdentifier identifier,
-        EventHubNamespaceResourceProperties properties)
+        EventHubNamespaceResourceProperties properties,
+        ResourceSku? sku = null)
     {
         Id = $"/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.EventHub/namespaces/{identifier}";
         Name = identifier.Value;
         Location = location;
         Properties = properties;
+        Sku = sku;
     }
     
     public override string Id { get; init; }

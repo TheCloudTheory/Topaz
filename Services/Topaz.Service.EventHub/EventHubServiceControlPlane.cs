@@ -31,7 +31,7 @@ internal sealed class EventHubServiceControlPlane(EventHubResourceProvider provi
             properties.UpdatedAt = DateTime.UtcNow;
             properties.ProvisioningState = "Succeeded";
 
-            var resource = new EventHubNamespaceResource(subscriptionIdentifier, resourceGroupIdentifier, location, @namespace, properties);
+            var resource = new EventHubNamespaceResource(subscriptionIdentifier, resourceGroupIdentifier, location, @namespace, properties, request.Sku);
             provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, @namespace.Value, resource, true);
             CreateOrUpdateNetworkRuleSet(subscriptionIdentifier, resourceGroupIdentifier, @namespace, "default",
                 EventHubNetworkRuleSetSubresourceProperties.Default());
