@@ -13,6 +13,12 @@ public sealed class GenericVirtualMachineCommand : IEmulatorCommand
             vm.AddCommand<GetVirtualMachineCommand>("show");
             vm.AddCommand<DeleteVirtualMachineCommand>("delete");
             vm.AddCommand<ListVirtualMachinesCommand>("list");
+            vm.AddCommand<UpdateVirtualMachineCommand>("update");
+            vm.AddBranch("image-version", imageVersion =>
+            {
+                imageVersion.AddCommand<GetVirtualMachineImageVersionCommand>("get");
+                imageVersion.AddCommand<ListVirtualMachineImageVersionsCommand>("list");
+            });
         });
     }
 }
