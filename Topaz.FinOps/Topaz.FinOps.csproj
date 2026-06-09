@@ -6,12 +6,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="TheCloudTheory.AzureCostEstimator.Core" Version="1.7.0" />
+        <PackageReference Include="TheCloudTheory.AzureCostEstimator.Core" Version="1.8.0" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Services\Topaz.Service.Shared\Topaz.Service.Shared.csproj" />
         <ProjectReference Include="..\Topaz.Shared\Topaz.Shared.csproj" />
+        <ProjectReference Include="..\Topaz.Identity\Topaz.Identity.csproj" />
         <ProjectReference Include="..\Topaz.ResourceManager\Topaz.ResourceManager.csproj" />
         <ProjectReference Include="..\Topaz.CLI.Infrastructure\Topaz.CLI.Infrastructure.csproj" />
         <ProjectReference Include="..\Documentation\Topaz.Documentation\Topaz.Documentation.csproj" />

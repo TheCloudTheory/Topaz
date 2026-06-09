@@ -1,0 +1,191 @@
+@page "/cost-analysis"
+@using Topaz.Portal.Models.FinOps
+@using Topaz.Portal.Models.Subscriptions
+@inject ITopazClient TopazClient
+
+<PageTitle>Cost Analysis — Topaz Portal</PageTitle>
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="mb-0">Cost Analysis</h1>
+
+    <button class="btn btn-sm btn-outline-secondary"
+            @onclick="LoadCosts"
+            disabled="@(_loading || _selectedSubscriptionId == Guid.Empty)">
+        Refresh
+    </button>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-6">
+                <label class="form-label" for="subscription-select">Subscription</label>
+                <select id="subscription-select"
+                        class="form-select"
+                        value="@_selectedSubscriptionId"
+                        @onchange="OnSubscriptionChanged"
+                        disabled="@_loading">
+                    <option value="@Guid.Empty">— select a subscription —</option>
+                    @foreach (var s in _subscriptions)
+                    {
+                        <option value="@s.SubscriptionId">@(s.DisplayName ?? s.SubscriptionId)</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-12 col-md-3">
+                <label class="form-label" for="currency-select">Currency</label>
+                <select id="currency-select"
+                        class="form-select"
+                        @bind="_selectedCurrency"
+                        @bind:after="LoadCosts"
+                        disabled="@(_loading || _selectedSubscriptionId == Guid.Empty)">
+                    @foreach (var c in _currencies)
+                    {
+                        <option value="@c">@c</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (_selectedSubscriptionId == Guid.Empty)
+{
+    <div class="card">
+        <div class="card-body text-center py-5 text-muted">
+            <span class="bi bi-bar-chart-line fs-1 d-block mb-3"></span>
+            Select a subscription to see estimated costs.
+        </div>
+    </div>
+}
+else if (_loading)
+{
+    <div class="card">
+        <div class="card-body text-center py-5 text-muted">
+            <p>Loading…</p>
+        </div>
+    </div>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger" role="alert">@_error</div>
+}
+else if (_result is not null)
+{
+    <div class="card">
+        <div class="card-body">
+            @if (_result.Resources.Count == 0)
+            {
+                <p class="text-muted mb-0">No priced resources found in this subscription.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Resource type</th>
+                                <th class="text-end">Estimated monthly cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var entry in _result.Resources.OrderByDescending(r => r.EstimatedMonthlyCost))
+                            {
+                                <tr>
+                                    <td><code>@(entry.ResourceType ?? entry.ResourceId ?? "(unknown)")</code></td>
+                                    <td class="text-end">@FormatCost(entry.EstimatedMonthlyCost, _result.Currency)</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="table-group-divider fw-semibold">
+                            <tr>
+                                <td>Total</td>
+                                <td class="text-end">@FormatCost(_result.TotalMonthlyCost, _result.Currency) / month</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private static readonly string[] _currencies =
+    [
+        "USD", "EUR", "GBP", "AUD", "BRL", "CAD", "CHF",
+        "CNY", "DKK", "INR", "JPY", "KRW", "NOK", "NZD",
+        "RUB", "SEK", "TWD"
+    ];
+
+    private SubscriptionDto[] _subscriptions = [];
+    private Guid _selectedSubscriptionId = Guid.Empty;
+    private string _selectedCurrency = "USD";
+
+    private bool _loading;
+    private string? _error;
+    private EstimatedCostsResponse? _result;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await TopazClient.ListSubscriptions();
+            _subscriptions = response.Value ?? [];
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load subscriptions: {ex.Message}";
+        }
+    }
+
+    private async Task OnSubscriptionChanged(ChangeEventArgs e)
+    {
+        _result = null;
+        _error = null;
+
+        if (Guid.TryParse(e.Value?.ToString(), out var id))
+            _selectedSubscriptionId = id;
+        else
+            _selectedSubscriptionId = Guid.Empty;
+
+        if (_selectedSubscriptionId != Guid.Empty)
+            await LoadCosts();
+    }
+
+    private async Task LoadCosts()
+    {
+        if (_selectedSubscriptionId == Guid.Empty)
+            return;
+
+        _loading = true;
+        _error = null;
+        _result = null;
+
+        try
+        {
+            _result = await TopazClient.GetEstimatedCosts(_selectedSubscriptionId, _selectedCurrency);
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load cost estimates: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string FormatCost(double value, string? currency)
+    {
+        var symbol = currency switch
+        {
+            "EUR" => "€",
+            "GBP" => "£",
+            "JPY" or "CNY" or "KRW" => "¥",
+            _ => "$"
+        };
+        return $"{symbol}{value:N2}";
+    }
+}

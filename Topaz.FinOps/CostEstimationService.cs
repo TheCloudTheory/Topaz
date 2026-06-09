@@ -1,5 +1,9 @@
 using ACE.Core;
 using ACE.WhatIf;
+using Azure.ResourceManager;
+using Topaz.Identity;
+using Topaz.ResourceManager;
+using Topaz.Shared;
 using Topaz.FinOps.Models;
 
 namespace Topaz.FinOps;
@@ -23,7 +27,20 @@ internal sealed class CostEstimationService
             currencyCode = CurrencyCode.USD;
         }
 
-        var options = new CoreEstimationOptions { Currency = currencyCode };
+        // Build an ArmClient scoped to the subscription being estimated so that
+        // ACE's CapabilitiesCache.GetDefaultSubscription() resolves against Topaz
+        // rather than attempting DefaultAzureCredential against real Azure.
+        var armClient = new ArmClient(
+            new AzureLocalCredential(Globals.GlobalAdminId),
+            subscriptionId,
+            TopazArmClientOptions.New);
+
+        var options = new CoreEstimationOptions
+        {
+            Currency = currencyCode,
+            ArmClient = armClient
+        };
+
         var output = await AceEstimationService.EstimateAsync(changes, options, null, cancellationToken);
 
         var resources = output.Resources

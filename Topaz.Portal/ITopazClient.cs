@@ -13,6 +13,7 @@ using Topaz.Portal.Models.Sql;
 using Topaz.Portal.Models.Storage;
 using Topaz.Portal.Models.Subscriptions;
 using Topaz.Portal.Models.Tenant;
+using Topaz.Portal.Models.FinOps;
 using Topaz.Portal.Models.VirtualMachines;
 using Topaz.Portal.Models.VirtualNetworks;
 
@@ -20,6 +21,12 @@ namespace Topaz.Portal;
 
 public interface ITopazClient
 {
+    // FinOps
+    Task<EstimatedCostsResponse?> GetEstimatedCosts(
+        Guid subscriptionId,
+        string currency = "USD",
+        CancellationToken cancellationToken = default);
+
     // Management Groups
     Task<GetManagementGroupEntitiesResponse> GetManagementGroupEntities(
         CancellationToken cancellationToken = default);
