@@ -6,7 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="TheCloudTheory.AzureCostEstimator.Core" Version="1.8.0" />
+        <PackageReference Include="TheCloudTheory.AzureCostEstimator.Core" Version="1.8.1" />
     </ItemGroup>
 
     <ItemGroup>

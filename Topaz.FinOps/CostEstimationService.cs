@@ -63,9 +63,9 @@ internal sealed class CostEstimationService
     }
 
     /// <summary>
-    /// Extracts the resource type from an ARM resource ID.
-    /// E.g. "/subscriptions/.../resourceGroups/.../providers/Microsoft.KeyVault/vaults/myVault"
-    /// → "Microsoft.KeyVault/vaults"
+    /// Extracts the full resource type from an ARM resource ID, including child types.
+    /// E.g. "/subscriptions/.../providers/Microsoft.Sql/servers/s/databases/d"
+    /// → "Microsoft.Sql/servers/databases"
     /// </summary>
     private static string ExtractTypeFromResourceId(string resourceId)
     {
@@ -76,6 +76,16 @@ internal sealed class CostEstimationService
             return string.Empty;
         }
 
-        return $"{parts[providersIndex + 1]}/{parts[providersIndex + 2]}";
+        // Build the full type path: namespace + every type segment (skip name segments).
+        // Pattern after "providers": namespace / type / name / subtype / name / ...
+        var typeBuilder = new System.Text.StringBuilder(parts[providersIndex + 1]);
+        var i = providersIndex + 2;
+        while (i < parts.Length)
+        {
+            typeBuilder.Append('/').Append(parts[i]);
+            i += 2; // skip the resource name, take the next type segment
+        }
+
+        return typeBuilder.ToString();
     }
 }
