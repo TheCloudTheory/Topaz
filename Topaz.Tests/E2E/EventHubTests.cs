@@ -171,6 +171,49 @@ public class EventHubTests
     }
     
     [Test]
+    public async Task EventHubTests_WhenMessageIsSentByProducer_ItShouldBeReceivedByConsumer()
+    {
+        var producer = new EventHubProducerClient(ConnectionString, EventHubName);
+        var consumer = new EventHubConsumerClient(
+            EventHubConsumerClient.DefaultConsumerGroupName,
+            ConnectionString,
+            EventHubName);
+
+        try
+        {
+            var partitionProps = await consumer.GetPartitionPropertiesAsync("0");
+            var startingPosition = partitionProps.IsEmpty
+                ? EventPosition.Earliest
+                : EventPosition.FromSequenceNumber(partitionProps.LastEnqueuedSequenceNumber, isInclusive: false);
+
+            var batch = await producer.CreateBatchAsync(new CreateBatchOptions { PartitionId = "0" });
+            batch.TryAdd(new EventData("smoke-test"));
+            await producer.SendAsync(batch);
+
+            var received = new List<string>();
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+            await foreach (var partitionEvent in consumer.ReadEventsFromPartitionAsync(
+                "0", startingPosition,
+                new ReadEventOptions { MaximumWaitTime = TimeSpan.FromSeconds(3) },
+                cts.Token))
+            {
+                if (partitionEvent.Data == null)
+                    break;
+                received.Add(partitionEvent.Data.EventBody.ToString());
+            }
+
+            Assert.That(received, Has.Count.EqualTo(1));
+            Assert.That(received[0], Is.EqualTo("smoke-test"));
+        }
+        finally
+        {
+            await producer.DisposeAsync();
+            await consumer.DisposeAsync();
+        }
+    }
+
+    [Test]
     [Ignore("Ignored tests until it's fully fixed.")]
     public async Task EventHubTests_WhenMessageIsSent_ItShouldBeAvailableInEventHub1()
     {

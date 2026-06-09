@@ -29,7 +29,8 @@ RUN pip install --no-cache-dir \
     azure-mgmt-network>=26.0.0 \
     azure-mgmt-web>=7.3.0 \
     azure-mgmt-resource>=23.1.0 \
-    azure-mgmt-subscription>=3.1.0
+    azure-mgmt-subscription>=3.1.0 \
+    azure-eventhub>=5.11.0
 
 # Copy Python test sources
 COPY Topaz.Tests.Python/tests /tests

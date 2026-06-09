@@ -53,6 +53,19 @@ internal static class PythonHostMapper
     }
 
     /// <summary>
+    /// Ensures the Event Hub namespace subdomain is mapped inside the
+    /// Python container.
+    /// </summary>
+    public static async Task EnsureEventHubHostsMapped(params string[] namespaceNames)
+    {
+        foreach (var namespaceName in namespaceNames)
+        {
+            await PythonFixture.EnsureHostMapping(
+                $"{namespaceName.ToLowerInvariant()}.eventhub.topaz.local.dev");
+        }
+    }
+
+    /// <summary>
     /// Ensures the Container Registry subdomain is mapped inside the
     /// Python container.
     /// </summary>

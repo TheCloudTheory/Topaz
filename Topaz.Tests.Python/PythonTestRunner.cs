@@ -73,6 +73,7 @@ public class PythonTestRunner
     [Test]
     public async Task Python_EventHubTests()
     {
+        await PythonHostMapper.EnsureEventHubHostsMapped("ns-test");
         await PythonFixture.RunPythonTests("test_event_hub.py");
     }
 

@@ -118,3 +118,76 @@ def test_eventhub_create_and_get():
     read_back = client.event_hubs.get(_RESOURCE_GROUP, _NAMESPACE_NAME, hub_name)
     assert read_back.name == hub_name
     # Cleanup: namespace is recreated by the module fixture on the next run
+
+
+# ---------------------------------------------------------------------------
+# AMQP data-plane smoke test (Phase 1 AMQP baseline)
+# ---------------------------------------------------------------------------
+
+_AMQP_HUB_NAME = "amqp-smoke"
+_AMQP_CONNECTION_STRING = TopazResourceHelpers.get_event_hub_connection_string(_NAMESPACE_NAME)
+
+
+@pytest.fixture(scope="module", autouse=False)
+def amqp_hub():
+    """Creates the AMQP smoke event hub once per module run."""
+    client = _eventhub_client()
+    try:
+        client.event_hubs.delete(_RESOURCE_GROUP, _NAMESPACE_NAME, _AMQP_HUB_NAME)
+    except Exception:
+        pass
+    client.event_hubs.create_or_update(
+        _RESOURCE_GROUP,
+        _NAMESPACE_NAME,
+        _AMQP_HUB_NAME,
+        Eventhub(),
+    )
+    yield
+    try:
+        client.event_hubs.delete(_RESOURCE_GROUP, _NAMESPACE_NAME, _AMQP_HUB_NAME)
+    except Exception:
+        pass
+
+
+def test_eventhub_amqp_message_sent_should_be_received(amqp_hub):
+    """
+    Phase 1 AMQP baseline: send one event and receive it back via AMQP.
+
+    Without client-side frame-padding patches, azure-eventhub's internal
+    _pyamqp decode layer raises IndexError when AMQPNetLite omits trailing
+    null fields from performatives. This test documents that failure mode so
+    Phase 2 (upgrade to AMQPNetLite 2.5.3) can verify whether the issue is
+    resolved.
+    """
+    from azure.eventhub import EventHubProducerClient, EventHubConsumerClient, EventData
+
+    received: list[str] = []
+    errors: list[str] = []
+
+    with EventHubProducerClient.from_connection_string(
+        _AMQP_CONNECTION_STRING, eventhub_name=_AMQP_HUB_NAME
+    ) as producer:
+        batch = producer.create_batch(partition_id="0")
+        batch.add(EventData("smoke-test"))
+        producer.send_batch(batch)
+
+    def on_event(partition_context, event):
+        received.append(event.body_as_str())
+
+    def on_error(partition_context, error):
+        errors.append(str(error))
+
+    with EventHubConsumerClient.from_connection_string(
+        _AMQP_CONNECTION_STRING, "$Default", eventhub_name=_AMQP_HUB_NAME
+    ) as consumer:
+        consumer.receive(
+            on_event=on_event,
+            on_error=on_error,
+            partition_id="0",
+            starting_position="-1",
+            max_wait_time=5,
+        )
+
+    assert len(errors) == 0, f"AMQP errors during receive: {errors}"
+    assert len(received) == 1, f"Expected 1 event, got {len(received)}"
+    assert received[0] == "smoke-test"

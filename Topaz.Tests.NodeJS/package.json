@@ -1,0 +1,15 @@
+{
+  "name": "topaz-amqp-smoke",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AMQP compatibility smoke tests for Topaz Service Bus and Event Hub",
+  "scripts": {
+    "smoke:servicebus": "node smoke-service-bus.mjs",
+    "smoke:eventhub": "node smoke-event-hub.mjs",
+    "smoke:all": "node smoke-service-bus.mjs && node smoke-event-hub.mjs"
+  },
+  "dependencies": {
+    "@azure/service-bus": "^7.9.5",
+    "@azure/event-hubs": "^6.0.0"
+  }
+}
