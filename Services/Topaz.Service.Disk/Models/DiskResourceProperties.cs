@@ -20,6 +20,10 @@ public sealed class DiskResourceProperties
 
     public string DiskState { get; set; } = "Unattached";
 
+    public string PublicNetworkAccess { get; set; } = "Enabled";
+
+    public string NetworkAccessPolicy { get; set; } = "AllowAll";
+
     public string ProvisioningState => "Succeeded";
 
     public DateTimeOffset TimeCreated { get; init; }
@@ -51,6 +55,8 @@ public sealed class DiskResourceProperties
                         }
                 },
             DiskState = "Unattached",
+            PublicNetworkAccess = properties?.PublicNetworkAccess ?? "Enabled",
+            NetworkAccessPolicy = properties?.NetworkAccessPolicy ?? "AllowAll",
             TimeCreated = DateTimeOffset.UtcNow,
             UniqueId = Guid.NewGuid()
         };
@@ -76,6 +82,12 @@ public sealed class DiskResourceProperties
 
         if (requestProperties.HyperVGeneration != null)
             properties.HyperVGeneration = requestProperties.HyperVGeneration;
+
+        if (requestProperties.PublicNetworkAccess != null)
+            properties.PublicNetworkAccess = requestProperties.PublicNetworkAccess;
+
+        if (requestProperties.NetworkAccessPolicy != null)
+            properties.NetworkAccessPolicy = requestProperties.NetworkAccessPolicy;
 
         if (requestProperties.CreationData != null)
             properties.CreationData = new DiskCreationData

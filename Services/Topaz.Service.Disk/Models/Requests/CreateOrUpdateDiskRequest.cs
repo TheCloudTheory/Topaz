@@ -55,6 +55,8 @@ public sealed class CreateOrUpdateDiskRequest
         public long DiskMBpsReadWrite { get; set; }
         public string? OsType { get; set; }
         public string? HyperVGeneration { get; set; }
+        public string? PublicNetworkAccess { get; set; }
+        public string? NetworkAccessPolicy { get; set; }
         public DiskCreationDataRequest? CreationData { get; set; }
 
         public sealed class DiskCreationDataRequest
