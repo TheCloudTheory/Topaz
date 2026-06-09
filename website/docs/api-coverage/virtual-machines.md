@@ -51,3 +51,9 @@ sidebar_position: 11
 | List Publishers | ❌ | |
 | List Offers | ❌ | |
 | List Skus | ❌ | |
+
+### Resource SKUs
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| List | ✅ | `GET /subscriptions/{sub}/providers/Microsoft.Compute/skus` — returns stub SKU list with `PremiumIO`, `OSVhdSizeMB`, `vCPUs`, `MemoryGB` capabilities; supports `$filter=location eq '...'`; used by ACE CapabilitiesCache |

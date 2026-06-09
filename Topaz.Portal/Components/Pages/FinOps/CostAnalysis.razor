@@ -93,7 +93,7 @@ else if (_result is not null)
                             @foreach (var entry in _result.Resources.OrderByDescending(r => r.EstimatedMonthlyCost))
                             {
                                 <tr>
-                                    <td><code>@(entry.ResourceType ?? entry.ResourceId ?? "(unknown)")</code></td>
+                                    <td><code>@(string.IsNullOrEmpty(entry.ResourceType) ? (entry.ResourceId ?? "(unknown)") : entry.ResourceType)</code></td>
                                     <td class="text-end">@FormatCost(entry.EstimatedMonthlyCost, _result.Currency)</td>
                                 </tr>
                             }

@@ -1064,6 +1064,27 @@ TODO: Storage Account — geo-replication sync simulation
   labels: enhancement, storage
 -->
 
+<!--
+TODO: Virtual Machines: Complete Microsoft.Compute/skus SKU catalogue
+  The current `GET /subscriptions/{sub}/providers/Microsoft.Compute/skus` stub returns only 17
+  general-purpose VM SKUs. Real Azure returns 200–400+ SKUs per region covering all families
+  (A, B, D, E, F, G, L, M, N, etc.). ACE's CapabilitiesCache looks up each template VM SKU
+  in this list; a cache miss causes ACE to assume no PremiumIO support and may produce an
+  incorrect disk-cost estimate for that VM.
+  Required changes:
+  - Replace the hard-coded 17-entry array in ListComputeResourceSkusEndpoint with a full
+    static catalogue sourced from `az vm list-skus --location eastus -o json` (or equivalent
+    Azure REST API snapshot). Include at minimum all SKU families that appear in Terraform
+    community templates: A, B, D, Ds, E, Es, F, Fs, G, L, M, N (GPU), and their _v2/_v3/_v4
+    variants.
+  - The location parameter from the `$filter=location eq '...'` query string must be threaded
+    through to the response so each SKU's `locations` array reflects the requested region.
+  - Add an E2E test that verifies the endpoint returns a non-empty list and that at least one
+    entry has `resourceType == "virtualMachines"` and a `PremiumIO` capability.
+  milestone: v1.9-preview
+  labels: enhancement, virtual-machine, finops
+-->
+
 ---
 
 ## v1.10-preview

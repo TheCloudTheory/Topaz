@@ -50,6 +50,7 @@ internal sealed class CostEstimationService
                 ResourceType = ExtractTypeFromResourceId(r.Id),
                 EstimatedMonthlyCost = r.TotalCost.OriginalValue
             })
+            .Where(r => !string.IsNullOrEmpty(r.ResourceType))
             .ToList();
 
         return new EstimatedCostsResponse

@@ -51,6 +51,38 @@ internal sealed class ResourceInventoryCollector(ITopazLogger logger)
                     ? locationElement.GetString()
                     : null;
 
+                // Populate properties so ACE estimators can read resource-specific config
+                // (e.g. hardwareProfile.vmSize for VMs, sku.name for storage accounts, etc.)
+                IDictionary<string, object?>? properties = null;
+                if (root.TryGetProperty("properties", out var propsElement) &&
+                    propsElement.ValueKind == JsonValueKind.Object)
+                {
+                    properties = new Dictionary<string, object?>();
+                    foreach (var prop in propsElement.EnumerateObject())
+                    {
+                        properties[prop.Name] = prop.Value.Clone();
+                    }
+                }
+
+                WhatIfSku? sku = null;
+                if (root.TryGetProperty("sku", out var skuElement) &&
+                    skuElement.ValueKind == JsonValueKind.Object)
+                {
+                    skuElement.TryGetProperty("name", out var skuName);
+                    skuElement.TryGetProperty("tier", out var skuTier);
+                    skuElement.TryGetProperty("capacity", out var skuCapacity);
+                    sku = new WhatIfSku
+                    {
+                        name = skuName.ValueKind == JsonValueKind.String ? skuName.GetString() : null,
+                        tier = skuTier.ValueKind == JsonValueKind.String ? skuTier.GetString() : null,
+                        capacity = skuCapacity.ValueKind == JsonValueKind.Number ? skuCapacity.GetInt32() : null
+                    };
+                }
+
+                string? kind = root.TryGetProperty("kind", out var kindElement)
+                    ? kindElement.GetString()
+                    : null;
+
                 changes.Add(new WhatIfChange
                 {
                     resourceId = resourceId,
@@ -58,7 +90,10 @@ internal sealed class ResourceInventoryCollector(ITopazLogger logger)
                     after = new WhatIfAfterBeforeChange
                     {
                         type = resourceType,
-                        location = location
+                        location = location,
+                        properties = properties,
+                        sku = sku,
+                        kind = kind
                     }
                 });
             }
@@ -73,6 +108,11 @@ internal sealed class ResourceInventoryCollector(ITopazLogger logger)
             }
         }
 
-        return [.. changes];
-    }
-}
+        // Deduplicate by resourceId — the same resource can appear in multiple
+        // JSON files on disk (e.g. stored both as a subresource entry and inside
+        // its parent). ACE's ReconcileResources uses a Dictionary and throws on
+        // duplicate keys, so we keep only the first occurrence.
+        return [.. changes
+            .GroupBy(c => c.resourceId, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())];
+    }}
