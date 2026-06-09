@@ -123,6 +123,16 @@
     padding-bottom: 0.5rem;
 }
 
+.nav-section-title {
+    margin-top: 0.9rem;
+    margin-bottom: 0.35rem;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
 .nav-item:first-of-type {
     padding-top: 1rem;
 }
@@ -136,10 +146,11 @@
     background: none;
     border: none;
     border-radius: 10px;
-    height: 3rem;
+    min-height: 2.5rem;
+    padding: 0.5rem 1rem;
     display: flex;
     align-items: center;
-    line-height: 3rem;
+    line-height: 1.2;
     width: 100%;
 }
 
