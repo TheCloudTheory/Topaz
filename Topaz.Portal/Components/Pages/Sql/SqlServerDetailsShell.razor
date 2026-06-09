@@ -1,0 +1,52 @@
+@using System.Net
+
+<div class="row g-3">
+    <div class="col-12 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@OverviewHref"
+                             Match="NavLinkMatch.All">
+                        Overview
+                    </NavLink>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@TagsHref">
+                        Tags
+                    </NavLink>
+
+                    <div class="list-group-item list-group-item-action disabled text-muted small py-1 px-3 mt-2"
+                         style="font-size:0.7rem;letter-spacing:.06em;text-transform:uppercase;cursor:default;background:transparent;border:none;">
+                        Databases
+                    </div>
+
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@DatabasesHref">
+                        SQL databases
+                    </NavLink>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-9">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string ServerName { get; set; } = "";
+    [Parameter] public RenderFragment ChildContent { get; set; } = default!;
+
+    private string EncodedRg => WebUtility.UrlEncode(ResourceGroupName);
+    private string EncodedServer => WebUtility.UrlEncode(ServerName);
+
+    private string Base => $"/portal/sql/{SubscriptionId:D}/{EncodedRg}/{EncodedServer}";
+
+    private string OverviewHref => Base;
+    private string TagsHref => $"{Base}/tags";
+    private string DatabasesHref => $"{Base}/databases";
+}

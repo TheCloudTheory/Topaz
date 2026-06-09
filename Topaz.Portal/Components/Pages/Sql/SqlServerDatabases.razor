@@ -1,0 +1,230 @@
+@page "/portal/sql/{SubscriptionId:guid}/{ResourceGroupName}/{ServerName}/databases"
+@using System.Net
+@using Topaz.Portal.Models.Sql
+@inject ITopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/sql">Azure SQL servers</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/portal/sql/{SubscriptionId:D}/{ResourceGroupName}/{ServerName}")">@DecodedServerName</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Databases</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedServerName</h1>
+
+<SqlServerDetailsShell SubscriptionId="SubscriptionId"
+                       ResourceGroupName="@DecodedRg"
+                       ServerName="@DecodedServerName">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="card-title mb-0">SQL databases</h5>
+                <button class="btn btn-primary btn-sm"
+                        @onclick="ToggleCreate"
+                        disabled="@(_loading || _creatingBusy)">
+                    New database
+                </button>
+            </div>
+
+            @if (_showCreate)
+            {
+                <div class="border rounded p-3 mb-3">
+                    @if (!string.IsNullOrWhiteSpace(_createError))
+                    {
+                        <div class="alert alert-danger" role="alert">@_createError</div>
+                    }
+
+                    <div class="row g-2 align-items-end">
+                        <div class="col-12 col-md-8">
+                            <label class="form-label mb-1">Database name</label>
+                            <input class="form-control form-control-sm"
+                                   @bind="_createDatabaseName"
+                                   placeholder="e.g. appdb"
+                                   disabled="@_creatingBusy" />
+                        </div>
+
+                        <div class="col-12 col-md-4 d-flex gap-2">
+                            <button class="btn btn-success btn-sm flex-fill"
+                                    @onclick="CreateDatabaseAsync"
+                                    disabled="@_creatingBusy">
+                                Create
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm"
+                                    @onclick="CloseCreate"
+                                    disabled="@_creatingBusy">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (_loading)
+            {
+                <p>Loading…</p>
+            }
+            else if (_error is not null)
+            {
+                <div class="alert alert-danger" role="alert">@_error</div>
+            }
+            else if (_databases.Length == 0)
+            {
+                <p class="mb-0 text-muted">No SQL databases found on this server.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Location</th>
+                                <th>Collation</th>
+                                <th>Max size (bytes)</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var db in _databases)
+                            {
+                                <tr>
+                                    <td>@(db.Name ?? "-")</td>
+                                    <td>@(db.Status ?? "-")</td>
+                                    <td>@(db.Location ?? "-")</td>
+                                    <td>@(db.Collation ?? "-")</td>
+                                    <td>@(db.MaxSizeBytes?.ToString() ?? "-")</td>
+                                    <td class="text-end">
+                                        @if (_deletingDatabase == db.Name)
+                                        {
+                                            <span class="text-muted small">Deleting…</span>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => DeleteDatabaseAsync(db.Name!)"
+                                                    disabled="@(!string.IsNullOrWhiteSpace(_deletingDatabase))">
+                                                Delete
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_deleteError))
+            {
+                <div class="alert alert-danger mt-2 mb-0" role="alert">@_deleteError</div>
+            }
+        </div>
+    </div>
+</SqlServerDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string ServerName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _error;
+    private SqlDatabaseDto[] _databases = [];
+
+    private bool _showCreate;
+    private bool _creatingBusy;
+    private string? _createError;
+    private string _createDatabaseName = "";
+
+    private string? _deletingDatabase;
+    private string? _deleteError;
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedServerName => WebUtility.UrlDecode(ServerName);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            var result = await TopazClient.ListSqlDatabases(SubscriptionId, DecodedRg, DecodedServerName);
+            _databases = result.Value;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleCreate()
+    {
+        _showCreate = !_showCreate;
+        _createError = null;
+    }
+
+    private void CloseCreate()
+    {
+        _showCreate = false;
+        _createError = null;
+        _createDatabaseName = "";
+    }
+
+    private async Task CreateDatabaseAsync()
+    {
+        _createError = null;
+
+        if (string.IsNullOrWhiteSpace(_createDatabaseName))
+        {
+            _createError = "Please enter a database name.";
+            return;
+        }
+
+        _creatingBusy = true;
+        try
+        {
+            await TopazClient.CreateSqlDatabase(SubscriptionId, DecodedRg, DecodedServerName, _createDatabaseName);
+            CloseCreate();
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _createError = ex.Message;
+        }
+        finally
+        {
+            _creatingBusy = false;
+        }
+    }
+
+    private async Task DeleteDatabaseAsync(string databaseName)
+    {
+        _deleteError = null;
+        _deletingDatabase = databaseName;
+
+        try
+        {
+            await TopazClient.DeleteSqlDatabase(SubscriptionId, DecodedRg, DecodedServerName, databaseName);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _deleteError = ex.Message;
+        }
+        finally
+        {
+            _deletingDatabase = null;
+        }
+    }
+}

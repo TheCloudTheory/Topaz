@@ -1,0 +1,127 @@
+@page "/portal/sql/{SubscriptionId:guid}/{ResourceGroupName}/{ServerName}/tags"
+@using System.Net
+@using Topaz.Portal.Models.Sql
+@inject ITopazClient TopazClient
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/sql">Azure SQL servers</BreadcrumbItem>
+    <BreadcrumbItem Href="@($"/portal/sql/{SubscriptionId:D}/{ResourceGroupName}/{ServerName}")">@DecodedServerName</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">Tags</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedServerName</h1>
+
+<SqlServerDetailsShell SubscriptionId="SubscriptionId"
+                       ResourceGroupName="@DecodedRg"
+                       ServerName="@DecodedServerName">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_loadError is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @_loadError
+        </div>
+    }
+    else
+    {
+        <TagsPanel Tags="_tags"
+                   OnAdd="AddTagAsync"
+                   OnRemove="RemoveTagAsync"
+                   OnEdit="EditTagAsync" />
+    }
+</SqlServerDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string ServerName { get; set; } = "";
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedServerName => WebUtility.UrlDecode(ServerName);
+
+    private bool _loading = true;
+    private string? _loadError;
+    private Dictionary<string, string> _tags = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadServerAsync();
+    }
+
+    private async Task LoadServerAsync()
+    {
+        _loading = true;
+        _loadError = null;
+
+        try
+        {
+            var server = await TopazClient.GetSqlServer(SubscriptionId, DecodedRg, DecodedServerName);
+
+            if (server is null)
+            {
+                _tags = [];
+                _loadError = "SQL server not found.";
+                return;
+            }
+
+            _tags = new Dictionary<string, string>(server.Tags, StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            _tags = [];
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<string?> AddTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateSqlServerTag(SubscriptionId, DecodedRg, DecodedServerName, tag, value);
+            await LoadServerAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> RemoveTagAsync(string key)
+    {
+        try
+        {
+            await TopazClient.DeleteSqlServerTag(SubscriptionId, DecodedRg, DecodedServerName, key);
+            await LoadServerAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private async Task<string?> EditTagAsync(string tag, string value)
+    {
+        try
+        {
+            await TopazClient.CreateOrUpdateSqlServerTag(SubscriptionId, DecodedRg, DecodedServerName, tag, value);
+            await LoadServerAsync();
+            StateHasChanged();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+}

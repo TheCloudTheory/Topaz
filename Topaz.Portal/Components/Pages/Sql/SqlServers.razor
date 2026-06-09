@@ -1,0 +1,424 @@
+@page "/portal/sql"
+@using System.Net
+@using Topaz.Portal.Models.ResourceGroups
+@using Topaz.Portal.Models.Sql
+@using Topaz.Portal.Models.Subscriptions
+@using Topaz.Portal.Components.Shared
+@inject ITopazClient TopazClient
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="mb-0">Azure SQL servers</h1>
+
+    <button class="btn btn-primary btn-sm"
+            @onclick="ToggleCreate"
+            disabled="@(_loading || _creatingBusy)">
+        New SQL server
+    </button>
+</div>
+
+<div class="row g-3">
+    <div class="@(_showCreate ? "col-12 col-lg-8" : "col-12")">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <strong>Filter</strong>
+                        <span class="text-muted small">
+                            @(_selectedSubscriptionIds.Count == 0 ? "All subscriptions" : $"{_selectedSubscriptionIds.Count} selected")
+                        </span>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="ToggleFilter"
+                                disabled="@_loading">
+                            @(_showFilter ? "Hide" : "Show")
+                        </button>
+
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="ClearFilter"
+                                disabled="@(_loading || _selectedSubscriptionIds.Count == 0)">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+
+                @if (_showFilter)
+                {
+                    <div class="border rounded p-2 mb-3" style="max-height: 180px; overflow:auto;">
+                        @if (_subscriptions.Length == 0)
+                        {
+                            <div class="text-muted small">No subscriptions loaded.</div>
+                        }
+                        else
+                        {
+                            @foreach (var s in _subscriptions)
+                            {
+                                var id = s.SubscriptionId ?? "";
+                                var isChecked = !string.IsNullOrWhiteSpace(id) && _selectedSubscriptionIds.Contains(id);
+
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="@($"sub-filter-{id}")"
+                                           checked="@isChecked"
+                                           @onchange="(e) => OnSubscriptionFilterChanged(id, e)" />
+                                    <label class="form-check-label" for="@($"sub-filter-{id}")">
+                                        @(s.DisplayName ?? "(no name)")
+                                        <span class="text-muted small">(@id)</span>
+                                    </label>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+
+                @if (_loading)
+                {
+                    <p>Loading…</p>
+                }
+                else if (_error is not null)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @_error
+                    </div>
+                }
+                else if (FilteredSqlServers.Length == 0)
+                {
+                    <p class="mb-0">No SQL servers found.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Resource group</th>
+                                    <th>Subscription</th>
+                                    <th>Location</th>
+                                    <th>Version</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var server in FilteredSqlServers)
+                                {
+                                    <tr>
+                                        <td>
+                                            @if (Guid.TryParse(server.SubscriptionId, out var subId) &&
+                                                 !string.IsNullOrWhiteSpace(server.ResourceGroupName) &&
+                                                 !string.IsNullOrWhiteSpace(server.Name))
+                                            {
+                                                <a href="@GetSqlServerHref(subId, server.ResourceGroupName, server.Name)">@server.Name</a>
+                                            }
+                                            else
+                                            {
+                                                @(server.Name ?? "(unknown)")
+                                            }
+                                        </td>
+                                        <td>@(server.ResourceGroupName ?? "-")</td>
+                                        <td>@(server.SubscriptionName ?? "(unknown)")</td>
+                                        <td><code>@(server.Location ?? "-")</code></td>
+                                        <td>@(server.Version ?? "-")</td>
+                                        <td>@(server.State ?? "-")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (_showCreate)
+    {
+        <div class="col-12 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <h5 class="card-title mb-0">Create SQL server</h5>
+
+                        <button class="btn btn-sm btn-outline-secondary"
+                                @onclick="CloseCreate"
+                                disabled="@_creatingBusy">
+                            Close
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(_createError))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @_createError
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label">Subscription</label>
+                        <select class="form-select"
+                                @bind="_createSubscriptionId"
+                                @bind:after="OnCreateSubscriptionChangedAsync"
+                                disabled="@_creatingBusy">
+                            <option value="">Select a subscription…</option>
+                            @foreach (var s in _subscriptions)
+                            {
+                                <option value="@(s.SubscriptionId ?? "")">
+                                    @(s.DisplayName ?? "(no name)") (@(s.SubscriptionId ?? ""))
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Resource group</label>
+                        <select class="form-select"
+                                @bind="_createResourceGroupName"
+                                disabled="@(_creatingBusy || _rgLoading || string.IsNullOrWhiteSpace(_createSubscriptionId))">
+                            <option value="">@(_rgLoading ? "Loading…" : (string.IsNullOrWhiteSpace(_createSubscriptionId) ? "Select a subscription first" : "Select a resource group…"))</option>
+                            @foreach (var rg in _resourceGroupOptions)
+                            {
+                                <option value="@(rg.Name ?? "")">@(rg.Name ?? "")</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">SQL server name</label>
+                        <input class="form-control"
+                               @bind="_createServerName"
+                               placeholder="e.g. my-sql-server"
+                               disabled="@_creatingBusy" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Administrator login</label>
+                        <input class="form-control"
+                               @bind="_createAdminLogin"
+                               placeholder="e.g. sqladmin"
+                               disabled="@_creatingBusy" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Administrator password</label>
+                        <input class="form-control"
+                               type="password"
+                               @bind="_createAdminPassword"
+                               placeholder="Enter admin password"
+                               disabled="@_creatingBusy" />
+                    </div>
+
+                    <LocationDropdown
+                        SelectedLocation="@_createLocation"
+                        OnLocationChanged="OnLocationChanged"
+                        Disabled="@_creatingBusy" />
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success"
+                                @onclick="CreateSqlServerAsync"
+                                disabled="@_creatingBusy">
+                            Create
+                        </button>
+
+                        <button class="btn btn-outline-secondary"
+                                @onclick="CloseCreate"
+                                disabled="@_creatingBusy">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code
+{
+    private bool _loading = true;
+    private string? _error;
+    private SqlServerDto[] _sqlServers = [];
+
+    private SubscriptionDto[] _subscriptions = [];
+    private bool _showFilter = true;
+    private readonly HashSet<string> _selectedSubscriptionIds = new(StringComparer.OrdinalIgnoreCase);
+
+    private bool _showCreate;
+    private bool _creatingBusy;
+    private string? _createError;
+    private string _createSubscriptionId = "";
+    private string _createResourceGroupName = "";
+    private string _createServerName = "";
+    private string _createAdminLogin = "";
+    private string _createAdminPassword = "";
+    private string _createLocation = "westeurope";
+    private bool _rgLoading;
+    private ResourceGroupDto[] _resourceGroupOptions = [];
+
+    private SqlServerDto[] FilteredSqlServers =>
+        _selectedSubscriptionIds.Count == 0
+            ? _sqlServers
+            : _sqlServers.Where(server =>
+                !string.IsNullOrWhiteSpace(server.SubscriptionId) &&
+                _selectedSubscriptionIds.Contains(server.SubscriptionId))
+            .ToArray();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            var subsTask = TopazClient.ListSubscriptions();
+            var serversTask = TopazClient.ListSqlServers();
+
+            await Task.WhenAll(subsTask, serversTask);
+
+            _subscriptions = subsTask.Result.Value;
+            _sqlServers = serversTask.Result.Value;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string GetSqlServerHref(Guid subscriptionId, string resourceGroupName, string serverName)
+        => $"/portal/sql/{subscriptionId:D}/{WebUtility.UrlEncode(resourceGroupName)}/{WebUtility.UrlEncode(serverName)}";
+
+    private void ToggleFilter() => _showFilter = !_showFilter;
+
+    private void ClearFilter() => _selectedSubscriptionIds.Clear();
+
+    private void OnLocationChanged(string location) => _createLocation = location;
+
+    private void OnSubscriptionFilterChanged(string subscriptionId, ChangeEventArgs e)
+    {
+        var isChecked = e.Value is true;
+        if (isChecked)
+            _selectedSubscriptionIds.Add(subscriptionId);
+        else
+            _selectedSubscriptionIds.Remove(subscriptionId);
+    }
+
+    private void ToggleCreate()
+    {
+        _showCreate = !_showCreate;
+        _createError = null;
+    }
+
+    private void CloseCreate()
+    {
+        _showCreate = false;
+        _createError = null;
+        _createSubscriptionId = "";
+        _createResourceGroupName = "";
+        _createServerName = "";
+        _createAdminLogin = "";
+        _createAdminPassword = "";
+        _createLocation = "westeurope";
+        _resourceGroupOptions = [];
+    }
+
+    private async Task OnCreateSubscriptionChangedAsync()
+    {
+        _createResourceGroupName = "";
+        _resourceGroupOptions = [];
+
+        if (!Guid.TryParse(_createSubscriptionId, out var subId))
+            return;
+
+        _rgLoading = true;
+        try
+        {
+            var rgs = await TopazClient.ListResourceGroups(subId);
+            _resourceGroupOptions = rgs.Value;
+        }
+        catch
+        {
+            _resourceGroupOptions = [];
+        }
+        finally
+        {
+            _rgLoading = false;
+        }
+    }
+
+    private async Task CreateSqlServerAsync()
+    {
+        _createError = null;
+
+        if (string.IsNullOrWhiteSpace(_createSubscriptionId))
+        {
+            _createError = "Please select a subscription.";
+            return;
+        }
+
+        if (!Guid.TryParse(_createSubscriptionId, out var subscriptionId))
+        {
+            _createError = "Subscription ID is invalid.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_createResourceGroupName))
+        {
+            _createError = "Please select a resource group.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_createServerName))
+        {
+            _createError = "Please enter a SQL server name.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_createAdminLogin))
+        {
+            _createError = "Please enter an administrator login.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_createAdminPassword))
+        {
+            _createError = "Please enter an administrator password.";
+            return;
+        }
+
+        _creatingBusy = true;
+        try
+        {
+            await TopazClient.CreateSqlServer(
+                subscriptionId,
+                _createResourceGroupName,
+                _createServerName,
+                _createLocation,
+                _createAdminLogin,
+                _createAdminPassword);
+
+            _createServerName = "";
+            _createAdminLogin = "";
+            _createAdminPassword = "";
+            _createResourceGroupName = "";
+            _showCreate = false;
+
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _createError = ex.Message;
+        }
+        finally
+        {
+            _creatingBusy = false;
+        }
+    }
+}

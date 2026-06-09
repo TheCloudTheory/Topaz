@@ -9,6 +9,7 @@ using Topaz.Portal.Models.Rbac;
 using Topaz.Portal.Models.ResourceGroups;
 using Topaz.Portal.Models.ResourceManager;
 using Topaz.Portal.Models.ServiceBus;
+using Topaz.Portal.Models.Sql;
 using Topaz.Portal.Models.Storage;
 using Topaz.Portal.Models.Subscriptions;
 using Topaz.Portal.Models.Tenant;
@@ -141,6 +142,74 @@ public interface ITopazClient
         string resourceGroupName,
         string storageAccountName,
         string tagName,
+        CancellationToken cancellationToken = default);
+
+    // Azure SQL
+    Task<ListSqlServersResponse> ListSqlServers(
+        CancellationToken cancellationToken = default);
+
+    Task<SqlServerDto?> GetSqlServer(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string serverName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateSqlServer(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string serverName,
+        string location,
+        string administratorLogin,
+        string administratorLoginPassword,
+        string version = "12.0",
+        CancellationToken cancellationToken = default);
+
+    Task DeleteSqlServer(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string serverName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateOrUpdateSqlServerTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string serverName,
+        string tagName,
+        string tagValue,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteSqlServerTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string serverName,
+        string tagName,
+        CancellationToken cancellationToken = default);
+
+    Task<ListSqlDatabasesResponse> ListSqlDatabases(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string serverName,
+        CancellationToken cancellationToken = default);
+
+    Task<SqlDatabaseDto?> GetSqlDatabase(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string serverName,
+        string databaseName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateSqlDatabase(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string serverName,
+        string databaseName,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteSqlDatabase(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string serverName,
+        string databaseName,
         CancellationToken cancellationToken = default);
 
     // Managed Identities
