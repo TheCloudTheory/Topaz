@@ -219,54 +219,7 @@ _Implemented in v1.6-beta: all storage data-plane sub-services (Blob, Table, Que
 
 ### ACE (Azure Cost Estimator) integration
 
-<!--
-TODO: ACE Integration: Cost estimation backend endpoint in Topaz Host
-  Integrate ACE (https://github.com/TheCloudTheory/arm-estimator) as a library into
-  Topaz.Host to expose a cost analysis REST endpoint:
-  - GET /subscriptions/{sub}/providers/Microsoft.CostManagement/estimatedCosts
-    Returns cost estimates for all provisioned resources in a subscription, grouped by
-    resource type, with monthly cost totals. Accepts an optional `currency` query
-    parameter (default: USD) mapping to the 17 currencies ACE supports.
-  Wiring:
-  - Add ACE project reference (or NuGet package) to Topaz.Host.
-  - Walk the subscription's persisted resource files via the existing resource providers.
-  - Build ACE-compatible resource descriptors from the stored ArmResource<T> models and
-    call the ACE estimation engine.
-  - Return the result as JSON so both the CLI command and the Portal page can consume it.
-  milestone: v1.6-beta
-  labels: enhancement, ace, finops
--->
-
-<!--
-TODO: ACE Integration: `topaz estimate` CLI command
-  Add a `topaz estimate` sub-command to Topaz.CLI that queries the running Host's cost
-  estimation endpoint and prints a formatted cost breakdown table to stdout.
-  Options:
-  - `--subscription <id>`  — target subscription (default: first available)
-  - `--currency <code>`    — ISO 4217 currency code, e.g. USD, EUR, GBP (default: USD)
-  - `--output <format>`    — table (default) | json | csv
-  The command follows the same pattern as existing Topaz.CLI commands (e.g. StartCommand).
-  milestone: v1.6-beta
-  labels: enhancement, ace, finops, cli
--->
-
-<!--
-TODO: ACE Integration: Cost Analysis page in Topaz Portal
-  Add a dedicated "Cost Analysis" page to Topaz.Portal that shows ACE-powered estimated
-  monthly costs for all provisioned resources in the selected subscription.
-  UI requirements:
-  - A top-level nav entry "Cost Analysis" linking to /cost-analysis.
-  - Subscription selector (reuse the existing pattern from other portal pages).
-  - A table listing each resource type with its individual and cumulative estimated cost.
-  - A total monthly estimate at the bottom.
-  - A currency selector (dropdown of the 17 currencies ACE supports).
-  - Auto-refresh when the subscription or currency changes.
-  The page calls the Host's GET estimatedCosts endpoint via ITopazClient.
-  Include a bUnit component test in Topaz.Tests.Portal/ covering the render and
-  data-load behaviour (mock ITopazClient response).
-  milestone: v1.6-beta
-  labels: enhancement, ace, finops, portal
--->
+_Implemented in v1.6-beta: `TheCloudTheory.AzureCostEstimator.Core` NuGet package extracted from ACE and consumed by `Topaz.FinOps`. Topaz-native endpoint `GET /topaz/subscriptions/{sub}/estimatedCosts` returns monthly cost estimates for all provisioned resources in a subscription; supports 17 currencies via optional `?currency=` query parameter. `topaz finops estimate` CLI command prints a formatted cost breakdown table or JSON. Portal Cost Analysis page deferred to v1.7-beta._
 
 ### Azure Cosmos DB — initial control plane
 

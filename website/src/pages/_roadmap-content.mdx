@@ -34,8 +34,8 @@
 
 | | Feature | Description |
 |--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Cost estimation backend endpoint | `GET /subscriptions/{sub}/providers/Microsoft.CostManagement/estimatedCosts` — uses [ACE](https://github.com/TheCloudTheory/arm-estimator) to return monthly cost estimates for all provisioned resources in a subscription; supports 17 currencies |
-| <span class="badge--preview">Preview</span> | `topaz estimate` CLI command | New Topaz CLI sub-command that queries the Host's cost estimation endpoint and prints a formatted cost breakdown table; supports `--subscription`, `--currency`, and `--output` (table/json/csv) options |
+| <span class="badge--stable">Stable</span> | Cost estimation backend endpoint | `GET /topaz/subscriptions/{sub}/estimatedCosts` — uses [ACE](https://github.com/TheCloudTheory/arm-estimator) (`TheCloudTheory.AzureCostEstimator.Core` NuGet) to return monthly cost estimates for all provisioned resources in a subscription; supports 17 currencies |
+| <span class="badge--stable">Stable</span> | `topaz finops estimate` CLI command | New `topaz finops estimate` sub-command that queries the Host's cost estimation endpoint and prints a formatted cost breakdown table; supports `--subscription`, `--currency`, and `--output` (table/json) options |
 | <span class="badge--preview">Preview</span> | Cost Analysis portal page | Dedicated **Cost Analysis** page in Topaz Portal showing per-resource-type estimated costs for the selected subscription, with currency selector and auto-refresh |
 
 ### Azure Cosmos DB — initial control plane
