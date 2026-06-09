@@ -23,6 +23,7 @@ using Topaz.Service.VirtualMachine.Commands;
 using Topaz.Service.Disk.Commands;
 using Topaz.Service.Sql.Commands;
 using Topaz.Service.CosmosDb.Commands;
+using Topaz.FinOps.Commands;
 using Topaz.Shared;
 
 namespace Topaz.CLI;
@@ -138,7 +139,8 @@ internal class Program
             typeof(GenericVirtualMachineCommand),
             typeof(GenericSqlCommand),
             typeof(GenericCosmosDbCommand),
-            typeof(GenericDiskCommand)
+            typeof(GenericDiskCommand),
+            typeof(GenericFinOpsCommand)
         };
 
         var commands = Assembly.GetExecutingAssembly()
