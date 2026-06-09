@@ -71,13 +71,14 @@ public class OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger) : L
                 {
                     var message = IncomingLinkEndpoint.Messages[0];
                     message.Header ??= new Header();
+                    
                     // AMQPNetLite only writes a field into the encoded list when the backing store has been
                     // explicitly set via the property setter — it does NOT encode fields whose backing store
                     // is null even when the getter returns the default (0). Re-assigning DeliveryCount
                     // through the setter forces the value into the backing store so it appears as
                     // delivery-count=0 (0x43) in the binary. Microsoft.Azure.Amqp decodes that as
-                    // Nullable<uint> with HasValue=true, which AmqpMessageToSBReceivedMessage requires in
-                    // order to populate ServiceBusReceivedMessage.DeliveryCount without throwing.
+                    // Nullable<uint> with HasValue=true, which AmqpMessageToSBReceivedMessage requires 
+                    // to populate ServiceBusReceivedMessage.DeliveryCount without throwing.
                     message.Header.DeliveryCount = message.Header.DeliveryCount;
                     message.MessageAnnotations[new Symbol("x-opt-offset")] = IncomingLinkEndpoint.Messages.IndexOf(message).ToString();
                     message.MessageAnnotations[new Symbol("x-opt-locked-until")] = DateTime.UtcNow.AddMinutes(5);
@@ -154,6 +155,7 @@ public class OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger) : L
         DeliveryBufferField.SetValue(delivery, buffer);
         DeliveryHandleField.SetValue(delivery, link.Handle);
         DeliveryLinkField.SetValue(delivery, link);
+        
         // Service Bus queue receivers operate in PeekLock mode and expect normal unsettled
         // transfers. Sender-settled deliveries consume the initial credit but do not appear to
         // trigger credit replenishment in the MassTransit/Azure Service Bus receive path, which

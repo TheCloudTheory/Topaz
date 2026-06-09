@@ -35,11 +35,10 @@ public class CbsProcessor : IRequestProcessor
         }
 
         var responseLink = requestContext.ResponseLink;
-        if (responseLink != null)
-        {
-            responseLink.SendMessage(reply);
-            requestContext.Message.Dispose();
-        }
+        if (responseLink == null) return;
+        
+        responseLink.SendMessage(reply);
+        requestContext.Message.Dispose();
     }
 
     public int Credit => 10;
