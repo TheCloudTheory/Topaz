@@ -1,0 +1,148 @@
+@using Topaz.Portal.Models.FinOps
+@using Topaz.Portal.Models.Subscriptions
+@inject ITopazClient TopazClient
+
+<div class="card h-100">
+    <div class="card-body">
+        <h5 class="card-title mb-3">
+            <span class="bi bi-bar-chart-line me-2 text-primary" aria-hidden="true"></span>Estimated costs
+        </h5>
+
+        @if (_loading)
+        {
+            <p class="text-muted small mb-0">Loading…</p>
+        }
+        else if (_error is not null)
+        {
+            <div class="alert alert-danger alert-sm py-1 px-2 mb-0 small" role="alert">@_error</div>
+        }
+        else if (_rows.Count == 0)
+        {
+            <p class="text-muted small mb-0">No subscriptions found.</p>
+        }
+        else
+        {
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Subscription</th>
+                        <th class="text-end">Est. monthly cost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in _rows)
+                    {
+                        <tr>
+                            <td>
+                                <a href="/cost-analysis" class="text-decoration-none text-body">
+                                    @row.DisplayName
+                                </a>
+                            </td>
+                            <td class="text-end">
+                                @if (row.Loading)
+                                {
+                                    <span class="text-muted small">…</span>
+                                }
+                                else if (row.Error)
+                                {
+                                    <span class="text-muted small">—</span>
+                                }
+                                else
+                                {
+                                    <span class="@(row.TotalMonthlyCost > 0 ? "fw-semibold" : "text-muted")">
+                                        @FormatCost(row.TotalMonthlyCost, row.Currency)
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot class="table-group-divider fw-semibold">
+                    <tr>
+                        <td>Total</td>
+                        <td class="text-end">@FormatCost(_rows.Sum(r => r.TotalMonthlyCost), "USD") / month</td>
+                    </tr>
+                </tfoot>
+            </table>
+        }
+    </div>
+</div>
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private List<SubscriptionCostRow> _rows = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var subsResult = await TopazClient.ListSubscriptions();
+            var subscriptions = subsResult.Value ?? [];
+
+            _rows = subscriptions
+                .Select(s => new SubscriptionCostRow
+                {
+                    SubscriptionId = Guid.Parse(s.SubscriptionId!),
+                    DisplayName = s.DisplayName ?? s.SubscriptionId ?? "(unknown)"
+                })
+                .ToList();
+
+            _loading = false;
+            StateHasChanged();
+
+            // Fetch estimates in parallel after the skeleton rows are shown
+            var tasks = _rows.Select(row => FetchCostAsync(row));
+            await Task.WhenAll(tasks);
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load subscriptions: {ex.Message}";
+            _loading = false;
+        }
+    }
+
+    private async Task FetchCostAsync(SubscriptionCostRow row)
+    {
+        try
+        {
+            var result = await TopazClient.GetEstimatedCosts(row.SubscriptionId);
+            row.TotalMonthlyCost = result?.TotalMonthlyCost ?? 0;
+            row.Currency = result?.Currency ?? "USD";
+        }
+        catch
+        {
+            row.Error = true;
+        }
+        finally
+        {
+            row.Loading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private static string FormatCost(double cost, string? currency)
+    {
+        var symbol = currency switch
+        {
+            "EUR" => "€",
+            "GBP" => "£",
+            "JPY" => "¥",
+            "CNY" => "¥",
+            "INR" => "₹",
+            "KRW" => "₩",
+            _ => "$"
+        };
+        return $"{symbol}{cost:N2}";
+    }
+
+    private sealed class SubscriptionCostRow
+    {
+        public Guid SubscriptionId { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+        public bool Loading { get; set; } = true;
+        public bool Error { get; set; }
+        public double TotalMonthlyCost { get; set; }
+        public string? Currency { get; set; } = "USD";
+    }
+}
