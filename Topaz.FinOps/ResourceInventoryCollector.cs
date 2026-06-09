@@ -29,7 +29,8 @@ internal sealed class ResourceInventoryCollector(ITopazLogger logger)
                 using var doc = JsonDocument.Parse(content);
                 var root = doc.RootElement;
 
-                if (!root.TryGetProperty("id", out var idElement) ||
+                if (root.ValueKind != JsonValueKind.Object ||
+                    !root.TryGetProperty("id", out var idElement) ||
                     !root.TryGetProperty("type", out var typeElement))
                 {
                     continue;
