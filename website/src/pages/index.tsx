@@ -32,9 +32,12 @@ const SERVICES = [
   {name: 'Container Registry', sub: 'Images · Tags · Manifests'},
   {name: 'Azure App Service', sub: 'Plans · Web Apps · Function Apps'},
   {name: 'Azure SQL', sub: 'Servers · Databases'},
+  {name: 'Azure Cosmos DB', sub: 'Accounts · SQL Databases · Containers'},
+  {name: 'Azure Disk', sub: 'Managed Disks · SAS Access'},
   {name: 'Virtual Machines', sub: 'Control Plane'},
   {name: 'Virtual Network', sub: 'VNets · Subnets · NICs'},
   {name: 'Resource Manager', sub: 'ARM · Bicep · Terraform'},
+  {name: 'Managed Identity', sub: 'System & User-Assigned'},
   {name: 'Microsoft Entra ID', sub: 'Tenants · Identity'},
   {name: 'Azure RBAC', sub: 'Roles · Assignments'},
 ];

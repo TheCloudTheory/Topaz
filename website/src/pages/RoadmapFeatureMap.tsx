@@ -15,20 +15,6 @@ interface Milestone {
 
 const MILESTONES: Milestone[] = [
   {
-    version: 'v1.6-beta',
-    label: 'v1.6 beta',
-    colorClass: styles.milestoneBlue,
-    features: [
-      { service: 'Key Vault', summary: 'Accurate WWW-Authenticate challenge resource' },
-      { service: 'AMQP', summary: 'Spec-compliant encoding for non-.NET clients' },
-      { service: 'Azure Storage', summary: 'Secondary endpoint reads · unified data-plane port' },
-      { service: 'ARM Deployments', summary: 'Mid-flight cancellation' },
-      { service: 'Cost Estimator (ACE)', summary: 'Cost estimation endpoint · CLI command · portal page' },
-      { service: 'Cosmos DB', summary: 'Initial control plane (CRUD, keys, SQL databases/containers)' },
-      { service: 'Azure Disks', summary: 'Initial control plane · SAS access endpoints' },
-    ],
-  },
-  {
     version: 'v1.7-beta',
     label: 'v1.7 beta',
     colorClass: styles.milestonePurple,
@@ -83,7 +69,7 @@ export default function RoadmapFeatureMap(): JSX.Element {
       <div className="container">
         <h2 className={styles.featureMapTitle}>What's coming</h2>
         <p className={styles.featureMapSubtitle}>
-          A quick overview of the services and features planned for upcoming releases.
+          v1.6 is now released. Here is a quick overview of the services and features planned for upcoming releases.
         </p>
         <div className={styles.milestoneGrid}>
           {MILESTONES.map((milestone) => (

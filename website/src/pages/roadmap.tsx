@@ -12,8 +12,8 @@ function Hero() {
       <div className="container">
         <h1 className={styles.heroTitle}>Roadmap</h1>
         <p className={styles.heroSubtitle}>
-          Planned features and milestones for upcoming Topaz releases. The
-          roadmap reflects current intentions and may change.
+          Recent releases and planned milestones for upcoming Topaz versions.
+          The roadmap reflects current intentions and may change.
         </p>
       </div>
     </section>
@@ -51,7 +51,7 @@ export default function RoadmapPage(): JSX.Element {
   return (
     <Layout
       title="Roadmap"
-      description="Topaz release roadmap — planned features and milestones across upcoming beta versions."
+      description="Topaz release roadmap — recent releases and planned features across upcoming versions."
     >
       <Hero />
       <RoadmapFeatureMap />

@@ -19,24 +19,26 @@ type Service = {
 };
 
 const SERVICES: Service[] = [
-  { abbr: 'ST',   bg: '#0078D4', name: 'Azure Storage',           description: 'Blob, Table, and Queue storage' },
-  { abbr: 'KV',   bg: '#1B63EB', name: 'Azure Key Vault',         description: 'Secrets management' },
-  { abbr: 'KV',   bg: '#1B63EB', name: 'Key Vault Keys',          description: 'Cryptographic key operations' },
+  { abbr: 'ST',   bg: '#0078D4', name: 'Azure Storage',           description: 'Blob, Table, and Queue storage', preview: true },
+  { abbr: 'KV',   bg: '#1B63EB', name: 'Azure Key Vault',         description: 'Secrets management', preview: true },
+  { abbr: 'KV',   bg: '#1B63EB', name: 'Key Vault Keys',          description: 'Cryptographic key operations', preview: true },
   { abbr: 'KV',   bg: '#1B63EB', name: 'Key Vault Certificates',  description: 'Certificate lifecycle management', preview: true },
-  { abbr: 'SB',   bg: '#8661C5', name: 'Azure Service Bus',       description: 'Queues and topics via AMQP' },
-  { abbr: 'EH',   bg: '#C0392B', name: 'Azure Event Hub',         description: 'Real-time event streaming' },
+  { abbr: 'SB',   bg: '#8661C5', name: 'Azure Service Bus',       description: 'Queues and topics via AMQP', preview: true },
+  { abbr: 'EH',   bg: '#C0392B', name: 'Azure Event Hub',         description: 'Real-time event streaming', preview: true },
   { abbr: 'CR',   bg: '#0078D4', name: 'Container Registry',      description: 'Image push & pull operations', preview: true },
-  { abbr: 'ARM',  bg: '#E8751A', name: 'Resource Manager',        description: 'ARM templates & Bicep deployments' },
+  { abbr: 'ARM',  bg: '#E8751A', name: 'Resource Manager',        description: 'ARM templates & Bicep deployments', preview: true },
   { abbr: 'MG',   bg: '#E8751A', name: 'Management Groups',       description: 'Management group hierarchy and subscriptions', preview: true },
-  { abbr: 'AAD',  bg: '#0078D4', name: 'Microsoft Entra ID',      description: 'Identity & token issuance' },
-  { abbr: 'RBAC', bg: '#07A560', name: 'Azure RBAC',              description: 'Role-based access control' },
+  { abbr: 'AAD',  bg: '#0078D4', name: 'Microsoft Entra ID',      description: 'Identity & token issuance', preview: true },
+  { abbr: 'RBAC', bg: '#07A560', name: 'Azure RBAC',              description: 'Role-based access control', preview: true },
   { abbr: 'MI',   bg: '#8661C5', name: 'Managed Identity',        description: 'System & user-assigned identities' },
-  { abbr: 'VNet', bg: '#1B63EB', name: 'Virtual Network',         description: 'VNet and subnet emulation' },
+  { abbr: 'VNet', bg: '#1B63EB', name: 'Virtual Network',         description: 'VNet and subnet emulation', preview: true },
+  { abbr: 'NIC',  bg: '#1B63EB', name: 'Network Interface',       description: 'Network interface resources and VM networking' },
   { abbr: 'VM',   bg: '#1B63EB', name: 'Virtual Machines',        description: 'VM lifecycle management (no-op emulation)', preview: true },
   { abbr: 'NSG',  bg: '#07A560', name: 'Network Security Groups', description: 'NSG rules and associations', preview: true },
-  { abbr: 'AS',   bg: '#0078D4', name: 'Azure App Service',        description: 'App Service Plans, Web Apps and Function Apps', preview: true },
+  { abbr: 'AS',   bg: '#0078D4', name: 'Azure App Service',       description: 'App Service Plans, Web Apps and Function Apps', preview: true },
   { abbr: 'SQL',  bg: '#CC2927', name: 'Azure SQL',               description: 'SQL Server and Database emulation', preview: true },
-  { abbr: 'CDB',  bg: '#0078D4', name: 'Azure Cosmos DB',         description: 'NoSQL multi-model database emulation', comingSoon: true },
+  { abbr: 'CDB',  bg: '#0078D4', name: 'Azure Cosmos DB',         description: 'NoSQL multi-model database emulation', preview: true },
+  { abbr: 'DISK', bg: '#E8751A', name: 'Azure Disk',              description: 'Managed disk control plane and SAS access', preview: true },
 ];
 
 const TOOLING: Service[] = [
