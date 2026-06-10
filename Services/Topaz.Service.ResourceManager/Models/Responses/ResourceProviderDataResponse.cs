@@ -19,7 +19,7 @@ public sealed class ResourceProviderDataResponse(string providerName)
         ["Microsoft.ServiceBus"]        = ["namespaces"],
         ["Microsoft.EventHub"]          = ["namespaces"],
         ["Microsoft.Network"]           = ["virtualNetworks", "networkInterfaces", "publicIPAddresses"],
-        ["Microsoft.Compute"]           = ["virtualMachines"],
+        ["Microsoft.Compute"]           = ["virtualMachines", "disks"],
         ["Microsoft.Resources"]         = ["resourceGroups", "deployments", "subscriptions"],
         ["Microsoft.ManagedIdentity"]   = ["userAssignedIdentities"],
     };
@@ -57,15 +57,26 @@ public sealed class ResourceProviderDataResponse(string providerName)
         public IReadOnlyList<ProviderExtendedLocation>? LocationMappings { get; init; }
         public IReadOnlyList<ResourceTypeAlias>? Aliases { get; init; }
 
-        public IReadOnlyList<string> ApiVersions { get; init; } =
-        [
-            "2025-12-01"
-        ];
+        public IReadOnlyList<string> ApiVersions { get; init; } = GetApiVersions(resourceType);
 
-        public string DefaultApiVersion { get; init; } = "2025-12-01";
+        public string DefaultApiVersion { get; init; } = GetDefaultApiVersion(resourceType);
         public IReadOnlyList<ZoneMapping>? ZoneMappings { get; init; }
         public IReadOnlyList<ApiProfile>? ApiProfiles { get; init; }
         public string? Capabilities { get; init; }
         public IReadOnlyDictionary<string, string>? Properties { get; init; }
+
+        private static IReadOnlyList<string> GetApiVersions(string resourceType)
+        {
+            return resourceType.Equals("disks", StringComparison.OrdinalIgnoreCase)
+                ? ["2025-11-01"]
+                : ["2025-12-01"];
+        }
+
+        private static string GetDefaultApiVersion(string resourceType)
+        {
+            return resourceType.Equals("disks", StringComparison.OrdinalIgnoreCase)
+                ? "2025-11-01"
+                : "2025-12-01";
+        }
     }
 }
