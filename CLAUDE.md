@@ -231,15 +231,9 @@ When an azure-cli command returns unexpected JSON (e.g. missing fields that Topa
 
 3. **Known SDK behaviour — `content_type` is read from the `content-type` response header.** `_RequestsTransportResponseBase.__init__` sets `self.content_type = requests_response.headers.get("content-type")`. If the header is absent or wrong, XML is parsed as JSON (default) and deserialization silently returns `None` or an empty list.
 
-4. **Known CLI behaviour — `az storage container show-permission`** always strips `signed_identifiers` via `transform_container_permission_output` and only returns `{"publicAccess": "..."}`. To read stored access policies use `az storage container policy list` instead.
+4. **ContentDecodePolicy skips deserialization when `stream=True`.** The policy's `on_response` returns early if `response.context.options.get("stream", True)` is truthy. Generated operation code explicitly sets `_stream = False` before calling the pipeline, which is the correct pattern.
 
-5. **ContentDecodePolicy skips deserialization when `stream=True`.** The policy's `on_response` returns early if `response.context.options.get("stream", True)` is truthy. Generated operation code explicitly sets `_stream = False` before calling the pipeline, which is the correct pattern.
-
-6. **`az webapp list` silently drops items where `kind` is absent** — `list_webapp` (azure-cli 2.84.0) filters: `return list(filter(lambda x: x.kind is not None and "function" not in x.kind.lower(), full_list))`. Any web app resource **must** include a non-null `kind` (e.g. `"app"`). Sites created without an explicit kind in the PUT request must default to `"app"` in the control plane.
-
-7. **`az webapp show` crashes when `possibleOutboundIpAddresses` is absent** — `show_app` calls `_remove_list_duplicates(app)` which does `webapp.possible_outbound_ip_addresses.split(',')`. If the field is absent the CLI throws `AttributeError: 'NoneType' object has no attribute 'split'`. Every App Service site resource must include `possibleOutboundIpAddresses` (empty string `""` is valid).
-
-8. **`GenericResourceExpanded.From` must propagate `Kind`** — The shared helper maps `Id`, `Name`, `Type`, `Location`, `Tags`, `Properties` but historically dropped `Kind`. This silently strips `kind` from all generic list responses, breaking CLI filters such as the one in point 6. Always verify that `GenericResourceExpanded` forwards every ARM field when extending it.
+5. **`GenericResourceExpanded.From` must propagate `Kind`** — The shared helper maps `Id`, `Name`, `Type`, `Location`, `Tags`, `Properties` but historically dropped `Kind`. This silently strips `kind` from all generic list responses, breaking CLI filters such as the one in point 6. Always verify that `GenericResourceExpanded` forwards every ARM field when extending it.
 
 ### `Topaz.Tests.Portal/` (Portal work definition of done)
 - Inherit from `BunitTestContext`.
@@ -247,25 +241,6 @@ When an azure-cli command returns unexpected JSON (e.g. missing fields that Topa
 - After a click causes a re-render, re-query with a fresh `cut.Find(...)` — stored references hold stale event-handler IDs.
 - Use `cut.WaitForAssertion(...)` for async state changes.
 - One `[Test]` per user-visible behaviour; name: `<Component>_<Behaviour>_<ExpectedOutcome>`.
-
-## Azure Queue Storage — response contracts
-
-These differ from intuition; getting them wrong causes `NullReferenceException` inside the Azure SDK error parser.
-
-| Operation | Method | Path | Status | Response |
-|---|---|---|---|---|
-| Get Queue Metadata | `GET` | `/{queue}?comp=metadata` | 200 | Empty body; `x-ms-approximate-messages-count` header |
-| Update Message | `PUT` | `/{queue}/messages/{id}` | **204** | Empty body; `x-ms-popreceipt` + `x-ms-time-next-visible` headers |
-| Send Message | `POST` | `/{queue}/messages` | 201 | XML body (`QueueMessagesList`) |
-
-The `UpdateMessage` endpoint returns metadata in **response headers, not the body**. Any non-204 response causes the SDK to throw `RequestFailedException`, which then crashes in `StorageRequestFailedDetailsParser.TryParse` when the body isn't a valid error XML.
-
-## ACR data-plane — implemented endpoints
-
-- `GET /PUT /DELETE /HEAD /v2/{name}/manifests/{reference}`
-- `HEAD /GET /v2/{name}/blobs/{digest}`
-- `POST /PATCH /PUT` blob uploads
-- `GET /v2/_catalog`, `GET /v2/{name}/tags/list`, `GET /acr/v1/{name}/_tags`
 
 ## When to check with the user
 
