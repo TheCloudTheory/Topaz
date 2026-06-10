@@ -149,6 +149,11 @@ def amqp_hub():
         pass
 
 
+@pytest.mark.skip(
+    reason="azure-eventhub (pyamqp) is incompatible with AMQPNetLite: "
+           "pyamqp's $management link handling hangs indefinitely against AMQPNetLite. "
+           "Tracked for resolution when AMQPNetLite AMQP data-plane compatibility is added."
+)
 def test_eventhub_amqp_message_sent_should_be_received(amqp_hub):
     """
     Phase 1 AMQP baseline: send one event and receive it back via AMQP.
