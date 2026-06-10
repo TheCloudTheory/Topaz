@@ -279,7 +279,12 @@ public class Host
         listener.Listeners[0].SASL.EnableAnonymousMechanism = true;
         listener.Listeners[0].AMQP.MaxFrameSize = 262144;
 
-        listener.RegisterRequestProcessor("$management", new ManagementProcessor());
+        // Pad Open/Attach frames so Python's positional frame[] access (frame[9], frame[11], frame[13])
+        // doesn't raise IndexError. AMQPNetLite 2.5.1 omits trailing null fields; this handler ensures
+        // Properties is always included, forcing the serializer to emit all preceding fields too.
+        listener.Listeners[0].HandlerFactory = _ => AmqpFramePaddingHandler.Instance;
+
+        listener.RegisterRequestProcessor("$management", new ManagementProcessor(_logger));
         listener.RegisterLinkProcessor(new LinkProcessor(_logger));
 
         // Frame traces should be enabled only if LogLevel is set to Debug

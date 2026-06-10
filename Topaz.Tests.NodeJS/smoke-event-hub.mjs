@@ -38,8 +38,10 @@ const consumer = new EventHubConsumerClient(CONSUMER_GROUP, CONNECTION_STRING, H
 try {
   // Record current end-of-stream position on partition 0 before sending.
   const partitionProps = await consumer.getPartitionProperties("0");
+  
+  // Start from the last enqueued sequence number, or offset 0 if partition is empty
   const startingPosition = partitionProps.isEmpty
-    ? { earliest: true }
+    ? { offset: "0" }  // Use offset instead of earliest
     : { sequenceNumber: partitionProps.lastEnqueuedSequenceNumber };
 
   const batch = await producer.createBatch({ partitionId: "0" });

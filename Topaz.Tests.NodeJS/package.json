@@ -9,7 +9,7 @@
     "smoke:all": "node smoke-service-bus.mjs && node smoke-event-hub.mjs"
   },
   "dependencies": {
-    "@azure/service-bus": "^7.9.5",
-    "@azure/event-hubs": "^6.0.0"
+    "@azure/event-hubs": "^6.0.4",
+    "@azure/service-bus": "^7.9.5"
   }
 }

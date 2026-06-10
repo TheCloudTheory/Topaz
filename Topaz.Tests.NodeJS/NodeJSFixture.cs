@@ -5,10 +5,10 @@ using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Images;
 using DotNet.Testcontainers.Networks;
 
-namespace Topaz.Tests.Python;
+namespace Topaz.Tests.NodeJS;
 
 [SetUpFixture]
-public class PythonFixture
+public class NodeJSFixture
 {
     private static readonly string TopazContainerImage =
         Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "topaz/host";
@@ -16,11 +16,11 @@ public class PythonFixture
     private static readonly string CertificateFile = File.ReadAllText("topaz.crt");
     private static readonly string CertificateKey = File.ReadAllText("topaz.key");
 
-    private IFutureDockerImage? _pythonImage;
+    private IFutureDockerImage? _nodeImage;
     private IContainer? _containerTopaz;
     private INetwork? _network;
 
-    internal static IContainer? PythonContainer { get; private set; }
+    internal static IContainer? NodeContainer { get; private set; }
     internal static IContainer? TopazContainer { get; private set; }
 
     [OneTimeSetUp]
@@ -35,8 +35,8 @@ public class PythonFixture
         _containerTopaz = new ContainerBuilder()
             .WithImage(TopazContainerImage)
             .WithPortBinding(8888)
+            .WithPortBinding(8889)
             .WithPortBinding(8891)
-            .WithPortBinding(8892)
             .WithPortBinding(8897)
             .WithPortBinding(8898)
             .WithPortBinding(8899)
@@ -55,78 +55,58 @@ public class PythonFixture
 
         await _containerTopaz.StartAsync().ConfigureAwait(false);
 
-        // Wait until the resource manager port is accepting connections before
-        // proceeding, instead of relying on a fixed delay.
         await WaitForContainerReady(_containerTopaz, 8899).ConfigureAwait(false);
 
-        _pythonImage = new ImageFromDockerfileBuilder()
+        _nodeImage = new ImageFromDockerfileBuilder()
             .WithDockerfileDirectory(repoRoot)
-            .WithDockerfile("Topaz.Tests.Python/docker/Dockerfile")
+            .WithDockerfile("Topaz.Tests.NodeJS/docker/Dockerfile")
             .WithBuildArgument("BUILDKIT_INLINE_CACHE", "1")
             .Build();
 
-        await _pythonImage.CreateAsync().ConfigureAwait(false);
+        await _nodeImage.CreateAsync().ConfigureAwait(false);
 
         var topazIp = _containerTopaz.IpAddress;
 
-        var pythonContainer = new ContainerBuilder()
-            .WithImage(_pythonImage)
+        var nodeContainer = new ContainerBuilder()
+            .WithImage(_nodeImage)
             .WithNetwork(_network)
             .WithEntrypoint("/bin/sh")
             .WithCommand("-c", "tail -f /dev/null")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
-            .WithEnvironment("REQUESTS_CA_BUNDLE", "/tmp/topaz.crt")
-            .WithEnvironment("SSL_CERT_FILE", "/etc/ssl/certs/ca-certificates.crt")
-            .WithEnvironment("AZURE_CORE_INSTANCE_DISCOVERY", "false")
+            .WithEnvironment("NODE_EXTRA_CA_CERTS", "/tmp/topaz.crt")
             .WithExtraHost("topaz.local.dev", topazIp)
             .WithOutputConsumer(Consume.RedirectStdoutAndStderrToConsole())
             .Build();
 
-        await pythonContainer.StartAsync().ConfigureAwait(false);
+        await nodeContainer.StartAsync().ConfigureAwait(false);
 
-        var appendCertResult = await pythonContainer.ExecAsync([
-            "/bin/sh", "-c",
-            "cat /tmp/topaz.crt >> /etc/ssl/certs/ca-certificates.crt"
-        ]);
-
-        Assert.That(appendCertResult.ExitCode, Is.EqualTo(0),
-            $"Appending Topaz certificate to system trust store failed. STDERR: {appendCertResult.Stderr}");
-
-        // Also update certifi's CA bundle so that uAMQP / pyamqp trusts the Topaz cert
-        await pythonContainer.ExecAsync([
-            "/bin/sh", "-c",
-            "python3 -c \"import certifi; open(certifi.where(), 'a').write(open('/tmp/topaz.crt').read())\" 2>/dev/null || true"
-        ]);
-
-        PythonContainer = pythonContainer;
+        NodeContainer = nodeContainer;
         TopazContainer = _containerTopaz;
     }
 
     [OneTimeTearDown]
     public async Task OneTimeTearDown()
     {
-        if (PythonContainer != null) await PythonContainer.DisposeAsync();
+        if (NodeContainer != null) await NodeContainer.DisposeAsync();
         if (_containerTopaz != null) await _containerTopaz.DisposeAsync();
-        if (_pythonImage != null) await _pythonImage.DisposeAsync();
+        if (_nodeImage != null) await _nodeImage.DisposeAsync();
         if (_network != null) await _network.DisposeAsync();
     }
 
     /// <summary>
-    /// Runs pytest against the specified test file inside the Python container and
-    /// asserts that the exit code is 0.  On failure the full pytest output is
-    /// included in the assertion message.
+    /// Runs a Node.js smoke script inside the Node container and asserts exit code 0.
     /// </summary>
-    internal static async Task RunPythonTests(string testFile)
+    internal static async Task RunNodeScript(string scriptFile)
     {
-        Assert.That(PythonContainer, Is.Not.Null, "Python container has not been started.");
+        Assert.That(NodeContainer, Is.Not.Null, "Node container has not been started.");
         Assert.That(TopazContainer, Is.Not.Null, "Topaz container has not been started.");
 
-        var result = await PythonContainer!.ExecAsync([
+        var result = await NodeContainer!.ExecAsync([
             "/bin/sh", "-c",
-            $"cd /tests && python -m pytest {testFile} -v --tb=short 2>&1"
+            $"cd /tests && node {scriptFile} 2>&1"
         ]);
 
-        Console.WriteLine($"pytest {testFile}:");
+        Console.WriteLine($"node {scriptFile}:");
         Console.WriteLine(result.Stdout);
 
         if (result.ExitCode != 0)
@@ -135,19 +115,18 @@ public class PythonFixture
         }
 
         Assert.That(result.ExitCode, Is.EqualTo(0),
-            $"pytest {testFile} failed.\n\n{result.Stdout}\n{result.Stderr}");
+            $"node {scriptFile} failed.\n\n{result.Stdout}\n{result.Stderr}");
     }
 
     /// <summary>
-    /// Ensures a hostname is resolvable to the Topaz container IP inside the
-    /// Python container, adding an /etc/hosts entry if not already present.
+    /// Ensures a hostname resolves to the Topaz container IP inside the Node container.
     /// </summary>
     internal static async Task EnsureHostMapping(string hostname)
     {
-        Assert.That(PythonContainer, Is.Not.Null);
+        Assert.That(NodeContainer, Is.Not.Null);
         Assert.That(TopazContainer, Is.Not.Null);
 
-        var result = await PythonContainer!.ExecAsync([
+        var result = await NodeContainer!.ExecAsync([
             "/bin/sh", "-c",
             $"grep -qiE '(^|[[:space:]]){Regex.Escape(hostname)}([[:space:]]|$)' /etc/hosts " +
             $"|| echo '{TopazContainer!.IpAddress} {hostname}' >> /etc/hosts"
@@ -157,43 +136,30 @@ public class PythonFixture
             $"Failed to register host mapping for {hostname}. STDERR: {result.Stderr}");
     }
 
-    // ------------------------------------------------------------------
-
-    /// <summary>
-    /// Polls the Topaz container's mapped host port until it accepts a TCP
-    /// connection, or throws after the timeout expires.
-    /// </summary>
-    private static async Task WaitForContainerReady(IContainer container, ushort containerPort, int timeoutSeconds = 60)
+    private static string FindRepoRoot()
     {
-        var hostPort = container.GetMappedPublicPort(containerPort);
-        var deadline = DateTime.UtcNow.AddSeconds(timeoutSeconds);
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "Topaz.sln")))
+            dir = dir.Parent;
+        return dir?.FullName ?? throw new InvalidOperationException("Could not find repo root (Topaz.sln).");
+    }
 
+    private static async Task WaitForContainerReady(IContainer container, int port)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(60);
         while (DateTime.UtcNow < deadline)
         {
             try
             {
                 using var tcp = new System.Net.Sockets.TcpClient();
-                await tcp.ConnectAsync("localhost", hostPort).ConfigureAwait(false);
+                await tcp.ConnectAsync("127.0.0.1", container.GetMappedPublicPort(port));
                 return;
             }
             catch
             {
-                await Task.Delay(500).ConfigureAwait(false);
+                await Task.Delay(500);
             }
         }
-
-        throw new TimeoutException(
-            $"Topaz container did not become ready on port {containerPort} within {timeoutSeconds} seconds.");
-    }
-
-    private static string FindRepoRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "Topaz.sln")))
-            directory = directory.Parent;
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   "Repository root (directory containing Topaz.sln) could not be located.");
+        throw new TimeoutException($"Topaz container port {port} did not become ready within 60 s.");
     }
 }

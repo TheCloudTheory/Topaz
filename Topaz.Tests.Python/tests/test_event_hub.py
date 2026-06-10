@@ -7,7 +7,7 @@ import pytest
 from azure.mgmt.eventhub import EventHubManagementClient
 from azure.mgmt.eventhub.models import EHNamespace, Eventhub
 
-from topaz_sdk.helpers import DEFAULT_RESOURCE_MANAGER_PORT
+from topaz_sdk.helpers import DEFAULT_RESOURCE_MANAGER_PORT, TopazResourceHelpers
 from topaz_sdk.identity import GLOBAL_ADMIN_ID, AzureLocalCredential
 from topaz_sdk.client import TopazArmClient
 

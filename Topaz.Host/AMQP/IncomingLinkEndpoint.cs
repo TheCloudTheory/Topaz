@@ -2,6 +2,7 @@ using System.Text;
 using Amqp;
 using Amqp.Framing;
 using Amqp.Listener;
+using Amqp.Types;
 using Topaz.Shared;
 
 namespace Topaz.Host.AMQP;
@@ -38,10 +39,32 @@ public class IncomingLinkEndpoint(string targetAddress, ITopazLogger logger) : L
         // TODO: Add support for messages sent as a batch
         if (messageContext.Message.Format == BatchFormat)
         {
+            // The Event Hub producer SDK sends events as a batch AMQP message (Format=0x80013700).
+            // The body is a single Data section containing concatenated AMQP-encoded individual
+            // event messages. The real Event Hub broker unwraps these and delivers individual events
+            // to consumers. Topaz must do the same: decode the inner messages and store them
+            // individually so that consumers receive standard (non-batch) AMQP messages.
+            messageContext.Complete();
+            var batchBytes = messageContext.Message.Body as byte[];
+            if (batchBytes != null && batchBytes.Length > 0)
+            {
+                var buf = new ByteBuffer(batchBytes, 0, batchBytes.Length, batchBytes.Length);
+                while (buf.Length > 0)
+                {
+                    var inner = Message.Decode(buf);
+                    PrepareMessageForDelivery(inner);
+                    lock (OutgoingLinkEndpoint.DeliveryLock)
+                    {
+                        Messages.Add(inner);
+                    }
+                }
+                OutgoingLinkEndpoint.NotifyMessageEnqueued();
+            }
+            return;
         }
 
         // Add message annotations which are used by Event Hub SDK for some of the internal operations
-        messageContext.Message.MessageAnnotations = new MessageAnnotations();
+        PrepareMessageForDelivery(messageContext.Message);
 
         lock (OutgoingLinkEndpoint.DeliveryLock)
         {
@@ -66,6 +89,25 @@ public class IncomingLinkEndpoint(string targetAddress, ITopazLogger logger) : L
 
         logger.LogDebug(nameof(IncomingLinkEndpoint), nameof(OnMessage),
             $"Executing {nameof(IncomingLinkEndpoint)}.{nameof(OnMessage)}: Finished processing a message.");
+    }
+
+    /// <summary>
+    /// Applies standard delivery preparation to a message before it is added to the
+    /// outgoing queue: resets MessageAnnotations, assigns a fallback MessageId, and
+    /// (on platforms where AMQPNetLite uses a ByteBuffer-backed Data section) eagerly
+    /// copies the body bytes so the message is independent of the receive buffer lifetime.
+    /// </summary>
+    private static void PrepareMessageForDelivery(Message message)
+    {
+        // Reset/create MessageAnnotations — the Event Hub SDK reads system properties from here.
+        message.MessageAnnotations = new MessageAnnotations();
+
+        // Ensure every message has a MessageId. The Node.js @azure/service-bus SDK requires
+        // messageId to track lock renewal; without it, the receiver throws
+        // "Failed to stop auto lock renewal - no message ID".
+        message.Properties ??= new Properties();
+        if (message.Properties.MessageId == null)
+            message.Properties.MessageId = Guid.NewGuid().ToString();
     }
 
     public override void OnFlow(FlowContext flowContext)
