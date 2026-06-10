@@ -15,12 +15,12 @@ Make sure you're using the most recent version of Topaz to benefit from the bugf
 
 Service Name|Control Plane|Data Plane
 ------------|-------------|----------
-Subscriptions|🚧|N/A
+Subscriptions|✅|N/A
 Resource Groups|✅|N/A
-Azure Storage|🚧|🚧
-Table Storage|🚧|✅
-Blob Storage|🚧|🚧
-Queue Storage|🚧|✅
+Azure Storage|✅|🚧
+Table Storage|✅|✅
+Blob Storage|✅|🚧
+Queue Storage|✅|✅
 Key Vault|✅|🚧
 Event Hub|🚧|🚧
 Service Bus|🚧|🚧
@@ -29,12 +29,14 @@ Network Interface|✅|N/A
 Azure Resource Manager|🚧|N/A
 Managed Identity|✅|N/A
 Container Registry|✅|🚧
-Azure SQL|�|🔜
+Azure SQL|✅|:x:
 Azure App Service|🚧|N/A
 Azure Virtual Machines|🚧|N/A
 Entra ID|N/A|🚧
 RBAC|🚧|N/A
 Monitor|🚧|:x:
+Cosmos DB|🚧|🔜
+Azure Disk|🚧|🚧
 
 ✅ - fully supported (stable)
 
@@ -64,7 +66,6 @@ Resource Manager|8899, 443|HTTPS
 Blob Storage|8891|HTTPS
 Table Storage|8891|HTTPS
 Queue Storage|8891|HTTPS
-File Storage|8891|HTTPS
 Azure Key Vault|8898, 443|HTTPS
 Azure Event Hub|8897|HTTPS
 Azure Event Hub (AMQP)|8888|AMQP
