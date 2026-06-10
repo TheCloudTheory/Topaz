@@ -5,9 +5,9 @@ authors: kamilmrzyglod
 tags: [general, terraform]
 ---
 
-Every Terraform workflow that targets Azure needs the same things before it can do anything useful: an Azure subscription, a service principal or user account with the right permissions, and a network path to the Azure APIs. In a team setting you also need to make sure those credentials are available wherever `terraform apply` runs — local machines, CI agents, staging pipelines. The feedback loop is slow, and the blast radius for a misconfigured `apply` is real.
+I wanted to run Terraform locally against infrastructure emulated on my laptop, without an Azure subscription and without worrying about credentials leaking into my CI pipeline. At first it seemed cumbersome. As it turns out, the setup is straightforward, and it exposed something interesting about how the AzureRM provider actually discovers its endpoints.
 
-Topaz removes all of that. The same `terraform apply` that would create resources in Azure can instead create them in a local emulator, with no subscription, no credentials to rotate, and no cloud charges. This post explains how the integration works and how to set it up.
+Every Terraform workflow targeting Azure needs an Azure subscription, a service principal or user account with the right permissions, and a network path to the Azure APIs. In a team setting, you also need credentials available wherever `terraform apply` runs: local machines, CI agents, staging pipelines. The feedback loop is slow, and the blast radius for a misconfigured `apply` is real. Topaz removes all of that. The same `terraform apply` that would create resources in Azure can instead create them locally, with no subscription, no credentials to rotate, and no cloud charges. Here is how the integration works and how to set it up.
 
 {/* truncate */}
 
@@ -24,9 +24,9 @@ curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/g
 
 ## Why the standard AzureRM provider works at all
 
-The key insight is that the AzureRM provider does not have Azure's API endpoints hardcoded. When it initialises, it fetches a metadata document from a discovery endpoint that describes where each Azure API lives. In a normal setup, that discovery endpoint is the Azure Resource Manager metadata endpoint at `management.azure.com`. Once the provider has that document, it constructs every subsequent request URL from it.
+The interesting part is that the AzureRM provider does not have Azure's API endpoints hardcoded. When it initialises, it fetches a metadata document from a discovery endpoint that describes where each Azure API lives. In a normal setup, that discovery endpoint is the Azure Resource Manager metadata endpoint at `management.azure.com`. Once the provider has that document, it constructs every subsequent request URL from it.
 
-The `metadata_host` setting exists precisely to point that discovery step somewhere else. Set it to Topaz's ARM port, and the provider fetches Topaz's metadata document instead. That document points every API URL — authentication, resource management, Key Vault, Storage — at the local emulator. The provider never knows it is not talking to Azure.
+The `metadata_host` setting exists precisely to point that discovery step somewhere else. Set it to Topaz's ARM port, and the provider fetches Topaz's metadata document instead. That document points every API URL (authentication, resource management, Key Vault, Storage) at the local emulator. The provider never knows it is not talking to Azure.
 
 ```hcl
 provider "azurerm" {
@@ -36,13 +36,13 @@ provider "azurerm" {
 }
 ```
 
-Two settings are doing the work here. `metadata_host` redirects endpoint discovery to Topaz. `resource_provider_registrations = "none"` tells the provider not to attempt registering resource providers on startup — Topaz does not emulate the full registration flow, and it is not needed for local development anyway.
+Two settings are doing the work here. `metadata_host` redirects endpoint discovery to Topaz. `resource_provider_registrations = "none"` tells the provider not to attempt registering resource providers on startup (Topaz does not emulate the full registration flow, and it is not needed for local development anyway).
 
 ## DNS setup
 
 The hostname `topaz.local.dev` needs to resolve to `127.0.0.1` on your machine. Topaz ships install scripts that configure this using `dnsmasq`, which handles the wildcard subdomains that services like Container Registry depend on. The [getting started guide](https://topaz.thecloudtheory.com/docs/intro/) covers installation and the one-time DNS and certificate setup.
 
-For containerised environments, the same configuration can be handled at the container network level — the [Terraform integration guide](https://topaz.thecloudtheory.com/docs/terraform-integration) covers that path as well.
+For containerised environments, the same configuration can be handled at the container network level. The [Terraform integration guide](https://topaz.thecloudtheory.com/docs/terraform-integration) covers that path as well.
 
 ## Authentication
 
