@@ -36,27 +36,41 @@ Binding port 443 on Linux and macOS requires elevated privileges (`CAP_NET_BIND_
 
 ---
 
-## AMQP — AMQPNetLite protocol deviations break non-.NET clients
+## AMQP — AMQPNetLite encoding breaks non-.NET clients
 
 **Affected services:** Service Bus, Event Hubs (AMQP data plane)
 
-Topaz's AMQP server is built on [AMQPNetLite 2.5.1](https://github.com/Azure/amqpnetlite). While AMQPNetLite is fully compatible with .NET Azure SDK clients, it exhibits two behaviours that violate the AMQP 1.0 specification and break non-.NET clients:
+Topaz's AMQP server is built on [AMQPNetLite 2.5.1](https://github.com/Azure/amqpnetlite). While AMQPNetLite is fully compatible with .NET Azure SDK clients, it produces AMQP frames that break several non-.NET clients in practice:
 
-1. **Trailing null fields are omitted.** AMQPNetLite encodes AMQP performatives (Attach, Transfer, Flow, Disposition, etc.) by writing only the fields up to the last non-null value and omitting any trailing optional fields. The AMQP 1.0 spec permits this as an optimisation, but several non-.NET AMQP clients (including the Python `pyamqp` used by `azure-servicebus`) access performative fields by **fixed numeric index** rather than by name, and raise `IndexError` when the encoded frame is shorter than expected.
+1. **Trailing null fields are omitted.** AMQPNetLite encodes AMQP performatives (Attach, Transfer, Flow, Disposition, etc.) by writing only the fields up to the last non-null value and omitting trailing optional fields. This is **explicitly permitted by the AMQP 1.0 specification** (section 1.4). However, the real Azure Service Bus and Event Hubs broker always emits full-length performative lists with every field present — even trailing ones that are null. SDKs were built and tested exclusively against the real broker, so several clients (most notably the Python `_pyamqp` transport used by `azure-eventhub` 5.x) access performative fields by **fixed numeric index** rather than by symbolic name and raise `IndexError` when a frame is shorter than expected.
 
 2. **`Error` objects are encoded with two fields instead of three.** AMQPNetLite encodes an `Error` composite as `[condition, description]`, omitting the optional `info` (third) field. Clients that unconditionally access `error[2]` crash when receiving any Detach or Close frame that carries an error.
 
-The Python `azure-servicebus` package currently requires monkey-patching in the test harness to work around both issues. Any other non-.NET AMQP client written against the spec will face the same problems.
+In short: Topaz is spec-compliant, but the real Azure broker is more explicit than the spec requires. SDKs were written against the broker's behaviour, not the spec minimum.
+
+### Phase 1 investigation results (v1.6-beta)
+
+Two application-level bugs in Topaz were found and fixed during Phase 1 (missing `MessageId` on received messages; batch message unwrapping for Event Hub batch sends). After those fixes the following baseline was established:
+
+| Client | Service Bus | Event Hubs | Notes |
+|---|---|---|---|
+| .NET Azure SDK | ✅ Pass | ✅ Pass | Unaffected by frame length |
+| Node.js Azure SDK | ✅ Pass | ✅ Pass | Passes without patches after Topaz fixes |
+| Python `azure-servicebus` | ⚠️ Patches required | — | `uamqp` requires frame-padding patches in `conftest.py` |
+| Python `azure-eventhub` | — | ❌ Fail | `_pyamqp` raises `IndexError` on short performatives |
+| Go Azure SDK | ⬜ Not tested | ⬜ Not tested | — |
+
+Upgrading AMQPNetLite from 2.5.1 to 2.5.3 does not resolve the Python incompatibility.
 
 ### Impact
 
-Non-.NET clients (Python, Go, JavaScript, etc.) cannot use the Service Bus or Event Hubs AMQP endpoints without client-side workarounds. The .NET Azure SDK is unaffected.
+Python `azure-eventhub` cannot receive events from Topaz without a server-side fix. Python `azure-servicebus` works only with the frame-padding patches applied in the test harness. .NET and Node.js Azure SDK clients are fully functional without any patches.
 
 **Workaround:** apply the frame-padding patches in your test setup (see `Topaz.Tests.Python/tests/conftest.py` for a reference implementation). These patches intercept decoded frames and pad them to the full AMQP field count before the client library processes them.
 
-### Planned fix — v1.6-beta
+### Planned fix — v1.7-beta
 
-Evaluate upgrading to a newer version of AMQPNetLite that may have resolved these encoding deviations. If no compliant version is available, evaluate replacing AMQPNetLite with a stricter AMQP 1.0 implementation (e.g. [Apache Qpid Proton .NET](https://qpid.apache.org/proton/) or a custom minimal server) that encodes all performative fields up to the defined count, matching what spec-conforming clients expect. The goal is for Service Bus and Event Hubs to work with standard Python, JavaScript, and Go Azure SDK clients without any client-side patches.
+Investigate whether AMQPNetLite can be patched — either via a subclass override or a post-encode buffer rewrite — to append trailing null bytes to every performative so the encoded frame length matches the full field count defined by the AMQP 1.0 spec for each performative type (Open, Begin, Attach, Transfer, Flow, Disposition, Detach, End, Close). This would make Topaz's output match the real Azure broker without replacing the entire AMQP stack. If patching is not feasible, evaluate replacing AMQPNetLite with a fully spec-compliant implementation (e.g. [Apache Qpid Proton .NET](https://qpid.apache.org/proton/)) that always encodes explicit nulls. Success criterion: Python `azure-eventhub` and `azure-servicebus` tests pass without any monkey-patching.
 
 ---
 

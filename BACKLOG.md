@@ -182,32 +182,7 @@ _Implemented in v1.6-beta: `KeyVaultAuthorizationChecker.BuildWwwAuthenticateCha
 
 ### AMQP — spec-compliant performative encoding for non-.NET clients
 
-<!--
-TODO: AMQP: Fix AMQPNetLite protocol deviations that break non-.NET clients
-  AMQPNetLite 2.5.1 exhibits two spec deviations that prevent non-.NET AMQP clients
-  (Python azure-servicebus, Go, JavaScript) from working without client-side patches:
-
-  1. Trailing null fields are omitted in encoded performatives (Attach, Transfer, Flow,
-     Disposition, etc.). The AMQP 1.0 spec allows this, but several clients access fields
-     by fixed numeric index and raise IndexError / panic when the frame is shorter than
-     expected.
-
-  2. Error composites are encoded with two fields [condition, description] instead of
-     three [condition, description, info]. Clients that unconditionally access error[2]
-     crash when receiving any Detach or Close frame that carries an error.
-
-  Investigation required:
-  - Check whether a newer version of AMQPNetLite (> 2.5.1) has resolved both issues.
-  - If not, evaluate replacing AMQPNetLite with a fully spec-compliant server
-    implementation (e.g. Apache Qpid Proton .NET or a custom minimal AMQP 1.0 server).
-  - Validate that the replacement works with .NET, Python, JavaScript, and Go Azure SDK
-    clients for Service Bus and Event Hubs without any client-side frame-padding patches.
-
-  See also: website/docs/known-limitations.md — "AMQP — AMQPNetLite protocol deviations
-  break non-.NET clients".
-  milestone: v1.6-beta
-  labels: enhancement, service-bus, event-hub, amqp
--->
+_Investigated in v1.6-beta: Phase 1 baseline established. AMQPNetLite's omission of trailing null fields is explicitly permitted by the AMQP 1.0 spec (section 1.4); the issue is that the real Azure broker always emits full-length frames, and several SDKs were written assuming that. Two Topaz application-level bugs were fixed during the investigation: missing `MessageId` on received messages (broke Node.js Service Bus auto-lock-renewal) and missing batch-message unwrapping for Event Hub send batches (broke Node.js Event Hubs receive). After those fixes the Phase 1 compatibility matrix is: .NET SDK — fully passes; Node.js SDK — fully passes without patches; Python `azure-servicebus` — passes with frame-padding patches in `conftest.py`; Python `azure-eventhub` — fails with `IndexError` in `_pyamqp`. Upgrading AMQPNetLite to 2.5.3 does not resolve the Python incompatibility. Phase 2 investigation (trailing-null padding) is tracked in v1.7-beta._
 
 ### ARM Deployments — mid-flight cancellation
 
@@ -597,6 +572,37 @@ TODO: Service Bus: Authorization rules and SAS key management
   primary and secondary key pairs on rule creation.
   milestone: v1.7-beta
   labels: enhancement, service-bus
+-->
+
+### AMQP — trailing null padding in AMQPNetLite performatives
+
+<!--
+TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
+  Phase 1 (v1.6-beta) confirmed that AMQPNetLite omits trailing null fields in encoded
+  performatives, which is AMQP 1.0 spec-compliant but breaks non-.NET clients whose
+  decoders access fields by fixed numeric index (specifically Python _pyamqp used by
+  azure-eventhub 5.x and azure-servicebus via uamqp). Upgrading to AMQPNetLite 2.5.3
+  does not resolve this.
+
+  Investigate whether AMQPNetLite can be patched — either via a subclass override or a
+  post-encode buffer rewrite — to append trailing null bytes to every performative so
+  the encoded frame length matches the full field count defined by the AMQP 1.0 spec
+  for each performative type (Open, Begin, Attach, Transfer, Flow, Disposition, Detach,
+  End, Close). The goal is to make Topaz's output match what the real Azure broker emits
+  without replacing the entire AMQP stack.
+
+  If patching AMQPNetLite is not feasible (e.g. frames are sealed before any
+  post-processing hook is reachable), evaluate replacing AMQPNetLite with a fully
+  spec-compliant server implementation (e.g. Apache Qpid Proton .NET or a custom minimal
+  AMQP 1.0 server) that always encodes explicit nulls for every defined field.
+
+  Success criterion: Python azure-eventhub and azure-servicebus tests pass without any
+  monkey-patching in conftest.py.
+
+  See also: website/docs/known-limitations.md — "AMQP — AMQPNetLite encoding breaks
+  non-.NET clients".
+  milestone: v1.7-beta
+  labels: enhancement, service-bus, event-hub, amqp
 -->
 
 ### ARM Deployments — resource group creation via deployment template
