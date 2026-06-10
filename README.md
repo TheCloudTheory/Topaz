@@ -14,7 +14,7 @@ brew tap thecloudtheory/topaz && brew install topaz && topaz-host
 curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash
 
 # Docker
-docker run -p 8891:8891 -p 8892:8892 -p 8898:8898 thecloudtheory/topaz-host
+docker run -p 8899:8899 thecloudtheory/topaz-host
 ```
 
 → Full docs, quickstarts, and service guides at **[topaz.thecloudtheory.com](https://topaz.thecloudtheory.com/)**
@@ -57,6 +57,8 @@ See the [roadmap](https://topaz.thecloudtheory.com/docs/roadmap/) for what's com
 | Microsoft Entra ID | ✅ | — | Preview |
 | Azure App Service | ✅ | — | Preview |
 | Azure SQL | ✅ | — | Preview |
+| Azure Cosmos DB | ✅ | — | Preview |
+| Azure Disk | ✅ | — | Preview |
 
 See the [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/) for the full operation-level breakdown per service.
 
