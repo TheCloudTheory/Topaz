@@ -11,7 +11,6 @@ jobs:
       contents: write
       checks: write
       pull-requests: write
-      workflows: write
     steps:
     - uses: actions/checkout@v4
       with:
@@ -138,8 +137,15 @@ jobs:
           ./publish/topaz.pfx
     - name: Stamp pipeline run with a tag
       run: nbgv tag
+    - name: Validate tag push token
+      run: |
+        if [ -z "${{ secrets.TOPAZ_PUSH_TOKEN }}" ]; then
+          echo "Missing required secret: TOPAZ_PUSH_TOKEN"
+          echo "Create a fine-grained PAT with Contents: Read and write, and Workflows: Read and write, scoped to this repository."
+          exit 1
+        fi
     - name: Push a tag
-      run: git push origin --tags
+      run: git push https://x-access-token:${{ secrets.TOPAZ_PUSH_TOKEN }}@github.com/${{ github.repository }} --tags
     - name: Get the generated tag
       id: get-tag
       run: |
