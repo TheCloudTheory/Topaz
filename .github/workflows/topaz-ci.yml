@@ -52,8 +52,7 @@ jobs:
         # - 8899: Resource Manager (ARM control plane)
         # - 8898: Key Vault data/control plane
         # - 8892: Container Registry
-        # - 8891: Blob Storage
-        # - 8890: Table Storage
+        # - 8891: Storage (Blob, Queue, Table, File)
         # - 8897: Event Hub HTTPS
         # - 8888: Event Hub AMQP
         # - 8889: Service Bus AMQP
@@ -73,7 +72,6 @@ jobs:
             -p 8898:8898 \
             -p 8892:8892 \
             -p 8891:8891 \
-            -p 8890:8890 \
             -p 8897:8897 \
             -p 8888:8888 \
             -p 8889:8889 \
@@ -84,7 +82,7 @@ jobs:
         run: |
           for i in $(seq 1 30); do
             # Use Topaz domain, not localhost, to mirror real SDK/CLI resolution.
-            if curl -sk https://topaz.local.dev:8899/subscriptions >/dev/null 2>&1; then
+            if curl -sk https://topaz.local.dev:8899/health >/dev/null 2>&1; then
               echo "Topaz is ready"
               exit 0
             fi

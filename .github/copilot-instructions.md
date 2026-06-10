@@ -67,15 +67,7 @@ response.Content.Headers.ContentLength = size;
 response.StatusCode = HttpStatusCode.OK;
 ```
 
-Ports — never hardcode. Always use `GlobalSettings.*Port` constants:
-
-| Constant | Port |
-|---|---|
-| `GlobalSettings.ContainerRegistryPort` | 8892 |
-| `GlobalSettings.DefaultKeyVaultPort` | 8898 |
-| `GlobalSettings.DefaultResourceManagerPort` | 8899 |
-| `GlobalSettings.DefaultBlobStoragePort` | 8891 |
-| `GlobalSettings.DefaultQueueStoragePort` | 8893 |
+Ports — never hardcode. Always use `GlobalSettings.*Port` constants.
 
 Response shaping for AzureRM/Terraform:
 - Use `response.CreateJsonContentResponse(...)` for JSON endpoints; do not build JSON responses via `StringContent` directly.
@@ -217,23 +209,6 @@ Mandatory steps
   - When a click causes a re-render, always re-query elements with a fresh `cut.Find(...)` before calling `.Change()` — stored references hold stale event-handler IDs and will throw.
   - Use `cut.WaitForAssertion(...)` for async state changes.
   - One `[Test]` method per user-visible behaviour; name it `<Component>_<Behaviour>_<ExpectedOutcome>`.
-Azure Queue Storage — response contracts
-
-These differ from intuition; getting them wrong causes `NullReferenceException` inside the Azure SDK error parser.
-
-| Operation | Method | Path | Status | Response |
-|---|---|---|---|---|
-| Get Queue Metadata | `GET` | `/{queue}?comp=metadata` | 200 | Empty body; `x-ms-approximate-messages-count` header |
-| Update Message | `PUT` | `/{queue}/messages/{id}` | **204** | Empty body; `x-ms-popreceipt` + `x-ms-time-next-visible` headers |
-| Send Message | `POST` | `/{queue}/messages` | 201 | XML body (`QueueMessagesList`) |
-
-The `UpdateMessage` endpoint returns metadata in **response headers, not the body**. Any non-204 response causes the SDK to throw `RequestFailedException`, which then crashes in `StorageRequestFailedDetailsParser.TryParse` when the body isn't a valid error XML.
-
-ACR data-plane — implemented endpoints
-- `GET /PUT /DELETE /HEAD /v2/{name}/manifests/{reference}`
-- `HEAD /GET /v2/{name}/blobs/{digest}`
-- `POST /PATCH /PUT` blob uploads
-- `GET /v2/_catalog`, `GET /v2/{name}/tags/list`, `GET /acr/v1/{name}/_tags`
 
 Git rules
 - **Never commit automatically.** Always show the user the proposed commit message and wait for explicit approval before running `git commit`.

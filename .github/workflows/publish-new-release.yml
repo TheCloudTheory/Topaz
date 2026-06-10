@@ -109,12 +109,10 @@ jobs:
           **/osx-x64/topaz-osx-x64
           **/osx-arm64/topaz-osx-arm64
           **/linux-x64/topaz-linux-x64
-          **/win-x64/topaz-win-x64.exe
           **/linux-arm64/topaz-linux-arm64
           **/host-osx-x64/topaz-host-osx-x64
           **/host-osx-arm64/topaz-host-osx-arm64
           **/host-linux-x64/topaz-host-linux-x64
-          **/host-win-x64/topaz-host-win-x64.exe
           **/host-linux-arm64/topaz-host-linux-arm64
           **/certificates/topaz.crt
           **/certificates/topaz.pfx
