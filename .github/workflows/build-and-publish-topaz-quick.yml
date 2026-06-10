@@ -64,8 +64,6 @@ jobs:
       with:
         name: CoverageReport        
         path: coveragereport
-    - name: Publish Windows
-      run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r win-x64 -o ./publish/win-x64
     - name: Publish Linux
       run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r linux-x64 -o ./publish/linux-x64
     - name: Publish macOS
@@ -74,10 +72,6 @@ jobs:
       run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r osx-arm64 -o ./publish/osx-arm64
     - name: Publish Arm64
       run: dotnet publish ${{ github.workspace }}/Topaz.CLI/Topaz.CLI.csproj -c Release -r linux-arm64 -o ./publish/linux-arm64
-    - name: Publish Host Windows
-      run: |
-        dotnet publish ${{ github.workspace }}/Topaz.Host/Topaz.Host.csproj -c Release -r win-x64 -o ./publish/host-win-x64
-        mv ./publish/host-win-x64/Topaz.Host.exe ./publish/host-win-x64/topaz-host-win-x64.exe
     - name: Publish Host Linux
       run: |
         dotnet publish ${{ github.workspace }}/Topaz.Host/Topaz.Host.csproj -c Release -r linux-x64 -o ./publish/host-linux-x64
@@ -94,11 +88,6 @@ jobs:
       run: |
         dotnet publish ${{ github.workspace }}/Topaz.Host/Topaz.Host.csproj -c Release -r linux-arm64 -o ./publish/host-linux-arm64
         mv ./publish/host-linux-arm64/Topaz.Host ./publish/host-linux-arm64/topaz-host-linux-arm64
-    - name: Upload Windows artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: win-x64
-        path: ./publish/win-x64
     - name: Upload Linux artifact
       uses: actions/upload-artifact@v4
       with:
@@ -119,11 +108,6 @@ jobs:
       with:
         name: linux-arm64
         path: ./publish/linux-arm64
-    - name: Upload Host Windows artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: host-win-x64
-        path: ./publish/host-win-x64
     - name: Upload Host Linux artifact
       uses: actions/upload-artifact@v4
       with:
