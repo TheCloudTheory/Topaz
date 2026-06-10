@@ -21,6 +21,8 @@ internal sealed class ManagementProcessor : IRequestProcessor
             {
                 Map =
                 {
+                    ["status-code"] = 200,
+                    ["status-description"] = "OK",
                     ["statusCode"] = 200,
                     ["statusDescription"] = "OK"
                 }
@@ -31,7 +33,47 @@ internal sealed class ManagementProcessor : IRequestProcessor
                 ["expiration"] = new[] { DateTime.UtcNow.AddMinutes(5) }
             };
 
-            requestContext.Complete(new Message(renewBody) { ApplicationProperties = renewProperties });
+            var renewResponse = new Message(renewBody) { ApplicationProperties = renewProperties };
+            CompleteWithCorrelation(requestContext, renewResponse);
+            return;
+        }
+
+        if (operation == "com.microsoft:partition" ||
+            (operation == "READ" && requestContext.Message.ApplicationProperties?["type"]?.ToString() == "com.microsoft:partition"))
+        {
+            // GetPartitionPropertiesAsync from the Azure SDK requests partition-specific metadata.
+            // The message body contains a Map with the partition ID.
+            var bodyMap = requestContext.Message.Body as Map;
+            var partitionId = bodyMap?["partition"] as string ?? "0";
+
+            var partitionProperties = new ApplicationProperties
+            {
+                Map =
+                {
+                    ["status-code"] = 200,
+                    ["status-description"] = "OK",
+                    ["statusCode"] = 200,
+                    ["statusDescription"] = "OK"
+                }
+            };
+
+            var eventHubName = requestContext.Message.ApplicationProperties?["name"]?.ToString() ?? "topaz_host";
+            var now = DateTime.UtcNow;
+
+            var partitionBody = new Map
+            {
+                [ResponseMap.Name] = eventHubName,
+                [ResponseMap.PartitionIdentifier] = partitionId,
+                [ResponseMap.PartitionBeginSequenceNumber] = 0L,
+                [ResponseMap.PartitionLastEnqueuedSequenceNumber] = 0L,
+                [ResponseMap.PartitionLastEnqueuedOffset] = "0",
+                [ResponseMap.PartitionLastEnqueuedTimeUtc] = now,
+                [ResponseMap.PartitionRuntimeInfoRetrievalTimeUtc] = now,
+                [ResponseMap.PartitionRuntimeInfoPartitionIsEmpty] = true
+            };
+
+            var partitionResponse = new Message(partitionBody) { ApplicationProperties = partitionProperties };
+            CompleteWithCorrelation(requestContext, partitionResponse);
             return;
         }
 
@@ -39,6 +81,8 @@ internal sealed class ManagementProcessor : IRequestProcessor
         {
             Map =
             {
+                ["status-code"] = 202,
+                ["status-description"] = "Accepted",
                 ["statusCode"] = 202,
                 ["statusDescription"] = "Accepted"
             }
@@ -52,7 +96,20 @@ internal sealed class ManagementProcessor : IRequestProcessor
             [ResponseMap.PartitionIdentifiers] = new[] { Guid.Empty.ToString() }
         };
 
-        requestContext.Complete(new Message(body) { ApplicationProperties = p });
+        var response = new Message(body) { ApplicationProperties = p };
+        CompleteWithCorrelation(requestContext, response);
+    }
+
+    private static void CompleteWithCorrelation(RequestContext requestContext, Message response)
+    {
+        response.Properties ??= new Properties();
+        var requestMessageId = requestContext.Message.Properties?.GetMessageId();
+        if (requestMessageId != null)
+        {
+            response.Properties.SetCorrelationId(requestMessageId);
+        }
+
+        requestContext.Complete(response);
     }
 
     public int Credit => 10;
