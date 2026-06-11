@@ -209,9 +209,16 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
         string tableName,
         string policyId)
     {
+        // Inline guard: CodeQL cs/path-injection requires a direct boolean check on tainted input.
+        if (policyId.Contains('/') || policyId.Contains('\\') || policyId.Contains(".."))
+            return null;
+
         var aclPath = provider.GetTableAclPath(subscriptionIdentifier, resourceGroupIdentifier, tableName,
             storageAccountName);
-        var policyFile = Path.Combine(aclPath, policyId + ".xml");
+        var safePolicyId = Path.GetFileName(policyId);
+        var policyFile = Path.Combine(aclPath, safePolicyId + ".xml");
+        PathGuard.EnsureWithinDirectory(policyFile, aclPath);
+
         if (!File.Exists(policyFile)) return null;
 
         var serializer = new XmlSerializer(typeof(TableSignedIdentifier));
