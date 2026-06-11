@@ -395,8 +395,8 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         
-        # Add changed files from website directory
-        git add ./website/
+        # Add changed files from website docs and Portal CLI catalog
+        git add ./website/ ./Topaz.Portal/wwwroot/cli/commands.json
         
         # Check if there are any changes to commit
         if git diff --staged --quiet; then
