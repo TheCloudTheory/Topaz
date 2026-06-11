@@ -402,6 +402,926 @@
     ]
   },
   {
+    "name": "appservice plan create",
+    "group": "app-service",
+    "description": "Creates or updates an App Service Plan.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) App Service Plan name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Azure region.",
+        "required": true
+      },
+      {
+        "names": "--sku-name",
+        "description": "(Optional) SKU name (e.g. B1, S1, P1v2). Defaults to B1.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a plan",
+        "command": "topaz appservice plan create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-plan\u0022 \\\n    --location \u0022westeurope\u0022 \\\n    --sku-name \u0022B1\u0022"
+      }
+    ]
+  },
+  {
+    "name": "appservice plan delete",
+    "group": "app-service",
+    "description": "Deletes an App Service Plan.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) App Service Plan name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a plan",
+        "command": "topaz appservice plan delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-plan\u0022"
+      }
+    ]
+  },
+  {
+    "name": "appservice plan get",
+    "group": "app-service",
+    "description": "Gets an App Service Plan.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) App Service Plan name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get a plan",
+        "command": "topaz appservice plan get \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-plan\u0022"
+      }
+    ]
+  },
+  {
+    "name": "appservice plan list",
+    "group": "app-service",
+    "description": "Lists App Service Plans in a resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List plans in a resource group",
+        "command": "topaz appservice plan list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "appservice plan restart-sites",
+    "group": "app-service",
+    "description": "Restarts all Web Apps in an App Service Plan.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) App Service Plan name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Restart sites in a plan",
+        "command": "topaz appservice plan restart-sites \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-plan\u0022"
+      }
+    ]
+  },
+  {
+    "name": "appservice site check-name",
+    "group": "app-service",
+    "description": "Checks if the provided App Service site name is globally available.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) App Service site name to check.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Check App Service site name",
+        "command": "topaz appservice site check-name \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --name \u0022my-webapp\u0022"
+      }
+    ]
+  },
+  {
+    "name": "appservice site config get-web",
+    "group": "app-service",
+    "description": "Gets the web configuration of a Web App (Microsoft.Web/sites/config/web).",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) App Service Site name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get web config",
+        "command": "topaz appservice site config get-web \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-site\u0022"
+      }
+    ]
+  },
+  {
+    "name": "appservice site config list-appsettings",
+    "group": "app-service",
+    "description": "Lists the current application settings of a Web App (Microsoft.Web/sites/config/appsettings/list).",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) App Service Site name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List app settings",
+        "command": "topaz appservice site config list-appsettings \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-site\u0022"
+      }
+    ]
+  },
+  {
+    "name": "appservice site config set-appsettings",
+    "group": "app-service",
+    "description": "Replaces all application settings of a Web App (Microsoft.Web/sites/config/appsettings).",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) App Service Site name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "--settings",
+        "description": "Application settings as KEY=VALUE pairs.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Set app settings",
+        "command": "topaz appservice site config set-appsettings \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-site\u0022 \\\n    --settings \u0022KEY1=VALUE1\u0022 \u0022KEY2=VALUE2\u0022"
+      }
+    ]
+  },
+  {
+    "name": "appservice site config update-web",
+    "group": "app-service",
+    "description": "Updates the web configuration of a Web App (Microsoft.Web/sites/config/web). Only supplied fields are changed.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) App Service Site name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "--linux-fx-version",
+        "description": "Linux runtime stack (e.g. DOTNETCORE|8.0).",
+        "required": false
+      },
+      {
+        "names": "--net-framework-version",
+        "description": ".NET Framework version (e.g. v8.0).",
+        "required": false
+      },
+      {
+        "names": "--always-on",
+        "description": "Enable Always On.",
+        "required": false
+      },
+      {
+        "names": "--ftps-state",
+        "description": "FTPS state (AllAllowed, FtpsOnly, Disabled).",
+        "required": false
+      },
+      {
+        "names": "--min-tls-version",
+        "description": "Minimum TLS version (e.g. 1.2).",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Set always-on and Linux runtime",
+        "command": "topaz appservice site config update-web \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-site\u0022 \\\n    --always-on true \\\n    --linux-fx-version \u0022DOTNETCORE|8.0\u0022"
+      }
+    ]
+  },
+  {
+    "name": "appservice site create",
+    "group": "app-service",
+    "description": "Creates or updates a Web App or Function App (Microsoft.Web/sites).",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) App Service Site name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Azure region.",
+        "required": true
+      },
+      {
+        "names": "--kind",
+        "description": "(Optional) Site kind: app, functionapp, functionapp,linux. Defaults to app.",
+        "required": false
+      },
+      {
+        "names": "--plan",
+        "description": "(Optional) Resource ID of the App Service Plan to associate with this site.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a web app",
+        "command": "topaz appservice site create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-site\u0022 \\\n    --location \u0022westeurope\u0022"
+      }
+    ]
+  },
+  {
+    "name": "appservice site delete",
+    "group": "app-service",
+    "description": "Deletes a Web App or Function App.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) App Service Site name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a web app",
+        "command": "topaz appservice site delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-site\u0022"
+      }
+    ]
+  },
+  {
+    "name": "appservice site get",
+    "group": "app-service",
+    "description": "Gets a Web App or Function App.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) App Service Site name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get a web app",
+        "command": "topaz appservice site get \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-site\u0022"
+      }
+    ]
+  },
+  {
+    "name": "appservice site list",
+    "group": "app-service",
+    "description": "Lists Web Apps and Function Apps in a resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List sites in a resource group",
+        "command": "topaz appservice site list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb account create",
+    "group": "cosmos-db",
+    "description": "Creates or updates an Azure Cosmos DB account.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Cosmos DB account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Azure region.",
+        "required": true
+      },
+      {
+        "names": "--kind",
+        "description": "(Optional) Account kind: GlobalDocumentDB, MongoDB, Parse. Defaults to GlobalDocumentDB.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a Cosmos DB account",
+        "command": "topaz cosmosdb account create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-cosmos-account\u0022 \\\n    --location \u0022westeurope\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb account delete",
+    "group": "cosmos-db",
+    "description": "Deletes an Azure Cosmos DB account.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Cosmos DB account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a Cosmos DB account",
+        "command": "topaz cosmosdb account delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-cosmos-account\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb account get",
+    "group": "cosmos-db",
+    "description": "Gets an Azure Cosmos DB account.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Cosmos DB account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get a Cosmos DB account",
+        "command": "topaz cosmosdb account get \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-cosmos-account\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb account list",
+    "group": "cosmos-db",
+    "description": "Lists Azure Cosmos DB accounts in a resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List Cosmos DB accounts in a resource group",
+        "command": "topaz cosmosdb account list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb account list-by-subscription",
+    "group": "cosmos-db",
+    "description": "Lists all Azure Cosmos DB accounts in a subscription.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List Cosmos DB accounts in a subscription",
+        "command": "topaz cosmosdb account list-by-subscription \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb account list-connection-strings",
+    "group": "cosmos-db",
+    "description": "Lists the connection strings for an Azure Cosmos DB account.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Cosmos DB account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List connection strings for a Cosmos DB account",
+        "command": "topaz cosmosdb account list-connection-strings \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-cosmos-account\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb account list-keys",
+    "group": "cosmos-db",
+    "description": "Lists the access keys for an Azure Cosmos DB account.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Cosmos DB account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List keys for a Cosmos DB account",
+        "command": "topaz cosmosdb account list-keys \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-cosmos-account\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb account list-readonly-keys",
+    "group": "cosmos-db",
+    "description": "Lists the read-only access keys for an Azure Cosmos DB account.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Cosmos DB account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List read-only keys for a Cosmos DB account",
+        "command": "topaz cosmosdb account list-readonly-keys \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-cosmos-account\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb account regenerate-key",
+    "group": "cosmos-db",
+    "description": "Regenerates an access key for an Azure Cosmos DB account.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Cosmos DB account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-k, --key-kind",
+        "description": "(Required) Key kind to regenerate: primary, secondary, primaryReadonly, secondaryReadonly.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Regenerate the primary key for a Cosmos DB account",
+        "command": "topaz cosmosdb account regenerate-key \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-cosmos-account\u0022 \\\n    --key-kind \u0022primary\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb account update",
+    "group": "cosmos-db",
+    "description": "Updates tags on an Azure Cosmos DB account.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) Cosmos DB account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "--tags",
+        "description": "(Optional) Space-separated tags in key=value format.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Update tags on a Cosmos DB account",
+        "command": "topaz cosmosdb account update \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --name \u0022my-cosmos-account\u0022 \\\n    --tags \u0022env=dev team=platform\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb sql-database create",
+    "group": "cosmos-db",
+    "description": "Creates or updates a SQL database in an Azure Cosmos DB account.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-a, --account-name",
+        "description": "(Required) Cosmos DB account name.",
+        "required": true
+      },
+      {
+        "names": "-n, --database-name",
+        "description": "(Required) SQL database name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "--throughput",
+        "description": "(Optional) Manual throughput in RU/s.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a SQL database",
+        "command": "topaz cosmosdb sql-database create \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022my-cosmos-account\u0022 \\\n    --database-name \u0022my-database\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb sql-database delete",
+    "group": "cosmos-db",
+    "description": "Deletes a SQL database in an Azure Cosmos DB account.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-a, --account-name",
+        "description": "(Required) Cosmos DB account name.",
+        "required": true
+      },
+      {
+        "names": "-n, --database-name",
+        "description": "(Required) SQL database name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a SQL database",
+        "command": "topaz cosmosdb sql-database delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022my-cosmos-account\u0022 \\\n    --database-name \u0022my-database\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb sql-database get",
+    "group": "cosmos-db",
+    "description": "Gets a SQL database in an Azure Cosmos DB account.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-a, --account-name",
+        "description": "(Required) Cosmos DB account name.",
+        "required": true
+      },
+      {
+        "names": "-n, --database-name",
+        "description": "(Required) SQL database name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get a SQL database",
+        "command": "topaz cosmosdb sql-database get \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022my-cosmos-account\u0022 \\\n    --database-name \u0022my-database\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb sql-database get-throughput",
+    "group": "cosmos-db",
+    "description": "Gets the throughput settings for a SQL database in an Azure Cosmos DB account.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-a, --account-name",
+        "description": "(Required) Cosmos DB account name.",
+        "required": true
+      },
+      {
+        "names": "-n, --database-name",
+        "description": "(Required) SQL database name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Get throughput for a SQL database",
+        "command": "topaz cosmosdb sql-database get-throughput \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022my-cosmos-account\u0022 \\\n    --database-name \u0022my-database\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb sql-database list",
+    "group": "cosmos-db",
+    "description": "Lists SQL databases in an Azure Cosmos DB account.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-a, --account-name",
+        "description": "(Required) Cosmos DB account name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "List SQL databases",
+        "command": "topaz cosmosdb sql-database list \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022my-cosmos-account\u0022"
+      }
+    ]
+  },
+  {
+    "name": "cosmosdb sql-database update-throughput",
+    "group": "cosmos-db",
+    "description": "Updates the throughput settings for a SQL database in an Azure Cosmos DB account.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-a, --account-name",
+        "description": "(Required) Cosmos DB account name.",
+        "required": true
+      },
+      {
+        "names": "-n, --database-name",
+        "description": "(Required) SQL database name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "--throughput",
+        "description": "(Required) Manual throughput in RU/s.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Update throughput for a SQL database",
+        "command": "topaz cosmosdb sql-database update-throughput \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --account-name \u0022my-cosmos-account\u0022 \\\n    --database-name \u0022my-database\u0022 \\\n    --throughput 800"
+      }
+    ]
+  },
+  {
     "name": "deployment group create",
     "group": "deployment",
     "description": "Creates a new deployment on a resource group level",
@@ -485,6 +1405,237 @@
     "examples": []
   },
   {
+    "name": "disk create",
+    "group": "managed-disk",
+    "description": "Creates or updates an Azure Managed Disk.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Disk name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Azure region.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--disk-size-gb",
+        "description": "(Optional) Disk size in GB. Defaults to 32.",
+        "required": false
+      },
+      {
+        "names": "--sku",
+        "description": "(Optional) SKU name (e.g. Premium_LRS, Standard_LRS).",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a new Managed Disk",
+        "command": "topaz disk create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-disk\u0022 \\\n    --location \u0022westeurope\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "disk delete",
+    "group": "managed-disk",
+    "description": "Deletes an Azure Managed Disk.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Disk name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes a Managed Disk",
+        "command": "topaz disk delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-disk\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "disk grant-access",
+    "group": "managed-disk",
+    "description": "Grants SAS access to an Azure Managed Disk.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Disk name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--access",
+        "description": "(Required) Access level: Read, Write, or ReadWrite.",
+        "required": true
+      },
+      {
+        "names": "--duration-in-seconds",
+        "description": "(Required) Duration of SAS access in seconds.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Grant read access to a Managed Disk",
+        "command": "topaz disk grant-access --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-disk\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --access \u0022Read\u0022 \\\n    --duration-in-seconds 3600"
+      }
+    ]
+  },
+  {
+    "name": "disk list",
+    "group": "managed-disk",
+    "description": "Lists Azure Managed Disks in a subscription or resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Optional) Filter by resource group name.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists Managed Disks in a resource group",
+        "command": "topaz disk list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "disk revoke-access",
+    "group": "managed-disk",
+    "description": "Revokes SAS access from an Azure Managed Disk.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Disk name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Revoke SAS access from a Managed Disk",
+        "command": "topaz disk revoke-access --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-disk\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "disk show",
+    "group": "managed-disk",
+    "description": "Gets an Azure Managed Disk.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Disk name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets a Managed Disk",
+        "command": "topaz disk show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-disk\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "disk update",
+    "group": "managed-disk",
+    "description": "Updates an Azure Managed Disk (tags, diskSizeGB, SKU).",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Disk name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--tags",
+        "description": "(Optional) Space-separated tags in key=value format.",
+        "required": false
+      },
+      {
+        "names": "--sku",
+        "description": "(Optional) SKU name (e.g. Premium_LRS, Standard_LRS).",
+        "required": false
+      },
+      {
+        "names": "--disk-size-gb",
+        "description": "(Optional) New disk size in GB.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Updates a Managed Disk\u0027s tags",
+        "command": "topaz disk update --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-disk\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --tags env=test"
+      }
+    ]
+  },
+  {
     "name": "eventhubs eventhub create",
     "group": "event-hub",
     "description": "Creates new Event Hub.",
@@ -530,6 +1681,16 @@
       {
         "names": "--namespace-name",
         "description": "(Required) Event Hub namespace name.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
         "required": false
       }
     ],
@@ -600,6 +1761,29 @@
         "command": "topaz eventhubs namespace delete \\\n    --name \u0022sb-namespace\u0022 \\\n    --resource-group \u0022rg\u0022 \\\n    --subscription-id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022"
       }
     ]
+  },
+  {
+    "name": "finops estimate",
+    "group": "finops",
+    "description": "Estimate monthly costs for a subscription.",
+    "options": [
+      {
+        "names": "-s, --subscription",
+        "description": "(Required) subscription ID",
+        "required": true
+      },
+      {
+        "names": "-c, --currency",
+        "description": "Currency code (default: USD)",
+        "required": false
+      },
+      {
+        "names": "-o, --output",
+        "description": "Output format: table (default) or json",
+        "required": false
+      }
+    ],
+    "examples": []
   },
   {
     "name": "group create",
@@ -2024,6 +3208,11 @@
     "description": "Generates random bytes using the Key Vault random number generator.",
     "options": [
       {
+        "names": "--vault-name",
+        "description": "(Optional) Key Vault name. When provided the remote Key Vault RNG endpoint is used; otherwise bytes are generated locally.",
+        "required": false
+      },
+      {
         "names": "-c, --count",
         "description": "(Required) Number of random bytes to generate (1\u2013128).",
         "required": true
@@ -3288,6 +4477,11 @@
         "names": "-g, --resource-group",
         "description": "(Required) Resource group name.",
         "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Azure region for the namespace.",
+        "required": true
       }
     ],
     "examples": [
@@ -3388,6 +4582,260 @@
       {
         "title": "Delete a queue",
         "command": "topaz servicebus queue delete \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --namespace-name \u0022sblocal\u0022 \\\n    --queue-name \u0022myqueue\u0022"
+      }
+    ]
+  },
+  {
+    "name": "sql create",
+    "group": "sql-server",
+    "description": "Creates or updates an Azure SQL Server.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) SQL server name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Azure region.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-u, --admin-user",
+        "description": "(Required) Administrator login username.",
+        "required": true
+      },
+      {
+        "names": "-p, --admin-password",
+        "description": "(Required) Administrator login password.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a new SQL Server",
+        "command": "topaz sql create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-sql-server\u0022 \\\n    --location \u0022westeurope\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --admin-user \u0022sqladmin\u0022 \\\n    --admin-password \u0022SqlAdmin1234!@#\u0022"
+      }
+    ]
+  },
+  {
+    "name": "sql db create",
+    "group": "sql-database",
+    "description": "Creates or updates an Azure SQL Database.",
+    "options": [
+      {
+        "names": "--server",
+        "description": "(Required) SQL server name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) SQL database name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Azure region.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a new SQL Database",
+        "command": "topaz sql db create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --server \u0022my-sql-server\u0022 \\\n    --name \u0022my-database\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --location \u0022westeurope\u0022"
+      }
+    ]
+  },
+  {
+    "name": "sql db delete",
+    "group": "sql-database",
+    "description": "Deletes an Azure SQL Database.",
+    "options": [
+      {
+        "names": "--server",
+        "description": "(Required) SQL server name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) SQL database name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes a SQL Database",
+        "command": "topaz sql db delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --server \u0022my-sql-server\u0022 \\\n    --name \u0022my-database\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "sql db list",
+    "group": "sql-database",
+    "description": "Lists Azure SQL Databases under a server.",
+    "options": [
+      {
+        "names": "--server",
+        "description": "(Required) SQL server name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists SQL Databases in a server",
+        "command": "topaz sql db list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --server \u0022my-sql-server\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "sql db show",
+    "group": "sql-database",
+    "description": "Gets an Azure SQL Database.",
+    "options": [
+      {
+        "names": "--server",
+        "description": "(Required) SQL server name.",
+        "required": true
+      },
+      {
+        "names": "-n, --name",
+        "description": "(Required) SQL database name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets a SQL Database",
+        "command": "topaz sql db show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --server \u0022my-sql-server\u0022 \\\n    --name \u0022my-database\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "sql delete",
+    "group": "sql-server",
+    "description": "Deletes an Azure SQL Server.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) SQL server name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes a SQL Server",
+        "command": "topaz sql delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-sql-server\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "sql list",
+    "group": "sql-server",
+    "description": "Lists Azure SQL Servers in a subscription or resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Optional) Filter by resource group name.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists SQL Servers in a resource group",
+        "command": "topaz sql list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "sql show",
+    "group": "sql-server",
+    "description": "Gets an Azure SQL Server.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) SQL server name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets a SQL Server",
+        "command": "topaz sql show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-sql-server\u0022 \\\n    --resource-group \u0022rg-local\u0022"
       }
     ]
   },
@@ -5187,6 +6635,237 @@
       {
         "title": "List subscription locations",
         "command": "topaz subscription list-locations \\\n    --id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vm create",
+    "group": "virtual-machine",
+    "description": "Creates or updates an Azure Virtual Machine.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Virtual machine name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Azure region.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--size",
+        "description": "(Optional) VM size (e.g. Standard_D2_v3). Defaults to Standard_D2_v3.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a new Virtual Machine",
+        "command": "topaz vm create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-vm\u0022 \\\n    --location \u0022westeurope\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --size \u0022Standard_D2_v3\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vm delete",
+    "group": "virtual-machine",
+    "description": "Deletes an Azure Virtual Machine.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Virtual machine name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes a Virtual Machine",
+        "command": "topaz vm delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-vm\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vm image-version get",
+    "group": "virtual-machine",
+    "description": "Gets an Azure Virtual Machine image version.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Location.",
+        "required": true
+      },
+      {
+        "names": "-p, --publisher",
+        "description": "(Required) Publisher.",
+        "required": true
+      },
+      {
+        "names": "-o, --offer",
+        "description": "(Required) Offer.",
+        "required": true
+      },
+      {
+        "names": "--sku",
+        "description": "(Required) SKU.",
+        "required": true
+      },
+      {
+        "names": "-v, --version",
+        "description": "(Required) Version.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets a Virtual Machine image version",
+        "command": "topaz vm image-version get --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --location \u0022westeurope\u0022 \\\n    --publisher \u0022Canonical\u0022 \\\n    --offer \u00220001-com-ubuntu-server-focal\u0022 \\\n    --sku \u002220_04-lts-gen2\u0022 \\\n    --version \u002220.04.202208100\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vm image-version list",
+    "group": "virtual-machine",
+    "description": "Lists Azure Virtual Machine image versions.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) Location.",
+        "required": true
+      },
+      {
+        "names": "-p, --publisher",
+        "description": "(Required) Publisher.",
+        "required": true
+      },
+      {
+        "names": "-o, --offer",
+        "description": "(Required) Offer.",
+        "required": true
+      },
+      {
+        "names": "--sku",
+        "description": "(Required) SKU.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists Virtual Machine image versions",
+        "command": "topaz vm image-version list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --location \u0022westeurope\u0022 \\\n    --publisher \u0022Canonical\u0022 \\\n    --offer \u00220001-com-ubuntu-server-focal\u0022 \\\n    --sku \u002220_04-lts-gen2\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vm list",
+    "group": "virtual-machine",
+    "description": "Lists Azure Virtual Machines in a subscription or resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Optional) Filter by resource group name.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists Virtual Machines in a resource group",
+        "command": "topaz vm list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vm show",
+    "group": "virtual-machine",
+    "description": "Gets an Azure Virtual Machine.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Virtual machine name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets a Virtual Machine",
+        "command": "topaz vm show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-vm\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "vm update",
+    "group": "virtual-machine",
+    "description": "Updates an Azure Virtual Machine.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) Virtual machine name.",
+        "required": true
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) Resource group name.",
+        "required": true
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) Subscription ID.",
+        "required": true
+      },
+      {
+        "names": "--size",
+        "description": "(Optional) Virtual machine size.",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Updates a Virtual Machine",
+        "command": "topaz vm update --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-vm\u0022 \\\n    --resource-group \u0022rg-local\u0022 \\\n    --size \u0022Standard_D2_v3\u0022"
       }
     ]
   },
