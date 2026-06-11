@@ -30,11 +30,8 @@ internal sealed class CreateTableEndpoint(Pipeline eventPipeline, ITopazLogger l
         var subscriptionIdentifier = storageAccount!.GetSubscription();
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
 
-        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context))
-        {
-            response.StatusCode = HttpStatusCode.Unauthorized;
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context, response))
             return;
-        }
 
         Logger.LogDebug(nameof(CreateTableEndpoint), nameof(GetResponse), "Executing {0}.",
             nameof(CreateTableEndpoint));

@@ -18,7 +18,7 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
     private readonly ServiceSasValidator _sasValidator = new(new AzureStorageControlPlane(new StorageResourceProvider(logger), logger), logger);
     private readonly AccountSasValidator _accountSasValidator = new(new AzureStorageControlPlane(new StorageResourceProvider(logger), logger), logger);
 
-    public bool RequestIsAuthorized(SubscriptionIdentifier subscriptionIdentifier,
+    public StorageAuthorizationResult RequestIsAuthorized(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, IHeaderDictionary headers,
         string[] requiredPermissions, string method, string absolutePath,
         QueryString query)
@@ -29,9 +29,10 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
             {
                 logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(RequestIsAuthorized),
                     "No Authorization header; attempting Account SAS validation for path='{0}'", absolutePath);
-                return _accountSasValidator.ValidateForPath(
+                var authorized = _accountSasValidator.ValidateForPath(
                     subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
                     method, absolutePath, query, AccountSasValidator.AccountSasService.Table);
+                return authorized ? StorageAuthorizationResult.Authorized() : StorageAuthorizationResult.AuthenticationFailed();
             }
 
             if (ServiceSasValidator.IsServiceSas(query))
@@ -39,11 +40,11 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
                 logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(RequestIsAuthorized),
                     "No Authorization header; attempting Service SAS validation for path='{0}'", absolutePath);
                 return IsAuthorizedForServiceSas(
-                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query);
+                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method);
             }
 
             logger.LogError($"Authentication failure for SharedKeyLite scheme. Authorization header is missing.");
-            return false;
+            return StorageAuthorizationResult.AuthenticationFailed();
         }
 
         var headerValue = value.ToString();
@@ -57,24 +58,31 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
         {
             case "SharedKey":
                 return IsAuthorizedForSharedKeyScheme(subscriptionIdentifier, resourceGroupIdentifier,
-                    storageAccountName, parts[1], headers, method, absolutePath, query);
+                    storageAccountName, parts[1], headers, method, absolutePath, query)
+                    ? StorageAuthorizationResult.Authorized()
+                    : StorageAuthorizationResult.AuthenticationFailed();
             case "SharedKeyLite":
                 return IsAuthorizedForSharedKeyLiteScheme(subscriptionIdentifier, resourceGroupIdentifier,
-                    storageAccountName, parts[1], headers, absolutePath, query);
+                    storageAccountName, parts[1], headers, absolutePath, query)
+                    ? StorageAuthorizationResult.Authorized()
+                    : StorageAuthorizationResult.AuthenticationFailed();
             case "Bearer":
-                return _bearerChecker.IsAuthorizedForBearer(subscriptionIdentifier, requiredPermissions, headerValue);
+                return _bearerChecker.IsAuthorizedForBearer(subscriptionIdentifier, requiredPermissions, headerValue)
+                    ? StorageAuthorizationResult.Authorized()
+                    : StorageAuthorizationResult.AuthenticationFailed();
             default:
                 logger.LogError($"Authentication failure for {scheme}. Scheme is not supported.");
-                return false;
+                return StorageAuthorizationResult.AuthenticationFailed();
         }
     }
 
-    private bool IsAuthorizedForServiceSas(
+    private StorageAuthorizationResult IsAuthorizedForServiceSas(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
         string absolutePath,
-        QueryString query)
+        QueryString query,
+        string method)
     {
         // Derive the table name from the first path segment (strip OData key predicates if present).
         var firstSegment = absolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
@@ -83,7 +91,7 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
 
         return _sasValidator.Validate(
             subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
-            absolutePath, query, ServiceSasValidator.SasServiceType.Table,
+            absolutePath, query, ServiceSasValidator.SasServiceType.Table, method,
             policyId => _tableControlPlane.GetTableStoredPolicy(
                 subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName, policyId));
     }

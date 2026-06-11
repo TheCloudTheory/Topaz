@@ -117,7 +117,8 @@ internal abstract class TableDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
-        HttpContext context)
+        HttpContext context,
+        HttpResponseMessage response)
     {
         var rawTarget = context.Features.Get<IHttpRequestFeature>()?.RawTarget
                         ?? context.Request.Path.Value
@@ -125,9 +126,33 @@ internal abstract class TableDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
         var queryIndex = rawTarget.IndexOf('?');
         var rawPath = queryIndex >= 0 ? rawTarget[..queryIndex] : rawTarget;
         var permissions = (this as IEndpointDefinition)?.Permissions ?? [];
-        return _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
+        var authResult = _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccountName, context.Request.Headers, permissions, context.Request.Method, rawPath,
             context.Request.QueryString);
+
+        if (!authResult.IsAuthorized)
+        {
+            if (authResult.ErrorCode == "AuthorizationPermissionMismatch")
+            {
+                // Service SAS permission mismatch: sp= does not cover HTTP method
+                var error = new TableErrorResponse("AuthorizationPermissionMismatch",
+                    "This request is not authorized to perform this operation.");
+                response.StatusCode = HttpStatusCode.Forbidden;
+                response.Headers.Add("x-ms-error-code", "AuthorizationPermissionMismatch");
+                response.Content = JsonContent.Create(error);
+            }
+            else
+            {
+                // Authentication failure (bad signature, expired token, etc.)
+                var error = new TableErrorResponse("AuthenticationFailed",
+                    "Server failed to authenticate the request.");
+                response.StatusCode = HttpStatusCode.Unauthorized;
+                response.Headers.Add("x-ms-error-code", "AuthenticationFailed");
+                response.Content = JsonContent.Create(error);
+            }
+        }
+
+        return authResult.IsAuthorized;
     }
 
     /// <summary>

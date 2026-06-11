@@ -22,7 +22,7 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
     private readonly AccountSasValidator _accountSasValidator = new(new AzureStorageControlPlane(new StorageResourceProvider(logger), logger), logger);
     private readonly UserDelegationSasValidator _userDelegationSasValidator = new(new AzureStorageControlPlane(new StorageResourceProvider(logger), logger), logger);
 
-    public bool RequestIsAuthorized(
+    public StorageAuthorizationResult RequestIsAuthorized(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
@@ -38,17 +38,19 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
             {
                 logger.LogDebug(nameof(BlobStorageSecurityProvider), nameof(RequestIsAuthorized),
                     "No Authorization header; attempting Account SAS validation for path='{0}'", absolutePath);
-                return _accountSasValidator.ValidateForPath(
+                var authorized = _accountSasValidator.ValidateForPath(
                     subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
                     method, absolutePath, query, AccountSasValidator.AccountSasService.Blob);
+                return authorized ? StorageAuthorizationResult.Authorized() : StorageAuthorizationResult.AuthenticationFailed();
             }
 
             if (UserDelegationSasValidator.IsUserDelegationSas(query))
             {
                 logger.LogDebug(nameof(BlobStorageSecurityProvider), nameof(RequestIsAuthorized),
                     "No Authorization header; attempting User Delegation SAS validation for path='{0}'", absolutePath);
-                return _userDelegationSasValidator.Validate(
+                var authorized = _userDelegationSasValidator.Validate(
                     subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query);
+                return authorized ? StorageAuthorizationResult.Authorized() : StorageAuthorizationResult.AuthenticationFailed();
             }
 
             if (ServiceSasValidator.IsServiceSas(query))
@@ -56,10 +58,12 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
                 logger.LogDebug(nameof(BlobStorageSecurityProvider), nameof(RequestIsAuthorized),
                     "No Authorization header; attempting Service SAS validation for path='{0}'", absolutePath);
                 return IsAuthorizedForServiceSas(
-                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query);
+                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method);
             }
 
-            return IsAnonymousAccessAllowed(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method);
+            return IsAnonymousAccessAllowed(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method)
+                ? StorageAuthorizationResult.Authorized() 
+                : StorageAuthorizationResult.AuthenticationFailed();
         }
 
         var headerValue = value.ToString();
@@ -69,36 +73,45 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
         logger.LogDebug(nameof(BlobStorageSecurityProvider), nameof(RequestIsAuthorized),
             "Scheme='{0}' Method='{1}' Path='{2}'", scheme, method, absolutePath);
 
-        return scheme switch
+        var result = scheme switch
         {
-            "SharedKey" => IsAuthorizedForSharedKey(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccountName, parts.Length > 1 ? parts[1] : string.Empty, headers, method, absolutePath, query),
-            "SharedKeyLite" => IsAuthorizedForSharedKeyLite(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccountName, parts.Length > 1 ? parts[1] : string.Empty, headers, absolutePath, query),
-            "Bearer" => _bearerChecker.IsAuthorizedForBearer(subscriptionIdentifier, requiredPermissions, headerValue),
+            "SharedKey" => (IsAuthorizedForSharedKey(subscriptionIdentifier, resourceGroupIdentifier,
+                storageAccountName, parts.Length > 1 ? parts[1] : string.Empty, headers, method, absolutePath, query)
+                ? StorageAuthorizationResult.Authorized()
+                : StorageAuthorizationResult.AuthenticationFailed()),
+            "SharedKeyLite" => (IsAuthorizedForSharedKeyLite(subscriptionIdentifier, resourceGroupIdentifier,
+                storageAccountName, parts.Length > 1 ? parts[1] : string.Empty, headers, absolutePath, query)
+                ? StorageAuthorizationResult.Authorized()
+                : StorageAuthorizationResult.AuthenticationFailed()),
+            "Bearer" => (_bearerChecker.IsAuthorizedForBearer(subscriptionIdentifier, requiredPermissions, headerValue) 
+                ? StorageAuthorizationResult.Authorized()
+                : StorageAuthorizationResult.AuthenticationFailed()),
             _ => LogAndDeny(scheme)
         };
+
+        return result;
     }
 
-    private bool LogAndDeny(string scheme)
+    private StorageAuthorizationResult LogAndDeny(string scheme)
     {
         logger.LogError($"Authentication failure for Blob Storage. Unsupported scheme: {scheme}.");
-        return false;
+        return StorageAuthorizationResult.AuthenticationFailed();
     }
 
-    private bool IsAuthorizedForServiceSas(
+    private StorageAuthorizationResult IsAuthorizedForServiceSas(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
         string absolutePath,
-        QueryString query)
+        QueryString query,
+        string method)
     {
         // Derive the container name from the first path segment.
         var containerName = absolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
 
         return _sasValidator.Validate(
             subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
-            absolutePath, query, ServiceSasValidator.SasServiceType.Blob,
+            absolutePath, query, ServiceSasValidator.SasServiceType.Blob, method,
             policyId => _blobControlPlane.GetContainerStoredPolicy(
                 subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName, policyId));
     }

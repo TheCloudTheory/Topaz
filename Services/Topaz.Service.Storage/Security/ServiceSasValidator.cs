@@ -42,17 +42,19 @@ internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane,
     /// <param name="absolutePath">Path from the request (without query string).</param>
     /// <param name="query">Full query string of the request.</param>
     /// <param name="serviceType">Blob, Queue, or Table.</param>
+    /// <param name="method">HTTP method of the request (GET, PUT, POST, DELETE, etc.).</param>
     /// <param name="policyResolver">
     /// Called when si= is present; receives the policy ID and returns the stored access policy or
     /// null when the policy does not exist (which causes a 403).
     /// </param>
-    public bool Validate(
+    public StorageAuthorizationResult Validate(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
         string absolutePath,
         QueryString query,
         SasServiceType serviceType,
+        string method,
         Func<string, StoredAccessPolicy?> policyResolver)
     {
         var parsed = HttpUtility.ParseQueryString(query.ToString());
@@ -97,7 +99,7 @@ internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane,
                 logger.LogError(nameof(ServiceSasValidator), nameof(Validate),
                     "Service SAS references stored policy '{0}' which does not exist on resource '{1}'. Denying.",
                     si, absolutePath);
-                return false;
+                return StorageAuthorizationResult.AuthenticationFailed();
             }
 
             // Merge policy fields into sp/st/se for authorization checks (expiry).
@@ -114,14 +116,14 @@ internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane,
             {
                 logger.LogError(nameof(ServiceSasValidator), nameof(Validate),
                     "Service SAS has unparseable expiry '{0}'. Denying.", se);
-                return false;
+                return StorageAuthorizationResult.AuthenticationFailed();
             }
 
             if (DateTimeOffset.UtcNow >= expiry)
             {
                 logger.LogError(nameof(ServiceSasValidator), nameof(Validate),
                     "Service SAS token has expired (se={0}, now={1}). Denying.", se, DateTimeOffset.UtcNow);
-                return false;
+                return StorageAuthorizationResult.AuthenticationFailed();
             }
         }
 
@@ -130,6 +132,14 @@ internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane,
         {
             logger.LogDebug(nameof(ServiceSasValidator), nameof(Validate),
                 "Service SAS contains sip='{0}' restriction — IP enforcement is not implemented; passing.", sip);
+        }
+
+        // Validate that the HTTP method is covered by sp= permission letters (fail-fast before HMAC).
+        if (!IsMethodPermitted(method, sp, serviceType))
+        {
+            logger.LogError(nameof(ServiceSasValidator), nameof(Validate),
+                "Service SAS sp='{0}' does not cover HTTP method '{1}' for {2}. Denying.", sp, method, serviceType);
+            return StorageAuthorizationResult.PermissionMismatch();
         }
 
         var canonicalizedResource = BuildCanonicalizedResource(storageAccountName, absolutePath, sr, serviceType);
@@ -151,13 +161,13 @@ internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane,
         {
             logger.LogError(nameof(ServiceSasValidator), nameof(Validate),
                 "Storage account '{0}' not found during Service SAS validation.", storageAccountName);
-            return false;
+            return StorageAuthorizationResult.AuthenticationFailed();
         }
 
         var hash1 = ComputeHmacSha256(accountResult.Resource.Keys[0].Value, stringToSign);
         var hash2 = ComputeHmacSha256(accountResult.Resource.Keys[1].Value, stringToSign);
 
-        if (hash1 == sig || hash2 == sig) return true;
+        if (hash1 == sig || hash2 == sig) return StorageAuthorizationResult.Authorized();
 
         logger.LogError(nameof(ServiceSasValidator), nameof(Validate),
             "Service SAS signature mismatch for account '{0}'. Expected [{1}...] or [{2}...], got [{3}...].",
@@ -165,7 +175,7 @@ internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane,
             hash1.Length >= 10 ? hash1[..10] : hash1,
             hash2.Length >= 10 ? hash2[..10] : hash2,
             sig.Length >= 10 ? sig[..10] : sig);
-        return false;
+        return StorageAuthorizationResult.AuthenticationFailed();
     }
 
     private static string BuildCanonicalizedResource(
@@ -232,5 +242,95 @@ internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane,
         var dataBytes = Encoding.UTF8.GetBytes(stringToSign);
         using var hmac = new HMACSHA256(keyBytes);
         return Convert.ToBase64String(hmac.ComputeHash(dataBytes));
+    }
+
+    /// <summary>
+    /// Returns true when the HTTP method is covered by the Service SAS permission letters in sp=.
+    /// Permission mapping differs by service type (Blob, Queue, Table).
+    /// 
+    /// Blob permission mapping:
+    ///   r (Read)       → GET, HEAD
+    ///   w (Write)      → PUT
+    ///   d (Delete)     → DELETE
+    ///   l (List)       → GET
+    ///   a (Add)        → POST, PUT
+    ///   c (Create)     → PUT
+    ///   p (Process)    → (not applicable to Blob)
+    ///   u (Update)     → (not applicable to Blob)
+    ///   q (Query)      → (not applicable to Blob)
+    ///   t (Tags)       → GET, PUT, HEAD
+    ///   x (Delete version) → DELETE
+    ///   f (Filter)     → GET
+    ///   e (Execute)    → GET
+    ///   m (Modify)     → PUT
+    ///   i (Immutable)  → PUT, DELETE
+    ///
+    /// Queue permission mapping:
+    ///   r (Read)       → GET, HEAD
+    ///   w (Write)      → (not applicable to Queue)
+    ///   d (Delete)     → DELETE
+    ///   l (List)       → GET
+    ///   a (Add)        → POST
+    ///   c (Create)     → (not applicable to Queue)
+    ///   p (Process)    → GET, DELETE
+    ///   u (Update)     → PUT
+    ///   q (Query)      → (not applicable to Queue)
+    ///   t, x, f, e, m, i → (not applicable to Queue)
+    ///
+    /// Table permission mapping:
+    ///   r (Read)       → GET, HEAD
+    ///   w (Write)      → (not applicable to Table)
+    ///   d (Delete)     → DELETE
+    ///   l (List)       → GET
+    ///   a (Add)        → POST
+    ///   c (Create)     → (not applicable to Table)
+    ///   p (Process)    → (not applicable to Table)
+    ///   u (Update)     → PUT, MERGE, PATCH
+    ///   q (Query)      → GET
+    ///   t, x, f, e, m, i → (not applicable to Table)
+    /// </summary>
+    private static bool IsMethodPermitted(string method, string sp, SasServiceType serviceType)
+    {
+        if (string.IsNullOrEmpty(sp)) return false;
+
+        var upperMethod = method.ToUpperInvariant();
+
+        return serviceType switch
+        {
+            SasServiceType.Blob => upperMethod switch
+            {
+                "GET"    => sp.IndexOfAny(['r', 'l', 'f', 'e', 't']) >= 0,
+                "HEAD"   => sp.IndexOfAny(['r', 't']) >= 0,
+                "PUT"    => sp.IndexOfAny(['w', 'c', 'a', 'm', 't', 'i']) >= 0,
+                "POST"   => sp.IndexOfAny(['a']) >= 0,
+                "DELETE" => sp.IndexOfAny(['d', 'x', 'i']) >= 0,
+                "PATCH"  => false,  // Blob does not support PATCH in standard operations
+                "MERGE"  => false,  // Blob does not support MERGE
+                _        => false
+            },
+            SasServiceType.Queue => upperMethod switch
+            {
+                "GET"    => sp.IndexOfAny(['r', 'p', 'l']) >= 0,
+                "HEAD"   => sp.IndexOfAny(['r']) >= 0,
+                "PUT"    => sp.IndexOfAny(['u']) >= 0,
+                "POST"   => sp.IndexOfAny(['a']) >= 0,
+                "DELETE" => sp.IndexOfAny(['d', 'p']) >= 0,
+                "PATCH"  => false,  // Queue does not support PATCH
+                "MERGE"  => false,  // Queue does not support MERGE
+                _        => false
+            },
+            SasServiceType.Table => upperMethod switch
+            {
+                "GET"    => sp.IndexOfAny(['r', 'l', 'q']) >= 0,
+                "HEAD"   => sp.IndexOfAny(['r']) >= 0,
+                "PUT"    => sp.IndexOfAny(['u']) >= 0,
+                "POST"   => sp.IndexOfAny(['a']) >= 0,
+                "DELETE" => sp.IndexOfAny(['d']) >= 0,
+                "PATCH"  => sp.IndexOfAny(['u']) >= 0,
+                "MERGE"  => sp.IndexOfAny(['u']) >= 0,
+                _        => false
+            },
+            _ => false
+        };
     }
 }

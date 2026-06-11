@@ -30,11 +30,8 @@ internal sealed class GetTableEntityEndpoint(Pipeline eventPipeline, ITopazLogge
         var subscriptionIdentifier = storageAccount!.GetSubscription();
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
 
-        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context))
-        {
-            response.StatusCode = HttpStatusCode.Unauthorized;
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context, response))
             return;
-        }
 
         var matches = Regex.Match(context.Request.Path, @"\w+\(PartitionKey='\w+',(%20|\s)?RowKey='\w+'\)$",
             RegexOptions.IgnoreCase);

@@ -52,22 +52,30 @@ internal abstract class BlobDataPlaneEndpointBase(Pipeline eventPipeline, ITopaz
         var queryIndex = rawTarget.IndexOf('?');
         var rawPath = queryIndex >= 0 ? rawTarget[..queryIndex] : rawTarget;
 
-        var authorized = _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
+        var authResult = _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccountName, context.Request.Headers, requiredPermissions, context.Request.Method,
             rawPath, context.Request.QueryString);
 
-        if (!authorized)
+        if (!authResult.IsAuthorized)
         {
-            const string errorXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
-                                    "<Error><Code>AuthenticationFailed</Code>" +
-                                    "<Message>Server failed to authenticate the request. " +
-                                    "Make sure the value of the Authorization header is formed correctly including the signature.</Message></Error>";
-            response.StatusCode = System.Net.HttpStatusCode.Unauthorized;
-            response.Headers.TryAddWithoutValidation("WWW-Authenticate", StorageDataPlaneAuthorizationChecker.WwwAuthenticateChallenge);
-            response.Content = new StringContent(errorXml, Encoding.UTF8, "application/xml");
+            if (authResult.ErrorCode == "AuthorizationPermissionMismatch")
+            {
+                // Service SAS permission mismatch: sp= does not cover HTTP method
+                var error = StorageErrorResponse.AuthorizationPermissionMismatch();
+                response.StatusCode = System.Net.HttpStatusCode.Forbidden;
+                response.Content = new StringContent(error.ToXml(), Encoding.UTF8, "application/xml");
+            }
+            else
+            {
+                // Authentication failure (bad signature, expired token, etc.)
+                var error = StorageErrorResponse.AuthenticationFailed();
+                response.StatusCode = System.Net.HttpStatusCode.Unauthorized;
+                response.Headers.TryAddWithoutValidation("WWW-Authenticate", StorageDataPlaneAuthorizationChecker.WwwAuthenticateChallenge);
+                response.Content = new StringContent(error.ToXml(), Encoding.UTF8, "application/xml");
+            }
         }
 
-        return authorized;
+        return authResult.IsAuthorized;
     }
 
     protected bool TryGetStorageAccountFromSecondaryHost(IHeaderDictionary headers,
@@ -107,11 +115,9 @@ internal abstract class BlobDataPlaneEndpointBase(Pipeline eventPipeline, ITopaz
         var firstLabel = host.ToString().Split('.')[0];
         if (!firstLabel.EndsWith("-secondary", StringComparison.OrdinalIgnoreCase)) return false;
 
-        const string errorXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
-                                 "<Error><Code>WriteOperationNotSupportedOnSecondary</Code>" +
-                                 "<Message>The account being accessed does not support writes from the secondary region.</Message></Error>";
-        response.StatusCode = HttpStatusCode.Forbidden;
-        response.Content = new StringContent(errorXml, Encoding.UTF8, "application/xml");
+        var error = StorageErrorResponse.WriteOperationNotSupportedOnSecondary();
+        response.StatusCode = System.Net.HttpStatusCode.Forbidden;
+        response.Content = new StringContent(error.ToXml(), Encoding.UTF8, "application/xml");
         return true;
     }
 

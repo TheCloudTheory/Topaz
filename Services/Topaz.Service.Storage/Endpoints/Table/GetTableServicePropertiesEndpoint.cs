@@ -36,11 +36,8 @@ internal sealed class GetTableServicePropertiesEndpoint(Pipeline eventPipeline, 
         var subscriptionIdentifier = storageAccount!.GetSubscription();
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
 
-        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context))
-        {
-            response.StatusCode = HttpStatusCode.Unauthorized;
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context, response))
             return;
-        }
 
         ThrowIfGetPropertiesRequestIsInvalid(context.Request.QueryString);
 

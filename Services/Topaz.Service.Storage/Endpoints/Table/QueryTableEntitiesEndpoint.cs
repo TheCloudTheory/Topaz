@@ -33,11 +33,8 @@ internal sealed class QueryTableEntitiesEndpoint(Pipeline eventPipeline, ITopazL
         var subscriptionIdentifier = storageAccount!.GetSubscription();
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
 
-        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context))
-        {
-            response.StatusCode = HttpStatusCode.Unauthorized;
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context, response))
             return;
-        }
 
         if (context.Request.Query.HasQueryKeyWithValue("comp", "acl"))
         {

@@ -28,11 +28,8 @@ internal sealed class ListTablesEndpoint(Pipeline eventPipeline, ITopazLogger lo
         var subscriptionIdentifier = storageAccount!.GetSubscription();
         var resourceGroupIdentifier = storageAccount!.GetResourceGroup();
 
-        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context))
-        {
-            response.StatusCode = HttpStatusCode.Unauthorized;
+        if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name, context, response))
             return;
-        }
 
         var tablesOp = ControlPlane.GetTables(subscriptionIdentifier, resourceGroupIdentifier, storageAccount.Name);
         response.Content = JsonContent.Create(new TableEndpointResponse(tablesOp.Resource!));

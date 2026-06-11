@@ -21,7 +21,7 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
     private readonly ServiceSasValidator _sasValidator = new(new AzureStorageControlPlane(new StorageResourceProvider(logger), logger), logger);
     private readonly AccountSasValidator _accountSasValidator = new(new AzureStorageControlPlane(new StorageResourceProvider(logger), logger), logger);
 
-    public bool RequestIsAuthorized(
+    public StorageAuthorizationResult RequestIsAuthorized(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
@@ -37,9 +37,10 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
             {
                 logger.LogDebug(nameof(QueueStorageSecurityProvider), nameof(RequestIsAuthorized),
                     "No Authorization header; attempting Account SAS validation for path='{0}'", absolutePath);
-                return _accountSasValidator.ValidateForPath(
+                var authorized = _accountSasValidator.ValidateForPath(
                     subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
                     method, absolutePath, query, AccountSasValidator.AccountSasService.Queue);
+                return authorized ? StorageAuthorizationResult.Authorized() : StorageAuthorizationResult.AuthenticationFailed();
             }
 
             if (ServiceSasValidator.IsServiceSas(query))
@@ -47,11 +48,11 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
                 logger.LogDebug(nameof(QueueStorageSecurityProvider), nameof(RequestIsAuthorized),
                     "No Authorization header; attempting Service SAS validation for path='{0}'", absolutePath);
                 return IsAuthorizedForServiceSas(
-                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query);
+                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method);
             }
 
             logger.LogError("Authentication failure for Queue Storage. Authorization header is missing.");
-            return false;
+            return StorageAuthorizationResult.AuthenticationFailed();
         }
 
         var headerValue = value.ToString();
@@ -61,36 +62,44 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
         logger.LogDebug(nameof(QueueStorageSecurityProvider), nameof(RequestIsAuthorized),
             "Scheme='{0}' Method='{1}' Path='{2}'", scheme, method, absolutePath);
 
-        return scheme switch
+        var result = scheme switch
         {
             "SharedKey" => IsAuthorizedForSharedKey(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccountName, parts.Length > 1 ? parts[1] : string.Empty, headers, method, absolutePath, query),
+                storageAccountName, parts.Length > 1 ? parts[1] : string.Empty, headers, method, absolutePath, query)
+                ? StorageAuthorizationResult.Authorized()
+                : StorageAuthorizationResult.AuthenticationFailed(),
             "SharedKeyLite" => IsAuthorizedForSharedKeyLite(subscriptionIdentifier, resourceGroupIdentifier,
-                storageAccountName, parts.Length > 1 ? parts[1] : string.Empty, headers, absolutePath, query),
-            "Bearer" => _bearerChecker.IsAuthorizedForBearer(subscriptionIdentifier, requiredPermissions, headerValue),
+                storageAccountName, parts.Length > 1 ? parts[1] : string.Empty, headers, absolutePath, query)
+                ? StorageAuthorizationResult.Authorized()
+                : StorageAuthorizationResult.AuthenticationFailed(),
+            "Bearer" => _bearerChecker.IsAuthorizedForBearer(subscriptionIdentifier, requiredPermissions, headerValue)
+                ? StorageAuthorizationResult.Authorized()
+                : StorageAuthorizationResult.AuthenticationFailed(),
             _ => LogAndDeny(scheme)
         };
+        return result;
     }
 
-    private bool LogAndDeny(string scheme)
+    private StorageAuthorizationResult LogAndDeny(string scheme)
     {
         logger.LogError($"Authentication failure for Queue Storage. Unsupported scheme: {scheme}.");
-        return false;
+        return StorageAuthorizationResult.AuthenticationFailed();
     }
 
-    private bool IsAuthorizedForServiceSas(
+    private StorageAuthorizationResult IsAuthorizedForServiceSas(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
         string absolutePath,
-        QueryString query)
+        QueryString query,
+        string method)
     {
-        // Derive the queue name from the first path segment (strip /messages suffix if present).
+        // Derive the queue name from the first path segment.
         var queueName = absolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
 
         return _sasValidator.Validate(
             subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
-            absolutePath, query, ServiceSasValidator.SasServiceType.Queue,
+            absolutePath, query, ServiceSasValidator.SasServiceType.Queue, method,
             policyId => _queueControlPlane.GetQueueStoredPolicy(
                 subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName, policyId));
     }

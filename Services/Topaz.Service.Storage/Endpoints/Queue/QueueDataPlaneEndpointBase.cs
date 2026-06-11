@@ -50,17 +50,30 @@ internal abstract class QueueDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
         var queryIndex = rawTarget.IndexOf('?');
         var rawPath = queryIndex >= 0 ? rawTarget[..queryIndex] : rawTarget;
 
-        var authorized = _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
+        var authResult = _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccountName, context.Request.Headers, requiredPermissions, context.Request.Method,
             rawPath, context.Request.QueryString);
 
-        if (!authorized)
+        if (!authResult.IsAuthorized)
         {
-            response.StatusCode = HttpStatusCode.Unauthorized;
-            response.Headers.TryAddWithoutValidation("WWW-Authenticate", StorageDataPlaneAuthorizationChecker.WwwAuthenticateChallenge);
+            if (authResult.ErrorCode == "AuthorizationPermissionMismatch")
+            {
+                // Service SAS permission mismatch: sp= does not cover HTTP method
+                var error = StorageErrorResponse.AuthorizationPermissionMismatch();
+                response.StatusCode = HttpStatusCode.Forbidden;
+                response.Content = new StringContent(error.ToXml(), Encoding.UTF8, "application/xml");
+            }
+            else
+            {
+                // Authentication failure (bad signature, expired token, etc.)
+                var error = StorageErrorResponse.AuthenticationFailed();
+                response.StatusCode = HttpStatusCode.Unauthorized;
+                response.Headers.TryAddWithoutValidation("WWW-Authenticate", StorageDataPlaneAuthorizationChecker.WwwAuthenticateChallenge);
+                response.Content = new StringContent(error.ToXml(), Encoding.UTF8, "application/xml");
+            }
         }
 
-        return authorized;
+        return authResult.IsAuthorized;
     }
 
     protected static bool RejectIfSecondaryHostForMutation(IHeaderDictionary headers, HttpResponseMessage response)
@@ -69,11 +82,9 @@ internal abstract class QueueDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
         var firstLabel = host.ToString().Split('.')[0];
         if (!firstLabel.EndsWith("-secondary", StringComparison.OrdinalIgnoreCase)) return false;
 
-        const string errorXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
-                                 "<Error><Code>WriteOperationNotSupportedOnSecondary</Code>" +
-                                 "<Message>The account being accessed does not support writes from the secondary region.</Message></Error>";
+        var error = StorageErrorResponse.WriteOperationNotSupportedOnSecondary();
         response.StatusCode = HttpStatusCode.Forbidden;
-        response.Content = new StringContent(errorXml, Encoding.UTF8, "application/xml");
+        response.Content = new StringContent(error.ToXml(), Encoding.UTF8, "application/xml");
         return true;
     }
 
