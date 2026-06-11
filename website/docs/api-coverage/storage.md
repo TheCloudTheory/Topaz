@@ -183,7 +183,7 @@ Queue Storage is served on port **8893** (HTTPS) in Topaz.
 
 ## Service SAS Authentication
 
-Topaz validates [Service SAS](https://learn.microsoft.com/en-us/rest/api/storageservices/create-service-sas) tokens on all three data-plane services. The signature is verified using HMAC-SHA256 with the storage account key. Stored access policies (`si=` parameter) are resolved from the persisted ACL of each resource.
+Topaz validates [Service SAS](https://learn.microsoft.com/en-us/rest/api/storageservices/create-service-sas) tokens on all three data-plane services. The signature is verified using HMAC-SHA256 with the storage account key. Stored access policies (`si=` parameter) are resolved from the persisted ACL of each resource. Permission-letter enforcement (`sp=`) validates that the HTTP method of the incoming request is covered by the permission letters in the token (e.g. `r`→GET/HEAD, `w`→PUT, `d`→DELETE, `a`→POST, `u`→PUT/MERGE). Mismatched requests return 403 `AuthorizationPermissionMismatch`.
 
 | Service | SAS resource type (`sr=`) | Status | Notes |
 |---------|--------------------------|--------|-------|
@@ -198,7 +198,6 @@ Topaz validates [Service SAS](https://learn.microsoft.com/en-us/rest/api/storage
 :::caution[Known Limitations]
 
 - **IP range restriction (`sip=`)**: The `sip` parameter is detected and logged but not enforced. All source IPs are permitted regardless of the `sip` value in the SAS token.
-- **Permission-letter enforcement (`sp=`)**: The `sp` permission letters are not checked against the HTTP verb of the incoming request (e.g. `r`→GET, `w`→PUT, `d`→DELETE). Any cryptographically valid SAS token is accepted regardless of the declared permissions. Verb-level enforcement is tracked in the backlog for a future release.
 
 :::
 

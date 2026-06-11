@@ -269,19 +269,6 @@ TODO: Virtual Networks: Private Endpoint IP tracking
   labels: enhancement, virtual-network, good first issue
 -->
 
-### Storage — Service SAS permission enforcement
-
-<!--
-TODO: Storage: Service SAS permission-letter enforcement (sp → HTTP verb mapping)
-  Map the `sp` permission letters in a Service SAS token to the HTTP method of the
-  incoming request (e.g. r=GET, w=PUT, d=DELETE, l=GET+comp=list, a=POST messages,
-  p=GET+dequeue, u=PUT messages, c=create). Return 403 AuthorizationPermissionMismatch
-  when the method is not covered by the token's permissions.
-  Applies to all three storage services: Blob, Queue, and Table.
-  milestone: v1.7-beta
-  labels: enhancement, storage, security
--->
-
 ### Storage — SAS source IP (`sip`) enforcement
 
 <!--

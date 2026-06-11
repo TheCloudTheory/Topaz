@@ -425,4 +425,222 @@ public class StorageServiceSasTests
         // Act + Assert — request with a now-revoked SAS must be denied.
         Assert.Catch<Exception>(() => sasTable.Query<TableEntity>().ToArray());
     }
+
+    // -----------------------------------------------------------------------
+    // Permission Mismatch Tests (sp= enforcement) — Returns 403 Forbidden
+    // -----------------------------------------------------------------------
+
+    [Test]
+    public void Blob_ServiceSas_PermissionMismatch_Write_OnReadOnlyToken_Returns403()
+    {
+        // Arrange — create a container with a read-only SAS (sp=r).
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var serviceClient = new BlobServiceClient(connectionString);
+        serviceClient.CreateBlobContainer("sp-mismatch-blob");
+        var container = serviceClient.GetBlobContainerClient("sp-mismatch-blob");
+
+        // Generate read-only SAS (sp=r — GET/HEAD only).
+        var readOnlySas = container.GenerateSasUri(BlobContainerSasPermissions.Read, DateTimeOffset.UtcNow.AddHours(1));
+        var readOnlyClient = new BlobContainerClient(readOnlySas);
+
+        // Act & Assert — attempt to upload (PUT) with read-only token must fail with 403.
+        var ex = Assert.Catch<RequestFailedException>(() =>
+            readOnlyClient.GetBlobClient("test.txt").Upload(new BinaryData("data")));
+        
+        Assert.That(ex.Status, Is.EqualTo(403), "Expected 403 Forbidden for permission mismatch");
+        Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationPermissionMismatch"), 
+            "Expected AuthorizationPermissionMismatch error code");
+    }
+
+    [Test]
+    public void Blob_ServiceSas_PermissionMismatch_Delete_OnReadOnlyToken_Returns403()
+    {
+        // Arrange — create a blob and upload it with account key.
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var serviceClient = new BlobServiceClient(connectionString);
+        serviceClient.CreateBlobContainer("sp-mismatch-del");
+        var blobClient = serviceClient.GetBlobContainerClient("sp-mismatch-del").GetBlobClient("todelete.txt");
+        blobClient.Upload(new BinaryData("data"));
+
+        // Generate read-only SAS (sp=r).
+        var readOnlySas = blobClient.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddHours(1));
+        var readOnlyClient = new BlobClient(readOnlySas);
+
+        // Act & Assert — attempt to delete with read-only token must fail with 403.
+        var ex = Assert.Catch<RequestFailedException>(() => readOnlyClient.Delete());
+        
+        Assert.That(ex.Status, Is.EqualTo(403), "Expected 403 Forbidden for permission mismatch");
+        Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationPermissionMismatch"));
+    }
+
+    [Test]
+    public void Queue_ServiceSas_PermissionMismatch_PutMessage_OnReadOnlyToken_Returns403()
+    {
+        // Arrange — create a queue with a read-only SAS (sp=r).
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var serviceClient = new QueueServiceClient(connectionString);
+        serviceClient.CreateQueue("sp-mismatch-queue");
+        var queueClient = serviceClient.GetQueueClient("sp-mismatch-queue");
+
+        // Generate read-only SAS (sp=r — GET/HEAD only).
+        var readOnlySas = queueClient.GenerateSasUri(QueueSasPermissions.Read | QueueSasPermissions.Process,
+            DateTimeOffset.UtcNow.AddHours(1));
+        var readOnlyClient = new QueueClient(readOnlySas);
+
+        // Act & Assert — attempt to send message (POST) with read-only token must fail with 403.
+        var ex = Assert.Catch<RequestFailedException>(() => readOnlyClient.SendMessage("should-fail"));
+        
+        Assert.That(ex.Status, Is.EqualTo(403), "Expected 403 Forbidden for permission mismatch");
+        Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationPermissionMismatch"));
+    }
+
+    [Test]
+    public void Queue_ServiceSas_PermissionMismatch_DeleteMessage_OnReadOnlyToken_Returns403()
+    {
+        // Arrange — create a queue, send a message with account key, then get read-only SAS.
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var serviceClient = new QueueServiceClient(connectionString);
+        serviceClient.CreateQueue("sp-mismatch-queuedel");
+        var queueClient = serviceClient.GetQueueClient("sp-mismatch-queuedel");
+        var message = queueClient.SendMessage("test");
+
+        // Generate read-only SAS (sp=r — read/list only, no delete).
+        var readOnlySas = queueClient.GenerateSasUri(QueueSasPermissions.Read,
+            DateTimeOffset.UtcNow.AddHours(1));
+        var readOnlyClient = new QueueClient(readOnlySas);
+
+        // Act & Assert — attempt to delete message with read-only token must fail with 403.
+        var ex = Assert.Catch<RequestFailedException>(() =>
+            readOnlyClient.DeleteMessage(message.Value.MessageId, message.Value.PopReceipt));
+        
+        Assert.That(ex.Status, Is.EqualTo(403), "Expected 403 Forbidden for permission mismatch");
+        Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationPermissionMismatch"));
+    }
+
+    [Test]
+    public void Table_ServiceSas_PermissionMismatch_Insert_OnReadOnlyToken_Returns403()
+    {
+        // Arrange — create a table with a read-only SAS (sp=r).
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var tableServiceClient = new TableServiceClient(connectionString);
+        tableServiceClient.CreateTable("sp_mismatch_table");
+        var tableClient = tableServiceClient.GetTableClient("sp_mismatch_table");
+
+        // Generate read-only SAS (sp=r — GET/HEAD only).
+        var sasBuilder = new TableSasBuilder { TableName = "sp_mismatch_table", ExpiresOn = DateTimeOffset.UtcNow.AddHours(1) };
+        sasBuilder.SetPermissions(TableSasPermissions.Read);
+        var readOnlySas = tableClient.GenerateSasUri(sasBuilder);
+        var tableEndpoint = new Uri(
+            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/sp_mismatch_table");
+        var readOnlyClient = new TableClient(tableEndpoint, new AzureSasCredential(readOnlySas.Query.TrimStart('?')));
+
+        // Act & Assert — attempt to insert entity with read-only token must fail with 403.
+        var entity = new TableEntity("pk", "rk") { { "data", "value" } };
+        var ex = Assert.Catch<RequestFailedException>(() => readOnlyClient.AddEntity(entity));
+        
+        Assert.That(ex.Status, Is.EqualTo(403), "Expected 403 Forbidden for permission mismatch");
+        Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationPermissionMismatch"));
+    }
+
+    [Test]
+    public void Table_ServiceSas_PermissionMismatch_Delete_OnReadOnlyToken_Returns403()
+    {
+        // Arrange — create a table and insert an entity with account key.
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var tableServiceClient = new TableServiceClient(connectionString);
+        tableServiceClient.CreateTable("sp_mismatch_del_table");
+        var tableClient = tableServiceClient.GetTableClient("sp_mismatch_del_table");
+        tableClient.AddEntity(new TableEntity("pk", "rk") { { "data", "value" } });
+
+        // Generate read-only SAS (sp=r).
+        var sasBuilder = new TableSasBuilder { TableName = "sp_mismatch_del_table", ExpiresOn = DateTimeOffset.UtcNow.AddHours(1) };
+        sasBuilder.SetPermissions(TableSasPermissions.Read);
+        var readOnlySas = tableClient.GenerateSasUri(sasBuilder);
+        var tableEndpoint = new Uri(
+            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/sp_mismatch_del_table");
+        var readOnlyClient = new TableClient(tableEndpoint, new AzureSasCredential(readOnlySas.Query.TrimStart('?')));
+
+        // Act & Assert — attempt to delete entity with read-only token must fail with 403.
+        var ex = Assert.Catch<RequestFailedException>(() =>
+            readOnlyClient.DeleteEntity("pk", "rk"));
+        
+        Assert.That(ex.Status, Is.EqualTo(403), "Expected 403 Forbidden for permission mismatch");
+        Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationPermissionMismatch"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Regression Tests — Valid permissions still work
+    // -----------------------------------------------------------------------
+
+    [Test]
+    public void Blob_ServiceSas_ValidPermission_Write_OnWriteToken_Succeeds()
+    {
+        // Arrange — create a container with write permission SAS (sp=w).
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var serviceClient = new BlobServiceClient(connectionString);
+        serviceClient.CreateBlobContainer("sp-valid-blob");
+        var container = serviceClient.GetBlobContainerClient("sp-valid-blob");
+
+        // Generate write-only SAS (sp=w).
+        var writeSas = container.GenerateSasUri(BlobContainerSasPermissions.Write, DateTimeOffset.UtcNow.AddHours(1));
+        var writeClient = new BlobContainerClient(writeSas);
+
+        // Act — upload blob with write-only token should succeed.
+        var blobClient = writeClient.GetBlobClient("written.txt");
+        blobClient.Upload(new BinaryData("written content"));
+
+        // Assert — verify blob was created.
+        var accountClient = new BlobServiceClient(connectionString);
+        var uploaded = accountClient.GetBlobContainerClient("sp-valid-blob").GetBlobClient("written.txt");
+        var content = uploaded.DownloadContent().Value;
+        Assert.That(content.Content.ToString(), Is.EqualTo("written content"));
+    }
+
+    [Test]
+    public void Queue_ServiceSas_ValidPermission_Add_OnAddToken_Succeeds()
+    {
+        // Arrange — create a queue with add permission SAS (sp=a).
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var serviceClient = new QueueServiceClient(connectionString);
+        serviceClient.CreateQueue("sp-valid-queue");
+        var queueClient = serviceClient.GetQueueClient("sp-valid-queue");
+
+        // Generate add-only SAS (sp=a).
+        var addSas = queueClient.GenerateSasUri(QueueSasPermissions.Add, DateTimeOffset.UtcNow.AddHours(1));
+        var addClient = new QueueClient(addSas);
+
+        // Act — send message with add-only token should succeed.
+        addClient.SendMessage("valid message");
+
+        // Assert — verify message was queued (via account key).
+        var messages = queueClient.ReceiveMessages();
+        Assert.That(messages.Value, Has.Length.GreaterThanOrEqualTo(1));
+        Assert.That(messages.Value[0].Body.ToString(), Is.EqualTo("valid message"));
+    }
+
+    [Test]
+    public void Table_ServiceSas_ValidPermission_Add_OnAddToken_Succeeds()
+    {
+        // Arrange — create a table with add permission SAS (sp=a).
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var tableServiceClient = new TableServiceClient(connectionString);
+        tableServiceClient.CreateTable("sp_valid_table");
+        var tableClient = tableServiceClient.GetTableClient("sp_valid_table");
+
+        // Generate add-only SAS (sp=a).
+        var sasBuilder = new TableSasBuilder { TableName = "sp_valid_table", ExpiresOn = DateTimeOffset.UtcNow.AddHours(1) };
+        sasBuilder.SetPermissions(TableSasPermissions.Add);
+        var addSas = tableClient.GenerateSasUri(sasBuilder);
+        var tableEndpoint = new Uri(
+            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/sp_valid_table");
+        var addClient = new TableClient(tableEndpoint, new AzureSasCredential(addSas.Query.TrimStart('?')));
+
+        // Act — insert entity with add-only token should succeed.
+        var entity = new TableEntity("pk", "rk") { { "data", "value" } };
+        addClient.AddEntity(entity);
+
+        // Assert — verify entity was inserted (via account key).
+        var retrieved = tableClient.GetEntity<TableEntity>("pk", "rk");
+        Assert.That(retrieved.Value["data"].ToString(), Is.EqualTo("value"));
+    }
 }
