@@ -1,4 +1,6 @@
 using Azure.Deployments.Core.Definitions.Schema;
+using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
+using Newtonsoft.Json.Linq;
 
 namespace Topaz.Service.ResourceManager.Deployment;
 
@@ -14,6 +16,8 @@ internal sealed class TemplateDeployment
     public Template Template { get; }
     public DeploymentStatus Status { get; private set; } = DeploymentStatus.New;
     public CancellationToken CancellationToken => _cts?.Token ?? CancellationToken.None;
+    public InsensitiveDictionary<JToken> Metadata { get; }
+    public System.Text.Json.JsonElement? Parameters { get; }
 
     private CancellationTokenSource? _cts;
 
@@ -21,6 +25,7 @@ internal sealed class TemplateDeployment
     private readonly Action _cancel;
     private readonly Action _fail;
     private readonly Action _persist;
+    private readonly Action<BinaryData?> _setOutputs;
 
     public TemplateDeployment(
         string id,
@@ -29,7 +34,10 @@ internal sealed class TemplateDeployment
         Action complete,
         Action cancel,
         Action fail,
-        Action persist)
+        Action persist,
+        Action<BinaryData?> setOutputs,
+        InsensitiveDictionary<JToken> metadata,
+        System.Text.Json.JsonElement? parameters)
     {
         Id = id;
         Name = name;
@@ -38,6 +46,9 @@ internal sealed class TemplateDeployment
         _cancel = cancel;
         _fail = fail;
         _persist = persist;
+        _setOutputs = setOutputs;
+        Metadata = metadata;
+        Parameters = parameters;
     }
 
     public void SetCancellationTokenSource(CancellationTokenSource cts) => _cts = cts;
@@ -63,6 +74,8 @@ internal sealed class TemplateDeployment
     }
 
     public void Persist() => _persist();
+
+    public void SetOutputs(BinaryData? outputs) => _setOutputs(outputs);
 
     public enum DeploymentStatus
     {

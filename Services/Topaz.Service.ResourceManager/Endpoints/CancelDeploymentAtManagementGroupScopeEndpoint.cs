@@ -12,7 +12,8 @@ public sealed class CancelDeploymentAtManagementGroupScopeEndpoint(
     TemplateDeploymentOrchestrator orchestrator) : IEndpointDefinition
 {
     private readonly ManagementGroupDeploymentControlPlane _controlPlane =
-        new(new ManagementGroupDeploymentResourceProvider(logger), orchestrator, logger);
+        new(new ManagementGroupDeploymentResourceProvider(logger), orchestrator,
+            new ArmTemplateEngineFacade(), logger);
 
     public string[] Endpoints =>
     [

@@ -1,5 +1,11 @@
+using System.Text.Json.Nodes;
+using Azure.ResourceManager.Resources.Models;
+using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
+using Newtonsoft.Json.Linq;
 using Topaz.Service.ResourceManager.Deployment;
 using Topaz.Service.ResourceManager.Models;
+using Topaz.Service.ResourceManager.Models.Requests;
+using Topaz.Service.ResourceManager.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -8,8 +14,10 @@ namespace Topaz.Service.ResourceManager;
 internal sealed class ManagementGroupDeploymentControlPlane(
     ManagementGroupDeploymentResourceProvider provider,
     TemplateDeploymentOrchestrator orchestrator,
+    ArmTemplateEngineFacade templateEngineFacade,
     ITopazLogger logger)
 {
+    private readonly ArmTemplateEngineFacade _templateEngineFacade = templateEngineFacade;
     private const string NotFoundCode = "ManagementGroupNotFound";
     private const string NotFoundMessageTemplate = "Management group '{0}' was not found.";
     private const string DeploymentNotFoundCode = "DeploymentNotFound";
@@ -51,5 +59,41 @@ internal sealed class ManagementGroupDeploymentControlPlane(
 
         return orchestrator.CancelDeployment(
             $"/providers/Microsoft.Management/managementGroups/{groupId}/providers/Microsoft.Resources/deployments/{deploymentName}");
+    }
+
+    public ControlPlaneOperationResult<ManagementGroupDeploymentResource> CreateOrUpdate(
+        string groupId,
+        string deploymentName,
+        string content,
+        Dictionary<string, CreateDeploymentRequest.ParameterValue>? parameters,
+        string location,
+        string mode)
+    {
+        logger.LogDebug(nameof(ManagementGroupDeploymentControlPlane), nameof(CreateOrUpdate),
+            "Creating or updating management-group-scope deployment '{0}' in management group '{1}'.",
+            deploymentName, groupId);
+
+        if (!provider.ManagementGroupExists(groupId))
+        {
+            return new ControlPlaneOperationResult<ManagementGroupDeploymentResource>(
+                OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, groupId),
+                NotFoundCode);
+        }
+
+        var template = _templateEngineFacade.Parse(content);
+        var deploymentResource = new ManagementGroupDeploymentResource(
+            groupId,
+            deploymentName,
+            location,
+            DeploymentResourceProperties.New(mode, content, parameters));
+
+        provider.CreateOrUpdateDeployment(groupId, deploymentName, deploymentResource);
+
+        orchestrator.EnqueueManagementGroupDeployment(groupId, template, deploymentResource,
+            InsensitiveDictionary<JToken>.Empty);
+
+        return new ControlPlaneOperationResult<ManagementGroupDeploymentResource>(
+            OperationResult.Success, deploymentResource, null, null);
     }
 }

@@ -634,29 +634,30 @@ TODO: ARM Deployments: Support Microsoft.Resources/deployments as a nested resou
   labels: bug, arm-deployments
 -->
 
-### ARM Deployments — outputs populated on completion
-
-<!--
-TODO: ARM Deployments: Populate deployment outputs field on successful completion
-  After TemplateDeploymentOrchestrator finishes provisioning all resources in a template,
-  the deployment's `properties.outputs` field is left as null.  Callers (az deployment sub create,
-  azure/arm-deploy GitHub Action, Terraform azurerm provider) all read outputs from the completed
-  deployment object to pass values between pipeline stages.
-  Required changes:
-  - Evaluate each output expression declared in the template's `outputs` block after all resources
-    have been provisioned.  At minimum, support literal string/object outputs and
-    `reference(resourceId(...)).property` patterns (read back the resource that was just created).
-  - For nested deployments, resolve cross-deployment `reference(extensionResourceId(...)).outputs.x.value`
-    expressions by reading the child deployment's own outputs once it has completed.
-  - Serialize the evaluated outputs map into DeploymentResourceProperties.Outputs and persist it.
-  - Return the populated outputs in every subsequent GET on the deployment resource.
-  milestone: v1.7-beta
-  labels: bug, arm-deployments
--->
-
 ---
 
 ## v1.8-preview
+
+### ARM Deployments — reference() function evaluation in outputs
+
+<!--
+TODO: ARM Deployments: Evaluate reference() expressions in deployment outputs
+  Deployment output values may contain ARM template language expressions including reference()
+  to fetch properties of deployed resources. After TemplateDeploymentOrchestrator finishes
+  provisioning all resources in a template, outputs are now populated with evaluated expressions
+  for parameters(), variables(), resourceId(), concat(), and other common functions.
+  However, reference() requires a runtime round-trip to the resource provider to read deployed
+  resource state — a capability deferred from v1.7-beta.
+  Required changes:
+  - Extend TemplateDeploymentOrchestrator.RouteDeployment to scan all output values for reference() calls.
+  - For each reference() call, extract the resource ID or identifier and resolve it by reading from
+    the respective resource provider control plane.
+  - Substitute the evaluated resource property value back into the outputs before calling SetOutputs().
+  - This applies to reference(resourceId(...).property) and reference(extensionResourceId(...)).outputs.x.value
+    patterns across all 4 deployment scopes (resource group, subscription, tenant, management group).
+  milestone: v1.8-preview
+  labels: enhancement, arm-deployments
+-->
 
 ### ARM Deployments — deployment operations tracking
 

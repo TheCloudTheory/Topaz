@@ -84,6 +84,19 @@ internal sealed class ArmTemplateEngineFacade
             new TemplateMetricsRecorder(), InsensitiveDictionary<JToken>.Empty);
     }
 
+    /// <summary>
+    /// Processes ARM template language expressions at management group scope.
+    /// Only management group-scoped functions such as <c>tenant()</c> are evaluated;
+    /// <c>subscription()</c> and <c>resourceGroup()</c> are not available at this scope.
+    /// Uses the same processing as tenant scope (no subscription or resource group context).
+    /// </summary>
+    public void ProcessTemplateAtManagementGroupScope(
+        Template template, InsensitiveDictionary<JToken> metadataInsensitive, JsonElement? propertiesParameters)
+    {
+        // Management group scope evaluation is equivalent to tenant scope
+        ProcessTemplateAtTenantScope(template, metadataInsensitive, propertiesParameters);
+    }
+
     public void Validate(Template template)
     {
         TemplateEngine.ValidateTemplate(template, "apiVersion", TemplateDeploymentScope.ResourceGroup);

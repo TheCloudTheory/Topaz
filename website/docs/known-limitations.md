@@ -121,6 +121,26 @@ Templates that express subresources as standalone entries deploy the parent reso
 
 ### No fix planned
 
+## ARM Deployments — `reference()` expressions in outputs are not evaluated
+
+**Affected services:** Azure Resource Manager (`Microsoft.Resources/deployments`)
+
+Deployment output values may contain ARM template language expressions including `reference()` to fetch properties of deployed resources. Topaz's template processing engine (Azure SDK's `TemplateDeploymentEngine`) evaluates most common template expressions: `parameters()`, `variables()`, `resourceId()`, `concat()`, and others. However, `reference()` requires a runtime round-trip to the resource provider to read deployed resource state — a capability Topaz has deferred.
+
+When a deployment completes, Topaz serializes the template's `outputs` map directly into the `DeploymentResourceProperties.Outputs` field. Any output value containing a raw `reference()` call (e.g. `"[reference('storageAccountId').primaryEndpoints.blob]"`) will appear as a literal string expression rather than the evaluated property value.
+
+### Impact
+
+Deployments with output values that use `reference()` will see those outputs returned as unevaluated expression strings instead of actual resource property values. Callers that read `deployment.Properties.Outputs` will receive the template syntax (e.g. `"[reference(...)]"`) rather than resolved data.
+
+Deployments with outputs using only `parameters()`, `variables()`, `resourceId()`, `concat()`, `uniqueString()`, or literal values work correctly.
+
+**Workaround:** avoid using `reference()` in deployment outputs. Refactor templates to output only `resourceId()` or literal values, and have the caller fetch resource properties directly if needed.
+
+### Planned fix — v1.8-beta
+
+Extend `TemplateDeploymentOrchestrator.RouteDeployment` to collect all `reference()` calls from the outputs map, resolve them by reading from the respective control planes, and substitute the evaluated values back into the outputs before calling `SetOutputs()`. This requires mapping template resource types to their control planes, similar to the existing resource routing logic.
+
 ## Key Vault — `wrapKey`/`unwrapKey` for `oct` keys does not implement RFC 3394 AES Key Wrap
 
 **Affected services:** Key Vault data plane — `wrapKey`, `unwrapKey`

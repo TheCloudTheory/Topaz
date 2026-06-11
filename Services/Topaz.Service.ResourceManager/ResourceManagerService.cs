@@ -30,6 +30,7 @@ public sealed class ResourceManagerService : IServiceDefinition
             new ResourceManagerResourceProvider(logger),
             new SubscriptionDeploymentResourceProvider(logger),
             new TenantDeploymentResourceProvider(logger),
+            new ManagementGroupDeploymentResourceProvider(logger),
             logger);
         _deploymentOrchestrator.Start(cancellationToken);
     }
@@ -58,6 +59,7 @@ public sealed class ResourceManagerService : IServiceDefinition
         new GetDeploymentOperationsAtSubscriptionScopeEndpoint(_logger, _deploymentOrchestrator!),
         new DeleteDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new ListDeploymentsAtManagementGroupScopeEndpoint(_logger, _deploymentOrchestrator!),
+        new CreateOrUpdateDeploymentAtManagementGroupScopeEndpoint(_logger, _deploymentOrchestrator!),
         new ListDeploymentsAtTenantScopeEndpoint(_logger),
         new CreateOrUpdateDeploymentAtTenantScopeEndpoint(_logger, _deploymentOrchestrator!),
         new GetDeploymentAtTenantScopeEndpoint(_logger, _deploymentOrchestrator!),

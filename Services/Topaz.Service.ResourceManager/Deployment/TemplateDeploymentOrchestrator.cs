@@ -30,6 +30,7 @@ public sealed class TemplateDeploymentOrchestrator(
     ResourceManagerResourceProvider rgProvider,
     SubscriptionDeploymentResourceProvider subProvider,
     TenantDeploymentResourceProvider tenantProvider,
+    ManagementGroupDeploymentResourceProvider mgProvider,
     ITopazLogger logger)
 {
     private static readonly List<TemplateDeployment> DeploymentQueue = [];
@@ -64,7 +65,10 @@ public sealed class TemplateDeploymentOrchestrator(
             cancel: deploymentResource.CancelDeployment,
             fail: deploymentResource.FailDeployment,
             persist: () => rgProvider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier,
-                deploymentResource.Name, deploymentResource));
+                deploymentResource.Name, deploymentResource),
+            setOutputs: outputs => deploymentResource.Properties.Outputs = outputs,
+            metadata: metadataInsensitive,
+            parameters: deploymentResource.Properties.Parameters);
 
         lock (QueueLock) { DeploymentQueue.Add(job); }
     }
@@ -92,7 +96,10 @@ public sealed class TemplateDeploymentOrchestrator(
             cancel: deploymentResource.CancelDeployment,
             fail: deploymentResource.FailDeployment,
             persist: () => subProvider.CreateOrUpdate(subscriptionIdentifier, null,
-                deploymentResource.Name, deploymentResource));
+                deploymentResource.Name, deploymentResource),
+            setOutputs: outputs => deploymentResource.Properties.Outputs = outputs,
+            metadata: metadataInsensitive,
+            parameters: deploymentResource.Properties.Parameters);
 
         lock (QueueLock) { DeploymentQueue.Add(job); }
     }
@@ -118,10 +125,44 @@ public sealed class TemplateDeploymentOrchestrator(
             complete: deploymentResource.CompleteDeployment,
             cancel: deploymentResource.CancelDeployment,
             fail: deploymentResource.FailDeployment,
-            persist: () => tenantProvider.CreateOrUpdateDeployment(deploymentResource.Name, deploymentResource));
+            persist: () => tenantProvider.CreateOrUpdateDeployment(deploymentResource.Name, deploymentResource),
+            setOutputs: outputs => deploymentResource.Properties.Outputs = outputs,
+            metadata: metadataInsensitive,
+            parameters: deploymentResource.Properties.Parameters);
 
         lock (QueueLock) { DeploymentQueue.Add(job); }
     }
+
+    public void EnqueueManagementGroupDeployment(
+        string groupId,
+        Template template,
+        ManagementGroupDeploymentResource deploymentResource,
+        InsensitiveDictionary<JToken> metadataInsensitive)
+    {
+        _armTemplateEngineFacade.ProcessTemplateAtManagementGroupScope(template,
+            metadataInsensitive, deploymentResource.Properties.Parameters);
+
+        foreach (var resource in template.Resources)
+        {
+            resource.Id = new TemplateGenericProperty<string>
+            {
+                Value = $"/providers/{resource.Type}/{resource.Name}"
+            };
+        }
+
+        var job = new TemplateDeployment(
+            deploymentResource.Id, deploymentResource.Name, template,
+            complete: deploymentResource.CompleteDeployment,
+            cancel: deploymentResource.CancelDeployment,
+            fail: deploymentResource.FailDeployment,
+            persist: () => mgProvider.CreateOrUpdateDeployment(groupId, deploymentResource.Name, deploymentResource),
+            setOutputs: outputs => deploymentResource.Properties.Outputs = outputs,
+            metadata: metadataInsensitive,
+            parameters: deploymentResource.Properties.Parameters);
+
+        lock (QueueLock) { DeploymentQueue.Add(job); }
+    }
+
 
     public OperationResult CancelDeployment(string deploymentId)
     {
@@ -289,6 +330,40 @@ public sealed class TemplateDeploymentOrchestrator(
             }
         }
 
+        // Serialize template outputs and set them on the deployment
+        if (templateDeployment.Template.Outputs != null)
+        {
+            // Serialize the template outputs in Azure format: { type, value }
+            var outputsDict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (var output in templateDeployment.Template.Outputs)
+            {
+                var extractedOutput = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                
+                // Extract type from TemplateGenericProperty<TemplateParameterType>
+                if (output.Value.Type != null)
+                {
+                    extractedOutput["type"] = output.Value.Type.Value.ToString();
+                }
+                else
+                {
+                    extractedOutput["type"] = "object";
+                }
+                
+                // Extract the actual JToken value from TemplateGenericProperty<JToken>
+                // The .Value property contains the evaluated JToken
+                if (output.Value.Value?.Value != null)
+                {
+                    extractedOutput["value"] = output.Value.Value.Value;
+                }
+                
+                outputsDict[output.Key] = extractedOutput;
+            }
+            
+            var outputsJson = JsonSerializer.Serialize(outputsDict, GlobalSettings.JsonOptions);
+            var outputs = new BinaryData(outputsJson);
+            templateDeployment.SetOutputs(outputs);
+        }
+
         if (!hasProvisioningFailed)
             templateDeployment.Complete();
         else
@@ -296,5 +371,59 @@ public sealed class TemplateDeploymentOrchestrator(
 
         templateDeployment.Persist();
         logger.LogInformation($"Deployment {templateDeployment.Id} completed.");
+    }
+
+    /// <summary>
+    /// Extracts the evaluated output values from template outputs.
+    /// After ProcessTemplateLanguageExpressions, the output values are evaluated in place.
+    /// This method builds the outputs in the format { type, value } that Azure expects.
+    /// </summary>
+    private static Dictionary<string, object?> ExtractEvaluatedOutputs(InsensitiveDictionary<TemplateOutputParameter> outputs)
+    {
+        var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        
+        foreach (var output in outputs)
+        {
+            var extractedOutput = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            
+            // Get type and value from TemplateOutputParameter
+            // Both Type and Value are TemplateGenericProperty<T> wrappers
+            if (output.Value.Type?.Value != null)
+            {
+                extractedOutput["type"] = output.Value.Type.Value.ToString().ToLowerInvariant();
+            }
+            else
+            {
+                extractedOutput["type"] = "object";
+            }
+            
+            // The value is stored in output.Value.Value which is TemplateGenericProperty<JToken>
+            // We need to extract the JToken from it
+            var valueGenericProperty = output.Value.Value;
+            if (valueGenericProperty != null)
+            {
+                // Try to get the actual value
+                var jtoken = valueGenericProperty.Value;
+                if (jtoken != null)
+                {
+                    // The JToken may contain a value at a nested property
+                    // Check if it's structured as { value: {...}, type: {...}, ... }
+                    if (jtoken is JObject jo && jo.TryGetValue("value", out var innerValue))
+                    {
+                        // Extract the inner value
+                        extractedOutput["value"] = innerValue;
+                    }
+                    else
+                    {
+                        // Use the JToken directly
+                        extractedOutput["value"] = jtoken;
+                    }
+                }
+            }
+            
+            result[output.Key] = extractedOutput;
+        }
+        
+        return result;
     }
 }

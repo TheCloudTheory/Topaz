@@ -5,7 +5,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.ResourceManager;
 
-internal sealed class ManagementGroupDeploymentResourceProvider(ITopazLogger logger)
+public sealed class ManagementGroupDeploymentResourceProvider(ITopazLogger logger)
     : ResourceProviderBase<ManagementGroupDeploymentService>(logger)
 {
     private const string ManagementGroupDir = ".management-group";
@@ -79,5 +79,31 @@ internal sealed class ManagementGroupDeploymentResourceProvider(ITopazLogger log
         if (string.IsNullOrWhiteSpace(content)) return null;
 
         return JsonSerializer.Deserialize<ManagementGroupDeploymentResource>(content, GlobalSettings.JsonOptions);
+    }
+
+    public void CreateOrUpdateDeployment(string groupId, string deploymentName, ManagementGroupDeploymentResource resource)
+    {
+        ValidateGroupId(groupId);
+
+        var mgDir = ResolveManagementGroupDirectory(groupId);
+        if (mgDir == null)
+            throw new InvalidOperationException($"Management group '{groupId}' does not exist.");
+
+        var deploymentsDir = Path.Combine(mgDir, DeploymentsSubDir, deploymentName);
+        Directory.CreateDirectory(deploymentsDir);
+        File.WriteAllText(Path.Combine(deploymentsDir, "metadata.json"),
+            JsonSerializer.Serialize(resource, GlobalSettings.JsonOptions));
+    }
+
+    public void DeleteDeployment(string groupId, string deploymentName)
+    {
+        ValidateGroupId(groupId);
+
+        var mgDir = ResolveManagementGroupDirectory(groupId);
+        if (mgDir == null) return;
+
+        var deploymentsDir = Path.Combine(mgDir, DeploymentsSubDir, deploymentName);
+        if (Directory.Exists(deploymentsDir))
+            Directory.Delete(deploymentsDir, recursive: true);
     }
 }

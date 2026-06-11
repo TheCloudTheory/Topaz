@@ -27,7 +27,7 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create Or Update | ✅ | ARM template deployments |
+| Create Or Update | ✅ | ARM template deployments; outputs are now populated (resource-group, subscription, tenant, and management-group scopes) |
 | Delete | ✅ | |
 | Get | ✅ | |
 | List At Resource Group Scope | ✅ | |
@@ -35,15 +35,16 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 | Cancel | ✅ | POST cancel; queued deployments only |
 | Export Template | ✅ | POST exportTemplate; returns the template used for the deployment |
 | What If | ✅ | POST whatif; resource-level (Create/Modify/Delete/NoChange) and property-level delta |
-| Create Or Update At Subscription Scope | ✅ | PUT /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125; |
+| Create Or Update At Subscription Scope | ✅ | PUT /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125;; outputs are now populated |
 | Validate At Subscription Scope | ✅ | POST /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125;/validate |
 | Get At Subscription Scope | ✅ | GET /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125; |
 | List At Subscription Scope | ✅ | GET /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments |
 | Cancel At Subscription Scope | ✅ | POST /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125;/cancel |
 | Delete At Subscription Scope | ✅ | DELETE /subscriptions/&#123;sub&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125; |
 | List At Management Group Scope | ✅ | GET /providers/Microsoft.Management/managementGroups/&#123;groupId&#125;/providers/Microsoft.Resources/deployments |
+| Create Or Update At Management Group Scope | ✅ | PUT /providers/Microsoft.Management/managementGroups/&#123;groupId&#125;/providers/Microsoft.Resources/deployments/&#123;name&#125;; outputs are now populated |
 | List At Tenant Scope | ✅ | GET /providers/Microsoft.Resources/deployments |
-| Create Or Update At Tenant Scope | ✅ | PUT /providers/Microsoft.Resources/deployments/&#123;name&#125; |
+| Create Or Update At Tenant Scope | ✅ | PUT /providers/Microsoft.Resources/deployments/&#123;name&#125;; outputs are now populated |
 | Get At Tenant Scope | ✅ | GET /providers/Microsoft.Resources/deployments/&#123;name&#125; |
 | Delete At Tenant Scope | ✅ | DELETE /providers/Microsoft.Resources/deployments/&#123;name&#125; |
 | Validate At Tenant Scope | ✅ | POST /providers/Microsoft.Resources/deployments/&#123;name&#125;/validate |
