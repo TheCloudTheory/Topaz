@@ -11,6 +11,7 @@ using Topaz.Service.EventHub;
 using Topaz.Service.KeyVault;
 using Topaz.Service.ManagedIdentity;
 using Topaz.Service.ResourceManager.Models;
+using Topaz.Service.ResourceGroup;
 using Topaz.Service.ServiceBus;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -84,10 +85,21 @@ public sealed class TemplateDeploymentOrchestrator(
 
         foreach (var resource in template.Resources)
         {
-            resource.Id = new TemplateGenericProperty<string>
+            // Resource groups use /subscriptions/{sub}/resourceGroups/{name} path format
+            if (resource.Type.Value == "Microsoft.Resources/resourceGroups")
             {
-                Value = $"/subscriptions/{subscriptionIdentifier}/providers/{resource.Type}/{resource.Name}"
-            };
+                resource.Id = new TemplateGenericProperty<string>
+                {
+                    Value = $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resource.Name}"
+                };
+            }
+            else
+            {
+                resource.Id = new TemplateGenericProperty<string>
+                {
+                    Value = $"/subscriptions/{subscriptionIdentifier}/providers/{resource.Type}/{resource.Name}"
+                };
+            }
         }
 
         var job = new TemplateDeployment(
@@ -251,7 +263,12 @@ public sealed class TemplateDeploymentOrchestrator(
         logger.LogInformation($"Deployment of {templateDeployment.Id} started.");
 
         var hasProvisioningFailed = false;
-        foreach (var resource in templateDeployment.Template.Resources)
+        // Process resource groups first to ensure they exist before dependent resources are deployed
+        var orderedResources = templateDeployment.Template.Resources
+            .OrderByDescending(r => r.Type.Value == "Microsoft.Resources/resourceGroups")
+            .ToList();
+        
+        foreach (var resource in orderedResources)
         {
             IControlPlane? controlPlane = null;
             var genericResource =
@@ -309,6 +326,9 @@ public sealed class TemplateDeploymentOrchestrator(
                     break;
                 case "Microsoft.DocumentDB/databaseAccounts":
                     controlPlane = CosmosDbServiceControlPlane.New(eventPipeline, logger);
+                    break;
+                case "Microsoft.Resources/resourceGroups":
+                    controlPlane = ResourceGroupControlPlane.New(eventPipeline, logger);
                     break;
                 default:
                     logger.LogWarning($"Deployment of resource type {resource.Type} is not yet supported.");

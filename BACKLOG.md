@@ -592,25 +592,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
   labels: enhancement, service-bus, event-hub, amqp
 -->
 
-### ARM Deployments — resource group creation via deployment template
-
-<!--
-TODO: ARM Deployments: Support Microsoft.Resources/resourceGroups as a template resource type
-  Subscription-scoped Bicep/ARM templates regularly declare resourceGroups inline (e.g. the
-  output of `az bicep build` for a subscription-scoped template).  Topaz's
-  TemplateDeploymentOrchestrator.RouteDeployment currently has no case for
-  "Microsoft.Resources/resourceGroups", so the resource group is silently skipped and the
-  deployment never creates the resource group before routing nested deployments into it.
-  Required changes:
-  - Add a `case "Microsoft.Resources/resourceGroups":` branch in RouteDeployment that calls
-    the existing resource-group control plane (CreateOrUpdate) using the template resource's
-    name and location.
-  - Ensure the resource group is created before any dependent resources (e.g. nested deployments)
-    are processed — respect the dependsOn graph or at minimum process resourceGroups first.
-  milestone: v1.7-beta
-  labels: bug, arm-deployments
--->
-
 ### ARM Deployments — nested deployment (Microsoft.Resources/deployments) support
 
 <!--

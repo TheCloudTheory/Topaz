@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Azure.Core;
 using Topaz.EventPipeline;
+using Topaz.ResourceManager;
 using Topaz.Service.ResourceGroup.Models;
 using Topaz.Service.ResourceGroup.Models.Requests;
 using Topaz.Service.Shared;
@@ -10,7 +11,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.ResourceGroup;
 
-internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider groupResourceProvider, SubscriptionControlPlane subscriptionControlPlane, ITopazLogger logger)
+internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider groupResourceProvider, SubscriptionControlPlane subscriptionControlPlane, ITopazLogger logger) : IControlPlane
 {
     private const string ResourceGroupNotFoundMessageTemplate =
         "Resource group '{0}' could not be found";
@@ -127,5 +128,40 @@ internal sealed class ResourceGroupControlPlane(ResourceGroupResourceProvider gr
         groupResourceProvider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, null, existing);
 
         return new ControlPlaneOperationResult<ResourceGroupResource>(OperationResult.Updated, existing, null, null);
+    }
+
+    public OperationResult Deploy(GenericResource resource)
+    {
+        var resourceGroup = resource.As<ResourceGroupResource, ResourceGroupProperties>();
+        if (resourceGroup == null)
+        {
+            logger.LogError($"Couldn't parse generic resource `{resource.Id}` as a Resource Group instance.");
+            return OperationResult.Failed;
+        }
+
+        if (string.IsNullOrWhiteSpace(resourceGroup.Location))
+        {
+            logger.LogError($"Resource group resource `{resource.Id}` is missing required location.");
+            return OperationResult.Failed;
+        }
+
+        try
+        {
+            var result = CreateOrUpdate(
+                resourceGroup.GetSubscription(),
+                ResourceGroupIdentifier.From(resourceGroup.Name),
+                new CreateOrUpdateResourceGroupRequest
+                {
+                    Location = resourceGroup.Location,
+                    Tags = resourceGroup.Tags ?? new Dictionary<string, string>()
+                });
+
+            return result.Result;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex);
+            return OperationResult.Failed;
+        }
     }
 }

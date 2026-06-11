@@ -1076,4 +1076,39 @@ public class ResourceManagerTests
             await topaz.CancelDeploymentAtManagementGroupScopeAsync(groupId, deploymentName));
         Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
     }
+
+    [Test]
+    public async Task ResourceManagerTest_WhenSubscriptionScopeDeploymentContainsResourceGroup_ItShouldBeCreated()
+    {
+        // Arrange
+        const string subscriptionName = "test-sub-rg-deployment";
+        const string deploymentName = "sub-deployment-with-rg";
+        const string resourceGroupName = "rg-created-by-deployment";
+        const string location = "westeurope";
+
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, subscriptionName);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+
+        // Act
+        var deploymentContent = new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+        {
+            Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment-resourcegroup.json"))
+        })
+        {
+            Location = AzureLocation.WestEurope
+        };
+
+        await subscription.GetArmDeployments().CreateOrUpdateAsync(
+            WaitUntil.Completed, deploymentName, deploymentContent);
+
+        // Assert — verify the resource group was created by the deployment
+        var resourceGroup = await subscription.GetResourceGroupAsync(resourceGroupName);
+        Assert.That(resourceGroup.Value, Is.Not.Null);
+        Assert.That(resourceGroup.Value.Data.Name, Is.EqualTo(resourceGroupName));
+        Assert.That(resourceGroup.Value.Data.Location.Name, Is.EqualTo(location));
+    }
 }

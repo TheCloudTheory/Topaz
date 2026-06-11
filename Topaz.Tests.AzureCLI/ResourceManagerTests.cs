@@ -383,4 +383,27 @@ public class ResourceManagerTests : TopazFixture
 
         await RunAzureCliCommand($"az deployment tenant delete --name {deploymentName}");
     }
+
+    [Test]
+    public async Task ResourceManagerTests_WhenSubscriptionScopeDeploymentContainsResourceGroup_ItShouldBeCreated()
+    {
+        const string resourceGroupName = "rg-created-by-deployment-cli";
+        const string deploymentName = "sub-deployment-with-rg-cli";
+
+        // Create deployment with template file
+        await RunAzureCliCommand(
+            $"az deployment sub create --name {deploymentName} --location westeurope " +
+            $"--template-file \"/templates/deployment-resourcegroup.json\"");
+
+        // Verify the resource group was created
+        await RunAzureCliCommand($"az group show --name {resourceGroupName}", response =>
+        {
+            Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo(resourceGroupName));
+            Assert.That(response["location"]!.GetValue<string>(), Is.EqualTo("westeurope"));
+        });
+
+        // Cleanup
+        await RunAzureCliCommand($"az group delete --name {resourceGroupName} --yes");
+        await RunAzureCliCommand($"az deployment sub delete --name {deploymentName}");
+    }
 }
