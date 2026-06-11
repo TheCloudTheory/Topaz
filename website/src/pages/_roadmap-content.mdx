@@ -175,6 +175,37 @@
 | <span class="badge--preview">Preview</span> | Backends CRUD | Create, get, update, delete, and list Backends; fields: `url`, `protocol`, `description`, `title`, `resourceId`; backends are referenced by policy expressions and persisted as subresources |
 | <span class="badge--preview">Preview</span> | Policies CRUD | Service-level and API-level policy documents stored and returned as raw APIM XML; no policy execution in v1.10 — storage and round-trip only |
 
+### Azure Container Instances — initial control plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.ContainerInstances` project with `ContainerGroupResource`, `ContainerGroupResourceProperties`, resource provider, control plane (including `Deploy()`), host registration, and `RouteDeployment()` case for `Microsoft.ContainerInstance/containerGroups` |
+| <span class="badge--preview">Preview</span> | Container Groups CRUD | Create, get, update (tags), delete, list by resource group, and list by subscription for `Microsoft.ContainerInstance/containerGroups`; `provisioningState` is always `Succeeded`; `instanceView.state` is always `Running` |
+| <span class="badge--preview">Preview</span> | Lifecycle operations | Start, stop, and restart container group operations (no-op in emulation; `provisioningState` and `instanceView.state` remain unchanged) |
+| <span class="badge--preview">Preview</span> | Container logs | `GET .../containers/{containerName}/logs` returns a stub log line; satisfies `az container logs` without running real containers |
+
+### Availability Sets — initial control plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Availability Set CRUD | Create, get, update (tags, `platformFaultDomainCount`), delete, list by resource group, and list by subscription for `Microsoft.Compute/availabilitySets`; `provisioningState` is always `Succeeded`; full `Deploy()` and `RouteDeployment()` support |
+| <span class="badge--preview">Preview</span> | List available VM sizes | `GET .../availabilitySets/{name}/vmSizes` returns the same stub catalogue as the compute SKUs endpoint |
+
+### Private Endpoints — initial control plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | Private Endpoint CRUD | Create, get, delete, list by resource group, and list by subscription for `Microsoft.Network/privateEndpoints`; assigns an IP from the linked subnet CIDR via `IpAllocationRegistry` on creation; `privateLinkServiceConnectionState` is always `Approved`; full `Deploy()` and `RouteDeployment()` support |
+
+### Azure Redis Cache — initial control plane
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.Redis` project with `RedisResource`, `RedisResourceProperties`, resource provider, control plane (including `Deploy()`), host registration, and `RouteDeployment()` case for `Microsoft.Cache/redis` |
+| <span class="badge--preview">Preview</span> | Redis Cache CRUD | Create, get, update (tags, SKU, `enableNonSslPort`, `minimumTlsVersion`, `redisConfiguration`), delete, list by resource group, and list by subscription; access keys generated on creation and exposed via `listKeys` / `regenerateKey` |
+| <span class="badge--preview">Preview</span> | Firewall Rules CRUD | Create, get, update, delete, and list firewall rules per cache; no actual IP filtering enforced in the emulator |
+| <span class="badge--preview">Preview</span> | MCP provisioning tool | `CreateRedisCache` MCP tool; `GetConnectionStrings` extended with Redis connection string |
+
 ---
 
 ## Future / Unplanned

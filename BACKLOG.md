@@ -1187,6 +1187,193 @@ TODO: Azure API Management: Data plane — Policies CRUD
   labels: enhancement, api-management
 -->
 
+### Azure Container Instances — initial control plane
+
+<!--
+TODO: Azure Container Instances: New service project scaffold
+  Create Topaz.Service.ContainerInstances following existing service conventions:
+  - ContainerGroupResourceProperties + ContainerGroupResource (ArmResource<T>) capturing:
+    containers (array of ContainerDefinition with name, image, resources, ports, environmentVariables,
+    volumeMounts), osType (Linux/Windows), restartPolicy (Always/OnFailure/Never),
+    ipAddress (type: Public/Private, ports, ip), provisioningState (always Succeeded),
+    instanceView (state: Running), volumes.
+  - ContainerGroupResourceProvider (ResourceProviderBase<T>) for filesystem persistence
+    under .topaz/container-instances/{subscriptionId}/{resourceGroup}/{groupName}/.
+  - ContainerInstancesServiceControlPlane implementing IControlPlane with a working Deploy()
+    that maps GenericResource → ContainerGroupResource via resource.As<T,TProps>().
+  - IServiceDefinition registration and wiring in Topaz.Host.
+  - ProjectReference in Topaz.Service.ResourceManager.csproj and a
+    case "Microsoft.ContainerInstance/containerGroups": entry in
+    TemplateDeploymentOrchestrator.RouteDeployment().
+  See: https://learn.microsoft.com/en-us/rest/api/container-instances/operation-groups?view=rest-container-instances-2025-09-01
+  milestone: v1.10-preview
+  labels: enhancement, container-instances, good first issue
+-->
+
+<!--
+TODO: Azure Container Instances: Container Groups control plane endpoints
+  Implement the ARM-level ContainerGroup resource surface
+  (Microsoft.ContainerInstance/containerGroups):
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ContainerInstance/containerGroups/{name}  – create or update
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ContainerInstance/containerGroups/{name}  – get
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ContainerInstance/containerGroups/{name}  – delete
+  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ContainerInstance/containerGroups/{name}  – update (tags)
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.ContainerInstance/containerGroups          – list by resource group
+  - GET    /subscriptions/{sub}/providers/Microsoft.ContainerInstance/containerGroups                              – list by subscription
+  provisioningState is always Succeeded. instanceView.state is always Running.
+  ipAddress.ip is a stub value (e.g. "10.0.0.1") assigned on creation.
+  Includes E2E SDK tests, Azure CLI tests, Azure PowerShell tests, and Terraform tests.
+  milestone: v1.10-preview
+  labels: enhancement, container-instances
+-->
+
+<!--
+TODO: Azure Container Instances: Container Groups lifecycle endpoints
+  Implement lifecycle operation endpoints for container groups:
+  - POST .../containerGroups/{name}/start   – start all containers (returns 204 No Content)
+  - POST .../containerGroups/{name}/stop    – stop all containers (returns 204 No Content)
+  - POST .../containerGroups/{name}/restart – restart all containers (returns 204 No Content)
+  All three operations are no-ops in the emulator (no real containers are started or stopped).
+  provisioningState and instanceView.state remain Succeeded/Running regardless of lifecycle calls.
+  milestone: v1.10-preview
+  labels: enhancement, container-instances
+-->
+
+<!--
+TODO: Azure Container Instances: Containers data-plane endpoints (logs)
+  Implement the Containers sub-resource endpoints:
+  - GET .../containerGroups/{name}/containers/{containerName}/logs
+    Returns a stub log body with a single line "Container emulated by Topaz."
+    Supports optional ?tail= query parameter (integer); ignored in emulation.
+  This satisfies `az container logs` calls without running real containers.
+  milestone: v1.10-preview
+  labels: enhancement, container-instances, good first issue
+-->
+
+### Availability Sets — initial control plane
+
+<!--
+TODO: Availability Sets: New service control plane
+  Implement the ARM-level AvailabilitySet resource surface
+  (Microsoft.Compute/availabilitySets) in the existing Topaz.Service.VirtualMachine project
+  (or a new Topaz.Service.AvailabilitySets project if separation is preferred):
+  - AvailabilitySetResourceProperties + AvailabilitySetResource (ArmResource<T>) capturing:
+    sku (name: Aligned/Classic), platformUpdateDomainCount (default 5),
+    platformFaultDomainCount (default 2), virtualMachines (list of sub-resource IDs),
+    provisioningState (always Succeeded).
+  - AvailabilitySetResourceProvider (ResourceProviderBase<T>) for filesystem persistence.
+  - Deploy() support in the control plane; register "Microsoft.Compute/availabilitySets"
+    in TemplateDeploymentOrchestrator.RouteDeployment().
+  Endpoints:
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/availabilitySets/{name}  – create or update
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/availabilitySets/{name}  – get
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/availabilitySets/{name}  – delete
+  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/availabilitySets/{name}  – update (tags, platformFaultDomainCount)
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/availabilitySets          – list by resource group
+  - GET    /subscriptions/{sub}/providers/Microsoft.Compute/availabilitySets                              – list by subscription
+  - GET    .../availabilitySets/{name}/vmSizes  – list available VM sizes (return the same stub catalogue as ListComputeResourceSkusEndpoint)
+  Includes E2E SDK tests, Azure CLI tests, Azure PowerShell tests, and Terraform tests.
+  See: https://learn.microsoft.com/en-us/rest/api/compute/availability-sets?view=rest-compute-2025-11-01
+  milestone: v1.10-preview
+  labels: enhancement, virtual-machine, good first issue
+-->
+
+### Private Endpoints — initial control plane
+
+<!--
+TODO: Private Endpoints: New service control plane
+  Implement the ARM-level PrivateEndpoint resource surface
+  (Microsoft.Network/privateEndpoints) as an extension of the existing
+  Topaz.Service.VirtualNetwork project:
+  - PrivateEndpointResourceProperties + PrivateEndpointResource (ArmResource<T>) capturing:
+    subnet (sub-resource ID reference), privateLinkServiceConnections (array with
+    privateLinkServiceId, groupIds, privateLinkServiceConnectionState),
+    networkInterfaces (list of auto-created NIC sub-resource IDs), provisioningState (always Succeeded),
+    customDnsConfigs (array of {fqdn, ipAddresses}).
+  - PrivateEndpointResourceProvider (ResourceProviderBase<T>) for filesystem persistence.
+  - Deploy() support; register "Microsoft.Network/privateEndpoints" in
+    TemplateDeploymentOrchestrator.RouteDeployment().
+  - On creation, register the endpoint's IP (resolved from the linked subnet CIDR via
+    IpAllocationRegistry) and unregister it on deletion — satisfying the Private Endpoint
+    IP tracking backlog item from v1.7-beta.
+  Endpoints:
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/privateEndpoints/{name}  – create or update
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/privateEndpoints/{name}  – get
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/privateEndpoints/{name}  – delete
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/privateEndpoints          – list by resource group
+  - GET    /subscriptions/{sub}/providers/Microsoft.Network/privateEndpoints                              – list by subscription
+  privateLinkServiceConnectionState is always set to {status: "Approved", description: "Auto-approved by Topaz"}.
+  Includes E2E SDK tests, Azure CLI tests, and Terraform tests.
+  See: https://learn.microsoft.com/en-us/rest/api/virtualnetwork/private-endpoints?view=rest-virtualnetwork-2025-05-01
+  milestone: v1.10-preview
+  labels: enhancement, virtual-network
+-->
+
+### Azure Redis Cache — initial control plane
+
+<!--
+TODO: Azure Redis Cache: New service project scaffold
+  Create Topaz.Service.Redis following existing service conventions:
+  - RedisResourceProperties + RedisResource (ArmResource<T>) capturing:
+    sku (name: Basic/Standard/Premium, family: C/P, capacity: 0–6),
+    redisVersion (default "6"), enableNonSslPort (default false),
+    minimumTlsVersion (default "1.2"), replicasPerMaster, shardCount,
+    hostName ({name}.redis.cache.topaz.local.dev), port (6379), sslPort (6380),
+    accessKeys (primaryKey, secondaryKey — 44-byte random base64 strings generated on creation),
+    provisioningState (always Succeeded), redisConfiguration.
+  - RedisResourceProvider (ResourceProviderBase<T>) for filesystem persistence
+    under .topaz/redis/{subscriptionId}/{resourceGroup}/{cacheName}/.
+  - RedisServiceControlPlane implementing IControlPlane with a working Deploy()
+    that maps GenericResource → RedisResource via resource.As<T,TProps>().
+  - IServiceDefinition registration and wiring in Topaz.Host.
+  - ProjectReference in Topaz.Service.ResourceManager.csproj and a
+    case "Microsoft.Cache/redis": entry in TemplateDeploymentOrchestrator.RouteDeployment().
+  See: https://learn.microsoft.com/en-us/rest/api/redis/operation-groups?view=rest-redis-2024-11-01
+  milestone: v1.10-preview
+  labels: enhancement, redis, good first issue
+-->
+
+<!--
+TODO: Azure Redis Cache: Control plane endpoints
+  Implement the ARM-level Redis cache resource surface (Microsoft.Cache/redis):
+  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis/{name}  – create or update
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis/{name}  – get
+  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis/{name}  – delete
+  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis/{name}  – update (tags, sku, enableNonSslPort, minimumTlsVersion, redisConfiguration)
+  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Cache/redis          – list by resource group
+  - GET    /subscriptions/{sub}/providers/Microsoft.Cache/redis                              – list by subscription
+  - POST   .../redis/{name}/listKeys       – return primary and secondary access keys
+  - POST   .../redis/{name}/regenerateKey  – regenerate the specified key (keyType: Primary/Secondary)
+  Access keys are generated on first creation and persisted; regenerateKey replaces the specified key.
+  GET responses must not include accessKeys inline (keys are only returned via listKeys).
+  Includes E2E SDK tests, Azure CLI tests, Azure PowerShell tests, and Terraform tests.
+  milestone: v1.10-preview
+  labels: enhancement, redis
+-->
+
+<!--
+TODO: Azure Redis Cache: Firewall Rules CRUD
+  Implement per-cache firewall rule endpoints (Microsoft.Cache/redis/firewallRules):
+  - PUT    .../redis/{name}/firewallRules/{ruleName}  – create or update (startIP, endIP)
+  - GET    .../redis/{name}/firewallRules/{ruleName}  – get
+  - DELETE .../redis/{name}/firewallRules/{ruleName}  – delete
+  - GET    .../redis/{name}/firewallRules              – list
+  Rules are persisted as subresources of the cache. No actual IP filtering is enforced in the emulator.
+  milestone: v1.10-preview
+  labels: enhancement, redis, good first issue
+-->
+
+<!--
+TODO: Azure Redis Cache: MCP Server provisioning tool
+  Extend Topaz.MCP with a Redis Cache provisioning tool:
+  - CreateRedisCache — create a Redis cache in a resource group and return the
+    hostName, sslPort, and primary access key.
+  Extend GetConnectionStrings to include the Redis connection string for provisioned caches
+  in the format: {hostName}:{sslPort},password={primaryKey},ssl=True,abortConnect=False
+  milestone: v1.10-preview
+  labels: enhancement, redis, mcp
+-->
+
 ---
 
 ## Unplanned / Ideas

@@ -59,6 +59,10 @@ const MILESTONES: Milestone[] = [
     colorClass: styles.milestoneRed,
     features: [
       { service: 'API Management', summary: 'Initial control plane · APIs · Products · Backends · Policies' },
+      { service: 'Container Instances', summary: 'Initial control plane · lifecycle operations · container logs' },
+      { service: 'Availability Sets', summary: 'Initial control plane · list available VM sizes' },
+      { service: 'Private Endpoints', summary: 'Initial control plane · IP allocation via subnet CIDR' },
+      { service: 'Redis Cache', summary: 'Initial control plane · firewall rules · MCP provisioning tool' },
     ],
   },
 ];
