@@ -151,6 +151,72 @@ function FutureTiers() {
   );
 }
 
+interface FaqItem {
+  q: string;
+  a: React.ReactNode;
+}
+
+const FAQ_ITEMS: FaqItem[] = [
+  {
+    q: 'Is Topaz really free — are there any hidden limits?',
+    a: 'Yes, completely free. There are no usage caps, no request limits, no time-limited trials, and no feature gates today. Everything Topaz currently offers is available to everyone at no cost.',
+  },
+  {
+    q: 'Can I self-host Topaz on my own infrastructure?',
+    a: 'Yes. Topaz ships as a single binary and a Docker image. You can run it on your laptop, in CI, in a VM, or in Kubernetes — anywhere you can run a container or an executable. No external services or accounts required.',
+  },
+  {
+    q: 'Which Azure services does Topaz support?',
+    a: (
+      <>
+        Topaz supports Azure Resource Manager, Key Vault, Service Bus, Event Hubs, Blob Storage,
+        Table Storage, Queue Storage, Container Registry, Virtual Networks, and more.{' '}
+        <Link to="/docs/supported-services/">See the full service list →</Link>
+      </>
+    ),
+  },
+  {
+    q: 'Will Topaz stay free when paid tiers launch?',
+    a: 'The Community (free) tier will remain available — it is not a trial. Any pricing changes will be communicated several releases in advance, never retroactively.',
+  },
+  {
+    q: 'Can I use Topaz in a commercial project or at my company?',
+    a: 'Yes. Commercial use is explicitly permitted under the current licence. No enterprise agreement or special approval is needed to start using Topaz in a professional context.',
+  },
+];
+
+function Faq() {
+  const [openIndex, setOpenIndex] = React.useState<number | null>(null);
+
+  return (
+    <section className={`${styles.section} ${styles.faqSection}`}>
+      <div className="container">
+        <h2 className={styles.sectionTitle}>Frequently asked questions</h2>
+        <p className={styles.sectionSubtitle}>
+          Common questions from teams evaluating Topaz.
+        </p>
+        <div className={styles.faqList}>
+          {FAQ_ITEMS.map((item, i) => (
+            <div key={i} className={styles.faqItem}>
+              <button
+                className={styles.faqQuestion}
+                onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                aria-expanded={openIndex === i}
+              >
+                <span>{item.q}</span>
+                <span className={styles.faqChevron}>{openIndex === i ? '▲' : '▼'}</span>
+              </button>
+              {openIndex === i && (
+                <div className={styles.faqAnswer}>{item.a}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function EnterpriseContact() {
   return (
     <section className={styles.section}>
@@ -218,6 +284,7 @@ export default function PricingPage(): JSX.Element {
       <Hero />
       <CurrentPlan />
       <FutureTiers />
+      <Faq />
       <EnterpriseContact />
       <Cta />
     </Layout>
