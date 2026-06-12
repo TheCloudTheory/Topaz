@@ -82,13 +82,18 @@ All Azure Storage sub-services (Blob, Table, Queue, File) share a single port (`
 
 For HTTPS endpoints, if you're running Topaz as a standalone application, you need to install and trust the certificates provided along with the main package.
 
-:::warning[Admin privileges required for port 443]
+:::note[No sudo required — HTTP CONNECT proxy handles port 443]
 
-Port 443 is a privileged port on Linux and macOS. If you are running Topaz as a **standalone executable** (not inside a container) and you need Azure CLI integration with Key Vault, you must start Topaz with `sudo` (or equivalent elevated privileges) so it can bind to port 443.
+When running Topaz as a standalone executable on Linux and macOS, you don't need `sudo` to start the host. Topaz launches a built-in HTTP CONNECT proxy on port `44380` that intercepts Azure CLI requests bound for port 443 and routes them through the emulator.
 
-This requirement does **not** apply when running Topaz as a Docker container — Docker handles the privileged port mapping automatically.
+This is automatic — just set the `HTTPS_PROXY` environment variable before running Azure CLI commands:
 
-If you are only using the Azure SDK (not the Azure CLI), you can point your SDK client directly at port 8898 and skip port 443 entirely.
+```bash
+export HTTPS_PROXY=http://127.0.0.1:44380
+az login --username alice@mytenant.onmicrosoft.com --password P@ssw0rd!
+```
+
+The proxy passes through all non-Topaz requests to the internet unchanged. If you are only using the Azure SDK (not the Azure CLI), you can point your SDK client directly at port `8898` and skip port 443 entirely.
 
 :::
 
