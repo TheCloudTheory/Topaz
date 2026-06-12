@@ -377,17 +377,9 @@ TODO: Azure Cosmos DB: Data plane — SQL query execution
   labels: enhancement, cosmos-db
 -->
 
-<!--
-TODO: Azure Cosmos DB: MCP Server provisioning tools for Cosmos DB
-  Extend Topaz.MCP with Cosmos DB provisioning tools:
-  - CreateCosmosDbAccount — create a DatabaseAccount with SQL API in a resource group
-  - CreateCosmosDbDatabase — create a SQL database under an existing account
-  - CreateCosmosDbContainer — create a SQL container with a specified partitionKey path
-  Extend GetConnectionStrings to include the Cosmos DB AccountEndpoint and AccountKey
-  for provisioned accounts.
-  milestone: v1.7-beta
-  labels: enhancement, cosmos-db, mcp
--->
+### Azure Cosmos DB — MCP Server provisioning tools
+
+_Implemented in v1.7-beta: three MCP provisioning tools (`CreateCosmosDbAccount`, `CreateCosmosDbDatabase`, `CreateCosmosDbContainer`) for SQL API account/database/container creation with partition key support. `GetConnectionStrings` extended to enumerate and return Cosmos DB accounts with AccountEndpoint and PrimaryConnectionString. Full test coverage (8 account/database/container provisioning tests + 2 connection string integration tests)._
 
 <!--
 TODO: VirtualNetwork — Public IP Address (PIP) CRUD

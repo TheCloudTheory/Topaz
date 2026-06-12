@@ -3,6 +3,7 @@ using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ContainerRegistry;
 using Azure.ResourceManager.ContainerRegistry.Models;
+using Azure.ResourceManager.CosmosDB;
 using Azure.ResourceManager.EventHubs;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
@@ -25,6 +26,7 @@ public class ConnectionStringsToolTests
     private const string KeyVaultName = "mcp-test-kv";
     private const string EventHubNamespaceName = "mcp-test-eh";
     private const string RegistryName = "mcptestreg";
+    private const string CosmosDbAccountName = "mcp-test-cosmos";
 
     [OneTimeSetUp]
     public async Task ProvisionResources()
@@ -71,6 +73,14 @@ public class ConnectionStringsToolTests
             new ContainerRegistryData(
                 McpTestFixture.Location,
                 new ContainerRegistrySku(ContainerRegistrySkuName.Basic)));
+
+        // Cosmos DB account
+        await CreateCosmosDbTool.CreateCosmosDbAccount(
+            McpTestFixture.SubscriptionId,
+            McpTestFixture.ResourceGroupName,
+            CosmosDbAccountName,
+            "eastus",
+            McpTestFixture.ObjectId);
     }
 
     [Test]
@@ -138,5 +148,31 @@ public class ConnectionStringsToolTests
         var entry = result.ContainerRegistries.Single(r => r.RegistryName == RegistryName);
 
         Assert.That(entry.LoginServer, Is.EqualTo($"{RegistryName}.cr.topaz.local.dev:8892"));
+    }
+
+    [Test]
+    public async Task GetConnectionStrings_CosmosDbAccount_ReturnsCorrectAccountEndpoint()
+    {
+        var result = await ConnectionStringsTool.GetConnectionStrings(McpTestFixture.SubscriptionId, McpTestFixture.ObjectId);
+
+        var entry = result.CosmosDbAccounts?.Single(c => c.AccountName == CosmosDbAccountName);
+
+        Assert.That(entry?.AccountEndpoint,
+            Does.StartWith($"https://{CosmosDbAccountName}.{GlobalSettings.DocumentsDnsSuffix}:{GlobalSettings.DefaultCosmosDbPort}/"));
+    }
+
+    [Test]
+    public async Task GetConnectionStrings_CosmosDbAccount_ReturnsCorrectConnectionString()
+    {
+        var result = await ConnectionStringsTool.GetConnectionStrings(McpTestFixture.SubscriptionId, McpTestFixture.ObjectId);
+
+        var entry = result.CosmosDbAccounts?.Single(c => c.AccountName == CosmosDbAccountName);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(entry?.PrimaryConnectionString, Does.Contain("AccountEndpoint="));
+            Assert.That(entry?.PrimaryConnectionString, Does.Contain("AccountKey="));
+            Assert.That(entry?.PrimaryConnectionString, Does.Contain(CosmosDbAccountName));
+        });
     }
 }

@@ -97,4 +97,19 @@ public static class TopazResourceHelpers
     /// <param name="storageAccountName">The name of the storage account.</param>
     /// <returns>A URI string for the local Table service endpoint.</returns>
     public static string GetTableServiceUri(string storageAccountName) => $"https://{storageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}/";
+
+    /// <summary>
+    /// Gets the Cosmos DB account endpoint URI for a specified account name.
+    /// </summary>
+    /// <param name="accountName">The name of the Cosmos DB account.</param>
+    /// <returns>A URI string for the local Cosmos DB account endpoint.</returns>
+    public static string GetCosmosDbAccountEndpoint(string accountName) => $"https://{accountName}.{GlobalSettings.DocumentsDnsSuffix}:{GlobalSettings.DefaultCosmosDbPort}/";
+
+    /// <summary>
+    /// Gets the Cosmos DB connection string for a specified account with a primary key.
+    /// </summary>
+    /// <param name="accountName">The name of the Cosmos DB account.</param>
+    /// <param name="primaryKey">The primary master key for the account.</param>
+    /// <returns>A connection string configured to connect to the local Cosmos DB emulator.</returns>
+    public static string GetCosmosDbConnectionString(string accountName, string primaryKey) => $"AccountEndpoint={GetCosmosDbAccountEndpoint(accountName)};AccountKey={primaryKey};";
 }

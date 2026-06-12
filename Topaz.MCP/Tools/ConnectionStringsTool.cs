@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ContainerRegistry;
+using Azure.ResourceManager.CosmosDB;
 using Azure.ResourceManager.EventHubs;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.ServiceBus;
@@ -37,6 +38,7 @@ public sealed class ConnectionStringsTool
         var keyVaultEntries = new List<KeyVaultUriEntry>();
         var eventHubEntries = new List<EventHubConnectionStringEntry>();
         var registryEntries = new List<ContainerRegistryEntry>();
+        var cosmosDbEntries = new List<CosmosDbEntry>();
 
         await foreach (var resourceGroup in subscription.GetResourceGroups().GetAllAsync().ConfigureAwait(false))
         {
@@ -105,6 +107,22 @@ public sealed class ConnectionStringsTool
                     LoginServer = TopazResourceHelpers.GetContainerRegistryLoginServer(acr.Data.Name),
                 });
             }
+
+            // Cosmos DB accounts
+            await foreach (var cosmosAccount in resourceGroup.GetCosmosDBAccounts().GetAllAsync().ConfigureAwait(false))
+            {
+                var keys = await cosmosAccount.GetKeysAsync().ConfigureAwait(false);
+                var primaryKey = keys.Value.PrimaryMasterKey ?? string.Empty;
+                var accountEndpoint = TopazResourceHelpers.GetCosmosDbAccountEndpoint(cosmosAccount.Data.Name!);
+
+                cosmosDbEntries.Add(new CosmosDbEntry
+                {
+                    ResourceGroup = resourceGroup.Data.Name,
+                    AccountName = cosmosAccount.Data.Name,
+                    AccountEndpoint = accountEndpoint,
+                    PrimaryConnectionString = TopazResourceHelpers.GetCosmosDbConnectionString(cosmosAccount.Data.Name!, primaryKey),
+                });
+            }
         }
 
         return new ConnectionStringsResult
@@ -114,6 +132,7 @@ public sealed class ConnectionStringsTool
             KeyVaults = keyVaultEntries,
             EventHubNamespaces = eventHubEntries,
             ContainerRegistries = registryEntries,
+            CosmosDbAccounts = cosmosDbEntries,
         };
     }
 
@@ -124,6 +143,7 @@ public sealed class ConnectionStringsTool
         public required List<KeyVaultUriEntry> KeyVaults { [UsedImplicitly] get; init; }
         public required List<EventHubConnectionStringEntry> EventHubNamespaces { [UsedImplicitly] get; init; }
         public required List<ContainerRegistryEntry> ContainerRegistries { [UsedImplicitly] get; init; }
+        public required List<CosmosDbEntry> CosmosDbAccounts { [UsedImplicitly] get; init; }
     }
 
     public sealed record StorageConnectionStringEntry
@@ -163,5 +183,13 @@ public sealed class ConnectionStringsTool
         public required string ResourceGroup { [UsedImplicitly] get; init; }
         public required string RegistryName { [UsedImplicitly] get; init; }
         public required string LoginServer { [UsedImplicitly] get; init; }
+    }
+
+    public sealed record CosmosDbEntry
+    {
+        public required string ResourceGroup { [UsedImplicitly] get; init; }
+        public required string? AccountName { [UsedImplicitly] get; init; }
+        public required string AccountEndpoint { [UsedImplicitly] get; init; }
+        public required string PrimaryConnectionString { [UsedImplicitly] get; init; }
     }
 }

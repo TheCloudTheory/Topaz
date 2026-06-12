@@ -109,6 +109,9 @@ All three tools accept an `objectId` parameter. `CreateOrUpdateTenantDeployment`
 | `CreateEventHubNamespace` | Creates an Event Hub namespace and returns its connection string |
 | `CreateEventHub` | Creates an Event Hub inside an existing namespace |
 | `CreateContainerRegistry` | Creates a Container Registry and returns its login server and admin credentials |
+| `CreateCosmosDbAccount` | Creates a Cosmos DB account (DatabaseAccount) with SQL API and returns the account endpoint and connection string |
+| `CreateCosmosDbDatabase` | Creates a SQL database inside an existing Cosmos DB account |
+| `CreateCosmosDbContainer` | Creates a SQL container inside an existing Cosmos DB database |
 
 All provisioning tools share these common parameters:
 
@@ -145,6 +148,42 @@ All provisioning tools share these common parameters:
 | `sku` | `Basic` | Registry SKU: `Basic`, `Standard`, or `Premium` |
 | `adminUserEnabled` | `true` | When `true`, admin credentials are returned alongside the login server |
 
+`CreateCosmosDbAccount` requires the following parameters (in addition to the common parameters):
+
+| Parameter | Description |
+|---|---|
+| `accountName` | Name of the Cosmos DB account to create |
+
+The tool returns `accountEndpoint` and `primaryConnectionString` immediately.
+
+`CreateCosmosDbDatabase` requires the following parameters (in addition to the common parameters):
+
+| Parameter | Description |
+|---|---|
+| `accountName` | Name of the Cosmos DB account containing the database |
+| `databaseName` | Name of the SQL database to create |
+
+It also accepts one optional parameter:
+
+| Parameter | Default | Description |
+|---|---|---|
+| `throughput` | (serverless) | Optional throughput in RU/s for the database |
+
+`CreateCosmosDbContainer` requires the following parameters (in addition to the common parameters):
+
+| Parameter | Description |
+|---|---|
+| `accountName` | Name of the Cosmos DB account containing the database |
+| `databaseName` | Name of the SQL database containing the container |
+| `containerName` | Name of the SQL container to create |
+| `partitionKeyPath` | The partition key path (e.g. `/id` or `/tenantId`) |
+
+It also accepts one optional parameter:
+
+| Parameter | Default | Description |
+|---|---|---|
+| `throughput` | (serverless) | Optional throughput in RU/s for the container |
+
 #### Delete
 
 | Tool | Description |
@@ -173,6 +212,7 @@ The tool scans every resource group in the subscription and returns connection i
 | Key Vaults | `vaultUri` |
 | Event Hub namespaces | `connectionString` |
 | Container Registries | `loginServer` |
+| Cosmos DB accounts | `accountEndpoint`, `primaryConnectionString` |
 
 ## Available prompts
 
