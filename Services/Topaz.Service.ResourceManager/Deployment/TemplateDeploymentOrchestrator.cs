@@ -1,7 +1,9 @@
 using System.Text.Json;
+using Azure.Core;
 using Azure.Deployments.Core.Definitions.Schema;
 using Azure.Deployments.Core.Entities;
 using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
+using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using Newtonsoft.Json.Linq;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
@@ -12,6 +14,7 @@ using Topaz.Service.KeyVault;
 using Topaz.Service.ManagedIdentity;
 using Topaz.Service.ResourceManager.Models;
 using Topaz.Service.ResourceGroup;
+using Topaz.Service.ResourceGroup.Models;
 using Topaz.Service.ServiceBus;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
@@ -330,6 +333,9 @@ public sealed class TemplateDeploymentOrchestrator(
                 case "Microsoft.Resources/resourceGroups":
                     controlPlane = ResourceGroupControlPlane.New(eventPipeline, logger);
                     break;
+                case "Microsoft.Resources/deployments":
+                    HandleNestedDeployment(genericResource, templateDeployment, resource, ref hasProvisioningFailed);
+                    break;
                 default:
                     logger.LogWarning($"Deployment of resource type {resource.Type} is not yet supported.");
                     break;
@@ -426,5 +432,175 @@ public sealed class TemplateDeploymentOrchestrator(
         }
         
         return result;
+    }
+
+    private void HandleNestedDeployment(
+        GenericResource genericResource,
+        TemplateDeployment parentDeployment,
+        TemplateResource resource,
+        ref bool hasProvisioningFailed)
+    {
+        try
+        {
+            // Step 1: Parse raw resource JSON to extract nested template and context
+            var resourceJson = JsonSerializer.Deserialize<JsonElement>(resource.ToJson(), GlobalSettings.JsonOptions);
+            var resourceObj = resourceJson.Deserialize<Dictionary<string, JsonElement>>(GlobalSettings.JsonOptions);
+            
+            if (resourceObj == null)
+            {
+                logger.LogWarning($"Failed to parse nested deployment resource JSON for '{genericResource.Name}'.");
+                hasProvisioningFailed = true;
+                return;
+            }
+
+            // Extract resourceGroup property
+            if (!resourceObj.TryGetValue("resourceGroup", out var rgElement))
+            {
+                logger.LogWarning($"Nested deployment '{genericResource.Name}' has no 'resourceGroup' property; subscription-scoped nested deployments are not yet supported.");
+                return;
+            }
+
+            var nestedRgName = rgElement.GetString();
+            if (string.IsNullOrWhiteSpace(nestedRgName))
+            {
+                logger.LogWarning($"Nested deployment '{genericResource.Name}' has empty 'resourceGroup' property.");
+                hasProvisioningFailed = true;
+                return;
+            }
+
+            // Extract properties block
+            if (!resourceObj.TryGetValue("properties", out var propsElement) || propsElement.ValueKind != JsonValueKind.Object)
+            {
+                logger.LogWarning($"Nested deployment '{genericResource.Name}' has no 'properties' object.");
+                hasProvisioningFailed = true;
+                return;
+            }
+
+            var propsObj = propsElement.Deserialize<Dictionary<string, JsonElement>>(GlobalSettings.JsonOptions);
+            if (propsObj == null)
+            {
+                logger.LogWarning($"Failed to deserialize properties of nested deployment '{genericResource.Name}'.");
+                hasProvisioningFailed = true;
+                return;
+            }
+
+            // Extract inner template
+            if (!propsObj.TryGetValue("template", out var templateElement))
+            {
+                logger.LogWarning($"Nested deployment '{genericResource.Name}' has no 'template' in properties.");
+                hasProvisioningFailed = true;
+                return;
+            }
+
+            var innerTemplateJson = templateElement.GetRawText();
+            
+            // Extract optional parameters and mode
+            JsonElement? innerParams = propsObj.TryGetValue("parameters", out var paramsElement) 
+                ? paramsElement 
+                : (JsonElement?)null;
+            var innerMode = propsObj.TryGetValue("mode", out var modeElement) 
+                ? modeElement.GetString() ?? "Incremental" 
+                : "Incremental";
+
+            // Step 2: Resolve nested context identifiers
+            var parentIdParts = parentDeployment.Id.TrimStart('/').Split('/');
+            var nestedSubId = parentIdParts.Length > 1 && parentIdParts[0] == "subscriptions"
+                ? SubscriptionIdentifier.From(parentIdParts[1])
+                : throw new InvalidOperationException($"Cannot extract subscription ID from parent deployment ID: {parentDeployment.Id}");
+
+            var nestedRgId = ResourceGroupIdentifier.From(nestedRgName);
+
+            // Step 3: Build inner metadata
+            var subscriptionMetadata = new SubscriptionMetadata(nestedSubId);
+            
+            // Extract parent RG metadata to get location
+            var parentRgMetadata = parentDeployment.Metadata.TryGetValue(DeploymentMetadata.ResourceGroupKey, out var rgMetadataToken)
+                ? JsonSerializer.Deserialize<ResourceGroupMetadata>(rgMetadataToken.ToString(), GlobalSettings.JsonOptions)
+                : null;
+
+            AzureLocation nestedLocation;
+            if (!string.IsNullOrWhiteSpace(genericResource.Location))
+            {
+                nestedLocation = new AzureLocation(genericResource.Location);
+            }
+            else if (parentRgMetadata?.Location != null)
+            {
+                nestedLocation = parentRgMetadata.Location;
+            }
+            else
+            {
+                logger.LogError(nameof(TemplateDeploymentOrchestrator), nameof(HandleNestedDeployment),
+                    $"Nested deployment '{genericResource.Name}' has no location and parent location cannot be resolved.");
+                hasProvisioningFailed = true;
+                return;
+            }
+
+            var resourceGroupMetadata = new ResourceGroupMetadata(nestedSubId, nestedRgId, nestedLocation);
+
+            var innerMetadataDict = new Dictionary<string, JToken>
+            {
+                { DeploymentMetadata.SubscriptionKey, JToken.Parse(subscriptionMetadata.ToString()) },
+                { DeploymentMetadata.ResourceGroupKey, JToken.Parse(resourceGroupMetadata.ToString()) }
+            };
+            var innerMetadata = innerMetadataDict.ToInsensitiveDictionary(x => x.Key, x => x.Value);
+
+            // Step 4: Parse and process inner template
+            var innerTemplate = _armTemplateEngineFacade.Parse(innerTemplateJson);
+
+            // Assign resource IDs on inner template resources
+            foreach (var innerResource in innerTemplate.Resources)
+            {
+                innerResource.Id = new TemplateGenericProperty<string>
+                {
+                    Value = $"/subscriptions/{nestedSubId}/resourceGroups/{nestedRgId}/providers/{innerResource.Type}/{innerResource.Name}"
+                };
+            }
+
+            // Process template expressions
+            _armTemplateEngineFacade.ProcessTemplate(nestedSubId, nestedRgId, innerTemplate, innerMetadata, innerParams);
+
+            // Step 5: Create and persist nested DeploymentResource
+            var nestedDeploymentProps = DeploymentResourceProperties.New(innerMode, innerTemplateJson, null);
+            var nestedDeploymentResource = new DeploymentResource(nestedSubId, nestedRgId, genericResource.Name, nestedLocation, nestedDeploymentProps);
+            
+            rgProvider.CreateOrUpdate(nestedSubId, nestedRgId, genericResource.Name, nestedDeploymentResource);
+
+            logger.LogDebug(nameof(TemplateDeploymentOrchestrator), nameof(HandleNestedDeployment),
+                "Created nested deployment resource '{0}'.", nestedDeploymentResource.Id);
+
+            // Step 6: Build inner TemplateDeployment with linked cancellation
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(parentDeployment.CancellationToken);
+            
+            var innerJob = new TemplateDeployment(
+                nestedDeploymentResource.Id,
+                nestedDeploymentResource.Name,
+                innerTemplate,
+                complete: nestedDeploymentResource.CompleteDeployment,
+                cancel: nestedDeploymentResource.CancelDeployment,
+                fail: nestedDeploymentResource.FailDeployment,
+                persist: () => rgProvider.CreateOrUpdate(nestedSubId, nestedRgId, genericResource.Name, nestedDeploymentResource),
+                setOutputs: outputs => nestedDeploymentResource.Properties.Outputs = outputs,
+                metadata: innerMetadata,
+                parameters: innerParams);
+
+            innerJob.SetCancellationTokenSource(linkedCts);
+
+            // Step 7: Recursive execution + status propagation
+            RouteDeployment(innerJob);
+
+            if (innerJob.Status == TemplateDeployment.DeploymentStatus.Failed || 
+                innerJob.Status == TemplateDeployment.DeploymentStatus.Cancelled)
+            {
+                hasProvisioningFailed = true;
+            }
+
+            linkedCts.Dispose();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(nameof(TemplateDeploymentOrchestrator), nameof(HandleNestedDeployment),
+                "Failed to handle nested deployment '{0}': {1}", genericResource.Name, ex.Message);
+            hasProvisioningFailed = true;
+        }
     }
 }
