@@ -17,7 +17,7 @@ public sealed class DeploymentResourceProperties
     public string? CorrelationId { get; set; }
     public DateTimeOffset? Timestamp { get; set; }
     public TimeSpan? Duration { get; set; }
-    public BinaryData? Outputs { get; set; }
+    public JsonElement? Outputs { get; set; }
     public IReadOnlyList<ResourceProviderData>? Providers { get; set;}
     public IReadOnlyList<ArmDependency>? Dependencies { get; set; }
     public ArmDeploymentTemplateLink? TemplateLink { get; set; }

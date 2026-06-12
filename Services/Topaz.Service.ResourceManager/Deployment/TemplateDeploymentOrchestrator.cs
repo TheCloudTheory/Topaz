@@ -350,37 +350,18 @@ public sealed class TemplateDeploymentOrchestrator(
             }
         }
 
-        // Serialize template outputs and set them on the deployment
+        // Evaluate and set template outputs on the deployment
         if (templateDeployment.Template.Outputs != null)
         {
-            // Serialize the template outputs in Azure format: { type, value }
-            var outputsDict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-            foreach (var output in templateDeployment.Template.Outputs)
-            {
-                var extractedOutput = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-                
-                // Extract type from TemplateGenericProperty<TemplateParameterType>
-                if (output.Value.Type != null)
-                {
-                    extractedOutput["type"] = output.Value.Type.Value.ToString();
-                }
-                else
-                {
-                    extractedOutput["type"] = "object";
-                }
-                
-                // Extract the actual JToken value from TemplateGenericProperty<JToken>
-                // The .Value property contains the evaluated JToken
-                if (output.Value.Value?.Value != null)
-                {
-                    extractedOutput["value"] = output.Value.Value.Value;
-                }
-                
-                outputsDict[output.Key] = extractedOutput;
-            }
-            
-            var outputsJson = JsonSerializer.Serialize(outputsDict, GlobalSettings.JsonOptions);
-            var outputs = new BinaryData(outputsJson);
+            // Parse subscription ID and resource group name from the deployment ID so the
+            // expression evaluation context matches the scope used during template processing.
+            var idParts = templateDeployment.Id.TrimStart('/').Split('/');
+            var subscriptionId = idParts.Length > 1 && idParts[0] == "subscriptions" ? idParts[1] : string.Empty;
+            var resourceGroupName = idParts.Length > 3 && idParts[2] == "resourceGroups" ? idParts[3] : string.Empty;
+
+            var outputsJObject = _armTemplateEngineFacade.EvaluateOutputs(subscriptionId, resourceGroupName, templateDeployment.Template);
+            var outputsJson = outputsJObject.ToString(Newtonsoft.Json.Formatting.None);
+            var outputs = JsonDocument.Parse(outputsJson).RootElement.Clone();
             templateDeployment.SetOutputs(outputs);
         }
 

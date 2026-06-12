@@ -25,7 +25,7 @@ internal sealed class TemplateDeployment
     private readonly Action _cancel;
     private readonly Action _fail;
     private readonly Action _persist;
-    private readonly Action<BinaryData?> _setOutputs;
+    private readonly Action<System.Text.Json.JsonElement?> _setOutputs;
 
     public TemplateDeployment(
         string id,
@@ -35,7 +35,7 @@ internal sealed class TemplateDeployment
         Action cancel,
         Action fail,
         Action persist,
-        Action<BinaryData?> setOutputs,
+        Action<System.Text.Json.JsonElement?> setOutputs,
         InsensitiveDictionary<JToken> metadata,
         System.Text.Json.JsonElement? parameters)
     {
@@ -75,7 +75,7 @@ internal sealed class TemplateDeployment
 
     public void Persist() => _persist();
 
-    public void SetOutputs(BinaryData? outputs) => _setOutputs(outputs);
+    public void SetOutputs(System.Text.Json.JsonElement? outputs) => _setOutputs(outputs);
 
     public enum DeploymentStatus
     {

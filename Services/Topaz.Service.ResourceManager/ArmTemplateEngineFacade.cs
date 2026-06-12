@@ -2,6 +2,8 @@ using Azure.Deployments.Core.Components;
 using Azure.Deployments.Core.Configuration;
 using Azure.Deployments.Core.Definitions.Schema;
 using Azure.Deployments.Core.Diagnostics;
+using Azure.Deployments.Core.ErrorResponses;
+using Azure.Deployments.Expression.Engines;
 using Azure.Deployments.Templates.Engines;
 using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
 using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
@@ -100,5 +102,45 @@ internal sealed class ArmTemplateEngineFacade
     public void Validate(Template template)
     {
         TemplateEngine.ValidateTemplate(template, "apiVersion", TemplateDeploymentScope.ResourceGroup);
+    }
+
+    /// <summary>
+    /// Evaluates ARM expressions in each output value using the expression evaluation context
+    /// built from the already-processed <paramref name="template"/>.
+    /// Output values that are plain literals are returned as-is; ARM expressions
+    /// (e.g. <c>[parameters('x')]</c>) are evaluated to their resolved values.
+    /// </summary>
+    public JObject EvaluateOutputs(string subscriptionId, string resourceGroupName, Template template)
+    {
+        var metrics = new TemplateMetricsRecorder();
+        var evalCtx = TemplateEngine.GetExpressionEvaluationContext(
+            string.Empty, subscriptionId, resourceGroupName, template, metrics,
+            false, null, null, null, null, null, null);
+
+        var result = new JObject();
+        foreach (var kv in template.Outputs)
+        {
+            var entry = new JObject();
+            entry["type"] = kv.Value.Type?.Value.ToString().ToLowerInvariant() ?? "object";
+
+            var rawJToken = kv.Value.Value?.Value;
+            if (rawJToken != null)
+            {
+                var rawString = rawJToken.Type == JTokenType.String ? rawJToken.Value<string>() : null;
+                if (rawString != null && ExpressionsEngine.IsLanguageExpression(rawString))
+                {
+                    var evaluated = ExpressionsEngine.EvaluateLanguageExpression(
+                        rawString, evalCtx, new TemplateErrorAdditionalInfo());
+                    entry["value"] = evaluated;
+                }
+                else
+                {
+                    entry["value"] = rawJToken;
+                }
+            }
+
+            result[kv.Key] = entry;
+        }
+        return result;
     }
 }
