@@ -43,7 +43,8 @@ internal sealed class SubscriptionDeploymentControlPlane(
         var subscriptionMetadata = new SubscriptionMetadata(subscriptionIdentifier);
         var metadataInsensitive = new Dictionary<string, JToken>
             {
-                { DeploymentMetadata.SubscriptionKey, JToken.Parse(subscriptionMetadata.ToString()) }
+                { DeploymentMetadata.SubscriptionKey, JToken.Parse(subscriptionMetadata.ToString()) },
+                { DeploymentMetadata.LocationKey, JToken.FromObject(location) }
             }
             .ToInsensitiveDictionary(meta => meta.Key, meta => meta.Value);
 

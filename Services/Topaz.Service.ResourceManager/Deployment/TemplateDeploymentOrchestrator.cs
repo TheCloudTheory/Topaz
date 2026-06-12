@@ -268,7 +268,7 @@ public sealed class TemplateDeploymentOrchestrator(
         var hasProvisioningFailed = false;
         // Process resource groups first to ensure they exist before dependent resources are deployed
         var orderedResources = templateDeployment.Template.Resources
-            .OrderByDescending(r => r.Type.Value == "Microsoft.Resources/resourceGroups")
+            .OrderByDescending(r => (r.Type?.Value ?? string.Empty).Equals("Microsoft.Resources/resourceGroups", StringComparison.OrdinalIgnoreCase))
             .ToList();
         
         foreach (var resource in orderedResources)
@@ -277,7 +277,12 @@ public sealed class TemplateDeploymentOrchestrator(
             var genericResource =
                 JsonSerializer.Deserialize<GenericResource>(resource.ToJson(), GlobalSettings.JsonOptions)!;
 
-            switch (resource.Type.Value)
+            // resource.Type.Value may be null after subscription-scope template processing for
+            // certain resource types (e.g. Microsoft.Resources/deployments); fall back to the
+            // type string preserved in the deserialized GenericResource.
+            var resourceType = resource.Type?.Value ?? genericResource.Type ?? string.Empty;
+
+            switch (resourceType)
             {
                 case "Microsoft.ContainerRegistry/registries":
                     controlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
@@ -337,7 +342,7 @@ public sealed class TemplateDeploymentOrchestrator(
                     HandleNestedDeployment(genericResource, templateDeployment, resource, ref hasProvisioningFailed);
                     break;
                 default:
-                    logger.LogWarning($"Deployment of resource type {resource.Type} is not yet supported.");
+                    logger.LogWarning($"Deployment of resource type {resourceType} is not yet supported.");
                     break;
             }
 
@@ -527,6 +532,13 @@ public sealed class TemplateDeploymentOrchestrator(
             {
                 nestedLocation = parentRgMetadata.Location;
             }
+            else if (parentDeployment.Metadata.TryGetValue(DeploymentMetadata.LocationKey, out var parentLocationToken)
+                     && parentLocationToken.Type == JTokenType.String
+                     && !string.IsNullOrWhiteSpace(parentLocationToken.Value<string>()))
+            {
+                // Subscription-scoped parent deployments carry the location directly (no resource group metadata).
+                nestedLocation = new AzureLocation(parentLocationToken.Value<string>()!);
+            }
             else
             {
                 logger.LogError(nameof(TemplateDeploymentOrchestrator), nameof(HandleNestedDeployment),
@@ -547,7 +559,10 @@ public sealed class TemplateDeploymentOrchestrator(
             // Step 4: Parse and process inner template
             var innerTemplate = _armTemplateEngineFacade.Parse(innerTemplateJson);
 
-            // Assign resource IDs on inner template resources
+            // Process template expressions first so Type/Name are resolved before ID assignment
+            _armTemplateEngineFacade.ProcessTemplate(nestedSubId, nestedRgId, innerTemplate, innerMetadata, innerParams);
+
+            // Assign resource IDs on inner template resources (after expression processing)
             foreach (var innerResource in innerTemplate.Resources)
             {
                 innerResource.Id = new TemplateGenericProperty<string>
@@ -555,9 +570,6 @@ public sealed class TemplateDeploymentOrchestrator(
                     Value = $"/subscriptions/{nestedSubId}/resourceGroups/{nestedRgId}/providers/{innerResource.Type}/{innerResource.Name}"
                 };
             }
-
-            // Process template expressions
-            _armTemplateEngineFacade.ProcessTemplate(nestedSubId, nestedRgId, innerTemplate, innerMetadata, innerParams);
 
             // Step 5: Create and persist nested DeploymentResource
             var nestedDeploymentProps = DeploymentResourceProperties.New(innerMode, innerTemplateJson, null);
