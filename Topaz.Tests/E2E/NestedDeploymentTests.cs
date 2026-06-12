@@ -26,17 +26,21 @@ public class NestedDeploymentTests
         using var topaz = new TopazArmClient(credentials);
         await topaz.CreateSubscriptionAsync(subscriptionId, "nested-deploy-sub");
         
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        
         // Act: Deploy the subscription-scoped template
-        var subscriptionResource = armClient.GetSubscriptionResource(ResourceIdentifier.Root);
-        await subscriptionResource.GetArmDeployments().CreateOrUpdateAsync(
+        await subscription.GetArmDeployments().CreateOrUpdateAsync(
             WaitUntil.Completed,
             "sub-deploy-with-nested",
             new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
             {
                 Template = BinaryData.FromString(GetNestedDeploymentTemplate())
-            }));
+            })
+            {
+                Location = AzureLocation.WestEurope
+            });
 
-        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        subscription = await armClient.GetDefaultSubscriptionAsync();
 
         // Assert: Verify the resource group was created
         var targetRgName = "nested-kv-rg";
