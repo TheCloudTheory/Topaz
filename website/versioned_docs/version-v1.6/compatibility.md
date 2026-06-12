@@ -119,4 +119,11 @@ Azure Python packages used by the test image:
 
 ## Versioning policy
 
-Topaz is in active development and does not yet publish a formal compatibility table across releases. The versions listed above reflect the current CI test suite. When a new Topaz release changes behaviour that affects a specific provider or SDK version, it will be noted in the release notes.
+Topaz maintains the following support policies:
+
+- **Topaz releases**: Supports the current release and the previous two major.minor versions (X-2). For example, if the current release is 1.6, versions 1.5 and 1.4 are supported.
+- **Azure CLI**: Supports the 3 latest releases. See the [Azure CLI integration](./integrations/azure-cli-integration.md) page for the current list.
+- **NuGet packages (.NET SDK)**: Supports the latest available version at the time of each Topaz release.
+- **Terraform & Python**: No formal support policy is currently published. Compatibility is validated on a best-effort basis.
+
+When a new Topaz release changes behaviour that affects a specific provider or SDK version, it will be noted in the release notes.
