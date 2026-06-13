@@ -584,29 +584,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
   labels: enhancement, service-bus, event-hub, amqp
 -->
 
-### ARM Deployments — nested deployment (Microsoft.Resources/deployments) support
-
-<!--
-TODO: ARM Deployments: Support Microsoft.Resources/deployments as a nested resource type
-  Subscription-scoped Bicep templates compiled by `az bicep build` always emit at least one
-  nested deployment resource of type "Microsoft.Resources/deployments" that carries the actual
-  resource-group-scoped template (Key Vault, Managed Identity, App Service, etc.) as an inline
-  `template` property.  Topaz's TemplateDeploymentOrchestrator.RouteDeployment has no case for
-  this type, so the entire nested payload is silently skipped and none of the inner resources
-  are provisioned.
-  Required changes:
-  - Add a `case "Microsoft.Resources/deployments":` branch in RouteDeployment.
-  - Extract the inline `template` from the resource's `properties.template` field.
-  - Recursively call the orchestrator (or a dedicated handler) with the inner template,
-    resolved against the nested deployment's `resourceGroup` scope.
-  - Persist the nested deployment as a child deployment resource so it is retrievable via
-    GET .../resourceGroups/{rg}/providers/Microsoft.Resources/deployments/{name}.
-  - Propagate the nested deployment's `outputs` back up to the parent deployment's `outputs`
-    when the parent template references them via `reference(...)`.
-  milestone: v1.7-beta
-  labels: bug, arm-deployments
--->
-
 ---
 
 ## v1.8-preview
