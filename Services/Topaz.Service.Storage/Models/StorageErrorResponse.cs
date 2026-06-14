@@ -32,6 +32,13 @@ internal sealed record StorageErrorResponse(string Code, string Message)
             "This request is not authorized to perform this operation.");
 
     /// <summary>
+    /// Factory method for source IP mismatch errors (403 Forbidden — sip= restriction).
+    /// </summary>
+    public static StorageErrorResponse AuthorizationSourceIPMismatch() =>
+        new("AuthorizationSourceIPMismatch",
+            "This request is not authorized to perform this operation using this source IP address.");
+
+    /// <summary>
     /// Factory method for authentication failure errors (401 Unauthorized).
     /// </summary>
     public static StorageErrorResponse AuthenticationFailed() =>

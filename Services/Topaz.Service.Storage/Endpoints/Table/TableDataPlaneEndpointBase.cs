@@ -134,11 +134,12 @@ internal abstract class TableDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
         {
             if (authResult.ErrorCode is "AuthorizationPermissionMismatch" or "AuthorizationSourceIPMismatch")
             {
-                // Service SAS permission mismatch: sp= does not cover HTTP method
-                var error = new TableErrorResponse("AuthorizationPermissionMismatch",
+                // Service SAS permission mismatch or source IP denied
+                var errorCode = authResult.ErrorCode!;
+                var error = new TableErrorResponse(errorCode,
                     "This request is not authorized to perform this operation.");
                 response.StatusCode = HttpStatusCode.Forbidden;
-                response.Headers.Add("x-ms-error-code", "AuthorizationPermissionMismatch");
+                response.Headers.Add("x-ms-error-code", errorCode);
                 response.Content = JsonContent.Create(error);
             }
             else
