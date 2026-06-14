@@ -12,6 +12,7 @@ public sealed class GenericLoadBalancerCommand : IEmulatorCommand
             lb.AddCommand<CreateLoadBalancerCommand>("create");
             lb.AddCommand<GetLoadBalancerCommand>("show");
             lb.AddCommand<DeleteLoadBalancerCommand>("delete");
+            lb.AddCommand<UpdateLoadBalancerCommand>("update");
             lb.AddCommand<ListLoadBalancersCommand>("list");
         });
     }
