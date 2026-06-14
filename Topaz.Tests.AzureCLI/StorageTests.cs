@@ -1541,4 +1541,92 @@ public class StorageTests : TopazFixture
         await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
+
+    // -----------------------------------------------------------------------
+    // Service SAS — source IP (sip=) enforcement
+    // -----------------------------------------------------------------------
+
+    [Test]
+    public async Task Storage_Blob_ServiceSas_WithDeniedSourceIP_Returns403()
+    {
+        const string storageAccountName = "topazblbsipdenied01";
+        const string resourceGroup      = "test-blob-sip-denied-rg";
+        const string containerName      = "sip-denied";
+        const string blobName           = "sip-test.txt";
+        var expiry = DateTime.UtcNow.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            resp =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        // Create container and upload blob with account key.
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}");
+        await RunAzureCliCommand(
+            $"printf 'sip test content' >/tmp/sip-test.txt && az storage blob upload --container-name {containerName} --name {blobName} --file /tmp/sip-test.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}");
+
+        // Generate a SAS token with sip=10.0.0.1 (will not match container IP).
+        string? sasToken = null;
+        await RunAzureCliCommand(
+            $"az storage blob generate-sas --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --permissions r --expiry {expiry} --ip 10.0.0.1 --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}",
+            resp => { sasToken = resp.GetValue<string>(); });
+
+        // Attempt to download the blob using the IP-restricted SAS — should fail with 403.
+        await RunAzureCliCommand(
+            $"az storage blob download --account-name {storageAccountName} --container-name {containerName} --name {blobName} --file /tmp/sip-denied-dl.txt --sas-token \"{sasToken}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort} --no-progress",
+            exitCode: 1);
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task Storage_Blob_ServiceSas_WithAllowedSourceIP_Returns200()
+    {
+        const string storageAccountName = "topazblbsipallow01";
+        const string resourceGroup      = "test-blob-sip-allow-rg";
+        const string containerName      = "sip-allowed";
+        const string blobName           = "sip-ok.txt";
+        var expiry = DateTime.UtcNow.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        string? accountKey = null;
+        await RunAzureCliCommand(
+            $"az storage account keys list --account-name {storageAccountName} --resource-group {resourceGroup}",
+            resp =>
+            {
+                accountKey = resp.AsArray().First(r => r!["keyName"]!.GetValue<string>() == "key1")!["value"]!.GetValue<string>();
+            });
+
+        // Create container and upload blob with account key.
+        await RunAzureCliCommand(
+            $"az storage container create --name {containerName} --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}");
+        await RunAzureCliCommand(
+            $"printf 'sip allowed content' >/tmp/sip-ok.txt && az storage blob upload --container-name {containerName} --name {blobName} --file /tmp/sip-ok.txt --account-name {storageAccountName} --account-key \"{accountKey}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}");
+
+        // Determine the Azure CLI container's actual IP and generate a SAS with that IP as the allowed range.
+        // The SAS will only be valid for the requesting container's own IP.
+        string? sasToken = null;
+        await RunAzureCliCommand(
+            $"bash -c 'MYIP=$(hostname -i | tr -d \" \") && az storage blob generate-sas --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --permissions r --expiry {expiry} --ip $MYIP --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}'",
+            resp => { sasToken = resp.GetValue<string>(); });
+
+        // Download should succeed because the container's IP matches the sip= range.
+        await RunAzureCliCommand(
+            $"az storage blob download --account-name {storageAccountName} --container-name {containerName} --name {blobName} --file /tmp/sip-allowed-dl.txt --sas-token \"{sasToken}\" --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort} --no-progress");
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
 }

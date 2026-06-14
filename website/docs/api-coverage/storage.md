@@ -197,7 +197,7 @@ Topaz validates [Service SAS](https://learn.microsoft.com/en-us/rest/api/storage
 
 :::caution[Known Limitations]
 
-- **IP range restriction (`sip=`)**: The `sip` parameter is detected and logged but not enforced. All source IPs are permitted regardless of the `sip` value in the SAS token.
+(none)
 
 :::
 
@@ -227,7 +227,6 @@ The `StringToSign` format follows the spec:
 
 :::caution[Known Limitations]
 
-- **IP range restriction (`sip=`)**: The `sip` parameter is detected and logged but not enforced.
 - **HTTP method enforcement (`sp=`)**: Permission letters are validated against the HTTP method of the request (e.g. `r`→GET, `w`→PUT, `d`→DELETE, `a`→POST add, `p`→GET process). Enforcement is complete for standard CRUD operations.
 - **Encryption scope (`ses=`)**: The `ses` field is included in the `StringToSign` for versions ≥ 2020-12-06 but the encryption scope is not applied to storage operations.
 

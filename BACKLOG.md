@@ -269,22 +269,19 @@ TODO: Virtual Networks: Private Endpoint IP tracking
   labels: enhancement, virtual-network, good first issue
 -->
 
-### Storage — SAS source IP (`sip`) enforcement
+### Storage — SAS source IP (`sip`) enforcement ✅ Implemented in v1.7-beta
 
 <!--
-TODO: Storage: Service SAS sip (source IP) parameter enforcement
-  Real Azure validates the `sip` parameter in a Service SAS token against the source IP
-  of the incoming request, rejecting out-of-range callers with 403 AuthorizationSourceIPMismatch.
-  Topaz currently detects the `sip` parameter and logs it at debug level but does not block
-  any requests based on it.
-  Required changes:
-  - Extract the remote IP from HttpContext in the SAS validation layer (ServiceSasValidator).
-  - Parse the `sip` value: support single IPv4/IPv6 addresses and hyphenated ranges
-    (e.g. "192.168.0.1-192.168.0.255").
-  - Compare the request source IP against the declared range; if it falls outside the range,
-    return 403 with error code AuthorizationSourceIPMismatch.
-  - Applies to all three storage services: Blob, Queue, and Table.
-  See also: website/docs/known-limitations.md — "Storage SAS — sip (source IP) parameter not enforced".
+DONE: Storage: Service SAS sip (source IP) parameter enforcement
+  Implemented in v1.7-beta.
+  - Created SipIpRangeChecker static utility (IPv4 BinaryPrimitives range check, IPv4-mapped IPv6 normalisation, lexicographic IPv6 comparison).
+  - ServiceSasValidator, AccountSasValidator, UserDelegationSasValidator all accept IPAddress? remoteIpAddress and enforce sip= fail-closed.
+  - AccountSasValidator and UserDelegationSasValidator return type changed from bool to StorageAuthorizationResult.
+  - StorageAuthorizationResult.SourceIPMismatch() factory added.
+  - BlobStorageSecurityProvider, QueueStorageSecurityProvider, TableStorageSecurityProvider pass context.Connection.RemoteIpAddress.
+  - All three endpoint base classes (Blob, Queue, Table) pass remoteIpAddress; handle AuthorizationSourceIPMismatch as 403.
+  - 6 new E2E tests in StorageServiceSasTests.cs; 2 Docker CLI tests in StorageTests.cs.
+  - website/docs/known-limitations.md entry removed; website/docs/api-coverage/storage.md updated.
   milestone: v1.7-beta
   labels: enhancement, storage, security
 -->
@@ -457,23 +454,6 @@ TODO: Azure Load Balancer: New service project scaffold
   See: https://learn.microsoft.com/en-us/rest/api/load-balancer/load-balancers?view=rest-load-balancer-2025-05-01
   milestone: v1.7-beta
   labels: enhancement, good first issue
--->
-
-<!--
-TODO: Azure Load Balancer: Control plane endpoints
-  Implement the ARM-level Load Balancer resource surface (Microsoft.Network/loadBalancers):
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/loadBalancers/{name}  – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/loadBalancers/{name}  – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/loadBalancers/{name}  – delete
-  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/loadBalancers/{name}  – update tags
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/loadBalancers          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.Network/loadBalancers                              – list all in subscription
-  The emulated load balancer does not route real traffic. All structural properties
-  (frontendIPConfigurations, backendAddressPools, loadBalancingRules, probes,
-  inboundNatRules, outboundRules) are stored and round-tripped as-is.
-  provisioningState is always Succeeded.
-  milestone: v1.7-beta
-  labels: enhancement
 -->
 
 ### Service Bus — dead letter queues

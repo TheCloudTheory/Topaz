@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
@@ -14,8 +15,7 @@ namespace Topaz.Service.Storage.Security;
 /// Account SAS tokens are distinguished from Service SAS tokens by the presence of the ss=
 /// (signed services) and srt= (signed resource types) parameters.
 /// Verifies HMAC-SHA256 signature, expiry, service letter (ss=), resource-type letter (srt=),
-/// and HTTP method coverage (sp=). IP range enforcement (sip=) is a known limitation and is
-/// logged but not enforced.
+/// HTTP method coverage (sp=), and source IP range (sip=).
 /// </summary>
 internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane, ITopazLogger logger)
 {
@@ -59,14 +59,16 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
     /// <param name="query">Full query string of the request, including all SAS parameters.</param>
     /// <param name="requiredService">The service letter that must appear in ss=.</param>
     /// <param name="requiredResourceType">The resource-type letter that must appear in srt=.</param>
-    public bool Validate(
+    /// <param name="remoteIpAddress">The caller's remote IP address for sip= enforcement.</param>
+    public StorageAuthorizationResult Validate(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
         string method,
         QueryString query,
         AccountSasService requiredService,
-        AccountSasResourceType requiredResourceType)
+        AccountSasResourceType requiredResourceType,
+        IPAddress? remoteIpAddress)
     {
         var parsed = HttpUtility.ParseQueryString(query.ToString());
 
@@ -87,22 +89,27 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
             {
                 logger.LogError(nameof(AccountSasValidator), nameof(Validate),
                     "Account SAS has unparseable expiry '{0}'. Denying.", se);
-                return false;
+                return StorageAuthorizationResult.AuthenticationFailed();
             }
 
             if (DateTimeOffset.UtcNow >= expiry)
             {
                 logger.LogError(nameof(AccountSasValidator), nameof(Validate),
                     "Account SAS token has expired (se={0}, now={1}). Denying.", se, DateTimeOffset.UtcNow);
-                return false;
+                return StorageAuthorizationResult.AuthenticationFailed();
             }
         }
 
-        // IP restriction — known limitation: sip is not enforced.
+        // IP restriction — enforce sip= (source IP range) if present.
         if (!string.IsNullOrEmpty(sip))
         {
-            logger.LogDebug(nameof(AccountSasValidator), nameof(Validate),
-                "Account SAS contains sip='{0}' restriction — IP enforcement is not implemented; passing.", sip);
+            if (!SipIpRangeChecker.IsAllowed(sip, remoteIpAddress))
+            {
+                logger.LogError(nameof(AccountSasValidator), nameof(Validate),
+                    "Account SAS sip='{0}' does not allow caller IP '{1}'. Denying.",
+                    sip, remoteIpAddress?.ToString() ?? "(null)");
+                return StorageAuthorizationResult.SourceIPMismatch();
+            }
         }
 
         // Validate that the required service letter is in ss=.
@@ -111,7 +118,7 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
         {
             logger.LogError(nameof(AccountSasValidator), nameof(Validate),
                 "Account SAS ss='{0}' does not include required service '{1}'. Denying.", ss, serviceChar);
-            return false;
+            return StorageAuthorizationResult.AuthenticationFailed();
         }
 
         // Validate that the required resource-type letter is in srt=.
@@ -120,7 +127,7 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
         {
             logger.LogError(nameof(AccountSasValidator), nameof(Validate),
                 "Account SAS srt='{0}' does not include required resource type '{1}'. Denying.", srt, resourceTypeChar);
-            return false;
+            return StorageAuthorizationResult.AuthenticationFailed();
         }
 
         // Validate that the HTTP method is covered by sp= permission letters.
@@ -128,7 +135,7 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
         {
             logger.LogError(nameof(AccountSasValidator), nameof(Validate),
                 "Account SAS sp='{0}' does not cover HTTP method '{1}'. Denying.", sp, method);
-            return false;
+            return StorageAuthorizationResult.PermissionMismatch();
         }
 
         // Build StringToSign.
@@ -152,7 +159,7 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
         {
             logger.LogError(nameof(AccountSasValidator), nameof(Validate),
                 "Storage account '{0}' not found during Account SAS validation.", storageAccountName);
-            return false;
+            return StorageAuthorizationResult.AuthenticationFailed();
         }
 
         var dataBytes = Encoding.UTF8.GetBytes(stringToSign);
@@ -161,7 +168,7 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
         var hash2 = Convert.ToBase64String(
             HMACSHA256.HashData(Convert.FromBase64String(accountResult.Resource.Keys[1].Value), dataBytes));
 
-        if (hash1 == sig || hash2 == sig) return true;
+        if (hash1 == sig || hash2 == sig) return StorageAuthorizationResult.Authorized();
 
         logger.LogError(nameof(AccountSasValidator), nameof(Validate),
             "Account SAS signature mismatch for account '{0}'. Expected [{1}...] or [{2}...], got [{3}...].",
@@ -169,7 +176,7 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
             hash1.Length >= 10 ? hash1[..10] : hash1,
             hash2.Length >= 10 ? hash2[..10] : hash2,
             sig.Length >= 10 ? sig[..10] : sig);
-        return false;
+        return StorageAuthorizationResult.AuthenticationFailed();
     }
 
     /// <summary>
@@ -183,14 +190,15 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
     ///     container-scope; tables and their entities both map to Object)</item>
     /// </list>
     /// </summary>
-    public bool ValidateForPath(
+    public StorageAuthorizationResult ValidateForPath(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
         string method,
         string absolutePath,
         QueryString query,
-        AccountSasService service)
+        AccountSasService service,
+        IPAddress? remoteIpAddress)
     {
         var segments = absolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
         var resourceType = service == AccountSasService.Table
@@ -202,7 +210,7 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
                 _ => AccountSasResourceType.Object
             };
         return Validate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
-            method, query, service, resourceType);
+            method, query, service, resourceType, remoteIpAddress);
     }
 
     /// <summary>

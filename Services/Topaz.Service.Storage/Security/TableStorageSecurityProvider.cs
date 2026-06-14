@@ -1,3 +1,4 @@
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
@@ -21,7 +22,7 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
     public StorageAuthorizationResult RequestIsAuthorized(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier, string storageAccountName, IHeaderDictionary headers,
         string[] requiredPermissions, string method, string absolutePath,
-        QueryString query)
+        QueryString query, IPAddress? remoteIpAddress)
     {
         if (!headers.TryGetValue("Authorization", out var value))
         {
@@ -29,10 +30,9 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
             {
                 logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(RequestIsAuthorized),
                     "No Authorization header; attempting Account SAS validation for path='{0}'", absolutePath);
-                var authorized = _accountSasValidator.ValidateForPath(
+                return _accountSasValidator.ValidateForPath(
                     subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
-                    method, absolutePath, query, AccountSasValidator.AccountSasService.Table);
-                return authorized ? StorageAuthorizationResult.Authorized() : StorageAuthorizationResult.AuthenticationFailed();
+                    method, absolutePath, query, AccountSasValidator.AccountSasService.Table, remoteIpAddress);
             }
 
             if (ServiceSasValidator.IsServiceSas(query))
@@ -40,7 +40,7 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
                 logger.LogDebug(nameof(TableStorageSecurityProvider), nameof(RequestIsAuthorized),
                     "No Authorization header; attempting Service SAS validation for path='{0}'", absolutePath);
                 return IsAuthorizedForServiceSas(
-                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method);
+                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method, remoteIpAddress);
             }
 
             logger.LogError($"Authentication failure for SharedKeyLite scheme. Authorization header is missing.");
@@ -82,7 +82,8 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
         string storageAccountName,
         string absolutePath,
         QueryString query,
-        string method)
+        string method,
+        IPAddress? remoteIpAddress)
     {
         // Derive the table name from the first path segment (strip OData key predicates if present).
         var firstSegment = absolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
@@ -92,6 +93,7 @@ internal sealed class TableStorageSecurityProvider(Pipeline eventPipeline, ITopa
         return _sasValidator.Validate(
             subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
             absolutePath, query, ServiceSasValidator.SasServiceType.Table, method,
+            remoteIpAddress,
             policyId => _tableControlPlane.GetTableStoredPolicy(
                 subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, tableName, policyId));
     }

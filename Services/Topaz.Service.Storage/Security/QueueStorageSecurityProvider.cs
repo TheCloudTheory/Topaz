@@ -1,3 +1,4 @@
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
@@ -29,7 +30,8 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
         string[] requiredPermissions,
         string method,
         string absolutePath,
-        QueryString query)
+        QueryString query,
+        IPAddress? remoteIpAddress)
     {
         if (!headers.TryGetValue("Authorization", out var value))
         {
@@ -37,10 +39,9 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
             {
                 logger.LogDebug(nameof(QueueStorageSecurityProvider), nameof(RequestIsAuthorized),
                     "No Authorization header; attempting Account SAS validation for path='{0}'", absolutePath);
-                var authorized = _accountSasValidator.ValidateForPath(
+                return _accountSasValidator.ValidateForPath(
                     subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
-                    method, absolutePath, query, AccountSasValidator.AccountSasService.Queue);
-                return authorized ? StorageAuthorizationResult.Authorized() : StorageAuthorizationResult.AuthenticationFailed();
+                    method, absolutePath, query, AccountSasValidator.AccountSasService.Queue, remoteIpAddress);
             }
 
             if (ServiceSasValidator.IsServiceSas(query))
@@ -48,7 +49,7 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
                 logger.LogDebug(nameof(QueueStorageSecurityProvider), nameof(RequestIsAuthorized),
                     "No Authorization header; attempting Service SAS validation for path='{0}'", absolutePath);
                 return IsAuthorizedForServiceSas(
-                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method);
+                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method, remoteIpAddress);
             }
 
             logger.LogError("Authentication failure for Queue Storage. Authorization header is missing.");
@@ -92,7 +93,8 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
         string storageAccountName,
         string absolutePath,
         QueryString query,
-        string method)
+        string method,
+        IPAddress? remoteIpAddress)
     {
         // Derive the queue name from the first path segment.
         var queueName = absolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
@@ -100,6 +102,7 @@ internal sealed class QueueStorageSecurityProvider(Pipeline eventPipeline, ITopa
         return _sasValidator.Validate(
             subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
             absolutePath, query, ServiceSasValidator.SasServiceType.Queue, method,
+            remoteIpAddress,
             policyId => _queueControlPlane.GetQueueStoredPolicy(
                 subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, queueName, policyId));
     }

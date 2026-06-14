@@ -25,4 +25,9 @@ internal readonly record struct StorageAuthorizationResult(bool IsAuthorized, st
     /// Shorthand for a 403 permission mismatch (valid token but wrong sp= permissions for the HTTP method).
     /// </summary>
     public static StorageAuthorizationResult PermissionMismatch() => Denied("AuthorizationPermissionMismatch");
+
+    /// <summary>
+    /// Shorthand for a 403 source IP mismatch (caller IP falls outside the sip= range in the SAS token).
+    /// </summary>
+    public static StorageAuthorizationResult SourceIPMismatch() => Denied("AuthorizationSourceIPMismatch");
 }

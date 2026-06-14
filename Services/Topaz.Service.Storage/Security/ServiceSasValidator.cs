@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
@@ -11,8 +12,7 @@ namespace Topaz.Service.Storage.Security;
 
 /// <summary>
 /// Validates Azure Storage Service SAS tokens for Blob, Queue, and Table data-plane requests.
-/// Verifies HMAC-SHA256 signature, expiry, and protocol. IP range enforcement (sip) is not
-/// implemented and is treated as a known limitation — requests with sip set are logged and passed.
+/// Verifies HMAC-SHA256 signature, expiry, protocol, and source IP range (sip=).
 /// </summary>
 internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane, ITopazLogger logger)
 {
@@ -33,8 +33,8 @@ internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane,
     }
 
     /// <summary>
-    /// Validates a Service SAS request. Returns true when the signature is valid and the token
-    /// has not expired.
+    /// Validates a Service SAS request. Returns an authorized result when the signature is valid
+    /// and the token has not expired and the caller IP matches the sip= restriction (if present).
     /// </summary>
     /// <param name="subscriptionIdentifier">Subscription that owns the storage account.</param>
     /// <param name="resourceGroupIdentifier">Resource group that owns the storage account.</param>
@@ -43,6 +43,7 @@ internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane,
     /// <param name="query">Full query string of the request.</param>
     /// <param name="serviceType">Blob, Queue, or Table.</param>
     /// <param name="method">HTTP method of the request (GET, PUT, POST, DELETE, etc.).</param>
+    /// <param name="remoteIpAddress">The caller's remote IP address from <see cref="Microsoft.AspNetCore.Http.ConnectionInfo.RemoteIpAddress"/>.</param>
     /// <param name="policyResolver">
     /// Called when si= is present; receives the policy ID and returns the stored access policy or
     /// null when the policy does not exist (which causes a 403).
@@ -55,6 +56,7 @@ internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane,
         QueryString query,
         SasServiceType serviceType,
         string method,
+        IPAddress? remoteIpAddress,
         Func<string, StoredAccessPolicy?> policyResolver)
     {
         var parsed = HttpUtility.ParseQueryString(query.ToString());
@@ -127,11 +129,16 @@ internal sealed class ServiceSasValidator(AzureStorageControlPlane controlPlane,
             }
         }
 
-        // IP restriction — known limitation: sip is not enforced.
+        // IP restriction — enforce sip= (source IP range) if present.
         if (!string.IsNullOrEmpty(sip))
         {
-            logger.LogDebug(nameof(ServiceSasValidator), nameof(Validate),
-                "Service SAS contains sip='{0}' restriction — IP enforcement is not implemented; passing.", sip);
+            if (!SipIpRangeChecker.IsAllowed(sip, remoteIpAddress))
+            {
+                logger.LogError(nameof(ServiceSasValidator), nameof(Validate),
+                    "Service SAS sip='{0}' does not allow caller IP '{1}'. Denying.",
+                    sip, remoteIpAddress?.ToString() ?? "(null)");
+                return StorageAuthorizationResult.SourceIPMismatch();
+            }
         }
 
         // Validate that the HTTP method is covered by sp= permission letters (fail-fast before HMAC).

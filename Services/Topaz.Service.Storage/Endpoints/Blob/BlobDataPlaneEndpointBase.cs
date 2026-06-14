@@ -54,11 +54,11 @@ internal abstract class BlobDataPlaneEndpointBase(Pipeline eventPipeline, ITopaz
 
         var authResult = _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccountName, context.Request.Headers, requiredPermissions, context.Request.Method,
-            rawPath, context.Request.QueryString);
+            rawPath, context.Request.QueryString, context.Connection.RemoteIpAddress);
 
         if (!authResult.IsAuthorized)
         {
-            if (authResult.ErrorCode == "AuthorizationPermissionMismatch")
+            if (authResult.ErrorCode is "AuthorizationPermissionMismatch" or "AuthorizationSourceIPMismatch")
             {
                 // Service SAS permission mismatch: sp= does not cover HTTP method
                 var error = StorageErrorResponse.AuthorizationPermissionMismatch();

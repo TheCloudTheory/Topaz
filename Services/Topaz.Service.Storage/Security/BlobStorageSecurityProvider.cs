@@ -1,3 +1,4 @@
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
@@ -30,7 +31,8 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
         string[] requiredPermissions,
         string method,
         string absolutePath,
-        QueryString query)
+        QueryString query,
+        IPAddress? remoteIpAddress)
     {
         if (!headers.TryGetValue("Authorization", out var value) || string.IsNullOrEmpty(value))
         {
@@ -38,19 +40,17 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
             {
                 logger.LogDebug(nameof(BlobStorageSecurityProvider), nameof(RequestIsAuthorized),
                     "No Authorization header; attempting Account SAS validation for path='{0}'", absolutePath);
-                var authorized = _accountSasValidator.ValidateForPath(
+                return _accountSasValidator.ValidateForPath(
                     subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
-                    method, absolutePath, query, AccountSasValidator.AccountSasService.Blob);
-                return authorized ? StorageAuthorizationResult.Authorized() : StorageAuthorizationResult.AuthenticationFailed();
+                    method, absolutePath, query, AccountSasValidator.AccountSasService.Blob, remoteIpAddress);
             }
 
             if (UserDelegationSasValidator.IsUserDelegationSas(query))
             {
                 logger.LogDebug(nameof(BlobStorageSecurityProvider), nameof(RequestIsAuthorized),
                     "No Authorization header; attempting User Delegation SAS validation for path='{0}'", absolutePath);
-                var authorized = _userDelegationSasValidator.Validate(
-                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query);
-                return authorized ? StorageAuthorizationResult.Authorized() : StorageAuthorizationResult.AuthenticationFailed();
+                return _userDelegationSasValidator.Validate(
+                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, remoteIpAddress);
             }
 
             if (ServiceSasValidator.IsServiceSas(query))
@@ -58,7 +58,7 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
                 logger.LogDebug(nameof(BlobStorageSecurityProvider), nameof(RequestIsAuthorized),
                     "No Authorization header; attempting Service SAS validation for path='{0}'", absolutePath);
                 return IsAuthorizedForServiceSas(
-                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method);
+                    subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method, remoteIpAddress);
             }
 
             return IsAnonymousAccessAllowed(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method)
@@ -104,7 +104,8 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
         string storageAccountName,
         string absolutePath,
         QueryString query,
-        string method)
+        string method,
+        IPAddress? remoteIpAddress)
     {
         // Derive the container name from the first path segment.
         var containerName = absolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
@@ -112,6 +113,7 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
         return _sasValidator.Validate(
             subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
             absolutePath, query, ServiceSasValidator.SasServiceType.Blob, method,
+            remoteIpAddress,
             policyId => _blobControlPlane.GetContainerStoredPolicy(
                 subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, containerName, policyId));
     }

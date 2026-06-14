@@ -643,4 +643,206 @@ public class StorageServiceSasTests
         var retrieved = tableClient.GetEntity<TableEntity>("pk", "rk");
         Assert.That(retrieved.Value["data"].ToString(), Is.EqualTo("value"));
     }
+
+    // -----------------------------------------------------------------------
+    // Source IP (sip=) enforcement — Service SAS
+    // -----------------------------------------------------------------------
+
+    [Test]
+    public void Blob_ServiceSas_SourceIP_DeniedIP_Returns403()
+    {
+        // Arrange
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var serviceClient = new BlobServiceClient(connectionString);
+        serviceClient.CreateBlobContainer("sip-blob");
+        serviceClient.GetBlobContainerClient("sip-blob").GetBlobClient("sip-test.txt").Upload(new BinaryData("hello"));
+
+        // Generate a SAS whose sip= restricts to an IP that is NOT 127.0.0.1.
+        var sasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = "sip-blob",
+            BlobName          = "sip-test.txt",
+            Resource          = "b",
+            ExpiresOn         = DateTimeOffset.UtcNow.AddHours(1),
+            IPRange           = new SasIPRange(System.Net.IPAddress.Parse("10.0.0.1"))
+        };
+        sasBuilder.SetPermissions(BlobSasPermissions.Read);
+        var credential = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
+        var sasUri = new UriBuilder(
+            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/sip-blob/sip-test.txt")
+        {
+            Query = sasBuilder.ToSasQueryParameters(credential).ToString()
+        }.Uri;
+
+        var sasClient = new BlobClient(sasUri);
+
+        // Act & Assert — the SAS is structurally valid but caller IP (127.0.0.1) is outside 10.0.0.1.
+        var ex = Assert.Throws<Azure.RequestFailedException>(() => sasClient.DownloadContent());
+        Assert.That(ex.Status, Is.EqualTo(403));
+        Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationSourceIPMismatch"));
+    }
+
+    [Test]
+    public void Blob_ServiceSas_SourceIP_AllowedIP_Returns200()
+    {
+        // Arrange
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var serviceClient = new BlobServiceClient(connectionString);
+        serviceClient.CreateBlobContainer("sip-allowed");
+        serviceClient.GetBlobContainerClient("sip-allowed").GetBlobClient("sip-ok.txt").Upload(new BinaryData("allowed"));
+
+        // SAS whose sip= is exactly 127.0.0.1 — the loopback the Kestrel test server runs on.
+        var sasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = "sip-allowed",
+            BlobName          = "sip-ok.txt",
+            Resource          = "b",
+            ExpiresOn         = DateTimeOffset.UtcNow.AddHours(1),
+            IPRange           = new SasIPRange(System.Net.IPAddress.Parse("127.0.0.1"))
+        };
+        sasBuilder.SetPermissions(BlobSasPermissions.Read);
+        var credential = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
+        var sasUri = new UriBuilder(
+            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/sip-allowed/sip-ok.txt")
+        {
+            Query = sasBuilder.ToSasQueryParameters(credential).ToString()
+        }.Uri;
+
+        var sasClient = new BlobClient(sasUri);
+
+        // Act & Assert
+        var result = sasClient.DownloadContent();
+        Assert.That(result.Value.Content.ToString(), Is.EqualTo("allowed"));
+    }
+
+    [Test]
+    public void Queue_ServiceSas_SourceIP_DeniedIP_Returns403()
+    {
+        // Arrange
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var queueServiceClient = new QueueServiceClient(connectionString);
+        queueServiceClient.CreateQueue("sip-queue");
+
+        var sasBuilder = new QueueSasBuilder
+        {
+            QueueName = "sip-queue",
+            ExpiresOn = DateTimeOffset.UtcNow.AddHours(1),
+            IPRange   = new SasIPRange(System.Net.IPAddress.Parse("10.0.0.1"))
+        };
+        sasBuilder.SetPermissions(QueueSasPermissions.Add);
+        var credential = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
+        var sasUri = new UriBuilder(
+            $"https://{StorageAccountName}.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/sip-queue")
+        {
+            Query = sasBuilder.ToSasQueryParameters(credential).ToString()
+        }.Uri;
+
+        var sasQueueClient = new QueueClient(sasUri);
+
+        // Act & Assert
+        var ex = Assert.Throws<Azure.RequestFailedException>(() => sasQueueClient.SendMessage("hello"));
+        Assert.That(ex.Status, Is.EqualTo(403));
+        Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationSourceIPMismatch"));
+    }
+
+    [Test]
+    public void Table_ServiceSas_SourceIP_DeniedIP_Returns403()
+    {
+        // Arrange
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var tableServiceClient = new TableServiceClient(connectionString);
+        tableServiceClient.CreateTableIfNotExists("sipTable");
+        var tableClient = tableServiceClient.GetTableClient("sipTable");
+
+        // Build a Table SAS with sip=10.0.0.1 using the low-level TableSasBuilder API.
+        var sasBuilder = new TableSasBuilder
+        {
+            TableName = "sipTable",
+            ExpiresOn = DateTimeOffset.UtcNow.AddHours(1),
+            IPRange   = new TableSasIPRange(System.Net.IPAddress.Parse("10.0.0.1"))
+        };
+        sasBuilder.SetPermissions(TableSasPermissions.Read);
+        var sasUri = tableClient.GenerateSasUri(sasBuilder);
+        var tableEndpoint = new Uri(
+            $"https://{StorageAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/sipTable");
+        var sasTableClient = new TableClient(tableEndpoint, new AzureSasCredential(sasUri.Query.TrimStart('?')));
+
+        // Act & Assert
+        var ex = Assert.Throws<Azure.RequestFailedException>(() => sasTableClient.Query<TableEntity>().ToList());
+        Assert.That(ex.Status, Is.EqualTo(403));
+        Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationSourceIPMismatch"));
+    }
+
+    [Test]
+    public void Blob_AccountSas_SourceIP_DeniedIP_Returns403()
+    {
+        // Arrange — upload a blob with the account key.
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var serviceClient = new BlobServiceClient(connectionString);
+        serviceClient.CreateBlobContainer("sip-acct");
+        serviceClient.GetBlobContainerClient("sip-acct").GetBlobClient("sip-acct.txt").Upload(new BinaryData("acct"));
+
+        // Build an Account SAS with sip=10.0.0.1.
+        var sasBuilder = new AccountSasBuilder
+        {
+            Services      = AccountSasServices.Blobs,
+            ResourceTypes = AccountSasResourceTypes.Object,
+            ExpiresOn     = DateTimeOffset.UtcNow.AddHours(1),
+            IPRange       = new SasIPRange(System.Net.IPAddress.Parse("10.0.0.1"))
+        };
+        sasBuilder.SetPermissions(AccountSasPermissions.Read);
+        var sharedKeyCredential = new StorageSharedKeyCredential(StorageAccountName, _accountKey);
+        var sasToken = sasBuilder.ToSasQueryParameters(sharedKeyCredential).ToString();
+        var sasUri = new UriBuilder(
+            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/sip-acct/sip-acct.txt")
+        {
+            Query = sasToken
+        }.Uri;
+
+        var sasClient = new BlobClient(sasUri);
+
+        // Act & Assert
+        var ex = Assert.Throws<Azure.RequestFailedException>(() => sasClient.DownloadContent());
+        Assert.That(ex.Status, Is.EqualTo(403));
+        Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationSourceIPMismatch"));
+    }
+
+    [Test]
+    public async Task Blob_UserDelegationSas_SourceIP_DeniedIP_Returns403()
+    {
+        // Arrange — upload a blob with the account key.
+        var connectionString = TopazResourceHelpers.GetAzureStorageConnectionString(StorageAccountName, _accountKey);
+        var serviceClientKey = new BlobServiceClient(connectionString);
+        serviceClientKey.CreateBlobContainer("sip-udkey");
+        serviceClientKey.GetBlobContainerClient("sip-udkey").GetBlobClient("sip-ud.txt").Upload(new BinaryData("ud"));
+
+        // Get a User Delegation Key via bearer credential.
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var serviceUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}");
+        var blobServiceClient = new BlobServiceClient(serviceUri, credential);
+        var keyExpiry = DateTimeOffset.UtcNow.AddHours(1);
+        var udKey = await blobServiceClient.GetUserDelegationKeyAsync(
+            new BlobGetUserDelegationKeyOptions(keyExpiry) { StartsOn = DateTimeOffset.UtcNow.AddSeconds(-5) });
+
+        // Build a User Delegation SAS with sip=10.0.0.1.
+        var sasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = "sip-udkey",
+            BlobName          = "sip-ud.txt",
+            Resource          = "b",
+            ExpiresOn         = keyExpiry,
+            IPRange           = new SasIPRange(System.Net.IPAddress.Parse("10.0.0.1"))
+        };
+        sasBuilder.SetPermissions(BlobSasPermissions.Read);
+        var sasParams = sasBuilder.ToSasQueryParameters(udKey, StorageAccountName);
+        var sasUri = new Uri(
+            $"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/sip-udkey/sip-ud.txt?{sasParams}");
+
+        var sasClient = new BlobClient(sasUri);
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<Azure.RequestFailedException>(async () => await sasClient.DownloadContentAsync());
+        Assert.That(ex!.Status, Is.EqualTo(403));
+        Assert.That(ex.ErrorCode, Is.EqualTo("AuthorizationSourceIPMismatch"));
+    }
 }

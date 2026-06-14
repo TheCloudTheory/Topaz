@@ -128,11 +128,11 @@ internal abstract class TableDataPlaneEndpointBase(Pipeline eventPipeline, ITopa
         var permissions = (this as IEndpointDefinition)?.Permissions ?? [];
         var authResult = _securityProvider.RequestIsAuthorized(subscriptionIdentifier, resourceGroupIdentifier,
             storageAccountName, context.Request.Headers, permissions, context.Request.Method, rawPath,
-            context.Request.QueryString);
+            context.Request.QueryString, context.Connection.RemoteIpAddress);
 
         if (!authResult.IsAuthorized)
         {
-            if (authResult.ErrorCode == "AuthorizationPermissionMismatch")
+            if (authResult.ErrorCode is "AuthorizationPermissionMismatch" or "AuthorizationSourceIPMismatch")
             {
                 // Service SAS permission mismatch: sp= does not cover HTTP method
                 var error = new TableErrorResponse("AuthorizationPermissionMismatch",

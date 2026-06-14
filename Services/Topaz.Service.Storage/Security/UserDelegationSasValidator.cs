@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
@@ -15,7 +16,7 @@ namespace Topaz.Service.Storage.Security;
 /// User Delegation SAS tokens are signed with a user delegation key derived deterministically from
 /// the storage account key and the caller's Entra ID identity fields (skoid, sktid, skt, ske, sks,
 /// skv). The same derivation is used at validation time so no key persistence is required.
-/// IP range enforcement (sip=) is not implemented and is treated as a known limitation.
+/// IP range enforcement (sip=) is implemented via <see cref="SipIpRangeChecker"/>.
 /// </summary>
 internal sealed class UserDelegationSasValidator(AzureStorageControlPlane controlPlane, ITopazLogger logger)
 {
@@ -36,15 +37,16 @@ internal sealed class UserDelegationSasValidator(AzureStorageControlPlane contro
     }
 
     /// <summary>
-    /// Validates a User Delegation SAS token. Returns true when the HMAC-SHA256 signature is
-    /// valid and the token has not expired.
+    /// Validates a User Delegation SAS token. Returns an authorized result when the HMAC-SHA256
+    /// signature is valid, the token has not expired, and the caller IP matches the sip= restriction.
     /// </summary>
-    public bool Validate(
+    public StorageAuthorizationResult Validate(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string storageAccountName,
         string absolutePath,
-        QueryString query)
+        QueryString query,
+        IPAddress? remoteIpAddress)
     {
         var parsed = HttpUtility.ParseQueryString(query.ToString());
 
@@ -82,22 +84,27 @@ internal sealed class UserDelegationSasValidator(AzureStorageControlPlane contro
             {
                 logger.LogError(nameof(UserDelegationSasValidator), nameof(Validate),
                     "User Delegation SAS has unparseable expiry '{0}'. Denying.", se);
-                return false;
+                return StorageAuthorizationResult.AuthenticationFailed();
             }
 
             if (DateTimeOffset.UtcNow >= expiry)
             {
                 logger.LogError(nameof(UserDelegationSasValidator), nameof(Validate),
                     "User Delegation SAS has expired (se={0}, now={1}). Denying.", se, DateTimeOffset.UtcNow);
-                return false;
+                return StorageAuthorizationResult.AuthenticationFailed();
             }
         }
 
-        // IP restriction — known limitation: sip= is not enforced.
+        // IP restriction — enforce sip= (source IP range) if present.
         if (!string.IsNullOrEmpty(sip))
         {
-            logger.LogDebug(nameof(UserDelegationSasValidator), nameof(Validate),
-                "User Delegation SAS contains sip='{0}' restriction — IP enforcement is not implemented; passing.", sip);
+            if (!SipIpRangeChecker.IsAllowed(sip, remoteIpAddress))
+            {
+                logger.LogError(nameof(UserDelegationSasValidator), nameof(Validate),
+                    "User Delegation SAS sip='{0}' does not allow caller IP '{1}'. Denying.",
+                    sip, remoteIpAddress?.ToString() ?? "(null)");
+                return StorageAuthorizationResult.SourceIPMismatch();
+            }
         }
 
         var canonicalizedResource = BuildCanonicalizedResource(storageAccountName, absolutePath, sr);
@@ -170,7 +177,7 @@ internal sealed class UserDelegationSasValidator(AzureStorageControlPlane contro
         {
             logger.LogError(nameof(UserDelegationSasValidator), nameof(Validate),
                 "Storage account '{0}' not found during User Delegation SAS validation.", storageAccountName);
-            return false;
+            return StorageAuthorizationResult.AuthenticationFailed();
         }
 
         // Re-derive the user delegation key from each account key and check the signature.
@@ -185,12 +192,12 @@ internal sealed class UserDelegationSasValidator(AzureStorageControlPlane contro
             using var hmac = new HMACSHA256(userDelegationKeyBytes);
             var computedSig = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(stringToSign)));
 
-            if (computedSig == sig) return true;
+            if (computedSig == sig) return StorageAuthorizationResult.Authorized();
         }
 
         logger.LogError(nameof(UserDelegationSasValidator), nameof(Validate),
             "User Delegation SAS signature mismatch for account '{0}'.", storageAccountName);
-        return false;
+        return StorageAuthorizationResult.AuthenticationFailed();
     }
 
     private static string BuildCanonicalizedResource(string accountName, string absolutePath, string sr)
