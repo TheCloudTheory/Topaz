@@ -126,8 +126,8 @@ jobs:
           python:
             - 'Topaz.Tests.Python/**'
             - 'sdk/python/**'
-                    nodejs:
-                      - 'Topaz.Tests.NodeJS/**'
+          nodejs:
+            - 'Topaz.Tests.NodeJS/**'
           managementgroup:
             - 'Services/Topaz.Service.ManagementGroup/**'
           sql:
