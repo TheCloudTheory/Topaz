@@ -305,24 +305,25 @@ jobs:
           PY_JOINED=$(IFS='|'; echo "${PY_PARTS[*]}")
           echo "py_filter=$PY_JOINED" >> "$GITHUB_OUTPUT"
 
-                # Build NodeJS test filter
-                NODEJS_PARTS=()
-                [[ "${{ steps.changes.outputs.servicebus }}" == "true" ]] && NODEJS_PARTS+=("FullyQualifiedName~NodeJS_ServiceBus")
-                [[ "${{ steps.changes.outputs.eventhub }}"   == "true" ]] && NODEJS_PARTS+=("FullyQualifiedName~NodeJS_EventHub")
+        fi
 
-                if [[ "${{ steps.changes.outputs.nodejs }}" == "true" ]]; then
-                  # NodeJS test files or SDK changed: run all NodeJS tests
-                  echo "nodejs_skip=false" >> "$GITHUB_OUTPUT"
-                  echo "nodejs_filter=" >> "$GITHUB_OUTPUT"
-                elif [[ ${#NODEJS_PARTS[@]} -eq 0 ]]; then
-                  # No NodeJS-related service or test files changed
-                  echo "nodejs_skip=true" >> "$GITHUB_OUTPUT"
-                  echo "nodejs_filter=" >> "$GITHUB_OUTPUT"
-                else
-                  echo "nodejs_skip=false" >> "$GITHUB_OUTPUT"
-                  NODEJS_JOINED=$(IFS='|'; echo "${NODEJS_PARTS[*]}")
-                  echo "nodejs_filter=$NODEJS_JOINED" >> "$GITHUB_OUTPUT"
-                fi
+        # Build NodeJS test filter
+        NODEJS_PARTS=()
+        [[ "${{ steps.changes.outputs.servicebus }}" == "true" ]] && NODEJS_PARTS+=("FullyQualifiedName~NodeJS_ServiceBus")
+        [[ "${{ steps.changes.outputs.eventhub }}"   == "true" ]] && NODEJS_PARTS+=("FullyQualifiedName~NodeJS_EventHub")
+
+        if [[ "${{ steps.changes.outputs.nodejs }}" == "true" ]]; then
+          # NodeJS test files or SDK changed: run all NodeJS tests
+          echo "nodejs_skip=false" >> "$GITHUB_OUTPUT"
+          echo "nodejs_filter=" >> "$GITHUB_OUTPUT"
+        elif [[ ${#NODEJS_PARTS[@]} -eq 0 ]]; then
+          # No NodeJS-related service or test files changed
+          echo "nodejs_skip=true" >> "$GITHUB_OUTPUT"
+          echo "nodejs_filter=" >> "$GITHUB_OUTPUT"
+        else
+          echo "nodejs_skip=false" >> "$GITHUB_OUTPUT"
+          NODEJS_JOINED=$(IFS='|'; echo "${NODEJS_PARTS[*]}")
+          echo "nodejs_filter=$NODEJS_JOINED" >> "$GITHUB_OUTPUT"
         fi
     - name: Test
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.skip != 'true'
