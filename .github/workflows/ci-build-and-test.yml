@@ -126,6 +126,8 @@ jobs:
           python:
             - 'Topaz.Tests.Python/**'
             - 'sdk/python/**'
+                    nodejs:
+                      - 'Topaz.Tests.NodeJS/**'
           managementgroup:
             - 'Services/Topaz.Service.ManagementGroup/**'
           sql:
@@ -144,6 +146,8 @@ jobs:
           echo "cli_skip=false" >> "$GITHUB_OUTPUT"
           echo "py_filter=" >> "$GITHUB_OUTPUT"
           echo "py_skip=false" >> "$GITHUB_OUTPUT"
+          echo "nodejs_skip=false" >> "$GITHUB_OUTPUT"
+          echo "nodejs_filter=" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
@@ -163,6 +167,13 @@ jobs:
             echo "py_skip=true" >> "$GITHUB_OUTPUT"
             echo "py_filter=" >> "$GITHUB_OUTPUT"
           fi
+          if [[ "${{ steps.changes.outputs.nodejs }}" == "true" ]]; then
+            echo "nodejs_skip=false" >> "$GITHUB_OUTPUT"
+            echo "nodejs_filter=" >> "$GITHUB_OUTPUT"
+          else
+            echo "nodejs_skip=true" >> "$GITHUB_OUTPUT"
+            echo "nodejs_filter=" >> "$GITHUB_OUTPUT"
+          fi
           exit 0
         fi
 
@@ -177,6 +188,8 @@ jobs:
           echo "cli_skip=false" >> "$GITHUB_OUTPUT"
           echo "py_filter=" >> "$GITHUB_OUTPUT"
           echo "py_skip=false" >> "$GITHUB_OUTPUT"
+          echo "nodejs_skip=false" >> "$GITHUB_OUTPUT"
+          echo "nodejs_filter=" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
@@ -291,6 +304,25 @@ jobs:
           echo "py_skip=false" >> "$GITHUB_OUTPUT"
           PY_JOINED=$(IFS='|'; echo "${PY_PARTS[*]}")
           echo "py_filter=$PY_JOINED" >> "$GITHUB_OUTPUT"
+
+                # Build NodeJS test filter
+                NODEJS_PARTS=()
+                [[ "${{ steps.changes.outputs.servicebus }}" == "true" ]] && NODEJS_PARTS+=("FullyQualifiedName~NodeJS_ServiceBus")
+                [[ "${{ steps.changes.outputs.eventhub }}"   == "true" ]] && NODEJS_PARTS+=("FullyQualifiedName~NodeJS_EventHub")
+
+                if [[ "${{ steps.changes.outputs.nodejs }}" == "true" ]]; then
+                  # NodeJS test files or SDK changed: run all NodeJS tests
+                  echo "nodejs_skip=false" >> "$GITHUB_OUTPUT"
+                  echo "nodejs_filter=" >> "$GITHUB_OUTPUT"
+                elif [[ ${#NODEJS_PARTS[@]} -eq 0 ]]; then
+                  # No NodeJS-related service or test files changed
+                  echo "nodejs_skip=true" >> "$GITHUB_OUTPUT"
+                  echo "nodejs_filter=" >> "$GITHUB_OUTPUT"
+                else
+                  echo "nodejs_skip=false" >> "$GITHUB_OUTPUT"
+                  NODEJS_JOINED=$(IFS='|'; echo "${NODEJS_PARTS[*]}")
+                  echo "nodejs_filter=$NODEJS_JOINED" >> "$GITHUB_OUTPUT"
+                fi
         fi
     - name: Test
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.skip != 'true'
@@ -323,6 +355,9 @@ jobs:
     - name: Build Python container
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.py_skip != 'true'
       run: ./scripts/build-python-container.sh
+    - name: Build NodeJS container
+      if: steps.build.outcome == 'success' && steps.test_filter.outputs.nodejs_skip != 'true'
+      run: ./scripts/build-nodejs-container.sh
     - name: Build PowerShell container
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.ps_skip != 'true'
       run: ./scripts/build-powershell-container.sh
@@ -348,34 +383,45 @@ jobs:
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
+    - name: NodeJS Tests
+      if: steps.build.outcome == 'success' && steps.test_filter.outputs.nodejs_skip != 'true'
+      run: |
+        FILTER="${{ steps.test_filter.outputs.nodejs_filter }}"
+        if [[ -z "$FILTER" ]]; then
+          FILTER="FullyQualifiedName~Topaz.Tests.NodeJS"
+        fi
+        dotnet test -m:1 --no-build --verbosity normal --logger trx \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ${{ github.workspace }}/TestResults \
+          --filter "$FILTER"
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true')
+      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true')
       with:
         large_files: true
         files: |
           ${{ github.workspace }}/**/*.trx
     - name: ReportGenerator
-      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true')
+      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true')
       uses: danielpalme/ReportGenerator-GitHub-Action@5.4.8
       with:
         reports: ./TestResults/**/coverage.cobertura.xml
         targetdir: coveragereport
         reporttypes: HtmlSummary;MarkdownSummaryGithub;Badges
     - name: Upload coverage report artifact
-      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true')
+      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true')
       uses: actions/upload-artifact@v4
       with:
         name: CoverageReport        
         path: coveragereport
     - name: Add comment to PR
-      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true')
+      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true')
       run: gh pr comment $PR_NUMBER --body-file coveragereport/SummaryGithub.md
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PR_NUMBER: ${{ github.event.number }}
     - name: Publish coverage in build summary
-      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true')
+      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true')
       run: |
         if [[ -f coveragereport/SummaryGithub.md ]]; then
           cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
