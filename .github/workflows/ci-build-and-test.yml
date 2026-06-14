@@ -132,6 +132,12 @@ jobs:
             - 'Services/Topaz.Service.ManagementGroup/**'
           sql:
             - 'Services/Topaz.Service.Sql/**'
+          cosmosdb:
+            - 'Services/Topaz.Service.CosmosDb/**'
+          disk:
+            - 'Services/Topaz.Service.Disk/**'
+          loadbalancer:
+            - 'Services/Topaz.Service.LoadBalancer/**'
     - name: Build test filter
       id: test_filter
       shell: bash
@@ -212,6 +218,9 @@ jobs:
         [[ "${{ steps.changes.outputs.portal }}"          == "true" ]] && PARTS+=("FullyQualifiedName~Tests.Portal")
         [[ "${{ steps.changes.outputs.managementgroup }}" == "true" ]] && PARTS+=("FullyQualifiedName~ManagementGroup")
         [[ "${{ steps.changes.outputs.sql }}"             == "true" ]] && PARTS+=("FullyQualifiedName~SqlServer")
+        [[ "${{ steps.changes.outputs.cosmosdb }}"        == "true" ]] && PARTS+=("FullyQualifiedName~CosmosDb")
+        [[ "${{ steps.changes.outputs.disk }}"            == "true" ]] && PARTS+=("FullyQualifiedName~Disk")
+        [[ "${{ steps.changes.outputs.loadbalancer }}"    == "true" ]] && PARTS+=("FullyQualifiedName~LoadBalancer")
 
         if [[ ${#PARTS[@]} -eq 0 ]]; then
           # Untracked code path changed (e.g. Topaz.CLI): run all tests as safety fallback
@@ -230,6 +239,9 @@ jobs:
         [[ "${{ steps.changes.outputs.resourcegroup }}"  == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.ResourceGroup")
         [[ "${{ steps.changes.outputs.virtualmachine }}"   == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.VirtualMachine")
         [[ "${{ steps.changes.outputs.sql }}"              == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.SqlServer")
+        [[ "${{ steps.changes.outputs.cosmosdb }}"         == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.CosmosDb")
+        [[ "${{ steps.changes.outputs.disk }}"             == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.Disk")
+        [[ "${{ steps.changes.outputs.loadbalancer }}"     == "true" ]] && PS_PARTS+=("FullyQualifiedName~AzurePowerShell.LoadBalancer")
 
         if [[ "${{ steps.changes.outputs.azurepowershell }}" == "true" ]]; then
           # PS test files themselves changed: run all PS tests
@@ -259,6 +271,9 @@ jobs:
         [[ "${{ steps.changes.outputs.resourcemanager }}" == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.ResourceManager")
         [[ "${{ steps.changes.outputs.virtualnetwork }}"  == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.VirtualNetwork")        [[ "${{ steps.changes.outputs.virtualmachine }}"   == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.VirtualMachine")
         [[ "${{ steps.changes.outputs.sql }}"              == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.SqlServer")
+        [[ "${{ steps.changes.outputs.cosmosdb }}"         == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.CosmosDb")
+        [[ "${{ steps.changes.outputs.disk }}"             == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.Disk")
+        [[ "${{ steps.changes.outputs.loadbalancer }}"     == "true" ]] && CLI_PARTS+=("FullyQualifiedName~AzureCLI.LoadBalancer")
         if [[ "${{ steps.changes.outputs.azurecli }}" == "true" ]]; then
           # CLI test files themselves changed: run all CLI tests
           echo "cli_skip=false" >> "$GITHUB_OUTPUT"
