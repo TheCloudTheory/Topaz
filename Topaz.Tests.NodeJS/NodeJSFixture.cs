@@ -13,8 +13,8 @@ public class NodeJSFixture
     private static readonly string TopazContainerImage =
         Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "topaz/host";
 
-    private static readonly string CertificateFile = File.ReadAllText("topaz.crt");
-    private static readonly string CertificateKey = File.ReadAllText("topaz.key");
+    private string _certificateFile = "";
+    private string _certificateKey = "";
 
     private IFutureDockerImage? _nodeImage;
     private IContainer? _containerTopaz;
@@ -27,6 +27,9 @@ public class NodeJSFixture
     public async Task OneTimeSetUp()
     {
         var repoRoot = FindRepoRoot();
+
+        _certificateFile = File.ReadAllText("topaz.crt");
+        _certificateKey = File.ReadAllText("topaz.key");
 
         _network = new NetworkBuilder()
             .WithName(Guid.NewGuid().ToString("D"))
@@ -42,8 +45,8 @@ public class NodeJSFixture
             .WithPortBinding(8899)
             .WithNetwork(_network)
             .WithName("topaz.local.dev")
-            .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
-            .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateKey), "/app/topaz.key")
+            .WithResourceMapping(Encoding.UTF8.GetBytes(_certificateFile), "/app/topaz.crt")
+            .WithResourceMapping(Encoding.UTF8.GetBytes(_certificateKey), "/app/topaz.key")
             .WithCommand(
                 "--certificate-file", "topaz.crt",
                 "--certificate-key", "topaz.key",
@@ -72,7 +75,7 @@ public class NodeJSFixture
             .WithNetwork(_network)
             .WithEntrypoint("/bin/sh")
             .WithCommand("-c", "tail -f /dev/null")
-            .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
+            .WithResourceMapping(Encoding.UTF8.GetBytes(_certificateFile), "/tmp/topaz.crt")
             .WithEnvironment("NODE_EXTRA_CA_CERTS", "/tmp/topaz.crt")
             .WithExtraHost("topaz.local.dev", topazIp)
             .WithOutputConsumer(Consume.RedirectStdoutAndStderrToConsole())
