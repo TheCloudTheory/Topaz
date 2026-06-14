@@ -351,6 +351,38 @@ resource "azurerm_network_security_group" "nsg_tagged" {
   }
 }
 
+# ── Load Balancer ──────────────────────────────────────────────────────────────
+
+resource "azurerm_resource_group" "lb_rg" {
+  name     = "tf-rm-lb-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_lb" "lb" {
+  name                = "tf-rm-lb"
+  location            = azurerm_resource_group.lb_rg.location
+  resource_group_name = azurerm_resource_group.lb_rg.name
+  sku                 = "Standard"
+}
+
+resource "azurerm_lb" "lb_basic" {
+  name                = "tf-rm-lb-basic"
+  location            = azurerm_resource_group.lb_rg.location
+  resource_group_name = azurerm_resource_group.lb_rg.name
+  sku                 = "Basic"
+}
+
+resource "azurerm_lb" "lb_tagged" {
+  name                = "tf-rm-lb-tagged"
+  location            = azurerm_resource_group.lb_rg.location
+  resource_group_name = azurerm_resource_group.lb_rg.name
+  sku                 = "Standard"
+  tags = {
+    environment = "test"
+    team        = "platform"
+  }
+}
+
 # ── Container Registry ─────────────────────────────────────────────────────────
 
 resource "azurerm_resource_group" "acr_rg" {
@@ -421,6 +453,14 @@ output "subnet_prefix"              { value = azurerm_subnet.subnet.address_pref
 output "nsg_name"                   { value = azurerm_network_security_group.nsg.name }
 output "nsg_location"               { value = azurerm_network_security_group.nsg.location }
 output "nsg_tagged_name"            { value = azurerm_network_security_group.nsg_tagged.name }
+
+output "lb_name"                    { value = azurerm_lb.lb.name }
+output "lb_sku"                     { value = azurerm_lb.lb.sku }
+output "lb_basic_name"              { value = azurerm_lb.lb_basic.name }
+output "lb_basic_sku"               { value = azurerm_lb.lb_basic.sku }
+output "lb_tagged_name"             { value = azurerm_lb.lb_tagged.name }
+output "lb_tagged_env"              { value = azurerm_lb.lb_tagged.tags["environment"] }
+output "lb_tagged_team"             { value = azurerm_lb.lb_tagged.tags["team"] }
 
 # ── Network Interface + Public IP ─────────────────────────────────────────────
 
