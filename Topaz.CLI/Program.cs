@@ -21,6 +21,7 @@ using Topaz.Service.Subscription.Commands;
 using Topaz.Service.AppService.Commands;
 using Topaz.Service.VirtualMachine.Commands;
 using Topaz.Service.Disk.Commands;
+using Topaz.Service.LoadBalancer.Commands;
 using Topaz.Service.Sql.Commands;
 using Topaz.Service.CosmosDb.Commands;
 using Topaz.FinOps.Commands;
@@ -140,6 +141,7 @@ internal class Program
             typeof(GenericSqlCommand),
             typeof(GenericCosmosDbCommand),
             typeof(GenericDiskCommand),
+            typeof(GenericLoadBalancerCommand),
             typeof(GenericFinOpsCommand)
         };
 

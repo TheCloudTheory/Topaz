@@ -32,6 +32,7 @@ using Topaz.Service.Subscription;
 using Topaz.Service.Disk;
 using Topaz.Service.VirtualMachine;
 using Topaz.Service.VirtualNetwork;
+using Topaz.Service.LoadBalancer;
 using Topaz.Service.Sql;
 using Topaz.Service.CosmosDb;
 using Topaz.FinOps;
@@ -111,6 +112,7 @@ public class Host
             new PublicIpAddressService(_eventPipeline, _logger),
             new VirtualMachineService(_eventPipeline, _logger),
             new DiskService(_eventPipeline, _logger),
+            new LoadBalancerService(_eventPipeline, _logger),
             new ManagedIdentityService(_eventPipeline, _logger),
             new ManagementGroupService(_eventPipeline, _logger),
             new ResourceAuthorizationService(),

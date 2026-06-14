@@ -22,6 +22,7 @@ using Topaz.Service.Storage;
 using Topaz.Service.Sql;
 using Topaz.Service.CosmosDb;
 using Topaz.Service.Disk;
+using Topaz.Service.LoadBalancer;
 using Topaz.Service.VirtualMachine;
 using Topaz.Service.VirtualNetwork;
 using Topaz.Shared;
@@ -301,6 +302,9 @@ public sealed class TemplateDeploymentOrchestrator(
                     break;
                 case "Microsoft.Network/publicIPAddresses":
                     controlPlane = PublicIpAddressControlPlane.New(eventPipeline, logger);
+                    break;
+                case "Microsoft.Network/loadBalancers":
+                    controlPlane = LoadBalancerControlPlane.New(eventPipeline, logger);
                     break;
                 case "Microsoft.Compute/virtualMachines":
                     controlPlane = VirtualMachineServiceControlPlane.New(eventPipeline, logger);
