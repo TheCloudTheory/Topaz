@@ -402,20 +402,20 @@ jobs:
         files: |
           ${{ github.workspace }}/**/*.trx
     - name: ReportGenerator
-      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true')
+      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true') && hashFiles('TestResults/**/coverage.cobertura.xml') != ''
       uses: danielpalme/ReportGenerator-GitHub-Action@5.4.8
       with:
         reports: ./TestResults/**/coverage.cobertura.xml
         targetdir: coveragereport
         reporttypes: HtmlSummary;MarkdownSummaryGithub;Badges
     - name: Upload coverage report artifact
-      if: always() && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true')
+      if: always() && hashFiles('coveragereport/SummaryGithub.md') != ''
       uses: actions/upload-artifact@v4
       with:
         name: CoverageReport        
         path: coveragereport
     - name: Add comment to PR
-      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (steps.test_filter.outputs.skip != 'true' || steps.test_filter.outputs.py_skip != 'true' || steps.test_filter.outputs.nodejs_skip != 'true')
+      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && hashFiles('coveragereport/SummaryGithub.md') != ''
       run: gh pr comment $PR_NUMBER --body-file coveragereport/SummaryGithub.md
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
