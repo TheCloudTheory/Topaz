@@ -7,7 +7,7 @@ authors: kamilmrzyglod
 tags: [general, ci, devops]
 ---
 
-Every team that tests against real Azure services in CI eventually hits the same four problems. You need credentials for the pipeline. Those credentials need to be stored somewhere, rotated, and audited, and if they leak they affect a real environment. The tests themselves become flaky because Azure provisioning has variable latency and your Service Bus namespace occasionally takes three minutes to appear. And if you run on private agents, younee to add networking complexity on top of all of that.
+Every team that tests against real Azure services in CI eventually hits the same four problems. You need credentials for the pipeline. Those credentials need to be stored somewhere, rotated, and audited, and if they leak they affect a real environment. The tests themselves become flaky because Azure provisioning has variable latency and your Service Bus namespace occasionally takes three minutes to appear. And if you run on private agents, you need to add networking complexity on top of all of that.
 
 These are not Azure-specific problems. They show up in any pipeline that depends on external cloud services. But the fix for them often is Azure-specific, and the usual answers (use a dedicated test subscription, use Managed Identity, sanitize your test fixtures) treat the symptoms without changing the fundamental structure of the problem.
 
