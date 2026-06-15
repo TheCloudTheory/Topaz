@@ -124,6 +124,7 @@ public class Host
             new ContainerRegistryService(_eventPipeline, _logger),
             new AppServicePlanService(_eventPipeline, _logger),
             new AppServiceSiteService(_eventPipeline, _logger),
+            new AppServiceKuduService(_eventPipeline, _logger),
             new SqlService(_eventPipeline, _logger),
             new CosmosDbService(_eventPipeline, _logger),
             new FinOpsService(_logger)

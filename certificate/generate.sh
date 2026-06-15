@@ -34,6 +34,7 @@ openssl req \
   echo "DNS.8 = *.eventhub.${PARENT}${SUFFIX}"; \
   echo "DNS.9 = *.keyvault.${PARENT}${SUFFIX}"; \
   echo "DNS.10 = *.cr.${PARENT}${SUFFIX}"; \
+  echo "DNS.11 = *.scm.azurewebsites.${PARENT}${SUFFIX}"; \
   echo '[ v3_ca ]'; \
   echo 'subjectKeyIdentifier=hash'; \
   echo 'authorityKeyIdentifier=keyid:always,issuer'; \

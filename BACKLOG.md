@@ -694,6 +694,24 @@ TODO: Azure App Service: transparent HTTP request forwarding (data-plane hosting
   labels: enhancement, app-service
 -->
 
+### Azure App Service — Kudu SCM — individual deployment GET endpoint
+
+<!--
+TODO: Azure App Service: Kudu SCM — individual deployment GET endpoint
+  Implement the single-deployment lookup endpoint for the Kudu/SCM data-plane
+  (prerequisite: Kudu SCM data plane from v1.7-beta).
+  - GET /api/deployments/{id}
+    Parse siteName from the Host header ({siteName}.scm.azurewebsites.topaz.local.dev).
+    Read .topaz/{sub}/{rg}/.azure-web-sites/{name}/deployments/{id}/metadata.json
+    and return the DeploymentRecord as JSON (200 OK), or 404 if the deployment ID
+    does not exist for the resolved site.
+  Add GetDeploymentByIdEndpoint.cs under Services/Topaz.Service.AppService/Endpoints/Kudu/
+  and register it in AppServiceKuduService.Endpoints.
+  Includes E2E test and Azure CLI test.
+  milestone: v1.8-preview
+  labels: enhancement, app-service
+-->
+
 ### Chaos Engineering — controllable fault injection
 
 <!--
@@ -841,6 +859,26 @@ TODO: Azure Disks: SAS access — LRO polling for beginGetAccess
 ---
 
 ## v1.9-preview
+
+### Azure App Service — Kudu / SCM authentication
+
+<!--
+TODO: Azure App Service: Kudu SCM — publishing credentials and Basic auth
+  Implement per-site publishing credentials and Basic auth enforcement for the
+  Kudu/SCM data-plane (prerequisite: Kudu SCM data plane from v1.7-beta).
+  Publishing credentials:
+  - Generate a userName (${siteName}\$publishinguser format) and a random 44-character
+    password on site creation; persist as part of AppServiceSiteResourceProperties
+    (or as a dedicated sub-resource).
+  - Expose via ARM endpoint:
+    POST .../sites/{name}/listPublishingCredentials — returns userName, password, scmUri.
+  Kudu Basic auth enforcement:
+  - Validate Authorization: Basic base64({userName}:{password}) on all Kudu endpoints.
+  - Return 401 Unauthorized with WWW-Authenticate: Basic realm="Kudu" when credentials
+    are absent or incorrect.
+  milestone: v1.9-preview
+  labels: enhancement, app-service, security
+-->
 
 ### Application Insights — initial control plane and ingestion
 

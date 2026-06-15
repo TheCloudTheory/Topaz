@@ -282,4 +282,19 @@ internal sealed class AppServiceSiteControlPlane(
         using var reader = new StreamReader(stream);
         return new ControlPlaneOperationResult<string>(OperationResult.Success, reader.ReadToEnd(), null, null);
     }
+
+    public (SubscriptionIdentifier Sub, ResourceGroupIdentifier Rg, AppServiceSiteResource Site)? FindSiteByName(
+        string siteName) => provider.FindSiteByName(siteName);
+
+    public string ZipDeploy(SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string siteName, Stream body)
+    {
+        var id = Guid.NewGuid().ToString();
+        provider.SaveDeploymentZip(sub, rg, siteName, id, body);
+        provider.SaveDeploymentRecord(sub, rg, siteName, id, Models.DeploymentRecord.Succeeded(id));
+        return id;
+    }
+
+    public IReadOnlyList<Models.DeploymentRecord> ListDeployments(
+        SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string siteName) =>
+        provider.ListDeploymentRecords(sub, rg, siteName);
 }

@@ -58,6 +58,7 @@ public class TopazFixture
             .WithPortBinding(8898)
             .WithPortBinding(8897)
             .WithPortBinding(8891)
+            .WithPortBinding(8896)
             .WithNetwork(_network)
             .WithName("topaz.local.dev")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/app/topaz.crt")
@@ -111,6 +112,8 @@ public class TopazFixture
             .WithExtraHost("topazstortblprops01.table.storage.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazstortblqry01.table.storage.topaz.local.dev", _containerTopaz.IpAddress)
             .WithExtraHost("topazacrrun01.cr.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("kudu-cli-deploy.scm.azurewebsites.topaz.local.dev", _containerTopaz.IpAddress)
+            .WithExtraHost("kudu-cli-list.scm.azurewebsites.topaz.local.dev", _containerTopaz.IpAddress)
             .Build();
         
         // Act
