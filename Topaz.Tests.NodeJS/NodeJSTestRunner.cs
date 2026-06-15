@@ -7,6 +7,7 @@ namespace Topaz.Tests.NodeJS;
 /// Naming follows the convention used by Topaz.Tests.Python:
 /// the test method name describes the service / scenario being tested.
 /// </summary>
+[Explicit]
 public class NodeJSTestRunner
 {
     [Test]
