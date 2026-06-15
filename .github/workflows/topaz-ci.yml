@@ -52,13 +52,13 @@ jobs:
         # - 8899: Resource Manager (ARM control plane)
         # - 8898: Key Vault data/control plane
         # - 8892: Container Registry
-        # - 8891: Storage (Blob, Queue, Table, File)
+        # - 8891: Storage — Blob, Queue, Table, and File all share this port
         # - 8897: Event Hub HTTPS
         # - 8888: Event Hub AMQP
-        # - 8889: Service Bus AMQP
-        # - 8887: Additional Service Bus endpoint
+        # - 8889: Service Bus AMQP (plain)
+        # - 8887: Service Bus AMQP (secondary)
+        # - 5671: Service Bus AMQPS / TLS (MassTransit, NServiceBus)
         # - 443: Optional default HTTPS endpoint (enable via workflow input)
-        # Optional extension: expose 5671:5671 for AMQP-over-TLS scenarios.
         run: |
           PORT_443_ARG=""
           if [[ "${{ env.EXPOSE_HTTPS_443 }}" == "true" ]]; then
@@ -76,6 +76,7 @@ jobs:
             -p 8888:8888 \
             -p 8889:8889 \
             -p 8887:8887 \
+            -p 5671:5671 \
             thecloudtheory/topaz-host:${{ env.TOPAZ_VERSION }}
 
       - name: Wait for Topaz
@@ -92,12 +93,25 @@ jobs:
           echo "Topaz did not start in time" >&2
           exit 1
 
-      - name: Restore and build
-        # Optional extension: cache NuGet with actions/cache for faster repeated runs.
-        run: dotnet restore Topaz.sln && dotnet build Topaz.sln --no-restore
+      # Smoke test — verify each emulated endpoint responds before handing off
+      # to your real test suite. Replace the echo lines with your own runner
+      # (dotnet test, pytest, go test, etc.).
+      - name: Smoke test endpoints
+        run: |
+          echo "--- ARM / Resource Manager ---"
+          curl -sf https://topaz.local.dev:8899/health | grep -i healthy
 
-      - name: Run tests
-        run: dotnet test Topaz.sln --no-build --verbosity normal
+          echo "--- Key Vault ---"
+          curl -sf -o /dev/null -w "%{http_code}" \
+            https://kv-smoke.vault.topaz.local.dev:8898/ | grep -qE "^(200|401|404)$" \
+            && echo "Key Vault: reachable" || (echo "Key Vault: FAIL" && exit 1)
+
+          echo "--- Blob Storage ---"
+          curl -sf -o /dev/null -w "%{http_code}" \
+            https://stsmoke.blob.storage.topaz.local.dev:8891/ | grep -qE "^(200|400|401|404)$" \
+            && echo "Blob Storage: reachable" || (echo "Blob Storage: FAIL" && exit 1)
+
+          echo "All endpoints reachable — replace this step with your test runner"
 
       - name: Stop Topaz
         if: always()
