@@ -344,7 +344,7 @@ jobs:
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.skip != 'true'
       run: |
         FILTER="${{ steps.test_filter.outputs.filter }}"
-        EXCLUDE="FullyQualifiedName!~Topaz.Tests.Terraform&FullyQualifiedName!~Topaz.Tests.AzurePowerShell&FullyQualifiedName!~Topaz.Tests.AzureCLI&FullyQualifiedName!~Topaz.Tests.Python&FullyQualifiedName!~Topaz.Tests.NodeJS"
+        EXCLUDE="FullyQualifiedName!~Topaz.Tests.Terraform&FullyQualifiedName!~Topaz.Tests.AzurePowerShell&FullyQualifiedName!~Topaz.Tests.AzureCLI&FullyQualifiedName!~Topaz.Tests.Python"
         if [[ -n "$FILTER" ]]; then
           # Apply exclusions to each OR branch individually so that & (higher precedence
           # than |) correctly scopes every branch, not just the last one.

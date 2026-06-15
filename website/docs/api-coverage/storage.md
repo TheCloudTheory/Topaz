@@ -36,7 +36,7 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Get Properties | ✅ | |
 | List | ✅ | `GET /subscriptions/{subscriptionId}/providers/Microsoft.Storage/storageAccounts` |
 | List By Resource Group | ✅ | |
-| List Keys | ✅ | `POST .../listKeys` |
+| List Keys | ✅ | `POST .../listKeys` — note: `az storage account show-connection-string` returns 404; use `--connection-string` explicitly in Azure CLI commands (see Known Limitations) |
 | Check Name Availability | ✅ | `POST /subscriptions/{subscriptionId}/providers/Microsoft.Storage/checkNameAvailability` |
 | Update | ✅ | `PATCH .../storageAccounts/{accountName}` |
 | Regenerate Key | ✅ | `POST .../regenerateKey` |
@@ -197,7 +197,7 @@ Topaz validates [Service SAS](https://learn.microsoft.com/en-us/rest/api/storage
 
 :::caution[Known Limitations]
 
-(none)
+- **`az storage account show-connection-string` returns 404.** The Azure CLI `show-connection-string` command resolves the storage account key via an internal ARM call that Topaz does not currently handle. Workaround: retrieve the connection string with `az storage account show-connection-string --name <account> --resource-group <rg> --query connectionString -o tsv` — if that also returns 404, pass credentials explicitly using `--connection-string`, `--account-key`, or `--sas-token` on every `az storage` data-plane command.
 
 :::
 

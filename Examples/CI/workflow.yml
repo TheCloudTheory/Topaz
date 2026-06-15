@@ -118,6 +118,12 @@ jobs:
             --location "westeurope" \
             --sku Standard_LRS
 
+          STORAGE_CONN=$(az storage account show-connection-string \
+            --name "stci001" \
+            --resource-group "rg-ci" \
+            --query connectionString -o tsv)
+          echo "STORAGE_CONN=$STORAGE_CONN" >> $GITHUB_ENV
+
           az servicebus namespace create \
             --name "sbci01" \
             --resource-group "rg-ci" \
@@ -148,20 +154,20 @@ jobs:
         run: |
           az storage container create \
             --name "artifacts" \
-            --account-name "stci001"
+            --connection-string "$STORAGE_CONN"
 
           echo "build-output" > /tmp/artifact.txt
           az storage blob upload \
-            --account-name "stci001" \
             --container-name "artifacts" \
             --name "artifact.txt" \
-            --file /tmp/artifact.txt
+            --file /tmp/artifact.txt \
+            --connection-string "$STORAGE_CONN"
 
           az storage blob download \
-            --account-name "stci001" \
             --container-name "artifacts" \
             --name "artifact.txt" \
-            --file /tmp/artifact-downloaded.txt
+            --file /tmp/artifact-downloaded.txt \
+            --connection-string "$STORAGE_CONN"
 
           diff /tmp/artifact.txt /tmp/artifact-downloaded.txt \
             && echo "Blob Storage: PASS" \
