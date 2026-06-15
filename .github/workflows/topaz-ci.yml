@@ -211,13 +211,13 @@ jobs:
             --sku Standard_LRS
 
           az servicebus namespace create \
-            --name "sb-ci" \
+            --name "sbci01" \
             --resource-group "rg-ci" \
             --location "westeurope"
 
           az servicebus queue create \
             --name "jobs" \
-            --namespace-name "sb-ci" \
+            --namespace-name "sbci01" \
             --resource-group "rg-ci"
 
       - name: Test Key Vault
@@ -262,7 +262,7 @@ jobs:
       - name: Test Service Bus
         run: |
           COUNT=$(az servicebus queue list \
-            --namespace-name "sb-ci" \
+            --namespace-name "sbci01" \
             --resource-group "rg-ci" \
             --query "length(@)" -o tsv)
 
