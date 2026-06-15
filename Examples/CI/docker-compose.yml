@@ -1,0 +1,33 @@
+# CI-optimised Topaz stack — emulator only, no persistent state.
+#
+# Designed to run on a GitHub Actions ubuntu-latest runner (or any CI agent
+# with Docker). The test suite runs directly on the runner and connects to
+# Topaz via localhost; no application container is included here.
+#
+# Usage:
+#   sudo bash install/install-linux.sh   # one-time: sets up dnsmasq wildcard DNS
+#   docker compose up -d
+#   dotnet test --filter Category=Integration
+#   docker compose down
+
+services:
+  topaz:
+    image: thecloudtheory/topaz-host:latest
+    platform: linux/amd64
+    ports:
+      - "443:443"     # HTTPS — required for MSAL pre-flight during az login
+      - "8899:8899"   # ARM / Resource Manager  (health: GET /health)
+      - "8898:8898"   # Key Vault data-plane
+      - "8891:8891"   # Blob Storage data-plane (also Queue, Table, File)
+      - "8889:8889"   # Service Bus AMQP plain   (Azure SDK UseDevelopmentEmulator)
+      - "8887:8887"   # Service Bus secondary AMQP port
+      - "5671:5671"   # Service Bus AMQPS / TLS  (MassTransit, NServiceBus)
+    volumes:
+      - ../../certificate:/certs:ro   # dev certificate at repo root
+    command:
+      - --certificate-file
+      - /certs/topaz.crt
+      - --certificate-key
+      - /certs/topaz.key
+      - --log-level
+      - Warning   # keep CI output quiet; use Information when debugging

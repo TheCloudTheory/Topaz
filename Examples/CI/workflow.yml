@@ -1,0 +1,187 @@
+# Copy this file to .github/workflows/integration.yml in your repository.
+#
+# What this workflow solves:
+#   - No Azure subscription or service principal required in CI
+#   - No cloud credentials to store, rotate, or leak
+#   - Tests run against a clean, isolated Topaz instance every run — no shared state
+#   - No network round-trips to Azure; runs fully on the CI agent (works on private runners too)
+#
+# This example uses plain Azure CLI commands so the concept is language-agnostic.
+# Swap the "Run tests" step for your own test runner (pytest, dotnet test, go test, etc.)
+
+name: Integration tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # 1. Trust the Topaz certificate at the OS level.
+      #    Topaz ships a self-signed cert. Without this step every HTTPS call
+      #    (SDK, CLI, curl) fails with a certificate verify error.
+      # -----------------------------------------------------------------------
+      - name: Trust Topaz certificate (OS)
+        run: sudo bash certificate/ubuntu-install.sh
+
+      # -----------------------------------------------------------------------
+      # 2. Trust the certificate inside the Azure CLI Python bundle.
+      #    Azure CLI maintains its own CA bundle and does not inherit the OS
+      #    trust store. This script appends the Topaz cert to that bundle.
+      # -----------------------------------------------------------------------
+      - name: Trust Topaz certificate (Azure CLI)
+        run: sudo bash install/configure-azure-cli-cert.sh
+
+      # -----------------------------------------------------------------------
+      # 3. Configure DNS.
+      #    Topaz uses dnsmasq to resolve all *.topaz.local.dev subdomains to
+      #    127.0.0.1 — no per-resource /etc/hosts entries needed.
+      # -----------------------------------------------------------------------
+      - name: Configure Topaz DNS
+        run: sudo bash install/install-linux.sh
+
+      # -----------------------------------------------------------------------
+      # 4. Start Topaz.
+      #    Each run gets a clean slate — no leftover resources from a previous
+      #    run can cause test interference.
+      # -----------------------------------------------------------------------
+      - name: Start Topaz
+        working-directory: Examples/CI
+        run: docker compose up -d
+
+      # -----------------------------------------------------------------------
+      # 5. Wait for Topaz to be ready.
+      #    The /health endpoint returns 200 once the emulator accepts requests.
+      # -----------------------------------------------------------------------
+      - name: Wait for Topaz to be ready
+        run: |
+          for i in $(seq 1 15); do
+            if curl -sf https://topaz.local.dev:8899/health; then
+              echo "Topaz is ready"
+              exit 0
+            fi
+            echo "Waiting... ($i/15)"
+            sleep 2
+          done
+          echo "Topaz did not become ready — dumping logs"
+          docker compose -f Examples/CI/docker-compose.yml logs
+          exit 1
+
+      # -----------------------------------------------------------------------
+      # 6. Authenticate Azure CLI against Topaz.
+      #    Topaz emulates Entra ID. Register it as a custom cloud, then log in
+      #    with the built-in admin account (not a secret — Topaz ships these
+      #    credentials in every install for local/CI use only).
+      #    AZURE_CORE_INSTANCE_DISCOVERY=false is required because the Topaz
+      #    Entra endpoint is not in Microsoft's public instance discovery list.
+      # -----------------------------------------------------------------------
+      - name: Configure Azure CLI cloud
+        run: |
+          az cloud register -n Topaz --cloud-config @cloud.json
+          az cloud set -n Topaz
+
+      - name: Log in to Topaz
+        env:
+          AZURE_CORE_INSTANCE_DISCOVERY: "false"
+        run: |
+          az login \
+            --username topazadmin@topaz.local.dev \
+            --password admin
+
+      # -----------------------------------------------------------------------
+      # 7. Run tests — plain Azure CLI commands, no SDK or runtime required.
+      #    This section is intentionally language-agnostic: swap it for
+      #    pytest, dotnet test, go test, or any other runner.
+      # -----------------------------------------------------------------------
+      - name: Provision resources
+        run: |
+          az group create \
+            --name "rg-ci" \
+            --location "westeurope"
+
+          az keyvault create \
+            --name "kv-ci" \
+            --resource-group "rg-ci" \
+            --location "westeurope"
+
+          az storage account create \
+            --name "stci001" \
+            --resource-group "rg-ci" \
+            --location "westeurope" \
+            --sku Standard_LRS
+
+          az servicebus namespace create \
+            --name "sb-ci" \
+            --resource-group "rg-ci" \
+            --location "westeurope"
+
+          az servicebus queue create \
+            --name "jobs" \
+            --namespace-name "sb-ci" \
+            --resource-group "rg-ci"
+
+      - name: Test Key Vault
+        run: |
+          az keyvault secret set \
+            --vault-name "kv-ci" \
+            --name "db-password" \
+            --value "correct-horse-battery-staple"
+
+          VALUE=$(az keyvault secret show \
+            --vault-name "kv-ci" \
+            --name "db-password" \
+            --query "value" -o tsv)
+
+          [ "$VALUE" = "correct-horse-battery-staple" ] \
+            && echo "Key Vault: PASS" \
+            || (echo "Key Vault: FAIL — got '$VALUE'" && exit 1)
+
+      - name: Test Blob Storage
+        run: |
+          az storage container create \
+            --name "artifacts" \
+            --account-name "stci001"
+
+          echo "build-output" > /tmp/artifact.txt
+          az storage blob upload \
+            --account-name "stci001" \
+            --container-name "artifacts" \
+            --name "artifact.txt" \
+            --file /tmp/artifact.txt
+
+          az storage blob download \
+            --account-name "stci001" \
+            --container-name "artifacts" \
+            --name "artifact.txt" \
+            --file /tmp/artifact-downloaded.txt
+
+          diff /tmp/artifact.txt /tmp/artifact-downloaded.txt \
+            && echo "Blob Storage: PASS" \
+            || (echo "Blob Storage: FAIL" && exit 1)
+
+      - name: Test Service Bus
+        run: |
+          # Verify the queue exists and is reachable via ARM
+          COUNT=$(az servicebus queue list \
+            --namespace-name "sb-ci" \
+            --resource-group "rg-ci" \
+            --query "length(@)" -o tsv)
+
+          [ "$COUNT" -ge 1 ] \
+            && echo "Service Bus: PASS ($COUNT queue(s))" \
+            || (echo "Service Bus: FAIL — no queues found" && exit 1)
+
+      # -----------------------------------------------------------------------
+      # 8. Tear down — always runs so the container doesn't linger on failure.
+      # -----------------------------------------------------------------------
+      - name: Stop Topaz
+        if: always()
+        working-directory: Examples/CI
+        run: docker compose down

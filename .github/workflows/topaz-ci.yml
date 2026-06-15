@@ -102,3 +102,156 @@ jobs:
       - name: Stop Topaz
         if: always()
         run: docker rm -f topaz.local.dev
+
+  # ---------------------------------------------------------------------------
+  # Azure CLI integration job
+  # Demonstrates the CI pattern from Examples/CI/workflow.yml using only
+  # az commands — no SDK or language runtime required.
+  # ---------------------------------------------------------------------------
+  azure-cli-integration:
+    name: Azure CLI integration (Topaz)
+    runs-on: ubuntu-latest
+    env:
+      TOPAZ_VERSION: ${{ github.event.inputs.topaz_version || 'latest' }}
+      AZURE_CORE_INSTANCE_DISCOVERY: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 1) Map Azure SDK hostnames to localhost in CI.
+      - name: Configure DNS
+        run: sudo bash install/install-linux.sh
+
+      # 2) Trust the Topaz certificate at the OS level.
+      - name: Install certificate (OS)
+        run: sudo bash certificate/ubuntu-install.sh
+
+      # 3) Trust the certificate inside the Azure CLI Python bundle.
+      #    Azure CLI ships its own CA bundle and does not inherit the OS trust store.
+      - name: Install certificate (Azure CLI)
+        run: sudo bash install/configure-azure-cli-cert.sh
+
+      # 4) Start Topaz. Port 443 must be exposed for MSAL's pre-flight request
+      #    during az login --username --password (ROPC flow).
+      - name: Start Topaz
+        run: |
+          docker run -d \
+            --name topaz.local.dev \
+            -p 443:443 \
+            -p 8899:8899 \
+            -p 8898:8898 \
+            -p 8891:8891 \
+            -p 8889:8889 \
+            -p 8887:8887 \
+            -p 5671:5671 \
+            thecloudtheory/topaz-host:${{ env.TOPAZ_VERSION }}
+
+      - name: Wait for Topaz
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sk https://topaz.local.dev:8899/health >/dev/null 2>&1; then
+              echo "Topaz is ready"
+              exit 0
+            fi
+            echo "Waiting for Topaz... ($i/30)"
+            sleep 2
+          done
+          echo "Topaz did not start in time" >&2
+          exit 1
+
+      # 5) Register Topaz as a custom Azure cloud and authenticate.
+      #    topazadmin@topaz.local.dev / admin are built-in dev credentials —
+      #    not secrets, shipped with every Topaz install for local/CI use only.
+      - name: Register Topaz cloud
+        run: |
+          az cloud register -n Topaz --cloud-config @cloud.json
+          az cloud set -n Topaz
+
+      - name: Log in to Topaz
+        run: |
+          az login \
+            --username topazadmin@topaz.local.dev \
+            --password admin
+
+      # 6) Provision shared resources used by all test steps.
+      - name: Provision resources
+        run: |
+          az group create \
+            --name "rg-ci" \
+            --location "westeurope"
+
+          az keyvault create \
+            --name "kv-ci" \
+            --resource-group "rg-ci" \
+            --location "westeurope"
+
+          az storage account create \
+            --name "stci001" \
+            --resource-group "rg-ci" \
+            --location "westeurope" \
+            --sku Standard_LRS
+
+          az servicebus namespace create \
+            --name "sb-ci" \
+            --resource-group "rg-ci" \
+            --location "westeurope"
+
+          az servicebus queue create \
+            --name "jobs" \
+            --namespace-name "sb-ci" \
+            --resource-group "rg-ci"
+
+      - name: Test Key Vault
+        run: |
+          az keyvault secret set \
+            --vault-name "kv-ci" \
+            --name "db-password" \
+            --value "correct-horse-battery-staple"
+
+          VALUE=$(az keyvault secret show \
+            --vault-name "kv-ci" \
+            --name "db-password" \
+            --query "value" -o tsv)
+
+          [ "$VALUE" = "correct-horse-battery-staple" ] \
+            && echo "Key Vault: PASS" \
+            || (echo "Key Vault: FAIL — got '$VALUE'" && exit 1)
+
+      - name: Test Blob Storage
+        run: |
+          az storage container create \
+            --name "artifacts" \
+            --account-name "stci001"
+
+          echo "build-output" > /tmp/artifact.txt
+          az storage blob upload \
+            --account-name "stci001" \
+            --container-name "artifacts" \
+            --name "artifact.txt" \
+            --file /tmp/artifact.txt
+
+          az storage blob download \
+            --account-name "stci001" \
+            --container-name "artifacts" \
+            --name "artifact.txt" \
+            --file /tmp/artifact-downloaded.txt
+
+          diff /tmp/artifact.txt /tmp/artifact-downloaded.txt \
+            && echo "Blob Storage: PASS" \
+            || (echo "Blob Storage: FAIL" && exit 1)
+
+      - name: Test Service Bus
+        run: |
+          COUNT=$(az servicebus queue list \
+            --namespace-name "sb-ci" \
+            --resource-group "rg-ci" \
+            --query "length(@)" -o tsv)
+
+          [ "$COUNT" -ge 1 ] \
+            && echo "Service Bus: PASS ($COUNT queue(s))" \
+            || (echo "Service Bus: FAIL — no queues found" && exit 1)
+
+      - name: Stop Topaz
+        if: always()
+        run: docker rm -f topaz.local.dev
