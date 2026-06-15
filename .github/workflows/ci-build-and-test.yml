@@ -406,7 +406,7 @@ jobs:
         if [[ -z "$FILTER" ]]; then
           FILTER="FullyQualifiedName~Topaz.Tests.NodeJS"
         fi
-        dotnet test -m:1 --no-build --verbosity normal --logger trx \
+        dotnet test Topaz.Tests.NodeJS/Topaz.Tests.NodeJS.csproj -m:1 --no-build --verbosity normal --logger trx \
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
