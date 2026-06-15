@@ -1,12 +1,21 @@
 using System.Text;
 using System.Text.Json;
-using Azure;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Topaz.Service.ResourceManager.Models.Requests;
 using Topaz.Shared;
 
 namespace Topaz.Service.ResourceManager.Models;
+
+/// <summary>
+/// Serializable error detail for a failed ARM deployment.
+/// Matches the { "code": "...", "message": "..." } shape expected by ARM clients.
+/// </summary>
+public sealed class DeploymentErrorInfo
+{
+    public string? Code { get; set; }
+    public string? Message { get; set; }
+}
 
 public sealed class DeploymentResourceProperties
 {
@@ -29,7 +38,7 @@ public sealed class DeploymentResourceProperties
     public string? TemplateHash { get; set; }
     public IReadOnlyList<ArmResourceReference>? OutputResourceDetails { get; set; }
     public IReadOnlyList<ArmResourceReference>? ValidatedResourceDetails { get; set; }
-    public ResponseError? Error { get; set; }
+    public DeploymentErrorInfo? Error { get; set; }
     public IReadOnlyList<DeploymentDiagnosticsDefinition>? Diagnostics { get; set; }
     public ValidationLevel? ValidationLevel { get; set; }
 

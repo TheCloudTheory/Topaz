@@ -73,7 +73,8 @@ public sealed class TemplateDeploymentOrchestrator(
                 deploymentResource.Name, deploymentResource),
             setOutputs: outputs => deploymentResource.Properties.Outputs = outputs,
             metadata: metadataInsensitive,
-            parameters: deploymentResource.Properties.Parameters);
+            parameters: deploymentResource.Properties.Parameters,
+            setError: error => deploymentResource.Properties.Error = error);
 
         lock (QueueLock) { DeploymentQueue.Add(job); }
     }
@@ -115,7 +116,8 @@ public sealed class TemplateDeploymentOrchestrator(
                 deploymentResource.Name, deploymentResource),
             setOutputs: outputs => deploymentResource.Properties.Outputs = outputs,
             metadata: metadataInsensitive,
-            parameters: deploymentResource.Properties.Parameters);
+            parameters: deploymentResource.Properties.Parameters,
+            setError: error => deploymentResource.Properties.Error = error);
 
         lock (QueueLock) { DeploymentQueue.Add(job); }
     }
@@ -144,7 +146,8 @@ public sealed class TemplateDeploymentOrchestrator(
             persist: () => tenantProvider.CreateOrUpdateDeployment(deploymentResource.Name, deploymentResource),
             setOutputs: outputs => deploymentResource.Properties.Outputs = outputs,
             metadata: metadataInsensitive,
-            parameters: deploymentResource.Properties.Parameters);
+            parameters: deploymentResource.Properties.Parameters,
+            setError: error => deploymentResource.Properties.Error = error);
 
         lock (QueueLock) { DeploymentQueue.Add(job); }
     }
@@ -174,7 +177,8 @@ public sealed class TemplateDeploymentOrchestrator(
             persist: () => mgProvider.CreateOrUpdateDeployment(groupId, deploymentResource.Name, deploymentResource),
             setOutputs: outputs => deploymentResource.Properties.Outputs = outputs,
             metadata: metadataInsensitive,
-            parameters: deploymentResource.Properties.Parameters);
+            parameters: deploymentResource.Properties.Parameters,
+            setError: error => deploymentResource.Properties.Error = error);
 
         lock (QueueLock) { DeploymentQueue.Add(job); }
     }
@@ -242,6 +246,14 @@ public sealed class TemplateDeploymentOrchestrator(
                 try
                 {
                     RouteDeployment(deployment);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(nameof(TemplateDeploymentOrchestrator), nameof(Start),
+                        "Unhandled exception on deployment background thread for '{0}': {1}", deployment.Id, ex.Message);
+                    deployment.SetError(new DeploymentErrorInfo { Code = "DeploymentFailed", Message = ex.Message });
+                    deployment.Fail();
+                    deployment.Persist();
                 }
                 finally
                 {
@@ -597,12 +609,27 @@ public sealed class TemplateDeploymentOrchestrator(
                 persist: () => rgProvider.CreateOrUpdate(nestedSubId, nestedRgId, genericResource.Name, nestedDeploymentResource),
                 setOutputs: outputs => nestedDeploymentResource.Properties.Outputs = outputs,
                 metadata: innerMetadata,
-                parameters: innerParams);
+                parameters: innerParams,
+                setError: error => nestedDeploymentResource.Properties.Error = error);
 
             innerJob.SetCancellationTokenSource(linkedCts);
 
             // Step 7: Recursive execution + status propagation
-            RouteDeployment(innerJob);
+            try
+            {
+                RouteDeployment(innerJob);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(nameof(TemplateDeploymentOrchestrator), nameof(HandleNestedDeployment),
+                    "Unhandled exception in nested deployment '{0}': {1}", genericResource.Name, ex.Message);
+                nestedDeploymentResource.Properties.Error = new DeploymentErrorInfo { Code = "DeploymentFailed", Message = ex.Message };
+                innerJob.Fail();
+                innerJob.Persist();
+                hasProvisioningFailed = true;
+                linkedCts.Dispose();
+                return;
+            }
 
             if (innerJob.Status == TemplateDeployment.DeploymentStatus.Failed || 
                 innerJob.Status == TemplateDeployment.DeploymentStatus.Cancelled)

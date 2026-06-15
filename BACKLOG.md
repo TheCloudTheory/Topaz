@@ -270,27 +270,7 @@ _Implemented in v1.6-beta: a built-in HTTP CONNECT proxy starts on port 44380 al
 
 ### ARM Deployments — unhandled exception leaves deployment stuck in Running state
 
-<!--
-TODO: ARM Deployments: Catch unhandled exceptions on deployment background thread and mark deployment Failed
-  When TemplateDeploymentOrchestrator processes a nested deployment on a background thread
-  (TemplateDeploymentOrchestrator.cs:244) and an unhandled exception is thrown (e.g. an
-  ExpressionException from EvaluateOutputs when a reference() call is not supported), the
-  thread exits but the deployment record is never transitioned out of provisioningState=Running.
-  Callers that poll for a terminal state (Succeeded/Failed/Canceled) will block indefinitely.
-  Required changes:
-  - Wrap the entire body of the background thread lambda in TemplateDeploymentOrchestrator.Start()
-    in a try/catch(Exception).
-  - In the catch block, log the exception at Error level and call the existing failure-state
-    transition helper (or equivalent) to set provisioningState=Failed with an error code of
-    "DeploymentFailed" and the exception message in the details.
-  - This applies to all four deployment scopes (resource group, subscription, tenant,
-    management group) wherever background thread dispatch is used.
-  Repro: deploy phase1-foundation.bicep from topaz-demo — the nested foundation-deployment
-  attempts to use reference() in outputs (unsupported), crashes the thread, and leaves
-  topaz-demo-bicep-test-foundation stuck at Running forever.
-  milestone: v1.7-beta
-  labels: bug, arm-deployments
--->
+_Implemented in v1.7-beta: unhandled exceptions on the deployment background thread now transition the deployment to `provisioningState=Failed` instead of leaving it stuck at `Running`. Added an inner `try-catch(Exception)` in `HandleNestedDeployment` around `RouteDeployment(innerJob)` — sets `DeploymentErrorInfo { Code="DeploymentFailed", Message=ex.Message }` on the nested `DeploymentResource`, calls `Fail()` and `Persist()`. Added a secondary safety-net `catch` in `Start()` for top-level deployments. `DeploymentResourceProperties.Error` changed from `Azure.ResponseError` (not STJ-serializable) to a new `DeploymentErrorInfo` POCO. Includes two E2E regression tests in `ArmDeploymentFailureTests.cs` using template `deployment-nested-reference-output.json`._
 
 ### Virtual Network — Private Endpoint IP tracking
 

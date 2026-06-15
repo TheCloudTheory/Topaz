@@ -1,6 +1,7 @@
 using Azure.Deployments.Core.Definitions.Schema;
 using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
 using Newtonsoft.Json.Linq;
+using Topaz.Service.ResourceManager.Models;
 
 namespace Topaz.Service.ResourceManager.Deployment;
 
@@ -26,6 +27,7 @@ internal sealed class TemplateDeployment
     private readonly Action _fail;
     private readonly Action _persist;
     private readonly Action<System.Text.Json.JsonElement?> _setOutputs;
+    private readonly Action<DeploymentErrorInfo?> _setError;
 
     public TemplateDeployment(
         string id,
@@ -37,7 +39,8 @@ internal sealed class TemplateDeployment
         Action persist,
         Action<System.Text.Json.JsonElement?> setOutputs,
         InsensitiveDictionary<JToken> metadata,
-        System.Text.Json.JsonElement? parameters)
+        System.Text.Json.JsonElement? parameters,
+        Action<DeploymentErrorInfo?>? setError = null)
     {
         Id = id;
         Name = name;
@@ -47,6 +50,7 @@ internal sealed class TemplateDeployment
         _fail = fail;
         _persist = persist;
         _setOutputs = setOutputs;
+        _setError = setError ?? (_ => { });
         Metadata = metadata;
         Parameters = parameters;
     }
@@ -76,6 +80,8 @@ internal sealed class TemplateDeployment
     public void Persist() => _persist();
 
     public void SetOutputs(System.Text.Json.JsonElement? outputs) => _setOutputs(outputs);
+
+    public void SetError(DeploymentErrorInfo? error) => _setError(error);
 
     public enum DeploymentStatus
     {
