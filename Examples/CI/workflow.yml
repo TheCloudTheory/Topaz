@@ -93,7 +93,8 @@ jobs:
         run: |
           az login \
             --username topazadmin@topaz.local.dev \
-            --password admin
+            --password admin \
+            --allow-no-subscriptions
 
       # -----------------------------------------------------------------------
       # 7. Run tests — plain Azure CLI commands, no SDK or runtime required.

@@ -31,3 +31,5 @@ services:
       - /certs/topaz.key
       - --log-level
       - Warning   # keep CI output quiet; use Information when debugging
+      - --default-subscription
+      - "00000000-0000-0000-0000-000000000001"

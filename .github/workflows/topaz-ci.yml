@@ -148,6 +148,8 @@ jobs:
 
       # 4) Start Topaz. Port 443 must be exposed for MSAL's pre-flight request
       #    during az login --username --password (ROPC flow).
+      #    --default-subscription creates a subscription automatically so that
+      #    az login does not fail with "No subscriptions found".
       - name: Start Topaz
         run: |
           docker run -d \
@@ -159,7 +161,8 @@ jobs:
             -p 8889:8889 \
             -p 8887:8887 \
             -p 5671:5671 \
-            thecloudtheory/topaz-host:${{ env.TOPAZ_VERSION }}
+            thecloudtheory/topaz-host:${{ env.TOPAZ_VERSION }} \
+            --default-subscription 00000000-0000-0000-0000-000000000001
 
       - name: Wait for Topaz
         run: |
@@ -186,7 +189,8 @@ jobs:
         run: |
           az login \
             --username topazadmin@topaz.local.dev \
-            --password admin
+            --password admin \
+            --allow-no-subscriptions
 
       # 6) Provision shared resources used by all test steps.
       - name: Provision resources
