@@ -22,8 +22,9 @@ public class TopazFixture
     "acr_login_server_endpoint": "https://topaz.local.dev:8899"
   },
   "suffixes": {
-    "keyvault_dns": ".vault.topaz.local.dev",
-    "acrLoginServerEndpoint": ".cr.topaz.local.dev"
+    "keyvaultDns": ".vault.topaz.local.dev",
+    "acrLoginServerEndpoint": ".cr.topaz.local.dev",
+    "storageEndpoint": "storage.topaz.local.dev"
   }
 }
 """;
