@@ -96,20 +96,33 @@ jobs:
       # Smoke test — verify each emulated endpoint responds before handing off
       # to your real test suite. Replace the echo lines with your own runner
       # (dotnet test, pytest, go test, etc.).
+      # Uses --cacert to validate the Topaz certificate explicitly; -v prints
+      # the HTTP status line so failures are visible in the log.
       - name: Smoke test endpoints
         run: |
           echo "--- ARM / Resource Manager ---"
-          curl -sf https://topaz.local.dev:8899/health | grep -i healthy
+          STATUS=$(curl -s --cacert certificate/topaz.crt \
+            -o /dev/null -w "%{http_code}" \
+            https://topaz.local.dev:8899/health)
+          echo "Health status: $STATUS"
+          [[ "$STATUS" == "200" ]] \
+            && echo "ARM: PASS" || (echo "ARM: FAIL (HTTP $STATUS)" && exit 1)
 
           echo "--- Key Vault ---"
-          curl -sf -o /dev/null -w "%{http_code}" \
-            https://kv-smoke.vault.topaz.local.dev:8898/ | grep -qE "^(200|401|404)$" \
-            && echo "Key Vault: reachable" || (echo "Key Vault: FAIL" && exit 1)
+          STATUS=$(curl -s --cacert certificate/topaz.crt \
+            -o /dev/null -w "%{http_code}" \
+            https://kv-smoke.vault.topaz.local.dev:8898/)
+          echo "Key Vault status: $STATUS"
+          [[ "$STATUS" =~ ^(200|401|404)$ ]] \
+            && echo "Key Vault: PASS" || (echo "Key Vault: FAIL (HTTP $STATUS)" && exit 1)
 
           echo "--- Blob Storage ---"
-          curl -sf -o /dev/null -w "%{http_code}" \
-            https://stsmoke.blob.storage.topaz.local.dev:8891/ | grep -qE "^(200|400|401|404)$" \
-            && echo "Blob Storage: reachable" || (echo "Blob Storage: FAIL" && exit 1)
+          STATUS=$(curl -s --cacert certificate/topaz.crt \
+            -o /dev/null -w "%{http_code}" \
+            https://stsmoke.blob.storage.topaz.local.dev:8891/)
+          echo "Blob Storage status: $STATUS"
+          [[ "$STATUS" =~ ^(200|400|401|404)$ ]] \
+            && echo "Blob Storage: PASS" || (echo "Blob Storage: FAIL (HTTP $STATUS)" && exit 1)
 
           echo "All endpoints reachable — replace this step with your test runner"
 
