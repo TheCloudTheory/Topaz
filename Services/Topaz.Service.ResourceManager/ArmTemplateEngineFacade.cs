@@ -129,9 +129,19 @@ internal sealed class ArmTemplateEngineFacade
                 var rawString = rawJToken.Type == JTokenType.String ? rawJToken.Value<string>() : null;
                 if (rawString != null && ExpressionsEngine.IsLanguageExpression(rawString))
                 {
-                    var evaluated = ExpressionsEngine.EvaluateLanguageExpression(
-                        rawString, evalCtx, new TemplateErrorAdditionalInfo());
-                    entry["value"] = evaluated;
+                    try
+                    {
+                        var evaluated = ExpressionsEngine.EvaluateLanguageExpression(
+                            rawString, evalCtx, new TemplateErrorAdditionalInfo());
+                        entry["value"] = evaluated;
+                    }
+                    catch (Exception)
+                    {
+                        // Some ARM functions (e.g. listKeys) are not available in the
+                        // output evaluation context. Return null for those outputs rather
+                        // than crashing the test host.
+                        entry["value"] = null;
+                    }
                 }
                 else
                 {
