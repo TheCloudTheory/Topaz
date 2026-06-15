@@ -73,6 +73,7 @@ Azure Service Bus|8887, 8899|HTTPS
 Azure Service Bus (AMQP)|8889, 5671|AMQP, AMQP/TLS
 Container Registry (control plane)|8899|HTTPS
 Container Registry (data plane)|8892|HTTPS
+Azure App Service (Kudu/SCM)|8896|HTTPS
 
 :::note[Unified storage port]
 

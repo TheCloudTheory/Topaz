@@ -69,14 +69,21 @@ Tests run against a fresh Topaz instance on every build — no shared state, no 
 
 | Service | Coverage |
 |---|---|
-| Azure Storage (Blob, Table) | Partial — core operations |
-| Azure Key Vault (secrets) | Full secret lifecycle |
-| Azure Service Bus | Namespaces, queues, topics |
-| Azure Event Hubs | Namespaces, event hubs |
-| Azure Container Registry | Full Docker Registry V2 + OCI |
+| Azure Storage (Blob, Table, Queue) | Partial — core operations, SAS, User Delegation SAS |
+| Azure Key Vault (secrets, keys, certificates) | Full lifecycle including soft-delete |
+| Azure Service Bus | Namespaces, queues, topics, subscriptions (AMQP) |
+| Azure Event Hubs | Namespaces, event hubs (AMQP) |
+| Azure Container Registry | Full Docker Registry V2 + OCI + ACR Tasks |
+| Azure SQL | Server and database CRUD |
+| Azure App Service | Plans, sites, Kudu SCM (zip deploy, deployment list) |
+| Azure Cosmos DB | SQL API control plane |
+| Azure Virtual Machines | Full VM CRUD + PATCH |
+| Azure Virtual Networks | VNet, subnet, NIC, check IP availability |
+| Azure Load Balancer | Full control plane |
+| Azure Disks | Control plane + SAS access |
 | Managed Identity | Token issuance |
-| ARM control plane | Resource groups, subscriptions, deployments |
-| Entra ID | Applications, service principals, groups |
+| ARM control plane | Resource groups, subscriptions, deployments (all scopes) |
+| Entra ID | Applications, service principals, groups, device code, ROPC |
 
 See [Supported services](./supported-services.md) for the full operation-level breakdown.
 

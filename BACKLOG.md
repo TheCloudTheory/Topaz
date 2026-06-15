@@ -425,32 +425,7 @@ TODO: Topaz CLI — configurable defaults
 
 ### Azure App Service — Kudu / SCM data plane
 
-<!--
-TODO: Azure App Service: Kudu SCM data-plane endpoints (zip deploy + deployment list)
-  Implement a minimal Kudu/SCM data-plane for Microsoft.Web/sites on a dedicated
-  port (GlobalSettings.DefaultAppServiceKuduPort, 8896).
-  Site identity is resolved from the Host header:
-    {siteName}.scm.azurewebsites.topaz.local.dev
-  New model: DeploymentRecord with Id (GUID string), Status ("succeeded"/"pending"/"failed"),
-  StartTime, EndTime (DateTimeOffset), Message (optional), Deployer ("topaz").
-  Endpoints (one file each under Services/Topaz.Service.AppService/Endpoints/Kudu/):
-  - POST /api/zipdeploy
-    Read the request body (zip archive), store it at
-    .topaz/{sub}/{rg}/.azure-web-sites/{name}/deployments/{id}.zip,
-    persist a DeploymentRecord at
-    .topaz/{sub}/{rg}/.azure-web-sites/{name}/deployments/{id}/metadata.json,
-    and return 202 Accepted with a Location: /api/deployments/{id} header.
-  - GET /api/deployments
-    List all DeploymentRecord metadata files for the resolved site and return them
-    as a JSON array.
-  Add a new AppServiceKuduService (IServiceDefinition) referencing both endpoints on
-  DefaultAppServiceKuduPort / Protocol.Https, and register it in Topaz.Host/Host.cs.
-  Prerequisite: port constant DefaultAppServiceKuduPort = 8896 and DNS suffix constant
-  AppServiceKuduDnsSuffix = "scm.azurewebsites.topaz.local.dev" must be added to
-  GlobalSettings as part of the v1.5-beta ARM control-plane work.
-  milestone: v1.7-beta
-  labels: enhancement, app-service
--->
+_Implemented in v1.7-beta: `POST /api/zipdeploy` and `GET /api/deployments` on a dedicated Kudu port (8896, HTTPS). Site identity is resolved from the `Host` header (`{siteName}.scm.azurewebsites.topaz.local.dev`). Zip packages are stored at `.topaz/{sub}/{rg}/.azure-web-sites/{name}/deployments/{id}.zip`; a `DeploymentRecord` (id, status, startTime, endTime, deployer: `"Push Deployer"`) is persisted at `.../deployments/{id}/metadata.json`. Certificate SAN `*.scm.azurewebsites.topaz.local.dev` added to `certificate/generate.sh` and cert regenerated._
 
 ### Azure Load Balancer — initial control plane
 
