@@ -110,7 +110,7 @@ internal sealed class ArmTemplateEngineFacade
     /// Output values that are plain literals are returned as-is; ARM expressions
     /// (e.g. <c>[parameters('x')]</c>) are evaluated to their resolved values.
     /// </summary>
-    public JObject EvaluateOutputs(string subscriptionId, string resourceGroupName, Template template)
+    public JObject EvaluateOutputs(string subscriptionId, string resourceGroupName, Template template, ITopazLogger logger)
     {
         var metrics = new TemplateMetricsRecorder();
         var evalCtx = TemplateEngine.GetExpressionEvaluationContext(
@@ -135,11 +135,12 @@ internal sealed class ArmTemplateEngineFacade
                             rawString, evalCtx, new TemplateErrorAdditionalInfo());
                         entry["value"] = evaluated;
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        // Some ARM functions (e.g. listKeys) are not available in the
+                        // Some ARM functions (e.g. listKeys) are not supported in the
                         // output evaluation context. Return null for those outputs rather
-                        // than crashing the test host.
+                        // than crashing the host process.
+                        logger.LogWarning($"ARM output '{kv.Key}' could not be evaluated: {ex.Message}");
                         entry["value"] = null;
                     }
                 }

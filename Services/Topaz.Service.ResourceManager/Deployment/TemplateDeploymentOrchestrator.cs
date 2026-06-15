@@ -374,7 +374,7 @@ public sealed class TemplateDeploymentOrchestrator(
             var subscriptionId = idParts.Length > 1 && idParts[0] == "subscriptions" ? idParts[1] : string.Empty;
             var resourceGroupName = idParts.Length > 3 && idParts[2] == "resourceGroups" ? idParts[3] : string.Empty;
 
-            var outputsJObject = _armTemplateEngineFacade.EvaluateOutputs(subscriptionId, resourceGroupName, templateDeployment.Template);
+            var outputsJObject = _armTemplateEngineFacade.EvaluateOutputs(subscriptionId, resourceGroupName, templateDeployment.Template, logger);
             var outputsJson = outputsJObject.ToString(Newtonsoft.Json.Formatting.None);
             var outputs = JsonDocument.Parse(outputsJson).RootElement.Clone();
             templateDeployment.SetOutputs(outputs);
