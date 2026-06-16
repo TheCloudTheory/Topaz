@@ -12,12 +12,15 @@ public class LoadBalancerTests : TopazFixture
         await RunAzureCliCommand(
             $"az network lb create --location westeurope --name {LoadBalancerName} " +
             $"--resource-group {ResourceGroup} --sku Standard",
+            null, 0);
+        await RunAzureCliCommand(
+            $"az network lb show --resource-group {ResourceGroup} --name {LoadBalancerName}",
             response =>
             {
                 Assert.Multiple(() =>
                 {
-                    Assert.That(response["loadBalancer"]!["name"]!.GetValue<string>(), Is.EqualTo(LoadBalancerName));
-                    Assert.That(response["loadBalancer"]!["location"]!.GetValue<string>(), Is.EqualTo("westeurope"));
+                    Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo(LoadBalancerName));
+                    Assert.That(response["location"]!.GetValue<string>(), Is.EqualTo("westeurope"));
                 });
             }, 0);
     }
