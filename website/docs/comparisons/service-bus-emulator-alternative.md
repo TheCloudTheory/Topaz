@@ -54,7 +54,7 @@ There is no restart cycle and no static configuration file.
 | **JMS protocol** | ❌ | ❌ |
 | **Dead letter queues** | ❌ (planned) | ✅ |
 | **Message sessions** | ❌ (planned) | ✅ |
-| **Topic filters and rules** (correlation + SQL) | ❌ (planned) | ✅ |
+| **Topic filters and rules** (correlation + SQL) | ✅ | ✅ |
 | **Partitioned entities** | ❌ | ❌ |
 | **Entity definitions persist across restarts** | ✅ | ❌ |
 | **In-flight messages persist across restarts** | ❌ | ❌ |
@@ -132,7 +132,6 @@ For applications that rely on advanced messaging features, the current gaps in T
 
 - **Dead letter queues**: not yet implemented
 - **Message sessions**: not yet implemented
-- **Topic filters and rules** (correlation filters, SQL filters): not yet implemented
 - **Authorization rules and SAS keys per entity**: not yet implemented
 
 These features are planned for v1.7. The [roadmap](/roadmap) tracks the current status. If your application depends on any of these, the Azure Service Bus Emulator may be the better choice until they are available.
@@ -163,7 +162,7 @@ If your application uses Service Bus alongside any other Azure service, running 
 
 The Azure Service Bus Emulator is the right choice if:
 
-- Your application uses dead letter queues, message sessions, or topic filters and rules
+- Your application uses dead letter queues or message sessions
 - You are working exclusively in .NET and do not need ARM-level tooling
 - You only need a single namespace and static entity configuration is sufficient
 - You have existing CI/CD pipelines built around the emulator's Docker setup and the migration cost is not worth it
@@ -185,4 +184,4 @@ Topaz implements the AMQP 1.0 messaging protocol. For send and receive operation
 
 For entity management, replace config.json-based setup with ARM API calls — either through `az servicebus` or Terraform. Topaz does not have a `config.json` equivalent; all entities are created through the standard ARM control plane.
 
-Before migrating, verify that your application does not rely on dead letter queues, message sessions, or topic filters and rules — these are planned for v1.7 and not yet available. See the [roadmap](/roadmap) for the full list.
+Before migrating, verify that your application does not rely on dead letter queues or message sessions — these are planned for v1.7 and not yet available. See the [roadmap](/roadmap) for the full list.
