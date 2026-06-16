@@ -1619,7 +1619,7 @@ public class StorageTests : TopazFixture
         // The SAS will only be valid for the requesting container's own IP.
         string? sasToken = null;
         await RunAzureCliCommand(
-            $"bash -c 'MYIP=$(hostname -i | tr -d \" \") && az storage blob generate-sas --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --permissions r --expiry {expiry} --ip $MYIP --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}'",
+            $"bash -c 'MYIP=$(python3 -c \"import socket; s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.connect((\\\"1.1.1.1\\\", 80)); print(s.getsockname()[0]); s.close()\") && az storage blob generate-sas --account-name {storageAccountName} --account-key \"{accountKey}\" --container-name {containerName} --name {blobName} --permissions r --expiry {expiry} --ip $MYIP --blob-endpoint https://{storageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultStoragePort}'",
             resp => { sasToken = resp.GetValue<string>(); });
 
         // Download should succeed because the container's IP matches the sip= range.
