@@ -40,6 +40,7 @@ Most Azure emulators cover a single service. Topaz covers the full stack:
 * **Azure resource hierarchy** — management groups, subscriptions, resource groups, and resource IDs behave as expected
 * **Seamless Azure SDK integration** — no code changes; point your SDK at Topaz
 * **Full portability** — single executable or Docker container, runs anywhere
+* **No runtime required** — published as a self-contained binary and a distroless Docker image; no .NET installation needed
 
 See the [roadmap](https://topaz.thecloudtheory.com/docs/roadmap/) for what's coming next.
 
@@ -109,7 +110,7 @@ If you need emulation for a single Azure service, these official Microsoft tools
 
 If you need multiple services, RBAC, or ARM deployments locally, that's where Topaz fits.
 
-If you're coming from AWS and already use [LocalStack](https://github.com/localstack/localstack), Topaz fills the equivalent role for Azure — one process, multiple services, no account required.
+If you're coming from AWS and already use [LocalStack](https://github.com/localstack/localstack), Topaz is the equivalent for Azure — one process, multiple services, RBAC, Bicep deployments, and Entra ID emulation, all without an Azure account.
 
 ## Privacy
 
