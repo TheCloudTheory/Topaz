@@ -480,31 +480,6 @@ TODO: Service Bus: Message session support
   labels: enhancement, service-bus
 -->
 
-### Service Bus — topic filters and rules
-
-<!--
-TODO: Service Bus: Topic subscription filters and rules
-  Implement correlation filters, SQL filters, and rule actions for topic subscriptions.
-  ARM control plane:
-  - PUT    .../topics/{topicName}/subscriptions/{subscriptionName}/rules/{ruleName}  – create or update
-  - GET    .../topics/{topicName}/subscriptions/{subscriptionName}/rules/{ruleName}  – get
-  - DELETE .../topics/{topicName}/subscriptions/{subscriptionName}/rules/{ruleName}  – delete
-  - GET    .../topics/{topicName}/subscriptions/{subscriptionName}/rules             – list
-  Data plane:
-  - On message publish to a topic, evaluate each subscription's active rules against
-    the message's system properties and application properties.
-  - CorrelationRuleFilter: match on ContentType, CorrelationId, MessageId, ReplyTo,
-    ReplyToSessionId, SessionId, Subject, To, and user application properties.
-  - SqlRuleFilter: evaluate SQL-92 predicate against system and user properties.
-  - SqlRuleAction: apply property mutations (SET, REMOVE) after filter match.
-  - Only forward messages to a subscription when at least one rule matches (or the
-    subscription's only rule is TrueRuleFilter).
-  Also implement the Atom XML data-plane rule endpoints on ServiceBusServiceAdditionalEndpoint
-  to support ServiceBusAdministrationClient rule CRUD from the .NET SDK.
-  milestone: v1.7-beta
-  labels: enhancement, service-bus
--->
-
 ### Service Bus — authorization rules and SAS keys
 
 <!--
