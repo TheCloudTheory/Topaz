@@ -6,5 +6,6 @@ internal enum Subresource
     Topics,
     Subscriptions,
     NetworkRuleSets,
-    Rules
+    Rules,
+    AuthorizationRules
 }

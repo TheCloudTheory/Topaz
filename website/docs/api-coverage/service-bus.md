@@ -37,12 +37,12 @@ The control plane covers ARM operations available under `management.azure.com` �
 | List | ✅ | Subscription-level listing |
 | List By Resource Group | ✅ | |
 | Update | ❌ | |
-| List Keys | ❌ | |
-| Regenerate Keys | ❌ | |
-| Get Authorization Rule | ❌ | |
-| List Authorization Rules | ❌ | |
-| Create Or Update Authorization Rule | ❌ | |
-| Delete Authorization Rule | ❌ | |
+| List Keys | ✅ | |
+| Regenerate Keys | ✅ | |
+| Get Authorization Rule | ✅ | |
+| List Authorization Rules | ✅ | |
+| Create Or Update Authorization Rule | ✅ | |
+| Delete Authorization Rule | ✅ | |
 
 ### Queues
 
@@ -52,12 +52,12 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Delete | ✅ |
 | Get | ✅ |
 | List By Namespace | ✅ |
-| List Keys | ❌ |
-| Regenerate Keys | ❌ |
-| Get Authorization Rule | ❌ |
-| List Authorization Rules | ❌ |
-| Create Or Update Authorization Rule | ❌ |
-| Delete Authorization Rule | ❌ |
+| List Keys | ✅ |
+| Regenerate Keys | ✅ |
+| Get Authorization Rule | ✅ |
+| List Authorization Rules | ✅ |
+| Create Or Update Authorization Rule | ✅ |
+| Delete Authorization Rule | ✅ |
 
 ### Topics
 
@@ -67,12 +67,12 @@ The control plane covers ARM operations available under `management.azure.com` �
 | Delete | ✅ |
 | Get | ✅ |
 | List By Namespace | ✅ |
-| List Keys | ❌ |
-| Regenerate Keys | ❌ |
-| Get Authorization Rule | ❌ |
-| List Authorization Rules | ❌ |
-| Create Or Update Authorization Rule | ❌ |
-| Delete Authorization Rule | ❌ |
+| List Keys | ✅ |
+| Regenerate Keys | ✅ |
+| Get Authorization Rule | ✅ |
+| List Authorization Rules | ✅ |
+| Create Or Update Authorization Rule | ✅ |
+| Delete Authorization Rule | ✅ |
 
 ### Subscriptions
 

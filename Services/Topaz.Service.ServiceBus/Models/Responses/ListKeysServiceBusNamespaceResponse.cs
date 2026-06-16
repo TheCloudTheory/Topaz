@@ -15,14 +15,15 @@ internal sealed class ListKeysServiceBusNamespaceResponse
     public string? SecondaryKey { get; init; }
     public string? KeyName { get; init; }
 
-    public static ListKeysServiceBusNamespaceResponse For(string namespaceName, string authorizationRuleName) => new()
+    public static ListKeysServiceBusNamespaceResponse For(string namespaceName, string authorizationRuleName,
+        string primaryKey, string secondaryKey) => new()
     {
-        PrimaryConnectionString = $"Endpoint=sb://{namespaceName}.servicebus.topaz.local.dev:{GlobalSettings.AmqpTlsConnectionPort};SharedAccessKeyName={authorizationRuleName};SharedAccessKey=SAS_KEY_VALUE;",
-        SecondaryConnectionString = $"Endpoint=sb://{namespaceName}.servicebus.topaz.local.dev:{GlobalSettings.AmqpTlsConnectionPort};SharedAccessKeyName={authorizationRuleName};SharedAccessKey=SAS_KEY_VALUE;",
+        PrimaryConnectionString = $"Endpoint=sb://{namespaceName}.servicebus.topaz.local.dev:{GlobalSettings.AmqpTlsConnectionPort};SharedAccessKeyName={authorizationRuleName};SharedAccessKey={primaryKey};",
+        SecondaryConnectionString = $"Endpoint=sb://{namespaceName}.servicebus.topaz.local.dev:{GlobalSettings.AmqpTlsConnectionPort};SharedAccessKeyName={authorizationRuleName};SharedAccessKey={secondaryKey};",
         AliasPrimaryConnectionString = null,
         AliasSecondaryConnectionString = null,
-        PrimaryKey = "SAS_KEY_VALUE",
-        SecondaryKey = "SAS_KEY_VALUE",
+        PrimaryKey = primaryKey,
+        SecondaryKey = secondaryKey,
         KeyName = authorizationRuleName
     };
 

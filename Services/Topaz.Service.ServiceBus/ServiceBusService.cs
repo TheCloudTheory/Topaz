@@ -21,7 +21,7 @@ public sealed class ServiceBusService(Pipeline eventPipeline, ITopazLogger logge
     [
         nameof(Subresource.Queues).ToLowerInvariant(), nameof(Subresource.Topics).ToLowerInvariant(),
         nameof(Subresource.Subscriptions).ToLowerInvariant(), nameof(Subresource.NetworkRuleSets).ToLowerInvariant(),
-        nameof(Subresource.Rules).ToLowerInvariant()
+        nameof(Subresource.Rules).ToLowerInvariant(), nameof(Subresource.AuthorizationRules).ToLowerInvariant()
     ];
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
@@ -64,7 +64,27 @@ public sealed class ServiceBusService(Pipeline eventPipeline, ITopazLogger logge
         new GetServiceBusRuleEndpoint(eventPipeline, logger),
         new DeleteServiceBusRuleEndpoint(eventPipeline, logger),
         new ListServiceBusRulesEndpoint(eventPipeline, logger),
-        new ListKeysServiceBusNamespaceEndpoint(eventPipeline, logger)
+        new ListKeysServiceBusNamespaceEndpoint(eventPipeline, logger),
+        // Namespace authorization rules
+        new CreateOrUpdateServiceBusNamespaceAuthorizationRuleEndpoint(eventPipeline, logger),
+        new GetServiceBusNamespaceAuthorizationRuleEndpoint(eventPipeline, logger),
+        new DeleteServiceBusNamespaceAuthorizationRuleEndpoint(eventPipeline, logger),
+        new ListServiceBusNamespaceAuthorizationRulesEndpoint(eventPipeline, logger),
+        new RegenerateKeysServiceBusNamespaceAuthorizationRuleEndpoint(eventPipeline, logger),
+        // Queue authorization rules
+        new CreateOrUpdateServiceBusQueueAuthorizationRuleEndpoint(eventPipeline, logger),
+        new GetServiceBusQueueAuthorizationRuleEndpoint(eventPipeline, logger),
+        new DeleteServiceBusQueueAuthorizationRuleEndpoint(eventPipeline, logger),
+        new ListServiceBusQueueAuthorizationRulesEndpoint(eventPipeline, logger),
+        new ListKeysServiceBusQueueAuthorizationRuleEndpoint(eventPipeline, logger),
+        new RegenerateKeysServiceBusQueueAuthorizationRuleEndpoint(eventPipeline, logger),
+        // Topic authorization rules
+        new CreateOrUpdateServiceBusTopicAuthorizationRuleEndpoint(eventPipeline, logger),
+        new GetServiceBusTopicAuthorizationRuleEndpoint(eventPipeline, logger),
+        new DeleteServiceBusTopicAuthorizationRuleEndpoint(eventPipeline, logger),
+        new ListServiceBusTopicAuthorizationRulesEndpoint(eventPipeline, logger),
+        new ListKeysServiceBusTopicAuthorizationRuleEndpoint(eventPipeline, logger),
+        new RegenerateKeysServiceBusTopicAuthorizationRuleEndpoint(eventPipeline, logger)
     ];
 
     public void Bootstrap()

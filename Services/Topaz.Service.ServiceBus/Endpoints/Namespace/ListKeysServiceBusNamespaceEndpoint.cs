@@ -1,7 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
-using Topaz.Service.ServiceBus.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -35,14 +34,13 @@ internal sealed class ListKeysServiceBusNamespaceEndpoint(Pipeline eventPipeline
         var namespaceIdentifier = ServiceBusNamespaceIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(8));
         var authorizationRuleName = context.Request.Path.Value.ExtractValueFromPath(10) ?? string.Empty;
 
-        var operation = _controlPlane.GetNamespace(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier);
+        var operation = _controlPlane.ListNamespaceAuthorizationRuleKeys(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier, authorizationRuleName);
         if (operation.Result == OperationResult.NotFound || operation.Resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;
             return;
         }
 
-        var keys = ListKeysServiceBusNamespaceResponse.For(namespaceIdentifier.Value, authorizationRuleName);
-        response.CreateJsonContentResponse(keys);
+        response.CreateJsonContentResponse(operation.Resource);
     }
 }
