@@ -16,7 +16,38 @@ public class OutgoingLinkEndpoint : LinkEndpoint
         // AMQP source addresses arrive with a leading '/' (e.g. "/filter-topic/Subscriptions/sub-true").
         // Strip it so the name matches what IncomingLinkEndpoint enqueues under.
         EntityAddress = sourceAddress.TrimStart('/');
+
+        // Event Hub consumer links use the address "{hubName}/ConsumerGroups/{cg}/Partitions/{id}".
+        // The producer enqueues messages under just "{hubName}", so we must look up messages using
+        // only the hub name portion.
+        MessageStoreAddress = ResolveMessageStoreAddress(EntityAddress);
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Returns the key under which messages are stored in <see cref="SubscriptionMessageStore"/>
+    /// for this entity.  For Event Hub consumer links (address contains "/ConsumerGroups/") this
+    /// is "{hubName}/Partitions/{partitionId}" to match how the producer enqueues; for all other
+    /// entities it is the full entity address.
+    /// </summary>
+    private static string ResolveMessageStoreAddress(string entityAddress)
+    {
+        // Pattern: "{hubName}/ConsumerGroups/{consumerGroup}/Partitions/{partitionId}"
+        // Producer sends to:  "{hubName}/Partitions/{partitionId}"
+        // We must return "{hubName}/Partitions/{partitionId}" so TryDequeue finds the messages.
+        var consumerGroupsIndex = entityAddress.IndexOf("/ConsumerGroups/", StringComparison.OrdinalIgnoreCase);
+        if (consumerGroupsIndex > 0)
+        {
+            var hubName = entityAddress[..consumerGroupsIndex];
+            var partitionsIndex = entityAddress.IndexOf("/Partitions/", consumerGroupsIndex, StringComparison.OrdinalIgnoreCase);
+            if (partitionsIndex > 0)
+            {
+                var partitionId = entityAddress[(partitionsIndex + "/Partitions/".Length)..];
+                return $"{hubName}/Partitions/{partitionId}";
+            }
+            return hubName;
+        }
+        return entityAddress;
     }
 
     // The Azure SDK (AmqpMessageConverter) reads LockTokenGuid from the AMQP Transfer delivery tag,
@@ -62,6 +93,10 @@ public class OutgoingLinkEndpoint : LinkEndpoint
     // cannot both be captured in member bodies and used to initialize a field.
     internal readonly string EntityAddress;
 
+    // The key used for SubscriptionMessageStore lookups.  For Event Hub consumer links this is
+    // the hub name only (the producer enqueues under the hub name, not the full consumer path).
+    internal readonly string MessageStoreAddress;
+
     // Per-instance state — was static, which caused FLOW from any receiver link (including
     // AMQP management response links) to overwrite the single shared _pendingLink and steal
     // all subsequent deliveries away from the real queue consumer.
@@ -83,7 +118,7 @@ public class OutgoingLinkEndpoint : LinkEndpoint
             foreach (var ep in _queueEndpoints)
             {
                 while (ep._pendingCredit > 0 && ep._pendingLink != null
-                       && SubscriptionMessageStore.TryDequeue(ep.EntityAddress, out var message) && message != null)
+                       && SubscriptionMessageStore.TryDequeue(ep.MessageStoreAddress, out var message) && message != null)
                 {
                     message.Header ??= new Header();
                     
@@ -112,7 +147,7 @@ public class OutgoingLinkEndpoint : LinkEndpoint
 
     public override void OnFlow(FlowContext flowContext)
     {
-        _logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "There will be a maximum of {0} to process with {1} messages available.", flowContext.Messages, SubscriptionMessageStore.Count(EntityAddress));
+        _logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "There will be a maximum of {0} to process with {1} messages available.", flowContext.Messages, SubscriptionMessageStore.Count(MessageStoreAddress));
         if (flowContext.Link.Role) return;
 
         lock (DeliveryLock)
@@ -132,7 +167,7 @@ public class OutgoingLinkEndpoint : LinkEndpoint
             {
                 // Ensure the per-entity queue slot exists so pre-consumer messages
                 // accumulate here until the consumer attaches.
-                SubscriptionMessageStore.EnsureQueue(EntityAddress);
+                SubscriptionMessageStore.EnsureQueue(MessageStoreAddress);
                 _queueEndpoints.Add(this);
                 flowContext.Link.Closed += (_, _) =>
                 {
