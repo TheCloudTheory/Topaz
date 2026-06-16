@@ -278,6 +278,18 @@ docker run --rm \
 
 Image tags match the Git release tags. Expose only the ports you actually need.
 
+:::tip[Nightly builds]
+
+A `nightly` tag is published automatically every day from the `main` branch. Use it to get the latest unreleased features and fixes:
+
+```bash
+docker pull thecloudtheory/topaz-host:nightly
+```
+
+Nightly images are not guaranteed to be stable. For production use, pin to a release tag.
+
+:::
+
 :::info[Data persistence]
 
 By default, all state is held in memory and lost when the container stops. Mount a volume to persist resources across restarts:

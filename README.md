@@ -13,8 +13,11 @@ brew tap thecloudtheory/topaz && brew install topaz && topaz-host
 # Linux
 curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/get-topaz.sh | bash
 
-# Docker
+# Docker (latest stable release)
 docker run -p 8899:8899 thecloudtheory/topaz-host
+
+# Docker (nightly — built daily from main)
+docker run -p 8899:8899 thecloudtheory/topaz-host:nightly
 ```
 
 → Full docs, quickstarts, and service guides at **[topaz.thecloudtheory.com](https://topaz.thecloudtheory.com/)**
