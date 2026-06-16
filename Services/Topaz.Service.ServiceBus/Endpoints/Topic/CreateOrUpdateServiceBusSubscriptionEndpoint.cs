@@ -42,7 +42,7 @@ internal sealed class CreateOrUpdateServiceBusSubscriptionEndpoint(Pipeline even
             GlobalSettings.JsonOptions) ?? new CreateOrUpdateServiceBusSubscriptionRequest();
 
         var operation = _controlPlane.CreateOrUpdateSubscription(subscriptionIdentifier, resourceGroupIdentifier,
-            namespaceName, subscriptionName!, request, topicName);
+            namespaceName, subscriptionName!, request, topicName!);
 
         if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated ||
             operation.Resource == null)

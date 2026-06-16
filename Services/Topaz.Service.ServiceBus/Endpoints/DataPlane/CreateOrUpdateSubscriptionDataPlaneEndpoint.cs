@@ -43,7 +43,7 @@ internal sealed class CreateOrUpdateSubscriptionDataPlaneEndpoint(Pipeline event
             return;
         }
 
-        var operation = _controlPlane.CreateOrUpdateSubscription(subscriptionId!, resourceGroupId!, namespaceName, subscriptionName!, CreateOrUpdateServiceBusSubscriptionRequest.From(atomRequest), topicName);
+        var operation = _controlPlane.CreateOrUpdateSubscription(subscriptionId!, resourceGroupId!, namespaceName, subscriptionName!, CreateOrUpdateServiceBusSubscriptionRequest.From(atomRequest), topicName!);
         if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated || operation.Resource == null)
         {
             response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode, "Unknown error when performing CreateOrUpdate operation.");

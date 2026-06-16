@@ -318,15 +318,19 @@ internal sealed class ServiceBusServiceControlPlane(
                 ResourceGroupIdentifier.From(dnsEntry.Value.resourceGroup));
     }
 
+    private static string SubscriptionsParentId(ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName) =>
+        $"{namespaceIdentifier.Value}/topics/{topicName}";
+
     public ControlPlaneOperationResult<ServiceBusSubscriptionResource> CreateOrUpdateSubscription(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         ServiceBusNamespaceIdentifier namespaceIdentifier, string subscriptionName,
         CreateOrUpdateServiceBusSubscriptionRequest request,
-        string? topicName = null)
+        string topicName)
     {
+        var parentId = SubscriptionsParentId(namespaceIdentifier, topicName);
         var existingSubscription = provider.GetSubresourceAs<ServiceBusSubscriptionResource>(subscriptionIdentifier,
-            resourceGroupIdentifier, subscriptionName, namespaceIdentifier.Value,
+            resourceGroupIdentifier, subscriptionName, parentId,
             nameof(Subresource.Subscriptions).ToLowerInvariant());
 
         if (existingSubscription == null)
@@ -343,13 +347,10 @@ internal sealed class ServiceBusServiceControlPlane(
             };
 
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, subscriptionName,
-                namespaceIdentifier.Value, nameof(Subresource.Subscriptions).ToLowerInvariant(), resource);
+                parentId, nameof(Subresource.Subscriptions).ToLowerInvariant(), resource);
 
-            if (topicName != null)
-            {
-                CreateOrUpdateRule(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier,
-                    topicName, subscriptionName, "$Default", ServiceBusRuleResourceProperties.DefaultTrueFilter());
-            }
+            CreateOrUpdateRule(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier,
+                topicName, subscriptionName, "$Default", ServiceBusRuleResourceProperties.DefaultTrueFilter());
 
             return new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.Created, resource,
                 null, null);
@@ -358,7 +359,7 @@ internal sealed class ServiceBusServiceControlPlane(
         ServiceBusSubscriptionResourceProperties.UpdateFromRequest(existingSubscription, request);
 
         provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, subscriptionName,
-            namespaceIdentifier.Value, nameof(Subresource.Subscriptions).ToLowerInvariant(), existingSubscription);
+            parentId, nameof(Subresource.Subscriptions).ToLowerInvariant(), existingSubscription);
 
         return new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.Updated,
             existingSubscription, null, null);
@@ -384,11 +385,7 @@ internal sealed class ServiceBusServiceControlPlane(
                 return ServiceBusEntityType.Topic;
             }
 
-            var subscriptionOperation = GetSubscription(subscriptionIdentifier, resourceGroupIdentifier,
-                namespaceIdentifier, entityName);
-            return subscriptionOperation.Result == OperationResult.Success
-                ? ServiceBusEntityType.Subscription
-                : ServiceBusEntityType.Unknown;
+            return ServiceBusEntityType.Unknown;
         }
 
         var xml = XDocument.Parse(content);
@@ -409,10 +406,10 @@ internal sealed class ServiceBusServiceControlPlane(
 
     internal ControlPlaneOperationResult<ServiceBusSubscriptionResource> GetSubscription(
         SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
-        ServiceBusNamespaceIdentifier namespaceIdentifier, string subscriptionName)
+        ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, string subscriptionName)
     {
         var existingSubscription = provider.GetSubresourceAs<ServiceBusSubscriptionResource>(subscriptionIdentifier,
-            resourceGroupIdentifier, subscriptionName, namespaceIdentifier.Value,
+            resourceGroupIdentifier, subscriptionName, SubscriptionsParentId(namespaceIdentifier, topicName),
             nameof(Subresource.Subscriptions).ToLowerInvariant());
 
         return existingSubscription == null
@@ -421,6 +418,18 @@ internal sealed class ServiceBusServiceControlPlane(
             : new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.Success,
                 existingSubscription, null,
                 null);
+    }
+
+    internal ControlPlaneOperationResult<ServiceBusSubscriptionResource[]> ListSubscriptions(
+        SubscriptionIdentifier subscriptionIdentifier, ResourceGroupIdentifier resourceGroupIdentifier,
+        ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName)
+    {
+        var subscriptions = provider.ListSubresourcesShallowAs<ServiceBusSubscriptionResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, SubscriptionsParentId(namespaceIdentifier, topicName),
+            nameof(Subresource.Subscriptions).ToLowerInvariant());
+
+        return new ControlPlaneOperationResult<ServiceBusSubscriptionResource[]>(OperationResult.Success,
+            subscriptions, null, null);
     }
 
     public ControlPlaneOperationResult DeleteTopic(SubscriptionIdentifier subscriptionIdentifier,
@@ -442,10 +451,11 @@ internal sealed class ServiceBusServiceControlPlane(
 
     public OperationResult DeleteSubscription(SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
-        ServiceBusNamespaceIdentifier namespaceIdentifier, string subscriptionName)
+        ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, string subscriptionName)
     {
+        var parentId = SubscriptionsParentId(namespaceIdentifier, topicName);
         var existingSubscription = provider.GetSubresourceAs<ServiceBusSubscriptionResource>(subscriptionIdentifier,
-            resourceGroupIdentifier, subscriptionName, namespaceIdentifier.Value,
+            resourceGroupIdentifier, subscriptionName, parentId,
             nameof(Subresource.Subscriptions).ToLowerInvariant());
         if (existingSubscription == null)
         {
@@ -453,7 +463,7 @@ internal sealed class ServiceBusServiceControlPlane(
         }
 
         provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, subscriptionName,
-            namespaceIdentifier.Value, nameof(Subresource.Subscriptions).ToLowerInvariant());
+            parentId, nameof(Subresource.Subscriptions).ToLowerInvariant());
         return OperationResult.Deleted;
     }
 

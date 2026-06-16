@@ -527,4 +527,43 @@ public class ResourceProviderBase<TService> where TService : IServiceDefinition
             : metadataFiles.Select(x => JsonSerializer.Deserialize<T>(File.ReadAllText(x), GlobalSettings.JsonOptions)!)
                 .ToArray();
     }
+
+    public T[] ListSubresourcesShallowAs<T>(SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier, string parentId, string subresource)
+    {
+        if (TService.Subresources == null)
+        {
+            throw new InvalidOperationException(
+                "You can't get a subresource for a parent service which defines not subresources.");
+        }
+
+        if (!TService.Subresources.Contains(subresource))
+        {
+            throw new InvalidOperationException(
+                $"You can't get a subresource '{subresource}' for a parent service which doesn't define that subresource.");
+        }
+
+        var subresourcePath = Path.Combine(BaseEmulatorPath,
+            GetLocalDirectoryPathWithReplacedValues(subscriptionIdentifier, resourceGroupIdentifier), parentId,
+            subresource);
+
+        if (!Directory.Exists(subresourcePath))
+        {
+            _logger.LogDebug(nameof(ResourceProviderBase<>), nameof(ListSubresourcesShallowAs),
+                $"Subresource directory '{subresourcePath}' does not exist, returning empty list.");
+            return [];
+        }
+
+        // Read only the immediate subdirectory metadata files to avoid picking up
+        // nested sub-resource files (e.g. rules stored under each subscription folder).
+        var metadataFiles = Directory.GetDirectories(subresourcePath)
+            .Select(d => Path.Combine(d, "metadata.json"))
+            .Where(File.Exists)
+            .ToArray();
+
+        return metadataFiles.Length == 0
+            ? []
+            : metadataFiles.Select(x => JsonSerializer.Deserialize<T>(File.ReadAllText(x), GlobalSettings.JsonOptions)!)
+                .ToArray();
+    }
 }

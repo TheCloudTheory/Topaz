@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
+using Topaz.Service.ServiceBus.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -7,7 +8,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ServiceBus.Endpoints.Topic;
 
-internal sealed class GetServiceBusSubscriptionEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class ListServiceBusSubscriptionsEndpoint(Pipeline eventPipeline, ITopazLogger logger)
     : IEndpointDefinition
 {
     private readonly ServiceBusServiceControlPlane _controlPlane =
@@ -17,7 +18,7 @@ internal sealed class GetServiceBusSubscriptionEndpoint(Pipeline eventPipeline, 
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/topics/{topicName}/subscriptions/{subscriptionName}",
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ServiceBus/namespaces/{namespaceName}/topics/{topicName}/subscriptions",
     ];
 
     public string[] Permissions => ["Microsoft.ServiceBus/namespaces/topics/subscriptions/read"];
@@ -32,17 +33,10 @@ internal sealed class GetServiceBusSubscriptionEndpoint(Pipeline eventPipeline, 
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(4));
         var namespaceName = ServiceBusNamespaceIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(8));
         var topicName = context.Request.Path.Value.ExtractValueFromPath(10)!;
-        var subscriptionName = context.Request.Path.Value.ExtractValueFromPath(12);
 
-        var operation = _controlPlane.GetSubscription(subscriptionIdentifier, resourceGroupIdentifier,
-            namespaceName, topicName, subscriptionName!);
+        var operation = _controlPlane.ListSubscriptions(subscriptionIdentifier, resourceGroupIdentifier,
+            namespaceName, topicName);
 
-        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
-        {
-            response.CreateErrorResponse(operation.Code!, operation.Reason!, operation.Result);
-            return;
-        }
-
-        response.CreateJsonContentResponse(operation.Resource);
+        response.CreateJsonContentResponse(ListServiceBusSubscriptionsResponse.From(operation.Resource ?? []));
     }
 }

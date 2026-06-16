@@ -29,8 +29,9 @@ internal sealed class GetTopicSubscriptionDataPlaneEndpoint(Pipeline eventPipeli
             return;
         }
 
+        var topicName = context.Request.Path.Value.ExtractValueFromPath(1)!;
         var subscriptionName = context.Request.Path.Value.ExtractValueFromPath(4);
-        var operation = _controlPlane.GetSubscription(subscriptionId!, resourceGroupId!, namespaceName, subscriptionName!);
+        var operation = _controlPlane.GetSubscription(subscriptionId!, resourceGroupId!, namespaceName, topicName, subscriptionName!);
         if (operation.Result == OperationResult.NotFound || operation.Resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;

@@ -29,8 +29,9 @@ internal sealed class DeleteSubscriptionDataPlaneEndpoint(Pipeline eventPipeline
             return;
         }
 
+        var topicName = context.Request.Path.Value.ExtractValueFromPath(1)!;
         var subscriptionName = context.Request.Path.Value.ExtractValueFromPath(3);
-        var operationResult = _controlPlane.DeleteSubscription(subscriptionId!, resourceGroupId!, namespaceName, subscriptionName!);
+        var operationResult = _controlPlane.DeleteSubscription(subscriptionId!, resourceGroupId!, namespaceName, topicName, subscriptionName!);
         if (operationResult == OperationResult.NotFound)
         {
             response.StatusCode = HttpStatusCode.NotFound;

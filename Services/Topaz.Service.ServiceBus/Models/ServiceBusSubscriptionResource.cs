@@ -47,4 +47,7 @@ internal sealed class ServiceBusSubscriptionResource
         
         return stringWriter.ToString();
     }
+
+    public System.Xml.Linq.XElement ToEntryElement() =>
+        System.Xml.Linq.XDocument.Parse(ToXmlString()).Root!;
 }
