@@ -27,7 +27,9 @@ public sealed class ServiceBusService(Pipeline eventPipeline, ITopazLogger logge
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         new ServiceBusEndpoint(),
-        new ServiceBusServiceEndpoint(eventPipeline, logger),
+        new GetServiceBusNamespaceEndpoint(eventPipeline, logger),
+        new CreateOrUpdateServiceBusNamespaceEndpoint(eventPipeline, logger),
+        new GetServiceBusQueueEndpoint(eventPipeline, logger),
         new GetEntityDataPlaneEndpoint(eventPipeline, logger),
         new CreateOrUpdateEntityDataPlaneEndpoint(eventPipeline, logger),
         new DeleteEntityDataPlaneEndpoint(eventPipeline, logger),

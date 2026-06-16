@@ -6,6 +6,7 @@ using Topaz.Host;
 using Topaz.Identity;
 using Topaz.Service.EventHub.Endpoints;
 using Topaz.Service.ServiceBus.Endpoints;
+using Topaz.Service.ServiceBus.Endpoints.Namespace;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -24,7 +25,7 @@ public class RouterTests
         var endpoints = new IEndpointDefinition[]
         {
             new GetNamespaceEndpoint(logger),
-            new ServiceBusServiceEndpoint(pipeline, logger)
+            new GetServiceBusNamespaceEndpoint(pipeline, logger)
         };
         var context = new DefaultHttpContext()
         {
