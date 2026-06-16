@@ -480,6 +480,28 @@ TODO: Service Bus: Message session support
   labels: enhancement, service-bus
 -->
 
+### Service Bus — topic subscription rule-based message filtering
+
+<!--
+TODO: Service Bus: AMQP message filtering based on topic subscription rules
+  When a message is published to a topic, evaluate each subscription's active rules
+  against the message before forwarding it to the subscription's queue.
+  - Only forward a message to a subscription when at least one rule's filter matches
+    (or the subscription has no rules, in which case treat as TrueFilter).
+  - TrueRuleFilter: always matches (pass-through).
+  - CorrelationRuleFilter: match on ContentType, CorrelationId, MessageId, ReplyTo,
+    ReplyToSessionId, SessionId, Subject (Label), To, and user application properties.
+    All specified fields must match (AND semantics); unset fields are ignored.
+  - SqlRuleFilter: evaluate a SQL-92 predicate against the message's system properties
+    and user application properties (e.g. "color = 'red' AND priority > 2").
+  - SqlRuleAction: after a filter match, apply property mutations (SET, REMOVE) to
+    the message copy forwarded to the subscription.
+  - Load the subscription's rules from the filesystem via the rules subresource
+    (persisted by the rule CRUD endpoints) on each publish.
+  milestone: v1.7-beta
+  labels: enhancement, service-bus
+-->
+
 ### Service Bus — authorization rules and SAS keys
 
 <!--
