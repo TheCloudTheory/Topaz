@@ -521,26 +521,6 @@ TODO: Service Bus: Authorization rules and SAS key management
   labels: enhancement, service-bus
 -->
 
-### Service Bus — topic subscription name collision bug
-
-<!--
-TODO: Service Bus: Fix topic subscription name collision in filesystem persistence
-  ServiceBusServiceControlPlane.CreateOrUpdateSubscription passes only the namespace
-  name as parentId to provider.CreateOrUpdateSubresource, ignoring the topic name.
-  As a result, two subscriptions with the same name under different topics resolve to
-  the same on-disk directory and silently overwrite each other.
-  Required change:
-  - Build the parentId as "{namespaceName}/topics/{topicName}" instead of just
-    "{namespaceName}" when calling provider.CreateOrUpdateSubresource/GetSubresourceAs/
-    DeleteSubresource/ListSubresourcesAs for the Subscriptions subresource.
-  - Update GetSubscription, DeleteSubscription, and the list-subscriptions call in
-    ServiceBusServiceControlPlane to use the same compound parentId.
-  - Add a unit test that creates two subscriptions with the same name under different
-    topics and asserts both are independently retrievable and stored at separate paths.
-  milestone: v1.7-beta
-  labels: bug, service-bus
--->
-
 ### AMQP — trailing null padding in AMQPNetLite performatives
 
 <!--
