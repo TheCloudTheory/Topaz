@@ -30,6 +30,5 @@ internal sealed class CreateOrUpdateServiceBusQueueAuthorizationRuleEndpoint(Pip
         var request = JsonSerializer.Deserialize<CreateOrUpdateServiceBusAuthorizationRuleRequest>(reader.ReadToEnd(), GlobalSettings.JsonOptions) ?? new CreateOrUpdateServiceBusAuthorizationRuleRequest();
         var operation = _controlPlane.CreateOrUpdateQueueAuthorizationRule(sub, rg, ns, queueName, ruleName, request);
         response.CreateJsonContentResponse(operation.Resource!);
-        response.StatusCode = operation.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
     }
 }

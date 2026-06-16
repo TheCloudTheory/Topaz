@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
+using Topaz.Service.ServiceBus.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -23,6 +24,6 @@ internal sealed class ListServiceBusQueueAuthorizationRulesEndpoint(Pipeline eve
         var ns = ServiceBusNamespaceIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(8));
         var queueName = context.Request.Path.Value.ExtractValueFromPath(10)!;
         var operation = _controlPlane.ListQueueAuthorizationRules(sub, rg, ns, queueName);
-        response.CreateJsonContentResponse(new { value = operation.Resource });
+        response.CreateJsonContentResponse(ListServiceBusAuthorizationRulesResponse.From(operation.Resource ?? []));
     }
 }

@@ -482,19 +482,10 @@ TODO: Service Bus: Message session support
 
 ### Service Bus — authorization rules and SAS keys
 
+Implemented in v1.7-beta. Per-namespace, per-queue, and per-topic authorization rules with full CRUD,
+listKeys, and regenerateKeys. 256-bit random key pairs generated on rule creation. `RootManageSharedAccessKey`
+auto-created on namespace creation.
 <!--
-TODO: Service Bus: Authorization rules and SAS key management
-  Implement per-namespace, per-queue, and per-topic authorization rules and key endpoints.
-  Namespace-level endpoints:
-  - PUT    .../namespaces/{name}/authorizationRules/{ruleName}              – create or update
-  - GET    .../namespaces/{name}/authorizationRules/{ruleName}              – get
-  - DELETE .../namespaces/{name}/authorizationRules/{ruleName}              – delete
-  - GET    .../namespaces/{name}/authorizationRules                         – list
-  - POST   .../namespaces/{name}/authorizationRules/{ruleName}/listKeys     – list keys
-  - POST   .../namespaces/{name}/authorizationRules/{ruleName}/regenerateKeys – regenerate
-  Queue and Topic level: same pattern under /queues/{name}/... and /topics/{name}/...
-  Persist SAS key pairs inside the authorization rule model; generate 256-bit random
-  primary and secondary key pairs on rule creation.
   milestone: v1.7-beta
   labels: enhancement, service-bus
 -->

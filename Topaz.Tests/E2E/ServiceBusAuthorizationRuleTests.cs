@@ -1,5 +1,6 @@
 using Azure;
 using Azure.Core;
+using Azure.Messaging.ServiceBus.Administration;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ServiceBus;
 using Azure.ResourceManager.ServiceBus.Models;
@@ -28,8 +29,9 @@ public class ServiceBusAuthorizationRuleTests
         await Program.RunAsync(["group", "create", "--name", ResourceGroupName, "--location", "westeurope", "--subscription-id", SubscriptionId.ToString()]);
         await Program.RunAsync(["servicebus", "namespace", "delete", "--name", NamespaceName, "--resource-group", ResourceGroupName, "--subscription-id", SubscriptionId.ToString()]);
         await Program.RunAsync(["servicebus", "namespace", "create", "--name", NamespaceName, "--resource-group", ResourceGroupName, "--location", "westeurope", "--subscription-id", SubscriptionId.ToString()]);
-        await Program.RunAsync(["servicebus", "queue", "create", "--name", QueueName, "--namespace-name", NamespaceName, "--resource-group", ResourceGroupName, "--subscription-id", SubscriptionId.ToString()]);
-        await Program.RunAsync(["servicebus", "topic", "create", "--name", TopicName, "--namespace-name", NamespaceName, "--resource-group", ResourceGroupName, "--subscription-id", SubscriptionId.ToString()]);
+        await Program.RunAsync(["servicebus", "queue", "create", "--queue-name", QueueName, "--namespace-name", NamespaceName, "--resource-group", ResourceGroupName, "--subscription-id", SubscriptionId.ToString()]);
+        var adminClient = new ServiceBusAdministrationClient(TopazResourceHelpers.GetServiceBusConnectionStringForManagement(NamespaceName));
+        await adminClient.CreateTopicAsync(TopicName);
     }
 
     [TearDown]

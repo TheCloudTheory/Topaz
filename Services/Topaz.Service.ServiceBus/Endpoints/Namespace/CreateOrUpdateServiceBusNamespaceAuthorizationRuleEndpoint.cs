@@ -41,6 +41,5 @@ internal sealed class CreateOrUpdateServiceBusNamespaceAuthorizationRuleEndpoint
 
         var operation = _controlPlane.CreateOrUpdateNamespaceAuthorizationRule(sub, rg, ns, ruleName, request);
         response.CreateJsonContentResponse(operation.Resource!);
-        response.StatusCode = operation.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
     }
 }
