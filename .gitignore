@@ -25,3 +25,4 @@ sdk/python/topaz_sdk.egg-info/**
 .codeql-results-csharp.sarif
 .codeql-db-csharp-local/**
 .codeql-results-csharp-local.sarif
+.agents/skills/*
