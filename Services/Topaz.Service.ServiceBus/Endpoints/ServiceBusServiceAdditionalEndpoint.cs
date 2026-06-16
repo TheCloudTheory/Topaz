@@ -30,7 +30,15 @@ public sealed class ServiceBusServiceAdditionalEndpoint(Pipeline eventPipeline, 
         "DELETE /{entity}/Subscriptions/{subscription}",
         "GET /{entity}/{messageType}/Subscriptions/{subscription}",
         "PUT /{entity}/{messageType}/Subscriptions/{subscription}",
-        "DELETE /{entity}/{messageType}/Subscriptions/{subscription}"
+        "DELETE /{entity}/{messageType}/Subscriptions/{subscription}",
+        "GET /{entity}/Subscriptions/{subscription}/Rules",
+        "PUT /{entity}/Subscriptions/{subscription}/Rules/{ruleName}",
+        "GET /{entity}/Subscriptions/{subscription}/Rules/{ruleName}",
+        "DELETE /{entity}/Subscriptions/{subscription}/Rules/{ruleName}",
+        "GET /{entity}/{messageType}/Subscriptions/{subscription}/Rules",
+        "PUT /{entity}/{messageType}/Subscriptions/{subscription}/Rules/{ruleName}",
+        "GET /{entity}/{messageType}/Subscriptions/{subscription}/Rules/{ruleName}",
+        "DELETE /{entity}/{messageType}/Subscriptions/{subscription}/Rules/{ruleName}"
     ];
 
     public string[] Permissions => ["*"];
@@ -74,6 +82,13 @@ public sealed class ServiceBusServiceAdditionalEndpoint(Pipeline eventPipeline, 
             var content = reader.ReadToEnd();
         
             logger.LogDebug(nameof(ServiceBusServiceAdditionalEndpoint), nameof(GetResponse), "Received payload: {0}", content);
+
+            // Paths containing /Rules always represent rule operations.
+            if (context.Request.Path.Value.Contains("/Rules"))
+            {
+                HandleRuleRequest(context.Request.Path.Value, context.Request.Method, content, response, namespaceIdentifier);
+                return;
+            }
 
             // Paths containing /Subscriptions always represent subscription operations.
             // Routing via GetEntityType is unreliable for GET requests (empty body) because
@@ -436,6 +451,144 @@ public sealed class ServiceBusServiceAdditionalEndpoint(Pipeline eventPipeline, 
         }
         
         response.Content = new StringContent(operation.Resource.ToXmlString());
+        response.StatusCode = HttpStatusCode.OK;
+    }
+
+    private static (string topicName, string subscriptionName, string? ruleName) ExtractRulePathParts(string path)
+    {
+        // Path: /{topicName}/Subscriptions/{subscriptionName}/Rules[/{ruleName}]
+        var segments = path.TrimStart('/').Split('/');
+        var topicName = segments[0];
+        // segments[1] == "Subscriptions"
+        var subscriptionName = segments[2];
+        // segments[3] == "Rules"
+        var ruleName = segments.Length > 4 ? segments[4] : null;
+        return (topicName, subscriptionName, ruleName);
+    }
+
+    private void HandleRuleRequest(string path, string method, string input, HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier)
+    {
+        var (topicName, subscriptionName, ruleName) = ExtractRulePathParts(path);
+        logger.LogDebug(nameof(ServiceBusServiceAdditionalEndpoint), nameof(HandleRuleRequest),
+            "Rule request: topic={0}, subscription={1}, rule={2}", topicName, subscriptionName, ruleName ?? "(list)");
+
+        if (ruleName == null && method == "GET")
+        {
+            HandleListRulesRequest(response, namespaceIdentifier, topicName, subscriptionName);
+            return;
+        }
+
+        switch (method)
+        {
+            case "GET":
+                HandleGetRuleRequest(response, namespaceIdentifier, topicName, subscriptionName, ruleName!);
+                break;
+            case "PUT":
+                HandleCreateOrUpdateRuleRequest(response, namespaceIdentifier, topicName, subscriptionName, ruleName!, input);
+                break;
+            case "DELETE":
+                HandleDeleteRuleRequest(response, namespaceIdentifier, topicName, subscriptionName, ruleName!);
+                break;
+            default:
+                response.StatusCode = HttpStatusCode.NotFound;
+                break;
+        }
+    }
+
+    private void HandleListRulesRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, string subscriptionName)
+    {
+        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
+        if (identifiersOperation.result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
+        var operation = _controlPlane.ListRules(identifiersOperation.subscriptionIdentifier!,
+            identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, topicName, subscriptionName);
+        if (operation.Resource == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
+        var xmlEntries = operation.Resource.Select(r => r.ToXmlString()).ToArray();
+        response.Content = new StringContent(Models.Responses.ServiceBusRuleAtomResponse.FeedFrom(xmlEntries));
+        response.StatusCode = HttpStatusCode.OK;
+    }
+
+    private void HandleGetRuleRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, string subscriptionName, string ruleName)
+    {
+        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
+        if (identifiersOperation.result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
+        var operation = _controlPlane.GetRule(identifiersOperation.subscriptionIdentifier!,
+            identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, topicName, subscriptionName, ruleName);
+        if (operation.Result == OperationResult.NotFound || operation.Resource == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
+        response.Content = new StringContent(operation.Resource.ToXmlString());
+        response.StatusCode = HttpStatusCode.OK;
+    }
+
+    private void HandleCreateOrUpdateRuleRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, string subscriptionName, string ruleName, string input)
+    {
+        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
+        if (identifiersOperation.result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
+        var serializer = new XmlSerializer(typeof(CreateOrUpdateServiceBusRuleAtomRequest));
+        using var stringReader = new StringReader(input);
+
+        if (serializer.Deserialize(stringReader) is not CreateOrUpdateServiceBusRuleAtomRequest request)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            return;
+        }
+
+        var properties = CreateOrUpdateServiceBusRuleAtomRequest.ToProperties(request);
+
+        var operation = _controlPlane.CreateOrUpdateRule(identifiersOperation.subscriptionIdentifier!,
+            identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, topicName, subscriptionName, ruleName, properties);
+        if (operation.Result != OperationResult.Created && operation.Result != OperationResult.Updated ||
+            operation.Resource == null)
+        {
+            response.CreateErrorResponse(HttpResponseMessageExtensions.InternalErrorCode,
+                "Unknown error when performing CreateOrUpdate operation.");
+            return;
+        }
+
+        response.StatusCode = HttpStatusCode.OK;
+        response.Content = new StringContent(operation.Resource.ToXmlString());
+    }
+
+    private void HandleDeleteRuleRequest(HttpResponseMessage response, ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, string subscriptionName, string ruleName)
+    {
+        var identifiersOperation = ServiceBusServiceControlPlane.GetIdentifiersForParentResource(namespaceIdentifier);
+        if (identifiersOperation.result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
+        var result = _controlPlane.DeleteRule(identifiersOperation.subscriptionIdentifier!,
+            identifiersOperation.resourceGroupIdentifier!, namespaceIdentifier, topicName, subscriptionName, ruleName);
+        if (result == OperationResult.NotFound)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            return;
+        }
+
         response.StatusCode = HttpStatusCode.OK;
     }
 }

@@ -20,7 +20,8 @@ public sealed class ServiceBusService(Pipeline eventPipeline, ITopazLogger logge
     public static IReadOnlyCollection<string> Subresources =>
     [
         nameof(Subresource.Queues).ToLowerInvariant(), nameof(Subresource.Topics).ToLowerInvariant(),
-        nameof(Subresource.Subscriptions).ToLowerInvariant(), nameof(Subresource.NetworkRuleSets).ToLowerInvariant()
+        nameof(Subresource.Subscriptions).ToLowerInvariant(), nameof(Subresource.NetworkRuleSets).ToLowerInvariant(),
+        nameof(Subresource.Rules).ToLowerInvariant()
     ];
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
@@ -51,6 +52,10 @@ public sealed class ServiceBusService(Pipeline eventPipeline, ITopazLogger logge
         new DeleteServiceBusTopicEndpoint(eventPipeline, logger),
         new CreateOrUpdateServiceBusSubscriptionEndpoint(eventPipeline, logger),
         new GetServiceBusSubscriptionEndpoint(eventPipeline, logger),
+        new CreateOrUpdateServiceBusRuleEndpoint(eventPipeline, logger),
+        new GetServiceBusRuleEndpoint(eventPipeline, logger),
+        new DeleteServiceBusRuleEndpoint(eventPipeline, logger),
+        new ListServiceBusRulesEndpoint(eventPipeline, logger),
         new ListKeysServiceBusNamespaceEndpoint(eventPipeline, logger)
     ];
 

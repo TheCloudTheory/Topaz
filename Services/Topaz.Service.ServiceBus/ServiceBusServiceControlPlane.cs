@@ -345,6 +345,12 @@ internal sealed class ServiceBusServiceControlPlane(
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, subscriptionName,
                 namespaceIdentifier.Value, nameof(Subresource.Subscriptions).ToLowerInvariant(), resource);
 
+            if (topicName != null)
+            {
+                CreateOrUpdateRule(subscriptionIdentifier, resourceGroupIdentifier, namespaceIdentifier,
+                    topicName, subscriptionName, "$Default", ServiceBusRuleResourceProperties.DefaultTrueFilter());
+            }
+
             return new ControlPlaneOperationResult<ServiceBusSubscriptionResource>(OperationResult.Created, resource,
                 null, null);
         }
@@ -536,5 +542,82 @@ internal sealed class ServiceBusServiceControlPlane(
 
         return new ControlPlaneOperationResult<ServiceBusTopicResource[]>(OperationResult.Success,
             queues.ToArray(), null, null);
+    }
+
+    private static string RulesParentId(ServiceBusNamespaceIdentifier namespaceIdentifier, string topicName, string subscriptionName) =>
+        $"{namespaceIdentifier.Value}/topics/{topicName}/subscriptions/{subscriptionName}";
+
+    public ControlPlaneOperationResult<ServiceBusRuleResource> CreateOrUpdateRule(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        ServiceBusNamespaceIdentifier namespaceIdentifier,
+        string topicName,
+        string subscriptionName,
+        string ruleName,
+        ServiceBusRuleResourceProperties properties)
+    {
+        var parentId = RulesParentId(namespaceIdentifier, topicName, subscriptionName);
+        var existing = provider.GetSubresourceAs<ServiceBusRuleResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, ruleName, parentId, nameof(Subresource.Rules).ToLowerInvariant());
+
+        var resource = new ServiceBusRuleResource(subscriptionIdentifier, resourceGroupIdentifier,
+            namespaceIdentifier, topicName, subscriptionName, ruleName, properties);
+
+        provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, ruleName,
+            parentId, nameof(Subresource.Rules).ToLowerInvariant(), resource);
+
+        return new ControlPlaneOperationResult<ServiceBusRuleResource>(
+            existing == null ? OperationResult.Created : OperationResult.Updated, resource, null, null);
+    }
+
+    public ControlPlaneOperationResult<ServiceBusRuleResource> GetRule(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        ServiceBusNamespaceIdentifier namespaceIdentifier,
+        string topicName,
+        string subscriptionName,
+        string ruleName)
+    {
+        var parentId = RulesParentId(namespaceIdentifier, topicName, subscriptionName);
+        var rule = provider.GetSubresourceAs<ServiceBusRuleResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, ruleName, parentId, nameof(Subresource.Rules).ToLowerInvariant());
+
+        return rule == null
+            ? new ControlPlaneOperationResult<ServiceBusRuleResource>(OperationResult.NotFound, null,
+                $"Rule '{ruleName}' not found.", "RuleNotFound")
+            : new ControlPlaneOperationResult<ServiceBusRuleResource>(OperationResult.Success, rule, null, null);
+    }
+
+    public OperationResult DeleteRule(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        ServiceBusNamespaceIdentifier namespaceIdentifier,
+        string topicName,
+        string subscriptionName,
+        string ruleName)
+    {
+        var parentId = RulesParentId(namespaceIdentifier, topicName, subscriptionName);
+        var existing = provider.GetSubresourceAs<ServiceBusRuleResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, ruleName, parentId, nameof(Subresource.Rules).ToLowerInvariant());
+        if (existing == null)
+            return OperationResult.NotFound;
+
+        provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, ruleName,
+            parentId, nameof(Subresource.Rules).ToLowerInvariant());
+        return OperationResult.Deleted;
+    }
+
+    public ControlPlaneOperationResult<ServiceBusRuleResource[]> ListRules(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        ServiceBusNamespaceIdentifier namespaceIdentifier,
+        string topicName,
+        string subscriptionName)
+    {
+        var parentId = RulesParentId(namespaceIdentifier, topicName, subscriptionName);
+        var rules = provider.ListSubresourcesAs<ServiceBusRuleResource>(subscriptionIdentifier,
+            resourceGroupIdentifier, parentId, nameof(Subresource.Rules).ToLowerInvariant());
+
+        return new ControlPlaneOperationResult<ServiceBusRuleResource[]>(OperationResult.Success, rules, null, null);
     }
 }
