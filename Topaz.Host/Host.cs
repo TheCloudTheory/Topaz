@@ -288,7 +288,8 @@ public class Host
         listener.Listeners[0].HandlerFactory = _ => AmqpFramePaddingHandler.Instance;
 
         listener.RegisterRequestProcessor("$management", new ManagementProcessor(_logger));
-        listener.RegisterLinkProcessor(new LinkProcessor(_logger));
+        listener.RegisterLinkProcessor(new LinkProcessor(_logger,
+            new Topaz.Service.ServiceBus.Filtering.ServiceBusRuleLoader(Topaz.Shared.GlobalSettings.MainEmulatorDirectory)));
 
         // Frame traces should be enabled only if LogLevel is set to Debug
         if (_logger.LogLevel == LogLevel.Debug)

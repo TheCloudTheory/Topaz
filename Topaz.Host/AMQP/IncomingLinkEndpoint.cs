@@ -3,14 +3,16 @@ using Amqp;
 using Amqp.Framing;
 using Amqp.Listener;
 using Amqp.Types;
+using Topaz.Host.AMQP.Filtering;
+using Topaz.Service.ServiceBus.Filtering;
+using Topaz.Service.ServiceBus.Models;
 using Topaz.Shared;
 
 namespace Topaz.Host.AMQP;
 
-public class IncomingLinkEndpoint(string targetAddress, ITopazLogger logger) : LinkEndpoint
+public class IncomingLinkEndpoint(string targetAddress, ITopazLogger logger, ServiceBusRuleLoader? ruleLoader = null) : LinkEndpoint
 {
     private const uint BatchFormat = 0x80013700;
-    public static readonly List<Message> Messages = [];
 
     public override void OnMessage(MessageContext messageContext)
     {
@@ -55,7 +57,7 @@ public class IncomingLinkEndpoint(string targetAddress, ITopazLogger logger) : L
                     PrepareMessageForDelivery(inner);
                     lock (OutgoingLinkEndpoint.DeliveryLock)
                     {
-                        Messages.Add(inner);
+                        EnqueueMessage(inner);
                     }
                 }
                 OutgoingLinkEndpoint.NotifyMessageEnqueued();
@@ -68,7 +70,7 @@ public class IncomingLinkEndpoint(string targetAddress, ITopazLogger logger) : L
 
         lock (OutgoingLinkEndpoint.DeliveryLock)
         {
-            Messages.Add(messageContext.Message);
+            EnqueueMessage(messageContext.Message);
         }
 
         // Complete (send DISPOSITION to producer) BEFORE NotifyMessageEnqueued.
@@ -89,6 +91,93 @@ public class IncomingLinkEndpoint(string targetAddress, ITopazLogger logger) : L
 
         logger.LogDebug(nameof(IncomingLinkEndpoint), nameof(OnMessage),
             $"Executing {nameof(IncomingLinkEndpoint)}.{nameof(OnMessage)}: Finished processing a message.");
+    }
+
+    /// <summary>
+    /// Routes a prepared message to the appropriate entity queue(s).  For topic addresses
+    /// the message is fanned out to all matching subscription queues; for queue addresses
+    /// it is enqueued directly.
+    ///
+    /// Must be called while holding <see cref="OutgoingLinkEndpoint.DeliveryLock"/>.
+    /// </summary>
+    private void EnqueueMessage(Message message)
+    {
+        // AMQP target addresses arrive with a leading '/' (e.g. "/filter-topic").
+        // Strip it so the name matches the filesystem directory name.
+        var normalizedAddress = targetAddress.TrimStart('/');
+        var isKnown = ruleLoader != null && ruleLoader.IsKnownTopic(normalizedAddress);
+        logger.LogDebug(nameof(IncomingLinkEndpoint), nameof(EnqueueMessage),
+            "address='{0}' isKnownTopic={1}", normalizedAddress, isKnown);
+        if (isKnown)
+        {
+            FanOutToSubscriptions(normalizedAddress, message);
+        }
+        else
+        {
+            SubscriptionMessageStore.Enqueue(normalizedAddress, message);
+        }
+    }
+
+    /// <summary>
+    /// Fan-out: for each persisted subscription under this topic, evaluate the subscription's
+    /// rules and — if the message matches — enqueue an independent clone into the
+    /// subscription's per-entity queue.
+    /// </summary>
+    private void FanOutToSubscriptions(string topicName, Message original)
+    {
+        var subscriptionNames = ruleLoader!.GetSubscriptionNames(topicName);
+
+        if (subscriptionNames.Length == 0)
+        {
+            logger.LogDebug(nameof(IncomingLinkEndpoint), nameof(FanOutToSubscriptions),
+                "Topic '{0}' has no persisted subscriptions; message dropped.", targetAddress);
+            return;
+        }
+
+        foreach (var subscriptionName in subscriptionNames)
+        {
+            // Subscription AMQP address: "{topic}/Subscriptions/{sub}"
+            var subscriptionAddress = $"{topicName}/Subscriptions/{subscriptionName}";
+            logger.LogDebug(nameof(IncomingLinkEndpoint), nameof(FanOutToSubscriptions),
+                "topic='{0}' enqueue to subscription address='{1}'", topicName, subscriptionAddress);
+
+            // Ensure the per-entity queue slot exists so messages accumulate even when
+            // no consumer has attached yet (late-subscribe / durable-subscription semantics).
+            SubscriptionMessageStore.EnsureQueue(subscriptionAddress);
+
+            ServiceBusRuleResourceProperties[] rules;
+            rules = ruleLoader.LoadRules(topicName, subscriptionName);
+
+            if (!TopicSubscriptionRuleEvaluator.MatchesAny(original, rules))
+            {
+                logger.LogDebug(nameof(IncomingLinkEndpoint), nameof(FanOutToSubscriptions),
+                    "Message did not match any rule for subscription '{0}'; skipping.", subscriptionName);
+                continue;
+            }
+
+            // Clone the message so SqlRuleAction mutations on one subscription's copy
+            // do not affect other subscriptions.
+            var clone = CloneMessage(original);
+
+            // Apply the first matching rule's action (if any).
+            var matchingRule = Array.Find(rules, r => TopicSubscriptionRuleEvaluator.Matches(original, r));
+            if (matchingRule?.Action != null)
+                SqlRuleActionApplicator.Apply(matchingRule.Action, clone);
+
+            SubscriptionMessageStore.Enqueue(subscriptionAddress, clone);
+
+            logger.LogDebug(nameof(IncomingLinkEndpoint), nameof(FanOutToSubscriptions),
+                "Enqueued message copy to subscription '{0}'.", subscriptionAddress);
+        }
+    }
+
+    /// <summary>
+    /// Produces an independent deep copy of an AMQP message by encoding then decoding it.
+    /// </summary>
+    private static Message CloneMessage(Message source)
+    {
+        var bytes = source.Encode();
+        return Message.Decode(new ByteBuffer(bytes.Buffer, bytes.Offset, bytes.Length, bytes.Length));
     }
 
     /// <summary>
@@ -113,7 +202,7 @@ public class IncomingLinkEndpoint(string targetAddress, ITopazLogger logger) : L
     public override void OnFlow(FlowContext flowContext)
     {
         logger.LogDebug(nameof(IncomingLinkEndpoint), nameof(OnMessage),
-            $"Executing {nameof(IncomingLinkEndpoint)}.{nameof(OnFlow)}: There will be a maximum of {flowContext.Messages} to process with {Messages.Count} messages available.");
+            $"Executing {nameof(IncomingLinkEndpoint)}.{nameof(OnFlow)}: There will be a maximum of {flowContext.Messages} to process.");
     }
 
     public override void OnDisposition(DispositionContext dispositionContext)

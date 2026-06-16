@@ -2,11 +2,12 @@ using System.Collections.Concurrent;
 using Amqp;
 using Amqp.Framing;
 using Amqp.Listener;
+using Topaz.Service.ServiceBus.Filtering;
 using Topaz.Shared;
 
 namespace Topaz.Host.AMQP;
 
-internal sealed class LinkProcessor(ITopazLogger logger) : ILinkProcessor
+internal sealed class LinkProcessor(ITopazLogger logger, ServiceBusRuleLoader? ruleLoader = null) : ILinkProcessor
 {
     // Maps AMQP session (by reference) → CBS response link (server-side sender).
     // Populated when a client opens a ReceiverLink at "$cbs"; consumed when the
@@ -53,7 +54,7 @@ internal sealed class LinkProcessor(ITopazLogger logger) : ILinkProcessor
         }
         else
         {
-            attachContext.Complete(new IncomingLinkEndpoint(address ?? string.Empty, logger), 300);
+            attachContext.Complete(new IncomingLinkEndpoint(address ?? string.Empty, logger, ruleLoader), 300);
         }
     }
 

@@ -7,8 +7,18 @@ using Topaz.Shared;
 
 namespace Topaz.Host.AMQP;
 
-public class OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger) : LinkEndpoint
+public class OutgoingLinkEndpoint : LinkEndpoint
 {
+    private readonly ITopazLogger _logger;
+
+    public OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger)
+    {
+        // AMQP source addresses arrive with a leading '/' (e.g. "/filter-topic/Subscriptions/sub-true").
+        // Strip it so the name matches what IncomingLinkEndpoint enqueues under.
+        EntityAddress = sourceAddress.TrimStart('/');
+        _logger = logger;
+    }
+
     // The Azure SDK (AmqpMessageConverter) reads LockTokenGuid from the AMQP Transfer delivery tag,
     // but only if it is exactly 16 bytes (GuidUtilities.TryParseGuidBytes requires length == 16).
     // AMQPNetLite's ListenerLink.SendMessage generates a 4-byte counter delivery tag, which the SDK
@@ -39,13 +49,18 @@ public class OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger) : L
         typeof(ListenerLink).Assembly.GetTypes().First(t => t.Name == "Session")
             .GetMethod("SendDelivery", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
-    // Protects _queueEndpoints, per-instance _pendingLink/_pendingCredit, and IncomingLinkEndpoint.Messages.
+    // Protects _queueEndpoints, per-instance _pendingLink/_pendingCredit, and SubscriptionMessageStore.
     internal static readonly object DeliveryLock = new();
 
     // Registry of active OutgoingLinkEndpoint instances that serve real queue/topic addresses
     // (source address starts with "/"). Management links (e.g. "sbqueue/$management") are
     // excluded so their FLOW frames cannot hijack the shared delivery state.
     private static readonly List<OutgoingLinkEndpoint> _queueEndpoints = [];
+
+    // Expose the AMQP entity address so DeliverMessages() can look up the per-entity queue.
+    // Stored explicitly to satisfy the C# restriction that a primary constructor parameter
+    // cannot both be captured in member bodies and used to initialize a field.
+    internal readonly string EntityAddress;
 
     // Per-instance state — was static, which caused FLOW from any receiver link (including
     // AMQP management response links) to overwrite the single shared _pendingLink and steal
@@ -67,9 +82,9 @@ public class OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger) : L
         {
             foreach (var ep in _queueEndpoints)
             {
-                while (ep._pendingCredit > 0 && IncomingLinkEndpoint.Messages.Count > 0 && ep._pendingLink != null)
+                while (ep._pendingCredit > 0 && ep._pendingLink != null
+                       && SubscriptionMessageStore.TryDequeue(ep.EntityAddress, out var message) && message != null)
                 {
-                    var message = IncomingLinkEndpoint.Messages[0];
                     message.Header ??= new Header();
                     
                     // AMQPNetLite only writes a field into the encoded list when the backing store has been
@@ -80,9 +95,8 @@ public class OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger) : L
                     // Nullable<uint> with HasValue=true, which AmqpMessageToSBReceivedMessage requires 
                     // to populate ServiceBusReceivedMessage.DeliveryCount without throwing.
                     message.Header.DeliveryCount = message.Header.DeliveryCount;
-                    message.MessageAnnotations[new Symbol("x-opt-offset")] = IncomingLinkEndpoint.Messages.IndexOf(message).ToString();
+                    message.MessageAnnotations[new Symbol("x-opt-offset")] = SubscriptionMessageStore.NextOffset().ToString();
                     message.MessageAnnotations[new Symbol("x-opt-locked-until")] = DateTime.UtcNow.AddMinutes(5);
-                    IncomingLinkEndpoint.Messages.RemoveAt(0);
                     ep._pendingCredit--;
                     deliveries.Add((ep._pendingLink, message));
                 }
@@ -98,7 +112,7 @@ public class OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger) : L
 
     public override void OnFlow(FlowContext flowContext)
     {
-        logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "There will be a maximum of {0} to process with {1} messages available.", flowContext.Messages, IncomingLinkEndpoint.Messages.Count);
+        _logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "There will be a maximum of {0} to process with {1} messages available.", flowContext.Messages, SubscriptionMessageStore.Count(EntityAddress));
         if (flowContext.Link.Role) return;
 
         lock (DeliveryLock)
@@ -114,8 +128,11 @@ public class OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger) : L
             // to the management response link instead of the queue consumer.
             // Note: regular queue addresses are plain names like "py-queue-test" (no
             // leading slash), so $management is the correct discriminator — NOT "/".
-            if (!sourceAddress.Contains("$management", StringComparison.OrdinalIgnoreCase) && !_queueEndpoints.Contains(this))
+            if (!EntityAddress.Contains("$management", StringComparison.OrdinalIgnoreCase) && !_queueEndpoints.Contains(this))
             {
+                // Ensure the per-entity queue slot exists so pre-consumer messages
+                // accumulate here until the consumer attaches.
+                SubscriptionMessageStore.EnsureQueue(EntityAddress);
                 _queueEndpoints.Add(this);
                 flowContext.Link.Closed += (_, _) =>
                 {
@@ -128,12 +145,12 @@ public class OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger) : L
 
         if (flowContext.Link.IsDraining)
         {
-            logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "Completing draining.");
+            _logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "Completing draining.");
             flowContext.Link.CompleteDrain();
-            logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "Draining complete.");
+            _logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "Draining complete.");
         }
 
-        logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "Finished processing messages.");
+        _logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnFlow), "Finished processing messages.");
     }
 
     public override void OnDisposition(DispositionContext dispositionContext)
