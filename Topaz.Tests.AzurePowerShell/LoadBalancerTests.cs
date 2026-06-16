@@ -68,7 +68,7 @@ public class LoadBalancerTests : PowerShellTestBase
             "$result",
             response =>
             {
-                var tags = response["Tags"]!.AsObject();
+                var tags = response["Tag"]!.AsObject();
                 Assert.Multiple(() =>
                 {
                     Assert.That(tags.ContainsKey("env"), Is.True);
