@@ -75,13 +75,15 @@ public class LoadBalancerTests : TopazFixture
         await RunAzureCliCommand(
             $"az resource patch --resource-type Microsoft.Network/loadBalancers --api-version 2024-03-01 " +
             $"--resource-group {ResourceGroup}-patch --name {LoadBalancerName}-patch " +
-            $"--set tags.env=test tags.team=platform",
+            $"--is-full-object --properties \"{{\\\"tags\\\": {{\\\"env\\\": \\\"test\\\", \\\"team\\\": \\\"platform\\\"}}}}\"",
             null, 0);
         await RunAzureCliCommand(
             $"az network lb show --resource-group {ResourceGroup}-patch --name {LoadBalancerName}-patch",
             response =>
             {
                 Assert.That(response["name"]!.GetValue<string>(), Is.EqualTo($"{LoadBalancerName}-patch"));
+                Assert.That(response["tags"]!["env"]!.GetValue<string>(), Is.EqualTo("test"));
+                Assert.That(response["tags"]!["team"]!.GetValue<string>(), Is.EqualTo("platform"));
             }, 0);
     }
 
