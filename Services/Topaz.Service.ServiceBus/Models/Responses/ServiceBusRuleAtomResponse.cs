@@ -4,7 +4,7 @@ using Topaz.Service.ServiceBus.Models;
 namespace Topaz.Service.ServiceBus.Models.Responses;
 
 [XmlRoot("entry", Namespace = "http://www.w3.org/2005/Atom", IsNullable = false)]
-internal sealed class ServiceBusRuleAtomResponse
+public sealed class ServiceBusRuleAtomResponse
 {
     [XmlElement("title")]
     public string? Title { get; init; }

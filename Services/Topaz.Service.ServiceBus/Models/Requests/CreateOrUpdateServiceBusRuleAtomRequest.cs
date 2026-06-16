@@ -1,82 +1,72 @@
-using System.Xml.Serialization;
+using System.Xml.Linq;
 using JetBrains.Annotations;
 
 namespace Topaz.Service.ServiceBus.Models.Requests;
 
-[XmlRoot("entry", Namespace = "http://www.w3.org/2005/Atom", IsNullable = false)]
-internal sealed class CreateOrUpdateServiceBusRuleAtomRequest
+public sealed class CreateOrUpdateServiceBusRuleAtomRequest
 {
-    [XmlElement("content")]
-    public RuleRequestContent? Content { get; init; } = new();
+    private static readonly XNamespace Atom = "http://www.w3.org/2005/Atom";
+    private static readonly XNamespace Sb = "http://schemas.microsoft.com/netservices/2010/10/servicebus/connect";
+    private static readonly XNamespace Xsi = "http://www.w3.org/2001/XMLSchema-instance";
 
-    public class RuleRequestContent
+    public string? FilterType { get; private set; }
+    public string? SqlExpression { get; private set; }
+    public string? ActionSqlExpression { get; private set; }
+
+    // Correlation filter fields
+    public string? ContentType { get; private set; }
+    public string? CorrelationId { get; private set; }
+    public string? MessageId { get; private set; }
+    public string? ReplyTo { get; private set; }
+    public string? ReplyToSessionId { get; private set; }
+    public string? SessionId { get; private set; }
+    public string? Label { get; private set; }
+    public string? To { get; private set; }
+
+    public static CreateOrUpdateServiceBusRuleAtomRequest Parse(string xml)
     {
-        [XmlElement("RuleDescription", Namespace = "http://schemas.microsoft.com/netservices/2010/10/servicebus/connect")]
-        public RuleDescriptionData? RuleDescription { get; init; } = new();
-    }
+        var doc = XDocument.Parse(xml);
+        var ruleDesc = doc.Descendants(Sb + "RuleDescription").FirstOrDefault()
+            ?? doc.Descendants("RuleDescription").FirstOrDefault();
 
-    [UsedImplicitly]
-    public class RuleDescriptionData
-    {
-        [XmlElement("Name")]
-        public string? Name { get; set; }
+        var filterEl = ruleDesc?.Element(Sb + "Filter") ?? ruleDesc?.Element("Filter");
+        var actionEl = ruleDesc?.Element(Sb + "Action") ?? ruleDesc?.Element("Action");
 
-        [XmlElement("Filter")]
-        public RuleFilterData? Filter { get; set; }
+        var filterType = filterEl?.Attribute(Xsi + "type")?.Value ?? "SqlFilter";
 
-        [XmlElement("Action")]
-        public RuleActionData? Action { get; set; }
-    }
-
-    [UsedImplicitly]
-    public class RuleFilterData
-    {
-        // xsi:type discriminator from the SDK: "SqlFilter", "CorrelationFilter", "TrueFilter"
-        [XmlAttribute("type", Namespace = "http://www.w3.org/2001/XMLSchema-instance")]
-        public string? Type { get; set; }
-
-        [XmlElement("SqlExpression")]
-        public string? SqlExpression { get; set; }
-
-        // Correlation filter fields
-        [XmlElement("ContentType")] public string? ContentType { get; set; }
-        [XmlElement("CorrelationId")] public string? CorrelationId { get; set; }
-        [XmlElement("MessageId")] public string? MessageId { get; set; }
-        [XmlElement("ReplyTo")] public string? ReplyTo { get; set; }
-        [XmlElement("ReplyToSessionId")] public string? ReplyToSessionId { get; set; }
-        [XmlElement("SessionId")] public string? SessionId { get; set; }
-        [XmlElement("Label")] public string? Label { get; set; }
-        [XmlElement("To")] public string? To { get; set; }
-    }
-
-    [UsedImplicitly]
-    public class RuleActionData
-    {
-        [XmlAttribute("type", Namespace = "http://www.w3.org/2001/XMLSchema-instance")]
-        public string? Type { get; set; }
-
-        [XmlElement("SqlExpression")]
-        public string? SqlExpression { get; set; }
+        return new CreateOrUpdateServiceBusRuleAtomRequest
+        {
+            FilterType = filterType,
+            SqlExpression = filterEl?.Element(Sb + "SqlExpression")?.Value
+                ?? filterEl?.Element("SqlExpression")?.Value,
+            ContentType = filterEl?.Element(Sb + "ContentType")?.Value ?? filterEl?.Element("ContentType")?.Value,
+            CorrelationId = filterEl?.Element(Sb + "CorrelationId")?.Value ?? filterEl?.Element("CorrelationId")?.Value,
+            MessageId = filterEl?.Element(Sb + "MessageId")?.Value ?? filterEl?.Element("MessageId")?.Value,
+            ReplyTo = filterEl?.Element(Sb + "ReplyTo")?.Value ?? filterEl?.Element("ReplyTo")?.Value,
+            ReplyToSessionId = filterEl?.Element(Sb + "ReplyToSessionId")?.Value ?? filterEl?.Element("ReplyToSessionId")?.Value,
+            SessionId = filterEl?.Element(Sb + "SessionId")?.Value ?? filterEl?.Element("SessionId")?.Value,
+            Label = filterEl?.Element(Sb + "Label")?.Value ?? filterEl?.Element("Label")?.Value,
+            To = filterEl?.Element(Sb + "To")?.Value ?? filterEl?.Element("To")?.Value,
+            ActionSqlExpression = actionEl?.Element(Sb + "SqlExpression")?.Value
+                ?? actionEl?.Element("SqlExpression")?.Value,
+        };
     }
 
     public static ServiceBusRuleResourceProperties ToProperties(CreateOrUpdateServiceBusRuleAtomRequest request)
     {
-        var filter = request.Content?.RuleDescription?.Filter;
-        var action = request.Content?.RuleDescription?.Action;
-
-        ServiceBusRuleResourceProperties props = filter?.Type switch
+        ServiceBusRuleResourceProperties props = request.FilterType switch
         {
             "TrueFilter" => ServiceBusRuleResourceProperties.DefaultTrueFilter(),
             "CorrelationFilter" => ServiceBusRuleResourceProperties.FromCorrelationFilter(
-                filter.ContentType, filter.CorrelationId, filter.MessageId,
-                filter.ReplyTo, filter.ReplyToSessionId, filter.SessionId,
-                filter.Label, filter.To),
-            _ => ServiceBusRuleResourceProperties.FromSqlFilter(filter?.SqlExpression ?? "1=1")
+                request.ContentType, request.CorrelationId, request.MessageId,
+                request.ReplyTo, request.ReplyToSessionId, request.SessionId,
+                request.Label, request.To),
+            _ => ServiceBusRuleResourceProperties.FromSqlFilter(request.SqlExpression ?? "1=1")
         };
 
-        if (action?.SqlExpression != null)
+        if (request.ActionSqlExpression != null)
         {
-            props.Action = new ServiceBusSqlRuleAction { SqlExpression = action.SqlExpression };
+            props.Action = new ServiceBusSqlRuleAction { SqlExpression = request.ActionSqlExpression };
         }
 
         return props;

@@ -1,13 +1,13 @@
 namespace Topaz.Service.ServiceBus.Models;
 
-internal sealed class ServiceBusSqlRuleFilter
+public sealed class ServiceBusSqlRuleFilter
 {
     public string SqlExpression { get; set; } = "1=1";
     public bool RequiresPreprocessing { get; set; } = true;
     public int CompatibilityLevel { get; set; } = 20;
 }
 
-internal sealed class ServiceBusCorrelationRuleFilter
+public sealed class ServiceBusCorrelationRuleFilter
 {
     public string? ContentType { get; set; }
     public string? CorrelationId { get; set; }
@@ -21,14 +21,14 @@ internal sealed class ServiceBusCorrelationRuleFilter
     public Dictionary<string, string>? Properties { get; set; }
 }
 
-internal sealed class ServiceBusSqlRuleAction
+public sealed class ServiceBusSqlRuleAction
 {
     public string? SqlExpression { get; set; }
     public bool RequiresPreprocessing { get; set; }
     public int CompatibilityLevel { get; set; } = 20;
 }
 
-internal sealed class ServiceBusRuleResourceProperties
+public sealed class ServiceBusRuleResourceProperties
 {
     /// <summary>Filter type: "SqlFilter", "CorrelationFilter", or "True"</summary>
     public string FilterType { get; set; } = "SqlFilter";

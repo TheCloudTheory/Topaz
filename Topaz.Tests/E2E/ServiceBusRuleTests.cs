@@ -153,7 +153,7 @@ public class ServiceBusRuleTests
         var client = CreateClient();
 
         // Act & Assert
-        Assert.ThrowsAsync<Azure.RequestFailedException>(() =>
+        Assert.ThrowsAsync<Azure.Messaging.ServiceBus.ServiceBusException>(() =>
             client.GetRuleAsync(TopicName, TopicSubscriptionName, "does-not-exist"));
     }
 
@@ -170,7 +170,7 @@ public class ServiceBusRuleTests
         await client.DeleteRuleAsync(TopicName, TopicSubscriptionName, ruleName);
 
         // Assert
-        Assert.ThrowsAsync<Azure.RequestFailedException>(() =>
+        Assert.ThrowsAsync<Azure.Messaging.ServiceBus.ServiceBusException>(() =>
             client.GetRuleAsync(TopicName, TopicSubscriptionName, ruleName));
     }
 
