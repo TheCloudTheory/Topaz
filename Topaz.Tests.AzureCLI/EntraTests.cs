@@ -184,15 +184,21 @@ public class EntraTests : TopazFixture
 	{
 		// az login --use-device-code is inherently interactive and cannot be automated.
 		// Drive the underlying HTTP flow with curl: POST to the device code endpoint, capture
-		// the device_code, then immediately exchange it for a token.  The emulator pre-authorizes
-		// the code on issuance when no login_hint is provided, so the first poll succeeds without
-		// any browser interaction.
+		// device_code and user_code, simulate browser sign-in at /devicelogin, then exchange
+		// for an access token.
 		var command =
-			"DEVICE_CODE=$(curl -sf --cacert /tmp/topaz.crt " +
+			"RESPONSE=$(curl -sf --cacert /tmp/topaz.crt " +
 				"-X POST https://topaz.local.dev:8899/organizations/oauth2/v2.0/devicecode " +
 				"-H 'Content-Type: application/x-www-form-urlencoded' " +
-				"-d 'client_id=00000000-0000-0000-0000-000000000001&scope=https%3A%2F%2Fmanagement.azure.com%2F.default' " +
-				"| python3 -c 'import sys,json;print(json.load(sys.stdin)[\"device_code\"])') " +
+				"-d 'client_id=00000000-0000-0000-0000-000000000001&scope=https%3A%2F%2Fmanagement.azure.com%2F.default') " +
+			"&& DEVICE_CODE=$(echo \"$RESPONSE\" | python3 -c 'import sys,json;print(json.load(sys.stdin)[\"device_code\"])') " +
+			"&& USER_CODE=$(echo \"$RESPONSE\" | python3 -c 'import sys,json;print(json.load(sys.stdin)[\"user_code\"])') " +
+			"&& curl -sf --cacert /tmp/topaz.crt " +
+				"-X POST https://topaz.local.dev:8899/devicelogin " +
+				"-H 'Content-Type: application/x-www-form-urlencoded' " +
+				"--data-urlencode \"user_code=${USER_CODE}\" " +
+				"--data-urlencode 'username=topazadmin@topaz.local.dev' " +
+				"> /dev/null " +
 			"&& curl -sf --cacert /tmp/topaz.crt " +
 				"-X POST https://topaz.local.dev:8899/organizations/oauth2/v2.0/token " +
 				"-H 'Content-Type: application/x-www-form-urlencoded' " +

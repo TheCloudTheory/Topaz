@@ -394,7 +394,7 @@ public class EntraTests
     {
         using var http = new HttpClient();
 
-        // Step 1: obtain device_code
+        // Step 1: obtain device_code and user_code
         var deviceCodeResponse = await http.PostAsync(
             "https://topaz.local.dev:8899/organizations/oauth2/v2.0/devicecode",
             new FormUrlEncodedContent(new[]
@@ -406,8 +406,20 @@ public class EntraTests
         var dcBody = await deviceCodeResponse.Content.ReadAsStringAsync();
         using var dcDoc = JsonDocument.Parse(dcBody);
         var deviceCode = dcDoc.RootElement.GetProperty("device_code").GetString()!;
+        var userCode = dcDoc.RootElement.GetProperty("user_code").GetString()!;
 
-        // Step 2: exchange device_code for an access token
+        // Step 2: simulate browser sign-in at /devicelogin
+        var loginResponse = await http.PostAsync(
+            "https://topaz.local.dev:8899/devicelogin",
+            new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("user_code", userCode),
+                new KeyValuePair<string, string>("username", "topazadmin@topaz.local.dev"),
+            }));
+
+        Assert.That((int)loginResponse.StatusCode, Is.EqualTo(200), "Device login must succeed before token exchange");
+
+        // Step 3: exchange device_code for an access token
         var tokenResponse = await http.PostAsync(
             "https://topaz.local.dev:8899/organizations/oauth2/v2.0/token",
             new FormUrlEncodedContent(new[]
@@ -425,5 +437,99 @@ public class EntraTests
         Assert.That(tokenDoc.RootElement.TryGetProperty("access_token", out var accessToken) &&
                     !string.IsNullOrEmpty(accessToken.GetString()), Is.True,
                     "Token response must contain a non-empty access_token");
+    }
+
+    [Test]
+    public async Task DeviceLogin_Get_ReturnsHtmlForm()
+    {
+        using var http = new HttpClient();
+
+        var response = await http.GetAsync("https://topaz.local.dev:8899/devicelogin");
+
+        Assert.That((int)response.StatusCode, Is.EqualTo(200));
+        Assert.That(response.Content.Headers.ContentType?.MediaType, Is.EqualTo("text/html"));
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.That(body, Does.Contain("name=\"user_code\""), "Form must contain a user_code input");
+        Assert.That(body, Does.Contain("name=\"username\""), "Form must contain a username input");
+    }
+
+    [Test]
+    public async Task DeviceLogin_Post_AuthorizesDeviceCode()
+    {
+        using var http = new HttpClient();
+
+        // Obtain codes
+        var dcResponse = await http.PostAsync(
+            "https://topaz.local.dev:8899/organizations/oauth2/v2.0/devicecode",
+            new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("client_id", "00000000-0000-0000-0000-000000000001"),
+                new KeyValuePair<string, string>("scope", "https://management.azure.com/.default"),
+            }));
+
+        var dcBody = await dcResponse.Content.ReadAsStringAsync();
+        using var dcDoc = JsonDocument.Parse(dcBody);
+        var deviceCode = dcDoc.RootElement.GetProperty("device_code").GetString()!;
+        var userCode = dcDoc.RootElement.GetProperty("user_code").GetString()!;
+
+        // Before sign-in: token exchange must return authorization_pending
+        var pendingTokenResponse = await http.PostAsync(
+            "https://topaz.local.dev:8899/organizations/oauth2/v2.0/token",
+            new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("grant_type", "urn:ietf:params:oauth:grant-type:device_code"),
+                new KeyValuePair<string, string>("device_code", deviceCode),
+                new KeyValuePair<string, string>("client_id", "00000000-0000-0000-0000-000000000001"),
+            }));
+
+        Assert.That((int)pendingTokenResponse.StatusCode, Is.EqualTo(400), "Token exchange before sign-in must return 400");
+        var pendingBody = await pendingTokenResponse.Content.ReadAsStringAsync();
+        Assert.That(pendingBody, Does.Contain("authorization_pending"));
+
+        // Sign in via /devicelogin
+        var loginResponse = await http.PostAsync(
+            "https://topaz.local.dev:8899/devicelogin",
+            new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("user_code", userCode),
+                new KeyValuePair<string, string>("username", "topazadmin@topaz.local.dev"),
+            }));
+
+        Assert.That((int)loginResponse.StatusCode, Is.EqualTo(200));
+        var loginBody = await loginResponse.Content.ReadAsStringAsync();
+        Assert.That(loginBody, Does.Contain("topazadmin@topaz.local.dev"));
+
+        // After sign-in: token exchange must succeed
+        var tokenResponse = await http.PostAsync(
+            "https://topaz.local.dev:8899/organizations/oauth2/v2.0/token",
+            new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("grant_type", "urn:ietf:params:oauth:grant-type:device_code"),
+                new KeyValuePair<string, string>("device_code", deviceCode),
+                new KeyValuePair<string, string>("client_id", "00000000-0000-0000-0000-000000000001"),
+            }));
+
+        Assert.That((int)tokenResponse.StatusCode, Is.EqualTo(200));
+        var tokenBody = await tokenResponse.Content.ReadAsStringAsync();
+        using var tokenDoc = JsonDocument.Parse(tokenBody);
+        Assert.That(tokenDoc.RootElement.TryGetProperty("access_token", out var at) &&
+                    !string.IsNullOrEmpty(at.GetString()), Is.True);
+    }
+
+    [Test]
+    public async Task DeviceLogin_Post_InvalidUserCode_ReturnsBadRequest()
+    {
+        using var http = new HttpClient();
+
+        var response = await http.PostAsync(
+            "https://topaz.local.dev:8899/devicelogin",
+            new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("user_code", "XXXX-XXXX"),
+                new KeyValuePair<string, string>("username", "topazadmin@topaz.local.dev"),
+            }));
+
+        Assert.That((int)response.StatusCode, Is.EqualTo(400));
     }
 }
