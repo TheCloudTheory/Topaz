@@ -38,7 +38,7 @@ internal sealed class GetServiceBusTopicEndpoint(Pipeline eventPipeline, ITopazL
 
         if (operation.Result == OperationResult.NotFound || operation.Resource == null)
         {
-            response.CreateErrorResponse(operation.Code!, operation.Reason!, operation.Result);
+            response.CreateErrorResponse(operation.Code!, operation.Reason!, System.Net.HttpStatusCode.NotFound);
             return;
         }
 

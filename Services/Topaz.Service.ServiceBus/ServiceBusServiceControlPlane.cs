@@ -275,7 +275,7 @@ internal sealed class ServiceBusServiceControlPlane(
 
         return existingTopic == null
             ? new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.NotFound, null,
-                ServiceBusTopicNotFoundMessageTemplate, ServiceBusTopicNotFoundCode)
+                string.Format(ServiceBusTopicNotFoundMessageTemplate, topicName), ServiceBusTopicNotFoundCode)
             : new ControlPlaneOperationResult<ServiceBusTopicResource>(OperationResult.Success, existingTopic, null,
                 null);
     }
@@ -451,7 +451,7 @@ internal sealed class ServiceBusServiceControlPlane(
             nameof(Subresource.Topics).ToLowerInvariant());
         if (existingTopic == null)
         {
-            return new ControlPlaneOperationResult(OperationResult.NotFound, ServiceBusTopicNotFoundMessageTemplate, ServiceBusTopicNotFoundCode);
+            return new ControlPlaneOperationResult(OperationResult.NotFound, string.Format(ServiceBusTopicNotFoundMessageTemplate, topicName), ServiceBusTopicNotFoundCode);
         }
 
         provider.DeleteSubresource(subscriptionIdentifier, resourceGroupIdentifier, topicName,

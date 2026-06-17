@@ -37,7 +37,7 @@ internal sealed class DeleteServiceBusTopicEndpoint(Pipeline eventPipeline, ITop
         var operation = _controlPlane.DeleteTopic(subscriptionIdentifier, resourceGroupIdentifier, serviceBusNamespaceIdentifier, topicName!);
         if (operation.Result == OperationResult.NotFound)
         {
-            response.CreateErrorResponse(operation.Code!, operation.Reason!, operation.Result);
+            response.CreateErrorResponse(operation.Code!, operation.Reason!, HttpStatusCode.NotFound);
             return;
         }
 

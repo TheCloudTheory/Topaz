@@ -19,6 +19,11 @@ public class TopazFixture
     private const string AzureCliContainerImage = "mcr.microsoft.com/azure-cli:2.84.0";
     private const string TerraformVersion = "1.10.5";
 
+    // Serializes PreInitializeProviderTemplates across all parallel fixture instances.
+    // Multiple test classes share the same bind-mounted plugin cache; without a lock, concurrent
+    // terraform init calls race to write the same provider binary and produce "text file busy".
+    private static readonly SemaphoreSlim ProviderInitLock = new(1, 1);
+
     // Persisted on the host so providers and the Terraform binary are downloaded only once
     // across all test-class fixture setups, regardless of how many containers are created.
     // Override with TOPAZ_TERRAFORM_CACHE_DIR to use a different path.
@@ -231,7 +236,17 @@ public class TopazFixture
             await RunTerraformContainerCommand($"az account set --subscription {_subscriptionId}", maxAttempts: 3);
 
             // Pre-initialize one workspace per provider so tests can skip `terraform init`.
-            await PreInitializeProviderTemplates();
+            // Serialized across all parallel fixture instances to prevent concurrent writes
+            // to the shared plugin cache from causing "text file busy" errors.
+            await ProviderInitLock.WaitAsync();
+            try
+            {
+                await PreInitializeProviderTemplates();
+            }
+            finally
+            {
+                ProviderInitLock.Release();
+            }
 
             RegisterCleanupHook();
             _isInitialized = true;
