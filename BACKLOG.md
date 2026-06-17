@@ -244,22 +244,6 @@ _Implemented in v1.6-beta: `AuthorizeEndpoint` now reads `response_mode` from th
 
 _Implemented in v1.6-beta: `DeviceCodeEndpoint` handles `POST /organizations|{tenantId}|common/oauth2/v2.0/devicecode` and returns a valid RFC 8628 device-authorization response (`device_code`, `user_code`, `verification_uri`, `expires_in`, `interval`, `message`). `TokenEndpoint` now handles `grant_type=urn:ietf:params:oauth:grant-type:device_code`. When a `login_hint` is present in the device code request the matching user is resolved; otherwise the global admin is used as a placeholder (see TODO below)._
 
-<!--
-TODO: Entra — implement /devicelogin for real device code browser sign-in
-  DeviceCodeEndpoint currently pre-binds the device code to the global admin when no
-  login_hint is provided, so token polling succeeds immediately. Real Azure keeps the
-  code in "authorization_pending" state until the user visits verification_uri, enters
-  the user_code, and signs in. Topaz could support this properly:
-    1. GET /devicelogin — serves an HTML form that asks for user_code + username
-    2. POST /devicelogin — looks up the device code by user_code, marks it authorized
-       for the submitted user (writes into DeviceCodeEndpoint.AuthorizedDeviceCodes)
-    3. Token polling returns authorization_pending until step 2 completes
-  This would make the device code flow fully Azure-compatible and allow specifying any
-  registered user when logging in via az login --use-device-code.
-  milestone: v1.7-beta
-  labels: enhancement, entra
--->
-
 ### Entra — ROPC login on non-container installs
 
 _Implemented in v1.6-beta: a built-in HTTP CONNECT proxy starts on port 44380 alongside the Topaz host. MSAL's user-realm discovery pre-flight (`GET .../common/userrealm/{user}?api-version=1.0`) targets port 443 (stripped by MSAL from the authority URL); the proxy remaps the tunnel to port 8899 where Kestrel handles it. Set `HTTPS_PROXY=http://127.0.0.1:44380` before running `az login --username --password` on non-Docker local installs. Docker installs continue to bind port 443 directly and do not require the proxy._
