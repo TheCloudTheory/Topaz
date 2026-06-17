@@ -1,7 +1,9 @@
 using Topaz.EventPipeline;
-using Topaz.Service.CosmosDb.DataPlane;
-using Topaz.Service.CosmosDb.DataPlane.Databases;
-using Topaz.Service.CosmosDb.Endpoints;
+using Topaz.Service.CosmosDb.Endpoints.DatabaseAccounts;
+using Topaz.Service.CosmosDb.Endpoints.DataPlane;
+using Topaz.Service.CosmosDb.Endpoints.DataPlane.Databases;
+using Topaz.Service.CosmosDb.Endpoints.SqlContainers;
+using Topaz.Service.CosmosDb.Endpoints.SqlDatabases;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Shared;
