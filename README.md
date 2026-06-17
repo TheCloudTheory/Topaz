@@ -76,8 +76,8 @@ topaz health
 
 Then connect your tooling — no code changes required:
 
-- **Azure CLI** — [Azure CLI integration guide](https://topaz.thecloudtheory.com/azure-cli-integration/)
-- **Azure PowerShell** — [Azure PowerShell integration guide](https://topaz.thecloudtheory.com/azure-powershell-integration/)
+- **Azure CLI** — [Azure CLI integration guide](https://topaz.thecloudtheory.com/docs/azure-cli-integration/)
+- **Azure PowerShell** — [Azure PowerShell integration guide](https://topaz.thecloudtheory.com/docs/azure-powershell-integration/)
 - **Azure SDKs (.NET, Python, Java, JS)** — [Getting started](https://topaz.thecloudtheory.com/docs/intro/)
 
 See the [documentation](https://topaz.thecloudtheory.com/) for connection strings, DNS setup, and service-specific quickstarts.
