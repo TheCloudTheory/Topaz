@@ -42,7 +42,7 @@ Most Azure emulators cover a single service. Topaz covers the full stack:
 * **Full portability** — single executable or Docker container, runs anywhere
 * **No runtime required** — published as a self-contained binary and a distroless Docker image; no .NET installation needed
 
-See the [roadmap](https://topaz.thecloudtheory.com/docs/roadmap/) for what's coming next.
+See the [roadmap](https://topaz.thecloudtheory.com/roadmap/) for what's coming next.
 
 ## Supported services
 
@@ -64,7 +64,7 @@ See the [roadmap](https://topaz.thecloudtheory.com/docs/roadmap/) for what's com
 | Azure Cosmos DB | ✅ | — | Preview |
 | Azure Disk | ✅ | — | Preview |
 
-See the [API coverage docs](https://topaz.thecloudtheory.com/docs/api-coverage/) for the full operation-level breakdown per service.
+See the [API coverage docs](https://topaz.thecloudtheory.com/docs/category/api-coverage/) for the full operation-level breakdown per service.
 
 ## Getting started
 
