@@ -8,7 +8,7 @@ namespace Topaz.Host;
 /// <summary>
 /// Lightweight HTTP CONNECT proxy that remaps port-443 requests targeting Topaz hostnames
 /// to the Topaz resource-manager port (8899), allowing MSAL's user-realm discovery pre-flight
-/// to succeed on non-Docker local installs without requiring elevated privileges.
+/// to succeed on non-Docker local installations without requiring elevated privileges.
 ///
 /// Routing rules (evaluated in order):
 ///   1. {TopazHostname}:443 or *.{TopazHostname}:443  →  127.0.0.1:{DefaultResourceManagerPort}
@@ -17,24 +17,15 @@ namespace Topaz.Host;
 ///
 /// Set HTTPS_PROXY=http://127.0.0.1:{ConnectProxyPort} in the client environment to use.
 /// </summary>
-internal sealed class ConnectProxy
+internal sealed class ConnectProxy(string bindAddress, ITopazLogger logger)
 {
-    private readonly string _bindAddress;
-    private readonly ITopazLogger _logger;
-
-    public ConnectProxy(string bindAddress, ITopazLogger logger)
-    {
-        _bindAddress = bindAddress;
-        _logger = logger;
-    }
-
     public async Task RunAsync(CancellationToken cancellationToken)
     {
-        var listener = new TcpListener(IPAddress.Parse(_bindAddress), GlobalSettings.ConnectProxyPort);
+        var listener = new TcpListener(IPAddress.Parse(bindAddress), GlobalSettings.ConnectProxyPort);
         listener.Start();
 
-        _logger.LogDebug(nameof(ConnectProxy), nameof(RunAsync),
-            $"CONNECT proxy listening on {_bindAddress}:{GlobalSettings.ConnectProxyPort}");
+        logger.LogDebug(nameof(ConnectProxy), nameof(RunAsync),
+            $"CONNECT proxy listening on {bindAddress}:{GlobalSettings.ConnectProxyPort}");
 
         try
         {
@@ -46,7 +37,7 @@ internal sealed class ConnectProxy
         }
         catch (OperationCanceledException)
         {
-            // Normal shutdown
+            logger.LogDebug(nameof(ConnectProxy), nameof(RunAsync), "Proxy stopped by user.");
         }
         finally
         {
@@ -64,7 +55,9 @@ internal sealed class ConnectProxy
             // Read the CONNECT request line (e.g. "CONNECT topaz.local.dev:443 HTTP/1.1")
             var requestLine = await ReadLineAsync(stream, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrEmpty(requestLine))
+            {
                 return;
+            }
 
             // Drain remaining headers
             while (true)
@@ -76,7 +69,7 @@ internal sealed class ConnectProxy
 
             if (!TryParseConnectTarget(requestLine, out var targetHost, out var targetPort))
             {
-                _logger.LogDebug(nameof(ConnectProxy), nameof(HandleClientAsync),
+                logger.LogDebug(nameof(ConnectProxy), nameof(HandleClientAsync),
                     $"Malformed CONNECT request: {requestLine}");
                 await WriteAsync(stream, "HTTP/1.1 400 Bad Request\r\n\r\n", cancellationToken).ConfigureAwait(false);
                 return;
@@ -84,7 +77,7 @@ internal sealed class ConnectProxy
 
             var (resolvedHost, resolvedPort) = ResolveTarget(targetHost, targetPort);
 
-            _logger.LogDebug(nameof(ConnectProxy), nameof(HandleClientAsync),
+            logger.LogDebug(nameof(ConnectProxy), nameof(HandleClientAsync),
                 $"CONNECT {targetHost}:{targetPort} → {resolvedHost}:{resolvedPort}");
 
             TcpClient upstream;
@@ -95,7 +88,7 @@ internal sealed class ConnectProxy
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(nameof(ConnectProxy), nameof(HandleClientAsync),
+                logger.LogDebug(nameof(ConnectProxy), nameof(HandleClientAsync),
                     $"Failed to connect to {resolvedHost}:{resolvedPort}: {ex.Message}");
                 await WriteAsync(stream, "HTTP/1.1 502 Bad Gateway\r\n\r\n", cancellationToken).ConfigureAwait(false);
                 return;
@@ -109,14 +102,14 @@ internal sealed class ConnectProxy
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogDebug(nameof(ConnectProxy), nameof(HandleClientAsync),
+            logger.LogDebug(nameof(ConnectProxy), nameof(HandleClientAsync),
                 $"Connection error: {ex.Message}");
         }
     }
 
     private static (string host, int port) ResolveTarget(string requestedHost, int requestedPort)
     {
-        var topazSuffix = "." + GlobalSettings.TopazHostname; // ".topaz.local.dev"
+        const string topazSuffix = "." + GlobalSettings.TopazHostname; // ".topaz.local.dev"
 
         var isTopaz = requestedHost.Equals(GlobalSettings.TopazHostname, StringComparison.OrdinalIgnoreCase)
                       || requestedHost.EndsWith(topazSuffix, StringComparison.OrdinalIgnoreCase);
@@ -127,14 +120,11 @@ internal sealed class ConnectProxy
             return ("127.0.0.1", GlobalSettings.DefaultResourceManagerPort);
         }
 
-        if (isTopaz)
-        {
+        return isTopaz ?
             // Other Topaz sub-service ports tunnel directly to loopback
-            return ("127.0.0.1", requestedPort);
-        }
-
-        // Non-Topaz host: pass through transparently
-        return (requestedHost, requestedPort);
+            ("127.0.0.1", requestedPort) :
+            // Non-Topaz host: pass through transparently
+            (requestedHost, requestedPort);
     }
 
     private static bool TryParseConnectTarget(string requestLine, out string host, out int port)

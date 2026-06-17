@@ -30,11 +30,11 @@ internal sealed class AmqpFramePaddingHandler : IHandler
                     // Ensure the Open frame has all 10 fields so Python's frame[4] and frame[9] succeed.
                     if (protocolEvent.Context is Open open)
                     {
-                        System.Console.Error.WriteLine($"[PADDING] Open frame intercepted");
+                        Console.Error.WriteLine($"[PADDING] Open frame intercepted");
                         if (open.Properties == null)
                         {
                             open.Properties = new Fields();
-                            System.Console.Error.WriteLine($"[PADDING] Open frame Properties set to empty Fields");
+                            Console.Error.WriteLine($"[PADDING] Open frame Properties set to empty Fields");
                         }
                     }
                     break;
@@ -43,11 +43,11 @@ internal sealed class AmqpFramePaddingHandler : IHandler
                     // Ensure the Begin frame has all 8 fields so Python's frame[7] (properties) succeeds.
                     if (protocolEvent.Context is Begin begin)
                     {
-                        System.Console.Error.WriteLine($"[PADDING] Begin frame intercepted");
+                        Console.Error.WriteLine($"[PADDING] Begin frame intercepted");
                         if (begin.Properties == null)
                         {
                             begin.Properties = new Fields();
-                            System.Console.Error.WriteLine($"[PADDING] Begin frame Properties set to empty Fields");
+                            Console.Error.WriteLine($"[PADDING] Begin frame Properties set to empty Fields");
                         }
                     }
                     break;
@@ -56,11 +56,11 @@ internal sealed class AmqpFramePaddingHandler : IHandler
                     // Ensure the Attach frame has all 14 fields so Python's frame[11] and frame[13] succeed.
                     if (protocolEvent.Context is Attach attach)
                     {
-                        System.Console.Error.WriteLine($"[PADDING] Attach frame intercepted");
+                        Console.Error.WriteLine($"[PADDING] Attach frame intercepted");
                         if (attach.Properties == null)
                         {
                             attach.Properties = new Fields();
-                            System.Console.Error.WriteLine($"[PADDING] Attach frame Properties set to empty Fields");
+                            Console.Error.WriteLine($"[PADDING] Attach frame Properties set to empty Fields");
                         }
                     }
                     break;
@@ -68,7 +68,7 @@ internal sealed class AmqpFramePaddingHandler : IHandler
         }
         catch (Exception ex)
         {
-            System.Console.Error.WriteLine($"[PADDING] Exception in handler: {ex.Message}");
+            Console.Error.WriteLine($"[PADDING] Exception in handler: {ex.Message}");
         }
     }
 }

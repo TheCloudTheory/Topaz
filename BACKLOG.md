@@ -269,45 +269,7 @@ TODO: Virtual Networks: Private Endpoint IP tracking
   labels: enhancement, virtual-network, good first issue
 -->
 
-### Storage — SAS source IP (`sip`) enforcement ✅ Implemented in v1.7-beta
-
-<!--
-DONE: Storage: Service SAS sip (source IP) parameter enforcement
-  Implemented in v1.7-beta.
-  - Created SipIpRangeChecker static utility (IPv4 BinaryPrimitives range check, IPv4-mapped IPv6 normalisation, lexicographic IPv6 comparison).
-  - ServiceSasValidator, AccountSasValidator, UserDelegationSasValidator all accept IPAddress? remoteIpAddress and enforce sip= fail-closed.
-  - AccountSasValidator and UserDelegationSasValidator return type changed from bool to StorageAuthorizationResult.
-  - StorageAuthorizationResult.SourceIPMismatch() factory added.
-  - BlobStorageSecurityProvider, QueueStorageSecurityProvider, TableStorageSecurityProvider pass context.Connection.RemoteIpAddress.
-  - All three endpoint base classes (Blob, Queue, Table) pass remoteIpAddress; handle AuthorizationSourceIPMismatch as 403.
-  - 6 new E2E tests in StorageServiceSasTests.cs; 2 Docker CLI tests in StorageTests.cs.
-  - website/docs/known-limitations.md entry removed; website/docs/api-coverage/storage.md updated.
-  milestone: v1.7-beta
-  labels: enhancement, storage, security
--->
-
 ### Azure Cosmos DB — SQL API data plane
-
-<!--
-TODO: Azure Cosmos DB: Data plane service scaffold and authentication
-  Add a CosmosDbDataPlane service (analogous to AcrDataPlane) that handles the
-  Cosmos DB REST API (https://learn.microsoft.com/en-us/rest/api/cosmos-db/) on a
-  dedicated port (GlobalSettings.DefaultCosmosDbPort, 8894).
-  Authentication:
-  - Implement master-key HMAC-SHA256 signature validation.
-    StringToSign format: verb.toLowerCase() + "\n" + resourceType.toLowerCase() + "\n"
-      + resourceLink + "\n" + date.toLowerCase() + "\n" + "" + "\n"
-    (all values lowercased; trailing newlines are significant.)
-  - Parse the Authorization header: type=master&ver=1.0&sig=<base64>
-  - Derive the signing key from the stored primaryMasterKey bytes (base64-decode first).
-  - Validate that the computed HMAC matches sig=, and that x-ms-date is within 15 minutes
-    of the server clock (replay-attack window matching real Azure).
-  - Return 401 with a structured JSON error body on auth failure.
-  All data-plane endpoints must inherit from a CosmosDataPlaneEndpointBase that
-  calls IsRequestAuthorized and returns 401 before processing.
-  milestone: v1.7-beta
-  labels: enhancement, cosmos-db
--->
 
 <!--
 TODO: Azure Cosmos DB: Data plane — Database operations

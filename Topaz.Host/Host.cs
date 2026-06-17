@@ -55,8 +55,8 @@ public class Host
     private readonly Router _router;
 
     /// <summary>
-    /// IP address used by Topaz to listen to incoming requests. Note that address is controlled by the
-    /// host itself while ports and protocols are the responsibility of appropriate services.
+    /// IP address used by Topaz to listen to incoming requests. Note that the address is controlled by the
+    /// host itself, while ports and protocols are the responsibility of appropriate services.
     /// </summary>
     private readonly string _topazIpAddress;
 
@@ -171,7 +171,7 @@ public class Host
 
         // Start the built-in HTTP CONNECT proxy. This remaps port-443 CONNECT tunnels
         // targeting Topaz hostnames to the resource-manager port so that MSAL's user-realm
-        // discovery pre-flight works on non-Docker local installs without root privileges.
+        // discovery pre-flight works on non-Docker local installations without root privileges.
         var proxy = new ConnectProxy(_topazIpAddress, _logger);
         _ = Task.Run(() => proxy.RunAsync(cancellationToken), cancellationToken);
 
@@ -182,14 +182,9 @@ public class Host
             Console.WriteLine("  To use ROPC authentication (az login --username --password),");
             Console.WriteLine("  set the following environment variable before running Azure CLI commands:");
             Console.WriteLine();
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
-            {
-                Console.WriteLine($"    set HTTPS_PROXY=http://127.0.0.1:{GlobalSettings.ConnectProxyPort}");
-            }
-            else
-            {
-                Console.WriteLine($"    export HTTPS_PROXY=http://127.0.0.1:{GlobalSettings.ConnectProxyPort}");
-            }
+            Console.WriteLine(RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? $"    set HTTPS_PROXY=http://127.0.0.1:{GlobalSettings.ConnectProxyPort}"
+                : $"    export HTTPS_PROXY=http://127.0.0.1:{GlobalSettings.ConnectProxyPort}");
             Console.WriteLine();
         }
 
@@ -221,7 +216,7 @@ public class Host
         await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
     }
 
-    private void Bootstrap()
+    private static void Bootstrap()
     {
         if (Directory.Exists(GlobalSettings.MainEmulatorDirectory))
         {
@@ -284,12 +279,12 @@ public class Host
 
         // Pad Open/Attach frames so Python's positional frame[] access (frame[9], frame[11], frame[13])
         // doesn't raise IndexError. AMQPNetLite 2.5.1 omits trailing null fields; this handler ensures
-        // Properties is always included, forcing the serializer to emit all preceding fields too.
+        // Properties are always included, forcing the serializer to emit all preceding fields too.
         listener.Listeners[0].HandlerFactory = _ => AmqpFramePaddingHandler.Instance;
 
         listener.RegisterRequestProcessor("$management", new ManagementProcessor(_logger));
         listener.RegisterLinkProcessor(new LinkProcessor(_logger,
-            new Topaz.Service.ServiceBus.Filtering.ServiceBusRuleLoader(Topaz.Shared.GlobalSettings.MainEmulatorDirectory)));
+            new Service.ServiceBus.Filtering.ServiceBusRuleLoader(GlobalSettings.MainEmulatorDirectory)));
 
         // Frame traces should be enabled only if LogLevel is set to Debug
         if (_logger.LogLevel == LogLevel.Debug)
