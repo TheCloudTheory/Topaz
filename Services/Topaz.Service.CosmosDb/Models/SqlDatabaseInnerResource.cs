@@ -1,4 +1,6 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using Topaz.Shared;
 
 namespace Topaz.Service.CosmosDb.Models;
 
@@ -23,6 +25,9 @@ public sealed class SqlDatabaseInnerResource
 
     [JsonPropertyName("_ts")]
     public long Timestamp { get; set; }
+
+    public override string ToString() =>
+        JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
 
     public static SqlDatabaseInnerResource Create(string databaseName)
     {

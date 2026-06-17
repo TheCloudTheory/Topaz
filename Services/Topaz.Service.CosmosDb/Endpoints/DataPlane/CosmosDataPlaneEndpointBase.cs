@@ -227,5 +227,8 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
 
         [JsonPropertyName("message")]
         public string Message { get; init; } = string.Empty;
+
+        public override string ToString() =>
+            System.Text.Json.JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
     }
 }

@@ -54,9 +54,14 @@ internal sealed class CreateDatabaseEndpoint : CosmosDataPlaneEndpointBase
             return;
         }
 
-        response.StatusCode = result.Result == OperationResult.Created ? HttpStatusCode.Created : HttpStatusCode.OK;
+        if (result.Result == OperationResult.Updated)
+        {
+            response.StatusCode = HttpStatusCode.Conflict;
+            return;
+        }
+
         response.Headers.Add("x-ms-request-charge", "1");
-        response.CreateJsonContentResponse(result.Resource);
+        response.CreateJsonContentResponse(result.Resource, HttpStatusCode.Created);
     }
 
     private sealed class CreateDatabaseRequest
