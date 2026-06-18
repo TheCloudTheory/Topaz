@@ -272,37 +272,6 @@ TODO: Virtual Networks: Private Endpoint IP tracking
 ### Azure Cosmos DB — SQL API data plane
 
 <!--
-TODO: Azure Cosmos DB: Data plane — Collection (Container) operations
-  Implement the Cosmos DB REST API collection resource endpoints:
-  - POST   /{dbs}/{db}/colls                   – create collection (body includes id, partitionKey, indexingPolicy, defaultTtl; optional x-ms-offer-throughput header)
-  - GET    /{dbs}/{db}/colls/{coll}             – get collection
-  - DELETE /{dbs}/{db}/colls/{coll}             – delete collection
-  - PUT    /{dbs}/{db}/colls/{coll}             – replace collection (update indexingPolicy, defaultTtl)
-  - GET    /{dbs}/{db}/colls                    – list collections
-  Resource links follow the pattern: dbs/{db}/colls/{coll}.
-  Persist collection definitions as JSON files on disk via the resource provider;
-  they mirror the ARM-side container created through the control plane.
-  milestone: v1.7-beta
-  labels: enhancement, cosmos-db
--->
-
-<!--
-TODO: Azure Cosmos DB: Data plane — Document (Item) CRUD operations
-  Implement the Cosmos DB REST API document resource endpoints:
-  - POST   /{dbs}/{db}/colls/{coll}/docs                      – create document (assigns _rid, _self, _etag, _ts; validates partition key presence)
-  - GET    /{dbs}/{db}/colls/{coll}/docs/{docId}              – get document (requires x-ms-documentdb-partitionkey header matching stored partition key value)
-  - PUT    /{dbs}/{db}/colls/{coll}/docs/{docId}              – replace document (full replace; update _etag, _ts; respect If-Match for optimistic concurrency)
-  - PATCH  /{dbs}/{db}/colls/{coll}/docs/{docId}              – partial update via JSON Patch operations array (add, set, replace, remove, increment)
-  - DELETE /{dbs}/{db}/colls/{coll}/docs/{docId}              – delete document (requires x-ms-documentdb-partitionkey header)
-  - GET    /{dbs}/{db}/colls/{coll}/docs                      – list documents in a collection (returns {"_rid":"...","Documents":[...],"_count":N})
-  Documents are stored as individual JSON files under .topaz/cosmos-db/.../colls/{coll}/docs/.
-  Filename: {docId}.json (URL-encoded if the id contains special characters).
-  Implement If-Match / If-None-Match ETag concurrency checks; return 412 on mismatch.
-  milestone: v1.7-beta
-  labels: enhancement, cosmos-db
--->
-
-<!--
 TODO: Azure Cosmos DB: Data plane — SQL query execution
   Implement the document query endpoint:
   - POST /{dbs}/{db}/colls/{coll}/docs  with header x-ms-documentdb-isquery: true

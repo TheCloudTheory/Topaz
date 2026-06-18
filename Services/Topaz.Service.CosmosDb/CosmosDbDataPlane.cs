@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http;
 using Topaz.Dns;
 using Topaz.Service.CosmosDb.Models;
@@ -256,5 +258,263 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         var parentId = SqlContainerParentId(account.Name, databaseName);
         var containers = provider.ListSubresourcesAs<SqlContainerResource>(sub, rg, parentId, SqlContainersSubresource);
         return new DataPlaneOperationResult<SqlContainerInnerResource[]>(OperationResult.Success, containers.Select(c => c.Properties.Resource).ToArray(), null, null);
+    }
+
+    private static string DocFileName(string docId) =>
+        Uri.EscapeDataString(docId) + ".json";
+
+    private static string? ExtractPartitionKeyValue(JsonObject doc, SqlContainerInnerResource container)
+    {
+        // PartitionKey.Paths is e.g. ["/pk"]; we only look at the first path for v1.7
+        var path = container.PartitionKey?.Paths?.FirstOrDefault();
+        if (string.IsNullOrEmpty(path)) return null;
+
+        var field = path.TrimStart('/');
+        return doc[field]?.ToString();
+    }
+
+    private string? ParsePartitionKeyHeader(string header)
+    {
+        // Header value is a JSON array, e.g. ["value"] or [null]
+        try
+        {
+            var arr = JsonNode.Parse(header)?.AsArray();
+            return arr?[0]?.ToString();
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(nameof(CosmosDbDataPlane), nameof(ParsePartitionKeyHeader),
+                "Failed to parse x-ms-documentdb-partitionkey header '{0}': {1}", header, ex.Message);
+            return null;
+        }
+    }
+
+    /// <summary>Creates a new document in the given collection.</summary>
+    internal DataPlaneOperationResult<JsonObject> CreateDocument(
+        HttpContext context, string databaseName, string collectionName, JsonObject body)
+    {
+        var ctx = ResolveAccountContext(context);
+        if (ctx == null) return new DataPlaneOperationResult<JsonObject>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
+        var (account, sub, rg) = ctx.Value;
+
+        var parentId = SqlContainerParentId(account.Name, databaseName);
+        var container = provider.GetSubresourceAs<SqlContainerResource>(sub, rg, collectionName, parentId, SqlContainersSubresource);
+        if (container == null) return new DataPlaneOperationResult<JsonObject>(OperationResult.NotFound, null, $"Collection '{collectionName}' not found.", "CollectionNotFound");
+
+        var docId = body["id"]?.ToString();
+        if (string.IsNullOrWhiteSpace(docId))
+            return new DataPlaneOperationResult<JsonObject>(OperationResult.BadRequest, null, "Document must have an 'id' field.", "BadRequest");
+
+        // Validate partition key is present in the document body
+        var pkValue = ExtractPartitionKeyValue(body, container.Properties.Resource);
+        var pkPath = container.Properties.Resource.PartitionKey?.Paths?.FirstOrDefault();
+        if (!string.IsNullOrEmpty(pkPath) && pkValue == null)
+            return new DataPlaneOperationResult<JsonObject>(OperationResult.BadRequest, null,
+                $"The partition key path '{pkPath}' was not present in the document.", "BadRequest");
+
+        var docsDir = provider.GetDocumentDirectory(sub, rg, account.Name, databaseName, collectionName);
+        var filePath = Path.Combine(docsDir, DocFileName(docId));
+        if (File.Exists(filePath))
+            return new DataPlaneOperationResult<JsonObject>(OperationResult.Conflict, null, $"Document with id '{docId}' already exists.", "Conflict");
+
+        var doc = DocumentItemResource.Create(body, databaseName, collectionName);
+        File.WriteAllText(filePath, doc.ToJsonString());
+
+        return new DataPlaneOperationResult<JsonObject>(OperationResult.Created, doc, null, null);
+    }
+
+    /// <summary>Reads a single document by id. Validates the partition key header.</summary>
+    internal DataPlaneOperationResult<JsonObject> GetDocument(
+        HttpContext context, string databaseName, string collectionName, string docId, string partitionKeyHeader)
+    {
+        var ctx = ResolveAccountContext(context);
+        if (ctx == null) return new DataPlaneOperationResult<JsonObject>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
+        var (account, sub, rg) = ctx.Value;
+
+        var parentId = SqlContainerParentId(account.Name, databaseName);
+        var container = provider.GetSubresourceAs<SqlContainerResource>(sub, rg, collectionName, parentId, SqlContainersSubresource);
+        if (container == null) return new DataPlaneOperationResult<JsonObject>(OperationResult.NotFound, null, $"Collection '{collectionName}' not found.", "CollectionNotFound");
+
+        var docsDir = provider.GetDocumentDirectory(sub, rg, account.Name, databaseName, collectionName);
+        var filePath = Path.Combine(docsDir, DocFileName(docId));
+        if (!File.Exists(filePath))
+            return new DataPlaneOperationResult<JsonObject>(OperationResult.NotFound, null, $"Document '{docId}' not found.", "NotFound");
+
+        var doc = JsonNode.Parse(File.ReadAllText(filePath))!.AsObject();
+
+        // Validate partition key header
+        var headerPkValue = ParsePartitionKeyHeader(partitionKeyHeader);
+        var storedPkValue = ExtractPartitionKeyValue(doc, container.Properties.Resource);
+        if (storedPkValue != null && headerPkValue != storedPkValue)
+            return new DataPlaneOperationResult<JsonObject>(OperationResult.BadRequest, null,
+                "The partition key value in the request header does not match the stored document.", "BadRequest");
+
+        return new DataPlaneOperationResult<JsonObject>(OperationResult.Success, doc, null, null);
+    }
+
+    /// <summary>Fully replaces a document. Respects <c>If-Match</c> ETag.</summary>
+    internal DataPlaneOperationResult<JsonObject> ReplaceDocument(
+        HttpContext context, string databaseName, string collectionName, string docId,
+        JsonObject body, string? ifMatchEtag)
+    {
+        var ctx = ResolveAccountContext(context);
+        if (ctx == null) return new DataPlaneOperationResult<JsonObject>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
+        var (account, sub, rg) = ctx.Value;
+
+        var docsDir = provider.GetDocumentDirectory(sub, rg, account.Name, databaseName, collectionName);
+        var filePath = Path.Combine(docsDir, DocFileName(docId));
+        if (!File.Exists(filePath))
+            return new DataPlaneOperationResult<JsonObject>(OperationResult.NotFound, null, $"Document '{docId}' not found.", "NotFound");
+
+        var existing = JsonNode.Parse(File.ReadAllText(filePath))!.AsObject();
+
+        // ETag concurrency check
+        if (!string.IsNullOrEmpty(ifMatchEtag) && ifMatchEtag != "*")
+        {
+            var storedEtag = existing["_etag"]?.ToString();
+            if (storedEtag != ifMatchEtag)
+                return new DataPlaneOperationResult<JsonObject>(OperationResult.PreconditionFailed, null,
+                    "The operation specified an If-Match condition that is not satisfied.", "PreconditionFailed");
+        }
+
+        // Full replace: user body with preserved _rid/_self and fresh _etag/_ts
+        var doc = JsonNode.Parse(body.ToJsonString())!.AsObject();
+        doc["_rid"] = existing["_rid"]?.DeepClone();
+        doc["_self"] = existing["_self"]?.DeepClone();
+        DocumentItemResource.RefreshSystemFields(doc);
+
+        File.WriteAllText(filePath, doc.ToJsonString());
+        return new DataPlaneOperationResult<JsonObject>(OperationResult.Updated, doc, null, null);
+    }
+
+    /// <summary>Applies Cosmos DB patch operations to a document. Respects <c>If-Match</c> ETag.</summary>
+    internal DataPlaneOperationResult<JsonObject> PatchDocument(
+        HttpContext context, string databaseName, string collectionName, string docId,
+        PatchDocumentRequest patchRequest, string? ifMatchEtag)
+    {
+        var ctx = ResolveAccountContext(context);
+        if (ctx == null) return new DataPlaneOperationResult<JsonObject>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
+        var (account, sub, rg) = ctx.Value;
+
+        var docsDir = provider.GetDocumentDirectory(sub, rg, account.Name, databaseName, collectionName);
+        var filePath = Path.Combine(docsDir, DocFileName(docId));
+        if (!File.Exists(filePath))
+            return new DataPlaneOperationResult<JsonObject>(OperationResult.NotFound, null, $"Document '{docId}' not found.", "NotFound");
+
+        var doc = JsonNode.Parse(File.ReadAllText(filePath))!.AsObject();
+
+        // ETag concurrency check
+        if (!string.IsNullOrEmpty(ifMatchEtag) && ifMatchEtag != "*")
+        {
+            var storedEtag = doc["_etag"]?.ToString();
+            if (storedEtag != ifMatchEtag)
+                return new DataPlaneOperationResult<JsonObject>(OperationResult.PreconditionFailed, null,
+                    "The operation specified an If-Match condition that is not satisfied.", "PreconditionFailed");
+        }
+
+        foreach (var op in patchRequest.Operations)
+        {
+            var field = op.Path.TrimStart('/');
+            switch (op.Op.ToLowerInvariant())
+            {
+                case "set":
+                case "add":
+                case "replace":
+                    doc[field] = op.Value?.DeepClone();
+                    break;
+                case "remove":
+                    doc.Remove(field);
+                    break;
+                case "incr":
+                case "increment":
+                {
+                    var delta = op.Value?.GetValue<double>() ?? 0;
+                    var current = doc[field]?.GetValue<double>() ?? 0;
+                    doc[field] = current + delta;
+                    break;
+                }
+                default:
+                    logger.LogDebug(nameof(CosmosDbDataPlane), nameof(PatchDocument),
+                        "Unknown patch op '{0}' — ignored.", op.Op);
+                    break;
+            }
+        }
+
+        DocumentItemResource.RefreshSystemFields(doc);
+        File.WriteAllText(filePath, doc.ToJsonString());
+        return new DataPlaneOperationResult<JsonObject>(OperationResult.Updated, doc, null, null);
+    }
+
+    /// <summary>Deletes a document. Validates the partition key header and respects <c>If-Match</c>.</summary>
+    internal DataPlaneOperationResult DeleteDocument(
+        HttpContext context, string databaseName, string collectionName, string docId,
+        string partitionKeyHeader, string? ifMatchEtag)
+    {
+        var ctx = ResolveAccountContext(context);
+        if (ctx == null) return new DataPlaneOperationResult(OperationResult.NotFound, "Account not found.", "AccountNotFound");
+        var (account, sub, rg) = ctx.Value;
+
+        var parentId = SqlContainerParentId(account.Name, databaseName);
+        var container = provider.GetSubresourceAs<SqlContainerResource>(sub, rg, collectionName, parentId, SqlContainersSubresource);
+        if (container == null) return new DataPlaneOperationResult(OperationResult.NotFound, $"Collection '{collectionName}' not found.", "CollectionNotFound");
+
+        var docsDir = provider.GetDocumentDirectory(sub, rg, account.Name, databaseName, collectionName);
+        var filePath = Path.Combine(docsDir, DocFileName(docId));
+        if (!File.Exists(filePath))
+            return new DataPlaneOperationResult(OperationResult.NotFound, $"Document '{docId}' not found.", "NotFound");
+
+        var doc = JsonNode.Parse(File.ReadAllText(filePath))!.AsObject();
+
+        // Validate partition key header
+        var headerPkValue = ParsePartitionKeyHeader(partitionKeyHeader);
+        var storedPkValue = ExtractPartitionKeyValue(doc, container.Properties.Resource);
+        if (storedPkValue != null && headerPkValue != storedPkValue)
+            return new DataPlaneOperationResult(OperationResult.BadRequest,
+                "The partition key value in the request header does not match the stored document.", "BadRequest");
+
+        // ETag concurrency check
+        if (!string.IsNullOrEmpty(ifMatchEtag) && ifMatchEtag != "*")
+        {
+            var storedEtag = doc["_etag"]?.ToString();
+            if (storedEtag != ifMatchEtag)
+                return new DataPlaneOperationResult(OperationResult.PreconditionFailed,
+                    "The operation specified an If-Match condition that is not satisfied.", "PreconditionFailed");
+        }
+
+        File.Delete(filePath);
+        return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
+    }
+
+    /// <summary>Lists all documents in a collection (full scan, no pagination).</summary>
+    internal DataPlaneOperationResult<JsonObject[]> ListDocuments(
+        HttpContext context, string databaseName, string collectionName)
+    {
+        var ctx = ResolveAccountContext(context);
+        if (ctx == null) return new DataPlaneOperationResult<JsonObject[]>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
+        var (account, sub, rg) = ctx.Value;
+
+        var parentId = SqlContainerParentId(account.Name, databaseName);
+        var container = provider.GetSubresourceAs<SqlContainerResource>(sub, rg, collectionName, parentId, SqlContainersSubresource);
+        if (container == null) return new DataPlaneOperationResult<JsonObject[]>(OperationResult.NotFound, null, $"Collection '{collectionName}' not found.", "CollectionNotFound");
+
+        var docsDir = provider.GetDocumentDirectory(sub, rg, account.Name, databaseName, collectionName);
+        var files = Directory.GetFiles(docsDir, "*.json", SearchOption.TopDirectoryOnly);
+
+        var docs = files
+            .Select(f =>
+            {
+                try { return JsonNode.Parse(File.ReadAllText(f))?.AsObject(); }
+                catch (Exception ex)
+                {
+                    logger.LogDebug(nameof(CosmosDbDataPlane), nameof(ListDocuments),
+                        "Failed to read document file '{0}': {1}", f, ex.Message);
+                    return null;
+                }
+            })
+            .Where(d => d != null)
+            .Select(d => d!)
+            .ToArray();
+
+        return new DataPlaneOperationResult<JsonObject[]>(OperationResult.Success, docs, null, null);
     }
 }

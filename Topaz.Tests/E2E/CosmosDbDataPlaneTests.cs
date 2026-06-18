@@ -318,4 +318,195 @@ public class CosmosDbDataPlaneTests
         // Assert
         Assert.That(container.Value.Data.Name, Is.EqualTo("dp-dp2arm-coll"));
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Document (Item) CRUD tests
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private async Task<Container> CreateContainerWithPartitionKey(string databaseName, string containerName)
+    {
+        var (endpoint, primaryKey) = await CreateAccountAndGetCredentials();
+        using var client = CreateCosmosClient(endpoint, primaryKey);
+        var db = await client.CreateDatabaseAsync(databaseName);
+        var result = await db.Database.CreateContainerAsync(
+            new ContainerProperties(containerName, "/pk"));
+        return result.Container;
+    }
+
+    private async Task<(string Endpoint, string PrimaryKey, Container Container)> PrepareContainer(
+        string databaseName, string containerName)
+    {
+        var (endpoint, primaryKey) = await CreateAccountAndGetCredentials();
+        var client = CreateCosmosClient(endpoint, primaryKey);
+        var db = await client.CreateDatabaseAsync(databaseName);
+        var c = await db.Database.CreateContainerAsync(
+            new ContainerProperties(containerName, "/pk"));
+        return (endpoint, primaryKey, c.Container);
+    }
+
+    [Test]
+    public async Task Item_WhenCreated_ReturnsCorrectId()
+    {
+        var (_, _, container) = await PrepareContainer("doc-create-db", "doc-create-coll");
+
+        var item = new { id = "item-1", pk = "pk1", value = 42 };
+        var result = await container.CreateItemAsync(item, new PartitionKey("pk1"));
+
+        Assert.That(result.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Created));
+        Assert.That(result.Resource.id.ToString(), Is.EqualTo("item-1"));
+    }
+
+    [Test]
+    public async Task Item_WhenRead_ReturnsItem()
+    {
+        var (_, _, container) = await PrepareContainer("doc-read-db", "doc-read-coll");
+
+        var item = new { id = "item-read", pk = "pk-read", name = "hello" };
+        await container.CreateItemAsync(item, new PartitionKey("pk-read"));
+
+        var result = await container.ReadItemAsync<dynamic>("item-read", new PartitionKey("pk-read"));
+
+        Assert.That(result.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.OK));
+        Assert.That(result.Resource.id.ToString(), Is.EqualTo("item-read"));
+    }
+
+    [Test]
+    public async Task Item_WhenReplaced_ReturnsUpdatedFields()
+    {
+        var (_, _, container) = await PrepareContainer("doc-replace-db", "doc-replace-coll");
+
+        var item = new { id = "item-replace", pk = "pk-replace", value = 1 };
+        await container.CreateItemAsync(item, new PartitionKey("pk-replace"));
+
+        var updated = new { id = "item-replace", pk = "pk-replace", value = 99 };
+        var result = await container.ReplaceItemAsync(updated, "item-replace", new PartitionKey("pk-replace"));
+
+        Assert.That(result.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.OK));
+        Assert.That((int)result.Resource.value, Is.EqualTo(99));
+    }
+
+    [Test]
+    public async Task Item_WhenPatched_UpdatesSpecificField()
+    {
+        var (_, _, container) = await PrepareContainer("doc-patch-db", "doc-patch-coll");
+
+        var item = new { id = "item-patch", pk = "pk-patch", counter = 10 };
+        await container.CreateItemAsync(item, new PartitionKey("pk-patch"));
+
+        var patchOps = new[] { PatchOperation.Increment("/counter", 5) };
+        var result = await container.PatchItemAsync<dynamic>("item-patch", new PartitionKey("pk-patch"), patchOps);
+
+        Assert.That(result.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.OK));
+        Assert.That((double)result.Resource.counter, Is.EqualTo(15));
+    }
+
+    [Test]
+    public async Task Item_WhenDeleted_ReturnsNotFound()
+    {
+        var (_, _, container) = await PrepareContainer("doc-delete-db", "doc-delete-coll");
+
+        var item = new { id = "item-delete", pk = "pk-delete" };
+        await container.CreateItemAsync(item, new PartitionKey("pk-delete"));
+
+        await container.DeleteItemAsync<dynamic>("item-delete", new PartitionKey("pk-delete"));
+
+        var ex = Assert.ThrowsAsync<CosmosException>(async () =>
+            await container.ReadItemAsync<dynamic>("item-delete", new PartitionKey("pk-delete")));
+        Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
+    }
+
+    [Test]
+    public async Task Items_WhenListed_ContainsCreatedItems()
+    {
+        var (endpoint, primaryKey) = await CreateAccountAndGetCredentials();
+
+        // Create database and container via ARM so the path is well-known
+        var armClient = CreateArmClient();
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var accountArm = await resourceGroup.Value.GetCosmosDBAccounts().GetAsync(AccountName);
+        await accountArm.Value.GetCosmosDBSqlDatabases()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "doc-list-db",
+                new CosmosDBSqlDatabaseCreateOrUpdateContent(AzureLocation.WestEurope,
+                    new CosmosDBSqlDatabaseResourceInfo("doc-list-db")));
+        await accountArm.Value.GetCosmosDBSqlDatabases().Get("doc-list-db").Value
+            .GetCosmosDBSqlContainers()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "doc-list-coll",
+                new CosmosDBSqlContainerCreateOrUpdateContent(AzureLocation.WestEurope,
+                    new CosmosDBSqlContainerResourceInfo("doc-list-coll")
+                    {
+                        PartitionKey = new CosmosDBContainerPartitionKey { Paths = { "/pk" } }
+                    }));
+
+        var cosmosClient = CreateCosmosClient(endpoint, primaryKey);
+        var container = cosmosClient.GetDatabase("doc-list-db").GetContainer("doc-list-coll");
+
+        await container.CreateItemAsync(new { id = "list-a", pk = "pk1" }, new PartitionKey("pk1"));
+        await container.CreateItemAsync(new { id = "list-b", pk = "pk2" }, new PartitionKey("pk2"));
+
+        // Call list endpoint directly — SDK doesn't expose a raw "list all" without a query
+        using var httpClient = new HttpClient(new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        });
+
+        var accountName = AccountName;
+        var port = Topaz.Shared.GlobalSettings.DefaultCosmosDbPort;
+        var dateStr = DateTimeOffset.UtcNow.ToString("ddd, dd MMM yyyy HH:mm:ss 'GMT'",
+            System.Globalization.CultureInfo.InvariantCulture);
+
+        // Build HMAC-SHA256 authorization for the list-docs request
+        var resourceLink = "dbs/doc-list-db/colls/doc-list-coll";
+        var resourceType = "docs";
+        var stringToSign = $"get\n{resourceType}\n{resourceLink}\n{dateStr.ToLowerInvariant()}\n\n";
+        var keyBytes = Convert.FromBase64String(primaryKey);
+        using var hmac = new System.Security.Cryptography.HMACSHA256(keyBytes);
+        var sig = Convert.ToBase64String(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(stringToSign)));
+        var authHeader = Uri.EscapeDataString($"type=master&ver=1.0&sig={sig}");
+
+        var url = $"https://{accountName}.documents.topaz.local.dev:{port}/{resourceLink}/{resourceType}";
+        var req = new HttpRequestMessage(HttpMethod.Get, url);
+        req.Headers.Add("Authorization", authHeader);
+        req.Headers.Add("x-ms-date", dateStr);
+        req.Headers.Add("x-ms-version", "2018-12-31");
+
+        var resp = await httpClient.SendAsync(req);
+        Assert.That(resp.IsSuccessStatusCode, Is.True);
+
+        var json = await resp.Content.ReadAsStringAsync();
+        Assert.That(json, Does.Contain("list-a"));
+        Assert.That(json, Does.Contain("list-b"));
+    }
+
+    [Test]
+    public async Task Item_WithStaleETag_ReturnsPreconditionFailed()
+    {
+        var (_, _, container) = await PrepareContainer("doc-etag-db", "doc-etag-coll");
+
+        var item = new { id = "item-etag", pk = "pk-etag", value = 1 };
+        await container.CreateItemAsync(item, new PartitionKey("pk-etag"));
+
+        var staleEtag = "\"00000000000000000000000000000000\"";
+        var ex = Assert.ThrowsAsync<CosmosException>(async () =>
+            await container.ReplaceItemAsync(
+                new { id = "item-etag", pk = "pk-etag", value = 2 },
+                "item-etag",
+                new PartitionKey("pk-etag"),
+                new ItemRequestOptions { IfMatchEtag = staleEtag }));
+
+        Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.PreconditionFailed));
+    }
+
+    [Test]
+    public async Task Item_CreatedTwice_ReturnsConflict()
+    {
+        var (_, _, container) = await PrepareContainer("doc-conflict-db", "doc-conflict-coll");
+
+        var item = new { id = "item-conflict", pk = "pk-conflict" };
+        await container.CreateItemAsync(item, new PartitionKey("pk-conflict"));
+
+        var ex = Assert.ThrowsAsync<CosmosException>(async () =>
+            await container.CreateItemAsync(item, new PartitionKey("pk-conflict")));
+        Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Conflict));
+    }
 }

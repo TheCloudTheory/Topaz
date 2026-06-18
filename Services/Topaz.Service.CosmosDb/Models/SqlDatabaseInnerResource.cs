@@ -31,7 +31,8 @@ public sealed class SqlDatabaseInnerResource
 
     public static SqlDatabaseInnerResource Create(string databaseName)
     {
-        var rid = Convert.ToBase64String(Guid.NewGuid().ToByteArray())[..8];
+        var guidBytes = Guid.NewGuid().ToByteArray();
+        var rid = Convert.ToBase64String(guidBytes[..4]).Replace('+', '-').Replace('/', '_');
         return new SqlDatabaseInnerResource
         {
             Id = databaseName,
