@@ -198,6 +198,42 @@ Introduce a `GeoReplicationSyncScheduler` background service that periodically u
 
 ---
 
+## Cosmos DB SQL queries — GROUP BY not supported
+
+**Affected services:** Azure Cosmos DB (data-plane SQL API — query engine)
+
+The SQL query engine introduced in v1.7-beta supports global aggregates (`COUNT`, `SUM`, `MIN`, `MAX`, `AVG`) applied to the entire filtered result set, but does not support the `GROUP BY` clause. Queries that include `GROUP BY` return `400 Bad Request`.
+
+### Impact
+
+Queries such as `SELECT c.category, COUNT(1) FROM c GROUP BY c.category` cannot be evaluated. Applications that partition aggregate results by a field value will fail against Topaz.
+
+**Workaround:** perform grouping in application code after fetching all matching documents with a `WHERE` filter, or split into multiple targeted queries — one per partition value.
+
+### Planned fix — v1.9-preview
+
+Extend the query engine to partition filtered documents by the `GROUP BY` field before applying aggregate functions and return one result row per unique value.
+
+---
+
+## Cosmos DB SQL queries — ORDER BY on aggregate output not supported
+
+**Affected services:** Azure Cosmos DB (data-plane SQL API — query engine)
+
+The query engine supports `ORDER BY` on regular document fields but not on computed aggregate columns. A query such as `SELECT c.category, COUNT(1) AS cnt FROM c GROUP BY c.category ORDER BY cnt DESC` is not supported.
+
+### Impact
+
+Aggregate result sets cannot be sorted server-side. Applications that require ordered aggregate output must sort results in application code after receiving them.
+
+**Workaround:** sort aggregate results in application code after receiving them from Topaz.
+
+### Planned fix — v1.9-preview
+
+Extend the query engine to apply `ORDER BY` to aggregate output rows after `GROUP BY` evaluation. Prerequisite: `GROUP BY` support.
+
+---
+
 ## Python SDK (`topaz-sdk`) — `REQUESTS_CA_BUNDLE` required for SSL trust
 
 **Affected services:** All Topaz HTTP/HTTPS endpoints accessed via the Python SDK (`topaz-sdk`) or any Python Azure SDK client pointed at Topaz.

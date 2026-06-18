@@ -61,11 +61,8 @@ public class CosmosDbDataPlaneTests
         new(endpoint, primaryKey, new CosmosClientOptions
         {
             ConnectionMode = ConnectionMode.Gateway,
-            HttpClientFactory = () => new HttpClient(new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-            }),
-            LimitToEndpoint = true
+            LimitToEndpoint = true,
+            HttpClientFactory = () => new HttpClient(new HttpClientHandler())
         });
 
     private async Task<(string Endpoint, string PrimaryKey)> CreateAccountAndGetCredentials()
@@ -445,10 +442,7 @@ public class CosmosDbDataPlaneTests
         await container.CreateItemAsync(new { id = "list-b", pk = "pk2" }, new PartitionKey("pk2"));
 
         // Call list endpoint directly — SDK doesn't expose a raw "list all" without a query
-        using var httpClient = new HttpClient(new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        });
+        using var httpClient = new HttpClient();
 
         var accountName = AccountName;
         var port = Topaz.Shared.GlobalSettings.DefaultCosmosDbPort;
@@ -508,5 +502,280 @@ public class CosmosDbDataPlaneTests
         var ex = Assert.ThrowsAsync<CosmosException>(async () =>
             await container.CreateItemAsync(item, new PartitionKey("pk-conflict")));
         Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Conflict));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  SQL query tests
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private async Task<(string Endpoint, string PrimaryKey)> SeedQueryContainer(
+        string databaseName, string containerName, IEnumerable<object> items)
+    {
+        var (endpoint, primaryKey) = await CreateAccountAndGetCredentials();
+        var client = CreateCosmosClient(endpoint, primaryKey);
+        try
+        {
+            var db = await client.CreateDatabaseAsync(databaseName);
+            var c = (await db.Database.CreateContainerAsync(
+                new ContainerProperties(containerName, "/pk"))).Container;
+            foreach (var item in items)
+                await c.CreateItemAsync(item, new PartitionKey(((dynamic)item).pk.ToString()));
+        }
+        finally
+        {
+            client.Dispose();
+        }
+        return (endpoint, primaryKey);
+    }
+
+    private static async Task<System.Text.Json.Nodes.JsonObject> ExecuteQueryAsync(
+        string primaryKey, string database, string collection,
+        string sql, object[]? parameters = null,
+        int? maxItemCount = null, string? continuation = null)
+    {
+        using var httpClient = new HttpClient();
+
+        var port = Topaz.Shared.GlobalSettings.DefaultCosmosDbPort;
+        var dateStr = DateTimeOffset.UtcNow.ToString("ddd, dd MMM yyyy HH:mm:ss 'GMT'",
+            System.Globalization.CultureInfo.InvariantCulture);
+        var resourceLink = $"dbs/{database}/colls/{collection}";
+        var resourceType = "docs";
+        var stringToSign = $"post\n{resourceType}\n{resourceLink}\n{dateStr.ToLowerInvariant()}\n\n";
+        var keyBytes = Convert.FromBase64String(primaryKey);
+        using var hmac = new System.Security.Cryptography.HMACSHA256(keyBytes);
+        var sig = Convert.ToBase64String(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(stringToSign)));
+        var authHeader = Uri.EscapeDataString($"type=master&ver=1.0&sig={sig}");
+
+        var url = $"https://{AccountName}.documents.topaz.local.dev:{port}/{resourceLink}/{resourceType}";
+        var body = System.Text.Json.JsonSerializer.Serialize(
+            new { query = sql, parameters = parameters ?? [] });
+
+        var req = new HttpRequestMessage(HttpMethod.Post, url);
+        req.Headers.Add("Authorization", authHeader);
+        req.Headers.Add("x-ms-date", dateStr);
+        req.Headers.Add("x-ms-version", "2018-12-31");
+        req.Headers.Add("x-ms-documentdb-isquery", "true");
+        req.Headers.Add("x-ms-documentdb-query-enablecrosspartition", "true");
+        if (maxItemCount.HasValue)
+            req.Headers.Add("x-ms-max-item-count", maxItemCount.Value.ToString());
+        if (continuation != null)
+            req.Headers.Add("x-ms-continuation", continuation);
+        req.Content = new StringContent(body, System.Text.Encoding.UTF8, "application/query+json");
+
+        var resp = await httpClient.SendAsync(req);
+        Assert.That(resp.IsSuccessStatusCode, Is.True, $"Query failed: {await resp.Content.ReadAsStringAsync()}");
+        var json = await resp.Content.ReadAsStringAsync();
+        var result = System.Text.Json.Nodes.JsonNode.Parse(json)!.AsObject();
+        result["_continuation"] = resp.Headers.TryGetValues("x-ms-continuation", out var vals)
+            ? vals.First() : null;
+        return result;
+    }
+
+    [Test]
+    public async Task Query_SelectStar_ReturnsAllDocuments()
+    {
+        var (_, key) = await SeedQueryContainer("q-star-db", "q-star-coll",
+        [
+            new { id = "q1", pk = "p1", name = "Alice" },
+            new { id = "q2", pk = "p2", name = "Bob" }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-star-db", "q-star-coll", "SELECT * FROM c");
+        Assert.That((int)result["_count"]!, Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task Query_WhereEquality_FiltersCorrectly()
+    {
+        var (_, key) = await SeedQueryContainer("q-eq-db", "q-eq-coll",
+        [
+            new { id = "e1", pk = "p1", category = "A" },
+            new { id = "e2", pk = "p2", category = "B" },
+            new { id = "e3", pk = "p3", category = "A" }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-eq-db", "q-eq-coll",
+            "SELECT * FROM c WHERE c.category = 'A'");
+        var docs = result["Documents"]!.AsArray();
+        Assert.That(docs.Count, Is.EqualTo(2));
+        Assert.That(docs.All(d => d!["category"]!.GetValue<string>() == "A"), Is.True);
+    }
+
+    [Test]
+    public async Task Query_WhereGreaterThan_FiltersCorrectly()
+    {
+        var (_, key) = await SeedQueryContainer("q-gt-db", "q-gt-coll",
+        [
+            new { id = "g1", pk = "p1", age = 20 },
+            new { id = "g2", pk = "p2", age = 30 },
+            new { id = "g3", pk = "p3", age = 40 }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-gt-db", "q-gt-coll",
+            "SELECT * FROM c WHERE c.age > 25");
+        var docs = result["Documents"]!.AsArray();
+        Assert.That(docs.Count, Is.EqualTo(2));
+        Assert.That(docs.All(d => d!["age"]!.GetValue<double>() > 25), Is.True);
+    }
+
+    [Test]
+    public async Task Query_FieldProjection_ReturnsOnlyRequestedFields()
+    {
+        var (_, key) = await SeedQueryContainer("q-proj-db", "q-proj-coll",
+        [
+            new { id = "p1", pk = "x", name = "Alice", secret = "hidden" }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-proj-db", "q-proj-coll",
+            "SELECT c.name FROM c");
+        var docs = result["Documents"]!.AsArray();
+        Assert.That(docs.Count, Is.EqualTo(1));
+        Assert.That(docs[0]!.ToJsonString(), Does.Contain("name"));
+        Assert.That(docs[0]!.ToJsonString(), Does.Not.Contain("secret"));
+    }
+
+    [Test]
+    public async Task Query_ValueProjection_ReturnsScalarArray()
+    {
+        var (_, key) = await SeedQueryContainer("q-val-db", "q-val-coll",
+        [
+            new { id = "v1", pk = "p1", name = "Alice" },
+            new { id = "v2", pk = "p2", name = "Bob" }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-val-db", "q-val-coll",
+            "SELECT VALUE c.name FROM c");
+        var names = result["Documents"]!.AsArray().Select(d => d!.GetValue<string>()).ToList();
+        Assert.That(names, Does.Contain("Alice"));
+        Assert.That(names, Does.Contain("Bob"));
+    }
+
+    [Test]
+    public async Task Query_OrderByAsc_ReturnsSortedResults()
+    {
+        var (_, key) = await SeedQueryContainer("q-asc-db", "q-asc-coll",
+        [
+            new { id = "s1", pk = "p1", score = 30 },
+            new { id = "s2", pk = "p2", score = 10 },
+            new { id = "s3", pk = "p3", score = 20 }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-asc-db", "q-asc-coll",
+            "SELECT * FROM c ORDER BY c.score ASC");
+        var docs = result["Documents"]!.AsArray();
+        Assert.That(docs.Count, Is.EqualTo(3));
+        Assert.That(docs[0]!["score"]!.GetValue<double>(), Is.EqualTo(10));
+        Assert.That(docs[1]!["score"]!.GetValue<double>(), Is.EqualTo(20));
+        Assert.That(docs[2]!["score"]!.GetValue<double>(), Is.EqualTo(30));
+    }
+
+    [Test]
+    public async Task Query_OrderByDesc_ReturnsSortedResults()
+    {
+        var (_, key) = await SeedQueryContainer("q-desc-db", "q-desc-coll",
+        [
+            new { id = "d1", pk = "p1", score = 10 },
+            new { id = "d2", pk = "p2", score = 30 },
+            new { id = "d3", pk = "p3", score = 20 }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-desc-db", "q-desc-coll",
+            "SELECT * FROM c ORDER BY c.score DESC");
+        var docs = result["Documents"]!.AsArray();
+        Assert.That(docs.Count, Is.EqualTo(3));
+        Assert.That(docs[0]!["score"]!.GetValue<double>(), Is.EqualTo(30));
+        Assert.That(docs[1]!["score"]!.GetValue<double>(), Is.EqualTo(20));
+        Assert.That(docs[2]!["score"]!.GetValue<double>(), Is.EqualTo(10));
+    }
+
+    [Test]
+    public async Task Query_ParameterizedQuery_FiltersCorrectly()
+    {
+        var (_, key) = await SeedQueryContainer("q-param-db", "q-param-coll",
+        [
+            new { id = "pr1", pk = "p1", name = "Alice" },
+            new { id = "pr2", pk = "p2", name = "Bob" }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-param-db", "q-param-coll",
+            "SELECT * FROM c WHERE c.name = @name",
+            parameters: [new { name = "@name", value = "Alice" }]);
+        var docs = result["Documents"]!.AsArray();
+        Assert.That(docs.Count, Is.EqualTo(1));
+        Assert.That(docs[0]!["name"]!.GetValue<string>(), Is.EqualTo("Alice"));
+    }
+
+    [Test]
+    public async Task Query_CountAggregate_ReturnsCorrectCount()
+    {
+        var (_, key) = await SeedQueryContainer("q-count-db", "q-count-coll",
+        [
+            new { id = "c1", pk = "p1" },
+            new { id = "c2", pk = "p2" },
+            new { id = "c3", pk = "p3" }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-count-db", "q-count-coll",
+            "SELECT VALUE COUNT(1) FROM c");
+        var docs = result["Documents"]!.AsArray();
+        Assert.That(docs.Count, Is.EqualTo(1));
+        Assert.That(docs[0]!.GetValue<long>(), Is.EqualTo(3));
+    }
+
+    [Test]
+    public async Task Query_InOperator_FiltersCorrectly()
+    {
+        var (_, key) = await SeedQueryContainer("q-in-db", "q-in-coll",
+        [
+            new { id = "i1", pk = "p1", status = "active" },
+            new { id = "i2", pk = "p2", status = "pending" },
+            new { id = "i3", pk = "p3", status = "deleted" }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-in-db", "q-in-coll",
+            "SELECT * FROM c WHERE c.status IN ('active', 'pending')");
+        var docs = result["Documents"]!.AsArray();
+        Assert.That(docs.Count, Is.EqualTo(2));
+        Assert.That(docs.All(d => d!["status"]!.GetValue<string>() != "deleted"), Is.True);
+    }
+
+    [Test]
+    public async Task Query_IsDefinedOperator_FiltersCorrectly()
+    {
+        var (_, key) = await SeedQueryContainer("q-def-db", "q-def-coll",
+        [
+            new { id = "d1", pk = "p1", optional = "present" },
+            new { id = "d2", pk = "p2" }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-def-db", "q-def-coll",
+            "SELECT * FROM c WHERE IS_DEFINED(c.optional)");
+        var docs = result["Documents"]!.AsArray();
+        Assert.That(docs.Count, Is.EqualTo(1));
+        Assert.That(docs[0]!["id"]!.GetValue<string>(), Is.EqualTo("d1"));
+    }
+
+    [Test]
+    public async Task Query_PaginationWithContinuationToken_ReturnsAllDocumentsAcrossPages()
+    {
+        var items = Enumerable.Range(1, 20)
+            .Select(i => (object)new { id = $"page-{i:D2}", pk = $"p{i}" })
+            .ToArray();
+        var (_, key) = await SeedQueryContainer("q-page-db", "q-page-coll", items);
+
+        var allDocs = new List<System.Text.Json.Nodes.JsonNode?>();
+        string? continuation = null;
+        var pageCount = 0;
+        do
+        {
+            var result = await ExecuteQueryAsync(key, "q-page-db", "q-page-coll",
+                "SELECT * FROM c", maxItemCount: 5, continuation: continuation);
+            allDocs.AddRange(result["Documents"]!.AsArray());
+            continuation = result["_continuation"]?.GetValue<string>();
+            pageCount++;
+        } while (continuation != null);
+
+        Assert.That(allDocs.Count, Is.EqualTo(20));
+        Assert.That(pageCount, Is.GreaterThanOrEqualTo(4));
     }
 }

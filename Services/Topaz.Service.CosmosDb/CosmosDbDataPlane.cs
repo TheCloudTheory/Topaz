@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Topaz.Dns;
 using Topaz.Service.CosmosDb.Models;
 using Topaz.Service.CosmosDb.Models.Requests;
+using Topaz.Service.CosmosDb.SqlQuery;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -483,6 +484,81 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
 
         File.Delete(filePath);
         return new DataPlaneOperationResult(OperationResult.Deleted, null, null);
+    }
+
+    /// <summary>
+    /// Executes a Cosmos DB SQL query against all documents in the collection and
+    /// returns the projected page together with an optional continuation-token skip offset.
+    /// </summary>
+    internal DataPlaneOperationResult<QueryDocumentsResponse> QueryDocuments(
+        HttpContext context,
+        string databaseName,
+        string collectionName,
+        CosmosDbSqlQueryRequest request,
+        int maxItemCount,
+        int skip)
+    {
+        var ctx = ResolveAccountContext(context);
+        if (ctx == null)
+            return new DataPlaneOperationResult<QueryDocumentsResponse>(
+                OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
+
+        var (account, sub, rg) = ctx.Value;
+
+        var parentId = SqlContainerParentId(account.Name, databaseName);
+        var container = provider.GetSubresourceAs<SqlContainerResource>(
+            sub, rg, collectionName, parentId, SqlContainersSubresource);
+        if (container == null)
+            return new DataPlaneOperationResult<QueryDocumentsResponse>(
+                OperationResult.NotFound, null,
+                $"Collection '{collectionName}' not found.", "CollectionNotFound");
+
+        ParsedQuery query;
+        try
+        {
+            query = new CosmosDbSqlParser().Parse(request.Query);
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(nameof(CosmosDbDataPlane), nameof(QueryDocuments),
+                "Failed to parse query '{0}': {1}", request.Query, ex.Message);
+            return new DataPlaneOperationResult<QueryDocumentsResponse>(
+                OperationResult.BadRequest, null,
+                $"Invalid query syntax: {ex.Message}", "BadRequest");
+        }
+
+        var parameters = (request.Parameters ?? [])
+            .ToDictionary(p => p.Name, p => p.Value);
+
+        var docsDir = provider.GetDocumentDirectory(sub, rg, account.Name, databaseName, collectionName);
+        var files = Directory.GetFiles(docsDir, "*.json", SearchOption.TopDirectoryOnly);
+        var docs = files
+            .Select(f =>
+            {
+                try { return JsonNode.Parse(File.ReadAllText(f))?.AsObject(); }
+                catch (Exception ex)
+                {
+                    logger.LogDebug(nameof(CosmosDbDataPlane), nameof(QueryDocuments),
+                        "Failed to read document file '{0}': {1}", f, ex.Message);
+                    return null;
+                }
+            })
+            .Where(d => d != null)
+            .Select(d => d!)
+            .ToArray();
+
+        var result = new CosmosDbSqlExecutor().Execute(docs, query, parameters, skip, maxItemCount);
+
+        var response = new QueryDocumentsResponse
+        {
+            Rid = container.Properties.Resource.Rid,
+            Documents = result.Results,
+            Count = result.Results.Length,
+            NextSkip = result.NextSkip
+        };
+
+        return new DataPlaneOperationResult<QueryDocumentsResponse>(
+            OperationResult.Success, response, null, null);
     }
 
     /// <summary>Lists all documents in a collection (full scan, no pagination).</summary>
