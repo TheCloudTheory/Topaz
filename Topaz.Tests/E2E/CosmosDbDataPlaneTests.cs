@@ -533,42 +533,36 @@ public class CosmosDbDataPlaneTests
         string sql, object[]? parameters = null,
         int? maxItemCount = null, string? continuation = null)
     {
-        using var httpClient = new HttpClient();
-
         var port = Topaz.Shared.GlobalSettings.DefaultCosmosDbPort;
-        var dateStr = DateTimeOffset.UtcNow.ToString("ddd, dd MMM yyyy HH:mm:ss 'GMT'",
-            System.Globalization.CultureInfo.InvariantCulture);
-        var resourceLink = $"dbs/{database}/colls/{collection}";
-        var resourceType = "docs";
-        var stringToSign = $"post\n{resourceType}\n{resourceLink}\n{dateStr.ToLowerInvariant()}\n\n";
-        var keyBytes = Convert.FromBase64String(primaryKey);
-        using var hmac = new System.Security.Cryptography.HMACSHA256(keyBytes);
-        var sig = Convert.ToBase64String(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(stringToSign)));
-        var authHeader = Uri.EscapeDataString($"type=master&ver=1.0&sig={sig}");
+        var endpoint = $"https://{AccountName}.documents.topaz.local.dev:{port}";
+        using var cosmosClient = CreateCosmosClient(endpoint, primaryKey);
 
-        var url = $"https://{AccountName}.documents.topaz.local.dev:{port}/{resourceLink}/{resourceType}";
-        var body = System.Text.Json.JsonSerializer.Serialize(
-            new { query = sql, parameters = parameters ?? [] });
+        var queryDef = new QueryDefinition(sql);
+        if (parameters != null)
+            foreach (dynamic p in parameters)
+                queryDef = queryDef.WithParameter((string)p.name, (object)p.value);
 
-        var req = new HttpRequestMessage(HttpMethod.Post, url);
-        req.Headers.Add("Authorization", authHeader);
-        req.Headers.Add("x-ms-date", dateStr);
-        req.Headers.Add("x-ms-version", "2018-12-31");
-        req.Headers.Add("x-ms-documentdb-isquery", "true");
-        req.Headers.Add("x-ms-documentdb-query-enablecrosspartition", "true");
+        var options = new QueryRequestOptions();
         if (maxItemCount.HasValue)
-            req.Headers.Add("x-ms-max-item-count", maxItemCount.Value.ToString());
-        if (continuation != null)
-            req.Headers.Add("x-ms-continuation", continuation);
-        req.Content = new StringContent(body, System.Text.Encoding.UTF8, "application/query+json");
+            options.MaxItemCount = maxItemCount.Value;
 
-        var resp = await httpClient.SendAsync(req);
-        Assert.That(resp.IsSuccessStatusCode, Is.True, $"Query failed: {await resp.Content.ReadAsStringAsync()}");
-        var json = await resp.Content.ReadAsStringAsync();
-        var result = System.Text.Json.Nodes.JsonNode.Parse(json)!.AsObject();
-        result["_continuation"] = resp.Headers.TryGetValues("x-ms-continuation", out var vals)
-            ? vals.First() : null;
-        return result;
+        var iterator = cosmosClient
+            .GetDatabase(database)
+            .GetContainer(collection)
+            .GetItemQueryIterator<System.Text.Json.Nodes.JsonNode>(queryDef, continuation, options);
+
+        var page = await iterator.ReadNextAsync();
+
+        var docs = new System.Text.Json.Nodes.JsonArray();
+        foreach (var item in page)
+            docs.Add(item?.DeepClone());
+
+        return new System.Text.Json.Nodes.JsonObject
+        {
+            ["Documents"] = docs,
+            ["_count"] = docs.Count,
+            ["_continuation"] = page.ContinuationToken
+        };
     }
 
     [Test]
