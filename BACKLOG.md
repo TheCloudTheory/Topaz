@@ -289,29 +289,6 @@ TODO: Virtual Networks: Private Endpoint IP tracking
   labels: enhancement, virtual-network, good first issue
 -->
 
-### Azure Cosmos DB — SQL API data plane
-
-<!--
-TODO: Azure Cosmos DB: Data plane — SQL query execution
-  Implement the document query endpoint:
-  - POST /{dbs}/{db}/colls/{coll}/docs  with header x-ms-documentdb-isquery: true
-    and Content-Type: application/query+json
-    Body: {"query": "SELECT * FROM c WHERE c.field = @val", "parameters": [{"name": "@val", "value": 42}]}
-  Implement a minimal SQL subset sufficient for the .NET SDK and Azure CLI:
-  - SELECT with scalar and wildcard projections (SELECT *, SELECT c.field, SELECT VALUE c.field)
-  - FROM with a single collection alias (FROM c)
-  - WHERE with equality (=), inequality (<, >, <=, >=, !=), IN, BETWEEN, IS_NULL, IS_DEFINED, IS_STRING, IS_NUMBER, IS_BOOL operators on top-level and nested properties
-  - ORDER BY on a single property (ASC/DESC)
-  - OFFSET/LIMIT
-  - COUNT, SUM, MIN, MAX, AVG aggregate functions
-  - Parameterised queries (@name substitution)
-  Pagination: honour x-ms-max-item-count; return x-ms-continuation token when more
-  results exist; accept x-ms-continuation on follow-up requests.
-  Return: {"_rid":"...","Documents":[...],"_count":N} with x-ms-request-charge header.
-  milestone: v1.7-beta
-  labels: enhancement, cosmos-db
--->
-
 ### Azure Cosmos DB — MCP Server provisioning tools
 
 _Implemented in v1.7-beta: three MCP provisioning tools (`CreateCosmosDbAccount`, `CreateCosmosDbDatabase`, `CreateCosmosDbContainer`) for SQL API account/database/container creation with partition key support. `GetConnectionStrings` extended to enumerate and return Cosmos DB accounts with AccountEndpoint and PrimaryConnectionString. Full test coverage (8 account/database/container provisioning tests + 2 connection string integration tests)._
