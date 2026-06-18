@@ -54,29 +54,29 @@ sidebar_position: 16
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create Database | ❌ | `POST /{dbs}` |
-| Get Database | ❌ | `GET /{dbs}/{db}` |
-| Delete Database | ❌ | `DELETE /{dbs}/{db}` |
-| List Databases | ❌ | `GET /{dbs}` |
+| Create Database | ✅ | `POST /{dbs}` |
+| Get Database | ✅ | `GET /{dbs}/{db}` |
+| Delete Database | ✅ | `DELETE /{dbs}/{db}` |
+| List Databases | ✅ | `GET /{dbs}` |
 
 ### Collections
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create Collection | ❌ | `POST /{dbs}/{db}/colls` |
-| Get Collection | ❌ | `GET /{dbs}/{db}/colls/{coll}` |
-| Replace Collection | ❌ | `PUT /{dbs}/{db}/colls/{coll}` |
-| Delete Collection | ❌ | `DELETE /{dbs}/{db}/colls/{coll}` |
-| List Collections | ❌ | `GET /{dbs}/{db}/colls` |
+| Create Collection | ✅ | `POST /{dbs}/{db}/colls` |
+| Get Collection | ✅ | `GET /{dbs}/{db}/colls/{coll}` |
+| Replace Collection | ✅ | `PUT /{dbs}/{db}/colls/{coll}` |
+| Delete Collection | ✅ | `DELETE /{dbs}/{db}/colls/{coll}` |
+| List Collections | ✅ | `GET /{dbs}/{db}/colls` |
 
 ### Documents
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| Create Document | ❌ | `POST /{dbs}/{db}/colls/{coll}/docs` |
-| Get Document | ❌ | `GET /{dbs}/{db}/colls/{coll}/docs/{docId}` |
-| Replace Document | ❌ | `PUT /{dbs}/{db}/colls/{coll}/docs/{docId}` |
-| Patch Document | ❌ | `PATCH /{dbs}/{db}/colls/{coll}/docs/{docId}` |
-| Delete Document | ❌ | `DELETE /{dbs}/{db}/colls/{coll}/docs/{docId}` |
-| List Documents | ❌ | `GET /{dbs}/{db}/colls/{coll}/docs` |
-| Query Documents | ❌ | `POST /{dbs}/{db}/colls/{coll}/docs` with `x-ms-documentdb-isquery: true` |
+| Create Document | ✅ | `POST /{dbs}/{db}/colls/{coll}/docs` |
+| Get Document | ✅ | `GET /{dbs}/{db}/colls/{coll}/docs/{docId}` |
+| Replace Document | ✅ | `PUT /{dbs}/{db}/colls/{coll}/docs/{docId}` |
+| Patch Document | ✅ | `PATCH /{dbs}/{db}/colls/{coll}/docs/{docId}` |
+| Delete Document | ✅ | `DELETE /{dbs}/{db}/colls/{coll}/docs/{docId}` |
+| List Documents | ✅ | `GET /{dbs}/{db}/colls/{coll}/docs` |
+| Query Documents | ✅ | `POST /{dbs}/{db}/colls/{coll}/docs` with `x-ms-documentdb-isquery: true` |
