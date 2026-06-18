@@ -272,19 +272,6 @@ TODO: Virtual Networks: Private Endpoint IP tracking
 ### Azure Cosmos DB — SQL API data plane
 
 <!--
-TODO: Azure Cosmos DB: Data plane — Database operations
-  Implement the Cosmos DB REST API database resource endpoints:
-  - POST   /{dbs}                    – create database (body: {"id": "<name>"}, optional x-ms-offer-throughput header)
-  - GET    /{dbs}/{db}               – get database (returns _rid, _self, _etag, _colls, _users, _ts)
-  - DELETE /{dbs}/{db}               – delete database
-  - GET    /{dbs}                    – list databases (returns {"_rid":"","Databases":[...],"_count":N})
-  Resource links follow the pattern: dbs/{db}.
-  All responses must include the x-ms-request-charge header (set to "1" for emulation).
-  milestone: v1.7-beta
-  labels: enhancement, cosmos-db
--->
-
-<!--
 TODO: Azure Cosmos DB: Data plane — Collection (Container) operations
   Implement the Cosmos DB REST API collection resource endpoints:
   - POST   /{dbs}/{db}/colls                   – create collection (body includes id, partitionKey, indexingPolicy, defaultTtl; optional x-ms-offer-throughput header)

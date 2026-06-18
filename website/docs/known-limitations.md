@@ -6,6 +6,24 @@ keywords: [topaz limitations, azure emulator limitations, storage ports, topaz k
 
 # Known limitations
 
+## Cosmos DB — `x-ms-request-charge` is always `1`
+
+**Affected services:** Azure Cosmos DB (data-plane SQL API)
+
+Every Cosmos DB data-plane response from Topaz includes the `x-ms-request-charge` header, but its value is hardcoded to `1` for all operations regardless of the actual cost a real Azure Cosmos DB account would report (which depends on document size, index pressure, query complexity, and consistency level).
+
+### Impact
+
+Applications or tests that inspect `x-ms-request-charge` to track or budget Request Unit (RU) consumption will always see `1`, making RU profiling and capacity-planning workflows inaccurate when run against Topaz.
+
+**Workaround:** none. Do not rely on `x-ms-request-charge` values returned by Topaz for RU estimation or billing forecasting.
+
+### Planned fix
+
+Topaz will introduce a simple RU estimation model that scales the charge with operation type (point read, upsert, delete, query) and approximate payload size. Not yet planned.
+
+---
+
 This page documents deliberate design trade-offs in the current version of Topaz that differ from real Azure behaviour. Each entry notes the impact and the milestone where the limitation is expected to be resolved.
 
 ## Entra — ROPC login requires `HTTPS_PROXY` on non-Docker installs
