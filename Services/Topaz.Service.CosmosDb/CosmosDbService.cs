@@ -1,6 +1,7 @@
 using Topaz.EventPipeline;
 using Topaz.Service.CosmosDb.Endpoints.DatabaseAccounts;
 using Topaz.Service.CosmosDb.Endpoints.DataPlane;
+using Topaz.Service.CosmosDb.Endpoints.DataPlane.Collections;
 using Topaz.Service.CosmosDb.Endpoints.DataPlane.Databases;
 using Topaz.Service.CosmosDb.Endpoints.SqlContainers;
 using Topaz.Service.CosmosDb.Endpoints.SqlDatabases;
@@ -52,7 +53,12 @@ public sealed class CosmosDbService(Pipeline eventPipeline, ITopazLogger logger)
         new GetDatabaseEndpoint(_eventPipeline, _logger),
         new DeleteDatabaseEndpoint(_eventPipeline, _logger),
         new ListDatabasesEndpoint(_eventPipeline, _logger),
-        new GetAccountPropertiesEndpoint(_eventPipeline, _logger)
+        new GetAccountPropertiesEndpoint(_eventPipeline, _logger),
+        new CreateCollectionEndpoint(_eventPipeline, _logger),
+        new GetCollectionEndpoint(_eventPipeline, _logger),
+        new DeleteCollectionEndpoint(_eventPipeline, _logger),
+        new ReplaceCollectionEndpoint(_eventPipeline, _logger),
+        new ListCollectionsEndpoint(_eventPipeline, _logger)
     ];
 
     public void Bootstrap() { }

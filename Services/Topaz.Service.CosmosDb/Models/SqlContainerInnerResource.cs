@@ -1,4 +1,6 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using Topaz.Shared;
 
 namespace Topaz.Service.CosmosDb.Models;
 
@@ -22,6 +24,9 @@ public sealed class SqlContainerInnerResource
     public object? IndexingPolicy { get; set; }
     public object? UniqueKeyPolicy { get; set; }
     public int? DefaultTtl { get; set; }
+
+    public override string ToString() =>
+        JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
 
     public static SqlContainerInnerResource Create(string containerName, ContainerPartitionKey? partitionKey, object? indexingPolicy, object? uniqueKeyPolicy, int? defaultTtl)
     {
