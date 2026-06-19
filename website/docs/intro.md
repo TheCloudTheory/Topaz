@@ -9,11 +9,9 @@ import TabItem from '@theme/TabItem';
 
 # Getting started
 
-Let's discover what Topaz is and how to set it up for local Azure development.
+In this guide, we will install Topaz, configure DNS, trust the certificate, and verify the emulator is running on your machine.
 
-## What is Topaz?
-
-Topaz is an Azure emulator that lets you develop and test Azure-based applications without connecting to real cloud services. It implements the ARM control plane and the data planes of popular services such as Azure Storage, Key Vault, Service Bus, and more — all running locally on your machine.
+Topaz is a local Azure emulator — a single process that runs Azure Storage, Key Vault, Service Bus, and more on localhost. See [How Topaz works](./concepts/how-topaz-works.md) for a conceptual overview of its architecture.
 
 :::danger[Early stage]
 

@@ -17,14 +17,12 @@ These are the default ports Topaz binds to. Use the table whenever you suspect a
 | Resource Manager / Entra / general | 8899 | HTTPS | Primary control-plane endpoint |
 | Key Vault | 8898 | HTTPS | |
 | Event Hub HTTP | 8897 | HTTPS | |
-| Service Bus AMQP | 8889 | AMQP | |
-| Service Bus additional | 8887 | HTTPS | |
-| Event Hub AMQP | 8888 | AMQP | |
-| Table Storage | 8890 | HTTPS | |
-| Blob Storage | 8891 | HTTPS | |
-| Queue Storage | 8893 | HTTPS | |
-| File Storage | 8894 | HTTPS | |
+| Cosmos DB data plane | 8895 | HTTPS | |
 | Container Registry data plane | 8892 | HTTPS | |
+| Azure Storage (Blob, Queue, Table, File) | 8891 | HTTPS | Unified port since v1.6 |
+| Service Bus AMQP | 8889 | AMQP | |
+| Event Hub AMQP | 8888 | AMQP | |
+| Service Bus additional | 8887 | HTTPS | |
 | AMQP over TLS | 5671 | AMQP/TLS | Enabled when a certificate is provided |
 
 Check which processes are listening on a port:

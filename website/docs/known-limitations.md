@@ -6,6 +6,37 @@ keywords: [topaz limitations, azure emulator limitations, storage ports, topaz k
 
 # Known limitations
 
+## Cosmos DB — `pkranges` endpoint does not verify the master-key signature
+
+**Affected services:** Azure Cosmos DB (data-plane SQL API)
+
+When the Cosmos SDK executes cross-partition or `ORDER BY` queries, it calls
+`GET /dbs/{dbRid}/colls/{collRid}/pkranges` to discover the container's partition key ranges.
+The SDK signs this request using the collection's internal resource ID (a short base64 RID)
+as the resource link. Topaz cannot reconstruct that bare resource ID from the HTTP path alone
+— the path only carries the RID embedded within a longer `dbs/…/colls/…/pkranges` URL, and
+the Cosmos SDK's signing algorithm strips all but the leaf RID before hashing.
+
+As a consequence, Topaz skips master-key verification for `pkranges` requests and always
+returns 200. Because `pkranges` carries only structural metadata (hash-range boundaries, no
+user data), this has no security impact in a local development emulator.
+
+### Impact
+
+None for correctness or security in local development. `pkranges` responses are identical
+regardless of which account key the caller presents.
+
+**Workaround:** none required.
+
+### Planned fix — v1.9-preview
+
+Extend the collection `GET` response to include a fully-qualified `_self` link
+(`dbs/{dbRid}/colls/{collRid}/`) matching real Cosmos DB. The SDK will then embed the correct
+leaf collection RID in the pkranges URL, making it straightforward to extract and verify the
+master-key signature using the same HMAC logic as all other data-plane endpoints.
+
+---
+
 ## Cosmos DB — `x-ms-request-charge` is always `1`
 
 **Affected services:** Azure Cosmos DB (data-plane SQL API)

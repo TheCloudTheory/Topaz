@@ -9,7 +9,7 @@ import TabItem from '@theme/TabItem';
 
 # Local Service Bus development with Topaz
 
-This tutorial walks through a complete Azure Service Bus local development workflow using Topaz: create a namespace, send and receive messages on queues and topics via the Azure CLI and the Azure SDK — all without connecting to real Azure.
+In this tutorial, we will create a local Service Bus namespace on Topaz, set up a queue and a topic, and send and receive messages using the Azure SDK.
 
 ## What you will build
 
@@ -33,6 +33,10 @@ topaz-host \
   --default-subscription 00000000-0000-0000-0000-000000000001 \
   --log-level Information
 ```
+
+You will see the Topaz ASCII art banner, a table listing every running service with its port, and a "Default subscription created" confirmation.
+
+Leave this terminal open and Topaz running throughout the tutorial.
 
 ## Step 2: Set the active cloud to Topaz
 
@@ -306,3 +310,7 @@ Then create the namespace and queue via the ARM SDK before each test class, usin
 | `SSL handshake failed` in MassTransit | Topaz certificate not trusted at OS level | Trust the certificate as described in [Getting started](../intro.md) |
 | `MessagingEntityNotFoundException` | Queue or topic does not exist yet | Create the queue/topic first via the Azure CLI or ARM SDK |
 | MassTransit connects but never receives | Wrong port — MassTransit needs port 5671 (TLS), not 8889 | Use `GetServiceBusConnectionStringWithTls(...)` or point to port 5671 |
+
+## You've now built
+
+You have a working local Azure Service Bus environment running on Topaz. You created a namespace, queue, and topic, sent and received messages with both the Azure SDK and MassTransit, and automated the setup with Testcontainers — all without a real Azure subscription. The same connection strings and SDK code work against real Azure Service Bus with only the namespace hostname changed.

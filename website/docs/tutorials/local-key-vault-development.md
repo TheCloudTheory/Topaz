@@ -6,7 +6,7 @@ keywords: [azure key vault local, key vault local development, local key vault e
 
 # Local Key Vault development with Topaz
 
-This tutorial walks through a complete Azure Key Vault local development workflow using Topaz: create a vault, store secrets, retrieve them with the Azure CLI and the Azure SDK, and integrate with a .NET application — all without connecting to real Azure.
+In this tutorial, we will create a local Key Vault on Topaz, store a secret in it, retrieve it with the Azure CLI, and connect to it from a .NET application using `SecretClient`.
 
 ## What you will build
 
@@ -29,6 +29,10 @@ topaz-host \
   --default-subscription 00000000-0000-0000-0000-000000000001 \
   --log-level Information
 ```
+
+You will see the Topaz ASCII art banner, a table listing every running service with its port, and a "Default subscription created" confirmation.
+
+Leave this terminal open and Topaz running throughout the tutorial.
 
 ## Step 2: Set the active cloud to Topaz
 

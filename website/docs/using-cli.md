@@ -7,12 +7,11 @@ keywords: [topaz cli, azure emulator cli, local azure commands, subscription man
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Using Topaz CLI
+# How to use the Topaz CLI
 
-Topaz is split into two separate executables:
+This guide shows you how to start the emulator, check its status, create a default subscription, configure startup flags, and use the CLI for common operations.
 
-- **`topaz-host`** — the emulator process. Start this first and leave it running.
-- **`topaz`** — the CLI tool. Use this to manage resources inside the running emulator.
+Topaz ships as two executables: `topaz-host` (the emulator) and `topaz` (the CLI). See [How Topaz works](./concepts/how-topaz-works.md) for an explanation of the two-binary architecture.
 
 :::info[Pre-flight check]
 

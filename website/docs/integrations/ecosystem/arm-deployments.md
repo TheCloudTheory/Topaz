@@ -1,11 +1,13 @@
 ---
 sidebar_position: 3
 slug: /ecosystem/arm-deployments
+description: Test ARM and Bicep deployments locally with Topaz — supported resource types, deployment modes, and how to use az deployment group create against the local emulator.
+keywords: [arm deployments local, bicep local testing, topaz arm templates, azure deployment local emulator]
 ---
 
-# ARM Template Deployments
+# How to test ARM and Bicep deployments locally
 
-Topaz supports ARM template deployments at resource-group scope, using the real `Azure.Deployments` template engine. Template expressions — `[resourceGroup().location]`, `[parameters('name')]`, `[concat(...)]`, `dependsOn`, `outputs`, and more — are evaluated identically to Azure, so templates that work against Topaz work against real Azure without modification.
+This guide shows you how to deploy ARM templates and Bicep files to a local Topaz instance. Topaz supports ARM template deployments at resource-group scope using the real `Azure.Deployments` template engine. Template expressions — `[resourceGroup().location]`, `[parameters('name')]`, `[concat(...)]`, `dependsOn`, `outputs`, and more — are evaluated identically to Azure, so templates that work against Topaz work against real Azure without modification.
 
 ## Supported resource types
 

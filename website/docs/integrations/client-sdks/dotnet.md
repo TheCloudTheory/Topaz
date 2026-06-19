@@ -1,13 +1,13 @@
 ---
 sidebar_position: 1
 slug: /client-sdks/dotnet
-description: Full API reference for the TheCloudTheory.Topaz.Identity and TheCloudTheory.Topaz.ResourceManager NuGet packages.
-keywords: [topaz, dotnet, nuget, identity, credential, arm client, azure sdk, testing]
+description: Connect .NET applications and test projects to Topaz using the Topaz.Identity and Topaz.ResourceManager NuGet packages.
+keywords: [topaz dotnet sdk, topaz nuget, topaz identity credential, topaz resource manager dotnet, azure sdk local dotnet]
 ---
 
-# .NET
+# How to connect .NET apps to Topaz
 
-Two NuGet packages bridge your .NET test code and local development applications to the Topaz emulator:
+This guide shows you how to install and use the two NuGet packages that connect .NET applications and test projects to the Topaz emulator:
 
 | Package | Purpose |
 |---|---|

@@ -6,15 +6,7 @@ keywords: [topaz tutorial, terraform local azure, azurerm with topaz, local terr
 
 # Local Terraform development with Topaz
 
-This tutorial walks through a full local Terraform workflow using Topaz as your Azure target.
-
-You will learn:
-
-- Initial machine and tool configuration
-- A working Terraform project layout
-- Exact provider configuration required for Topaz
-- Step-by-step `init` → `plan` → `apply` → `destroy`
-- Common gotchas and how to fix them quickly
+In this tutorial, we will create a Terraform project that provisions Azure resources against a local Topaz emulator. We will run the full `init` → `plan` → `apply` → `destroy` workflow, configure the `azurerm` provider for Topaz, and verify that resources are created and cleaned up correctly.
 
 ## What you will build
 
@@ -45,9 +37,7 @@ topaz-host \
   --log-level Information
 ```
 
-Why this matters:
-
-- `--default-subscription` makes Terraform runs repeatable.
+You will see the Topaz ASCII art banner, a table listing every running service with its port, and a "Default subscription created" confirmation.
 
 Keep Topaz running for the rest of this tutorial.
 
@@ -78,7 +68,13 @@ Verify:
 az account show --output table
 ```
 
-## Step 3: Create a Terraform project
+You should see the Topaz subscription listed:
+
+```
+Name        CloudName    SubscriptionId                        TenantId     State    IsDefault
+----------  -----------  ------------------------------------  -----------  -------  -----------
+dev-local   Topaz        00000000-0000-0000-0000-000000000001  <tenant-id>  Enabled  True
+```
 
 Create a clean working directory:
 

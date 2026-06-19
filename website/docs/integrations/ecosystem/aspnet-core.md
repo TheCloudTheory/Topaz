@@ -1,11 +1,13 @@
 ---
 sidebar_position: 1
 slug: /ecosystem/aspnet-core
+description: Use the Topaz.AspNetCore.Extensions NuGet package to provision local Azure infrastructure automatically at ASP.NET Core startup — no manual CLI steps required.
+keywords: [topaz aspnet core, aspnet core azure emulator, topaz builder api, local azure aspnet, azure sdk aspnet local]
 ---
 
-# ASP.NET Core
+# How to configure ASP.NET Core apps to use Topaz
 
-The [TheCloudTheory.Topaz.AspNetCore.Extensions](https://www.nuget.org/packages/TheCloudTheory.Topaz.AspNetCore.Extensions/) NuGet package provides a fluent builder API that lets your ASP.NET Core application provision its own local Azure infrastructure at startup — no manual CLI steps required.
+This guide shows you how to use the [TheCloudTheory.Topaz.AspNetCore.Extensions](https://www.nuget.org/packages/TheCloudTheory.Topaz.AspNetCore.Extensions/) NuGet package to provision local Azure infrastructure automatically at ASP.NET Core startup.
 
 ## Installation
 
@@ -20,10 +22,6 @@ dotnet add package Azure.ResourceManager.KeyVault
 dotnet add package Azure.ResourceManager.Storage
 dotnet add package Azure.ResourceManager.ServiceBus
 ```
-
-## How it works
-
-Call `AddTopaz(subscriptionId, objectId)` on `IConfigurationBuilder` to get a `TopazEnvironmentBuilder`. Chain builder methods on the returned task to create resources in dependency order. The configuration values produced (e.g. connection strings, secret URIs) are injected into the application's `IConfiguration`.
 
 :::info[Order matters]
 

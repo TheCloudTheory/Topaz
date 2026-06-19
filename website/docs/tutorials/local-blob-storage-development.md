@@ -9,7 +9,7 @@ import TabItem from '@theme/TabItem';
 
 # Local Blob Storage development with Topaz
 
-This tutorial walks through a complete Azure Blob Storage local development workflow using Topaz: create a storage account, manage containers, upload and download blobs via the Azure CLI and the Azure SDK — all without connecting to real Azure.
+In this tutorial, we will create a local Storage Account on Topaz, upload a blob, download it again, and connect to the storage account using the Azure SDK.
 
 ## What you will build
 
@@ -33,6 +33,10 @@ topaz-host \
   --default-subscription 00000000-0000-0000-0000-000000000001 \
   --log-level Information
 ```
+
+You will see the Topaz ASCII art banner, a table listing every running service with its port, and a "Default subscription created" confirmation.
+
+Leave this terminal open and Topaz running throughout the tutorial.
 
 ## Step 2: Set the active cloud to Topaz
 
@@ -312,3 +316,7 @@ az storage container delete \
 | `ResourceNotFound` on blob upload | Container does not exist yet | Create the container first (`az storage container create`) |
 | `AuthenticationFailed` | Wrong account key passed to `--account-key` | Re-fetch the key with `az storage account keys list` |
 | `DNS resolution failed` | DNS not configured, or wrong hostname | Verify the DNS setup and that the account name matches the subdomain exactly |
+
+## You've now built
+
+You have a working local Azure Blob Storage environment running on Topaz. You created a Storage Account, uploaded and downloaded blobs with the Azure CLI, and connected to the storage account using the Azure SDK — all without a real Azure subscription or internet access. The same SDK code and CLI commands work against real Azure with only the endpoint hostname changed.

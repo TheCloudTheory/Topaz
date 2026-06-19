@@ -1,13 +1,13 @@
 ---
 sidebar_position: 2
 slug: /client-sdks/python
-description: Full API reference for the topaz-sdk Python package — credentials, ARM client, and endpoint helpers.
-keywords: [topaz, python, pip, identity, credential, arm client, azure sdk, testing]
+description: Connect Python applications and test projects to Topaz using the topaz-sdk package — credentials, ARM client, and endpoint helpers.
+keywords: [topaz python sdk, topaz pip, topaz python credential, azure sdk local python, topaz python testing]
 ---
 
-# Python
+# How to connect Python apps to Topaz
 
-The `topaz-sdk` package bridges Python test code and local development applications to the Topaz emulator.
+This guide shows you how to install and use the `topaz-sdk` package to connect Python applications and test projects to the Topaz emulator.
 
 | Symbol | Purpose |
 |---|---|

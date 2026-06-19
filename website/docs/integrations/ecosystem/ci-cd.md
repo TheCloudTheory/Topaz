@@ -1,25 +1,23 @@
 ---
 sidebar_position: 6
 slug: /ecosystem/ci-cd
+description: Run Topaz in GitHub Actions and Azure DevOps pipelines — complete copy-paste examples for container service and executable approaches.
+keywords: [topaz ci, topaz github actions, topaz azure devops, azure emulator ci, local azure ci pipeline]
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# CI/CD integration
+# How to run Topaz in CI/CD pipelines
 
-Running your test suite against a live Topaz instance in CI requires three setup steps that mirror what you'd do locally: install the certificate, configure DNS, and start the emulator. This page shows complete, copy-paste ready examples for GitHub Actions and Azure DevOps Pipelines.
+This guide shows you how to run Topaz as a service in CI pipelines, with complete examples for GitHub Actions and Azure DevOps. Setup mirrors local development: install the certificate, configure DNS, and start the emulator.
 
-## How Topaz runs in CI
-
-There are two approaches:
+Two approaches are available:
 
 | Approach | When to use |
 |---|---|
-| **Container service** | Simpler. Docker pulls the published image; no build step needed. |
+| **Container service** | Simpler. Docker pulls the published image; no build step needed. Recommended for most projects. |
 | **In-process (executable)** | Fastest. Useful if you already publish a self-contained binary as a build artifact. |
-
-Both approaches are shown below. The container approach is recommended for most projects.
 
 ## GitHub Actions
 

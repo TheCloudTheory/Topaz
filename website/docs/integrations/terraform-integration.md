@@ -1,26 +1,15 @@
 ---
 sidebar_position: 2
 slug: /terraform-integration
-description: Run Terraform AzureRM local testing with Topaz — configure azurerm, azapi, and azuread providers to hit a local emulator instead of real Azure. No subscription required.
+description: Configure azurerm, azapi, and azuread providers to target Topaz and run a full Terraform workflow locally — init, plan, apply, destroy — without a real Azure subscription.
 keywords: [terraform topaz, azurerm local emulator, azure terraform local, topaz metadata_host, terraform azure emulator, terraform azurerm local testing, azurerm local testing]
 ---
 
-# Terraform integration
+# How to develop Terraform configurations locally
 
-Topaz can be used as a local Azure target for Terraform, enabling full `azurerm` local testing without a real Azure subscription. Configure Terraform providers to discover endpoints from Topaz metadata instead of Azure public cloud, and run your complete `init` → `plan` → `apply` → `destroy` workflow locally.
+This guide shows you how to configure Terraform's Azure providers to target Topaz and run a complete `init` → `plan` → `apply` → `destroy` workflow locally, without a real Azure subscription.
 
-This page explains how Terraform integration works, how to configure it, and which settings are required.
-
-## How it works
-
-Terraform still uses the standard Azure providers, but endpoint discovery is redirected to Topaz:
-
-1. Terraform providers read cloud metadata from Topaz ARM metadata endpoint.
-2. Providers authenticate against Topaz Entra endpoints.
-3. Resource management operations are sent to Topaz ARM/resource endpoints.
-4. Resources are stored in Topaz local persistence.
-
-In practice, this means your Terraform workflow (`init`, `plan`, `apply`, `destroy`) stays the same, but runs locally.
+Terraform providers redirect endpoint discovery to Topaz via a single configuration setting. See [Control plane and data plane](../concepts/control-plane-and-data-plane.md) for background on how the ARM control plane enables this.
 
 ## Prerequisites
 

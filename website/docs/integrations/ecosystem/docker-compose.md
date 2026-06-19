@@ -1,14 +1,16 @@
 ---
 sidebar_position: 4
 slug: /ecosystem/docker-compose
+description: Configure a docker-compose.yml to run Topaz alongside your application, wire up Azure SDK networking, and manage the full container lifecycle.
+keywords: [topaz docker compose, azure emulator docker, local azure docker compose, topaz container networking]
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Docker Compose
+# How to run Topaz with Docker Compose
 
-Docker Compose is a natural fit for local development with Topaz. A single `docker-compose.yml` file describes both Topaz and your application as services, wires up the networking that Azure SDK clients expect, and manages the full container lifecycle.
+This guide shows you how to configure a `docker-compose.yml` that runs Topaz alongside your application, with the networking required for Azure SDK clients to reach the emulator.
 
 ## Scenario
 

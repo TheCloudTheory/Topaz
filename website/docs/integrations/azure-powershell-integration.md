@@ -8,9 +8,9 @@ keywords: [azure powershell local, az module topaz, azure powershell emulator, l
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Azure PowerShell integration
+# How to use Azure PowerShell with Topaz
 
-Topaz exposes a custom Azure cloud environment that the Az PowerShell module can register and authenticate against, letting you run `*-Az*` cmdlets locally without touching real Azure resources. This guide walks through the full setup end-to-end.
+This guide shows you how to register Topaz as a cloud environment in the Az PowerShell module and run `*-Az*` cmdlets against your local emulator.
 
 ## Prerequisites
 

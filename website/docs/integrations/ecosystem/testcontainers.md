@@ -1,11 +1,13 @@
 ---
 sidebar_position: 2
 slug: /ecosystem/testcontainers
+description: Use Testcontainers for .NET to run Topaz automatically in NUnit, xUnit, and MSTest projects — shared fixture pattern with full container lifecycle management.
+keywords: [topaz testcontainers, azure emulator integration tests, testcontainers dotnet topaz, local azure unit tests]
 ---
 
-# Testcontainers
+# How to write integration tests with Testcontainers
 
-[Testcontainers for .NET](https://dotnet.testcontainers.org/) is the recommended way to run Topaz automatically inside test projects and CI pipelines. It manages the full container lifecycle — pulling the image, starting the container before tests run, and disposing of it cleanly afterwards.
+This guide shows you how to use [Testcontainers for .NET](https://dotnet.testcontainers.org/) to run a Topaz instance automatically in your test suite, with shared fixture patterns for NUnit, xUnit, and MSTest.
 
 ## Installation
 

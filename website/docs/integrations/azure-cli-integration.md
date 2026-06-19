@@ -8,9 +8,9 @@ keywords: [azure cli local, az command topaz, azure cli emulator, local azure cl
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Azure CLI integration
+# How to use Azure CLI with Topaz
 
-Topaz exposes a custom Azure cloud environment that Azure CLI can register and authenticate against, letting you use `az` commands locally without touching real Azure resources. This guide walks through the full setup end-to-end.
+This guide shows you how to register Topaz as a cloud environment in the Azure CLI and run `az` commands against your local emulator.
 
 ## Prerequisites
 

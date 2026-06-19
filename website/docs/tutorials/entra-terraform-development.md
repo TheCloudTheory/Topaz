@@ -6,14 +6,7 @@ keywords: [topaz entra, azuread terraform, terraform azure ad local, topaz azure
 
 # Managing Entra ID objects with Terraform and Topaz
 
-This tutorial walks through managing Entra ID (Azure Active Directory) resources locally using Terraform's `azuread` provider with Topaz as the identity backend.
-
-You will learn:
-
-- How to configure the `azuread` provider to point at Topaz
-- How to create and destroy users, groups, applications, and service principals
-- How to combine `azurerm` and `azuread` in a single Terraform project
-- Common gotchas specific to Entra ID emulation
+In this tutorial, we will use Terraform's `azuread` provider to create and destroy Entra ID objects locally against Topaz: an application registration, a service principal, a security group, and a user account.
 
 ## What you will build
 
@@ -43,6 +36,8 @@ topaz-host \
   --default-subscription 00000000-0000-0000-0000-000000000001 \
   --log-level Information
 ```
+
+You will see the Topaz ASCII art banner, a table listing every running service with its port, and a "Default subscription created" confirmation.
 
 Keep Topaz running for the rest of this tutorial.
 
