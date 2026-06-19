@@ -286,4 +286,6 @@ curl -fsSL https://raw.githubusercontent.com/TheCloudTheory/Topaz/main/install/g
 ```
 
 [Getting started →](https://topaz.thecloudtheory.com/docs/intro/) · Not ready to install? [Star the repo →](https://github.com/TheCloudTheory/Topaz)
+
+If you are evaluating local workflows, continue with [Using Topaz CLI](https://topaz.thecloudtheory.com/docs/using-cli/), [Local Azure emulator](https://topaz.thecloudtheory.com/docs/local-azure-emulator/), and [Pricing](https://topaz.thecloudtheory.com/pricing/).
 :::
