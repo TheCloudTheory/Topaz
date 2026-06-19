@@ -22,6 +22,11 @@ docker run -p 8899:8899 thecloudtheory/topaz-host:nightly
 
 → Full docs, quickstarts, and service guides at **[topaz.thecloudtheory.com](https://topaz.thecloudtheory.com/)**
 
+> [!TIP]
+> New to Topaz? Start here:
+> - [Getting started](https://topaz.thecloudtheory.com/docs/intro/)
+> - [Using Topaz CLI](https://topaz.thecloudtheory.com/docs/using-cli/)
+
 ## What is Topaz?
 
 Topaz is a single-binary Azure emulator. Instead of running Azurite for Storage, a separate emulator for Service Bus, and another for Key Vault — you run one tool.
@@ -75,6 +80,10 @@ topaz health
 ```
 
 Then connect your tooling — no code changes required:
+
+Quick onboarding path:
+- [Getting started](https://topaz.thecloudtheory.com/docs/intro/)
+- [Using Topaz CLI](https://topaz.thecloudtheory.com/docs/using-cli/)
 
 - **Azure CLI** — [Azure CLI integration guide](https://topaz.thecloudtheory.com/docs/azure-cli-integration/)
 - **Azure PowerShell** — [Azure PowerShell integration guide](https://topaz.thecloudtheory.com/docs/azure-powershell-integration/)
