@@ -22,7 +22,6 @@ internal sealed class GetPartitionKeyRangesEndpoint : CosmosDataPlaneEndpointBas
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        Console.Error.WriteLine($"[DBG-PKR] {context.Request.Path}");
         // Auth is intentionally skipped for pkranges: the Cosmos SDK signs this request
         // using the internal collection RID as the resource link, which Topaz cannot
         // reconstruct from the request path alone. pkranges returns only structural
@@ -44,13 +43,16 @@ internal sealed class GetPartitionKeyRangesEndpoint : CosmosDataPlaneEndpointBas
                     ["maxExclusive"] = "FF",
                     ["_lsn"] = 1,
                     ["_self"] = $"colls/{collRid}/pkranges/0/",
-                    ["_etag"] = "\"topaz-pkrange\""
+                    ["_etag"] = "\"topaz-pkrange\"",
+                    ["status"] = "online",
+                    ["parents"] = new JsonArray()
                 }
             },
             ["_count"] = 1
         };
 
         response.Headers.Add("x-ms-request-charge", "1");
+        response.Headers.Add("ETag", "\"topaz-pkrange\"");
         response.CreateJsonContentResponse(result);
     }
 }

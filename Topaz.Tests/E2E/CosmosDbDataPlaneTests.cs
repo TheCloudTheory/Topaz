@@ -181,8 +181,11 @@ public class CosmosDbDataPlaneTests
         var result = await db.Database.CreateContainerAsync(new ContainerProperties("dp-coll-create", "/pk"));
 
         // Assert
-        Assert.That(result.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Created));
-        Assert.That(result.Resource.Id, Is.EqualTo("dp-coll-create"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Created));
+            Assert.That(result.Resource.Id, Is.EqualTo("dp-coll-create"));
+        }
     }
 
     [Test]
@@ -198,8 +201,11 @@ public class CosmosDbDataPlaneTests
         var result = await db.Database.GetContainer("dp-coll-read").ReadContainerAsync();
 
         // Assert
-        Assert.That(result.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.OK));
-        Assert.That(result.Resource.Id, Is.EqualTo("dp-coll-read"));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.OK));
+            Assert.That(result.Resource.Id, Is.EqualTo("dp-coll-read"));
+        }
     }
 
     [Test]
@@ -237,9 +243,12 @@ public class CosmosDbDataPlaneTests
         var result = await container.ReplaceContainerAsync(props);
 
         // Assert
-        Assert.That(result.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.OK));
-        Assert.That(result.Resource.Id, Is.EqualTo("dp-coll-replace"));
-        Assert.That(result.Resource.DefaultTimeToLive, Is.EqualTo(3600));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.OK));
+            Assert.That(result.Resource.Id, Is.EqualTo("dp-coll-replace"));
+            Assert.That(result.Resource.DefaultTimeToLive, Is.EqualTo(3600));
+        }
     }
 
     [Test]

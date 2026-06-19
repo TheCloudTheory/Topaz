@@ -25,8 +25,7 @@ internal sealed class GetDocumentEndpoint : CosmosDataPlaneEndpointBase
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        if (!IsRequestAuthorized(context, response)) return;
-
+        
         var segments = context.Request.Path.Value!.Trim('/').Split('/');
         var databaseName = segments[1];
         var collectionName = segments[3];
@@ -38,7 +37,12 @@ internal sealed class GetDocumentEndpoint : CosmosDataPlaneEndpointBase
 
         if (result.Result == OperationResult.NotFound)
         {
-            response.StatusCode = HttpStatusCode.NotFound;
+            var notFoundBody = new System.Text.Json.Nodes.JsonObject
+            {
+                ["code"] = "NotFound",
+                ["message"] = result.Reason ?? "Entity with the specified id does not exist in the system."
+            };
+            response.CreateJsonContentResponse(notFoundBody, HttpStatusCode.NotFound);
             return;
         }
 

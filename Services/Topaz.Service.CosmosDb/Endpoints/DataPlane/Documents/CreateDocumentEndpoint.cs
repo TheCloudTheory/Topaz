@@ -30,7 +30,6 @@ internal sealed class CreateDocumentEndpoint : CosmosDataPlaneEndpointBase
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
-        Console.Error.WriteLine($"[DBG] {context.Request.Method} {context.Request.Path}{context.Request.QueryString} ct={context.Request.ContentType} isquery={context.Request.Headers["x-ms-documentdb-isquery"]} isqplan={context.Request.Headers["x-ms-cosmos-is-query-plan-request"]} pkrid={context.Request.Headers["x-ms-documentdb-partitionkeyrangeid"]}");
         if (!IsRequestAuthorized(context, response)) return;
 
         var segments = context.Request.Path.Value!.Trim('/').Split('/');

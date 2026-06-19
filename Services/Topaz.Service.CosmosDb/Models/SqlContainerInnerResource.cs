@@ -31,7 +31,7 @@ public sealed class SqlContainerInnerResource
     public static SqlContainerInnerResource Create(string containerName, ContainerPartitionKey? partitionKey, object? indexingPolicy, object? uniqueKeyPolicy, int? defaultTtl)
     {
         var guidBytes = Guid.NewGuid().ToByteArray();
-        var rid = Convert.ToBase64String(guidBytes[..8]).Replace('+', '-').Replace('/', '_');
+        var rid = Convert.ToBase64String(guidBytes[..8]);
         return new SqlContainerInnerResource
         {
             Id = containerName,

@@ -33,7 +33,7 @@ public sealed class DocumentItemResource
     public static JsonObject Create(JsonObject userBody, string databaseName, string collectionName)
     {
         var guidBytes = Guid.NewGuid().ToByteArray();
-        var rid = Convert.ToBase64String(guidBytes[..12]).Replace('+', '-').Replace('/', '_');
+        var rid = Convert.ToBase64String(guidBytes[..12]);
         var result = JsonNode.Parse(userBody.ToJsonString())!.AsObject();
 
         result["_rid"] = rid;
