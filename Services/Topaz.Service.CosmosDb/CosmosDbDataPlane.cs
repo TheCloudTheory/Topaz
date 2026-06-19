@@ -138,6 +138,45 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         return new DataPlaneOperationResult<SqlDatabaseInnerResource[]>(OperationResult.Success, databases.Select(d => d.Properties.Resource).ToArray(), null, null);
     }
 
+    /// <summary>
+    /// Returns a minimal query execution plan for cross-partition and ORDER BY queries.
+    ///
+    /// The Cosmos SDK sends a query-plan request (<c>x-ms-cosmos-is-query-plan-request: True</c>)
+    /// before executing any query that requires cross-partition fan-out. Topaz models a
+    /// single-partition container, so the plan always covers the full hash range with empty
+    /// <c>orderBy</c> / <c>aggregates</c> fields, causing the SDK to use simple parallel
+    /// execution and send the original SQL unchanged.
+    /// </summary>
+    internal static JsonObject GetQueryPlan(string query) => new()
+    {
+        ["partitionedQueryExecutionInfoVersion"] = 2,
+        ["queryInfo"] = new JsonObject
+        {
+            ["distinctType"] = "None",
+            ["top"] = JsonValue.Create((int?)null),
+            ["offset"] = JsonValue.Create((int?)null),
+            ["limit"] = JsonValue.Create((int?)null),
+            ["orderBy"] = new JsonArray(),
+            ["orderByExpressions"] = new JsonArray(),
+            ["aggregates"] = new JsonArray(),
+            ["groupByExpressions"] = new JsonArray(),
+            ["groupByAliases"] = new JsonArray(),
+            ["rewrittenQuery"] = query,
+            ["hasSelectValue"] = false,
+            ["hasNonStreamingOrderBy"] = true
+        },
+        ["queryRanges"] = new JsonArray
+        {
+            new JsonObject
+            {
+                ["min"] = "",
+                ["max"] = "FF",
+                ["isMinInclusive"] = true,
+                ["isMaxInclusive"] = false
+            }
+        }
+    };
+
     /// <summary>Returns the account properties response for the account resolved from the request host.</summary>
     internal DataPlaneOperationResult<AccountPropertiesResponse> GetAccountProperties(HttpContext context)
     {

@@ -60,6 +60,7 @@ public sealed class CosmosDbService(Pipeline eventPipeline, ITopazLogger logger)
         new DeleteCollectionEndpoint(_eventPipeline, _logger),
         new ReplaceCollectionEndpoint(_eventPipeline, _logger),
         new ListCollectionsEndpoint(_eventPipeline, _logger),
+        new GetPartitionKeyRangesEndpoint(_eventPipeline, _logger),
         new CreateDocumentEndpoint(_eventPipeline, _logger),
         new GetDocumentEndpoint(_eventPipeline, _logger),
         new ReplaceDocumentEndpoint(_eventPipeline, _logger),

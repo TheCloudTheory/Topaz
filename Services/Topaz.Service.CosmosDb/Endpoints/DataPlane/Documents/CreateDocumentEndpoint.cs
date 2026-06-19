@@ -30,6 +30,7 @@ internal sealed class CreateDocumentEndpoint : CosmosDataPlaneEndpointBase
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
     {
+        Console.Error.WriteLine($"[DBG] {context.Request.Method} {context.Request.Path}{context.Request.QueryString} ct={context.Request.ContentType} isquery={context.Request.Headers["x-ms-documentdb-isquery"]} isqplan={context.Request.Headers["x-ms-cosmos-is-query-plan-request"]} pkrid={context.Request.Headers["x-ms-documentdb-partitionkeyrangeid"]}");
         if (!IsRequestAuthorized(context, response)) return;
 
         var segments = context.Request.Path.Value!.Trim('/').Split('/');
@@ -37,15 +38,18 @@ internal sealed class CreateDocumentEndpoint : CosmosDataPlaneEndpointBase
         var collectionName = segments[3];
 
         if (string.Equals(context.Request.Headers["x-ms-documentdb-isquery"].ToString(), "true",
-                StringComparison.OrdinalIgnoreCase))
+                StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(context.Request.ContentType, "application/query+json", StringComparison.OrdinalIgnoreCase) ||
+            (context.Request.ContentType?.StartsWith("application/query+json", StringComparison.OrdinalIgnoreCase) == true))
         {
             CosmosDbSqlQueryRequest? queryRequest;
+            string rawBody;
             try
             {
                 using var queryReader = new StreamReader(context.Request.Body);
-                var raw = queryReader.ReadToEnd();
+                rawBody = queryReader.ReadToEnd();
                 queryRequest = JsonSerializer.Deserialize<CosmosDbSqlQueryRequest>(
-                    raw, GlobalSettings.JsonOptions);
+                    rawBody, GlobalSettings.JsonOptions);
             }
             catch (Exception ex)
             {
@@ -57,6 +61,17 @@ internal sealed class CreateDocumentEndpoint : CosmosDataPlaneEndpointBase
             if (queryRequest == null || string.IsNullOrWhiteSpace(queryRequest.Query))
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                return;
+            }
+
+            // Query plan requests: the Cosmos SDK sends this before executing ORDER BY / complex
+            // cross-partition queries. Return a minimal single-range plan so the SDK uses
+            // parallel (non-merging) execution and sends the original query unchanged.
+            if (string.Equals(context.Request.Headers["x-ms-cosmos-is-query-plan-request"].ToString(), "True",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                response.Headers.Add("x-ms-request-charge", "1");
+                response.CreateJsonContentResponse(CosmosDbDataPlane.GetQueryPlan(queryRequest.Query));
                 return;
             }
 

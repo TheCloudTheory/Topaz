@@ -58,6 +58,7 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
     /// </summary>
     protected bool IsRequestAuthorized(HttpContext context, HttpResponseMessage response)
     {
+
         // ── 1. Parse Authorization header ──────────────────────────────────────
         var authHeader = context.Request.Headers["Authorization"].ToString();
         if (string.IsNullOrEmpty(authHeader))
@@ -84,7 +85,7 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
         var (resourceType, resourceLink) = ParseResourceTypeAndLink(context.Request.Path.Value ?? string.Empty);
 
         var method = context.Request.Method.ToLowerInvariant();
-        var stringToSign = $"{method}\n{resourceType.ToLowerInvariant()}\n{resourceLink}\n{dateHeader.ToLowerInvariant()}\n\n";
+        var stringToSign = $"{method}\n{resourceType.ToLowerInvariant()}\n{resourceLink.ToLowerInvariant()}\n{dateHeader.ToLowerInvariant()}\n\n";
         var payload = Encoding.UTF8.GetBytes(stringToSign);
         var account = dataPlane.ResolveAccount(context);
         if (account?.Properties == null)
