@@ -256,6 +256,10 @@ function Cta() {
         <p className={styles.ctaSubtitle}>
           Download, run, and integrate in minutes. No sign-up required.
         </p>
+        <p className={styles.ctaSubtitle}>
+          Topaz runs fully locally with no Azure subscription, everything available today is free,
+          and future paid tiers are planned for advanced support and enterprise needs.
+        </p>
         <div className={styles.ctaButtons}>
           <Link
             className="button button--primary button--lg"
