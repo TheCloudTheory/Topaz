@@ -207,9 +207,19 @@
 
 .installNote {
   text-align: center;
-  margin-top: 0.6rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
   font-size: 0.9rem;
   color: var(--ifm-color-secondary-darkest);
+}
+
+.installNoteLinks {
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+  margin-top: 0.4rem;
 }
 
 /* ── Services section ─────────────────────────────────────────── */

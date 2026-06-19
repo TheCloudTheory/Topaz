@@ -126,11 +126,12 @@ function HomepageInstall() {
         <p className={styles.installNote}>
           Then verify with <code>topaz health</code> — or jump straight to the{' '}
           <Link to="/docs/intro/">Getting Started guide</Link>.
-          {' '}For next steps, see{' '}
-          <Link to="/docs/using-cli/">Using Topaz CLI</Link>,{' '}
-          <Link to="/docs/local-azure-emulator/">Local Azure emulator setup</Link>, and{' '}
-          <Link to="/pricing/">Pricing</Link>.
         </p>
+        <div className={styles.installNoteLinks}>
+          <Link to="/docs/using-cli/">Using Topaz CLI</Link>
+          <Link to="/docs/local-azure-emulator/">Local Azure emulator setup</Link>
+          <Link to="/pricing/">Pricing</Link>
+        </div>
       </div>
     </section>
   );
