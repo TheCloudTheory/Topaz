@@ -7,6 +7,10 @@ namespace Topaz.Service.CosmosDb.Models;
 
 public sealed class AccountPropertiesResponse
 {
+    /// <summary>Serialized default query engine configuration as a JSON string.</summary>
+    private static readonly string DefaultQueryEngineConfigurationJson =
+        JsonSerializer.Serialize(new QueryEngineConfiguration(), GlobalSettings.JsonOptions);
+
     [JsonPropertyName("id")]
     public string Id { get; init; } = string.Empty;
 
@@ -48,6 +52,14 @@ public sealed class AccountPropertiesResponse
 
     [JsonPropertyName("_etag")]
     public string Etag { get; init; } = string.Empty;
+
+    /// <summary>
+    /// JSON-stringified query engine configuration returned by the Cosmos DB service.
+    /// The SDK's QueryPartitionProvider reads this field during initialization; without it
+    /// the internal lock is never set and the finalizer crashes with ArgumentNullException.
+    /// </summary>
+    [JsonPropertyName("queryEngineConfiguration")]
+    public string QueryEngineConfiguration { get; init; } = DefaultQueryEngineConfigurationJson;
 
     public override string ToString() =>
         JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);

@@ -12,12 +12,21 @@ namespace Topaz.Tests.E2E;
 
 public class CosmosDbDataPlaneTests
 {
+    private readonly List<CosmosClient> _ownedClients = [];
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
     private static readonly Guid SubscriptionId = Guid.Parse("A1B2C3D4-E5F6-4A5B-8C9D-AABBCC003300");
 
     private const string SubscriptionName = "sub-test-cosmosdb-dp";
     private const string ResourceGroupName = "rg-test-cosmosdb-dp";
     private const string AccountName = "test-cosmos-dp";
+
+    [TearDown]
+    public void TearDown()
+    {
+        foreach (var c in _ownedClients)
+            c.Dispose();
+        _ownedClients.Clear();
+    }
 
     [SetUp]
     public async Task SetUp()
@@ -335,6 +344,7 @@ public class CosmosDbDataPlaneTests
     {
         var (endpoint, primaryKey) = await CreateAccountAndGetCredentials();
         var client = CreateCosmosClient(endpoint, primaryKey);
+        _ownedClients.Add(client);
         var db = await client.CreateDatabaseAsync(databaseName);
         var c = await db.Database.CreateContainerAsync(
             new ContainerProperties(containerName, "/pk"));
@@ -436,6 +446,7 @@ public class CosmosDbDataPlaneTests
                     }));
 
         var cosmosClient = CreateCosmosClient(endpoint, primaryKey);
+        _ownedClients.Add(cosmosClient);
         var container = cosmosClient.GetDatabase("doc-list-db").GetContainer("doc-list-coll");
 
         await container.CreateItemAsync(new { id = "list-a", pk = "pk1" }, new PartitionKey("pk1"));
