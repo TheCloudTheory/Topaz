@@ -4,5 +4,5 @@ public sealed class ContainerPartitionKey
 {
     public string[] Paths { get; set; } = [];
     public string Kind { get; set; } = "Hash";
-    public int? Version { get; set; }
+    public int? Version { get; set; } = 2;
 }

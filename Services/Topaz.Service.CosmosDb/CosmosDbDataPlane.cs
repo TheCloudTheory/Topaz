@@ -285,6 +285,61 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         return new DataPlaneOperationResult<SqlContainerInnerResource>(OperationResult.Updated, existing.Properties.Resource, null, null);
     }
 
+    /// <summary>
+    /// Scans every database in the account and returns the first collection whose <c>_rid</c>
+    /// either exactly matches <paramref name="ridSegment"/> or has the same decoded byte-prefix.
+    ///
+    /// The Cosmos SDK sometimes sends pkranges requests using only the first 4 bytes of an
+    /// 8-byte collection <c>_rid</c> as the URL segment. This method finds the real collection
+    /// so that the pkranges response can echo back the full <c>_rid</c>, which is required for
+    /// the SDK's routing-map lookup to succeed.
+    /// </summary>
+    internal SqlContainerInnerResource? GetCollectionByRidPrefix(HttpContext context, string ridSegment)
+    {
+        if (string.IsNullOrEmpty(ridSegment)) return null;
+
+        var ctx = ResolveAccountContext(context);
+        if (ctx == null) return null;
+        var (account, sub, rg) = ctx.Value;
+
+        byte[]? segmentBytes = null;
+        try { segmentBytes = Convert.FromBase64String(ridSegment); }
+        catch (FormatException ex)
+        {
+            logger.LogDebug(nameof(CosmosDbDataPlane), nameof(GetCollectionByRidPrefix),
+                "pkranges URL segment '{0}' is not valid base64: {1}", ridSegment, ex.Message);
+            return null;
+        }
+
+        var databases = provider.ListSubresourcesAs<SqlDatabaseResource>(sub, rg, account.Name, SqlDatabasesSubresource);
+        foreach (var db in databases)
+        {
+            var dbName = db.Properties.Resource.Id;
+            var parentId = SqlContainerParentId(account.Name, dbName);
+            var containers = provider.ListSubresourcesAs<SqlContainerResource>(sub, rg, parentId, SqlContainersSubresource);
+            foreach (var container in containers)
+            {
+                var rid = container.Properties.Resource.Rid;
+                if (string.IsNullOrEmpty(rid)) continue;
+                if (rid == ridSegment) return container.Properties.Resource;
+                try
+                {
+                    var ridBytes = Convert.FromBase64String(rid);
+                    if (ridBytes.Length >= segmentBytes.Length &&
+                        ridBytes.AsSpan(0, segmentBytes.Length).SequenceEqual(segmentBytes))
+                        return container.Properties.Resource;
+                }
+                catch (FormatException ex)
+                {
+                    logger.LogDebug(nameof(CosmosDbDataPlane), nameof(GetCollectionByRidPrefix),
+                        "Collection _rid '{0}' is not valid base64 — skipping: {1}", rid, ex.Message);
+                }
+            }
+        }
+
+        return null;
+    }
+
     /// <summary>Lists all collections for the given database resolved from the request host.</summary>
     internal DataPlaneOperationResult<SqlContainerInnerResource[]> ListCollections(HttpContext context, string databaseName)
     {

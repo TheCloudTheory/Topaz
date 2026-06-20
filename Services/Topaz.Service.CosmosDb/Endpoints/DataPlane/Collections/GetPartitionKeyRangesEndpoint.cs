@@ -13,8 +13,16 @@ namespace Topaz.Service.CosmosDb.Endpoints.DataPlane.Collections;
 /// </summary>
 internal sealed class GetPartitionKeyRangesEndpoint : CosmosDataPlaneEndpointBase
 {
+    private readonly CosmosDbDataPlane _dataPlane;
+
     public GetPartitionKeyRangesEndpoint(Pipeline eventPipeline, ITopazLogger logger)
-        : base(new CosmosDbDataPlane(new DatabaseAccountResourceProvider(logger), logger), logger) { }
+        : this(new CosmosDbDataPlane(new DatabaseAccountResourceProvider(logger), logger), logger) { }
+
+    private GetPartitionKeyRangesEndpoint(CosmosDbDataPlane dataPlane, ITopazLogger logger)
+        : base(dataPlane, logger)
+    {
+        _dataPlane = dataPlane;
+    }
 
     public override string[] Endpoints => ["GET /dbs/{dbRid}/colls/{collRid}/pkranges"];
     public override string[] Permissions => [];
@@ -27,12 +35,33 @@ internal sealed class GetPartitionKeyRangesEndpoint : CosmosDataPlaneEndpointBas
         // reconstruct from the request path alone. pkranges returns only structural
         // metadata (partition boundaries) and contains no sensitive user data.
         // See: known-limitations.md — "Cosmos DB — pkranges auth bypass"
+
+        // The Cosmos SDK fetches pkranges via an incremental change-feed loop:
+        //   1st call: no If-None-Match  → server returns 200 with ranges + ETag
+        //   2nd call: If-None-Match set → server returns 304 Not Modified → loop ends
+        // Without 304, the loop runs forever and the actual document GET is never made.
+        const string pkrangeEtag = "\"topaz-pkrange\"";
+        var ifNoneMatch = context.Request.Headers["If-None-Match"].ToString();
+        if (!string.IsNullOrEmpty(ifNoneMatch) && ifNoneMatch == pkrangeEtag)
+        {
+            response.StatusCode = System.Net.HttpStatusCode.NotModified;
+            response.Headers.Add("ETag", pkrangeEtag);
+            return;
+        }
+
         var segments = context.Request.Path.Value!.Trim('/').Split('/');
-        var collRid = segments.Length > 3 ? segments[3] : string.Empty;
+        var collRidSegment = segments.Length > 3 ? segments[3] : string.Empty;
+
+        // The Cosmos SDK sometimes sends pkranges requests using only the first 4 bytes of
+        // the collection _rid as the URL segment (a truncated form from ResourceId parsing).
+        // We look up the real collection so the response _rid matches the collection._rid
+        // that the SDK uses as its routing-map cache key.
+        var collection = _dataPlane.GetCollectionByRidPrefix(context, collRidSegment);
+        var actualRid = collection?.Rid ?? collRidSegment;
 
         var result = new JsonObject
         {
-            ["_rid"] = collRid,
+            ["_rid"] = actualRid,
             ["PartitionKeyRanges"] = new JsonArray
             {
                 new JsonObject
@@ -42,8 +71,8 @@ internal sealed class GetPartitionKeyRangesEndpoint : CosmosDataPlaneEndpointBas
                     ["minInclusive"] = "",
                     ["maxExclusive"] = "FF",
                     ["_lsn"] = 1,
-                    ["_self"] = $"colls/{collRid}/pkranges/0/",
-                    ["_etag"] = "\"topaz-pkrange\"",
+                    ["_self"] = $"colls/{actualRid}/pkranges/0/",
+                    ["_etag"] = pkrangeEtag,
                     ["status"] = "online",
                     ["parents"] = new JsonArray()
                 }
@@ -52,7 +81,7 @@ internal sealed class GetPartitionKeyRangesEndpoint : CosmosDataPlaneEndpointBas
         };
 
         response.Headers.Add("x-ms-request-charge", "1");
-        response.Headers.Add("ETag", "\"topaz-pkrange\"");
+        response.Headers.Add("ETag", pkrangeEtag);
         response.CreateJsonContentResponse(result);
     }
 }
