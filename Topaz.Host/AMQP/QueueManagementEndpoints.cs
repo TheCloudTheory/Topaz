@@ -35,7 +35,8 @@ internal sealed class QueueManagementResponseEndpoint : LinkEndpoint
 /// </summary>
 internal sealed class QueueManagementRequestEndpoint(
     ConcurrentDictionary<Session, ListenerLink> responseLinks,
-    ITopazLogger logger) : LinkEndpoint
+    ITopazLogger logger,
+    Service.ServiceBus.Filtering.ServiceBusRuleLoader? ruleLoader = null) : LinkEndpoint
 {
     public override void OnMessage(MessageContext messageContext)
     {
@@ -78,13 +79,14 @@ internal sealed class QueueManagementRequestEndpoint(
 
             reply = new Message(renewBody) { ApplicationProperties = responseProperties };
         }
+        else if (operation is "com.microsoft:complete" or "com.microsoft:abandon" or "com.microsoft:dead-letter")
+        {
+            ProcessLockTokenOperation(operation, messageContext.Message.Body);
+            reply = new Message(new Map()) { ApplicationProperties = responseProperties };
+        }
         else
         {
-            // com.microsoft:complete, com.microsoft:abandon, com.microsoft:dead-letter, etc.
-
-            // Management replies are expected to be real AMQP management responses,
-            // not a header-only message. Use an empty map body rather than a body-less
-            // message, so the client-side response parser does not treat it as malformed.
+            // Other operations (e.g. peek, schedule) — return empty OK response.
             reply = new Message(new Map()) { ApplicationProperties = responseProperties };
         }
 
@@ -109,6 +111,54 @@ internal sealed class QueueManagementRequestEndpoint(
     public override void OnDisposition(DispositionContext dispositionContext)
     {
     }
+
+    private void ProcessLockTokenOperation(string operation, object? body)
+    {
+        if (body is not Map bodyMap)
+            return;
+
+        var lockTokens = ExtractLockTokens(bodyMap["lock-tokens"]);
+
+        lock (OutgoingLinkEndpoint.DeliveryLock)
+        {
+            foreach (var lockToken in lockTokens)
+            {
+                switch (operation)
+                {
+                    case "com.microsoft:complete":
+                        InFlightMessageStore.TryCompleteByLockToken(lockToken);
+                        break;
+
+                    case "com.microsoft:abandon":
+                        InFlightMessageStore.HandleAbandonByLockToken(lockToken,
+                            ruleLoader != null
+                                ? ResolveMaxDeliveryCount(lockToken)
+                                : 10);
+                        break;
+
+                    case "com.microsoft:dead-letter":
+                        var reason = bodyMap.ContainsKey("deadletter-reason")
+                            ? bodyMap["deadletter-reason"]?.ToString()
+                            : null;
+                        var description = bodyMap.ContainsKey("deadletter-error-description")
+                            ? bodyMap["deadletter-error-description"]?.ToString()
+                            : null;
+                        InFlightMessageStore.HandleDeadLetterByLockToken(lockToken, reason, description);
+                        break;
+                }
+            }
+        }
+    }
+
+    private int ResolveMaxDeliveryCount(Guid lockToken) => 10;
+
+    private static IEnumerable<Guid> ExtractLockTokens(object? value) => value switch
+    {
+        Guid[] guids  => guids,
+        Guid single   => [single],
+        object[] objs => objs.OfType<Guid>(),
+        _             => []
+    };
 
     private static string DescribeBody(object? body)
     {

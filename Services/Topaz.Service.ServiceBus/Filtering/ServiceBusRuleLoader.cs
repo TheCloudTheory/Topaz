@@ -126,6 +126,89 @@ public sealed class ServiceBusRuleLoader
         }
     }
 
+    /// <summary>
+    /// Returns the configured <c>MaxDeliveryCount</c> for the given AMQP entity address
+    /// (normalized, e.g. <c>"myqueue"</c> or <c>"mytopic/subscriptions/mysub"</c>).
+    /// Returns 10 when the entity cannot be found or deserialization fails.
+    /// </summary>
+    public int GetMaxDeliveryCount(string entityAddress)
+    {
+        const int defaultMaxDeliveryCount = 10;
+
+        // Strip DLQ suffix so callers can pass the original entity address.
+        var address = entityAddress;
+        if (address.EndsWith("/$deadletterqueue", StringComparison.OrdinalIgnoreCase))
+            address = address[..^"/$deadletterqueue".Length];
+
+        try
+        {
+            var subscriptionsIdx = address.IndexOf("/subscriptions/", StringComparison.OrdinalIgnoreCase);
+            if (subscriptionsIdx > 0)
+            {
+                // Topic subscription: "{topic}/subscriptions/{sub}"
+                var topicName = address[..subscriptionsIdx];
+                var subscriptionName = address[(subscriptionsIdx + "/subscriptions/".Length)..];
+
+                foreach (var topicDir in EnumerateTopicDirectories(topicName))
+                {
+                    var metadataFile = Path.Combine(topicDir, "subscriptions", subscriptionName, "metadata.json");
+                    if (!File.Exists(metadataFile))
+                        continue;
+
+                    var json = File.ReadAllText(metadataFile);
+                    var resource = JsonSerializer.Deserialize<ServiceBusSubscriptionResource>(json, GlobalSettings.JsonOptions);
+                    if (resource?.Properties?.MaxDeliveryCount is { } mdc)
+                        return mdc;
+                }
+
+                return defaultMaxDeliveryCount;
+            }
+
+            // Queue
+            foreach (var queueDir in EnumerateQueueDirectories(address))
+            {
+                var metadataFile = Path.Combine(queueDir, "metadata.json");
+                if (!File.Exists(metadataFile))
+                    continue;
+
+                var json = File.ReadAllText(metadataFile);
+                var resource = JsonSerializer.Deserialize<ServiceBusQueueResource>(json, GlobalSettings.JsonOptions);
+                if (resource?.Properties?.MaxDeliveryCount is { } mdc)
+                    return mdc;
+            }
+
+            return defaultMaxDeliveryCount;
+        }
+        catch (Exception)
+        {
+            return defaultMaxDeliveryCount;
+        }
+    }
+
+    // Produces all `{emulatorRoot}/.../queues/{queueName}` directories.
+    private IEnumerable<string> EnumerateQueueDirectories(string queueName)
+    {
+        if (!Directory.Exists(_baseEmulatorPath))
+            yield break;
+
+        var subscriptionsRoot = Path.Combine(_baseEmulatorPath, ".subscription");
+        if (!Directory.Exists(subscriptionsRoot))
+            yield break;
+
+        foreach (var subDir in SafeEnumerateDirectories(subscriptionsRoot))
+        {
+            var resourceGroupsDir = Path.Combine(subDir, ".resource-group");
+            if (!Directory.Exists(resourceGroupsDir))
+                continue;
+
+            foreach (var rgDir in SafeEnumerateDirectories(resourceGroupsDir))
+            foreach (var namespaceDir in SafeEnumerateDirectories(Path.Combine(rgDir, ".service-bus")))
+            {
+                yield return Path.Combine(namespaceDir, "queues", queueName);
+            }
+        }
+    }
+
     private static IEnumerable<string> SafeEnumerateDirectories(string path)
     {
         try

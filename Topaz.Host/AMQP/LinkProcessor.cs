@@ -50,7 +50,7 @@ internal sealed class LinkProcessor(ITopazLogger logger, ServiceBusRuleLoader? r
 
         if (attachContext.Attach.Role)
         {
-            attachContext.Complete(new OutgoingLinkEndpoint(address ?? string.Empty, logger), 300);
+            attachContext.Complete(new OutgoingLinkEndpoint(address ?? string.Empty, logger, ruleLoader), 300);
         }
         else
         {
@@ -104,7 +104,7 @@ internal sealed class LinkProcessor(ITopazLogger logger, ServiceBusRuleLoader? r
             // can send responses (200 OK) for com.microsoft:complete, renew-lock, etc.
             logger.LogInformation($"[{nameof(LinkProcessor)}.{nameof(HandleQueueManagementLink)}] Registering queue management request link for address '{address}'.");
 
-            attachContext.Complete(new QueueManagementRequestEndpoint(_queueManagementResponseLinks, logger), 300);
+            attachContext.Complete(new QueueManagementRequestEndpoint(_queueManagementResponseLinks, logger, ruleLoader), 300);
         }
     }
 }

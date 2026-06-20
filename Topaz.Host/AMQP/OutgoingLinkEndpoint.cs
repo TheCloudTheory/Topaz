@@ -3,6 +3,7 @@ using Amqp;
 using Amqp.Framing;
 using Amqp.Listener;
 using Amqp.Types;
+using Topaz.Service.ServiceBus.Filtering;
 using Topaz.Shared;
 
 namespace Topaz.Host.AMQP;
@@ -10,9 +11,11 @@ namespace Topaz.Host.AMQP;
 public class OutgoingLinkEndpoint : LinkEndpoint
 {
     private readonly ITopazLogger _logger;
+    private readonly ServiceBusRuleLoader? _ruleLoader;
 
-    public OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger)
+    public OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger, ServiceBusRuleLoader? ruleLoader = null)
     {
+        _ruleLoader = ruleLoader;
         // AMQP source addresses arrive with a leading '/' (e.g. "/filter-topic/Subscriptions/sub-true").
         // Strip it so the name matches what IncomingLinkEndpoint enqueues under.
         EntityAddress = sourceAddress.TrimStart('/');
@@ -111,7 +114,7 @@ public class OutgoingLinkEndpoint : LinkEndpoint
 
     private static void DeliverMessages()
     {
-        List<(ListenerLink Link, Message Message)> deliveries = [];
+        List<(ListenerLink Link, Message Message, Guid LockToken)> deliveries = [];
 
         lock (DeliveryLock)
         {
@@ -133,15 +136,17 @@ public class OutgoingLinkEndpoint : LinkEndpoint
                     message.MessageAnnotations[new Symbol("x-opt-offset")] = SubscriptionMessageStore.NextOffset().ToString();
                     message.MessageAnnotations[new Symbol("x-opt-locked-until")] = DateTime.UtcNow.AddMinutes(5);
                     ep._pendingCredit--;
-                    deliveries.Add((ep._pendingLink, message));
+                    var lockToken = Guid.NewGuid();
+                    InFlightMessageStore.Track(lockToken, ep.MessageStoreAddress, message);
+                    deliveries.Add((ep._pendingLink, message, lockToken));
                 }
             }
         }
 
         // Send outside the lock to avoid holding it during network I/O.
-        foreach (var (link, message) in deliveries)
+        foreach (var (link, message, lockToken) in deliveries)
         {
-            SendMessageWithGuidTag(link, message);
+            SendMessageWithGuidTag(link, message, lockToken);
         }
     }
 
@@ -190,19 +195,55 @@ public class OutgoingLinkEndpoint : LinkEndpoint
 
     public override void OnDisposition(DispositionContext dispositionContext)
     {
-        // The client (Azure SDK / MassTransit) sends a DISPOSITION frame after processing a message.
-        // Because TRANSFER frames are sent pre-settled (Settled=true), the receiver never adds the
-        // message to its unsettledMap and CompleteMessageAsync returns immediately without waiting for
-        // a broker confirmation.  Complete() is still called here to acknowledge the disposition and
-        // keep the AMQP session state clean.
+        var message = dispositionContext.Message;
+        _logger.LogDebug(nameof(OutgoingLinkEndpoint), nameof(OnDisposition),
+            "Disposition received: state={0}, messageNull={1}, entity={2}",
+            dispositionContext.DeliveryState?.GetType().Name ?? "<null>", message == null, MessageStoreAddress);
+
+        if (message != null)
+        {
+            switch (dispositionContext.DeliveryState)
+            {
+                case Accepted:
+                    lock (DeliveryLock) { InFlightMessageStore.TryCompleteByMessage(message); }
+                    break;
+
+                case Released:
+                    lock (DeliveryLock)
+                    {
+                        var maxDeliveryCount = _ruleLoader?.GetMaxDeliveryCount(MessageStoreAddress) ?? 10;
+                        InFlightMessageStore.HandleAbandonByMessage(message, maxDeliveryCount);
+                    }
+                    break;
+
+                // ponytail: Azure SDK sends Modified{DeliveryFailed=true} for AbandonMessageAsync, treat as Released
+                case Modified:
+                    lock (DeliveryLock)
+                    {
+                        var maxDeliveryCount = _ruleLoader?.GetMaxDeliveryCount(MessageStoreAddress) ?? 10;
+                        InFlightMessageStore.HandleAbandonByMessage(message, maxDeliveryCount);
+                    }
+                    break;
+
+                case Rejected rejected:
+                    lock (DeliveryLock)
+                    {
+                        var reason = rejected.Error?.Condition?.ToString();
+                        var description = rejected.Error?.Description;
+                        InFlightMessageStore.HandleDeadLetterByMessage(message, reason, description);
+                    }
+                    break;
+            }
+        }
+
         dispositionContext.Complete();
     }
 
-    private static void SendMessageWithGuidTag(ListenerLink link, Message message)
+    private static void SendMessageWithGuidTag(ListenerLink link, Message message, Guid lockToken)
     {
         var buffer = message.Encode();
         var delivery = Activator.CreateInstance(DeliveryType)!;
-        DeliveryTagProperty.SetValue(delivery, Guid.NewGuid().ToByteArray());
+        DeliveryTagProperty.SetValue(delivery, lockToken.ToByteArray());
         DeliveryMessageProperty.SetValue(delivery, message);
         DeliveryBufferField.SetValue(delivery, buffer);
         DeliveryHandleField.SetValue(delivery, link.Handle);

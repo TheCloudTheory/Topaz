@@ -326,26 +326,6 @@ TODO: Topaz CLI — configurable defaults
 
 _Implemented in v1.7-beta: `POST /api/zipdeploy` and `GET /api/deployments` on a dedicated Kudu port (8896, HTTPS). Site identity is resolved from the `Host` header (`{siteName}.scm.azurewebsites.topaz.local.dev`). Zip packages are stored at `.topaz/{sub}/{rg}/.azure-web-sites/{name}/deployments/{id}.zip`; a `DeploymentRecord` (id, status, startTime, endTime, deployer: `"Push Deployer"`) is persisted at `.../deployments/{id}/metadata.json`. Certificate SAN `*.scm.azurewebsites.topaz.local.dev` added to `certificate/generate.sh` and cert regenerated._
 
-### Azure Load Balancer — initial control plane
-
-<!--
-TODO: Azure Load Balancer: New service project scaffold
-  Create Topaz.Service.LoadBalancer following the existing service conventions:
-  - LoadBalancerResourceProperties + LoadBalancerResource (ArmResource<T>) with fields:
-    sku (name: Basic/Standard, tier: Regional/Global), frontendIPConfigurations,
-    backendAddressPools, loadBalancingRules, probes, inboundNatRules, outboundRules,
-    provisioningState (always Succeeded).
-  - LoadBalancerResourceProvider (ResourceProviderBase<T>) for filesystem persistence.
-  - LoadBalancerServiceControlPlane implementing IControlPlane with a working Deploy()
-    that maps GenericResource → LoadBalancerResource via resource.As<T,TProps>().
-  - IServiceDefinition registration and wiring in Topaz.Host.
-  - ProjectReference in Topaz.Service.ResourceManager.csproj.
-  - case "Microsoft.Network/loadBalancers": entry in TemplateDeploymentOrchestrator.RouteDeployment().
-  See: https://learn.microsoft.com/en-us/rest/api/load-balancer/load-balancers?view=rest-load-balancer-2025-05-01
-  milestone: v1.7-beta
-  labels: enhancement, good first issue
--->
-
 ### Service Bus — dead letter queues
 
 <!--
@@ -864,6 +844,57 @@ TODO: Azure Disks: Full azcopy-compatible disk streaming via SAS URL
   - Large disks use on-disk .topaz/disks/{uniqueId}.vhd sparse file.
   milestone: v1.9-preview
   labels: enhancement
+-->
+
+<!--
+TODO: Service Bus: Dead letter queue — DeadLetteringOnMessageExpiration
+  Automatically move messages to the dead-letter sub-queue when their TTL expires.
+  When a message's TTL (TimeToLive on the message, or DefaultMessageTimeToLive on the
+  entity) elapses while the message is sitting in the queue, it should be routed to
+  <entity>/$DeadLetterQueue with DeadLetterReason="TTLExpiredException" instead of being
+  silently discarded.
+  Prerequisite: dead-letter queue support (v1.7-beta).
+  Required changes:
+  - Add a background scheduler (ITopazBackgroundService) that periodically scans
+    SubscriptionMessageStore for messages whose x-opt-enqueued-time-utc + TTL < UtcNow.
+  - Expired messages are removed from the main queue and enqueued in
+    <entity>/$deadletterqueue with the appropriate dead-letter annotations.
+  - Respect DeadLetteringOnMessageExpiration=false (default) per entity — when false,
+    expired messages are simply discarded rather than dead-lettered.
+  milestone: v1.9-preview
+  labels: enhancement, service-bus
+-->
+
+<!--
+TODO: Service Bus: Dead letter queue — ForwardDeadLetteredMessagesTo
+  When a queue or topic subscription has ForwardDeadLetteredMessagesTo set to another
+  entity name, automatically forward messages that land in the DLQ to the target entity
+  instead of keeping them in <entity>/$deadletterqueue.
+  Prerequisite: dead-letter queue support (v1.7-beta).
+  Required changes:
+  - Read ForwardDeadLetteredMessagesTo from ServiceBusQueueResourceProperties /
+    ServiceBusSubscriptionResourceProperties when a message is routed to the DLQ.
+  - If the property is set, enqueue the message to the target entity's main queue
+    (resolve via ServiceBusRuleLoader or SubscriptionMessageStore) instead of
+    <entity>/$deadletterqueue.
+  - If the forwarding target does not exist, fall back to the local DLQ.
+  milestone: v1.9-preview
+  labels: enhancement, service-bus
+-->
+
+<!--
+TODO: Service Bus: Dead letter queue — session-filtered DLQ access
+  Allow SDK callers to receive dead-lettered messages from session-enabled entities via a
+  session-filtered receiver on the DLQ address.
+  Prerequisite: dead-letter queue support (v1.7-beta), message session support.
+  Required changes:
+  - When a message is dead-lettered from a session-enabled queue or subscription, preserve
+    the SessionId annotation on the DLQ message.
+  - Accept session-filtered Attach frames (com.microsoft:session-filter) on
+    <entity>/$DeadLetterQueue addresses, applying the same session-lock semantics as the
+    main queue's session receiver (see Message session support backlog item).
+  milestone: v1.9-preview
+  labels: enhancement, service-bus
 -->
 
 <!--
