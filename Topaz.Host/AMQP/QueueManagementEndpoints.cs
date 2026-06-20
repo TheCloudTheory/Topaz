@@ -154,10 +154,11 @@ internal sealed class QueueManagementRequestEndpoint(
 
     private static IEnumerable<Guid> ExtractLockTokens(object? value) => value switch
     {
-        Guid[] guids  => guids,
-        Guid single   => [single],
-        object[] objs => objs.OfType<Guid>(),
-        _             => []
+        Guid[] guids              => guids,
+        Guid single               => [single],
+        object[] objs             => objs.OfType<Guid>(),
+        IEnumerable<object> list  => list.OfType<Guid>(),
+        _                         => []
     };
 
     private static string DescribeBody(object? body)

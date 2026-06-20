@@ -326,24 +326,6 @@ TODO: Topaz CLI — configurable defaults
 
 _Implemented in v1.7-beta: `POST /api/zipdeploy` and `GET /api/deployments` on a dedicated Kudu port (8896, HTTPS). Site identity is resolved from the `Host` header (`{siteName}.scm.azurewebsites.topaz.local.dev`). Zip packages are stored at `.topaz/{sub}/{rg}/.azure-web-sites/{name}/deployments/{id}.zip`; a `DeploymentRecord` (id, status, startTime, endTime, deployer: `"Push Deployer"`) is persisted at `.../deployments/{id}/metadata.json`. Certificate SAN `*.scm.azurewebsites.topaz.local.dev` added to `certificate/generate.sh` and cert regenerated._
 
-### Service Bus — dead letter queues
-
-<!--
-TODO: Service Bus: Dead letter queue support
-  Implement dead-letter queue semantics for queues and topic subscriptions.
-  When a message's delivery count exceeds MaxDeliveryCount, or when a subscriber
-  explicitly dead-letters a message, move it to the entity's dead-letter sub-queue
-  (<queue>/$DeadLetterQueue or <topic>/Subscriptions/<sub>/$DeadLetterQueue).
-  Required AMQP changes:
-  - Handle Rejected and Released dispositions by incrementing the delivery count.
-  - When MaxDeliveryCount is exceeded, route the message to the dead-letter sub-queue
-    instead of returning it to the main queue.
-  - Expose the dead-letter sub-queue as an addressable AMQP entity so SDK callers can
-    create a receiver for <queue>/$DeadLetterQueue.
-  milestone: v1.7-beta
-  labels: enhancement, service-bus
--->
-
 ### Service Bus — message sessions
 
 <!--
