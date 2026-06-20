@@ -569,13 +569,21 @@ public class CosmosDbDataPlaneTests
         var iterator = cosmosClient
             .GetDatabase(database)
             .GetContainer(collection)
-            .GetItemQueryIterator<System.Text.Json.Nodes.JsonNode>(queryDef, continuation, options);
+            .GetItemQueryIterator<Newtonsoft.Json.Linq.JToken>(queryDef, continuation, options);
 
         var page = await iterator.ReadNextAsync();
 
         var docs = new System.Text.Json.Nodes.JsonArray();
         foreach (var item in page)
-            docs.Add(item?.DeepClone());
+        {
+            if (item == null)
+                docs.Add(null);
+            else
+            {
+                var jsonNode = System.Text.Json.Nodes.JsonNode.Parse(item.ToString(Newtonsoft.Json.Formatting.None));
+                docs.Add(jsonNode);
+            }
+        }
 
         return new System.Text.Json.Nodes.JsonObject
         {
