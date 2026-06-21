@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Amqp;
 using Amqp.Framing;
 using Amqp.Listener;
+using Amqp.Types;
 using Topaz.Service.ServiceBus.Filtering;
 using Topaz.Shared;
 
@@ -50,7 +51,30 @@ internal sealed class LinkProcessor(ITopazLogger logger, ServiceBusRuleLoader? r
 
         if (attachContext.Attach.Role)
         {
-            attachContext.Complete(new OutgoingLinkEndpoint(address ?? string.Empty, logger, ruleLoader), 300);
+            // Parse com.microsoft:session-filter from the Attach Source filter-set (if present).
+            // A null value means "any session" (wildcard); a string value means a specific session.
+            // The sentinel SessionFilterRequested.Any is used to distinguish "wildcard requested"
+            // from "no session filter at all".
+            string? sessionFilter = null;
+            bool hasSessionFilter = false;
+            if (attachContext.Attach.Source is Source source && source.FilterSet != null)
+            {
+                foreach (var key in source.FilterSet.Keys)
+                {
+                    var keyStr = key?.ToString() ?? string.Empty;
+                    if (keyStr.Contains("session-filter", StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasSessionFilter = true;
+                        sessionFilter = source.FilterSet[key]?.ToString(); // null = wildcard
+                        break;
+                    }
+                }
+            }
+
+            attachContext.Complete(
+                new OutgoingLinkEndpoint(address ?? string.Empty, logger, ruleLoader,
+                    hasSessionFilter ? (sessionFilter ?? OutgoingLinkEndpoint.WildcardSession) : null),
+                300);
         }
         else
         {
@@ -104,7 +128,12 @@ internal sealed class LinkProcessor(ITopazLogger logger, ServiceBusRuleLoader? r
             // can send responses (200 OK) for com.microsoft:complete, renew-lock, etc.
             logger.LogInformation($"[{nameof(LinkProcessor)}.{nameof(HandleQueueManagementLink)}] Registering queue management request link for address '{address}'.");
 
-            attachContext.Complete(new QueueManagementRequestEndpoint(_queueManagementResponseLinks, logger, ruleLoader), 300);
+            // Strip the /$management suffix to get the bare entity address for session operations.
+            var entityAddress = address != null && address.EndsWith("/$management", StringComparison.OrdinalIgnoreCase)
+                ? address[..^"/$management".Length].TrimStart('/')
+                : address ?? string.Empty;
+
+            attachContext.Complete(new QueueManagementRequestEndpoint(_queueManagementResponseLinks, logger, ruleLoader, entityAddress), 300);
         }
     }
 }

@@ -114,6 +114,41 @@ public class IncomingLinkEndpoint(string targetAddress, ITopazLogger logger, Ser
         }
         else
         {
+            EnqueueToEntityQueue(normalizedAddress, message);
+        }
+    }
+
+    /// <summary>
+    /// Enqueues a message to the appropriate store for the given entity address.
+    /// Session messages (GroupId set) go to <see cref="SessionMessageStore"/>;
+    /// non-session messages go to <see cref="SubscriptionMessageStore"/>.
+    /// Enforces <c>requiresSession</c> by rejecting messages without a session ID on session-only entities.
+    /// Must be called while holding <see cref="OutgoingLinkEndpoint.DeliveryLock"/>.
+    /// </summary>
+    private void EnqueueToEntityQueue(string normalizedAddress, Message message)
+    {
+        var sessionId = message.Properties?.GroupId;
+
+        if (ruleLoader != null && ruleLoader.GetRequiresSession(normalizedAddress))
+        {
+            if (sessionId == null)
+            {
+                // Entity requires sessions but message has no SessionId — drop with a warning.
+                // Real Azure returns SessionIdIsNull; we can't reject individual AMQP transfers
+                // easily here (Complete was already called), so log and discard.
+                logger.LogDebug(nameof(IncomingLinkEndpoint), nameof(EnqueueToEntityQueue),
+                    "Entity '{0}' requires a session (requiresSession=true) but message has no GroupId/SessionId — message discarded.",
+                    normalizedAddress);
+                return;
+            }
+        }
+
+        if (sessionId != null)
+        {
+            SessionMessageStore.Enqueue(normalizedAddress, sessionId, message);
+        }
+        else
+        {
             SubscriptionMessageStore.Enqueue(normalizedAddress, message);
         }
     }
@@ -164,7 +199,16 @@ public class IncomingLinkEndpoint(string targetAddress, ITopazLogger logger, Ser
             if (matchingRule?.Action != null)
                 SqlRuleActionApplicator.Apply(matchingRule.Action, clone);
 
-            SubscriptionMessageStore.Enqueue(subscriptionAddress, clone);
+            // Route session messages to SessionMessageStore, non-session to SubscriptionMessageStore.
+            var sessionId = clone.Properties?.GroupId;
+            if (sessionId != null)
+            {
+                SessionMessageStore.Enqueue(subscriptionAddress, sessionId, clone);
+            }
+            else
+            {
+                SubscriptionMessageStore.Enqueue(subscriptionAddress, clone);
+            }
 
             logger.LogDebug(nameof(IncomingLinkEndpoint), nameof(FanOutToSubscriptions),
                 "Enqueued message copy to subscription '{0}'.", subscriptionAddress);

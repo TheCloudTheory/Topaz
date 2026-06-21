@@ -13,9 +13,24 @@ public class OutgoingLinkEndpoint : LinkEndpoint
     private readonly ITopazLogger _logger;
     private readonly ServiceBusRuleLoader? _ruleLoader;
 
-    public OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger, ServiceBusRuleLoader? ruleLoader = null)
+    /// <summary>
+    /// Sentinel value used when a session-filter Attach was received with a null (wildcard) session ID.
+    /// Distinguishes "receiver wants any session" from "receiver is not session-aware".
+    /// </summary>
+    internal const string WildcardSession = "\0wildcard";
+
+    /// <summary>
+    /// Session filter requested on this receiver link, or <c>null</c> when the link is not
+    /// session-aware.  Equal to <see cref="WildcardSession"/> for wildcard receivers.
+    /// Once a session is acquired this field holds the resolved session ID.
+    /// </summary>
+    private string? _sessionFilter;
+
+    public OutgoingLinkEndpoint(string sourceAddress, ITopazLogger logger,
+        ServiceBusRuleLoader? ruleLoader = null, string? sessionFilter = null)
     {
         _ruleLoader = ruleLoader;
+        _sessionFilter = sessionFilter;
         // AMQP source addresses arrive with a leading '/' (e.g. "/filter-topic/Subscriptions/sub-true").
         // Strip it so the name matches what IncomingLinkEndpoint enqueues under.
         EntityAddress = sourceAddress.TrimStart('/');
@@ -120,9 +135,22 @@ public class OutgoingLinkEndpoint : LinkEndpoint
         {
             foreach (var ep in _queueEndpoints)
             {
-                while (ep._pendingCredit > 0 && ep._pendingLink != null
-                       && SubscriptionMessageStore.TryDequeue(ep.MessageStoreAddress, out var message) && message != null)
+                while (ep._pendingCredit > 0 && ep._pendingLink != null)
                 {
+                    Message? message = null;
+
+                    if (ep._sessionFilter != null)
+                    {
+                        // Session receiver: dequeue from the session-specific sub-queue.
+                        if (!SessionMessageStore.TryDequeue(ep.MessageStoreAddress, ep._sessionFilter, out message) || message == null)
+                            break;
+                    }
+                    else
+                    {
+                        if (!SubscriptionMessageStore.TryDequeue(ep.MessageStoreAddress, out message) || message == null)
+                            break;
+                    }
+
                     message.Header ??= new Header();
                     
                     // AMQPNetLite only writes a field into the encoded list when the backing store has been
@@ -157,6 +185,65 @@ public class OutgoingLinkEndpoint : LinkEndpoint
 
         lock (DeliveryLock)
         {
+            // Session receiver: enforce requiresSession and acquire the session lock.
+            if (_sessionFilter != null)
+            {
+                // Enforce: non-session receiver on a requiresSession=true entity is rejected.
+                // (This branch is for session receivers, so nothing to enforce here.)
+
+                // Resolve wildcard session filter to the next available session.
+                if (_sessionFilter == WildcardSession)
+                {
+                    var nextSession = SessionMessageStore.GetNextAvailableSession(MessageStoreAddress);
+                    if (nextSession == null)
+                    {
+                        // No sessions available — close the link with SessionCannotBeLocked.
+                        flowContext.Link.Close(TimeSpan.FromSeconds(5),
+                            new Amqp.Framing.Error(new Symbol("com.microsoft:session-cannot-be-locked"))
+                            {
+                                Description = "No sessions available for entity."
+                            });
+                        return;
+                    }
+                    _sessionFilter = nextSession;
+                }
+
+                // Acquire the session lock.
+                if (!SessionMessageStore.TryAcquireSessionLock(MessageStoreAddress, _sessionFilter, flowContext.Link))
+                {
+                    flowContext.Link.Close(TimeSpan.FromSeconds(5),
+                        new Amqp.Framing.Error(new Symbol("com.microsoft:session-cannot-be-locked"))
+                        {
+                            Description = $"Session '{_sessionFilter}' is already locked by another receiver."
+                        });
+                    return;
+                }
+
+                // Release the session lock when this link closes.
+                var capturedSession = _sessionFilter;
+                flowContext.Link.Closed += (_, _) =>
+                {
+                    lock (DeliveryLock)
+                    {
+                        SessionMessageStore.ReleaseSessionLock(MessageStoreAddress, capturedSession);
+                        _queueEndpoints.Remove(this);
+                    }
+                };
+            }
+            else
+            {
+                // Non-session receiver: enforce requiresSession flag.
+                if (_ruleLoader != null && _ruleLoader.GetRequiresSession(MessageStoreAddress))
+                {
+                    flowContext.Link.Close(TimeSpan.FromSeconds(5),
+                        new Amqp.Framing.Error(new Symbol("amqp:not-allowed"))
+                        {
+                            Description = "Entity requires a session-aware receiver (requiresSession = true)."
+                        });
+                    return;
+                }
+            }
+
             _pendingLink = flowContext.Link;
             _pendingCredit = flowContext.Messages;
 
@@ -174,10 +261,14 @@ public class OutgoingLinkEndpoint : LinkEndpoint
                 // accumulate here until the consumer attaches.
                 SubscriptionMessageStore.EnsureQueue(MessageStoreAddress);
                 _queueEndpoints.Add(this);
-                flowContext.Link.Closed += (_, _) =>
+                if (_sessionFilter == null)
                 {
-                    lock (DeliveryLock) { _queueEndpoints.Remove(this); }
-                };
+                    // Non-session: remove from registry on close (session receivers handle this above).
+                    flowContext.Link.Closed += (_, _) =>
+                    {
+                        lock (DeliveryLock) { _queueEndpoints.Remove(this); }
+                    };
+                }
             }
         }
 

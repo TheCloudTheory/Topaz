@@ -185,6 +185,83 @@ public sealed class ServiceBusRuleLoader
         }
     }
 
+    // In-memory cache: normalised entity address → RequiresSession flag.
+    // Populated on first access per address; stale after entity update (acceptable for emulator).
+    private readonly Dictionary<string, bool> _requiresSessionCache = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Returns <c>true</c> when the entity at <paramref name="entityAddress"/> was created
+    /// with <c>requiresSession = true</c>.  Returns <c>false</c> when the entity cannot be
+    /// found or has no session requirement.  Results are cached in-memory to avoid a
+    /// filesystem round-trip on every incoming message.
+    /// </summary>
+    public bool GetRequiresSession(string entityAddress)
+    {
+        // Strip DLQ suffix so callers can pass the original entity address.
+        var address = entityAddress;
+        if (address.EndsWith("/$deadletterqueue", StringComparison.OrdinalIgnoreCase))
+            address = address[..^"/$deadletterqueue".Length];
+
+        var normalised = address.Trim('/').ToLowerInvariant();
+        if (_requiresSessionCache.TryGetValue(normalised, out var cached))
+            return cached;
+
+        var result = LoadRequiresSessionFromDisk(normalised);
+        _requiresSessionCache[normalised] = result;
+        return result;
+    }
+
+    /// <summary>Clears the <see cref="GetRequiresSession"/> cache for a given entity (call after create/update).</summary>
+    public void InvalidateRequiresSessionCache(string entityAddress)
+    {
+        var normalised = entityAddress.Trim('/').ToLowerInvariant();
+        _requiresSessionCache.Remove(normalised);
+    }
+
+    private bool LoadRequiresSessionFromDisk(string normalisedAddress)
+    {
+        try
+        {
+            var subscriptionsIdx = normalisedAddress.IndexOf("/subscriptions/", StringComparison.OrdinalIgnoreCase);
+            if (subscriptionsIdx > 0)
+            {
+                var topicName = normalisedAddress[..subscriptionsIdx];
+                var subscriptionName = normalisedAddress[(subscriptionsIdx + "/subscriptions/".Length)..];
+
+                foreach (var topicDir in EnumerateTopicDirectories(topicName))
+                {
+                    var metadataFile = Path.Combine(topicDir, "subscriptions", subscriptionName, "metadata.json");
+                    if (!File.Exists(metadataFile))
+                        continue;
+
+                    var json = File.ReadAllText(metadataFile);
+                    var resource = JsonSerializer.Deserialize<ServiceBusSubscriptionResource>(json, GlobalSettings.JsonOptions);
+                    if (resource?.Properties?.RequiresSession is { } rs)
+                        return rs == true;
+                }
+                return false;
+            }
+
+            foreach (var queueDir in EnumerateQueueDirectories(normalisedAddress))
+            {
+                var metadataFile = Path.Combine(queueDir, "metadata.json");
+                if (!File.Exists(metadataFile))
+                    continue;
+
+                var json = File.ReadAllText(metadataFile);
+                var resource = JsonSerializer.Deserialize<ServiceBusQueueResource>(json, GlobalSettings.JsonOptions);
+                if (resource?.Properties?.RequiresSession is { } rs)
+                    return rs;
+            }
+
+            return false;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     // Produces all `{emulatorRoot}/.../queues/{queueName}` directories.
     private IEnumerable<string> EnumerateQueueDirectories(string queueName)
     {

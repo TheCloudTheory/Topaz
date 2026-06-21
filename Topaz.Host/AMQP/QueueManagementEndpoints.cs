@@ -36,7 +36,8 @@ internal sealed class QueueManagementResponseEndpoint : LinkEndpoint
 internal sealed class QueueManagementRequestEndpoint(
     ConcurrentDictionary<Session, ListenerLink> responseLinks,
     ITopazLogger logger,
-    Service.ServiceBus.Filtering.ServiceBusRuleLoader? ruleLoader = null) : LinkEndpoint
+    Service.ServiceBus.Filtering.ServiceBusRuleLoader? ruleLoader = null,
+    string entityAddress = "") : LinkEndpoint
 {
     public override void OnMessage(MessageContext messageContext)
     {
@@ -82,6 +83,46 @@ internal sealed class QueueManagementRequestEndpoint(
         else if (operation is "com.microsoft:complete" or "com.microsoft:abandon" or "com.microsoft:dead-letter")
         {
             ProcessLockTokenOperation(operation, messageContext.Message.Body);
+            reply = new Message(new Map()) { ApplicationProperties = responseProperties };
+        }
+        else if (operation == "com.microsoft:renew-session-lock")
+        {
+            var sessionId = ExtractSessionId(messageContext.Message.Body);
+            DateTimeOffset expiry;
+            lock (OutgoingLinkEndpoint.DeliveryLock)
+            {
+                expiry = SessionMessageStore.RenewSessionLock(entityAddress, sessionId ?? string.Empty);
+            }
+            var renewSessionBody = new Map
+            {
+                ["expiration"] = new[] { expiry.UtcDateTime }
+            };
+            reply = new Message(renewSessionBody) { ApplicationProperties = responseProperties };
+        }
+        else if (operation == "com.microsoft:get-session-state")
+        {
+            var sessionId = ExtractSessionId(messageContext.Message.Body);
+            byte[]? state;
+            lock (OutgoingLinkEndpoint.DeliveryLock)
+            {
+                state = SessionMessageStore.GetSessionState(entityAddress, sessionId ?? string.Empty);
+            }
+            var getStateBody = new Map
+            {
+                ["session-state"] = state
+            };
+            reply = new Message(getStateBody) { ApplicationProperties = responseProperties };
+        }
+        else if (operation == "com.microsoft:set-session-state")
+        {
+            var sessionId = ExtractSessionId(messageContext.Message.Body);
+            byte[]? state = null;
+            if (messageContext.Message.Body is Map setStateMap && setStateMap.ContainsKey("session-state"))
+                state = setStateMap["session-state"] as byte[];
+            lock (OutgoingLinkEndpoint.DeliveryLock)
+            {
+                SessionMessageStore.SetSessionState(entityAddress, sessionId ?? string.Empty, state);
+            }
             reply = new Message(new Map()) { ApplicationProperties = responseProperties };
         }
         else
@@ -151,6 +192,13 @@ internal sealed class QueueManagementRequestEndpoint(
     }
 
     private int ResolveMaxDeliveryCount(Guid lockToken) => 10;
+
+    private static string? ExtractSessionId(object? body)
+    {
+        if (body is Map map && map.ContainsKey("session-id"))
+            return map["session-id"]?.ToString();
+        return null;
+    }
 
     private static IEnumerable<Guid> ExtractLockTokens(object? value) => value switch
     {

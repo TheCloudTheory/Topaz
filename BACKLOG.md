@@ -326,21 +326,6 @@ TODO: Topaz CLI — configurable defaults
 
 _Implemented in v1.7-beta: `POST /api/zipdeploy` and `GET /api/deployments` on a dedicated Kudu port (8896, HTTPS). Site identity is resolved from the `Host` header (`{siteName}.scm.azurewebsites.topaz.local.dev`). Zip packages are stored at `.topaz/{sub}/{rg}/.azure-web-sites/{name}/deployments/{id}.zip`; a `DeploymentRecord` (id, status, startTime, endTime, deployer: `"Push Deployer"`) is persisted at `.../deployments/{id}/metadata.json`. Certificate SAN `*.scm.azurewebsites.topaz.local.dev` added to `certificate/generate.sh` and cert regenerated._
 
-### Service Bus — message sessions
-
-<!--
-TODO: Service Bus: Message session support
-  Implement AMQP session-based messaging for queues and subscriptions with
-  requiresSession = true.
-  - Allow setting requiresSession on queue/subscription create or update (persist the flag).
-  - On the AMQP layer, accept session-filtered Attach frames (filter map containing
-    com.microsoft:session-filter with a string or null session ID).
-  - Track active session locks per entity; enforce at most one active receiver per session.
-  - Expose RenewSessionLock and GetSessionState/SetSessionState via AMQP management link.
-  milestone: v1.7-beta
-  labels: enhancement, service-bus
--->
-
 ### Service Bus — authorization rules and SAS keys
 
 Implemented in v1.7-beta. Per-namespace, per-queue, and per-topic authorization rules with full CRUD,
