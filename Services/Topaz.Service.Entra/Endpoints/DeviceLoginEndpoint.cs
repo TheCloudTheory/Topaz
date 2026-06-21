@@ -1,6 +1,7 @@
 using System.Net;
 using System.Security.Claims;
 using System.Text;
+using System.Web;
 using Microsoft.AspNetCore.Http;
 using Topaz.Service.Entra.Domain;
 using Topaz.Service.Entra.Planes;
@@ -70,7 +71,7 @@ internal sealed class DeviceLoginEndpoint(ITopazLogger logger) : IEndpointDefini
             logger.LogDebug(nameof(DeviceLoginEndpoint), nameof(HandlePost),
                 "Device login failed — unknown username: {0}", username);
             response.Content = new StringContent(
-                DeviceLoginHtmlBuilder.Form(userCode, $"User \u2018{username}\u2019 was not found."),
+                DeviceLoginHtmlBuilder.Form(userCode, $"User \u2018{HttpUtility.HtmlEncode(username)}\u2019 was not found."),
                 Encoding.UTF8, "text/html");
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
