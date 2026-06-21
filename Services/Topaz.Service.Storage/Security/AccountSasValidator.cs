@@ -100,47 +100,10 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
             }
         }
 
-        // IP restriction — enforce sip= (source IP range) if present.
-        if (!string.IsNullOrEmpty(sip))
-        {
-            if (!SipIpRangeChecker.IsAllowed(sip, remoteIpAddress))
-            {
-                logger.LogError(nameof(AccountSasValidator), nameof(Validate),
-                    "Account SAS sip='{0}' does not allow caller IP '{1}'. Denying.",
-                    sip, remoteIpAddress?.ToString() ?? "(null)");
-                return StorageAuthorizationResult.SourceIPMismatch();
-            }
-        }
-
-        // Validate that the required service letter is in ss=.
-        var serviceChar = (char)requiredService;
-        if (!ss.Contains(serviceChar, StringComparison.OrdinalIgnoreCase))
-        {
-            logger.LogError(nameof(AccountSasValidator), nameof(Validate),
-                "Account SAS ss='{0}' does not include required service '{1}'. Denying.", ss, serviceChar);
-            return StorageAuthorizationResult.AuthenticationFailed();
-        }
-
-        // Validate that the required resource-type letter is in srt=.
-        var resourceTypeChar = (char)requiredResourceType;
-        if (!srt.Contains(resourceTypeChar, StringComparison.OrdinalIgnoreCase))
-        {
-            logger.LogError(nameof(AccountSasValidator), nameof(Validate),
-                "Account SAS srt='{0}' does not include required resource type '{1}'. Denying.", srt, resourceTypeChar);
-            return StorageAuthorizationResult.AuthenticationFailed();
-        }
-
-        // Validate that the HTTP method is covered by sp= permission letters.
-        if (!IsMethodPermitted(method, sp))
-        {
-            logger.LogError(nameof(AccountSasValidator), nameof(Validate),
-                "Account SAS sp='{0}' does not cover HTTP method '{1}'. Denying.", sp, method);
-            return StorageAuthorizationResult.PermissionMismatch();
-        }
-
-        // Build StringToSign.
-        // For sv >= 2020-12-06 the spec adds a signed-encryption-scope (ses) field after sv.
-        // https://learn.microsoft.com/rest/api/storageservices/create-account-sas
+        // Build StringToSign and verify the HMAC-SHA256 signature BEFORE acting on any
+        // user-supplied field values (ss=, srt=, sp=, sip=). This prevents a user-controlled
+        // bypass where an attacker crafts values that pass the field checks while the
+        // signature has not yet been verified (CWE-807 / CodeQL cs/user-controlled-bypass).
         var ses = parsed["ses"] ?? string.Empty;
         var includeEncryptionScope = IsVersionAtLeast(sv, 2020, 12, 6);
 
@@ -149,10 +112,6 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
         var stringToSign = includeEncryptionScope
             ? string.Join("\n", storageAccountName, sp, ss, srt, st, se, sip, spr, sv, ses, string.Empty)
             : string.Join("\n", storageAccountName, sp, ss, srt, st, se, sip, spr, sv, string.Empty);
-
-        logger.LogDebug(nameof(AccountSasValidator), nameof(Validate),
-            "Account='{0}' Service='{1}' ResourceType='{2}' StringToSign='{3}'",
-            storageAccountName, serviceChar, resourceTypeChar, stringToSign.Replace("\n", "\\n"));
 
         var accountResult = controlPlane.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
         if (accountResult.Result != OperationResult.Success || accountResult.Resource == null)
@@ -168,15 +127,62 @@ internal sealed class AccountSasValidator(AzureStorageControlPlane controlPlane,
         var hash2 = Convert.ToBase64String(
             HMACSHA256.HashData(Convert.FromBase64String(accountResult.Resource.Keys[1].Value), dataBytes));
 
-        if (hash1 == sig || hash2 == sig) return StorageAuthorizationResult.Authorized();
+        if (hash1 != sig && hash2 != sig)
+        {
+            logger.LogError(nameof(AccountSasValidator), nameof(Validate),
+                "Account SAS signature mismatch for account '{0}'. Expected [{1}...] or [{2}...], got [{3}...].",
+                storageAccountName,
+                hash1.Length >= 10 ? hash1[..10] : hash1,
+                hash2.Length >= 10 ? hash2[..10] : hash2,
+                sig.Length >= 10 ? sig[..10] : sig);
+            return StorageAuthorizationResult.AuthenticationFailed();
+        }
 
-        logger.LogError(nameof(AccountSasValidator), nameof(Validate),
-            "Account SAS signature mismatch for account '{0}'. Expected [{1}...] or [{2}...], got [{3}...].",
-            storageAccountName,
-            hash1.Length >= 10 ? hash1[..10] : hash1,
-            hash2.Length >= 10 ? hash2[..10] : hash2,
-            sig.Length >= 10 ? sig[..10] : sig);
-        return StorageAuthorizationResult.AuthenticationFailed();
+        // Signature is valid — the fields below are now cryptographically bound to the token.
+        var serviceChar = (char)requiredService;
+        var resourceTypeChar = (char)requiredResourceType;
+
+        logger.LogDebug(nameof(AccountSasValidator), nameof(Validate),
+            "Account='{0}' Service='{1}' ResourceType='{2}' StringToSign='{3}'",
+            storageAccountName, serviceChar, resourceTypeChar, stringToSign.Replace("\n", "\\n"));
+
+        // IP restriction — enforce sip= (source IP range) if present.
+        if (!string.IsNullOrEmpty(sip))
+        {
+            if (!SipIpRangeChecker.IsAllowed(sip, remoteIpAddress))
+            {
+                logger.LogError(nameof(AccountSasValidator), nameof(Validate),
+                    "Account SAS sip='{0}' does not allow caller IP '{1}'. Denying.",
+                    sip, remoteIpAddress?.ToString() ?? "(null)");
+                return StorageAuthorizationResult.SourceIPMismatch();
+            }
+        }
+
+        // Validate that the required service letter is in ss=.
+        if (!ss.Contains(serviceChar, StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogError(nameof(AccountSasValidator), nameof(Validate),
+                "Account SAS ss='{0}' does not include required service '{1}'. Denying.", ss, serviceChar);
+            return StorageAuthorizationResult.AuthenticationFailed();
+        }
+
+        // Validate that the required resource-type letter is in srt=.
+        if (!srt.Contains(resourceTypeChar, StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogError(nameof(AccountSasValidator), nameof(Validate),
+                "Account SAS srt='{0}' does not include required resource type '{1}'. Denying.", srt, resourceTypeChar);
+            return StorageAuthorizationResult.AuthenticationFailed();
+        }
+
+        // Validate that the HTTP method is covered by sp= permission letters.
+        if (!IsMethodPermitted(method, sp))
+        {
+            logger.LogError(nameof(AccountSasValidator), nameof(Validate),
+                "Account SAS sp='{0}' does not cover HTTP method '{1}'. Denying.", sp, method);
+            return StorageAuthorizationResult.PermissionMismatch();
+        }
+
+        return StorageAuthorizationResult.Authorized();
     }
 
     /// <summary>
