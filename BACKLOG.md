@@ -274,24 +274,6 @@ _Implemented in v1.7-beta: three MCP provisioning tools (`CreateCosmosDbAccount`
 
 _Implemented in v1.7-beta: six control-plane endpoints (Create/Update, Get, Delete, List by resource group, List by subscription, Update Tags) for `Microsoft.Network/publicIPAddresses`. Stub IP address assigned from RFC 5737 documentation range (203.0.113.0/24) on creation. Full `Deploy()` support for ARM template deployments. Four Topaz CLI commands (`topaz pip create/show/delete/list`). Includes E2E SDK tests, Azure CLI tests, Azure PowerShell tests, and Terraform tests._
 
-<!--
-TODO: Topaz CLI — configurable defaults
-  Add a `topaz configure` command (and `topaz configure list` sub-command) that persists
-  per-user default values for the most commonly repeated flags:
-  - --subscription-id  (default subscription GUID)
-  - --resource-group   (default resource group name)
-  - --location         (default Azure region)
-  Defaults are stored in a JSON config file inside the Topaz data directory
-  (e.g. ~/.topaz/defaults.json or alongside global-dns.json).
-  All existing commands that accept these flags should read from the config file when
-  the flag is not explicitly supplied on the command line, following the same precedence
-  as the Azure CLI: explicit flag > environment variable > config file default.
-  Include CLI tests covering: set a default, verify it is applied by a downstream command,
-  and clear/override a default.
-  milestone: v1.7-beta
-  labels: enhancement, cli, good first issue
--->
-
 ### Azure App Service — Kudu / SCM data plane
 
 _Implemented in v1.7-beta: `POST /api/zipdeploy` and `GET /api/deployments` on a dedicated Kudu port (8896, HTTPS). Site identity is resolved from the `Host` header (`{siteName}.scm.azurewebsites.topaz.local.dev`). Zip packages are stored at `.topaz/{sub}/{rg}/.azure-web-sites/{name}/deployments/{id}.zip`; a `DeploymentRecord` (id, status, startTime, endTime, deployer: `"Push Deployer"`) is persisted at `.../deployments/{id}/metadata.json`. Certificate SAN `*.scm.azurewebsites.topaz.local.dev` added to `certificate/generate.sh` and cert regenerated._
