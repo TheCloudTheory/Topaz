@@ -1,0 +1,33 @@
+@using System.Net
+
+<div class="row g-3">
+    <div class="col-12 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <NavLink class="list-group-item list-group-item-action"
+                             href="@OverviewHref"
+                             Match="NavLinkMatch.All">
+                        Overview
+                    </NavLink>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-9">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string RegistryName { get; set; } = "";
+    [Parameter] public RenderFragment ChildContent { get; set; } = default!;
+
+    private string EncodedRg => WebUtility.UrlEncode(ResourceGroupName);
+    private string EncodedRegistry => WebUtility.UrlEncode(RegistryName);
+
+    private string OverviewHref => $"/portal/acr/{SubscriptionId:D}/{EncodedRg}/{EncodedRegistry}";
+}

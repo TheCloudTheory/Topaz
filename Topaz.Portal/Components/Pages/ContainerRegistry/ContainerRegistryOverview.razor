@@ -1,0 +1,156 @@
+@page "/portal/acr/{SubscriptionId:guid}/{ResourceGroupName}/{RegistryName}"
+@using System.Net
+@using Topaz.Portal.Models.ContainerRegistry
+@inject ITopazClient TopazClient
+@inject NavigationManager Nav
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/acr">Container registries</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">@DecodedRegistry</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedRegistry</h1>
+
+<ContainerRegistryDetailsShell SubscriptionId="SubscriptionId"
+                                ResourceGroupName="@DecodedRg"
+                                RegistryName="@DecodedRegistry">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_error</div>
+    }
+    else if (_registry is null)
+    {
+        <p class="mb-0">Container registry not found.</p>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between mb-3">
+                    <h5 class="card-title mb-0">Overview</h5>
+
+                    <button class="btn btn-sm btn-outline-danger"
+                            @onclick="() => _showDeleteConfirm = true"
+                            disabled="@_deletebusy">
+                        Delete
+                    </button>
+                </div>
+
+                @if (_showDeleteConfirm)
+                {
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Delete container registry?</strong> This action cannot be undone.
+                        <div class="mt-2 d-flex gap-2">
+                            <button class="btn btn-sm btn-danger"
+                                    @onclick="DeleteRegistryAsync"
+                                    disabled="@_deletebusy">
+                                Confirm delete
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    @onclick="() => _showDeleteConfirm = false"
+                                    disabled="@_deletebusy">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                @if (_deleteError is not null)
+                {
+                    <div class="alert alert-danger" role="alert">@_deleteError</div>
+                }
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Name</dt>
+                    <dd class="col-sm-9">@(_registry.Name ?? "-")</dd>
+
+                    <dt class="col-sm-3">Location</dt>
+                    <dd class="col-sm-9"><code>@(_registry.Location ?? "-")</code></dd>
+
+                    <dt class="col-sm-3">Resource group</dt>
+                    <dd class="col-sm-9">@(_registry.ResourceGroupName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Subscription</dt>
+                    <dd class="col-sm-9">@(_registry.SubscriptionName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Subscription ID</dt>
+                    <dd class="col-sm-9">@(_registry.SubscriptionId ?? "-")</dd>
+
+                    <dt class="col-sm-3">SKU</dt>
+                    <dd class="col-sm-9">@(_registry.SkuName ?? "-")</dd>
+
+                    <dt class="col-sm-3">Login server</dt>
+                    <dd class="col-sm-9"><small class="text-muted">@(_registry.LoginServer ?? "-")</small></dd>
+
+                    <dt class="col-sm-3">Admin user</dt>
+                    <dd class="col-sm-9">@(_registry.AdminUserEnabled ? "Enabled" : "Disabled")</dd>
+
+                    <dt class="col-sm-3">Resource ID</dt>
+                    <dd class="col-sm-9"><small class="text-muted">@(_registry.Id ?? "-")</small></dd>
+                </dl>
+            </div>
+        </div>
+    }
+</ContainerRegistryDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string RegistryName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _error;
+    private ContainerRegistryDto? _registry;
+
+    private bool _showDeleteConfirm;
+    private bool _deletebusy;
+    private string? _deleteError;
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedRegistry => WebUtility.UrlDecode(RegistryName);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            _registry = await TopazClient.GetContainerRegistry(SubscriptionId, DecodedRg, DecodedRegistry);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task DeleteRegistryAsync()
+    {
+        _deleteError = null;
+        _deletebusy = true;
+
+        try
+        {
+            await TopazClient.DeleteContainerRegistry(SubscriptionId, DecodedRg, DecodedRegistry);
+            Nav.NavigateTo("/portal/acr");
+        }
+        catch (Exception ex)
+        {
+            _deleteError = ex.Message;
+            _showDeleteConfirm = false;
+        }
+        finally
+        {
+            _deletebusy = false;
+        }
+    }
+}

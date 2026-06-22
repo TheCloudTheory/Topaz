@@ -106,6 +106,10 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M8 1c-3.3 0-6 .9-6 2v10c0 1.1 2.7 2 6 2s6-.9 6-2V3c0-1.1-2.7-2-6-2Zm0 1.2c2.9 0 4.8.7 4.8 1.3S10.9 4.8 8 4.8 3.2 4.1 3.2 3.5 5.1 2.2 8 2.2Zm0 4c2.9 0 4.8.7 4.8 1.3S10.9 8.8 8 8.8 3.2 8.1 3.2 7.5 5.1 6.2 8 6.2Zm0 4c2.9 0 4.8.7 4.8 1.3S10.9 12.8 8 12.8 3.2 12.1 3.2 11.5 5.1 10.2 8 10.2Z'/%3E%3C/svg%3E");
 }
 
+.bi-box-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.922l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z'/%3E%3C/svg%3E");
+}
+
 .bi-pc-display-horizontal-nav-menu {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H8.5l.5 2H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h2l.5-2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H2z'/%3E%3C/svg%3E");
 }

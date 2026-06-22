@@ -17,6 +17,7 @@ using Topaz.Portal.Models.FinOps;
 using Topaz.Portal.Models.VirtualMachines;
 using Topaz.Portal.Models.VirtualNetworks;
 using Topaz.Portal.Models.PublicIps;
+using Topaz.Portal.Models.ContainerRegistry;
 
 namespace Topaz.Portal;
 
@@ -417,6 +418,29 @@ public interface ITopazClient
         string resourceGroupName,
         string namespaceName,
         string topicName,
+        CancellationToken cancellationToken = default);
+
+    // Container Registry
+    Task<ListContainerRegistriesResponse> ListContainerRegistries();
+
+    Task CreateContainerRegistry(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string registryName,
+        string location,
+        string skuName = "Basic",
+        CancellationToken cancellationToken = default);
+
+    Task DeleteContainerRegistry(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string registryName,
+        CancellationToken cancellationToken = default);
+
+    Task<ContainerRegistryDto?> GetContainerRegistry(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string registryName,
         CancellationToken cancellationToken = default);
 
     // Key Vault
