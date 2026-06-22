@@ -17,6 +17,7 @@ using Azure.Storage.Blobs;
 using DotNet.Testcontainers.Builders;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
+using Spectre.Console;
 using Topaz.AspNetCore.Extensions;
 using Topaz.Identity;
 using Topaz.ResourceManager;
@@ -38,7 +39,7 @@ string registryLoginServer = string.Empty;
 
 if (builder.Environment.IsDevelopment())
 {
-    var topazImage = Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "thecloudtheory/topaz-host:latest";
+    var topazImage = Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "thecloudtheory/topaz-host:nightly";
 
     var certificateFile = File.ReadAllText("topaz.crt");
     var certificateKey = File.ReadAllText("topaz.key");
@@ -158,19 +159,22 @@ if (builder.Environment.IsDevelopment())
     roleAssignmentId = roleAssignmentOp.Value.Data.Id?.ToString() ?? roleAssignmentName;
 
     Console.WriteLine();
-    Console.WriteLine("╔══════════════════════════════════════════════════════════════╗");
-    Console.WriteLine("║          Topaz — All Azure Services Ready Locally            ║");
-    Console.WriteLine("╠══════════════════════════════════════════════════════════════╣");
-    Console.WriteLine($"║  Storage (Blob)    {TopazResourceHelpers.GetBlobServiceUri(storageAccountName),-43}║");
-    Console.WriteLine($"║  Storage (Table)   {TopazResourceHelpers.GetTableServiceUri(storageAccountName),-43}║");
-    Console.WriteLine($"║  Service Bus       {TopazResourceHelpers.GetServiceBusConnectionStringWithTls(serviceBusNamespace)[..60],-43}║");
-    Console.WriteLine($"║  Cosmos DB         {TopazResourceHelpers.GetCosmosDbAccountEndpoint(cosmosAccountName),-43}║");
-    Console.WriteLine($"║  Container Reg.    {registryLoginServer,-43}║");
-    Console.WriteLine($"║  RBAC Assignment   {roleAssignmentId[..Math.Min(43, roleAssignmentId.Length)]}║");
-    Console.WriteLine("╠══════════════════════════════════════════════════════════════╣");
-    Console.WriteLine("║  Replaced: Azurite  •  Service Bus Emulator                 ║");
-    Console.WriteLine("║            Cosmos DB Emulator  •  No ACR emulator needed    ║");
-    Console.WriteLine("╚══════════════════════════════════════════════════════════════╝");
+    var table = new Table()
+        .Border(TableBorder.Rounded)
+        .Title("[bold yellow]Topaz — All Azure Services Ready Locally[/]")
+        .AddColumn("[bold]Service[/]")
+        .AddColumn("[bold]Endpoint[/]")
+        .AddColumn("[bold]Replaces[/]");
+
+    table.AddRow("Blob Storage",       TopazResourceHelpers.GetBlobServiceUri(storageAccountName),                        "Azurite");
+    table.AddRow("Table Storage",      TopazResourceHelpers.GetTableServiceUri(storageAccountName),                       "Azurite");
+    table.AddRow("Service Bus",        TopazResourceHelpers.GetServiceBusConnectionStringWithTls(serviceBusNamespace),    "Service Bus Emulator");
+    table.AddRow("Cosmos DB",          TopazResourceHelpers.GetCosmosDbAccountEndpoint(cosmosAccountName),                "Cosmos DB Emulator");
+    table.AddRow("Container Registry", registryLoginServer,                                                               "N/A — first time available locally");
+    table.AddRow("ARM / RBAC",         "https://topaz.local.dev:8899/",                                                  "azure-sdk-for-net live calls");
+
+    AnsiConsole.Write(table);
+    AnsiConsole.MarkupLine("[grey]RBAC Assignment ID:[/] " + roleAssignmentId);
     Console.WriteLine();
 
     builder.Services.AddSingleton(new CosmosClient(
@@ -233,6 +237,23 @@ app.MapPost("/order", async ([FromBody] OrderRequest order, IConfiguration confi
     return Results.Ok(new OrderResult(order.Id, results));
 })
 .WithName("PlaceOrder")
+.WithOpenApi();
+
+// GET /orders — list all orders from Cosmos DB
+app.MapGet("/orders", async (CosmosClient cosmosClient) =>
+{
+    var container = cosmosClient.GetContainer("orders-db", "orders");
+    var query = container.GetItemQueryIterator<Newtonsoft.Json.Linq.JObject>("SELECT * FROM c");
+    var results = new List<Newtonsoft.Json.Linq.JObject>();
+    while (query.HasMoreResults)
+    {
+        var page = await query.ReadNextAsync();
+        results.AddRange(page);
+    }
+    var json = Newtonsoft.Json.JsonConvert.SerializeObject(results);
+    return Results.Text(json, "application/json");
+})
+.WithName("ListOrders")
 .WithOpenApi();
 
 // GET /status — show all provisioned services and what they replaced
