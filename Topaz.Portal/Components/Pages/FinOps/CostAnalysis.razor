@@ -93,7 +93,7 @@ else if (_result is not null)
                         <tbody>
                             @foreach (var entry in _result.Resources.OrderByDescending(r => r.EstimatedMonthlyCost))
                             {
-                                @{ var name = entry.ResourceId?.Split('/').LastOrDefault(s => !string.IsNullOrEmpty(s)); }
+                                var name = entry.ResourceId?.Split('/').LastOrDefault(s => !string.IsNullOrEmpty(s));
                                 <tr>
                                     <td><code>@(string.IsNullOrEmpty(entry.ResourceType) ? (entry.ResourceId ?? "(unknown)") : entry.ResourceType)</code></td>
                                     <td class="text-muted">@(name ?? "—")</td>
