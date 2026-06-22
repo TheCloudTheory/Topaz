@@ -67,7 +67,7 @@ internal sealed class PatchDocumentEndpoint : CosmosDataPlaneEndpointBase
         }
 
         response.Headers.Add("x-ms-request-charge", "1");
-        response.Headers.Add("x-ms-session-token", "0:1");
+        response.Headers.Add("x-ms-session-token", "0:-1#1");
         response.CreateJsonContentResponse(result.Resource!);
     }
 }

@@ -53,6 +53,6 @@ internal sealed class DeleteDocumentEndpoint : CosmosDataPlaneEndpointBase
 
         response.StatusCode = HttpStatusCode.NoContent;
         response.Headers.Add("x-ms-request-charge", "1");
-        response.Headers.Add("x-ms-session-token", "0:1");
+        response.Headers.Add("x-ms-session-token", "0:-1#1");
     }
 }
