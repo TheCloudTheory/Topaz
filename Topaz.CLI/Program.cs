@@ -5,6 +5,7 @@ using JetBrains.Annotations;
 using Topaz.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
+using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
 using Topaz.Service.Authorization.Commands;
 using Topaz.Service.ContainerRegistry.Commands;
@@ -110,18 +111,27 @@ internal class Program
         var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", JwtHelper.GenerateCliToken());
         registrations.AddSingleton(client);
+        registrations.AddSingleton<DefaultsProvider>();
     }
 
     private static void FindAndRegisterCommands(IConfigurator config)
     {
         config.AddCommand<Commands.HealthCommand>("health")
             .WithDescription("Check whether the Topaz host is running and display its status.");
+        
+        config.AddBranch("configure", (configurator =>
+        {
+            configurator.AddCommand<Commands.SetDefaultsCommand>("set")
+                .WithDescription("Allows configuring defaults for CLI.");
+            configurator.AddCommand<Commands.ShowDefaultsCommand>("show")
+                .WithDescription("Show current defaults for CLI.");
+        }));
 
         // Even though the types will be loaded via reflection, they must be explicitly
         // used so they can be loaded. The issue here is related to GetReferencedAssemblies(),
         // which gets the assemblies referenced in the assembly, not in the project
         // (those are completely different references conceptually).
-        // See e.g. https://github.com/dotnet/runtime/issues/57714 for a reference.
+        // See e.g., https://github.com/dotnet/runtime/issues/57714 for a reference.
         _ = new[]
         {
             typeof(GenericResourceGroupCommand),

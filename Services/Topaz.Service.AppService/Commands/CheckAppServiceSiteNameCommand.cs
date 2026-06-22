@@ -27,9 +27,7 @@ public sealed class CheckAppServiceSiteNameCommand(HttpClient httpClient)
             return ValidationResult.Error("Subscription ID can't be null.");
         if (!Guid.TryParse(settings.SubscriptionId, out _))
             return ValidationResult.Error("Subscription ID must be a valid GUID.");
-        if (string.IsNullOrEmpty(settings.Name))
-            return ValidationResult.Error("App Service site name can't be null.");
-        return base.Validate(context, settings);
+        return string.IsNullOrEmpty(settings.Name) ? ValidationResult.Error("App Service site name can't be null.") : base.Validate(context, settings);
     }
 
     [UsedImplicitly]

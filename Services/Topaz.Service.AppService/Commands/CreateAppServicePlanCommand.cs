@@ -9,7 +9,7 @@ namespace Topaz.Service.AppService.Commands;
 [UsedImplicitly]
 [CommandDefinition("appservice plan create", "app-service", "Creates or updates an App Service Plan.")]
 [CommandExample("Create a plan", "topaz appservice plan create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"my-plan\" \\\n    --location \"westeurope\" \\\n    --sku-name \"B1\"")]
-public sealed class CreateAppServicePlanCommand(HttpClient httpClient)
+public sealed class CreateAppServicePlanCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateAppServicePlanCommand.CreateAppServicePlanCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateAppServicePlanCommandSettings settings)
@@ -28,6 +28,11 @@ public sealed class CreateAppServicePlanCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, CreateAppServicePlanCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+        settings.Location ??= defaults.Location;
+        
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("App Service Plan name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))
@@ -46,7 +51,7 @@ public sealed class CreateAppServicePlanCommand(HttpClient httpClient)
     {
         [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        public string? SubscriptionId { get; set; } = null!;
 
         [CommandOptionDefinition("(Required) App Service Plan name.", required: true)]
         [CommandOption("-n|--name")]
