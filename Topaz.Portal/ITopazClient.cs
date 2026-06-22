@@ -16,6 +16,7 @@ using Topaz.Portal.Models.Tenant;
 using Topaz.Portal.Models.FinOps;
 using Topaz.Portal.Models.VirtualMachines;
 using Topaz.Portal.Models.VirtualNetworks;
+using Topaz.Portal.Models.PublicIps;
 
 namespace Topaz.Portal;
 
@@ -597,6 +598,46 @@ public interface ITopazClient
         Guid subscriptionId,
         string resourceGroupName,
         string vnetName,
+        string tagName,
+        CancellationToken cancellationToken = default);
+
+    // Public IP Addresses
+    Task<ListPublicIpAddressesResponse> ListPublicIpAddresses(CancellationToken cancellationToken = default);
+
+    Task<PublicIpAddressDto?> GetPublicIpAddress(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string pipName,
+        CancellationToken cancellationToken = default);
+
+    Task CreatePublicIpAddress(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string pipName,
+        string location,
+        string allocationMethod = "Static",
+        string ipVersion = "IPv4",
+        string sku = "Standard",
+        CancellationToken cancellationToken = default);
+
+    Task DeletePublicIpAddress(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string pipName,
+        CancellationToken cancellationToken = default);
+
+    Task CreateOrUpdatePublicIpAddressTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string pipName,
+        string tagName,
+        string tagValue,
+        CancellationToken cancellationToken = default);
+
+    Task DeletePublicIpAddressTag(
+        Guid subscriptionId,
+        string resourceGroupName,
+        string pipName,
         string tagName,
         CancellationToken cancellationToken = default);
 }

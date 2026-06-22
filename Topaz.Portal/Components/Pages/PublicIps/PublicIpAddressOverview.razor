@@ -1,0 +1,175 @@
+@page "/portal/public-ip-addresses/{SubscriptionId:guid}/{ResourceGroupName}/{PipName}"
+@using System.Net
+@using Topaz.Portal.Models.PublicIps
+@inject ITopazClient TopazClient
+@inject NavigationManager Nav
+
+<PageTitle>@DecodedName — Public IP addresses — Topaz Portal</PageTitle>
+
+<Breadcrumb>
+    <BreadcrumbItem Href="/">Home</BreadcrumbItem>
+    <BreadcrumbItem Href="/portal/public-ip-addresses">Public IP addresses</BreadcrumbItem>
+    <BreadcrumbItem IsActive="true">@DecodedName</BreadcrumbItem>
+</Breadcrumb>
+
+<h1 class="mb-3">@DecodedName</h1>
+
+<PublicIpAddressDetailsShell SubscriptionId="SubscriptionId"
+                              ResourceGroupName="@DecodedRg"
+                              PipName="@DecodedName">
+    @if (_loading)
+    {
+        <p>Loading…</p>
+    }
+    else if (_error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_error</div>
+    }
+    else if (_pip is null)
+    {
+        <p class="mb-0">Public IP address not found.</p>
+    }
+    else
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between mb-3">
+                    <h5 class="card-title mb-0">Essentials</h5>
+                    <button class="btn btn-sm btn-outline-danger"
+                            @onclick="() => _showDeleteConfirm = true"
+                            disabled="@_deletingBusy">
+                        Delete
+                    </button>
+                </div>
+
+                @if (_showDeleteConfirm)
+                {
+                    <div class="alert alert-warning d-flex align-items-center justify-content-between" role="alert">
+                        <span>Delete <strong>@(_pip.Name)</strong>? This cannot be undone.</span>
+                        <div class="d-flex gap-2 ms-3">
+                            <button class="btn btn-sm btn-danger"
+                                    @onclick="DeletePipAsync"
+                                    disabled="@_deletingBusy">
+                                Confirm delete
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    @onclick="() => _showDeleteConfirm = false"
+                                    disabled="@_deletingBusy">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_deleteError))
+                {
+                    <div class="alert alert-danger" role="alert">@_deleteError</div>
+                }
+
+                <div class="row g-0">
+                    <div class="col-12 col-xl-6">
+                        <dl class="row mb-0 essentials-grid">
+                            <dt class="col-5 text-muted fw-normal">Resource group</dt>
+                            <dd class="col-7">
+                                <a href="/resource-groups/@SubscriptionId:D/@WebUtility.UrlEncode(_pip.ResourceGroupName ?? "")">
+                                    @(_pip.ResourceGroupName ?? "-")
+                                </a>
+                            </dd>
+
+                            <dt class="col-5 text-muted fw-normal">Location</dt>
+                            <dd class="col-7">@(_pip.Location ?? "-")</dd>
+
+                            <dt class="col-5 text-muted fw-normal">Subscription</dt>
+                            <dd class="col-7">@(_pip.SubscriptionName ?? "-")</dd>
+
+                            <dt class="col-5 text-muted fw-normal">Subscription ID</dt>
+                            <dd class="col-7"><small class="font-monospace">@(_pip.SubscriptionId ?? "-")</small></dd>
+                        </dl>
+                    </div>
+
+                    <div class="col-12 col-xl-6">
+                        <dl class="row mb-0 essentials-grid">
+                            <dt class="col-5 text-muted fw-normal">IP address</dt>
+                            <dd class="col-7"><code>@(string.IsNullOrWhiteSpace(_pip.IpAddress) ? "-" : _pip.IpAddress)</code></dd>
+
+                            <dt class="col-5 text-muted fw-normal">Allocation</dt>
+                            <dd class="col-7">@(_pip.AllocationMethod ?? "-")</dd>
+
+                            <dt class="col-5 text-muted fw-normal">IP version</dt>
+                            <dd class="col-7">@(_pip.IpVersion ?? "-")</dd>
+
+                            <dt class="col-5 text-muted fw-normal">SKU</dt>
+                            <dd class="col-7">@(_pip.Sku ?? "-")</dd>
+
+                            <dt class="col-5 text-muted fw-normal">Idle timeout</dt>
+                            <dd class="col-7">@(_pip.IdleTimeoutInMinutes.HasValue ? $"{_pip.IdleTimeoutInMinutes} min" : "-")</dd>
+
+                            <dt class="col-5 text-muted fw-normal">Provisioning state</dt>
+                            <dd class="col-7">@(_pip.ProvisioningState ?? "-")</dd>
+
+                            <dt class="col-5 text-muted fw-normal">Resource ID</dt>
+                            <dd class="col-7"><small class="font-monospace text-break">@(_pip.Id ?? "-")</small></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</PublicIpAddressDetailsShell>
+
+@code {
+    [Parameter] public Guid SubscriptionId { get; set; }
+    [Parameter] public string ResourceGroupName { get; set; } = "";
+    [Parameter] public string PipName { get; set; } = "";
+
+    private bool _loading = true;
+    private string? _error;
+    private PublicIpAddressDto? _pip;
+
+    private bool _showDeleteConfirm;
+    private bool _deletingBusy;
+    private string? _deleteError;
+
+    private string DecodedRg => WebUtility.UrlDecode(ResourceGroupName);
+    private string DecodedName => WebUtility.UrlDecode(PipName);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            _pip = await TopazClient.GetPublicIpAddress(SubscriptionId, DecodedRg, DecodedName);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task DeletePipAsync()
+    {
+        _deleteError = null;
+        _deletingBusy = true;
+
+        try
+        {
+            await TopazClient.DeletePublicIpAddress(SubscriptionId, DecodedRg, DecodedName);
+            Nav.NavigateTo("/portal/public-ip-addresses");
+        }
+        catch (Exception ex)
+        {
+            _deleteError = ex.Message;
+            _showDeleteConfirm = false;
+        }
+        finally
+        {
+            _deletingBusy = false;
+        }
+    }
+}
