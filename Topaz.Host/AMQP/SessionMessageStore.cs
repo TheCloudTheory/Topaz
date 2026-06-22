@@ -110,6 +110,10 @@ internal static class SessionMessageStore
         return expiry;
     }
 
+    /// <summary>Returns <c>true</c> if the given session is currently locked by any receiver.</summary>
+    public static bool IsSessionLocked(string address, string sessionId) =>
+        _locks.ContainsKey(Key(address, sessionId));
+
     /// <summary>Returns the session state for the given entity and session ID, or <c>null</c> if not set.</summary>
     public static byte[]? GetSessionState(string address, string sessionId) =>
         _state.TryGetValue(Key(address, sessionId), out var s) ? s : null;

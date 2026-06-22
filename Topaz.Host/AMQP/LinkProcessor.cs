@@ -94,6 +94,40 @@ internal sealed class LinkProcessor(ITopazLogger logger, ServiceBusRuleLoader? r
                 }
             }
 
+            // For a named (non-wildcard) session, acquire the lock atomically during Attach.
+            // The Azure SDK resolves AcceptSessionAsync on Attach completion, not on Flow, so
+            // the lock must be held before the ATTACH response is sent.  OnFlow will re-acquire
+            // idempotently (same link) and register the _queueEndpoints entry as normal.
+            if (hasSessionFilter && sessionFilter != null && sessionFilter != OutgoingLinkEndpoint.WildcardSession)
+            {
+                var entityAddr = (address ?? string.Empty).TrimStart('/');
+                bool acquired;
+                lock (OutgoingLinkEndpoint.DeliveryLock)
+                {
+                    acquired = SessionMessageStore.TryAcquireSessionLock(entityAddr, sessionFilter, attachContext.Link);
+                }
+
+                if (!acquired)
+                {
+                    attachContext.Complete(new Amqp.Framing.Error(new Symbol("com.microsoft:session-cannot-be-locked"))
+                    {
+                        Description = $"Session '{sessionFilter}' is already locked by another receiver."
+                    });
+                    return;
+                }
+
+                // Safety net: release the lock if the link closes before OnFlow registers its own handler.
+                var capturedAddr = entityAddr;
+                var capturedSession = sessionFilter;
+                attachContext.Link.AddClosedCallback((_, _) =>
+                {
+                    lock (OutgoingLinkEndpoint.DeliveryLock)
+                    {
+                        SessionMessageStore.ReleaseSessionLock(capturedAddr, capturedSession);
+                    }
+                });
+            }
+
             // The Azure SDK reads com.microsoft:locked-until-utc from the ATTACH response
             // Properties as a long (DateTime.Ticks) to initialise SessionLockedUntil.  If the
             // property is absent or wrong type, TryGetValue<long> returns false → lockedUntilUtcTicks=0
