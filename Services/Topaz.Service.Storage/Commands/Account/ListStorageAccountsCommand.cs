@@ -44,7 +44,7 @@ public sealed class ListStorageAccountsCommand(HttpClient httpClient, DefaultsPr
     {
         [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        public string? SubscriptionId { get; set; } = null!;
 
         [CommandOptionDefinition("Resource group name (filters to accounts in this group when specified).")]
         [CommandOption("-g|--resource-group")]

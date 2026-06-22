@@ -44,7 +44,7 @@ public sealed class ShowResourceGroupCommand(HttpClient httpClient, DefaultsProv
     {
         [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        public string? SubscriptionId { get; set; } = null!;
 
         [CommandOptionDefinition("(Required) Resource group name.", required: true)]
         [CommandOption("-n|--name")]

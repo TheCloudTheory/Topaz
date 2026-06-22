@@ -62,6 +62,6 @@ public sealed class CreateEventHubNamespaceCommand(HttpClient httpClient, Defaul
         [CommandOption("-l|--location")] public string? Location { get; set; }
         
         [CommandOptionDefinition("(Required) subscription ID.")]
-        [CommandOption("-s|--subscription-id")] public string SubscriptionId { get; set; } = null!;
+        [CommandOption("-s|--subscription-id")] public string? SubscriptionId { get; set; } = null!;
     }
 }

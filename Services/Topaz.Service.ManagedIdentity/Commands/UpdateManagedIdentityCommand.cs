@@ -64,7 +64,7 @@ public sealed class UpdateManagedIdentityCommand(HttpClient httpClient, Defaults
         
         [CommandOptionDefinition("(Required) subscription ID")]
         [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        public string? SubscriptionId { get; set; } = null!;
 
         [CommandOptionDefinition("(Optional) resource tags")]
         [CommandOption("--tags")]

@@ -59,7 +59,7 @@ public sealed class CreateServiceBusNamespaceCommand(HttpClient httpClient, Defa
     {
         [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        public string? SubscriptionId { get; set; } = null!;
         
         [CommandOptionDefinition("(Required) Namespace name.", required: true)]
         [CommandOption("-n|--name")]

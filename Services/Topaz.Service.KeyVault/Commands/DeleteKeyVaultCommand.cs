@@ -61,6 +61,6 @@ public sealed class DeleteKeyVaultCommand(HttpClient httpClient, DefaultsProvide
         
         [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        public string? SubscriptionId { get; set; } = null!;
     }
 }

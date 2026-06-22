@@ -58,7 +58,7 @@ public sealed class DeleteServiceBusQueueCommand(HttpClient httpClient, Defaults
     {
         [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        public string? SubscriptionId { get; set; } = null!;
 
         [CommandOptionDefinition("(Required) Queue name.", required: true)]
         [CommandOption("-n|--queue-name")] public string? Name { get; set; }

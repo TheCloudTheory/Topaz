@@ -52,6 +52,6 @@ public sealed class ListManagedIdentityCommand(HttpClient httpClient, DefaultsPr
         
         [CommandOptionDefinition("(Required) subscription ID")]
         [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        public string? SubscriptionId { get; set; } = null!;
     }
 }

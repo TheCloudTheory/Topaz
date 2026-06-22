@@ -37,6 +37,6 @@ public sealed class ListDatabaseAccountsBySubscriptionCommand(HttpClient httpCli
     {
         [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        public string? SubscriptionId { get; set; } = null!;
     }
 }

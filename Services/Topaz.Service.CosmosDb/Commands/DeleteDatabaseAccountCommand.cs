@@ -41,7 +41,7 @@ public sealed class DeleteDatabaseAccountCommand(HttpClient httpClient, Defaults
     {
         [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        public string? SubscriptionId { get; set; } = null!;
 
         [CommandOptionDefinition("(Required) Cosmos DB account name.", required: true)]
         [CommandOption("-n|--name")]

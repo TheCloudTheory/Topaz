@@ -60,6 +60,6 @@ public sealed class DeleteManagedIdentityCommand(HttpClient httpClient, Defaults
         
         [CommandOptionDefinition("(Required) subscription ID")]
         [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        public string? SubscriptionId { get; set; } = null!;
     }
 }

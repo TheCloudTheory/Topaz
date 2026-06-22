@@ -8,7 +8,8 @@ namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage account update", "azure-storage/account", "Updates an Azure Storage account.")]
-[CommandExample("Update tags on a storage account", "topaz storage account update \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\" \\\n    --tags \"env=prod\" \"owner=team\"")]
+[CommandExample("Update tags on a storage account",
+    "topaz storage account update \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\" \\\n    --tags \"env=prod\" \"owner=team\"")]
 public sealed class UpdateStorageAccountCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<UpdateStorageAccountCommand.UpdateStorageAccountCommandSettings>(httpClient)
 {
@@ -16,10 +17,12 @@ public sealed class UpdateStorageAccountCommand(HttpClient httpClient, DefaultsP
     {
         AnsiConsole.WriteLine("Updating storage account...");
 
-        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.Name}";
+        var url =
+            $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.Name}";
         var (success, body) = await PatchAsync(url, new
         {
-            tags = settings.Tags?.ToDictionary(t => t.Split('=')[0], t => t.Split('=').Length > 1 ? t.Split('=')[1] : string.Empty)
+            tags = settings.Tags?.ToDictionary(t => t.Split('=')[0],
+                t => t.Split('=').Length > 1 ? t.Split('=')[1] : string.Empty)
         });
         if (!success) return 1;
         AnsiConsole.WriteLine(body);
@@ -50,11 +53,16 @@ public sealed class UpdateStorageAccountCommand(HttpClient httpClient, DefaultsP
     public sealed class UpdateStorageAccountCommandSettings : CommandSettings
     {
         [CommandOptionDefinition("(Required) Storage account name.", required: true)]
-        [CommandOption("-n|--name")] public string? Name { get; set; }
+        [CommandOption("-n|--name")]
+        public string? Name { get; set; }
+
         [CommandOptionDefinition("(Required) Resource group name.", required: true)]
-        [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
+        [CommandOption("-g|--resource-group")]
+        public string? ResourceGroup { get; set; }
+
         [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
-        [CommandOption("-s|--subscription-id")] public string SubscriptionId { get; set; } = null!;
+        [CommandOption("-s|--subscription-id")]
+        public string? SubscriptionId { get; set; } = null!;
 
         [CommandOptionDefinition("Resource tags as key=value pairs.")]
         [CommandOption("--tags")]

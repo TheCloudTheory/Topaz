@@ -56,6 +56,6 @@ public class DeleteEventHubNamespaceCommand(HttpClient httpClient, DefaultsProvi
         
         [CommandOptionDefinition("(Required) Event Hub namespace subscription ID.")]
         [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        public string? SubscriptionId { get; set; } = null!;
     }
 }

@@ -41,7 +41,7 @@ public sealed class DeleteAppServiceSiteCommand(HttpClient httpClient, DefaultsP
     {
         [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
         [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        public string? SubscriptionId { get; set; } = null!;
 
         [CommandOptionDefinition("(Required) App Service Site name.", required: true)]
         [CommandOption("-n|--name")]

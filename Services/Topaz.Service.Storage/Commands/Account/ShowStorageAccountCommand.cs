@@ -8,7 +8,8 @@ namespace Topaz.Service.Storage.Commands;
 
 [UsedImplicitly]
 [CommandDefinition("storage account show", "azure-storage/account", "Shows details of an Azure Storage account.")]
-[CommandExample("Show a storage account", "topaz storage account show \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\"")]
+[CommandExample("Show a storage account",
+    "topaz storage account show \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\"")]
 public sealed class ShowStorageAccountCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ShowStorageAccountCommand.ShowStorageAccountCommandSettings>(httpClient)
 {
@@ -16,7 +17,8 @@ public sealed class ShowStorageAccountCommand(HttpClient httpClient, DefaultsPro
     {
         AnsiConsole.WriteLine("Fetching storage account...");
 
-        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.Name}";
+        var url =
+            $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.Name}";
         var (success, body) = await GetAsync(url);
         if (!success) return 1;
         AnsiConsole.WriteLine(body);
@@ -47,10 +49,15 @@ public sealed class ShowStorageAccountCommand(HttpClient httpClient, DefaultsPro
     public sealed class ShowStorageAccountCommandSettings : CommandSettings
     {
         [CommandOptionDefinition("(Required) Storage account name.", required: true)]
-        [CommandOption("-n|--name")] public string? Name { get; set; }
+        [CommandOption("-n|--name")]
+        public string? Name { get; set; }
+
         [CommandOptionDefinition("(Required) Resource group name.", required: true)]
-        [CommandOption("-g|--resource-group")] public string? ResourceGroup { get; set; }
+        [CommandOption("-g|--resource-group")]
+        public string? ResourceGroup { get; set; }
+
         [CommandOptionDefinition("(Required) Subscription ID.", required: true)]
-        [CommandOption("-s|--subscription-id")] public string SubscriptionId { get; set; } = null!;
+        [CommandOption("-s|--subscription-id")]
+        public string? SubscriptionId { get; set; } = null!;
     }
 }

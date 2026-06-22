@@ -69,6 +69,6 @@ public sealed class CreateEventHubCommand(HttpClient httpClient, DefaultsProvide
         
         [CommandOptionDefinition("(Required) subscription ID.")]
         [CommandOption("-s|--subscription-id")]
-        public string SubscriptionId { get; set; } = null!;
+        public string? SubscriptionId { get; set; } = null!;
     }
 }
