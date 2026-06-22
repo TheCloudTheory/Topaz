@@ -73,6 +73,20 @@ internal sealed class LinkProcessor(ITopazLogger logger, ServiceBusRuleLoader? r
                 }
             }
 
+            // Reject non-session receivers attaching to requiresSession=true entities.
+            if (!hasSessionFilter && ruleLoader != null)
+            {
+                var entityAddr = (address ?? string.Empty).TrimStart('/');
+                if (ruleLoader.GetRequiresSession(entityAddr))
+                {
+                    attachContext.Complete(new Amqp.Framing.Error(new Symbol("com.microsoft:not-allowed"))
+                    {
+                        Description = "It is not possible for an entity that requires sessions to create a non-session receiver."
+                    });
+                    return;
+                }
+            }
+
             // When a wildcard session filter is present (sessionFilter == null), the Azure SDK
             // expects the broker to resolve and reflect the chosen session ID in the ATTACH
             // response Source FilterSet.  Without this, the SDK throws
