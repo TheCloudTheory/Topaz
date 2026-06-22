@@ -57,6 +57,7 @@ internal sealed class LinkProcessor(ITopazLogger logger, ServiceBusRuleLoader? r
             // from "no session filter at all".
             string? sessionFilter = null;
             bool hasSessionFilter = false;
+            object? sessionFilterKey = null;
             if (attachContext.Attach.Source is Source source && source.FilterSet != null)
             {
                 foreach (var key in source.FilterSet.Keys)
@@ -65,10 +66,44 @@ internal sealed class LinkProcessor(ITopazLogger logger, ServiceBusRuleLoader? r
                     if (keyStr.Contains("session-filter", StringComparison.OrdinalIgnoreCase))
                     {
                         hasSessionFilter = true;
+                        sessionFilterKey = key;
                         sessionFilter = source.FilterSet[key]?.ToString(); // null = wildcard
                         break;
                     }
                 }
+            }
+
+            // When a wildcard session filter is present (sessionFilter == null), the Azure SDK
+            // expects the broker to resolve and reflect the chosen session ID in the ATTACH
+            // response Source FilterSet.  Without this, the SDK throws
+            // "Failed to retrieve session ID from broker" before OnFlow is ever reached.
+            if (hasSessionFilter && sessionFilter == null && sessionFilterKey != null
+                && attachContext.Attach.Source is Source wildcardSource)
+            {
+                var entityAddr = (address ?? string.Empty).TrimStart('/');
+                string? resolved;
+                lock (OutgoingLinkEndpoint.DeliveryLock)
+                {
+                    resolved = SessionMessageStore.GetNextAvailableSession(entityAddr);
+                }
+
+                if (resolved != null)
+                {
+                    wildcardSource.FilterSet[sessionFilterKey] = resolved;
+                    sessionFilter = resolved;
+                }
+            }
+
+            // The Azure SDK reads com.microsoft:locked-until-utc from the ATTACH response
+            // Properties as a long (DateTime.Ticks) to initialise SessionLockedUntil.  If the
+            // property is absent or wrong type, TryGetValue<long> returns false → lockedUntilUtcTicks=0
+            // → DateTime.MinValue (Unspecified kind) → DateTimeOffset implicit cast throws
+            // ArgumentOutOfRangeException on UTC+ timezones (MinValue - offset underflows year 1).
+            if (hasSessionFilter)
+            {
+                attachContext.Attach.Properties ??= new Fields();
+                attachContext.Attach.Properties[new Symbol("com.microsoft:locked-until-utc")] =
+                    DateTime.UtcNow.AddMinutes(5).Ticks;
             }
 
             attachContext.Complete(
