@@ -95,7 +95,7 @@ internal sealed class QueueManagementRequestEndpoint(
             }
             var renewSessionBody = new Map
             {
-                ["expiration"] = new[] { expiry.UtcDateTime }
+                ["expiration"] = expiry.UtcDateTime
             };
             reply = new Message(renewSessionBody) { ApplicationProperties = responseProperties };
         }
