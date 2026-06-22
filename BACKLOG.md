@@ -293,16 +293,9 @@ TODO: Virtual Networks: Private Endpoint IP tracking
 
 _Implemented in v1.7-beta: three MCP provisioning tools (`CreateCosmosDbAccount`, `CreateCosmosDbDatabase`, `CreateCosmosDbContainer`) for SQL API account/database/container creation with partition key support. `GetConnectionStrings` extended to enumerate and return Cosmos DB accounts with AccountEndpoint and PrimaryConnectionString. Full test coverage (8 account/database/container provisioning tests + 2 connection string integration tests)._
 
-<!--
-TODO: VirtualNetwork — Public IP Address (PIP) CRUD
-  Implement PUT/GET/DELETE/LIST/PATCH endpoints for Microsoft.Network/publicIPAddresses.
-  Required to support `az vm create` which allocates a public IP before creating the NIC.
-  Properties: publicIPAllocationMethod (Dynamic/Static), publicIPAddressVersion (IPv4/IPv6),
-  ipAddress (stub value assigned on creation), provisioningState ("Succeeded").
-  Register Deploy() in TemplateDeploymentOrchestrator for "Microsoft.Network/publicIPAddresses".
-  milestone: v1.7-beta
-  labels: enhancement, good first issue
--->
+### VirtualNetwork — Public IP Address (PIP) CRUD
+
+_Implemented in v1.7-beta: six control-plane endpoints (Create/Update, Get, Delete, List by resource group, List by subscription, Update Tags) for `Microsoft.Network/publicIPAddresses`. Stub IP address assigned from RFC 5737 documentation range (203.0.113.0/24) on creation. Full `Deploy()` support for ARM template deployments. Four Topaz CLI commands (`topaz pip create/show/delete/list`). Includes E2E SDK tests, Azure CLI tests, Azure PowerShell tests, and Terraform tests._
 
 <!--
 TODO: Topaz CLI — configurable defaults
