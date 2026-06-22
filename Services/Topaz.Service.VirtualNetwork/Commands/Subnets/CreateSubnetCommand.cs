@@ -11,7 +11,7 @@ namespace Topaz.Service.VirtualNetwork.Commands.Subnets;
 [CommandDefinition("vnet subnet create", "virtual-network", "Creates or updates a subnet in a Virtual Network.")]
 [CommandExample("Creates a subnet",
     "topaz vnet subnet create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --vnet-name \"my-vnet\" \\\n    --name \"my-subnet\" \\\n    --address-prefix \"10.0.1.0/24\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class CreateSubnetCommand(HttpClient httpClient)
+internal sealed class CreateSubnetCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateSubnetCommand.CreateSubnetCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateSubnetCommandSettings settings)
@@ -25,6 +25,9 @@ internal sealed class CreateSubnetCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, CreateSubnetCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Subnet name can't be null.");
         if (string.IsNullOrEmpty(settings.VnetName))

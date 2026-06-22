@@ -9,7 +9,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 [UsedImplicitly]
 [CommandDefinition("cosmosdb account list", "cosmos-db", "Lists Azure Cosmos DB accounts in a resource group.")]
 [CommandExample("List Cosmos DB accounts in a resource group", "topaz cosmosdb account list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\"")]
-public sealed class ListDatabaseAccountsByResourceGroupCommand(HttpClient httpClient)
+public sealed class ListDatabaseAccountsByResourceGroupCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListDatabaseAccountsByResourceGroupCommand.ListDatabaseAccountsByResourceGroupCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ListDatabaseAccountsByResourceGroupCommandSettings settings)
@@ -23,6 +23,9 @@ public sealed class ListDatabaseAccountsByResourceGroupCommand(HttpClient httpCl
 
     public override ValidationResult Validate(CommandContext context, ListDatabaseAccountsByResourceGroupCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.ResourceGroup))
             return ValidationResult.Error("Resource group name can't be null.");
         if (string.IsNullOrEmpty(settings.SubscriptionId))

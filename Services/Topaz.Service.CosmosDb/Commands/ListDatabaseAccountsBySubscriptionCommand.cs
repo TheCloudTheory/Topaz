@@ -9,7 +9,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 [UsedImplicitly]
 [CommandDefinition("cosmosdb account list-by-subscription", "cosmos-db", "Lists all Azure Cosmos DB accounts in a subscription.")]
 [CommandExample("List Cosmos DB accounts in a subscription", "topaz cosmosdb account list-by-subscription \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\"")]
-public sealed class ListDatabaseAccountsBySubscriptionCommand(HttpClient httpClient)
+public sealed class ListDatabaseAccountsBySubscriptionCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListDatabaseAccountsBySubscriptionCommand.ListDatabaseAccountsBySubscriptionCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ListDatabaseAccountsBySubscriptionCommandSettings settings)
@@ -23,6 +23,8 @@ public sealed class ListDatabaseAccountsBySubscriptionCommand(HttpClient httpCli
 
     public override ValidationResult Validate(CommandContext context, ListDatabaseAccountsBySubscriptionCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
         if (string.IsNullOrEmpty(settings.SubscriptionId))
             return ValidationResult.Error("Subscription ID can't be null.");
         if (!Guid.TryParse(settings.SubscriptionId, out _))

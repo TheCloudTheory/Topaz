@@ -10,7 +10,7 @@ namespace Topaz.Service.LoadBalancer.Commands;
 [CommandDefinition("lb delete", "load-balancer", "Deletes an Azure Load Balancer.")]
 [CommandExample("Deletes a Load Balancer",
     "topaz lb delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-lb\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class DeleteLoadBalancerCommand(HttpClient httpClient)
+internal sealed class DeleteLoadBalancerCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteLoadBalancerCommand.DeleteLoadBalancerCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, DeleteLoadBalancerCommandSettings settings)
@@ -23,6 +23,9 @@ internal sealed class DeleteLoadBalancerCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, DeleteLoadBalancerCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Load Balancer name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

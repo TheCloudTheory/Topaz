@@ -10,7 +10,7 @@ namespace Topaz.Service.ContainerRegistry.Commands;
 [CommandDefinition("acr create", "container-registry", "Creates a new Azure Container Registry.")]
 [CommandExample("Create a Basic registry", "topaz acr create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\" \\\n    --name \"myregistry\" \\\n    --location \"westeurope\"")]
 [CommandExample("Create a Standard registry with admin user", "topaz acr create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\" \\\n    --name \"myregistry\" \\\n    --location \"westeurope\" \\\n    --sku Standard \\\n    --admin-enabled")]
-public sealed class CreateContainerRegistryCommand(HttpClient httpClient)
+public sealed class CreateContainerRegistryCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateContainerRegistryCommand.CreateContainerRegistryCommandSettings>(httpClient)
 {
 
@@ -31,6 +31,10 @@ public sealed class CreateContainerRegistryCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, CreateContainerRegistryCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+        settings.Location ??= defaults.Location;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Registry name can't be null.");
 

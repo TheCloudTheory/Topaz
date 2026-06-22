@@ -10,7 +10,7 @@ namespace Topaz.Service.Sql.Commands;
 [CommandDefinition("sql db list", "sql-database", "Lists Azure SQL Databases under a server.")]
 [CommandExample("Lists SQL Databases in a server",
     "topaz sql db list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --server \"my-sql-server\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class ListSqlDatabasesCommand(HttpClient httpClient)
+internal sealed class ListSqlDatabasesCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListSqlDatabasesCommand.ListSqlDatabasesCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ListSqlDatabasesCommandSettings settings)
@@ -25,6 +25,9 @@ internal sealed class ListSqlDatabasesCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, ListSqlDatabasesCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Server))
             return ValidationResult.Error("SQL server name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

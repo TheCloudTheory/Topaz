@@ -9,7 +9,7 @@ namespace Topaz.Service.ServiceBus.Commands;
 [UsedImplicitly]
 [CommandDefinition("servicebus queue delete", "service-bus", "Deletes a queue from a Service Bus namespace.")]
 [CommandExample("Delete a queue", "topaz servicebus queue delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --namespace-name \"sblocal\" \\\n    --queue-name \"myqueue\"")]
-public sealed class DeleteServiceBusQueueCommand(HttpClient httpClient)
+public sealed class DeleteServiceBusQueueCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteServiceBusQueueCommand.DeleteServiceBusQueueCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, DeleteServiceBusQueueCommandSettings settings)
@@ -22,6 +22,9 @@ public sealed class DeleteServiceBusQueueCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, DeleteServiceBusQueueCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Service Bus queue name can't be null.");

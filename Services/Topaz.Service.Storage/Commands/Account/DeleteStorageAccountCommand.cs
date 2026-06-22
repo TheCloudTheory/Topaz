@@ -9,7 +9,7 @@ namespace Topaz.Service.Storage.Commands;
 [UsedImplicitly]
 [CommandDefinition("storage account delete", "azure-storage/account", "Deletes an Azure Storage account.")]
 [CommandExample("Delete a storage account", "topaz storage account delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\"")]
-public class DeleteStorageAccountCommand(HttpClient httpClient) : TopazHttpCommand<DeleteStorageAccountCommand.DeleteStorageAccountCommandSettings>(httpClient)
+public class DeleteStorageAccountCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<DeleteStorageAccountCommand.DeleteStorageAccountCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, DeleteStorageAccountCommandSettings settings)
     {
@@ -24,6 +24,9 @@ public class DeleteStorageAccountCommand(HttpClient httpClient) : TopazHttpComma
 
     public override ValidationResult Validate(CommandContext context, DeleteStorageAccountCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if(string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Storage account name can't be null.");

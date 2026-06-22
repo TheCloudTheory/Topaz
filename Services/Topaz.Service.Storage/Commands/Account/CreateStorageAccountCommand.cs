@@ -9,7 +9,7 @@ namespace Topaz.Service.Storage.Commands;
 [UsedImplicitly]
 [CommandDefinition("storage account create", "azure-storage/account", "Creates a new Azure Storage account.")]
 [CommandExample("Create a storage account", "topaz storage account create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\" \\\n    --location \"westeurope\"")]
-public sealed class CreateStorageAccountCommand(HttpClient httpClient) : TopazHttpCommand<CreateStorageAccountCommand.CreateStorageAccountCommandSettings>(httpClient)
+public sealed class CreateStorageAccountCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateStorageAccountCommand.CreateStorageAccountCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateStorageAccountCommandSettings settings)
     {
@@ -24,6 +24,10 @@ public sealed class CreateStorageAccountCommand(HttpClient httpClient) : TopazHt
 
     public override ValidationResult Validate(CommandContext context, CreateStorageAccountCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+        settings.Location ??= defaults.Location;
         if(string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Storage account name can't be null.");

@@ -10,7 +10,7 @@ namespace Topaz.Service.Sql.Commands;
 [CommandDefinition("sql list", "sql-server", "Lists Azure SQL Servers in a subscription or resource group.")]
 [CommandExample("Lists SQL Servers in a resource group",
     "topaz sql list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \"rg-local\"")]
-internal sealed class ListSqlServersCommand(HttpClient httpClient)
+internal sealed class ListSqlServersCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListSqlServersCommand.ListSqlServersCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ListSqlServersCommandSettings settings)
@@ -29,6 +29,8 @@ internal sealed class ListSqlServersCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, ListSqlServersCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
         if (string.IsNullOrEmpty(settings.SubscriptionId))
             return ValidationResult.Error("Subscription ID can't be null.");
         return base.Validate(context, settings);

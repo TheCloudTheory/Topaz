@@ -9,7 +9,7 @@ namespace Topaz.Service.AppService.Commands;
 [UsedImplicitly]
 [CommandDefinition("appservice site create", "app-service", "Creates or updates a Web App or Function App (Microsoft.Web/sites).")]
 [CommandExample("Create a web app", "topaz appservice site create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"my-site\" \\\n    --location \"westeurope\"")]
-public sealed class CreateAppServiceSiteCommand(HttpClient httpClient)
+public sealed class CreateAppServiceSiteCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateAppServiceSiteCommand.CreateAppServiceSiteCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateAppServiceSiteCommandSettings settings)
@@ -29,6 +29,10 @@ public sealed class CreateAppServiceSiteCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, CreateAppServiceSiteCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+        settings.Location ??= defaults.Location;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("App Service Site name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

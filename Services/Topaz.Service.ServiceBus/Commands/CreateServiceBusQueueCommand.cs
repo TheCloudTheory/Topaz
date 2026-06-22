@@ -9,7 +9,7 @@ namespace Topaz.Service.ServiceBus.Commands;
 [UsedImplicitly]
 [CommandDefinition("servicebus queue create", "service-bus", "Creates or updates a queue in a Service Bus namespace.")]
 [CommandExample("Create a queue", "topaz servicebus queue create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --namespace-name \"sblocal\" \\\n    --queue-name \"myqueue\"")]
-public class CreateServiceBusQueueCommand(HttpClient httpClient) : TopazHttpCommand<CreateServiceBusQueueCommand.CreateServiceBusQueueCommandSettings>(httpClient)
+public class CreateServiceBusQueueCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateServiceBusQueueCommand.CreateServiceBusQueueCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateServiceBusQueueCommandSettings settings)
     {
@@ -22,6 +22,9 @@ public class CreateServiceBusQueueCommand(HttpClient httpClient) : TopazHttpComm
 
     public override ValidationResult Validate(CommandContext context, CreateServiceBusQueueCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if(string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Service Bus queue name can't be null.");

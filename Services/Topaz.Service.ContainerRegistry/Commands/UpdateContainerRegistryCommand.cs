@@ -10,7 +10,7 @@ namespace Topaz.Service.ContainerRegistry.Commands;
 [CommandDefinition("acr update", "container-registry", "Updates an Azure Container Registry.")]
 [CommandExample("Enable admin user", "topaz acr update \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\" \\\n    --name \"myregistry\" \\\n    --admin-enabled true")]
 [CommandExample("Change SKU and set tags", "topaz acr update \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\" \\\n    --name \"myregistry\" \\\n    --sku Premium \\\n    --tags env=prod team=ops")]
-public sealed class UpdateContainerRegistryCommand(HttpClient httpClient)
+public sealed class UpdateContainerRegistryCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<UpdateContainerRegistryCommand.UpdateContainerRegistryCommandSettings>(httpClient)
 {
 
@@ -30,6 +30,9 @@ public sealed class UpdateContainerRegistryCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, UpdateContainerRegistryCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Registry name can't be null.");
 

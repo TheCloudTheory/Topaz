@@ -11,7 +11,7 @@ namespace Topaz.Service.VirtualNetwork.Commands.Subnets;
 [CommandDefinition("vnet subnet list", "virtual-network", "Lists subnets in a Virtual Network.")]
 [CommandExample("Lists all subnets",
     "topaz vnet subnet list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --vnet-name \"my-vnet\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class ListSubnetsCommand(HttpClient httpClient)
+internal sealed class ListSubnetsCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListSubnetsCommand.ListSubnetsCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ListSubnetsCommandSettings settings)
@@ -25,6 +25,9 @@ internal sealed class ListSubnetsCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, ListSubnetsCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.VnetName))
             return ValidationResult.Error("Virtual network name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

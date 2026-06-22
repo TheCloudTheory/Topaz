@@ -10,7 +10,7 @@ namespace Topaz.Service.Disk.Commands;
 [CommandDefinition("disk create", "managed-disk", "Creates or updates an Azure Managed Disk.")]
 [CommandExample("Creates a new Managed Disk",
     "topaz disk create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-disk\" \\\n    --location \"westeurope\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class CreateDiskCommand(HttpClient httpClient)
+internal sealed class CreateDiskCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateDiskCommand.CreateDiskCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateDiskCommandSettings settings)
@@ -33,6 +33,10 @@ internal sealed class CreateDiskCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, CreateDiskCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+        settings.Location ??= defaults.Location;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Disk name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

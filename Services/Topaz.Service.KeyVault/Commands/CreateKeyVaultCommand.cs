@@ -9,7 +9,7 @@ namespace Topaz.Service.KeyVault.Commands;
 [UsedImplicitly]
 [CommandDefinition("keyvault create",  "key-vault", "Creates a new Azure Key Vault.")]
 [CommandExample("Creates a new Key Vault", "topaz keyvault create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"kvlocal\" \\\n    --location \"westeurope\" \\\n    --resource-group \"rg-local\"")]
-public class CreateKeyVaultCommand(HttpClient httpClient) : TopazHttpCommand<CreateKeyVaultCommand.CreateKeyVaultCommandSettings>(httpClient)
+public class CreateKeyVaultCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateKeyVaultCommand.CreateKeyVaultCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateKeyVaultCommandSettings settings)
     {
@@ -40,6 +40,10 @@ public class CreateKeyVaultCommand(HttpClient httpClient) : TopazHttpCommand<Cre
 
     public override ValidationResult Validate(CommandContext context, CreateKeyVaultCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+        settings.Location ??= defaults.Location;
         if(string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Resource group name can't be null.");

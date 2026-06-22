@@ -10,7 +10,7 @@ namespace Topaz.Service.Sql.Commands;
 [CommandDefinition("sql db create", "sql-database", "Creates or updates an Azure SQL Database.")]
 [CommandExample("Creates a new SQL Database",
     "topaz sql db create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --server \"my-sql-server\" \\\n    --name \"my-database\" \\\n    --resource-group \"rg-local\" \\\n    --location \"westeurope\"")]
-internal sealed class CreateSqlDatabaseCommand(HttpClient httpClient)
+internal sealed class CreateSqlDatabaseCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateSqlDatabaseCommand.CreateSqlDatabaseCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateSqlDatabaseCommandSettings settings)
@@ -29,6 +29,10 @@ internal sealed class CreateSqlDatabaseCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, CreateSqlDatabaseCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+        settings.Location ??= defaults.Location;
         if (string.IsNullOrEmpty(settings.Server))
             return ValidationResult.Error("SQL server name can't be null.");
         if (string.IsNullOrEmpty(settings.Name))

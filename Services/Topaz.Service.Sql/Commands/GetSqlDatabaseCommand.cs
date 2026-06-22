@@ -10,7 +10,7 @@ namespace Topaz.Service.Sql.Commands;
 [CommandDefinition("sql db show", "sql-database", "Gets an Azure SQL Database.")]
 [CommandExample("Gets a SQL Database",
     "topaz sql db show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --server \"my-sql-server\" \\\n    --name \"my-database\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class GetSqlDatabaseCommand(HttpClient httpClient)
+internal sealed class GetSqlDatabaseCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<GetSqlDatabaseCommand.GetSqlDatabaseCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, GetSqlDatabaseCommandSettings settings)
@@ -25,6 +25,9 @@ internal sealed class GetSqlDatabaseCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, GetSqlDatabaseCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Server))
             return ValidationResult.Error("SQL server name can't be null.");
         if (string.IsNullOrEmpty(settings.Name))

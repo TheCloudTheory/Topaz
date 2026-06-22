@@ -9,7 +9,7 @@ namespace Topaz.Service.AppService.Commands;
 [UsedImplicitly]
 [CommandDefinition("appservice site get", "app-service", "Gets a Web App or Function App.")]
 [CommandExample("Get a web app", "topaz appservice site get \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"my-site\"")]
-public sealed class GetAppServiceSiteCommand(HttpClient httpClient)
+public sealed class GetAppServiceSiteCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<GetAppServiceSiteCommand.GetAppServiceSiteCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, GetAppServiceSiteCommandSettings settings)
@@ -23,6 +23,9 @@ public sealed class GetAppServiceSiteCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, GetAppServiceSiteCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("App Service Site name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

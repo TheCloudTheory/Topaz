@@ -10,7 +10,7 @@ namespace Topaz.Service.Disk.Commands;
 [CommandDefinition("disk show", "managed-disk", "Gets an Azure Managed Disk.")]
 [CommandExample("Gets a Managed Disk",
     "topaz disk show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-disk\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class GetDiskCommand(HttpClient httpClient)
+internal sealed class GetDiskCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<GetDiskCommand.GetDiskCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, GetDiskCommandSettings settings)
@@ -24,6 +24,9 @@ internal sealed class GetDiskCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, GetDiskCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Disk name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

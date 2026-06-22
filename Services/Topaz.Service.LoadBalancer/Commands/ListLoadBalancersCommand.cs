@@ -10,7 +10,7 @@ namespace Topaz.Service.LoadBalancer.Commands;
 [CommandDefinition("lb list", "load-balancer", "Lists Azure Load Balancers.")]
 [CommandExample("Lists Load Balancers in a resource group",
     "topaz lb list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \"rg-local\"")]
-internal sealed class ListLoadBalancersCommand(HttpClient httpClient)
+internal sealed class ListLoadBalancersCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListLoadBalancersCommand.ListLoadBalancersCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ListLoadBalancersCommandSettings settings)
@@ -27,6 +27,8 @@ internal sealed class ListLoadBalancersCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, ListLoadBalancersCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
         if (string.IsNullOrEmpty(settings.SubscriptionId))
             return ValidationResult.Error("Subscription ID can't be null.");
         return base.Validate(context, settings);

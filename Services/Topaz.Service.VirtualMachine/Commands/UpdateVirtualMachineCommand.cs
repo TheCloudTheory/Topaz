@@ -10,7 +10,7 @@ namespace Topaz.Service.VirtualMachine.Commands;
 [CommandDefinition("vm update", "virtual-machine", "Updates an Azure Virtual Machine.")]
 [CommandExample("Updates a Virtual Machine",
     "topaz vm update --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-vm\" \\\n    --resource-group \"rg-local\" \\\n    --size \"Standard_D2_v3\"")]
-internal sealed class UpdateVirtualMachineCommand(HttpClient httpClient)
+internal sealed class UpdateVirtualMachineCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<UpdateVirtualMachineCommand.UpdateVirtualMachineCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, UpdateVirtualMachineCommandSettings settings)
@@ -41,6 +41,9 @@ internal sealed class UpdateVirtualMachineCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, UpdateVirtualMachineCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Virtual machine name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

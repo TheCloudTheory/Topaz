@@ -9,7 +9,7 @@ namespace Topaz.Service.Storage.Commands;
 [UsedImplicitly]
 [CommandDefinition("storage account update", "azure-storage/account", "Updates an Azure Storage account.")]
 [CommandExample("Update tags on a storage account", "topaz storage account update \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\" \\\n    --tags \"env=prod\" \"owner=team\"")]
-public sealed class UpdateStorageAccountCommand(HttpClient httpClient)
+public sealed class UpdateStorageAccountCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<UpdateStorageAccountCommand.UpdateStorageAccountCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, UpdateStorageAccountCommandSettings settings)
@@ -28,6 +28,9 @@ public sealed class UpdateStorageAccountCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, UpdateStorageAccountCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Storage account name can't be null.");
 

@@ -10,7 +10,7 @@ namespace Topaz.Service.Disk.Commands;
 [CommandDefinition("disk revoke-access", "managed-disk", "Revokes SAS access from an Azure Managed Disk.")]
 [CommandExample("Revoke SAS access from a Managed Disk",
     "topaz disk revoke-access --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-disk\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class RevokeDiskAccessCommand(HttpClient httpClient)
+internal sealed class RevokeDiskAccessCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<RevokeDiskAccessCommand.RevokeDiskAccessCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, RevokeDiskAccessCommandSettings settings)
@@ -24,6 +24,9 @@ internal sealed class RevokeDiskAccessCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, RevokeDiskAccessCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Disk name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

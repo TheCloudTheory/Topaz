@@ -9,7 +9,7 @@ namespace Topaz.Service.ManagedIdentity.Commands;
 [UsedImplicitly]
 [CommandDefinition("identity create", "managed-identity", "Creates a new user-assigned managed identity.")]
 [CommandExample("Creates a new managed identity", "topaz identity create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"myIdentity\" \\\n    --location \"westeurope\" \\\n    --resource-group \"rg-local\"")]
-public class CreateManagedIdentityCommand(HttpClient httpClient) : TopazHttpCommand<CreateManagedIdentityCommand.CreateManagedIdentityCommandSettings>(httpClient)
+public class CreateManagedIdentityCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateManagedIdentityCommand.CreateManagedIdentityCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateManagedIdentityCommandSettings settings)
     {
@@ -35,6 +35,10 @@ public class CreateManagedIdentityCommand(HttpClient httpClient) : TopazHttpComm
 
     public override ValidationResult Validate(CommandContext context, CreateManagedIdentityCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+        settings.Location ??= defaults.Location;
         if(string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Managed identity name can't be null.");

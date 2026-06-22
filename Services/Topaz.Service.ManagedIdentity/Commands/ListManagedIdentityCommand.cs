@@ -10,7 +10,7 @@ namespace Topaz.Service.ManagedIdentity.Commands;
 [CommandDefinition("identity list", "managed-identity", "Lists user-assigned managed identities.")]
 [CommandExample("Lists managed identities by resource group", "topaz identity list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \"rg-local\"")]
 [CommandExample("Lists managed identities by subscription", "topaz identity list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae")]
-public sealed class ListManagedIdentityCommand(HttpClient httpClient) : TopazHttpCommand<ListManagedIdentityCommand.ListManagedIdentityCommandSettings>(httpClient)
+public sealed class ListManagedIdentityCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<ListManagedIdentityCommand.ListManagedIdentityCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ListManagedIdentityCommandSettings settings)
     {
@@ -28,6 +28,8 @@ public sealed class ListManagedIdentityCommand(HttpClient httpClient) : TopazHtt
 
     public override ValidationResult Validate(CommandContext context, ListManagedIdentityCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
         if(string.IsNullOrEmpty(settings.SubscriptionId))
         {
             return ValidationResult.Error("Subscription ID can't be null.");

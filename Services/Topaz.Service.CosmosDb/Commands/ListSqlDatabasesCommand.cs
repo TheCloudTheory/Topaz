@@ -9,7 +9,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 [UsedImplicitly]
 [CommandDefinition("cosmosdb sql-database list", "cosmos-db", "Lists SQL databases in an Azure Cosmos DB account.")]
 [CommandExample("List SQL databases", "topaz cosmosdb sql-database list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"my-cosmos-account\"")]
-public sealed class ListSqlDatabasesCommand(HttpClient httpClient)
+public sealed class ListSqlDatabasesCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListSqlDatabasesCommand.ListSqlDatabasesCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ListSqlDatabasesCommandSettings settings)
@@ -23,6 +23,9 @@ public sealed class ListSqlDatabasesCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, ListSqlDatabasesCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.AccountName))
             return ValidationResult.Error("Cosmos DB account name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

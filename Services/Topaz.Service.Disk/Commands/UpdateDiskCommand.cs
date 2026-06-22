@@ -10,7 +10,7 @@ namespace Topaz.Service.Disk.Commands;
 [CommandDefinition("disk update", "managed-disk", "Updates an Azure Managed Disk (tags, diskSizeGB, SKU).")]
 [CommandExample("Updates a Managed Disk's tags",
     "topaz disk update --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-disk\" \\\n    --resource-group \"rg-local\" \\\n    --tags env=test")]
-internal sealed class UpdateDiskCommand(HttpClient httpClient)
+internal sealed class UpdateDiskCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<UpdateDiskCommand.UpdateDiskCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, UpdateDiskCommandSettings settings)
@@ -36,6 +36,9 @@ internal sealed class UpdateDiskCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, UpdateDiskCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Disk name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

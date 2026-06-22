@@ -9,7 +9,7 @@ namespace Topaz.Service.EventHub.Commands;
 [UsedImplicitly]
 [CommandDefinition("eventhubs eventhub create",  "event-hub", "Creates new Event Hub.")]
 [CommandExample("Creates Event Hub", "topaz eventhubs eventhub create \\\n    --resource-group rg-test \\\n    --namespace-name \"eh-namespace\" \\\n    --name \"hubtest\" \\\n    --subscription-id \"07CB2605-9C16-46E9-A2BD-0A8D39E049E8\"")]
-public sealed class CreateEventHubCommand(HttpClient httpClient) : TopazHttpCommand<CreateEventHubCommand.CreateEventHubCommandSettings>(httpClient)
+public sealed class CreateEventHubCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateEventHubCommand.CreateEventHubCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateEventHubCommandSettings settings)
     {
@@ -22,6 +22,9 @@ public sealed class CreateEventHubCommand(HttpClient httpClient) : TopazHttpComm
 
     public override ValidationResult Validate(CommandContext context, CreateEventHubCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if(string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Event Hub hub name can't be null.");

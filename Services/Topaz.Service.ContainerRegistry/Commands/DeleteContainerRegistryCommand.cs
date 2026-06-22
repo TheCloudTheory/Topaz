@@ -9,7 +9,7 @@ namespace Topaz.Service.ContainerRegistry.Commands;
 [UsedImplicitly]
 [CommandDefinition("acr delete", "container-registry", "Deletes an Azure Container Registry.")]
 [CommandExample("Delete a registry", "topaz acr delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\" \\\n    --name \"myregistry\"")]
-public sealed class DeleteContainerRegistryCommand(HttpClient httpClient)
+public sealed class DeleteContainerRegistryCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteContainerRegistryCommand.DeleteContainerRegistryCommandSettings>(httpClient)
 {
 
@@ -24,6 +24,9 @@ public sealed class DeleteContainerRegistryCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, DeleteContainerRegistryCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Registry name can't be null.");
 

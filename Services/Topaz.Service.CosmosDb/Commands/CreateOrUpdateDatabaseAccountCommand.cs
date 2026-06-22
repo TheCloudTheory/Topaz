@@ -9,7 +9,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 [UsedImplicitly]
 [CommandDefinition("cosmosdb account create", "cosmos-db", "Creates or updates an Azure Cosmos DB account.")]
 [CommandExample("Create a Cosmos DB account", "topaz cosmosdb account create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"my-cosmos-account\" \\\n    --location \"westeurope\"")]
-public sealed class CreateOrUpdateDatabaseAccountCommand(HttpClient httpClient)
+public sealed class CreateOrUpdateDatabaseAccountCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateOrUpdateDatabaseAccountCommand.CreateOrUpdateDatabaseAccountCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateOrUpdateDatabaseAccountCommandSettings settings)
@@ -36,6 +36,10 @@ public sealed class CreateOrUpdateDatabaseAccountCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, CreateOrUpdateDatabaseAccountCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+        settings.Location ??= defaults.Location;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Cosmos DB account name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

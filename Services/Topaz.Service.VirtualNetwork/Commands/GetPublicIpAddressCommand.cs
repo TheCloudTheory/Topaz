@@ -11,7 +11,7 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 [CommandDefinition("pip show", "public-ip-address", "Gets an Azure Public IP Address.")]
 [CommandExample("Gets a Public IP Address",
     "topaz pip show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-pip\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class GetPublicIpAddressCommand(HttpClient httpClient)
+internal sealed class GetPublicIpAddressCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<GetPublicIpAddressCommand.GetPublicIpAddressCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, GetPublicIpAddressCommandSettings settings)
@@ -25,6 +25,9 @@ internal sealed class GetPublicIpAddressCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, GetPublicIpAddressCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Public IP address name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

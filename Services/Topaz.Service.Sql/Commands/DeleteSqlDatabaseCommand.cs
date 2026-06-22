@@ -10,7 +10,7 @@ namespace Topaz.Service.Sql.Commands;
 [CommandDefinition("sql db delete", "sql-database", "Deletes an Azure SQL Database.")]
 [CommandExample("Deletes a SQL Database",
     "topaz sql db delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --server \"my-sql-server\" \\\n    --name \"my-database\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class DeleteSqlDatabaseCommand(HttpClient httpClient)
+internal sealed class DeleteSqlDatabaseCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteSqlDatabaseCommand.DeleteSqlDatabaseCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, DeleteSqlDatabaseCommandSettings settings)
@@ -24,6 +24,9 @@ internal sealed class DeleteSqlDatabaseCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, DeleteSqlDatabaseCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Server))
             return ValidationResult.Error("SQL server name can't be null.");
         if (string.IsNullOrEmpty(settings.Name))

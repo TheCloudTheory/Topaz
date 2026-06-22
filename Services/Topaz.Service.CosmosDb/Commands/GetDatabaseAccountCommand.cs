@@ -9,7 +9,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 [UsedImplicitly]
 [CommandDefinition("cosmosdb account get", "cosmos-db", "Gets an Azure Cosmos DB account.")]
 [CommandExample("Get a Cosmos DB account", "topaz cosmosdb account get \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"my-cosmos-account\"")]
-public sealed class GetDatabaseAccountCommand(HttpClient httpClient)
+public sealed class GetDatabaseAccountCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<GetDatabaseAccountCommand.GetDatabaseAccountCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, GetDatabaseAccountCommandSettings settings)
@@ -23,6 +23,9 @@ public sealed class GetDatabaseAccountCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, GetDatabaseAccountCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Cosmos DB account name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

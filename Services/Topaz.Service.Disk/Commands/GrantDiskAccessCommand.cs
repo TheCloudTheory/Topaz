@@ -10,7 +10,7 @@ namespace Topaz.Service.Disk.Commands;
 [CommandDefinition("disk grant-access", "managed-disk", "Grants SAS access to an Azure Managed Disk.")]
 [CommandExample("Grant read access to a Managed Disk",
     "topaz disk grant-access --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-disk\" \\\n    --resource-group \"rg-local\" \\\n    --access \"Read\" \\\n    --duration-in-seconds 3600")]
-internal sealed class GrantDiskAccessCommand(HttpClient httpClient)
+internal sealed class GrantDiskAccessCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<GrantDiskAccessCommand.GrantDiskAccessCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, GrantDiskAccessCommandSettings settings)
@@ -28,6 +28,9 @@ internal sealed class GrantDiskAccessCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, GrantDiskAccessCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Disk name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

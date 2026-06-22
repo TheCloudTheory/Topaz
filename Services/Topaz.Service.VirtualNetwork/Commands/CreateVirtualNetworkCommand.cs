@@ -11,7 +11,7 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 [CommandDefinition("vnet create", "virtual-network", "Creates or updates an Azure Virtual Network.")]
 [CommandExample("Creates a new Virtual Network",
     "topaz vnet create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-vnet\" \\\n    --location \"westeurope\" \\\n    --resource-group \"rg-local\" \\\n    --address-prefix \"10.0.0.0/16\"")]
-internal sealed class CreateVirtualNetworkCommand(HttpClient httpClient)
+internal sealed class CreateVirtualNetworkCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateVirtualNetworkCommand.CreateVirtualNetworkCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateVirtualNetworkCommandSettings settings)
@@ -35,6 +35,10 @@ internal sealed class CreateVirtualNetworkCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, CreateVirtualNetworkCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+        settings.Location ??= defaults.Location;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Virtual network name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

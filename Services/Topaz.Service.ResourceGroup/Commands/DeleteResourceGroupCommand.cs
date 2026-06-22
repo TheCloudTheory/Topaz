@@ -9,7 +9,7 @@ namespace Topaz.Service.ResourceGroup.Commands;
 [UsedImplicitly]
 [CommandDefinition("group delete", "group", "Deletes a resource group.")]
 [CommandExample("Delete a resource group", "topaz group delete \\\n    --name \"my-rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
-public sealed class DeleteResourceGroupCommand(HttpClient httpClient) : TopazHttpCommand<DeleteResourceGroupCommand.DeleteResourceGroupCommandSettings>(httpClient)
+public sealed class DeleteResourceGroupCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<DeleteResourceGroupCommand.DeleteResourceGroupCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, DeleteResourceGroupCommandSettings settings)
     {
@@ -21,6 +21,8 @@ public sealed class DeleteResourceGroupCommand(HttpClient httpClient) : TopazHtt
 
     public override ValidationResult Validate(CommandContext context, DeleteResourceGroupCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
         if(string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Resource group name can't be null.");

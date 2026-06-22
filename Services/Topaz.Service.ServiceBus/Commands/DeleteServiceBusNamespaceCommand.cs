@@ -9,7 +9,7 @@ namespace Topaz.Service.ServiceBus.Commands;
 [UsedImplicitly]
 [CommandDefinition("servicebus namespace delete", "service-bus", "Deletes a Service Bus namespace.")]
 [CommandExample("Delete a namespace", "topaz servicebus namespace delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"sblocal\"")]
-public sealed class DeleteServiceBusNamespaceCommand(HttpClient httpClient)
+public sealed class DeleteServiceBusNamespaceCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteServiceBusNamespaceCommand.DeleteServiceBusNamespaceCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, DeleteServiceBusNamespaceCommandSettings settings)
@@ -22,6 +22,9 @@ public sealed class DeleteServiceBusNamespaceCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, DeleteServiceBusNamespaceCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Service Bus namespace name can't be null.");

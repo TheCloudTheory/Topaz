@@ -11,7 +11,7 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 [CommandDefinition("pip delete", "public-ip-address", "Deletes an Azure Public IP Address.")]
 [CommandExample("Deletes a Public IP Address",
     "topaz pip delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-pip\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class DeletePublicIpAddressCommand(HttpClient httpClient)
+internal sealed class DeletePublicIpAddressCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeletePublicIpAddressCommand.DeletePublicIpAddressCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, DeletePublicIpAddressCommandSettings settings)
@@ -24,6 +24,9 @@ internal sealed class DeletePublicIpAddressCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, DeletePublicIpAddressCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Public IP address name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

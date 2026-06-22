@@ -11,7 +11,7 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 [CommandDefinition("pip list", "public-ip-address", "Lists Azure Public IP Addresses in a subscription or resource group.")]
 [CommandExample("Lists Public IP Addresses in a resource group",
     "topaz pip list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \"rg-local\"")]
-internal sealed class ListPublicIpAddressesCommand(HttpClient httpClient)
+internal sealed class ListPublicIpAddressesCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListPublicIpAddressesCommand.ListPublicIpAddressesCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ListPublicIpAddressesCommandSettings settings)
@@ -30,6 +30,8 @@ internal sealed class ListPublicIpAddressesCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, ListPublicIpAddressesCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
         return string.IsNullOrEmpty(settings.SubscriptionId) ? ValidationResult.Error("Subscription ID can't be null.") : base.Validate(context, settings);
     }
 

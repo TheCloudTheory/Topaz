@@ -9,7 +9,7 @@ namespace Topaz.Service.Storage.Commands;
 [UsedImplicitly]
 [CommandDefinition("storage account show", "azure-storage/account", "Shows details of an Azure Storage account.")]
 [CommandExample("Show a storage account", "topaz storage account show \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\"")]
-public sealed class ShowStorageAccountCommand(HttpClient httpClient)
+public sealed class ShowStorageAccountCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ShowStorageAccountCommand.ShowStorageAccountCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ShowStorageAccountCommandSettings settings)
@@ -25,6 +25,9 @@ public sealed class ShowStorageAccountCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, ShowStorageAccountCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Storage account name can't be null.");
 

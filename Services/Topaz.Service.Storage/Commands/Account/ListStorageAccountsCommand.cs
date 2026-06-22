@@ -10,7 +10,7 @@ namespace Topaz.Service.Storage.Commands;
 [CommandDefinition("storage account list", "azure-storage/account", "Lists Azure Storage accounts.")]
 [CommandExample("List all accounts in a subscription", "topaz storage account list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\"")]
 [CommandExample("List accounts in a resource group", "topaz storage account list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\"")]
-public sealed class ListStorageAccountsCommand(HttpClient httpClient)
+public sealed class ListStorageAccountsCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListStorageAccountsCommand.ListStorageAccountsCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ListStorageAccountsCommandSettings settings)
@@ -28,6 +28,8 @@ public sealed class ListStorageAccountsCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, ListStorageAccountsCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
         if (string.IsNullOrEmpty(settings.SubscriptionId))
             return ValidationResult.Error("Subscription ID can't be null.");
 

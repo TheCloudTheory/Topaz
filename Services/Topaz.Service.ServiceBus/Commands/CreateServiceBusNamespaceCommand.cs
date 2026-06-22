@@ -9,7 +9,7 @@ namespace Topaz.Service.ServiceBus.Commands;
 [UsedImplicitly]
 [CommandDefinition("servicebus namespace create", "service-bus", "Creates or updates a Service Bus namespace.")]
 [CommandExample("Create a namespace", "topaz servicebus namespace create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"sblocal\"")]
-public sealed class CreateServiceBusNamespaceCommand(HttpClient httpClient) : TopazHttpCommand<CreateServiceBusNamespaceCommand.CreateServiceBusNamespaceCommandSettings>(httpClient)
+public sealed class CreateServiceBusNamespaceCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateServiceBusNamespaceCommand.CreateServiceBusNamespaceCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateServiceBusNamespaceCommandSettings settings)
     {
@@ -22,6 +22,10 @@ public sealed class CreateServiceBusNamespaceCommand(HttpClient httpClient) : To
 
     public override ValidationResult Validate(CommandContext context, CreateServiceBusNamespaceCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+        settings.Location ??= defaults.Location;
         if(string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Service Bus namespace name can't be null.");

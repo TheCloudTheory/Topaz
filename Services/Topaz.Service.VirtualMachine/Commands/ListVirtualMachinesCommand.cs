@@ -10,7 +10,7 @@ namespace Topaz.Service.VirtualMachine.Commands;
 [CommandDefinition("vm list", "virtual-machine", "Lists Azure Virtual Machines in a subscription or resource group.")]
 [CommandExample("Lists Virtual Machines in a resource group",
     "topaz vm list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \"rg-local\"")]
-internal sealed class ListVirtualMachinesCommand(HttpClient httpClient)
+internal sealed class ListVirtualMachinesCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListVirtualMachinesCommand.ListVirtualMachinesCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ListVirtualMachinesCommandSettings settings)
@@ -29,6 +29,8 @@ internal sealed class ListVirtualMachinesCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, ListVirtualMachinesCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
         if (string.IsNullOrEmpty(settings.SubscriptionId))
             return ValidationResult.Error("Subscription ID can't be null.");
         return base.Validate(context, settings);

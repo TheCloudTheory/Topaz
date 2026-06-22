@@ -9,7 +9,7 @@ namespace Topaz.Service.ResourceGroup.Commands;
 [UsedImplicitly]
 [CommandDefinition("group list", "group", "Lists all resource groups in a subscription.")]
 [CommandExample("List resource groups", "topaz group list \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
-public sealed class ListResourceGroupCommand(HttpClient httpClient) : TopazHttpCommand<ListResourceGroupCommand.ListResourceGroupCommandSettings>(httpClient)
+public sealed class ListResourceGroupCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<ListResourceGroupCommand.ListResourceGroupCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ListResourceGroupCommandSettings settings)
     {
@@ -22,6 +22,8 @@ public sealed class ListResourceGroupCommand(HttpClient httpClient) : TopazHttpC
 
     public override ValidationResult Validate(CommandContext context, ListResourceGroupCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
         if(string.IsNullOrEmpty(settings.SubscriptionId))
         {
             return ValidationResult.Error("Resource group subscription ID can't be null.");

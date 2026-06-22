@@ -9,7 +9,7 @@ namespace Topaz.Service.EventHub.Commands;
 [UsedImplicitly]
 [CommandDefinition("eventhubs namespace delete",  "event-hub", "Deletes an Event Hub.")]
 [CommandExample("Deletes Event Hub", "topaz eventhubs namespace delete \\\n    --name \"sb-namespace\" \\\n    --resource-group \"rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
-public class DeleteEventHubNamespaceCommand(HttpClient httpClient) : TopazHttpCommand<DeleteEventHubNamespaceCommand.DeleteEventHubNamespaceCommandSettings>(httpClient)
+public class DeleteEventHubNamespaceCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<DeleteEventHubNamespaceCommand.DeleteEventHubNamespaceCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, DeleteEventHubNamespaceCommandSettings settings)
     {
@@ -21,6 +21,9 @@ public class DeleteEventHubNamespaceCommand(HttpClient httpClient) : TopazHttpCo
 
     public override ValidationResult Validate(CommandContext context, DeleteEventHubNamespaceCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if(string.IsNullOrEmpty(settings.ResourceGroup))
         {
             return ValidationResult.Error("Event Hub namespace resource group can't be null.");

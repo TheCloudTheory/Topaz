@@ -9,7 +9,7 @@ namespace Topaz.Service.KeyVault.Commands;
 [UsedImplicitly]
 [CommandDefinition("keyvault delete", "key-vault", "Deletes a Key Vault.")]
 [CommandExample("Delete a Key Vault", "topaz keyvault delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"kvlocal\"")]
-public sealed class DeleteKeyVaultCommand(HttpClient httpClient) : TopazHttpCommand<DeleteKeyVaultCommand.DeleteKeyVaultCommandSettings>(httpClient)
+public sealed class DeleteKeyVaultCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<DeleteKeyVaultCommand.DeleteKeyVaultCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, DeleteKeyVaultCommandSettings settings)
     {
@@ -22,6 +22,9 @@ public sealed class DeleteKeyVaultCommand(HttpClient httpClient) : TopazHttpComm
 
     public override ValidationResult Validate(CommandContext context, DeleteKeyVaultCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if(string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Azure Key Vault name can't be null.");

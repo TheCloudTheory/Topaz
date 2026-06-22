@@ -9,7 +9,7 @@ namespace Topaz.Service.ResourceGroup.Commands;
 [UsedImplicitly]
 [CommandDefinition("group create", "group", "Creates a new resource group.")]
 [CommandExample("Create a resource group", "topaz group create \\\n    --name \"my-rg\" \\\n    --location \"eastus\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
-public sealed class CreateResourceGroupCommand(HttpClient httpClient) : TopazHttpCommand<CreateResourceGroupCommand.CreateResourceGroupCommandSettings>(httpClient)
+public sealed class CreateResourceGroupCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateResourceGroupCommand.CreateResourceGroupCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateResourceGroupCommandSettings settings)
     {
@@ -22,6 +22,9 @@ public sealed class CreateResourceGroupCommand(HttpClient httpClient) : TopazHtt
 
     public override ValidationResult Validate(CommandContext context, CreateResourceGroupCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.Location ??= defaults.Location;
         if(string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Resource group name can't be null.");

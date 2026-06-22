@@ -9,7 +9,7 @@ namespace Topaz.Service.AppService.Commands;
 [UsedImplicitly]
 [CommandDefinition("appservice plan get", "app-service", "Gets an App Service Plan.")]
 [CommandExample("Get a plan", "topaz appservice plan get \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"my-plan\"")]
-public sealed class GetAppServicePlanCommand(HttpClient httpClient)
+public sealed class GetAppServicePlanCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<GetAppServicePlanCommand.GetAppServicePlanCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, GetAppServicePlanCommandSettings settings)
@@ -23,6 +23,9 @@ public sealed class GetAppServicePlanCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, GetAppServicePlanCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("App Service Plan name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

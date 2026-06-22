@@ -10,7 +10,7 @@ namespace Topaz.Service.Sql.Commands;
 [CommandDefinition("sql show", "sql-server", "Gets an Azure SQL Server.")]
 [CommandExample("Gets a SQL Server",
     "topaz sql show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-sql-server\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class GetSqlServerCommand(HttpClient httpClient)
+internal sealed class GetSqlServerCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<GetSqlServerCommand.GetSqlServerCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, GetSqlServerCommandSettings settings)
@@ -24,6 +24,9 @@ internal sealed class GetSqlServerCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, GetSqlServerCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("SQL server name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

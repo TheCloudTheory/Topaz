@@ -9,7 +9,7 @@ namespace Topaz.Service.EventHub.Commands;
 [UsedImplicitly]
 [CommandDefinition("eventhubs namespace create",  "event-hub", "Creates new Event Hub namespace.")]
 [CommandExample("Creates Event Hub namespace", "topaz eventhubs namespace create \\\n    --resource-group rg-test \\\n    --location \"westeurope\" \\\n    --name \"eh-namespace\" \\\n    --subscription-id \"07CB2605-9C16-46E9-A2BD-0A8D39E049E8\"")]
-public sealed class CreateEventHubNamespaceCommand(HttpClient httpClient) : TopazHttpCommand<CreateEventHubNamespaceCommand.CreateEventHubCommandSettings>(httpClient)
+public sealed class CreateEventHubNamespaceCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateEventHubNamespaceCommand.CreateEventHubCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateEventHubCommandSettings settings)
     {
@@ -22,6 +22,10 @@ public sealed class CreateEventHubNamespaceCommand(HttpClient httpClient) : Topa
 
     public override ValidationResult Validate(CommandContext context, CreateEventHubCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+        settings.Location ??= defaults.Location;
         if(string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Resource group name can't be null.");

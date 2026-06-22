@@ -10,7 +10,7 @@ namespace Topaz.Service.Disk.Commands;
 [CommandDefinition("disk list", "managed-disk", "Lists Azure Managed Disks in a subscription or resource group.")]
 [CommandExample("Lists Managed Disks in a resource group",
     "topaz disk list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \"rg-local\"")]
-internal sealed class ListDisksCommand(HttpClient httpClient)
+internal sealed class ListDisksCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListDisksCommand.ListDisksCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ListDisksCommandSettings settings)
@@ -29,6 +29,8 @@ internal sealed class ListDisksCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, ListDisksCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
         if (string.IsNullOrEmpty(settings.SubscriptionId))
             return ValidationResult.Error("Subscription ID can't be null.");
         return base.Validate(context, settings);

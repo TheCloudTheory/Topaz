@@ -9,7 +9,7 @@ namespace Topaz.Service.AppService.Commands;
 [UsedImplicitly]
 [CommandDefinition("appservice site list", "app-service", "Lists Web Apps and Function Apps in a resource group.")]
 [CommandExample("List sites in a resource group", "topaz appservice site list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\"")]
-public sealed class ListAppServiceSitesByResourceGroupCommand(HttpClient httpClient)
+public sealed class ListAppServiceSitesByResourceGroupCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListAppServiceSitesByResourceGroupCommand.ListAppServiceSitesByResourceGroupCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ListAppServiceSitesByResourceGroupCommandSettings settings)
@@ -23,6 +23,9 @@ public sealed class ListAppServiceSitesByResourceGroupCommand(HttpClient httpCli
 
     public override ValidationResult Validate(CommandContext context, ListAppServiceSitesByResourceGroupCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.ResourceGroup))
             return ValidationResult.Error("Resource group can't be null.");
         if (string.IsNullOrEmpty(settings.SubscriptionId))

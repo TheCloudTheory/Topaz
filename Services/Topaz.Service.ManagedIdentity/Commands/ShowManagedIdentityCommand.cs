@@ -9,7 +9,7 @@ namespace Topaz.Service.ManagedIdentity.Commands;
 [UsedImplicitly]
 [CommandDefinition("identity show", "managed-identity", "Shows details of a user-assigned managed identity.")]
 [CommandExample("Shows a managed identity", "topaz identity show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"myIdentity\" \\\n    --resource-group \"rg-local\"")]
-public sealed class ShowManagedIdentityCommand(HttpClient httpClient) : TopazHttpCommand<ShowManagedIdentityCommand.ShowManagedIdentityCommandSettings>(httpClient)
+public sealed class ShowManagedIdentityCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<ShowManagedIdentityCommand.ShowManagedIdentityCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ShowManagedIdentityCommandSettings settings)
     {
@@ -22,6 +22,9 @@ public sealed class ShowManagedIdentityCommand(HttpClient httpClient) : TopazHtt
 
     public override ValidationResult Validate(CommandContext context, ShowManagedIdentityCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if(string.IsNullOrEmpty(settings.Name))
         {
             return ValidationResult.Error("Managed identity name can't be null.");

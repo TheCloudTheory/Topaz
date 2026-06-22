@@ -11,7 +11,7 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 [CommandDefinition("pip create", "public-ip-address", "Creates or updates an Azure Public IP Address.")]
 [CommandExample("Creates a new Public IP Address",
     "topaz pip create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-pip\" \\\n    --location \"westeurope\" \\\n    --resource-group \"rg-local\"")]
-internal sealed class CreatePublicIpAddressCommand(HttpClient httpClient)
+internal sealed class CreatePublicIpAddressCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreatePublicIpAddressCommand.CreatePublicIpAddressCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreatePublicIpAddressCommandSettings settings)
@@ -33,6 +33,10 @@ internal sealed class CreatePublicIpAddressCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, CreatePublicIpAddressCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+        settings.Location ??= defaults.Location;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Public IP address name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

@@ -10,7 +10,7 @@ namespace Topaz.Service.VirtualMachine.Commands;
 [CommandDefinition("vm create", "virtual-machine", "Creates or updates an Azure Virtual Machine.")]
 [CommandExample("Creates a new Virtual Machine",
     "topaz vm create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"my-vm\" \\\n    --location \"westeurope\" \\\n    --resource-group \"rg-local\" \\\n    --size \"Standard_D2_v3\"")]
-internal sealed class CreateVirtualMachineCommand(HttpClient httpClient)
+internal sealed class CreateVirtualMachineCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateVirtualMachineCommand.CreateVirtualMachineCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CreateVirtualMachineCommandSettings settings)
@@ -31,6 +31,10 @@ internal sealed class CreateVirtualMachineCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, CreateVirtualMachineCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
+        settings.Location ??= defaults.Location;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Virtual machine name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

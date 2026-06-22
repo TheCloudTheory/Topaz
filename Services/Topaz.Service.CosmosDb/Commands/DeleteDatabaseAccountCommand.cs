@@ -9,7 +9,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 [UsedImplicitly]
 [CommandDefinition("cosmosdb account delete", "cosmos-db", "Deletes an Azure Cosmos DB account.")]
 [CommandExample("Delete a Cosmos DB account", "topaz cosmosdb account delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"my-cosmos-account\"")]
-public sealed class DeleteDatabaseAccountCommand(HttpClient httpClient)
+public sealed class DeleteDatabaseAccountCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteDatabaseAccountCommand.DeleteDatabaseAccountCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, DeleteDatabaseAccountCommandSettings settings)
@@ -22,6 +22,9 @@ public sealed class DeleteDatabaseAccountCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, DeleteDatabaseAccountCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Cosmos DB account name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

@@ -10,7 +10,7 @@ namespace Topaz.Service.ContainerRegistry.Commands;
 [CommandDefinition("acr list", "container-registry", "Lists Azure Container Registries.")]
 [CommandExample("List registries in a resource group", "topaz acr list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\"")]
 [CommandExample("List all registries in a subscription", "topaz acr list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\"")]
-public sealed class ListContainerRegistriesCommand(HttpClient httpClient)
+public sealed class ListContainerRegistriesCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListContainerRegistriesCommand.ListContainerRegistriesCommandSettings>(httpClient)
 {
 
@@ -27,6 +27,8 @@ public sealed class ListContainerRegistriesCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, ListContainerRegistriesCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
         if (string.IsNullOrEmpty(settings.SubscriptionId))
             return ValidationResult.Error("Subscription ID can't be null.");
 

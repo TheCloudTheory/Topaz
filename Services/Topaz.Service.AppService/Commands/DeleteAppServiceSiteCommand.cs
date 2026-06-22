@@ -9,7 +9,7 @@ namespace Topaz.Service.AppService.Commands;
 [UsedImplicitly]
 [CommandDefinition("appservice site delete", "app-service", "Deletes a Web App or Function App.")]
 [CommandExample("Delete a web app", "topaz appservice site delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"my-site\"")]
-public sealed class DeleteAppServiceSiteCommand(HttpClient httpClient)
+public sealed class DeleteAppServiceSiteCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteAppServiceSiteCommand.DeleteAppServiceSiteCommandSettings>(httpClient)
 {
     public override async Task<int> ExecuteAsync(CommandContext context, DeleteAppServiceSiteCommandSettings settings)
@@ -22,6 +22,9 @@ public sealed class DeleteAppServiceSiteCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, DeleteAppServiceSiteCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("App Service Site name can't be null.");
         if (string.IsNullOrEmpty(settings.ResourceGroup))

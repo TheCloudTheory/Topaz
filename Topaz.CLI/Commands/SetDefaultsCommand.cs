@@ -3,30 +3,18 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.CLI.Infrastructure;
 using Topaz.Documentation.Command;
-using Topaz.Shared;
 
 namespace Topaz.CLI.Commands;
 
 [UsedImplicitly]
-internal sealed class SetDefaultsCommand(DefaultsProvider provider, ITopazLogger logger) : AsyncCommand<SetDefaultsCommand.SetDefaultsCommandSettings>
+internal sealed class SetDefaultsCommand(DefaultsProvider provider) : AsyncCommand<SetDefaultsCommand.SetDefaultsCommandSettings>
 {
     public override Task<int> ExecuteAsync(CommandContext context, SetDefaultsCommandSettings settings)
     {
-        try
-        {
-            var defaults = FromSettings(settings);
-            provider.UpdateDefaults(defaults);
-        
-            AnsiConsole.MarkupLine("[green]Defaults updated successfully.[/]");
-            return Task.FromResult(0);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex);
-            
-            AnsiConsole.MarkupLine("[red]Host is not running.[/] Start it with [bold]topaz-host start[/].");
-            return Task.FromResult(1);
-        }
+        var defaults = FromSettings(settings);
+        provider.UpdateDefaults(defaults);
+        AnsiConsole.MarkupLine("[green]Defaults updated successfully.[/]");
+        return Task.FromResult(0);
     }
     
     public static DefaultValuesModel FromSettings(SetDefaultsCommand.SetDefaultsCommandSettings settings)

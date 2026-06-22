@@ -9,7 +9,7 @@ namespace Topaz.Service.ContainerRegistry.Commands;
 [UsedImplicitly]
 [CommandDefinition("acr show", "container-registry", "Shows details of an Azure Container Registry.")]
 [CommandExample("Show a registry", "topaz acr show \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-rg\" \\\n    --name \"myregistry\"")]
-public sealed class ShowContainerRegistryCommand(HttpClient httpClient)
+public sealed class ShowContainerRegistryCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ShowContainerRegistryCommand.ShowContainerRegistryCommandSettings>(httpClient)
 {
 
@@ -24,6 +24,9 @@ public sealed class ShowContainerRegistryCommand(HttpClient httpClient)
 
     public override ValidationResult Validate(CommandContext context, ShowContainerRegistryCommandSettings settings)
     {
+        var defaults = provider.LoadDefaults();
+        settings.SubscriptionId ??= defaults.SubscriptionId;
+        settings.ResourceGroup ??= defaults.ResourceGroup;
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Registry name can't be null.");
 
