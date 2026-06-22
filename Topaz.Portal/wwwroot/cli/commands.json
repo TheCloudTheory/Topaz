@@ -4412,6 +4412,128 @@
     ]
   },
   {
+    "name": "pip create",
+    "group": "public-ip-address",
+    "description": "Creates or updates an Azure Public IP Address.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) public IP address name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-l, --location",
+        "description": "(Required) location",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      },
+      {
+        "names": "--allocation-method",
+        "description": "IP allocation method (Dynamic or Static, default: Dynamic)",
+        "required": false
+      },
+      {
+        "names": "--version",
+        "description": "IP address version (IPv4 or IPv6, default: IPv4)",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Creates a new Public IP Address",
+        "command": "topaz pip create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-pip\u0022 \\\n    --location \u0022westeurope\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "pip delete",
+    "group": "public-ip-address",
+    "description": "Deletes an Azure Public IP Address.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) public IP address name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Deletes a Public IP Address",
+        "command": "topaz pip delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-pip\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "pip list",
+    "group": "public-ip-address",
+    "description": "Lists Azure Public IP Addresses in a subscription or resource group.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Optional) filter by resource group name",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Lists Public IP Addresses in a resource group",
+        "command": "topaz pip list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
+    "name": "pip show",
+    "group": "public-ip-address",
+    "description": "Gets an Azure Public IP Address.",
+    "options": [
+      {
+        "names": "-n, --name",
+        "description": "(Required) public IP address name",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "(Required) resource group name",
+        "required": false
+      },
+      {
+        "names": "-s, --subscription-id",
+        "description": "(Required) subscription ID",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Gets a Public IP Address",
+        "command": "topaz pip show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \u0022my-pip\u0022 \\\n    --resource-group \u0022rg-local\u0022"
+      }
+    ]
+  },
+  {
     "name": "role assignment create",
     "group": "authorization",
     "description": "Creates (or updates) an Azure RBAC role assignment for a principal at a given scope.",
