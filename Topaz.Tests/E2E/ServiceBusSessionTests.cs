@@ -151,7 +151,7 @@ public class ServiceBusSessionTests
 
         // Wildcard receiver should find nothing
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        Assert.ThrowsAsync<OperationCanceledException>(
+        Assert.CatchAsync<OperationCanceledException>(
             async () => await client.AcceptNextSessionAsync(SessionQueueName, cancellationToken: cts.Token));
     }
 }

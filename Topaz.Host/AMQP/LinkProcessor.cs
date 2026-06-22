@@ -106,6 +106,17 @@ internal sealed class LinkProcessor(ITopazLogger logger, ServiceBusRuleLoader? r
                     wildcardSource.FilterSet[sessionFilterKey] = resolved;
                     sessionFilter = resolved;
                 }
+                else
+                {
+                    // No session available yet. Do NOT complete the ATTACH — leave it pending.
+                    // The SDK (OpenLinkAsync) is waiting for the ATTACH response; when the
+                    // caller's CancellationToken fires it cancels OpenLinkAsync and closes the
+                    // connection, which causes OperationCanceledException — exactly what
+                    // AcceptNextSessionAsync is documented to throw on timeout/cancellation.
+                    logger.LogDebug(nameof(LinkProcessor), nameof(Process),
+                        "Wildcard session ATTACH for '{0}' left pending — no sessions available.", entityAddr);
+                    return;
+                }
             }
 
             // For a named (non-wildcard) session, acquire the lock atomically during Attach.
