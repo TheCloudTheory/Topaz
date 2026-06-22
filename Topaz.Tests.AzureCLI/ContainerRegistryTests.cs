@@ -619,4 +619,66 @@ public class ContainerRegistryTests : TopazFixture
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
     }
 
+    [Test]
+    public async Task AcrTaskRun_GetLogContent_NonDockerRun_ReturnsFallbackLog()
+    {
+        const string registryName = "topazacrlogcontent01";
+        const string resourceGroup = "test-acr-logcontent-rg";
+        const string taskName = "log-task";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az acr create --name {registryName} --resource-group {resourceGroup} --sku Standard --location westeurope");
+        await RunAzureCliCommand(
+            $"az acr task create --name {taskName} --registry {registryName} " +
+            $"--resource-group {resourceGroup} --cmd \"echo hello\" --no-push --context /dev/null");
+
+        // Trigger a non-DockerBuildRequest run (TaskRunRequest) — immediate Succeeded.
+        string? runId = null;
+        await RunAzureCliCommand(
+            $"az acr task run --name {taskName} --registry {registryName} --resource-group {resourceGroup} --no-logs",
+            resp => { runId = resp["runId"]?.GetValue<string>(); });
+
+        // Retrieve log SAS URL and fetch log content.
+        string? logLink = null;
+        await RunAzureCliCommand(
+            $"az rest --method post " +
+            $"--url \"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/subscriptions/$(az account show --query id -o tsv)/resourceGroups/{resourceGroup}/providers/Microsoft.ContainerRegistry/registries/{registryName}/runs/{runId}/listLogSasUrl?api-version=2019-04-01\"",
+            resp => { logLink = resp["logLink"]?.GetValue<string>(); });
+
+        Assert.That(logLink, Is.Not.Null.And.Not.Empty);
+
+        // Fetch log content — just confirm the endpoint returns HTTP 200 (curl -sf fails on 4xx/5xx).
+        await RunAzureCliCommand($"curl -sf \"{logLink}\"");
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
+    public async Task AcrTaskRun_ScheduleRun_DockerBuildRequest_AzAcrRun_ShouldReturnRunId()
+    {
+        const string registryName = "topazacrdocker01";
+        const string resourceGroup = "test-acr-docker-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az acr create --name {registryName} --resource-group {resourceGroup} --sku Standard --location westeurope");
+
+        // az acr run calls scheduleRun with DockerBuildRequest.
+        // In the test container Docker is not available, so Topaz falls back to immediate Succeeded.
+        await RunAzureCliCommand(
+            $"az acr run --registry {registryName} --resource-group {resourceGroup} " +
+            $"--cmd \"echo hello\" /dev/null",
+            resp =>
+            {
+                var runId = resp["runId"]?.GetValue<string>() ??
+                            resp["properties"]?["runId"]?.GetValue<string>();
+                Assert.That(runId, Is.Not.Null.And.Not.Empty);
+            });
+
+        await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
 }

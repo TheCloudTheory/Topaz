@@ -208,6 +208,15 @@ public class Host
 
         new BackgroundServiceOrchestrator(backgroundServices, _logger).StartAll(cancellationToken);
 
+        if (!Service.ContainerRegistry.AcrDockerExecutor.IsAvailable())
+        {
+            _logger.LogDebug(nameof(Host), nameof(StartAsync),
+                "Docker is not available — ACR DockerBuildRequest runs will use immediate-Succeeded emulation.");
+            Console.WriteLine();
+            Console.WriteLine("  [warning] Docker not detected. ACR DockerBuildRequest runs will report");
+            Console.WriteLine("            immediate Succeeded without real execution.");
+        }
+
         Console.WriteLine();
         AnsiConsole.MarkupLine("  [green]✓[/] Topaz is ready — listening for requests");
         Console.WriteLine();

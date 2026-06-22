@@ -156,18 +156,6 @@ _Implemented in v1.5-beta: ARM-level task management surface (Create, Get, Get D
 
 _Implemented in v1.5-beta: Task Run lifecycle surface — POST .../tasks/{task}/run, GET/PATCH .../runs/{run}, GET .../runs, POST .../runs/{run}/listLogSasUrl, POST .../scheduleRun. Runs report provisioningState: Succeeded immediately with a static log body. Real Docker execution deferred to v1.7-beta._
 
-<!--
-TODO: ACR Tasks: Real Docker build-and-push execution
-  Upgrade the ACR run emulation from immediate-Succeeded to real container workload execution:
-  - Detect Docker availability at host startup; log a warning if absent.
-  - For DockerBuildRequest step type: git clone contextPath, run `docker build`, `docker push` to the local OCI registry.
-  - Drive real status transitions: Queued → Running → Succeeded / Failed.
-  - Stream actual build output from the docker build process to the log content endpoint (GET /v2/runs/{runId}/log).
-  - For non-DockerBuildRequest step types (FileTaskRunRequest, EncodedTaskRunRequest, TaskRunRequest): keep immediate-Succeeded behaviour as a no-op.
-  milestone: v1.7-beta
-  labels: enhancement, container-registry
--->
-
 ### Azure SQL — initial control plane
 
 _Implemented in v1.5-beta: server CRUD (Create/Update, Get, Delete, List by resource group, List by subscription, PATCH update) and database CRUD (Create/Update, Get, Delete, List by server, PATCH update) for `Microsoft.Sql/servers` and `Microsoft.Sql/servers/databases`. Also includes read-only companion endpoints: Transparent Data Encryption (Get/CreateOrUpdate), Connection Policy (Get/CreateOrUpdate), Vulnerability Assessment (Get/CreateOrUpdate), Database Security Alert Policy (Get), Database Backup Short-Term and Long-Term Retention Policies (Get), and Restorable Dropped Databases (List)._
@@ -276,18 +264,7 @@ _Implemented in v1.6-beta: a built-in HTTP CONNECT proxy starts on port 44380 al
 
 _Implemented in v1.7-beta: unhandled exceptions on the deployment background thread now transition the deployment to `provisioningState=Failed` instead of leaving it stuck at `Running`. Added an inner `try-catch(Exception)` in `HandleNestedDeployment` around `RouteDeployment(innerJob)` — sets `DeploymentErrorInfo { Code="DeploymentFailed", Message=ex.Message }` on the nested `DeploymentResource`, calls `Fail()` and `Persist()`. Added a secondary safety-net `catch` in `Start()` for top-level deployments. `DeploymentResourceProperties.Error` changed from `Azure.ResponseError` (not STJ-serializable) to a new `DeploymentErrorInfo` POCO. Includes two E2E regression tests in `ArmDeploymentFailureTests.cs` using template `deployment-nested-reference-output.json`._
 
-### Virtual Network — Private Endpoint IP tracking
 
-<!--
-TODO: Virtual Networks: Private Endpoint IP tracking
-  Extend the IP allocation registry (introduced in v1.5-beta for NICs) to also record
-  IP addresses assigned to Private Endpoints on creation. This requires implementing the
-  Private Endpoint control plane (PUT/GET/DELETE/LIST for Microsoft.Network/privateEndpoints)
-  and hooking it into IpAllocationRegistry.Register on create and IpAllocationRegistry.Unregister
-  on delete, using the same subnetId → vnet resolution already used for NICs.
-  milestone: v1.7-beta
-  labels: enhancement, virtual-network, good first issue
--->
 
 ### Azure Cosmos DB — MCP Server provisioning tools
 
@@ -1082,6 +1059,17 @@ TODO: Availability Sets: New service control plane
 -->
 
 ### Private Endpoints — initial control plane
+
+<!--
+TODO: Virtual Networks: Private Endpoint IP tracking
+  Extend the IP allocation registry (introduced in v1.5-beta for NICs) to also record
+  IP addresses assigned to Private Endpoints on creation. This requires implementing the
+  Private Endpoint control plane (PUT/GET/DELETE/LIST for Microsoft.Network/privateEndpoints)
+  and hooking it into IpAllocationRegistry.Register on create and IpAllocationRegistry.Unregister
+  on delete, using the same subnetId → vnet resolution already used for NICs.
+  milestone: v1.10-preview
+  labels: enhancement, virtual-network, good first issue
+-->
 
 <!--
 TODO: Private Endpoints: New service control plane

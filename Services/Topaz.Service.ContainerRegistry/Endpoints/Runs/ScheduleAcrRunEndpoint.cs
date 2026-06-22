@@ -47,7 +47,33 @@ internal sealed class ScheduleAcrRunEndpoint(Pipeline eventPipeline, ITopazLogge
             return;
         }
 
-        response.StatusCode = HttpStatusCode.OK;
-        response.CreateJsonContentResponse(operation.Resource!);
+        var run = operation.Resource!;
+
+        // When the run is asynchronous (Docker execution in progress), return 202 Accepted.
+        // Azure-AsyncOperation points to the dedicated status endpoint so the .NET SDK LRO
+        // machinery receives {"status":"InProgress"/"Succeeded"/"Failed"} which it understands.
+        // Location points to the run GET endpoint so the SDK retrieves the final resource once done.
+        if (run.Properties.Status == "Queued" || run.Properties.Status == "Running")
+        {
+            var scheme = context.Request.Scheme;
+            var host = context.Request.Host.Value;
+            var basePath =
+                $"{scheme}://{host}/subscriptions/{path.ExtractValueFromPath(2)}" +
+                $"/resourceGroups/{path.ExtractValueFromPath(4)}" +
+                $"/providers/Microsoft.ContainerRegistry/registries/{registryName}";
+            var operationStatusUrl =
+                $"{basePath}/runs/{run.Properties.RunId}/operationStatuses?api-version=2019-04-01";
+            var runGetUrl =
+                $"{basePath}/runs/{run.Properties.RunId}?api-version=2019-04-01";
+            response.Headers.TryAddWithoutValidation("Azure-AsyncOperation", operationStatusUrl);
+            response.Headers.TryAddWithoutValidation("Location", runGetUrl);
+            response.StatusCode = HttpStatusCode.Accepted;
+        }
+        else
+        {
+            response.StatusCode = HttpStatusCode.OK;
+        }
+
+        response.CreateJsonContentResponse(run);
     }
 }

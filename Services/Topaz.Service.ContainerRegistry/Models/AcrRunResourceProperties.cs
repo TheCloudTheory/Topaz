@@ -19,6 +19,22 @@ internal sealed class AcrRunResourceProperties
     public JsonElement? Platform { get; set; }
     public JsonElement? AgentConfiguration { get; set; }
 
+    public static AcrRunResourceProperties CreateQueued(string runId, string? taskName, string runType)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return new AcrRunResourceProperties
+        {
+            RunId = runId,
+            Status = "Queued",
+            ProvisioningState = "Creating",
+            CreateTime = now,
+            StartTime = now,
+            RunType = runType,
+            Task = taskName,
+            IsArchiveEnabled = false
+        };
+    }
+
     public static AcrRunResourceProperties FromTaskRun(
         string taskName,
         string runId,
