@@ -86,14 +86,17 @@ else if (_result is not null)
                         <thead>
                             <tr>
                                 <th>Resource type</th>
+                                <th>Resource name</th>
                                 <th class="text-end">Estimated monthly cost</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var entry in _result.Resources.OrderByDescending(r => r.EstimatedMonthlyCost))
                             {
+                                @{ var name = entry.ResourceId?.Split('/').LastOrDefault(s => !string.IsNullOrEmpty(s)); }
                                 <tr>
                                     <td><code>@(string.IsNullOrEmpty(entry.ResourceType) ? (entry.ResourceId ?? "(unknown)") : entry.ResourceType)</code></td>
+                                    <td class="text-muted">@(name ?? "—")</td>
                                     <td class="text-end">@FormatCost(entry.EstimatedMonthlyCost, _result.Currency)</td>
                                 </tr>
                             }
