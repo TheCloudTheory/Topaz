@@ -124,6 +124,21 @@ internal static class SessionMessageStore
             _state[key] = state;
     }
 
+    /// <summary>
+    /// Removes all queued messages, session state, and locks for the given entity address.
+    /// Called when a queue is (re)created to discard stale data from a previous lifetime.
+    /// </summary>
+    public static void ClearQueue(string address)
+    {
+        var normalized = Normalize(address);
+        foreach (var key in _queues.Keys.Where(k => string.Equals(k.Item1, normalized, StringComparison.OrdinalIgnoreCase)).ToList())
+            _queues.Remove(key);
+        foreach (var key in _state.Keys.Where(k => string.Equals(k.Item1, normalized, StringComparison.OrdinalIgnoreCase)).ToList())
+            _state.Remove(key);
+        foreach (var key in _locks.Keys.Where(k => string.Equals(k.Item1, normalized, StringComparison.OrdinalIgnoreCase)).ToList())
+            _locks.Remove(key);
+    }
+
     private static (string, string) Key(string address, string sessionId) =>
         (Normalize(address), sessionId);
 

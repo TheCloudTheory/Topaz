@@ -183,6 +183,8 @@ internal sealed class ServiceBusServiceControlPlane(
             provider.CreateOrUpdateSubresource(subscriptionIdentifier, resourceGroupIdentifier, queueName,
                 @namespace.Value, nameof(Subresource.Queues).ToLowerInvariant(), resource);
 
+            ServiceBusService.OnQueueCreated?.Invoke(queueName);
+
             return new ControlPlaneOperationResult<ServiceBusQueueResource>(OperationResult.Created, resource, null,
                 null);
         }

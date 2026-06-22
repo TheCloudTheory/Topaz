@@ -104,7 +104,7 @@ public class Host
             new EventHubService(_logger),
             new BlobStorageService(_eventPipeline, _logger),
             new TopazCloudEnvironmentService(),
-            new ServiceBusService(_eventPipeline, _logger),
+            new ServiceBusService(_eventPipeline, _logger, SessionMessageStore.ClearQueue),
             new ResourceManagerService(_eventPipeline, _logger, cancellationToken),
             new VirtualNetworkService(_eventPipeline, _logger),
             new NetworkSecurityGroupService(_eventPipeline, _logger),

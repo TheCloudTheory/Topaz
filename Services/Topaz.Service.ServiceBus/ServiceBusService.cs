@@ -10,8 +10,10 @@ using Topaz.Shared;
 
 namespace Topaz.Service.ServiceBus;
 
-public sealed class ServiceBusService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
+public sealed class ServiceBusService(Pipeline eventPipeline, ITopazLogger logger, Action<string>? onQueueCreated = null) : IServiceDefinition
 {
+    internal static Action<string>? OnQueueCreated { get; private set; }
+
     public static string UniqueName => "servicebus";
     public string Name => "Azure Service Bus";
     public static bool IsGlobalService => true;
@@ -87,7 +89,8 @@ public sealed class ServiceBusService(Pipeline eventPipeline, ITopazLogger logge
         new RegenerateKeysServiceBusTopicAuthorizationRuleEndpoint(eventPipeline, logger)
     ];
 
-    public void Bootstrap()
+    public void Register()
     {
+        OnQueueCreated = onQueueCreated;
     }
 }
