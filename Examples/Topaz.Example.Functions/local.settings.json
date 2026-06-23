@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+
+    "ServiceBusConnection": "Endpoint=sb://sbns-orders.servicebus.topaz.local.dev:8889;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;",
+
+    "CosmosDbConnection": "AccountEndpoint=https://cosmos-orders.documents.topaz.local.dev:8895/;AccountKey=REPLACE_WITH_KEY_FROM_TOPAZ;",
+
+    "KeyVaultUri": "https://kv-functions-local.vault.topaz.local.dev:8898"
+  }
+}
