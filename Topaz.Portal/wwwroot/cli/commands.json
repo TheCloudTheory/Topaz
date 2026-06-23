@@ -834,6 +834,46 @@
     ]
   },
   {
+    "name": "configure set",
+    "group": "generic",
+    "description": "Sets default values for the CLI.",
+    "options": [
+      {
+        "names": "-s, --subscription-id",
+        "description": "Default subscription ID.",
+        "required": false
+      },
+      {
+        "names": "-g, --resource-group",
+        "description": "Default resource group name",
+        "required": false
+      },
+      {
+        "names": "-l, --location",
+        "description": "Default location",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Set default subscription, resource group, and location",
+        "command": "topaz configure set \\\n    --subscription-id \u002200000000-0000-0000-0000-000000000000\u0022 \\\n    --resource-group \u0022my-resource-group\u0022 \\\n    --location \u0022eastus\u0022"
+      }
+    ]
+  },
+  {
+    "name": "configure show",
+    "group": "generic",
+    "description": "Shows default values for the CLI.",
+    "options": [],
+    "examples": [
+      {
+        "title": "Show current CLI defaults",
+        "command": "topaz configure show"
+      }
+    ]
+  },
+  {
     "name": "cosmosdb account create",
     "group": "cosmos-db",
     "description": "Creates or updates an Azure Cosmos DB account.",
@@ -1925,6 +1965,18 @@
       {
         "title": "Update tags on a resource group",
         "command": "topaz group update \\\n    --name \u0022my-rg\u0022 \\\n    --subscription-id \u00226B1F305F-7C41-4E5C-AA94-AB937F2F530A\u0022 \\\n    --tags \u0027{\u0022env\u0022:\u0022prod\u0022}\u0027"
+      }
+    ]
+  },
+  {
+    "name": "health",
+    "group": "generic",
+    "description": "Provides information about the health of the host.",
+    "options": [],
+    "examples": [
+      {
+        "title": "Check host health",
+        "command": "topaz health"
       }
     ]
   },

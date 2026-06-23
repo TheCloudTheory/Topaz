@@ -2,10 +2,13 @@ using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Topaz.CLI.Infrastructure;
+using Topaz.Documentation.Command;
 
 namespace Topaz.CLI.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("configure show", "generic", "Shows default values for the CLI.")]
+[CommandExample("Show current CLI defaults", "topaz configure show")]
 internal sealed class ShowDefaultsCommand(DefaultsProvider provider) : AsyncCommand
 {
     public override Task<int> ExecuteAsync(CommandContext context)

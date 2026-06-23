@@ -7,6 +7,8 @@ using Topaz.Documentation.Command;
 namespace Topaz.CLI.Commands;
 
 [UsedImplicitly]
+[CommandDefinition("configure set", "generic", "Sets default values for the CLI.")]
+[CommandExample("Set default subscription, resource group, and location", "topaz configure set \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"my-resource-group\" \\\n    --location \"eastus\"")]
 internal sealed class SetDefaultsCommand(DefaultsProvider provider) : AsyncCommand<SetDefaultsCommand.SetDefaultsCommandSettings>
 {
     public override Task<int> ExecuteAsync(CommandContext context, SetDefaultsCommandSettings settings)

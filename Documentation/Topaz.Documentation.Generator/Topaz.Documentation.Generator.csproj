@@ -5,6 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <SelfContained>true</SelfContained>
+        <NoWarn>$(NoWarn);CS0436</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

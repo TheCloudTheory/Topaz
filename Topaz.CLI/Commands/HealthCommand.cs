@@ -2,12 +2,15 @@ using System.Text.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Topaz.Documentation.Command;
 using Topaz.Shared;
 
 namespace Topaz.CLI.Commands;
 
 [UsedImplicitly]
-internal sealed class HealthCommand(HttpClient httpClient) : AsyncCommand
+[CommandDefinition("health", "generic", "Provides information about the health of the host.")]
+[CommandExample("Check host health", "topaz health")]
+public sealed class HealthCommand(HttpClient httpClient) : AsyncCommand
 {
     public override async Task<int> ExecuteAsync(CommandContext context)
     {
