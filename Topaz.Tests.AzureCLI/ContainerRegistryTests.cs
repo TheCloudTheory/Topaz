@@ -649,7 +649,7 @@ public class ContainerRegistryTests : TopazFixture
         Assert.That(logLink, Is.Not.Null.And.Not.Empty);
 
         // Fetch log content — just confirm the endpoint returns HTTP 200 (curl -sf fails on 4xx/5xx).
-        await RunAzureCliCommand($"curl -sf \"{logLink}\"");
+        await RunAzureCliCommand($"curl -ksf \"{logLink}\"");
 
         await RunAzureCliCommand($"az acr delete --name {registryName} --resource-group {resourceGroup} --yes");
         await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
