@@ -669,7 +669,7 @@ public class ContainerRegistryTests : TopazFixture
         // In the test container Docker is not available, so Topaz falls back to immediate Succeeded.
         await RunAzureCliCommand(
             $"az acr run --registry {registryName} --resource-group {resourceGroup} " +
-            $"--cmd \"echo hello\" /dev/null",
+            $"--cmd \"echo hello\" /dev/null --no-logs",
             resp =>
             {
                 var runId = resp["runId"]?.GetValue<string>() ??

@@ -26,9 +26,22 @@ internal sealed class GetAcrRunLogContentEndpoint(Pipeline eventPipeline, ITopaz
     {
         var runId = context.Request.Path.Value!.ExtractValueFromPath(3) ?? string.Empty;
         var logContent = _controlPlane.GetRunLog(runId) ?? "Build succeeded.\n";
+        var logBytes = System.Text.Encoding.UTF8.GetBytes(logContent);
 
-        response.StatusCode = HttpStatusCode.OK;
-        response.Content = new StringContent(logContent);
+        var rangeHeader = context.Request.Headers["Range"].ToString();
+        long start = 0;
+        long end = logBytes.Length - 1;
+        if (!string.IsNullOrEmpty(rangeHeader) && rangeHeader.StartsWith("bytes="))
+        {
+            var parts = rangeHeader["bytes=".Length..].Split('-');
+            start = long.Parse(parts[0]);
+            end = string.IsNullOrEmpty(parts[1]) ? logBytes.Length - 1 : Math.Min(long.Parse(parts[1]), logBytes.Length - 1);
+        }
+
+        var slice = logBytes[(int)start..(int)(end + 1)];
+        response.StatusCode = HttpStatusCode.PartialContent;
+        response.Content = new ByteArrayContent(slice);
         response.Content.Headers.ContentType = new MediaTypeHeaderValue(MediaTypeNames.Text.Plain);
+        response.Content.Headers.ContentRange = new ContentRangeHeaderValue(start, end, logBytes.Length);
     }
 }

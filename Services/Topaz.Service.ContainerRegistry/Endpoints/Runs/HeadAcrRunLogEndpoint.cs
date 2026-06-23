@@ -22,6 +22,7 @@ internal sealed class HeadAcrRunLogEndpoint : IEndpointDefinition
     {
         response.StatusCode = HttpStatusCode.OK;
         response.Content = new ByteArrayContent([]);
-        response.Content.Headers.ContentType = new MediaTypeHeaderValue(MediaTypeNames.Text.Plain);
+        response.Content.Headers.ContentLength = 0;
+        response.Headers.Add("x-ms-meta-Complete", "Succeeded");
     }
 }
