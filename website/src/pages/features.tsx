@@ -35,10 +35,12 @@ const SERVICES: Service[] = [
   { abbr: 'NIC',  bg: '#1B63EB', name: 'Network Interface',       description: 'Network interface resources and VM networking' },
   { abbr: 'VM',   bg: '#1B63EB', name: 'Virtual Machines',        description: 'VM lifecycle management (no-op emulation)', preview: true },
   { abbr: 'NSG',  bg: '#07A560', name: 'Network Security Groups', description: 'NSG rules and associations', preview: true },
-  { abbr: 'AS',   bg: '#0078D4', name: 'Azure App Service',       description: 'App Service Plans, Web Apps and Function Apps', preview: true },
+  { abbr: 'AS',   bg: '#0078D4', name: 'Azure App Service',       description: 'App Service Plans, Web Apps, Function Apps and Kudu/SCM deployment', preview: true },
   { abbr: 'SQL',  bg: '#CC2927', name: 'Azure SQL',               description: 'SQL Server and Database emulation', preview: true },
   { abbr: 'CDB',  bg: '#0078D4', name: 'Azure Cosmos DB',         description: 'NoSQL multi-model database emulation', preview: true },
   { abbr: 'DISK', bg: '#E8751A', name: 'Azure Disk',              description: 'Managed disk control plane and SAS access', preview: true },
+  { abbr: 'LB',   bg: '#1B63EB', name: 'Azure Load Balancer',      description: 'Load balancer control plane', preview: true },
+  { abbr: 'PIP',  bg: '#1B63EB', name: 'Public IP Address',         description: 'Public IP address resources', preview: true },
 ];
 
 const TOOLING: Service[] = [
