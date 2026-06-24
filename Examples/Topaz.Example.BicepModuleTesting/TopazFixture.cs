@@ -1,36 +1,42 @@
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
-using Azure.ResourceManager.Resources.Models;
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
+using JetBrains.Annotations;
+using Testcontainers.Topaz;
 using Topaz.Identity;
+using Topaz.ResourceManager;
 using Xunit;
 
 namespace Topaz.Example.BicepModuleTesting;
 
+[UsedImplicitly]
 public class TopazFixture : IAsyncLifetime
 {
-    public IContainer Container { get; private set; } = null!;
-    public ArmClient ArmClient { get; private set; } = null!;
+    private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
+
+    private TopazContainer Container { get; set; } = null!;
+    private ArmClient ArmClient { get; set; } = null!;
     public ResourceGroupResource ResourceGroup { get; private set; } = null!;
 
     public async Task InitializeAsync()
     {
-        Container = new ContainerBuilder("thecloudtheory/topaz-host:latest")
-            .WithPortBinding(8891, 8891)
-            .WithPortBinding(8895, 8895)
-            .WithPortBinding(8899, 8899)
+        const string defaultSubscriptionId = "00000000-0000-0000-0000-000000000001";
+        Container = new TopazBuilder()
+            .WithDefaultSubscription(Guid.Parse(defaultSubscriptionId))
+            .WithLoggingToFile()
+            .WithLogLevel(TopazLogLevel.Debug)
             .WithName("topaz.local.dev")
-            .WithCommand("--log-level", "Warning")
             .Build();
 
         await Container.StartAsync();
         await Task.Delay(3000);
 
+        BicepDeployer.Login();
+
         ArmClient = new ArmClient(
             new AzureLocalCredential(Globals.GlobalAdminId),
-            "00000000-0000-0000-0000-000000000001");
+            defaultSubscriptionId,
+            ArmClientOptions);
 
         var subscription = await ArmClient.GetDefaultSubscriptionAsync();
         var rgOperation = await subscription.GetResourceGroups().CreateOrUpdateAsync(

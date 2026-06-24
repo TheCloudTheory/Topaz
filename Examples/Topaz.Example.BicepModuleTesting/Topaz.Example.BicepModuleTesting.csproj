@@ -14,6 +14,7 @@
         <PackageReference Include="Testcontainers" Version="4.12.0" />
         <PackageReference Include="TheCloudTheory.Topaz.Identity" Version="1.7.107-beta" />
         <PackageReference Include="TheCloudTheory.Topaz.ResourceManager" Version="1.7.14-beta" />
+        <PackageReference Include="TheCloudTheory.Topaz.Testcontainers" Version="1.4.0" />
         <PackageReference Include="xunit" Version="2.9.3" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

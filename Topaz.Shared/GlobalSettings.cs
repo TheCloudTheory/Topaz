@@ -69,5 +69,5 @@ public static class GlobalSettings
     public const string AppServiceKuduDnsSuffix = "scm.azurewebsites.topaz.local.dev";
 
     public static string GetWebSiteDefaultHostName(string siteName) => $"{siteName}.{AzureWebsitesDnsSuffix}";
-    public static string DefaultsPath = Path.Combine(MainEmulatorDirectory, "defaults.json");
+    public static readonly string DefaultsPath = Path.Combine(MainEmulatorDirectory, "defaults.json");
 }
