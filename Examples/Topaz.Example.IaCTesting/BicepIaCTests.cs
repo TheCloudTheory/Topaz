@@ -15,7 +15,8 @@ public class BicepIaCTests
     {
         _arm = new ArmClient(
             new AzureLocalCredential(Globals.GlobalAdminId),
-            "00000000-0000-0000-0000-000000000001");
+            "00000000-0000-0000-0000-000000000001",
+            Topaz.ResourceManager.TopazArmClientOptions.New);
     }
 
     [Fact]
@@ -58,6 +59,8 @@ public class BicepIaCTests
                 UseShellExecute = false
             }
         };
+
+        process.StartInfo.Environment["AZURE_CORE_INSTANCE_DISCOVERY"] = "false";
 
         process.Start();
         process.WaitForExit();

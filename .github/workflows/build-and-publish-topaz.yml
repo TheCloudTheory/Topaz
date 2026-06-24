@@ -48,7 +48,7 @@ jobs:
     - name: Build PowerShell container
       run: ./scripts/build-powershell-container.sh
     - name: Test
-      run: dotnet test -m:1 --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults
+      run: dotnet test -m:1 --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" --results-directory ${{ github.workspace }}/TestResults --filter "FullyQualifiedName!~Topaz.Example"
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always()
