@@ -204,4 +204,4 @@ After (measured on a GitHub-hosted `ubuntu-latest` runner):
 
 The compose file, the workflow YAML, and the `AllInOne` example are all in the [Topaz GitHub repo](https://github.com/TheCloudTheory/Topaz) under `Examples/`. The `brew install topaz` path works for local development; the Docker path works for CI.
 
-If you are already using Azurite and hitting its limits, the migration path is smaller than it looks. Most Azure SDK calls require only a credential and an endpoint change. The bigger gain comes when you finally start testing the services that had no local option before.
+Azurite is one starting point, but the more interesting cases are the ones that had no local option at all. If your application touches Key Vault, Container Registry, Entra, RBAC, or ARM deployments, you are probably either skipping those paths in tests, mocking them, or incurring real Azure costs in CI. Topaz is designed for the full stack, not as a drop-in for a single service.
