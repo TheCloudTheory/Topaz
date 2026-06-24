@@ -1,18 +1,96 @@
 ---
 sidebar_position: 2
 slug: /ecosystem/testcontainers
-description: Use Testcontainers for .NET to run Topaz automatically in NUnit, xUnit, and MSTest projects — shared fixture pattern with full container lifecycle management.
+description: Use the official Testcontainers.Topaz package to run Topaz automatically in NUnit, xUnit, and MSTest projects — shared fixture pattern with full container lifecycle management.
 keywords: [topaz testcontainers, azure emulator integration tests, testcontainers dotnet topaz, local azure unit tests]
 ---
 
 # How to write integration tests with Testcontainers
 
-This guide shows you how to use [Testcontainers for .NET](https://dotnet.testcontainers.org/) to run a Topaz instance automatically in your test suite, with shared fixture patterns for NUnit, xUnit, and MSTest.
+This guide shows you how to use the official [Testcontainers.Topaz](https://www.nuget.org/packages/TheCloudTheory.Topaz.Testcontainers) package to run a Topaz instance automatically in your test suite.
 
 ## Installation
 
 ```bash
-dotnet add package Testcontainers
+dotnet add package TheCloudTheory.Topaz.Testcontainers
+```
+
+## Prerequisites
+
+### 1. DNS resolution
+
+Topaz uses `topaz.local.dev` as its base hostname. Service endpoints use subdomains (e.g. `myaccount.blob.storage.topaz.local.dev`). Configure a wildcard DNS resolver so all subdomains resolve automatically:
+
+**macOS / Linux (dnsmasq)**
+
+```shell
+# Install
+brew install dnsmasq        # macOS
+sudo apt install dnsmasq    # Debian/Ubuntu
+
+# Route all *.topaz.local.dev to localhost
+echo "address=/.topaz.local.dev/127.0.0.1" | sudo tee /etc/dnsmasq.d/topaz.conf
+
+# Restart
+sudo brew services restart dnsmasq   # macOS
+sudo systemctl restart dnsmasq       # Linux
+```
+
+On macOS, also add a resolver file so the system uses dnsmasq for this domain:
+
+```shell
+sudo mkdir -p /etc/resolver
+echo "nameserver 127.0.0.1" | sudo tee /etc/resolver/topaz.local.dev
+```
+
+**Fallback: `/etc/hosts`**
+
+If you cannot install a DNS resolver, add an entry for each hostname your tests use:
+
+```
+127.0.0.1 topaz.local.dev
+127.0.0.1 myaccount.blob.storage.topaz.local.dev
+127.0.0.1 myvault.vault.topaz.local.dev
+```
+
+This requires a new entry per resource name and does not support wildcards.
+
+### 2. Certificate trust
+
+Topaz uses a self-signed TLS certificate. Call `TopazContainer.InstallCertificateToCurrentUserStore()` after the container starts to install it into the current user's trusted root store. Remove it on teardown with `TopazContainer.UninstallCertificateFromCurrentUserStore()`. No certificate validation bypass is needed.
+
+## Basic usage
+
+```csharp
+public sealed class MyServiceTests : IAsyncLifetime
+{
+    private readonly TopazContainer _topaz = new TopazBuilder().Build();
+
+    public async Task InitializeAsync()
+    {
+        await _topaz.StartAsync();
+
+        // Installs the Topaz cert into CurrentUser\Root so HttpClient and
+        // Azure SDK clients trust it without disabling certificate validation.
+        TopazContainer.InstallCertificateToCurrentUserStore();
+    }
+
+    public async Task DisposeAsync()
+    {
+        TopazContainer.UninstallCertificateFromCurrentUserStore();
+        await _topaz.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task StorageTest()
+    {
+        var blobUri = _topaz.GetStorageBlobUri("myaccount");
+        // Use blobUri with Azure.Storage.Blobs.BlobServiceClient ...
+
+        var cosmosUri = _topaz.GetCosmosDbUri("mycosmosaccount");
+        // Use cosmosUri with Microsoft.Azure.Cosmos.CosmosClient ...
+    }
+}
 ```
 
 ## The reusable fixture pattern
@@ -24,90 +102,69 @@ The best practice is to start Topaz once per test suite (not per test) using a s
 NUnit's `[SetUpFixture]` runs once per namespace assembly, making it ideal for a shared container:
 
 ```csharp
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
 using NUnit.Framework;
 
 [SetUpFixture]
 public class TopazFixture
 {
-    private IContainer _container = null!;
+    private TopazContainer _topaz = null!;
 
     [OneTimeSetUp]
     public async Task StartAsync()
     {
-        _container = new ContainerBuilder()
-            .WithImage("thecloudtheory/topaz-host:<tag>")
-            .WithPortBinding(8899)   // ARM / Resource Manager
-            .WithPortBinding(8898)   // Key Vault
-            .WithPortBinding(8891)   // Blob Storage
-            .WithPortBinding(8890)   // Table Storage
-            .WithPortBinding(8897)   // Event Hub (HTTP)
-            .WithName("topaz.local.dev")
-            .WithCommand("--log-level", "Information")
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8899))
-            .Build();
-
-        await _container.StartAsync();
+        _topaz = new TopazBuilder().Build();
+        await _topaz.StartAsync();
+        TopazContainer.InstallCertificateToCurrentUserStore();
     }
 
     [OneTimeTearDown]
     public async Task StopAsync()
     {
-        await _container.DisposeAsync();
+        TopazContainer.UninstallCertificateFromCurrentUserStore();
+        await _topaz.DisposeAsync();
     }
 }
 ```
-
-Each test class in the same namespace can then interact with Topaz on `localhost` using the standard Azure SDKs or the `TopazEnvironmentBuilder` API.
 
 ### xUnit
 
 xUnit uses a shared `IAsyncLifetime` class fixture:
 
 ```csharp
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
 using Xunit;
 
 public class TopazFixture : IAsyncLifetime
 {
-    private IContainer _container = null!;
+    public TopazContainer Topaz { get; } = new TopazBuilder().Build();
 
     public async Task InitializeAsync()
     {
-        _container = new ContainerBuilder()
-            .WithImage("thecloudtheory/topaz-host:<tag>")
-            .WithPortBinding(8899)
-            .WithPortBinding(8898)
-            .WithPortBinding(8891)
-            .WithPortBinding(8890)
-            .WithPortBinding(8897)
-            .WithName("topaz.local.dev")
-            .WithCommand("--log-level", "Information")
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8899))
-            .Build();
-
-        await _container.StartAsync();
+        await Topaz.StartAsync();
+        TopazContainer.InstallCertificateToCurrentUserStore();
     }
 
     public async Task DisposeAsync()
     {
-        await _container.DisposeAsync();
+        TopazContainer.UninstallCertificateFromCurrentUserStore();
+        await Topaz.DisposeAsync();
     }
 }
 
-// Declare the fixture on each collection that needs Topaz
 [CollectionDefinition("Topaz")]
 public class TopazCollection : ICollectionFixture<TopazFixture> { }
 
 [Collection("Topaz")]
 public class KeyVaultTests
 {
+    private readonly TopazFixture _fixture;
+
+    public KeyVaultTests(TopazFixture fixture) => _fixture = fixture;
+
     [Fact]
     public async Task CreateKeyVault_ShouldSucceed()
     {
-        // arrange / act / assert using Azure SDK against localhost
+        var kvUri = _fixture.Topaz.GetKeyVaultUri("kv-test");
+        // arrange / act / assert using Azure SDK
     }
 }
 ```
@@ -115,48 +172,36 @@ public class KeyVaultTests
 ### MSTest
 
 ```csharp
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 [TestClass]
 public class TopazFixture
 {
-    private static IContainer _container = null!;
+    private static TopazContainer _topaz = null!;
 
     [AssemblyInitialize]
     public static async Task StartAsync(TestContext _)
     {
-        _container = new ContainerBuilder()
-            .WithImage("thecloudtheory/topaz-host:<tag>")
-            .WithPortBinding(8899)
-            .WithPortBinding(8898)
-            .WithPortBinding(8891)
-            .WithPortBinding(8890)
-            .WithPortBinding(8897)
-            .WithName("topaz.local.dev")
-            .WithCommand("--log-level", "Information")
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8899))
-            .Build();
-
-        await _container.StartAsync();
+        _topaz = new TopazBuilder().Build();
+        await _topaz.StartAsync();
+        TopazContainer.InstallCertificateToCurrentUserStore();
     }
 
     [AssemblyCleanup]
     public static async Task StopAsync()
     {
-        await _container.DisposeAsync();
+        TopazContainer.UninstallCertificateFromCurrentUserStore();
+        await _topaz.DisposeAsync();
     }
 }
 ```
 
 ## Writing tests against Topaz
 
-Once the container is running, use `AzureLocalCredential` and the standard Azure SDK clients pointed at `localhost`. The `TopazArmClientOptions` type configures the ARM client to bypass the Azure endpoint discovery that would otherwise try to reach the public cloud.
+Once the container is running, use `AzureLocalCredential` and the standard Azure SDK clients. Retrieve service URIs via the typed helpers on `TopazContainer`:
 
 ```csharp
 using Azure;
-using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
@@ -165,22 +210,8 @@ using Topaz.ResourceManager;
 
 public class KeyVaultTests
 {
-    // Use a fixed subscription GUID per test class to avoid collision
     private static readonly Guid SubscriptionId = Guid.Parse("00000000-0000-0000-0000-000000000001");
     private static readonly ArmClientOptions ArmClientOptions = TopazArmClientOptions.New;
-
-    [OneTimeSetUp]
-    public async Task SetUp()
-    {
-        // Create test subscription and resource group via Topaz CLI or ARM client
-        await Program.Main(["subscription", "create",
-            "--id", SubscriptionId.ToString(),
-            "--name", "test-sub"]);
-        await Program.Main(["group", "create",
-            "--name", "rg-test",
-            "--location", "westeurope",
-            "--subscription-id", SubscriptionId.ToString()]);
-    }
 
     [Test]
     public void CreateKeyVault_ShouldBeAvailableAfterCreation()
@@ -208,54 +239,69 @@ public class KeyVaultTests
 }
 ```
 
-## Bringing your own certificate
+## Container-to-container setup
 
-By default Topaz uses its bundled self-signed certificate. If you want to test HTTPS certificate handling or need specific TLS behaviour, pass the certificate files into the container at startup using `WithResourceMapping`:
+When your tests run inside a Docker container (e.g. CI), attach both containers to a shared network and inject the Topaz certificate into the secondary container's CA bundle:
 
 ```csharp
-var certificatePem = File.ReadAllBytes("topaz.crt");
-var privateKeyPem  = File.ReadAllBytes("topaz.key");
+var network = new NetworkBuilder().WithName(Guid.NewGuid().ToString("D")).Build();
 
-_container = new ContainerBuilder()
-    .WithImage("thecloudtheory/topaz-host:<tag>")
-    .WithPortBinding(8899)
-    .WithPortBinding(8898)
-    .WithName("topaz.local.dev")
-    .WithResourceMapping(certificatePem, "/app/topaz.crt")
-    .WithResourceMapping(privateKeyPem,  "/app/topaz.key")
-    .WithCommand(
-        "--certificate-file", "topaz.crt",
-        "--certificate-key",  "topaz.key",
-        "--log-level", "Information")
-    .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8899))
+var topaz = new TopazBuilder()
+    .WithNetwork(network)
     .Build();
+
+await topaz.StartAsync();
+
+var certPem = await topaz.GetCertificatePemAsync();
+
+var myContainer = new ContainerBuilder()
+    .WithNetwork(network)
+    .WithExtraHost("topaz.local.dev", topaz.IpAddress)
+    .WithExtraHost("myaccount.blob.storage.topaz.local.dev", topaz.IpAddress)
+    // Add one WithExtraHost per subdomain your tests use
+    .WithResourceMapping(Encoding.UTF8.GetBytes(certPem), "/tmp/topaz.crt")
+    .WithEnvironment("REQUESTS_CA_BUNDLE", "/usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem")
+    .Build();
+
+await myContainer.StartAsync();
+
+// Append the cert to the CA bundle inside the container:
+await myContainer.ExecAsync(["/bin/sh", "-c",
+    "cat /tmp/topaz.crt >> /usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem"]);
 ```
 
-The certificate files in the example above are the ones bundled with the Topaz release package. The container is started with the custom certificate, so all HTTPS clients must trust that certificate to connect.
+## URI helpers
 
-## Using a dynamic image tag
+| Method | Returns |
+|---|---|
+| `GetResourceManagerUri()` | `https://topaz.local.dev:{port}` |
+| `GetKeyVaultUri(vaultName)` | `https://{vaultName}.vault.topaz.local.dev:{port}` |
+| `GetStorageBlobUri(account)` | `https://{account}.blob.storage.topaz.local.dev:{port}` |
+| `GetStorageQueueUri(account)` | `https://{account}.queue.storage.topaz.local.dev:{port}` |
+| `GetStorageTableUri(account)` | `https://{account}.table.storage.topaz.local.dev:{port}` |
+| `GetCosmosDbUri(account)` | `https://{account}.documents.topaz.local.dev:{port}/` |
+| `GetContainerRegistryUri(name)` | `https://{name}.cr.topaz.local.dev:{port}` |
+| `GetServiceBusAmqpUri(ns)` | `amqp://{ns}.servicebus.topaz.local.dev:{port}` |
+| `GetServiceBusHttpUri(ns)` | `https://{ns}.servicebus.topaz.local.dev:{port}` |
+| `GetEventHubAmqpUri(ns)` | `amqp://{ns}.eventhub.topaz.local.dev:{port}` |
+| `GetEventHubHttpUri(ns)` | `https://{ns}.eventhub.topaz.local.dev:{port}` |
+| `GetAppServiceUri(appName)` | `https://{appName}.scm.azurewebsites.topaz.local.dev:{port}` |
 
-Hard-coding an image tag in tests makes upgrades tedious. Read the tag from an environment variable and fall back to a sensible default:
-
-```csharp
-private static readonly string TopazImage =
-    Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE")
-    ?? "thecloudtheory/topaz-host:latest";
-```
-
-In CI set `TOPAZ_HOST_CONTAINER_IMAGE` to the specific tag being tested. Locally, `latest` keeps things up to date automatically.
+All ports are mapped to random host ports at runtime.
 
 ## Port reference
 
-| Port | Service |
-|---|---|
-| 8899 | ARM / Resource Manager (HTTPS) |
-| 8898 | Key Vault (HTTPS) |
-| 8891 | Blob Storage (HTTP) |
-| 8890 | Table Storage (HTTP) |
-| 8897 | Event Hub (HTTP) |
-| 8888 | Event Hub (AMQP) |
-| 8889 | Service Bus (AMQP) |
-| 5671 | Service Bus (AMQP/TLS) |
+| Constant | Port | Service |
+|---|---|---|
+| `ResourceManagerPort` | 8899 | ARM / Resource Manager (HTTPS) |
+| `KeyVaultPort` | 8898 | Key Vault (HTTPS) |
+| `StoragePort` | 8891 | Blob / Queue / Table / File Storage (HTTP) |
+| `CosmosDbPort` | 8895 | Cosmos DB |
+| `ContainerRegistryPort` | 8892 | Container Registry |
+| `ServiceBusAmqpPort` | 8889 | Service Bus (AMQP) |
+| `ServiceBusHttpPort` | 8887 | Service Bus (HTTP) |
+| `EventHubAmqpPort` | 8888 | Event Hubs (AMQP) |
+| `EventHubHttpPort` | 8897 | Event Hubs (HTTP) |
+| `AppServicePort` | 8896 | App Service / Kudu |
 
-Expose only the ports needed by your tests. The `WaitStrategy` should target port `8899` (ARM) as that is the last service to become ready.
+The `WaitStrategy` targets port `8899` (ARM) as that is the last service to become ready.
