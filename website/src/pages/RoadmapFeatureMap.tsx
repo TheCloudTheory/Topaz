@@ -15,21 +15,6 @@ interface Milestone {
 
 const MILESTONES: Milestone[] = [
   {
-    version: 'v1.7-beta',
-    label: 'v1.7 beta',
-    colorClass: styles.milestonePurple,
-    features: [
-      { service: 'Entra ID', summary: 'Interactive /devicelogin sign-in page' },
-      { service: 'Virtual Network', summary: 'Private endpoint IP tracking' },
-      { service: 'Azure Storage', summary: 'Service SAS permission & source IP enforcement' },
-      { service: 'Cosmos DB', summary: 'SQL API data plane (CRUD, query, auth)' },
-      { service: 'App Service', summary: 'Kudu / SCM zip deploy & deployment list' },
-      { service: 'Load Balancer', summary: 'Initial control plane' },
-      { service: 'Service Bus', summary: 'Dead-letter queues · sessions · topic filters · SAS keys' },
-      { service: 'Container Registry', summary: 'Real Docker build-and-push for ACR Tasks' },
-    ],
-  },
-  {
     version: 'v1.8-preview',
     label: 'v1.8 preview',
     colorClass: styles.milestoneOrange,
@@ -65,6 +50,14 @@ const MILESTONES: Milestone[] = [
       { service: 'Redis Cache', summary: 'Initial control plane · firewall rules · MCP provisioning tool' },
     ],
   },
+  {
+    version: 'v1.11',
+    label: 'v1.11',
+    colorClass: styles.milestonePurple,
+    features: [
+      { service: 'Container Registry', summary: 'ACR Tasks multi-step execution (FileTaskRunRequest & EncodedTaskRunRequest)' },
+    ],
+  },
 ];
 
 export default function RoadmapFeatureMap(): JSX.Element {
@@ -73,7 +66,7 @@ export default function RoadmapFeatureMap(): JSX.Element {
       <div className="container">
         <h2 className={styles.featureMapTitle}>What's coming</h2>
         <p className={styles.featureMapSubtitle}>
-          v1.6 is now released. Here is a quick overview of the services and features planned for upcoming releases.
+          v1.7 is now released. Here is a quick overview of the services and features planned for upcoming releases.
         </p>
         <div className={styles.milestoneGrid}>
           {MILESTONES.map((milestone) => (

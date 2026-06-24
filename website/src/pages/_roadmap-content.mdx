@@ -1,78 +1,3 @@
-## v1.7-beta
-
-### Entra — `/devicelogin` interactive sign-in page
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | `GET /devicelogin` page | Serve an HTML form that accepts a `user_code` and a username; completing the form marks the corresponding device code as authorized for the submitted user |
-| <span class="badge--preview">Preview</span> | `POST /devicelogin` handler | Look up the device code by `user_code`, write into `DeviceCodeEndpoint.AuthorizedDeviceCodes`, and redirect to a confirmation page |
-| <span class="badge--preview">Preview</span> | Proper `authorization_pending` polling | Token polling returns `{"error":"authorization_pending"}` until the `/devicelogin` form is submitted, matching real Azure device code flow semantics |
-
-### Virtual Network — Private Endpoint IP tracking
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Private Endpoint IP tracking | Extend the IP allocation registry to record IPs for Private Endpoints; requires implementing the `Microsoft.Network/privateEndpoints` control plane (PUT/GET/DELETE/LIST) and hooking it into `IpAllocationRegistry` |
-
-### Storage — Service SAS permission enforcement
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Service SAS permission-letter enforcement | Map `sp=` letters to HTTP verb; return 403 `AuthorizationPermissionMismatch` on mismatch for Blob, Queue, and Table |
-| <span class="badge--preview">Preview</span> | SAS source IP (`sip`) enforcement | Parse single-address and hyphenated-range `sip=` values; return 403 `AuthorizationSourceIPMismatch` when the request source IP falls outside the declared range; applies to Blob, Queue, and Table |
-
-### Azure Cosmos DB — SQL API data plane
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Data plane scaffold and master-key auth | Dedicated port; HMAC-SHA256 master-key signature validation (verb/resourceType/resourceLink/date StringToSign); 401 on invalid or expired signatures |
-| <span class="badge--preview">Preview</span> | Database operations | `POST /dbs`, `GET /dbs/{db}`, `DELETE /dbs/{db}`, `GET /dbs` — full resource lifecycle with `_rid`, `_self`, `_etag`, `_ts` and `x-ms-request-charge` header |
-| <span class="badge--preview">Preview</span> | Collection operations | `POST/GET/PUT/DELETE /dbs/{db}/colls/{coll}`, `GET /dbs/{db}/colls` — create, replace, and delete collections including indexingPolicy and partitionKey |
-| <span class="badge--preview">Preview</span> | Document CRUD | `POST/GET/PUT/PATCH/DELETE /dbs/{db}/colls/{coll}/docs/{id}` — full item lifecycle with partition key enforcement, ETag optimistic concurrency (If-Match / 412), and JSON Patch partial updates |
-| <span class="badge--preview">Preview</span> | SQL query execution | `POST /dbs/{db}/colls/{coll}/docs` with `x-ms-documentdb-isquery: true` — parameterised SQL subset: `SELECT`, `FROM`, `WHERE`, `ORDER BY`, `OFFSET/LIMIT`, aggregates (`COUNT`, `SUM`, `MIN`, `MAX`, `AVG`); continuation-token pagination |
-| <span class="badge--preview">Preview</span> | MCP Server tools | `CreateCosmosDbAccount`, `CreateCosmosDbDatabase`, `CreateCosmosDbContainer`; `GetConnectionStrings` extended with Cosmos DB endpoint and key |
-| <span class="badge--preview">Preview</span> | Public IP Address API | `Microsoft.Network/publicIPAddresses` — PUT/GET/DELETE/LIST/PATCH endpoints; stub `ipAddress` assigned on creation; supports `az vm create` public IP flow |
-| <span class="badge--preview">Preview</span> | CLI configurable defaults | `topaz configure` command persists default `--subscription-id`, `--resource-group`, and `--location` to `~/.topaz/defaults.json`; all commands apply them when the flag is omitted, following the precedence: explicit flag > environment variable > config file |
-
-### Azure App Service — Kudu / SCM data plane
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Kudu zip deploy | `POST /api/zipdeploy` on `*.scm.azurewebsites.topaz.local.dev:8896` — accepts a zip archive, stores it to disk, persists a `DeploymentRecord`, returns `202 Accepted` with a `Location` header |
-| <span class="badge--preview">Preview</span> | Deployment list | `GET /api/deployments` — returns the persisted deployment records for the site as a JSON array |
-
-### Azure Load Balancer — initial control plane
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--stable">Stable</span> | New service scaffold | `Topaz.Service.LoadBalancer` project with models (`LoadBalancerResource`, `LoadBalancerResourceProperties`), resource provider, control plane (including `Deploy()`), host registration, and `RouteDeployment()` case for `Microsoft.Network/loadBalancers` |
-| <span class="badge--preview">Preview</span> | Load Balancer CRUD | Create, get, update tags, delete, list by resource group, and list by subscription for `Microsoft.Network/loadBalancers`; all structural properties (frontend IP configurations, backend pools, LB rules, probes, inbound NAT rules, outbound rules) persisted and round-tripped; `provisioningState` always `Succeeded` |
-
-### Service Bus — advanced messaging features
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Dead letter queues | Move messages exceeding `MaxDeliveryCount` or explicitly dead-lettered to `<entity>/$DeadLetterQueue`; expose as an addressable AMQP entity so SDK receivers can consume it |
-| <span class="badge--preview">Preview</span> | Message sessions | Session-based messaging (`requiresSession = true`) for queues and subscriptions; session-filtered AMQP Attach frames; per-session lock enforcement; `RenewSessionLock`, `GetSessionState`, and `SetSessionState` via AMQP management link |
-| <span class="badge--preview">Preview</span> | Topic filters and rules | Full ARM CRUD for subscription rules (`CorrelationRuleFilter`, `SqlRuleFilter`, `SqlRuleAction`); message routing at publish time evaluates active rules and only forwards matching messages to each subscription |
-| <span class="badge--preview">Preview</span> | Authorization rules and SAS keys | Per-namespace, per-queue, and per-topic authorization rule CRUD; `listKeys` and `regenerateKeys` actions; 256-bit SAS key pairs persisted and rotatable |
-
-### ARM Deployments — subscription-scoped Bicep support
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | `Microsoft.Resources/resourceGroups` template resource | Handle `resourceGroups` entries in subscription-scoped templates: create or update the resource group before processing dependent resources; required for any Bicep file compiled with `targetScope = 'subscription'` |
-| <span class="badge--preview">Preview</span> | `Microsoft.Resources/deployments` nested deployment | Execute inline nested deployment resources: extract the `properties.template` payload, resolve scope to the target resource group, and recursively provision all inner resources; persist the nested deployment as a child object retrievable via ARM GET |
-| <span class="badge--preview">Preview</span> | Deployment `outputs` populated on completion | After all template resources are provisioned, evaluate the `outputs` block and persist the result; return populated outputs on every subsequent GET so that `az deployment sub create`, `azure/arm-deploy`, and the Terraform `azurerm` provider can read cross-stage values |
-
-### Container Registry — Real Docker build-and-push execution
-
-| | Feature | Description |
-|--|---------|-------------|
-| <span class="badge--preview">Preview</span> | Real Docker execution for ACR Tasks | Upgrade the ACR run emulation from immediate-Succeeded to real container workloads: detect Docker at host startup, git clone the contextPath, spawn `docker build` + `docker push` to the local OCI registry, drive real status transitions (`Queued` → `Running` → `Succeeded` / `Failed`), and stream actual build output to the log endpoint |
-
----
-
 ## v1.8-preview
 
 ### ARM Deployments — deployment operations tracking
@@ -205,6 +130,17 @@
 | <span class="badge--preview">Preview</span> | Redis Cache CRUD | Create, get, update (tags, SKU, `enableNonSslPort`, `minimumTlsVersion`, `redisConfiguration`), delete, list by resource group, and list by subscription; access keys generated on creation and exposed via `listKeys` / `regenerateKey` |
 | <span class="badge--preview">Preview</span> | Firewall Rules CRUD | Create, get, update, delete, and list firewall rules per cache; no actual IP filtering enforced in the emulator |
 | <span class="badge--preview">Preview</span> | MCP provisioning tool | `CreateRedisCache` MCP tool; `GetConnectionStrings` extended with Redis connection string |
+
+---
+
+## v1.11
+
+### Container Registry — ACR Tasks multi-step execution
+
+| | Feature | Description |
+|--|---------|-------------|
+| <span class="badge--preview">Preview</span> | Multi-step task file execution (`FileTaskRunRequest`) | Parse a task YAML provided via `FileTaskRunRequest` and execute each step sequentially: `build` (docker build), `cmd` (docker run), and `push` (docker push to the local OCI registry); topological ordering via `when` dependencies; real status transitions (`Queued` → `Running` → `Succeeded` / `Failed`); combined per-step output streamed to the log endpoint |
+| <span class="badge--preview">Preview</span> | Multi-step task file execution (`EncodedTaskRunRequest`) | Extend multi-step execution to the `EncodedTaskRunRequest` path: base64-decode `encodedTaskContent` to recover the YAML and apply the same step execution logic; support `encodedContext` (base64-encoded tar.gz build context) |
 
 ---
 
