@@ -76,7 +76,7 @@ Tests run against a fresh Topaz instance on every build — no shared state, no 
 | Azure Container Registry | Full Docker Registry V2 + OCI + ACR Tasks |
 | Azure SQL | Server and database CRUD |
 | Azure App Service | Plans, sites, Kudu SCM (zip deploy, deployment list) |
-| Azure Cosmos DB | SQL API control plane |
+| Azure Cosmos DB | SQL API control & data plane |
 | Azure Virtual Machines | Full VM CRUD + PATCH |
 | Azure Virtual Networks | VNet, subnet, NIC, check IP availability |
 | Azure Load Balancer | Full control plane |

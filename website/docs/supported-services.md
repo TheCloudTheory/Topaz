@@ -17,14 +17,14 @@ Service Name|Control Plane|Data Plane
 ------------|-------------|----------
 Subscriptions|✅|N/A
 Resource Groups|✅|N/A
-Azure Storage|✅|🚧
+Azure Storage|✅|✅
 Table Storage|✅|✅
-Blob Storage|✅|🚧
+Blob Storage|✅|✅
 Queue Storage|✅|✅
-Key Vault|✅|🚧
-Event Hub|🚧|🚧
-Service Bus|🚧|🚧
-Virtual Network|🚧|N/A
+Key Vault|✅|✅
+Event Hub|✅|🚧
+Service Bus|✅|🚧
+Virtual Network|✅|N/A
 Network Interface|✅|N/A
 Azure Resource Manager|🚧|N/A
 Managed Identity|✅|N/A
@@ -35,7 +35,7 @@ Azure Virtual Machines|🚧|N/A
 Entra ID|N/A|🚧
 RBAC|🚧|N/A
 Monitor|🚧|:x:
-Cosmos DB|🚧|�
+Cosmos DB|🚧|🚧
 Azure Disk|🚧|🚧
 Azure Load Balancer|✅|N/A
 Public IP Address|✅|N/A
