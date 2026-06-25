@@ -166,9 +166,19 @@ Deployments with outputs using only `parameters()`, `variables()`, `resourceId()
 
 **Workaround:** avoid using `reference()` in deployment outputs. Refactor templates to output only `resourceId()` or literal values, and have the caller fetch resource properties directly if needed.
 
-### Planned fix — v1.8-beta
+### Planned fix — v1.8-preview
 
 Extend `TemplateDeploymentOrchestrator.RouteDeployment` to collect all `reference()` calls from the outputs map, resolve them by reading from the respective control planes, and substitute the evaluated values back into the outputs before calling `SetOutputs()`. This requires mapping template resource types to their control planes, similar to the existing resource routing logic.
+
+The following `reference()` patterns are supported by the v1.8-preview resolver:
+
+- `reference(resourceId('TYPE', 'NAME'), 'API-VERSION').property` — 2-arg `resourceId`
+- `reference(resourceId('SUB', 'RG', 'TYPE', 'NAME'), 'API-VERSION').property` — 4-arg `resourceId` (sub/rg overrides are accepted but ignored; the calling deployment's own subscription and resource group are always used for the lookup)
+- `reference(extensionResourceId(scope, 'TYPE', 'NAME')).property` — `extensionResourceId` (scope is ignored)
+
+The following pattern is **not** supported and will still return `null`:
+
+- `reference()` nested inside another function call, e.g. `concat(reference(...).prop, '-suffix')` — the outer expression cannot be re-evaluated once `reference()` is resolved to a value.
 
 ## Key Vault — `wrapKey`/`unwrapKey` for `oct` keys does not implement RFC 3394 AES Key Wrap
 

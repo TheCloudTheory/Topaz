@@ -8,6 +8,7 @@ using Azure.Deployments.Templates.Engines;
 using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
 using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using Newtonsoft.Json.Linq;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 using Azure.Deployments.Expression.Expressions;
 using Topaz.Service.ResourceManager.Models.Requests;
@@ -194,8 +195,15 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
     /// built from the already-processed <paramref name="template"/>.
     /// Output values that are plain literals are returned as-is; ARM expressions
     /// (e.g. <c>[parameters('x')]</c>) are evaluated to their resolved values.
+    /// When the Azure SDK expression engine cannot evaluate an expression (e.g. <c>reference()</c>),
+    /// <paramref name="referenceResolver"/> is tried before falling back to <c>null</c>.
     /// </summary>
-    public JObject EvaluateOutputs(string subscriptionId, string resourceGroupName, Template template, ITopazLogger logger)
+    public JObject EvaluateOutputs(
+        string subscriptionId,
+        string resourceGroupName,
+        Template template,
+        ITopazLogger logger,
+        Func<string, JToken?>? referenceResolver = null)
     {
         var metrics = new TemplateMetricsRecorder();
         var evalCtx = TemplateEngine.GetExpressionEvaluationContext(
@@ -222,11 +230,35 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
                     }
                     catch (Exception ex)
                     {
-                        // Some ARM functions (e.g. listKeys) are not supported in the
-                        // output evaluation context. Return null for those outputs rather
-                        // than crashing the host process.
-                        logger.LogWarning($"ARM output '{kv.Key}' could not be evaluated: {ex.Message}");
-                        entry["value"] = null;
+                        // Some ARM functions (e.g. listKeys, reference()) are not supported in the
+                        // output evaluation context. Attempt the reference() resolver first, then
+                        // return null rather than crashing the host process.
+                        JToken? resolved = null;
+                        if (referenceResolver != null && rawString.Contains("reference(", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Pre-substitute parameters('name') → 'value' so the resolver sees a
+                            // literal name even when the output uses a parametrised resourceId().
+                            var preResolved = ParametersCallPattern.Replace(rawString, m =>
+                            {
+                                var paramExpr = $"[parameters('{m.Groups[1].Value}')]";
+                                try
+                                {
+                                    var val = ExpressionsEngine.EvaluateLanguageExpression(
+                                        paramExpr, evalCtx, new TemplateErrorAdditionalInfo());
+                                    return val is JValue jv && jv.Value is string s ? $"'{s}'" : m.Value;
+                                }
+                                catch { return m.Value; }
+                            });
+                            resolved = referenceResolver(preResolved);
+                        }
+
+                        if (resolved != null)
+                            entry["value"] = resolved;
+                        else
+                        {
+                            logger.LogWarning($"ARM output '{kv.Key}' could not be evaluated: {ex.Message}");
+                            entry["value"] = null;
+                        }
                     }
                 }
                 else
@@ -239,4 +271,13 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
         }
         return result;
     }
+
+    /// <summary>
+    /// Replaces <c>parameters('name')</c> sub-expressions within an ARM expression string
+    /// with their single-quoted literal values, enabling the reference() resolver to
+    /// match resource names even when outputs use parametrised <c>resourceId()</c> calls.
+    /// Any parameter whose value cannot be evaluated is left as-is.
+    /// </summary>
+    private static readonly Regex ParametersCallPattern = new(
+        @"parameters\('([^']+)'\)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 }

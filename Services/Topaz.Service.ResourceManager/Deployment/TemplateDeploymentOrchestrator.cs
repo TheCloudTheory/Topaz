@@ -393,7 +393,15 @@ public sealed class TemplateDeploymentOrchestrator(
         // Evaluate and set template outputs on the deployment
         if (templateDeployment.Template.Outputs != null)
         {
-            var outputsJObject = _armTemplateEngineFacade.EvaluateOutputs(deploymentSubscriptionId, deploymentResourceGroupName, templateDeployment.Template, logger);
+            Func<string, JToken?> referenceResolver = expr =>
+                ReferenceExpressionResolver.TryResolve(
+                    expr, deploymentSubscriptionId, deploymentResourceGroupName,
+                    GlobalSettings.MainEmulatorDirectory);
+
+            var outputsJObject = _armTemplateEngineFacade.EvaluateOutputs(
+                deploymentSubscriptionId, deploymentResourceGroupName,
+                templateDeployment.Template, logger,
+                referenceResolver);
             var outputsJson = outputsJObject.ToString(Newtonsoft.Json.Formatting.None);
             var outputs = JsonDocument.Parse(outputsJson).RootElement.Clone();
             templateDeployment.SetOutputs(outputs);

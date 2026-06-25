@@ -323,27 +323,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 
 ## v1.8-preview
 
-### ARM Deployments — reference() function evaluation in outputs
-
-<!--
-TODO: ARM Deployments: Evaluate reference() expressions in deployment outputs
-  Deployment output values may contain ARM template language expressions including reference()
-  to fetch properties of deployed resources. After TemplateDeploymentOrchestrator finishes
-  provisioning all resources in a template, outputs are now populated with evaluated expressions
-  for parameters(), variables(), resourceId(), concat(), and other common functions.
-  However, reference() requires a runtime round-trip to the resource provider to read deployed
-  resource state — a capability deferred from v1.7-beta.
-  Required changes:
-  - Extend TemplateDeploymentOrchestrator.RouteDeployment to scan all output values for reference() calls.
-  - For each reference() call, extract the resource ID or identifier and resolve it by reading from
-    the respective resource provider control plane.
-  - Substitute the evaluated resource property value back into the outputs before calling SetOutputs().
-  - This applies to reference(resourceId(...).property) and reference(extensionResourceId(...)).outputs.x.value
-    patterns across all 4 deployment scopes (resource group, subscription, tenant, management group).
-  milestone: v1.8-preview
-  labels: enhancement, arm-deployments
--->
-
 ### ARM Deployments — deployment operations tracking
 
 <!--
