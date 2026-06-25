@@ -395,7 +395,7 @@ jobs:
         if [[ -z "$FILTER" ]]; then
           FILTER="FullyQualifiedName~Topaz.Tests.Python"
         fi
-        dotnet test -m:1 --no-build --verbosity normal --logger trx \
+        dotnet test Topaz.Tests.Python/Topaz.Tests.Python.csproj -m:1 --no-build --verbosity normal --logger trx \
           --collect:"XPlat Code Coverage" \
           --results-directory ${{ github.workspace }}/TestResults \
           --filter "$FILTER"
