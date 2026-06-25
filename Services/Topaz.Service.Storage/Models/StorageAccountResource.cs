@@ -25,6 +25,7 @@ internal sealed class StorageAccountResource
         AzureLocation location,
         ResourceSku sku,
         string kind,
+        IDictionary<string, string>? tags,
         StorageAccountResourceProperties resourceProperties)
     {
         Id =
@@ -33,6 +34,7 @@ internal sealed class StorageAccountResource
         Location = location;
         Sku = sku;
         Kind = kind;
+        Tags = tags ?? new Dictionary<string, string>();
         Properties = resourceProperties;
         Keys =
         [
@@ -49,6 +51,7 @@ internal sealed class StorageAccountResource
         AzureLocation location,
         ResourceSku sku,
         string kind,
+        IDictionary<string, string>? tags,
         StorageAccountResourceProperties resourceProperties,
         TopazStorageAccountKey[] existingKeys)
     {
@@ -58,6 +61,7 @@ internal sealed class StorageAccountResource
         Location = location;
         Sku = sku;
         Kind = kind;
+        Tags = tags ?? new Dictionary<string, string>();
         Properties = resourceProperties;
         Keys = existingKeys;
     }

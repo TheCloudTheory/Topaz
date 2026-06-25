@@ -186,6 +186,39 @@ public class AzureStorageServiceTests
     }
 
     [Test]
+    public void StorageAccount_Create_PersistsTags()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = armClient.GetDefaultSubscription();
+        var resourceGroup = subscription.GetResourceGroup(ResourceGroupName);
+        var sku = new StorageSku(StorageSkuName.StandardLrs);
+        var createContent = new StorageAccountCreateOrUpdateContent(sku,
+            StorageKind.StorageV2, AzureLocation.WestEurope)
+        {
+            Tags =
+            {
+                ["environment"] = "production",
+                ["team"] = "platform"
+            }
+        };
+
+        // Act
+        var created = resourceGroup.Value.GetStorageAccounts()
+            .CreateOrUpdate(WaitUntil.Completed, StorageAccountName, createContent).Value;
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(created.Data.Tags.ContainsKey("environment"), Is.True);
+            Assert.That(created.Data.Tags["environment"], Is.EqualTo("production"));
+            Assert.That(created.Data.Tags.ContainsKey("team"), Is.True);
+            Assert.That(created.Data.Tags["team"], Is.EqualTo("platform"));
+        }
+    }
+
+    [Test]
     public void StorageAccount_Update_AppliesTagsAndPreservesKeys()
     {
         // Arrange

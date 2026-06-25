@@ -191,9 +191,9 @@ internal sealed class AzureStorageControlPlane(
 
         var resource = existingKeys != null
             ? new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
-                request.Location!, request.Sku!, request.Kind!, properties, existingKeys)
+                request.Location!, request.Sku!, request.Kind!, request.Tags, properties, existingKeys)
             : new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
-                request.Location!, request.Sku!, request.Kind!, properties);
+                request.Location!, request.Sku!, request.Kind!, request.Tags, properties);
 
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, resource,
             existingAccount == null);
@@ -335,6 +335,7 @@ internal sealed class AzureStorageControlPlane(
             existing.Location!,
             existing.Sku!,
             existing.Kind!,
+            existing.Tags,
             existing.Properties,
             updatedKeys)
         {
@@ -371,6 +372,7 @@ internal sealed class AzureStorageControlPlane(
             request.Location ?? existing.Location!,
             request.Sku ?? existing.Sku!,
             request.Kind ?? existing.Kind!,
+            request.Tags,
             mergedProperties,
             existing.Keys)
         {

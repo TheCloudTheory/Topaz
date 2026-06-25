@@ -323,30 +323,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 
 ## v1.8-preview
 
-### Azure Storage — tags not persisted on storage account create/update
-
-<!--
-TODO: Azure Storage: Tags silently dropped on every storage account create or update
-  Both `StorageAccountResource` constructors do not accept a `Tags` parameter, and
-  `AzureStorageControlPlane.CreateOrUpdate()` never copies `request.Tags` onto the
-  constructed resource. The `Tags` property defaults to `new Dictionary<string, string>()`,
-  so all tags are always silently discarded — regardless of whether the account was
-  created via a direct HTTP PUT or via an ARM template deployment.
-
-  Symptom: `account.Data.Tags["environment"]` throws `KeyNotFoundException`.
-
-  Fix: after constructing `resource` in `CreateOrUpdate`, assign tags before persisting:
-
-  ```csharp
-  resource.Tags = request.Tags ?? new Dictionary<string, string>();
-  ```
-
-  Or, alternatively, add a `tags` parameter to both `StorageAccountResource` constructors
-  and set `Tags = tags` in each one.
-  milestone: v1.8-preview
-  labels: bug, storage, good first issue
--->
-
 ### ARM Deployments — reference() function evaluation in outputs
 
 <!--
