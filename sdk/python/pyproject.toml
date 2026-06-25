@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "topaz-sdk"
-version = "0.1.2"
+version = "0.1.3"
 description = "Python SDK for the Topaz Azure emulator"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"
@@ -22,7 +22,7 @@ classifiers = [
 ]
 dependencies = [
     "azure-identity>=1.15.0",
-    "azure-mgmt-resource>=23.0.0",
+    "azure-mgmt-resource==26.0.0",
     "azure-mgmt-keyvault>=10.3.0",
     "azure-mgmt-storage>=21.0.0",
     "azure-mgmt-servicebus>=8.2.0",
