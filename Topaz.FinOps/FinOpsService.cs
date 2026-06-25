@@ -12,6 +12,7 @@ public sealed class FinOpsService(ITopazLogger logger) : IServiceDefinition
     public static string UniqueName => "finops";
 
     public string Name => "FinOps";
+    public bool IsTopazService => true;
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [

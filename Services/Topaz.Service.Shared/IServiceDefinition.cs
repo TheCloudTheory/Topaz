@@ -21,4 +21,11 @@ public interface IServiceDefinition
     /// Called for all services after all Register() calls have completed.
     /// </summary>
     void Initialize() { }
+
+    /// <summary>
+    /// Indicates whether this service is a Topaz service. Used to distinguish between
+    /// infrastructure services (e.g., FinsOps, Chaus) and azure-defined
+    /// services (e.g., Key Vault, Storage).
+    /// </summary>
+    public bool IsTopazService => false;
 }

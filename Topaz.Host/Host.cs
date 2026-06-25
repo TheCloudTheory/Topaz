@@ -37,6 +37,7 @@ using Topaz.Service.Sql;
 using Topaz.Service.CosmosDb;
 using Topaz.FinOps;
 using Spectre.Console;
+using Topaz.Chaos;
 using Topaz.Shared;
 
 namespace Topaz.Host;
@@ -127,7 +128,8 @@ public class Host
             new AppServiceKuduService(_eventPipeline, _logger),
             new SqlService(_eventPipeline, _logger),
             new CosmosDbService(_eventPipeline, _logger),
-            new FinOpsService(_logger)
+            new FinOpsService(_logger),
+            new ChaosService(_logger),
         };
 
         _logger.ConfigureIdFactory(idFactory);
