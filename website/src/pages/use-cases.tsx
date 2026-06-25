@@ -160,6 +160,76 @@ function IaCVisual() {
   );
 }
 
+// ── Visual: AI agent harness ─────────────────────────────────────
+
+const AGENT_TRACE = [
+  {
+    kind: 'thought',
+    text: 'Customer onboarding requested. Need to provision storage and retrieve API key.',
+  },
+  {
+    kind: 'call',
+    tool: 'blob_upload',
+    args: 'container="onboarding", blob="acme/profile.json"',
+  },
+  { kind: 'result', text: '201 Created — ETag: "0x8DC1A3F7"' },
+  {
+    kind: 'call',
+    tool: 'keyvault_get_secret',
+    args: 'vault="app-secrets", name="payment-api-key"',
+  },
+  { kind: 'result', text: '"sk-••••••••" — version: 3f9a1c' },
+  {
+    kind: 'call',
+    tool: 'servicebus_send',
+    args: 'queue="onboarding-events", body={customerId: "acme"}',
+  },
+  { kind: 'result', text: 'MessageId: "msg-7f3a2b1e" — enqueued' },
+  { kind: 'done', text: 'Completed in 3 tool calls · 0 cloud requests · $0.00' },
+];
+
+function AgentHarnessVisual() {
+  return (
+    <div className={styles.scenarioVisual}>
+      <WindowChrome title="Agent execution trace — local Topaz environment" />
+      <div className={styles.agentTrace}>
+        {AGENT_TRACE.map((entry, i) => {
+          if (entry.kind === 'thought') {
+            return (
+              <div key={i} className={styles.agentThought}>
+                <span className={styles.agentThoughtIcon}>🤖</span>
+                <span>{entry.text}</span>
+              </div>
+            );
+          }
+          if (entry.kind === 'call') {
+            return (
+              <div key={i} className={styles.agentCall}>
+                <span className={styles.agentCallArrow}>→</span>
+                <span className={styles.agentTool}>{entry.tool}</span>
+                <span className={styles.agentArgs}>({entry.args})</span>
+              </div>
+            );
+          }
+          if (entry.kind === 'result') {
+            return (
+              <div key={i} className={styles.agentResult}>
+                <span className={styles.agentResultArrow}>←</span>
+                <span>{entry.text}</span>
+              </div>
+            );
+          }
+          return (
+            <div key={i} className={styles.agentDone}>
+              ✅ {entry.text}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Visual: microservices topology ────────────────────────────────
 
 function MicroservicesVisual() {
@@ -249,6 +319,20 @@ const SCENARIOS: Scenario[] = [
     visual: <IaCVisual />,
   },
   {
+    tag: 'AI Agents · Semantic Kernel · LangChain · AutoGen',
+    icon: '🤖',
+    title: 'Safe local harness for AI agent development',
+    description:
+      'AI agents that call Azure services — reading blobs, publishing to Service Bus, fetching secrets, persisting state in Cosmos DB — need a deterministic, blast-radius-free environment to develop and test against. Topaz provides that environment without cloud credentials, quota limits, or per-run costs.',
+    benefits: [
+      'Test agent tool-calls against real Azure SDK behaviour — no cloud round-trips or quota consumed',
+      'Seed Blob containers, queues, and Cosmos DB with known data for repeatable evals and regression tests',
+      'RBAC emulation validates least-privilege agent identity before deploying to production',
+      'Pairs with a local LLM (Ollama, LM Studio) for a fully offline agentic loop',
+    ],
+    visual: <AgentHarnessVisual />,
+  },
+  {
     tag: 'Microservices · Docker Compose',
     icon: '🧩',
     title: 'Replace a cloud subscription with one Topaz container',
@@ -306,9 +390,9 @@ const MORE_USE_CASES: UseCase[] = [
   },
   {
     icon: '🤖',
-    title: 'AI-assisted provisioning',
+    title: 'AI-assisted resource provisioning',
     description:
-      'The built-in MCP server lets GitHub Copilot, Claude, and other AI assistants provision and inspect Topaz resources through natural language. Create resource groups, storage accounts, and key vaults without writing a single CLI command — a capability no other Azure emulator offers.',
+      'The built-in MCP server lets GitHub Copilot, Claude, and other AI assistants provision and inspect Topaz resources through natural language — a capability no other Azure emulator offers. Distinct from the AI agent harness above: here AI manages Topaz, rather than Topaz serving as the runtime for your agents.',
   },
   {
     icon: '🗄️',

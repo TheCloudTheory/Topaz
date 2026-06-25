@@ -1206,6 +1206,59 @@ TODO: Azure Redis Cache: MCP Server provisioning tool
 
 ## v1.11
 
+### Azure OpenAI Service — stub endpoint
+
+<!--
+TODO: Azure OpenAI Service: Stub chat completions endpoint
+  Implement a configurable Azure OpenAI stub on DefaultResourceManagerPort (or a dedicated
+  port, e.g. 8901) so that AzureOpenAIClient (.NET, Python, JS) works offline against Topaz.
+  Endpoint:
+  - POST /openai/deployments/{deploymentName}/chat/completions?api-version={version}
+    Reads a per-deployment response fixture from
+    .topaz/openai/{deploymentName}/response.json and returns it verbatim.
+    If no fixture exists, returns a minimal valid ChatCompletion response with a single
+    assistant message: "This is a Topaz stub response."
+  Fixture management:
+  - topaz openai stub set-response --deployment <name> --file <response.json>
+    Writes the JSON file to the fixture store.
+  - topaz openai stub clear-response --deployment <name>
+    Removes the fixture (reverts to default stub response).
+  - topaz openai stub list
+    Lists all configured deployments and whether a fixture is present.
+  Deployment registration (control plane stub, for SDK credential resolution):
+  - GET /openai/deployments  — returns the list of all known deployments.
+  Authentication: accept any Bearer token (Topaz Entra token or a dummy value) without
+  real validation, matching the existing Topaz auth-bypass pattern for emulated services.
+  Add GlobalSettings.DefaultOpenAIPort constant and register the service in Topaz.Host.
+  Add MCP tool: CreateOpenAIDeployment (name, model) so AI assistants can register
+  deployments without CLI.
+  milestone: v1.11
+  labels: enhancement, openai, ai-agents
+-->
+
+### Azure OpenAI Service — Cosmos DB vector search stub
+
+<!--
+TODO: Azure Cosmos DB: VectorDistance query support (vector search stub)
+  Extend the Cosmos DB SQL query engine (v1.7-beta) to accept queries containing the
+  VectorDistance() system function, used by Semantic Kernel's CosmosDBNoSqlVectorStore
+  plugin and LangChain's AzureCosmosDBNoSqlVectorSearch:
+    SELECT TOP 10 c.id, c.content, VectorDistance(c.embedding, @queryVector) AS score
+    FROM c
+    ORDER BY VectorDistance(c.embedding, @queryVector)
+  Implementation:
+  - Detect VectorDistance() in the SELECT and ORDER BY clauses during query parsing.
+  - Compute cosine similarity between the stored embedding array and @queryVector parameter.
+  - Return results ordered by descending similarity score.
+  - If the document has no embedding field, assign score 0.0 and exclude from TOP N results.
+  This does not require a real vector index — a linear scan over in-memory documents is
+  sufficient for the small datasets used in agent development and integration tests.
+  Also handle the flat embedding query pattern used by some SDKs:
+    SELECT * FROM c ORDER BY VectorDistance(c.embedding, @v) OFFSET 0 LIMIT 10
+  milestone: v1.11
+  labels: enhancement, cosmos-db, ai-agents
+-->
+
 ### ACR Tasks — multi-step task files
 
 <!--

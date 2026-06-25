@@ -519,3 +519,98 @@
   position: relative;
   z-index: 1;
 }
+
+/* ── Agent execution trace ─────────────────────────────────────── */
+.agentTrace {
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.78rem;
+}
+
+.agentThought {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.55rem 0.75rem;
+  background: rgba(27, 99, 235, 0.06);
+  border-left: 3px solid var(--ifm-color-primary);
+  border-radius: 0 6px 6px 0;
+  color: var(--ifm-color-primary-darker);
+  font-family: var(--ifm-font-family-base);
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.agentThoughtIcon {
+  flex-shrink: 0;
+  font-style: normal;
+}
+
+.agentCall {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.3rem 0.5rem;
+  flex-wrap: wrap;
+}
+
+.agentCallArrow {
+  color: #07A560;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.agentTool {
+  color: #07A560;
+  font-weight: 700;
+}
+
+.agentArgs {
+  color: var(--ifm-color-secondary-darkest);
+  word-break: break-all;
+}
+
+.agentResult {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.3rem 0.5rem 0.3rem 1.4rem;
+  color: var(--ifm-color-secondary-darkest);
+}
+
+.agentResultArrow {
+  color: var(--ifm-color-emphasis-500);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.agentDone {
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  background: rgba(7, 165, 96, 0.08);
+  border: 1px solid rgba(7, 165, 96, 0.2);
+  border-radius: 6px;
+  color: #065f46;
+  font-family: var(--ifm-font-family-base);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+[data-theme='dark'] .agentThought {
+  color: var(--ifm-color-primary-light);
+  background: rgba(27, 99, 235, 0.1);
+}
+
+[data-theme='dark'] .agentTool,
+[data-theme='dark'] .agentCallArrow {
+  color: #34d399;
+}
+
+[data-theme='dark'] .agentDone {
+  color: #34d399;
+  background: rgba(7, 165, 96, 0.1);
+  border-color: rgba(7, 165, 96, 0.25);
+}
