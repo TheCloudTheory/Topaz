@@ -305,6 +305,24 @@ internal sealed class AzureStorageControlPlane(
             null, null);
     }
 
+    public OperationResult RevokeUserDelegationKeys(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName)
+    {
+        var existingJson = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        if (string.IsNullOrEmpty(existingJson))
+            return OperationResult.NotFound;
+
+        var existing = JsonSerializer.Deserialize<StorageAccountResource>(existingJson, GlobalSettings.JsonOptions);
+        if (existing == null)
+            return OperationResult.Failed;
+
+        existing.UserDelegationKeyRevocationTime = DateTimeOffset.UtcNow;
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, existing);
+        return OperationResult.Success;
+    }
+
     public ControlPlaneOperationResult<StorageAccountResource> RegenerateKey(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,

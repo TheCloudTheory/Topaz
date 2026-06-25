@@ -10,15 +10,6 @@ converted to a GitHub Issue by CI when new lines are committed.
 ---
 
 <!--
-TODO: Storage — Revoke User Delegation Keys
-  Implement POST .../storageAccounts/{name}/revokeUserDelegationKeys ARM endpoint.
-  Should persist a per-account revocation timestamp; User Delegation SAS validation must reject
-  keys whose skt (signed key start) predates the revocation timestamp.
-  milestone: v1.8-preview
-  labels: enhancement
--->
-
-<!--
 TODO: Storage — Fix List Keys endpoint for Azure CLI show-connection-string
   `az storage account show-connection-string` (and the underlying automatic key-lookup
   path used by `az storage container create --account-name` without explicit credentials)

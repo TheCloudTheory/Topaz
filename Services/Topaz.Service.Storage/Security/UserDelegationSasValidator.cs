@@ -180,6 +180,18 @@ internal sealed class UserDelegationSasValidator(AzureStorageControlPlane contro
             return StorageAuthorizationResult.AuthenticationFailed();
         }
 
+        // Reject SAS tokens whose signed key start time (skt) predates the account's revocation timestamp.
+        if (accountResult.Resource.UserDelegationKeyRevocationTime.HasValue &&
+            !string.IsNullOrEmpty(skt) &&
+            DateTimeOffset.TryParse(skt, null, System.Globalization.DateTimeStyles.AssumeUniversal, out var sktTime) &&
+            sktTime < accountResult.Resource.UserDelegationKeyRevocationTime.Value)
+        {
+            logger.LogError(nameof(UserDelegationSasValidator), nameof(Validate),
+                "User Delegation SAS key start '{0}' predates revocation timestamp '{1}' for account '{2}'. Denying.",
+                skt, accountResult.Resource.UserDelegationKeyRevocationTime.Value, storageAccountName);
+            return StorageAuthorizationResult.AuthenticationFailed();
+        }
+
         // Re-derive the user delegation key from each account key and check the signature.
         // Both keys are tried so that SAS tokens remain valid after a key regeneration on the
         // other key, matching the same two-key pattern used by ServiceSasValidator.

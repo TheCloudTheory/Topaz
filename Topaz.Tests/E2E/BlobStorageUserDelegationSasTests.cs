@@ -139,6 +139,47 @@ public class BlobStorageUserDelegationSasTests
     }
 
     [Test]
+    public async Task RevokeUserDelegationKeys_SasIssuedBeforeRevocation_ReturnsForbidden()
+    {
+        // Arrange — get a user delegation key and build a valid SAS from it
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var serviceUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}");
+        var blobServiceClient = new BlobServiceClient(serviceUri, credential);
+
+        var keyStart = DateTimeOffset.UtcNow.AddSeconds(-5);
+        var keyExpiry = DateTimeOffset.UtcNow.AddHours(1);
+        var userDelegationKey = await blobServiceClient.GetUserDelegationKeyAsync(
+            new BlobGetUserDelegationKeyOptions(keyExpiry) { StartsOn = keyStart });
+
+        var sasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = ContainerName,
+            BlobName = BlobName,
+            Resource = "b",
+            StartsOn = keyStart,
+            ExpiresOn = keyExpiry
+        };
+        sasBuilder.SetPermissions(BlobSasPermissions.Read);
+        var sasParams = sasBuilder.ToSasQueryParameters(userDelegationKey, StorageAccountName);
+        var sasUri = new Uri($"https://{StorageAccountName}.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/{ContainerName}/{BlobName}?{sasParams}");
+
+        // Confirm the SAS works before revocation
+        var sasClient = new BlobClient(sasUri);
+        var before = await sasClient.DownloadContentAsync();
+        Assert.That(before.Value.Content.ToString(), Is.EqualTo(BlobContent));
+
+        // Act — revoke all user delegation keys for the account
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var storageAccount = await resourceGroup.Value.GetStorageAccountAsync(StorageAccountName);
+        storageAccount.Value.RevokeUserDelegationKeys();
+
+        // Assert — the same SAS (whose skt predates the revocation) must now be rejected
+        Assert.ThrowsAsync<Azure.RequestFailedException>(async () => await sasClient.DownloadContentAsync());
+    }
+
+    [Test]
     public async Task UserDelegationSas_WithExpiredToken_ReturnsForbidden()
     {
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);

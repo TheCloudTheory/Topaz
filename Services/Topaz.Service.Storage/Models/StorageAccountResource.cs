@@ -75,6 +75,7 @@ internal sealed class StorageAccountResource
     public override string? Kind { get; init; }
     public override StorageAccountResourceProperties Properties { get; init; }
     public TopazStorageAccountKey[] Keys { get; init; }
+    public DateTimeOffset? UserDelegationKeyRevocationTime { get; set; }
 
     /// <summary>
     /// Serializes the storage account for HTTP responses. Keys are intentionally excluded
