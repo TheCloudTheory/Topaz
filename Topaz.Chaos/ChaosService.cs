@@ -1,4 +1,5 @@
 using Topaz.Chaos.Endpoints;
+using Topaz.Chaos.Endpoints.Rules;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
@@ -17,6 +18,12 @@ public sealed class ChaosService(ITopazLogger logger) : IServiceDefinition
     [
         new EnableChaosEndpoint(logger),
         new DisableChaosEndpoint(logger),
-        new GetChaosStatusEndpoint(logger)
+        new GetChaosStatusEndpoint(logger),
+        new CreateChaosRuleEndpoint(logger),
+        new GetChaosRuleEndpoint(logger),
+        new DeleteChaosRuleEndpoint(logger),
+        new ListChaosRulesEndpoint(logger),
+        new EnableChaosRuleEndpoint(logger),
+        new DisableChaosRuleEndpoint(logger)
     ];
 }

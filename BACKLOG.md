@@ -424,25 +424,6 @@ TODO: Azure App Service: Kudu SCM — individual deployment GET endpoint
 ### Chaos Engineering — controllable fault injection
 
 <!--
-TODO: Chaos Engineering: Fault rule configuration
-  Allow users to define per-service (or global) fault rules that are evaluated on each
-  incoming request when chaos mode is enabled.
-  A fault rule has the following fields:
-  - serviceNamespace (e.g. "Microsoft.Storage", "Microsoft.KeyVault", or "*" for all)
-  - faultType: one of Timeout | TransientError | Throttle | ServiceUnavailable
-  - faultRate: 0.0–1.0 (probability of injecting the fault for a matching request)
-  - httpStatusCode: override for the response status code (e.g. 429, 500, 503)
-  REST endpoints (on DefaultResourceManagerPort):
-  - PUT  /topaz/chaos/rules/{ruleId} — create or replace a rule
-  - GET  /topaz/chaos/rules/{ruleId} — get a rule
-  - DELETE /topaz/chaos/rules/{ruleId} — delete a rule
-  - GET  /topaz/chaos/rules — list all rules
-  Rules are evaluated in registration order; first matching rule wins.
-  milestone: v1.8-preview
-  labels: enhancement, chaos-engineering
--->
-
-<!--
 TODO: Chaos Engineering: Router-level fault injection middleware
   Integrate fault injection into the Topaz router pipeline so that when chaos mode is
   enabled and a fault rule matches an incoming request, the router injects the configured
