@@ -28,7 +28,7 @@ RUN pip install --no-cache-dir \
     azure-mgmt-compute>=33.0.0 \
     azure-mgmt-network>=26.0.0 \
     azure-mgmt-web>=7.3.0 \
-    azure-mgmt-resource>=23.1.0 \
+    azure-mgmt-resource==26.0.0 \
     azure-mgmt-subscription>=3.1.0 \
     azure-eventhub>=5.11.0
 
