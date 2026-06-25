@@ -196,6 +196,27 @@ public class TopazFixture
 }
 ```
 
+## Builder options
+
+`TopazBuilder` exposes several optional configuration methods:
+
+| Method | Description |
+|---|---|
+| `WithDefaultSubscription(Guid)` | Sets the subscription ID created on startup. Defaults to a random GUID if omitted. |
+| `WithLogLevel(TopazLogLevel)` | Sets the verbosity of the Topaz host process (e.g. `TopazLogLevel.Debug`). |
+| `WithLoggingToFile(bool refreshLog = true)` | Enables logging to file. Pass `false` to keep the log from previous runs. |
+| `WithEmulatorIpAddress(string)` | Overrides the IP address the emulator listens on. |
+
+Example:
+
+```csharp
+var topaz = new TopazBuilder()
+    .WithDefaultSubscription(Guid.Parse("00000000-0000-0000-0000-000000000001"))
+    .WithLogLevel(TopazLogLevel.Debug)
+    .WithLoggingToFile()
+    .Build();
+```
+
 ## Writing tests against Topaz
 
 Once the container is running, use `AzureLocalCredential` and the standard Azure SDK clients. Retrieve service URIs via the typed helpers on `TopazContainer`:
@@ -252,7 +273,7 @@ var topaz = new TopazBuilder()
 
 await topaz.StartAsync();
 
-var certPem = await topaz.GetCertificatePemAsync();
+var certPem = TopazContainer.GetCertificatePem();
 
 var myContainer = new ContainerBuilder()
     .WithNetwork(network)
@@ -303,5 +324,6 @@ All ports are mapped to random host ports at runtime.
 | `EventHubAmqpPort` | 8888 | Event Hubs (AMQP) |
 | `EventHubHttpPort` | 8897 | Event Hubs (HTTP) |
 | `AppServicePort` | 8896 | App Service / Kudu |
+| `ConnectProxyPort` | 44380 | HTTP CONNECT proxy (used for `az login` from the host) |
 
 The `WaitStrategy` targets port `8899` (ARM) as that is the last service to become ready.
