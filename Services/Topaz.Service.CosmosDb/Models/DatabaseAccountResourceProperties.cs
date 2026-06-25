@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Security.Cryptography;
 using Topaz.Service.CosmosDb.Models.Requests;
 using Topaz.Shared;
@@ -71,7 +70,7 @@ public sealed class DatabaseAccountResourceProperties
     public bool EnableFreeTier { get; set; }
     public bool EnableAnalyticalStorage { get; set; }
     public ApiProperties? ApiProperties { get; set; }
-    public BackupPolicyModel BackupPolicy { get; set; } = new BackupPolicyModel { PeriodicModeProperties = new PeriodicModeProperties() };
+    public BackupPolicyModel BackupPolicy { get; set; } = new() { PeriodicModeProperties = new PeriodicModeProperties() };
     public string ProvisioningState => "Succeeded";
     public string? DocumentEndpoint { get; set; }
     public string? AccountName { get; set; }

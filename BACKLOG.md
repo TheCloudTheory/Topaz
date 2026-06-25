@@ -378,23 +378,6 @@ TODO: Azure Storage: Tags silently dropped on every storage account create or up
   labels: bug, storage, good first issue
 -->
 
-### Azure Cosmos DB — `locations` array not populated on account resource
-
-<!--
-TODO: Azure Cosmos DB: Populate `locations` array on account create/update
-  The CosmosDB account resource model does not populate the `locations` array.
-  Real Azure returns a list of `CosmosDBAccountLocation` objects (locationName, failoverPriority,
-  isZoneRedundant) derived from the `locations` property in the ARM request body.
-  Required changes:
-  - Add a `Locations` list property to `CosmosDbAccountResourceProperties`.
-  - On create/update, map the incoming `locations` array from the request body into the
-    persisted `Locations` list (primary region gets failoverPriority=0, additional regions
-    increment from 1).
-  - Include the populated `Locations` list in the GET/PUT response JSON.
-  milestone: v1.8-preview
-  labels: bug, cosmos-db, good first issue
--->
-
 ### ARM Deployments — reference() function evaluation in outputs
 
 <!--

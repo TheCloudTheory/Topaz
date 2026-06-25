@@ -1,9 +1,11 @@
+using System.Text.Json;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.CosmosDB;
 using Azure.ResourceManager.CosmosDB.Models;
 using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Resources.Models;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
@@ -642,5 +644,52 @@ public class CosmosDbTests
 
         // Assert
         Assert.That(throughputResult.Value.Data.Resource.Throughput, Is.EqualTo(600));
+    }
+
+    [Test]
+    public async Task DatabaseAccount_WhenDeployedViaArmTemplate_PopulatesLocations()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
+
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(
+            WaitUntil.Completed, "rg-cosmos-locations",
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        const string accountName = "test-cosmos-arm-locations";
+
+        var parameters = BinaryData.FromString(JsonSerializer.Serialize(new
+        {
+            accountName = new { value = accountName },
+            secondaryLocation = new { value = "northeurope" }
+        }));
+
+        // Act
+        await rg.Value.GetArmDeployments().CreateOrUpdateAsync(
+            WaitUntil.Completed, "deploy-cosmos-locations",
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(await File.ReadAllTextAsync(
+                    Path.Combine(AppContext.BaseDirectory, "templates", "deployment-cosmos-locations.json"))),
+                Parameters = parameters
+            }));
+
+        var account = await rg.Value.GetCosmosDBAccountAsync(accountName);
+
+        // Assert
+        Assert.That(account.Value.Data.Locations, Has.Count.EqualTo(2));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(account.Value.Data.Locations.Any(l =>
+                    string.Equals(l.LocationName, "westeurope", StringComparison.OrdinalIgnoreCase) &&
+                    l.FailoverPriority == 0),
+                Is.True, "Expected westeurope as primary (failoverPriority=0)");
+            Assert.That(account.Value.Data.Locations.Any(l =>
+                    string.Equals(l.LocationName, "northeurope", StringComparison.OrdinalIgnoreCase) &&
+                    l.FailoverPriority == 1),
+                Is.True, "Expected northeurope as secondary (failoverPriority=1)");
+        }
     }
 }

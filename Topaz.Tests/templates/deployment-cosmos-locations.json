@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "accountName": {
+      "type": "string"
+    },
+    "primaryLocation": {
+      "type": "string",
+      "defaultValue": "westeurope"
+    },
+    "secondaryLocation": {
+      "type": "string",
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "locations": "[if(empty(parameters('secondaryLocation')), createArray(createObject('locationName', parameters('primaryLocation'), 'failoverPriority', 0)), createArray(createObject('locationName', parameters('primaryLocation'), 'failoverPriority', 0), createObject('locationName', parameters('secondaryLocation'), 'failoverPriority', 1)))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2024-11-15",
+      "name": "[parameters('accountName')]",
+      "location": "[parameters('primaryLocation')]",
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "databaseAccountOfferType": "Standard",
+        "locations": "[variables('locations')]"
+      }
+    }
+  ]
+}

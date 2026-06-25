@@ -44,7 +44,7 @@ public sealed class TemplateDeploymentOrchestrator(
     private static CancellationTokenSource? _currentCts;
     private static Thread? OrchestratorThread { get; set; }
 
-    private readonly ArmTemplateEngineFacade _armTemplateEngineFacade = new();
+    private readonly ArmTemplateEngineFacade _armTemplateEngineFacade = new(logger);
 
     public void EnqueueTemplateDeployment(
         SubscriptionIdentifier subscriptionIdentifier,
@@ -278,6 +278,12 @@ public sealed class TemplateDeploymentOrchestrator(
         templateDeployment.Start();
         logger.LogInformation($"Deployment of {templateDeployment.Id} started.");
 
+        // Parse scope identifiers from the deployment ID once; used for both property
+        // expression evaluation and output evaluation below.
+        var idParts = templateDeployment.Id.TrimStart('/').Split('/');
+        var deploymentSubscriptionId = idParts.Length > 1 && idParts[0] == "subscriptions" ? idParts[1] : string.Empty;
+        var deploymentResourceGroupName = idParts.Length > 3 && idParts[2] == "resourceGroups" ? idParts[3] : string.Empty;
+
         var hasProvisioningFailed = false;
         // Process resource groups first to ensure they exist before dependent resources are deployed
         var orderedResources = templateDeployment.Template.Resources
@@ -286,6 +292,13 @@ public sealed class TemplateDeploymentOrchestrator(
         
         foreach (var resource in orderedResources)
         {
+            // Evaluate any remaining ARM expressions in resource.Properties before
+            // serializing to GenericResource. The template engine resolves variables
+            // lazily and does not inline them into the raw properties JToken.
+            _armTemplateEngineFacade.EvaluateResourceProperties(
+                deploymentSubscriptionId, deploymentResourceGroupName,
+                templateDeployment.Template, resource);
+
             IControlPlane? controlPlane = null;
             var genericResource =
                 JsonSerializer.Deserialize<GenericResource>(resource.ToJson(), GlobalSettings.JsonOptions)!;
@@ -380,13 +393,7 @@ public sealed class TemplateDeploymentOrchestrator(
         // Evaluate and set template outputs on the deployment
         if (templateDeployment.Template.Outputs != null)
         {
-            // Parse subscription ID and resource group name from the deployment ID so the
-            // expression evaluation context matches the scope used during template processing.
-            var idParts = templateDeployment.Id.TrimStart('/').Split('/');
-            var subscriptionId = idParts.Length > 1 && idParts[0] == "subscriptions" ? idParts[1] : string.Empty;
-            var resourceGroupName = idParts.Length > 3 && idParts[2] == "resourceGroups" ? idParts[3] : string.Empty;
-
-            var outputsJObject = _armTemplateEngineFacade.EvaluateOutputs(subscriptionId, resourceGroupName, templateDeployment.Template, logger);
+            var outputsJObject = _armTemplateEngineFacade.EvaluateOutputs(deploymentSubscriptionId, deploymentResourceGroupName, templateDeployment.Template, logger);
             var outputsJson = outputsJObject.ToString(Newtonsoft.Json.Formatting.None);
             var outputs = JsonDocument.Parse(outputsJson).RootElement.Clone();
             templateDeployment.SetOutputs(outputs);

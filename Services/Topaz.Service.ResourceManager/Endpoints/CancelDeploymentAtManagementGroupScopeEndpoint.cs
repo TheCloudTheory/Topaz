@@ -13,7 +13,7 @@ public sealed class CancelDeploymentAtManagementGroupScopeEndpoint(
 {
     private readonly ManagementGroupDeploymentControlPlane _controlPlane =
         new(new ManagementGroupDeploymentResourceProvider(logger), orchestrator,
-            new ArmTemplateEngineFacade(), logger);
+            new ArmTemplateEngineFacade(logger), logger);
 
     public string[] Endpoints =>
     [

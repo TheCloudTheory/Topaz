@@ -9,13 +9,14 @@ using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
 using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using Newtonsoft.Json.Linq;
 using System.Text.Json;
+using Azure.Deployments.Expression.Expressions;
 using Topaz.Service.ResourceManager.Models.Requests;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
 
 namespace Topaz.Service.ResourceManager;
 
-internal sealed class ArmTemplateEngineFacade
+internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
 {
     public Template Parse(string input)
     {
@@ -102,6 +103,90 @@ internal sealed class ArmTemplateEngineFacade
     public void Validate(Template template)
     {
         TemplateEngine.ValidateTemplate(template, "apiVersion", TemplateDeploymentScope.ResourceGroup);
+    }
+
+    /// <summary>
+    /// Evaluates any remaining ARM expression strings inside a resource's <c>properties</c>
+    /// JObject in-place, using the expression context built from the already-processed
+    /// <paramref name="template"/>. This handles properties whose values are variable
+    /// references (e.g. <c>[variables('locations')]</c>) that the template engine resolves
+    /// lazily and does not inline into the raw properties JToken.
+    /// </summary>
+    public void EvaluateResourceProperties(
+        string subscriptionId, string resourceGroupName,
+        Template template, TemplateResource resource)
+    {
+        if (resource.Properties?.Value is not JObject properties)
+            return;
+
+        var metrics = new TemplateMetricsRecorder();
+        var evalCtx = TemplateEngine.GetExpressionEvaluationContext(
+            string.Empty, subscriptionId, resourceGroupName, template, metrics,
+            false, null, null, null, null, null, null);
+
+        EvaluateJTokenExpressions(properties, evalCtx);
+    }
+
+    private void EvaluateJTokenExpressions(JToken token, IEvaluationContext evalCtx)
+    {
+        switch (token)
+        {
+            case JObject obj:
+            {
+                foreach (var prop in obj.Properties().ToList())
+                {
+                    if (prop.Value.Type == JTokenType.String)
+                    {
+                        var s = prop.Value.Value<string>()!;
+                        if (!ExpressionsEngine.IsLanguageExpression(s)) continue;
+
+                        try
+                        {
+                            var evaluated = ExpressionsEngine.EvaluateLanguageExpression(
+                                s, evalCtx, new TemplateErrorAdditionalInfo());
+                            prop.Value = evaluated;
+                        }
+                        catch
+                        {
+                            logger.LogError("Failed to evaluate expression: " + s + "");
+                        }
+                    }
+                    else
+                    {
+                        EvaluateJTokenExpressions(prop.Value, evalCtx);
+                    }
+                }
+
+                break;
+            }
+            case JArray arr:
+            {
+                for (var i = 0; i < arr.Count; i++)
+                {
+                    if (arr[i].Type == JTokenType.String)
+                    {
+                        var s = arr[i].Value<string>()!;
+                        if (!ExpressionsEngine.IsLanguageExpression(s)) continue;
+                        try
+                        {
+                            var evaluated = ExpressionsEngine.EvaluateLanguageExpression(
+                                s, evalCtx, new TemplateErrorAdditionalInfo());
+                            arr[i] = evaluated;
+                        }
+                        catch
+                        {
+                            logger.LogError("Failed to evaluate expression: " + s + "");
+                        }
+                    }
+                    else
+                    {
+                        EvaluateJTokenExpressions(arr[i], evalCtx);
+                    }
+                }
+
+                break;
+            }
+        }
     }
 
     /// <summary>

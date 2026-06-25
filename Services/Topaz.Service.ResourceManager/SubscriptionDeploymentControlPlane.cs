@@ -21,7 +21,7 @@ internal sealed class SubscriptionDeploymentControlPlane(
     // Segment depth: .topaz / .subscription / {subId} / .resource-manager / {name} / metadata.json = 6
     private const uint SubscriptionDeploymentDepth = 6;
 
-    private readonly ArmTemplateEngineFacade _templateEngineFacade = new();
+    private readonly ArmTemplateEngineFacade _templateEngineFacade = new(logger);
 
     public ControlPlaneOperationResult<SubscriptionDeploymentResource> CreateOrUpdate(
         SubscriptionIdentifier subscriptionIdentifier,

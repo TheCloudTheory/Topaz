@@ -20,7 +20,7 @@ internal sealed class TenantDeploymentControlPlane(
     private const string DeploymentNotFoundMessageTemplate = "Deployment {0} not found";
     private const string DeploymentNotFoundCode = "DeploymentNotFound";
 
-    private readonly ArmTemplateEngineFacade _templateEngineFacade = new();
+    private readonly ArmTemplateEngineFacade _templateEngineFacade = new(logger);
 
     public ControlPlaneOperationResult<TenantDeploymentResource[]> List()
     {
