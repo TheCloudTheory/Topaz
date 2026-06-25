@@ -834,6 +834,164 @@
     ]
   },
   {
+    "name": "chaos disable",
+    "group": "chaos",
+    "description": "Disables chaos mode in the Topaz host.",
+    "options": [],
+    "examples": [
+      {
+        "title": "Disable chaos mode",
+        "command": "topaz chaos disable"
+      }
+    ]
+  },
+  {
+    "name": "chaos enable",
+    "group": "chaos",
+    "description": "Enables chaos mode in the Topaz host.",
+    "options": [],
+    "examples": [
+      {
+        "title": "Enable chaos mode",
+        "command": "topaz chaos enable"
+      }
+    ]
+  },
+  {
+    "name": "chaos rule create",
+    "group": "chaos",
+    "description": "Creates a chaos fault rule.",
+    "options": [
+      {
+        "names": "--rule-id",
+        "description": "(Required) Unique ID for the rule.",
+        "required": true
+      },
+      {
+        "names": "--namespace",
+        "description": "(Required) Service namespace to match, e.g. Microsoft.Storage or * for all.",
+        "required": true
+      },
+      {
+        "names": "--fault-type",
+        "description": "(Required) Fault type: Timeout | TransientError | Throttle | ServiceUnavailable.",
+        "required": true
+      },
+      {
+        "names": "--rate",
+        "description": "(Required) Probability of injecting the fault (0.0\u20131.0).",
+        "required": true
+      },
+      {
+        "names": "--status-code",
+        "description": "(Optional) HTTP status code override (e.g. 429, 500, 503).",
+        "required": false
+      }
+    ],
+    "examples": [
+      {
+        "title": "Create a throttle rule for Storage",
+        "command": "topaz chaos rule create --rule-id throttle-storage --namespace Microsoft.Storage --fault-type Throttle --rate 0.5 --status-code 429"
+      }
+    ]
+  },
+  {
+    "name": "chaos rule delete",
+    "group": "chaos",
+    "description": "Deletes a chaos fault rule.",
+    "options": [
+      {
+        "names": "--rule-id",
+        "description": "(Required) Rule ID to delete.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Delete a chaos rule",
+        "command": "topaz chaos rule delete --rule-id throttle-storage"
+      }
+    ]
+  },
+  {
+    "name": "chaos rule disable",
+    "group": "chaos",
+    "description": "Disables a chaos fault rule.",
+    "options": [
+      {
+        "names": "--rule-id",
+        "description": "(Required) Rule ID to disable.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Disable a chaos rule",
+        "command": "topaz chaos rule disable --rule-id throttle-storage"
+      }
+    ]
+  },
+  {
+    "name": "chaos rule enable",
+    "group": "chaos",
+    "description": "Enables a chaos fault rule.",
+    "options": [
+      {
+        "names": "--rule-id",
+        "description": "(Required) Rule ID to enable.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Enable a chaos rule",
+        "command": "topaz chaos rule enable --rule-id throttle-storage"
+      }
+    ]
+  },
+  {
+    "name": "chaos rule list",
+    "group": "chaos",
+    "description": "Lists all chaos fault rules.",
+    "options": [],
+    "examples": [
+      {
+        "title": "List all chaos rules",
+        "command": "topaz chaos rule list"
+      }
+    ]
+  },
+  {
+    "name": "chaos rule show",
+    "group": "chaos",
+    "description": "Gets a chaos fault rule by ID.",
+    "options": [
+      {
+        "names": "--rule-id",
+        "description": "(Required) Rule ID to retrieve.",
+        "required": true
+      }
+    ],
+    "examples": [
+      {
+        "title": "Show a chaos rule",
+        "command": "topaz chaos rule show --rule-id throttle-storage"
+      }
+    ]
+  },
+  {
+    "name": "chaos status",
+    "group": "chaos",
+    "description": "Returns the current chaos mode status from the Topaz host.",
+    "options": [],
+    "examples": [
+      {
+        "title": "Get chaos status",
+        "command": "topaz chaos status"
+      }
+    ]
+  },
+  {
     "name": "configure set",
     "group": "generic",
     "description": "Sets default values for the CLI.",
