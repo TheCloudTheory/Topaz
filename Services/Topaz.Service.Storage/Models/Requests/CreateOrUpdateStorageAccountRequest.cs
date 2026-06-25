@@ -1,6 +1,5 @@
 using Azure.ResourceManager.Models;
 using Topaz.ResourceManager;
-using Topaz.Service.Shared;
 
 namespace Topaz.Service.Storage.Models.Requests;
 

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-09-01",
+      "name": "armdeployedstorage",
+      "location": "westeurope",
+      "sku": { "name": "Standard_GRS" },
+      "kind": "BlobStorage",
+      "properties": { "accessTier": "Hot" }
+    }
+  ]
+}

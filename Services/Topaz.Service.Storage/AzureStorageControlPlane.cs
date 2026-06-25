@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Xml.Linq;
-using Azure.Core;
 using Azure.ResourceManager.Storage.Models;
 using Topaz.Dns;
 using Topaz.ResourceManager;
@@ -42,37 +41,6 @@ internal sealed class AzureStorageControlPlane(
         return resource == null
             ? new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Failed, null, null, null)
             : new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Success, resource, null, null);
-    }
-
-    public ControlPlaneOperationResult<StorageAccountResource> Create(string storageAccountName,
-        ResourceGroupIdentifier resourceGroupIdentifier, AzureLocation location,
-        SubscriptionIdentifier subscriptionIdentifier)
-    {
-        var storageAccount = provider.Get(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
-        if (!string.IsNullOrEmpty(storageAccount))
-        {
-            logger.LogError($"Storage account '{storageAccountName}' already exists.");
-            return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Failed, null, null, null);
-        }
-
-        var sku = new ResourceSku
-        {
-            Name = StorageSkuName.StandardLrs.ToString()
-        };
-        var properties = new StorageAccountResourceProperties
-        {
-            PrimaryEndpoints = StorageAccountPrimaryEndpoints.For(storageAccountName),
-            StatusOfPrimary = "available",
-            CreationTime = DateTimeOffset.UtcNow
-        };
-        var resource = new StorageAccountResource(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName,
-            location, sku, StorageKind.StorageV2.ToString(), properties);
-
-        provider.Create(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, resource);
-
-        InitializeServicePropertiesFiles(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
-
-        return new ControlPlaneOperationResult<StorageAccountResource>(OperationResult.Created, resource, null, null);
     }
 
     public ControlPlaneOperationResult<CheckStorageAccountNameAvailabilityResponse> CheckNameAvailability(
@@ -531,7 +499,9 @@ internal sealed class AzureStorageControlPlane(
             {
                 Location = storageAccount.Location,
                 Tags = storageAccount.Tags,
-                Properties = storageAccount.Properties
+                Properties = storageAccount.Properties,
+                Sku = storageAccount.Sku,
+                Kind = storageAccount.Kind
             });
 
         return result.Result;

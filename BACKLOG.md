@@ -323,37 +323,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 
 ## v1.8-preview
 
-### Azure Storage — `sku` and `kind` missing from responses when deployed via ARM template
-
-<!--
-TODO: Azure Storage: `sku` and `kind` not persisted when storage account is deployed via ARM template
-  When a storage account is deployed via an ARM template or Bicep module, the GET response
-  omits the `sku` and `kind` fields. The root cause is in `AzureStorageControlPlane.Deploy()`:
-  the `CreateOrUpdateStorageAccountRequest` it builds only copies `Location`, `Tags`, and
-  `Properties` from the parsed generic resource — `Sku` and `Kind` are never mapped, so they
-  are null on the persisted resource and omitted from the JSON response by
-  `WhenWritingNull` serialization.
-
-  Fix: map `Sku` and `Kind` from the `StorageAccountResource` fields in `Deploy()`:
-
-  ```csharp
-  var result = CreateOrUpdate(storageAccount.GetSubscription(), storageAccount.GetResourceGroup(), storageAccount.Name,
-      new CreateOrUpdateStorageAccountRequest
-      {
-          Location = storageAccount.Location,
-          Tags = storageAccount.Tags,
-          Sku = storageAccount.Sku,
-          Kind = storageAccount.Kind,
-          Properties = storageAccount.Properties
-      });
-  ```
-
-  The `StorageAccountResource` record already has `Sku` and `Kind` properties populated by
-  `resource.As<StorageAccountResource, StorageAccountResourceProperties>()`.
-  milestone: v1.8-preview
-  labels: bug, storage, good first issue
--->
-
 ### Azure Storage — tags not persisted on storage account create/update
 
 <!--

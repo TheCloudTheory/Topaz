@@ -2,6 +2,8 @@ using Topaz.CLI;
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
+using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Resources.Models;
 using Azure.ResourceManager.Storage;
 using Azure.ResourceManager.Storage.Models;
 using Topaz.Identity;
@@ -499,5 +501,34 @@ public class AzureStorageServiceTests
         // Act & Assert
         Assert.Throws<RequestFailedException>(() =>
             storageAccount.GetQueueService().GetStorageQueue("nonexistent-queue"));
+    }
+
+    [Test]
+    public async Task StorageAccount_DeployedViaArmTemplate_SkuAndKindArePersistedInGetResponse()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+
+        // Act
+        await resourceGroup.Value.GetArmDeployments().CreateOrUpdateAsync(
+            WaitUntil.Completed, "storage-sku-kind-test",
+            new ArmDeploymentContent(
+                new ArmDeploymentProperties(
+                    ArmDeploymentMode.Incremental)
+                {
+                    Template = BinaryData.FromString(await File.ReadAllTextAsync("templates/deployment-storage.json"))
+                }));
+
+        var account = await resourceGroup.Value.GetStorageAccountAsync("armdeployedstorage");
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(account.Value.Data.Sku.Name, Is.EqualTo(StorageSkuName.StandardGrs));
+            Assert.That(account.Value.Data.Kind, Is.EqualTo(StorageKind.BlobStorage));
+        }
     }
 }
