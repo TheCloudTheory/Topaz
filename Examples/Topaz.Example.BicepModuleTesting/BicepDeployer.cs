@@ -9,7 +9,7 @@ public static class BicepDeployer
 
     public static void Login()
     {
-        RunAz("login --username topazadmin@topaz.local.dev --password admin");
+        RunAz(["login", "--username", "topazadmin@topaz.local.dev", "--password", "admin"]);
     }
 
     public static void Deploy(
@@ -18,28 +18,37 @@ public static class BicepDeployer
         string? parameters = null)
     {
         var templatePath = Path.Combine(ModulesDirectory, templateFileName);
-        var args = $"deployment group create " +
-                   "--only-show-errors " +
-                   $"--resource-group {resourceGroup} " +
-                   $"--template-file \"{templatePath}\"" +
-                   (parameters is not null ? $" --parameters {parameters}" : "");
+        var argList = new List<string>
+        {
+            "deployment", "group", "create",
+            "--only-show-errors",
+            "--resource-group", resourceGroup,
+            "--template-file", templatePath
+        };
 
-        RunAz(args, errorPrefix: $"Bicep deployment failed ({templateFileName})");
+        if (parameters is not null)
+        {
+            argList.Add("--parameters");
+            argList.AddRange(parameters.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        RunAz(argList, errorPrefix: $"Bicep deployment failed ({templateFileName})");
     }
 
-    private static void RunAz(string args, string? errorPrefix = null)
+    private static void RunAz(IEnumerable<string> argList, string? errorPrefix = null)
     {
-        var process = new Process
+        var startInfo = new ProcessStartInfo
         {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "az",
-                Arguments = args,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false
-            }
+            FileName = "az",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
         };
+
+        foreach (var arg in argList)
+            startInfo.ArgumentList.Add(arg);
+
+        var process = new Process { StartInfo = startInfo };
 
         process.StartInfo.Environment["AZURE_CORE_INSTANCE_DISCOVERY"] = "false";
         process.StartInfo.Environment["HTTPS_PROXY"] = "http://topaz.local.dev:44380";

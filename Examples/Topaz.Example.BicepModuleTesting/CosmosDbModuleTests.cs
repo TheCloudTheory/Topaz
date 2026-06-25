@@ -38,7 +38,7 @@ public class CosmosDbModuleTests(TopazFixture topaz)
                 "rg-bicep-module-tests",
                 "cosmos.bicep",
                 "accountName=cosmos-tagged " +
-                "tags.environment=test");
+                "tags={\"environment\":\"test\"}");
 
             var accounts = topaz.ResourceGroup.GetCosmosDBAccounts().ToList();
             var account = accounts.First(a => a.Data.Name == "cosmos-tagged");

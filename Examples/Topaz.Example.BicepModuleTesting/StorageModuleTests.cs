@@ -35,8 +35,8 @@ public class StorageModuleTests
             "rg-bicep-module-tests",
             "storage.bicep",
             "storageAccountName=sttagtest " +
-            "tags.environment=test " +
-            "tags.owner=platform-team");
+            "tags={\"environment\":\"test\"} " +
+            "tags={\"owner\":\"platform-team\"}");
 
         var account = (await _topaz.ResourceGroup.GetStorageAccountAsync("sttagtest")).Value;
 

@@ -1,9 +1,11 @@
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Core;
 using Azure.ResourceManager.Storage.Models;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared.Domain;
+using Topaz.Shared;
 
 namespace Topaz.Service.Storage.Models;
 
@@ -77,7 +79,7 @@ internal sealed class StorageAccountResource
     /// </summary>
     public override string ToString()
     {
-        return System.Text.Json.JsonSerializer.Serialize(new
+        return JsonSerializer.Serialize(new
         {
             id = Id,
             name = Name,
@@ -87,6 +89,6 @@ internal sealed class StorageAccountResource
             sku = Sku,
             kind = Kind,
             properties = Properties
-        }, Topaz.Shared.GlobalSettings.JsonOptions);
+        }, GlobalSettings.JsonOptions);
     }
 }
