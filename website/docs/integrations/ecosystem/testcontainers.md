@@ -9,6 +9,8 @@ keywords: [topaz testcontainers, azure emulator integration tests, testcontainer
 
 This guide shows you how to use the official [Testcontainers.Topaz](https://www.nuget.org/packages/TheCloudTheory.Topaz.Testcontainers) package to run a Topaz instance automatically in your test suite.
 
+A fully working end-to-end example — including xUnit fixtures, Bicep deployments via the Azure CLI, and SDK-level assertions — is available in the [Topaz GitHub repository](https://github.com/TheCloudTheory/Topaz/tree/main/Examples/Topaz.Example.BicepModuleTesting).
+
 ## Installation
 
 ```bash
@@ -58,6 +60,33 @@ This requires a new entry per resource name and does not support wildcards.
 ### 2. Certificate trust
 
 Topaz uses a self-signed TLS certificate. Call `TopazContainer.InstallCertificateToCurrentUserStore()` after the container starts to install it into the current user's trusted root store. Remove it on teardown with `TopazContainer.UninstallCertificateFromCurrentUserStore()`. No certificate validation bypass is needed.
+
+### 3. Required environment variables
+
+Two environment variables must be set whenever you call the Azure CLI (`az`) from within your tests or helper code:
+
+| Variable | Value | Purpose |
+|---|---|---|
+| `AZURE_CORE_INSTANCE_DISCOVERY` | `false` | Skips the AAD metadata discovery request that fails against a local emulator. |
+| `HTTPS_PROXY` | `http://topaz.local.dev:44380` | Routes `az` traffic through Topaz's built-in CONNECT proxy so TLS termination works against the self-signed certificate. |
+
+Set them on the `ProcessStartInfo` before starting the process:
+
+```csharp
+process.StartInfo.Environment["AZURE_CORE_INSTANCE_DISCOVERY"] = "false";
+process.StartInfo.Environment["HTTPS_PROXY"] = "http://topaz.local.dev:44380";
+```
+
+Or export them in your shell / CI environment if you prefer a global approach:
+
+```shell
+export AZURE_CORE_INSTANCE_DISCOVERY=false
+export HTTPS_PROXY=http://topaz.local.dev:44380
+```
+
+:::note
+These variables are only required when invoking the Azure CLI. Azure SDK clients in the same process do not need `HTTPS_PROXY` — they rely on the certificate installed by `TopazContainer.InstallCertificateToCurrentUserStore()`.
+:::
 
 ## Basic usage
 
