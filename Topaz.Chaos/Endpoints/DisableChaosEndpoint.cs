@@ -9,7 +9,7 @@ internal sealed class DisableChaosEndpoint(ITopazLogger logger) : IEndpointDefin
 {
     public string[] Endpoints =>
     [
-        "GET /topaz/chaos/disable"
+        "POST /topaz/chaos/disable"
     ];
     
     public string[] Permissions => [];

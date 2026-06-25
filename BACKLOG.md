@@ -424,22 +424,6 @@ TODO: Azure App Service: Kudu SCM — individual deployment GET endpoint
 ### Chaos Engineering — controllable fault injection
 
 <!--
-TODO: Chaos Engineering: Global chaos mode toggle and CLI command
-  Add a global chaos-mode on/off switch to Topaz that can be toggled at runtime via the
-  `topaz chaos` CLI command and via a REST control-plane endpoint:
-  - `topaz chaos enable`  — activate chaos mode
-  - `topaz chaos disable` — deactivate chaos mode
-  - `topaz chaos status`  — print current mode and active fault rules as a table
-  REST endpoint (on DefaultResourceManagerPort):
-  - POST /topaz/chaos/enable
-  - POST /topaz/chaos/disable
-  - GET  /topaz/chaos/status  — returns {"enabled": true, "rules": [...]}
-  Chaos state is held in-memory (not persisted across restarts).
-  milestone: v1.8-preview
-  labels: enhancement, chaos-engineering, good first issue
--->
-
-<!--
 TODO: Chaos Engineering: Fault rule configuration
   Allow users to define per-service (or global) fault rules that are evaluated on each
   incoming request when chaos mode is enabled.

@@ -26,6 +26,7 @@ using Topaz.Service.LoadBalancer.Commands;
 using Topaz.Service.Sql.Commands;
 using Topaz.Service.CosmosDb.Commands;
 using Topaz.FinOps.Commands;
+using Topaz.Chaos.Commands;
 using Topaz.Shared;
 
 namespace Topaz.CLI;
@@ -152,7 +153,8 @@ internal class Program
             typeof(GenericCosmosDbCommand),
             typeof(GenericDiskCommand),
             typeof(GenericLoadBalancerCommand),
-            typeof(GenericFinOpsCommand)
+            typeof(GenericFinOpsCommand),
+            typeof(GenericChaosCommand)
         };
 
         var commands = Assembly.GetExecutingAssembly()

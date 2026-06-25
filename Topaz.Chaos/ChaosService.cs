@@ -12,8 +12,11 @@ public sealed class ChaosService(ITopazLogger logger) : IServiceDefinition
     public static string UniqueName => "chaos";
     public string Name => "Chaos";
     public bool IsTopazService => true;
-    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
-     new EnableChaosEndpoint(logger),
-     new DisableChaosEndpoint(logger)
+
+    public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
+    [
+        new EnableChaosEndpoint(logger),
+        new DisableChaosEndpoint(logger),
+        new GetChaosStatusEndpoint(logger)
     ];
 }

@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.Json;
 using Spectre.Console.Cli;
+using Topaz.Chaos.Commands;
 using Topaz.CLI.Commands;
 using Topaz.Documentation.Command;
 using Topaz.Documentation.Models;
@@ -53,7 +54,8 @@ _ = new[]
     typeof(GenericSqlCommand),
     typeof(GenericDiskCommand),
     typeof(GenericFinOpsCommand),
-    typeof(HealthCommand)
+    typeof(HealthCommand),
+    typeof(GenericChaosCommand)
 };
 
 Console.WriteLine("Looking for commands...");
