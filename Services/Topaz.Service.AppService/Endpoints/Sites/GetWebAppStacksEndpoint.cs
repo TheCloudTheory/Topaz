@@ -1,14 +1,13 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
-using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
 namespace Topaz.Service.AppService.Endpoints.Sites;
 
-internal sealed class GetWebAppStacksEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class GetWebAppStacksEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly AppServiceSiteControlPlane _controlPlane = AppServiceSiteControlPlane.New(eventPipeline, logger);
+    private readonly AppServiceSiteControlPlane _controlPlane = AppServiceSiteControlPlane.New(logger);
 
     public string? ProviderNamespace => "Microsoft.Web";
 

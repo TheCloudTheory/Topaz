@@ -124,6 +124,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Example.BicepModuleTe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Chaos", "Topaz.Chaos\Topaz.Chaos.csproj", "{BCE893D5-A9AB-4B82-B055-B712729CBACA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.ForwardProxy", "Topaz.ForwardProxy\Topaz.ForwardProxy.csproj", "{C25DFFA0-C4D4-410E-A6F7-1564730D4E2F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -752,6 +754,18 @@ Global
 		{BCE893D5-A9AB-4B82-B055-B712729CBACA}.Release|x64.Build.0 = Release|Any CPU
 		{BCE893D5-A9AB-4B82-B055-B712729CBACA}.Release|x86.ActiveCfg = Release|Any CPU
 		{BCE893D5-A9AB-4B82-B055-B712729CBACA}.Release|x86.Build.0 = Release|Any CPU
+		{C25DFFA0-C4D4-410E-A6F7-1564730D4E2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C25DFFA0-C4D4-410E-A6F7-1564730D4E2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C25DFFA0-C4D4-410E-A6F7-1564730D4E2F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C25DFFA0-C4D4-410E-A6F7-1564730D4E2F}.Debug|x64.Build.0 = Debug|Any CPU
+		{C25DFFA0-C4D4-410E-A6F7-1564730D4E2F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C25DFFA0-C4D4-410E-A6F7-1564730D4E2F}.Debug|x86.Build.0 = Debug|Any CPU
+		{C25DFFA0-C4D4-410E-A6F7-1564730D4E2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C25DFFA0-C4D4-410E-A6F7-1564730D4E2F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C25DFFA0-C4D4-410E-A6F7-1564730D4E2F}.Release|x64.ActiveCfg = Release|Any CPU
+		{C25DFFA0-C4D4-410E-A6F7-1564730D4E2F}.Release|x64.Build.0 = Release|Any CPU
+		{C25DFFA0-C4D4-410E-A6F7-1564730D4E2F}.Release|x86.ActiveCfg = Release|Any CPU
+		{C25DFFA0-C4D4-410E-A6F7-1564730D4E2F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

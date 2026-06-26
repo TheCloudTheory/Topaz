@@ -1,26 +1,22 @@
 using Azure.Core;
-using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.AppService.Models;
 using Topaz.Service.AppService.Models.Requests;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
-using Topaz.Service.Subscription;
 
 namespace Topaz.Service.AppService;
 
 internal sealed class AppServicePlanControlPlane(
     AppServicePlanResourceProvider provider,
-    SubscriptionControlPlane subscriptionControlPlane,
     ITopazLogger logger) : IControlPlane
 {
-    private readonly SubscriptionControlPlane _subscriptionControlPlane = subscriptionControlPlane;
     private const string NotFoundCode = "AppServicePlanNotFound";
     private const string NotFoundMessageTemplate = "App Service Plan '{0}' could not be found";
 
-    public static AppServicePlanControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
-        new(new AppServicePlanResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
+    public static AppServicePlanControlPlane New(ITopazLogger logger) =>
+        new(new AppServicePlanResourceProvider(logger), logger);
 
     public ControlPlaneOperationResult<AppServicePlanResource> CreateOrUpdate(
         SubscriptionIdentifier subscriptionIdentifier,

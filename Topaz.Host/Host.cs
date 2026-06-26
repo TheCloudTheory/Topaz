@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Primitives;
 using Topaz.CloudEnvironment;
 using Topaz.Dns;
 using Topaz.EventPipeline;
@@ -38,6 +39,7 @@ using Topaz.Service.CosmosDb;
 using Topaz.FinOps;
 using Spectre.Console;
 using Topaz.Chaos;
+using Topaz.ForwardProxy;
 using Topaz.Shared;
 
 namespace Topaz.Host;
@@ -63,6 +65,7 @@ public class Host
 
     private readonly GlobalOptions _options;
     private readonly ITopazLogger _logger;
+    private readonly AppServiceForwardProxy _appServiceForwardProxy;
 
     public Host(GlobalOptions options, ITopazLogger logger)
     {
@@ -72,6 +75,7 @@ public class Host
         _router = new Router(_eventPipeline, options, logger);
         _topazIpAddress = IsRunningInsideContainer() ? "0.0.0.0" :
             string.IsNullOrWhiteSpace(options.EmulatorIpAddress) ? "127.0.0.1" : options.EmulatorIpAddress;
+        _appServiceForwardProxy = new AppServiceForwardProxy(new HttpClient(), logger);
     }
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
@@ -124,12 +128,13 @@ public class Host
             new EntraService(_eventPipeline, _logger),
             new ContainerRegistryService(_eventPipeline, _logger),
             new AppServicePlanService(_eventPipeline, _logger),
-            new AppServiceSiteService(_eventPipeline, _logger),
-            new AppServiceKuduService(_eventPipeline, _logger),
+            new AppServiceSiteService(_logger),
+            new AppServiceKuduService(_logger),
             new SqlService(_eventPipeline, _logger),
             new CosmosDbService(_eventPipeline, _logger),
             new FinOpsService(_logger),
             new ChaosService(_logger),
+            new ForwardProxyService()
         };
 
         _logger.ConfigureIdFactory(idFactory);
@@ -431,6 +436,20 @@ public class Host
                             throw new ArgumentOutOfRangeException();
                     }
                 }
+                
+                hostOptions.Listen(IPAddress.Parse(_topazIpAddress), ForwardProxySettings.DefaultPort, listenOptions =>
+                {
+                    _logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync), "Enabling forward proxy.");
+                    
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    {
+                        listenOptions.UseHttps("topaz.pfx", "qwerty");
+                    }
+                    else
+                    {
+                        ConfigurePemCertificate(listenOptions);
+                    }
+                });
             })
             // Used to disable the obsolete messages displayed by Kestrel when starting
             .UseSetting(WebHostDefaults.SuppressStatusMessagesKey, "True")
@@ -442,6 +461,28 @@ public class Host
                     {
                         // Generate new correlation ID, which can be fetched by any class via DI
                         idFactory.GenerateNew();
+
+                        if (_appServiceForwardProxy.CanForward(context.Request.Host.Host))
+                        {
+                            var response = await _appServiceForwardProxy.Send(context);
+                            
+                            context.Response.StatusCode = (int)response.StatusCode;
+                            if (response.StatusCode != HttpStatusCode.NoContent)
+                            {
+                                var responseBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+                                context.Response.ContentType = response.Content.Headers.ContentType?.ToString();
+                                if (!HttpMethods.IsHead(context.Request.Method))
+                                {
+                                    await context.Response.Body.WriteAsync(responseBytes, cancellationToken);
+                                }
+                            }
+                            
+                            foreach (var header in response.Headers)
+                            {
+                                context.Response.Headers[header.Key] = new StringValues(header.Value.ToArray());
+                            }
+                            return;
+                        }
 
                         await _router.MatchAndExecuteEndpoint(httpEndpoints, context).ConfigureAwait(false);
                     }

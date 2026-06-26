@@ -1,7 +1,6 @@
 using System.Reflection;
 using Azure.Core;
 using Topaz.Dns;
-using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.AppService.Models;
 using Topaz.Service.AppService.Models.Requests;
@@ -9,21 +8,18 @@ using Topaz.Service.AppService.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
-using Topaz.Service.Subscription;
 
 namespace Topaz.Service.AppService;
 
 internal sealed class AppServiceSiteControlPlane(
     AppServiceSiteResourceProvider provider,
-    SubscriptionControlPlane subscriptionControlPlane,
     ITopazLogger logger) : IControlPlane
 {
-    private readonly SubscriptionControlPlane _subscriptionControlPlane = subscriptionControlPlane;
     private const string NotFoundCode = "AppServiceSiteNotFound";
     private const string NotFoundMessageTemplate = "App Service Site '{0}' could not be found";
 
-    public static AppServiceSiteControlPlane New(Pipeline eventPipeline, ITopazLogger logger) =>
-        new(new AppServiceSiteResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
+    public static AppServiceSiteControlPlane New(ITopazLogger logger) =>
+        new(new AppServiceSiteResourceProvider(logger),  logger);
 
     public ControlPlaneOperationResult<AppServiceSiteResource> CreateOrUpdate(
         SubscriptionIdentifier subscriptionIdentifier,
@@ -83,6 +79,30 @@ internal sealed class AppServiceSiteControlPlane(
                 string.Format(NotFoundMessageTemplate, siteName), NotFoundCode)
             : new ControlPlaneOperationResult<AppServiceSiteConfigResource>(OperationResult.Success,
                 AppServiceSiteConfigResource.FromSite(resource), null, null);
+    }
+    
+    public ControlPlaneOperationResult<AppServiceSiteConfigResource> GetSiteConfig(string siteName)
+    {
+        var dnsEntry = GlobalDnsEntries.GetEntry(AppServiceSiteService.UniqueName, siteName);
+        if (dnsEntry == null)
+            return new ControlPlaneOperationResult<AppServiceSiteConfigResource>(
+                OperationResult.NotFound, null, null, null);
+
+        var existingSubId = SubscriptionIdentifier.From(dnsEntry.Value.subscription);
+        var existingRgId = dnsEntry.Value.resourceGroup != null
+            ? ResourceGroupIdentifier.From(dnsEntry.Value.resourceGroup)
+            : null;
+
+        if (existingRgId == null)
+            return new ControlPlaneOperationResult<AppServiceSiteConfigResource>(
+                OperationResult.NotFound, null, null, null);
+        
+        var resource = GetSiteConfig(existingSubId, existingRgId, siteName);
+        return resource.Resource == null
+            ? new ControlPlaneOperationResult<AppServiceSiteConfigResource>(OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, siteName), NotFoundCode)
+            : new ControlPlaneOperationResult<AppServiceSiteConfigResource>(OperationResult.Success,
+                resource.Resource, null, null);
     }
 
     public OperationResult Delete(

@@ -1,6 +1,5 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
-using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -8,9 +7,9 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.AppService.Endpoints.Sites;
 
-internal sealed class ListAppSettingsEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class ListAppSettingsEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly AppServiceSiteControlPlane _controlPlane = AppServiceSiteControlPlane.New(eventPipeline, logger);
+    private readonly AppServiceSiteControlPlane _controlPlane = AppServiceSiteControlPlane.New(logger);
 
     public string? ProviderNamespace => "Microsoft.Web";
 

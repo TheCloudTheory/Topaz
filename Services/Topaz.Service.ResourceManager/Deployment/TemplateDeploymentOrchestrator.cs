@@ -350,10 +350,10 @@ public sealed class TemplateDeploymentOrchestrator(
                     controlPlane = AzureStorageControlPlane.New(logger);
                     break;
                 case "Microsoft.Web/serverfarms":
-                    controlPlane = AppServicePlanControlPlane.New(eventPipeline, logger);
+                    controlPlane = AppServicePlanControlPlane.New(logger);
                     break;
                 case "Microsoft.Web/sites":
-                    controlPlane = AppServiceSiteControlPlane.New(eventPipeline, logger);
+                    controlPlane = AppServiceSiteControlPlane.New(logger);
                     break;
                 case "Microsoft.Sql/servers":
                     controlPlane = SqlServiceControlPlane.New(eventPipeline, logger);

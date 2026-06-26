@@ -1,5 +1,4 @@
 using JetBrains.Annotations;
-using Topaz.EventPipeline;
 using Topaz.Service.AppService.Endpoints.Kudu;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -7,7 +6,7 @@ using Topaz.Shared;
 namespace Topaz.Service.AppService;
 
 [UsedImplicitly]
-public sealed class AppServiceKuduService(Pipeline eventPipeline, ITopazLogger logger) : IServiceDefinition
+public sealed class AppServiceKuduService(ITopazLogger logger) : IServiceDefinition
 {
     public static bool IsGlobalService => false;
     public static string LocalDirectoryPath => AppServiceSiteService.LocalDirectoryPath;
@@ -17,7 +16,7 @@ public sealed class AppServiceKuduService(Pipeline eventPipeline, ITopazLogger l
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new PostZipDeployEndpoint(eventPipeline, logger),
-        new GetDeploymentsEndpoint(eventPipeline, logger)
+        new PostZipDeployEndpoint(logger),
+        new GetDeploymentsEndpoint(logger)
     ];
 }

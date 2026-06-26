@@ -1,6 +1,5 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
-using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Shared;
@@ -8,9 +7,9 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.AppService.Endpoints.Plans;
 
-internal sealed class DeleteAppServicePlanEndpoint(Pipeline eventPipeline, ITopazLogger logger) : IEndpointDefinition
+internal sealed class DeleteAppServicePlanEndpoint(ITopazLogger logger) : IEndpointDefinition
 {
-    private readonly AppServicePlanControlPlane _controlPlane = AppServicePlanControlPlane.New(eventPipeline, logger);
+    private readonly AppServicePlanControlPlane _controlPlane = AppServicePlanControlPlane.New(logger);
 
     public string? ProviderNamespace => "Microsoft.Web";
 

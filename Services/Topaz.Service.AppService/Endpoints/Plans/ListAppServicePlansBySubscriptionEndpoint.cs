@@ -1,6 +1,5 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
-using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription.Models.Responses;
@@ -9,10 +8,10 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.AppService.Endpoints.Plans;
 
-internal sealed class ListAppServicePlansBySubscriptionEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class ListAppServicePlansBySubscriptionEndpoint(ITopazLogger logger)
     : IEndpointDefinition
 {
-    private readonly AppServicePlanControlPlane _controlPlane = AppServicePlanControlPlane.New(eventPipeline, logger);
+    private readonly AppServicePlanControlPlane _controlPlane = AppServicePlanControlPlane.New(logger);
 
     public string? ProviderNamespace => "Microsoft.Web";
 

@@ -18,11 +18,11 @@ public sealed class AppServicePlanService(Pipeline eventPipeline, ITopazLogger l
 
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
-        new CreateOrUpdateAppServicePlanEndpoint(_eventPipeline, _logger),
-        new GetAppServicePlanEndpoint(_eventPipeline, _logger),
-        new DeleteAppServicePlanEndpoint(_eventPipeline, _logger),
-        new ListAppServicePlansByResourceGroupEndpoint(_eventPipeline, _logger),
-        new ListAppServicePlansBySubscriptionEndpoint(_eventPipeline, _logger),
-        new RestartAppServicePlanSitesEndpoint(_eventPipeline, _logger),
+        new CreateOrUpdateAppServicePlanEndpoint(_logger),
+        new GetAppServicePlanEndpoint(_logger),
+        new DeleteAppServicePlanEndpoint(_logger),
+        new ListAppServicePlansByResourceGroupEndpoint(_logger),
+        new ListAppServicePlansBySubscriptionEndpoint(_logger),
+        new RestartAppServicePlanSitesEndpoint(_logger),
     ];
 }

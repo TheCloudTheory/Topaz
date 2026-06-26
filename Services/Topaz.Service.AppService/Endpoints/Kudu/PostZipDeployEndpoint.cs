@@ -1,15 +1,14 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
-using Topaz.EventPipeline;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 
 namespace Topaz.Service.AppService.Endpoints.Kudu;
 
-internal sealed class PostZipDeployEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+internal sealed class PostZipDeployEndpoint(ITopazLogger logger)
     : IEndpointDefinition
 {
-    private readonly AppServiceSiteControlPlane _controlPlane = AppServiceSiteControlPlane.New(eventPipeline, logger);
+    private readonly AppServiceSiteControlPlane _controlPlane = AppServiceSiteControlPlane.New(logger);
 
     public string? ProviderNamespace => null;
 
