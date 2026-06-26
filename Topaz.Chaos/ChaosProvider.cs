@@ -11,23 +11,29 @@ public sealed class ChaosProvider(ITopazLogger logger)
             logger.LogDebug(nameof(ChaosProvider), nameof(GetChaosResponse), "Chaos is not enabled.");
             return (false, null);
         }
+
+        if (providerNamespace == "Topaz")
+        {
+            logger.LogDebug(nameof(ChaosProvider), nameof(GetChaosResponse), "Chaos is not applicable to Topaz endpoints.");
+            return (false, null);
+        }
         
         var rules = ChaosRulesProvider.ListOrdered();
         foreach (var rule in rules)
         {
             logger.LogDebug(nameof(ChaosProvider), nameof(GetChaosResponse), $"Checking chaos rule '{rule.Id}'.");
-            
-            // For each rule, calculate the current fail chance. The formula is simple:
-            // - get a random double between 0 and 1
-            // - subtract the fail chance from 1
-            // - compare the result with the fault rate of a rule
-            // 
-            // For example, if the fail chance is 0.05, and the fault rate is 0.1,
-            // the rule will be triggered because fail chance < fault rate.
+
+            if (!rule.Enabled) continue;
+
+            var namespaceMatches = rule.ServiceNamespace == "*" || rule.ServiceNamespace == providerNamespace;
+            if (!namespaceMatches) continue;
+
+            // Roll the fault: 1 - NextDouble() gives a value in (0, 1].
+            // Inject the fault when the rolled value falls below FaultRate.
             var failValue = 1 - new Random().NextDouble();
-            if (!(failValue < rule.FaultRate) || rule.ServiceNamespace != providerNamespace) continue;
-            
-            logger.LogDebug(nameof(ChaosProvider), nameof(GetChaosResponse), $"Chaos rule '{rule.Id}' triggered.");
+            if (failValue >= rule.FaultRate) continue;
+
+            logger.LogInformation($"[ChaosProvider] Rule '{rule.Id}' triggered (faultType={rule.FaultType}, faultRate={rule.FaultRate}).");
             return (true, await rule.GetResponse());
         }
         

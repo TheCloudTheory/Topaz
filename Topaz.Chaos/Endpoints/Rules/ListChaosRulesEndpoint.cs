@@ -9,6 +9,7 @@ internal sealed class ListChaosRulesEndpoint(ITopazLogger logger) : IEndpointDef
 {
     public string[] Endpoints => ["GET /topaz/chaos/rules"];
     public string[] Permissions => [];
+    public string? ProviderNamespace => "Topaz";
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 

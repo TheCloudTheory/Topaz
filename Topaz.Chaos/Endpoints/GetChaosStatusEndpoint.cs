@@ -13,6 +13,7 @@ internal sealed class GetChaosStatusEndpoint(ITopazLogger logger) : IEndpointDef
     ];
     
     public string[] Permissions => [];
+    public string? ProviderNamespace => "Topaz";
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
     public void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)

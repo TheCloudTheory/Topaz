@@ -11,6 +11,7 @@ internal sealed class EnableChaosRuleEndpoint(ITopazLogger logger) : IEndpointDe
 {
     public string[] Endpoints => ["POST /topaz/chaos/rules/{ruleId}/enable"];
     public string[] Permissions => [];
+    public string? ProviderNamespace => "Topaz";
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 

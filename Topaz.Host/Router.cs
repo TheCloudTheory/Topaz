@@ -225,7 +225,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
 
             // Provider registration gate — mirrors Azure's MissingSubscriptionRegistration behaviour.
             // Endpoints that declare a ProviderNamespace are checked before GetResponse() is called.
-            if (endpoint.ProviderNamespace is { } providerNamespace)
+            if (endpoint.ProviderNamespace is { } providerNamespace && providerNamespace != "Topaz")
             {
                 var requestPath = context.Request.Path.Value ?? string.Empty;
                 var subscriptionSegment = ExtractSubscriptionIdFromPath(requestPath);

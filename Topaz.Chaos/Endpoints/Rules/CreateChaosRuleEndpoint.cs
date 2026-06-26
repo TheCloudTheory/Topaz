@@ -12,6 +12,7 @@ internal sealed class CreateChaosRuleEndpoint(ITopazLogger logger) : IEndpointDe
 {
     public string[] Endpoints => ["PUT /topaz/chaos/rules/{ruleId}"];
     public string[] Permissions => [];
+    public string? ProviderNamespace => "Topaz";
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 

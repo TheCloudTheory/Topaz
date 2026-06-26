@@ -9,6 +9,8 @@ internal sealed class GetHealthEndpoint : IEndpointDefinition
 {
     public string[] Endpoints => ["GET /health"];
     public string[] Permissions => [];
+    public string? ProviderNamespace => "Topaz";
+
     public (ushort[] Ports, Protocol Protocol) PortsAndProtocol =>
         ([GlobalSettings.DefaultResourceManagerPort], Protocol.Https);
 
