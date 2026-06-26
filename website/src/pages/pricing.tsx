@@ -107,6 +107,11 @@ function CurrentPlan() {
                 never without warning.
               </span>
             </div>
+            <div className={styles.currentPlanCta}>
+              <Link className="button button--primary button--lg" to="/docs/intro/">
+                Get started free →
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -287,8 +292,8 @@ export default function PricingPage(): JSX.Element {
     >
       <Hero />
       <CurrentPlan />
-      <FutureTiers />
       <Faq />
+      <FutureTiers />
       <EnterpriseContact />
       <Cta />
     </Layout>

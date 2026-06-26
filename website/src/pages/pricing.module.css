@@ -178,6 +178,11 @@
   color: var(--ifm-heading-color);
 }
 
+.currentPlanCta {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
 /* ── Future tiers ──────────────────────────────────────────────── */
 .tiersGrid {
   display: grid;
