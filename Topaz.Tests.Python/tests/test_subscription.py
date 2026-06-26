@@ -6,7 +6,7 @@ import uuid
 
 import pytest
 
-from azure.mgmt.resource import ResourceManagementClient
+from azure.mgmt.resource.resources import ResourceManagementClient
 from azure.mgmt.resource.resources.models import ResourceGroup, ResourceGroupPatchable
 from azure.mgmt.subscription import SubscriptionClient
 

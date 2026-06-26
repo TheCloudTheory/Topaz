@@ -20,8 +20,8 @@ public class PythonFixture
     private IContainer? _containerTopaz;
     private INetwork? _network;
 
-    internal static IContainer? PythonContainer { get; private set; }
-    internal static IContainer? TopazContainer { get; private set; }
+    private static IContainer? PythonContainer { get; set; }
+    private static IContainer? TopazContainer { get; set; }
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
@@ -118,8 +118,11 @@ public class PythonFixture
     /// </summary>
     internal static async Task RunPythonTests(string testFile)
     {
-        Assert.That(PythonContainer, Is.Not.Null, "Python container has not been started.");
-        Assert.That(TopazContainer, Is.Not.Null, "Topaz container has not been started.");
+        Assert.Multiple(() =>
+        {
+            Assert.That(PythonContainer, Is.Not.Null, "Python container has not been started.");
+            Assert.That(TopazContainer, Is.Not.Null, "Topaz container has not been started.");
+        });
 
         var result = await PythonContainer!.ExecAsync([
             "/bin/sh", "-c",
@@ -144,8 +147,11 @@ public class PythonFixture
     /// </summary>
     internal static async Task EnsureHostMapping(string hostname)
     {
-        Assert.That(PythonContainer, Is.Not.Null);
-        Assert.That(TopazContainer, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(PythonContainer, Is.Not.Null);
+            Assert.That(TopazContainer, Is.Not.Null);
+        });
 
         var result = await PythonContainer!.ExecAsync([
             "/bin/sh", "-c",
