@@ -362,6 +362,21 @@ public class Host
             .UseKestrel((_, hostOptions) =>
             {
                 var usedPorts = new List<int>();
+                hostOptions.Listen(IPAddress.Parse(_topazIpAddress), ForwardProxySettings.DefaultPort, listenOptions =>
+                {
+                    _logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync), "Enabling forward proxy.");
+                    
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    {
+                        listenOptions.UseHttps("topaz.pfx", "qwerty");
+                    }
+                    else
+                    {
+                        ConfigurePemCertificate(listenOptions);
+                    }
+                });
+                
+                usedPorts.Add(ForwardProxySettings.DefaultPort);
                 foreach (var httpEndpoint in httpEndpoints)
                 {
                     switch (httpEndpoint.PortsAndProtocol.Protocol)
@@ -436,20 +451,6 @@ public class Host
                             throw new ArgumentOutOfRangeException();
                     }
                 }
-                
-                hostOptions.Listen(IPAddress.Parse(_topazIpAddress), ForwardProxySettings.DefaultPort, listenOptions =>
-                {
-                    _logger.LogDebug(nameof(Host), nameof(CreateWebserverForHttpEndpointsAsync), "Enabling forward proxy.");
-                    
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                    {
-                        listenOptions.UseHttps("topaz.pfx", "qwerty");
-                    }
-                    else
-                    {
-                        ConfigurePemCertificate(listenOptions);
-                    }
-                });
             })
             // Used to disable the obsolete messages displayed by Kestrel when starting
             .UseSetting(WebHostDefaults.SuppressStatusMessagesKey, "True")
@@ -467,6 +468,18 @@ public class Host
                             var response = await _appServiceForwardProxy.Send(context);
                             
                             context.Response.StatusCode = (int)response.StatusCode;
+
+                            // Copy upstream headers before writing the body — once WriteAsync
+                            // is called the response is flushed and headers can no longer be set.
+                            // Skip Transfer-Encoding: HttpClient already decoded chunked bodies
+                            // into a plain byte array via ReadAsByteArrayAsync.
+                            foreach (var header in response.Headers)
+                            {
+                                if (string.Equals(header.Key, "Transfer-Encoding", StringComparison.OrdinalIgnoreCase))
+                                    continue;
+                                context.Response.Headers[header.Key] = new StringValues(header.Value.ToArray());
+                            }
+
                             if (response.StatusCode != HttpStatusCode.NoContent)
                             {
                                 var responseBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
@@ -477,10 +490,6 @@ public class Host
                                 }
                             }
                             
-                            foreach (var header in response.Headers)
-                            {
-                                context.Response.Headers[header.Key] = new StringValues(header.Value.ToArray());
-                            }
                             return;
                         }
 

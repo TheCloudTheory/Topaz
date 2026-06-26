@@ -10,5 +10,7 @@ public sealed class ForwardProxyService : IServiceDefinition
     public static string UniqueName => "forward-proxy";
     public string Name => "ForwardProxy";
     public bool IsTopazService => true;
-    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [];
+    public IReadOnlyCollection<IEndpointDefinition> Endpoints => [
+        new ForwardProxyEndpoint()
+    ];
 }

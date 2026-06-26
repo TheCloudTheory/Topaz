@@ -1,0 +1,133 @@
+networks:
+  topaz-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.28.0.0/16"
+
+volumes:
+  topaz-data: {}
+  topaz-certs:
+    external: true
+
+services:
+
+  # --- Topaz emulator -----------------------------------------------------------
+  topaz:
+    image: topaz/host:latest
+    networks:
+      topaz-net:
+        ipv4_address: "172.28.0.10"
+    ports:
+      - "8899:8899"   # ARM / Resource Manager
+      - "8900:8900"   # App Service forward proxy
+    volumes:
+      - topaz-certs:/certs:ro
+      - topaz-data:/app/.topaz
+    command:
+      - --certificate-file
+      - /certs/topaz.crt
+      - --certificate-key
+      - /certs/topaz.key
+      - --log-level
+      - Information
+
+
+  # --- Backend application ------------------------------------------------------
+  # The Compose service name ("backend") must match the App Service site name
+  # provisioned in Topaz. Topaz resolves the forwarding target as
+  # http://{siteName}:{WEBSITES_PORT}, and Docker's internal DNS resolves
+  # "backend" to this container's IP on the shared network.
+  backend:
+    image: nginx:alpine
+    networks:
+      - topaz-net
+    # nginx listens on port 80 by default, which is also the WEBSITES_PORT default.
+
+
+  # --- Provisioner (one-shot) ---------------------------------------------------
+  # Registers the App Service plan and site in Topaz so the forward proxy can
+  # look up the site and knows where to route incoming requests.
+  # Runs once on startup and exits; the other services continue running.
+  provisioner:
+    image: curlimages/curl:latest
+    depends_on:
+      - topaz
+    networks:
+      - topaz-net
+    # Topaz default subscription / resource group used for local dev
+    environment:
+      TOPAZ_HOST: "https://topaz.local.dev:8899"
+      TENANT_ID: "50717675-3E5E-4A1E-8CB5-C62D8BE8CA48"
+      SUBSCRIPTION_ID: "00000000-0000-0000-0000-000000000001"
+      RESOURCE_GROUP: "rg-forward-proxy-demo"
+      PLAN_NAME: "plan-forward-proxy-demo"
+      SITE_NAME: "backend"         # must match the Compose service name above
+      WEBSITES_PORT: "80"          # port nginx listens on inside the backend container
+    extra_hosts:
+      - "topaz.local.dev:172.28.0.10"
+      - "backend.azurewebsites.topaz.local.dev:172.28.0.10"
+    volumes:
+      - topaz-certs:/certs:ro
+    command:
+      - /bin/sh
+      - -c
+      - |
+        # Wait for Topaz to be ready
+        until curl -sk "$${TOPAZ_HOST}/health" | grep -q '"status":"Healthy"'; do
+          echo "Waiting for Topaz..."; sleep 2
+        done
+
+        CACERT="--cacert /certs/topaz.crt"
+        ARM="$${TOPAZ_HOST}/subscriptions/$${SUBSCRIPTION_ID}"
+
+        # Create subscription (no auth required for this internal endpoint)
+        curl -sk $$CACERT -X POST \
+          "$${TOPAZ_HOST}/subscriptions/$${SUBSCRIPTION_ID}" \
+          -H "Content-Type: application/json" \
+          -d "{\"subscriptionId\":\"$${SUBSCRIPTION_ID}\",\"subscriptionName\":\"dev-local\"}" > /dev/null
+
+        # Obtain a Bearer token via ROPC (username/password)
+        TOKEN=$(curl -sk $$CACERT -X POST \
+          "$${TOPAZ_HOST}/$${TENANT_ID}/oauth2/v2.0/token" \
+          -H "Content-Type: application/x-www-form-urlencoded" \
+          -d "grant_type=password&username=topazadmin%40topaz.local.dev&password=admin&scope=openid" \
+          | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
+
+        AUTH="-H \"Authorization: Bearer $${TOKEN}\""
+
+        # Create resource group
+        curl -sk $$CACERT -X PUT \
+          "$${ARM}/resourceGroups/$${RESOURCE_GROUP}?api-version=2021-04-01" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer $${TOKEN}" \
+          -d '{"location":"westeurope"}' > /dev/null
+
+        # Create App Service plan
+        curl -sk $$CACERT -X PUT \
+          "$${ARM}/resourceGroups/$${RESOURCE_GROUP}/providers/Microsoft.Web/serverfarms/$${PLAN_NAME}?api-version=2022-03-01" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer $${TOKEN}" \
+          -d '{"location":"westeurope","sku":{"name":"B1","tier":"Basic","capacity":1},"properties":{}}' > /dev/null
+
+        # Create App Service site (name = Docker Compose service name)
+        curl -sk $$CACERT -X PUT \
+          "$${ARM}/resourceGroups/$${RESOURCE_GROUP}/providers/Microsoft.Web/sites/$${SITE_NAME}?api-version=2022-03-01" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer $${TOKEN}" \
+          -d "{\"location\":\"westeurope\",\"kind\":\"app\",\"properties\":{\"serverFarmId\":\"$${PLAN_NAME}\"}}" > /dev/null
+
+        # Set WEBSITES_PORT so Topaz knows which port the backend listens on
+        curl -sk $$CACERT -X PUT \
+          "$${ARM}/resourceGroups/$${RESOURCE_GROUP}/providers/Microsoft.Web/sites/$${SITE_NAME}/config/appsettings?api-version=2022-03-01" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer $${TOKEN}" \
+          -d "{\"properties\":{\"WEBSITES_PORT\":\"$${WEBSITES_PORT}\"}}" > /dev/null
+
+        echo "Provisioning complete. Testing forward proxy..."
+        echo ""
+        # Send a request through the forward proxy — Topaz receives it on port 8900,
+        # looks up the site, and forwards it to http://backend:80 (the nginx container).
+        curl -sk $$CACERT "https://backend.azurewebsites.topaz.local.dev:8900/"
+        echo ""
+        echo "Forward proxy is working. Nginx response received via Topaz on port 8900."
