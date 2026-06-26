@@ -12,7 +12,10 @@ public sealed class AppServiceForwardProxy(HttpClient httpClient, ITopazLogger l
     public bool CanForward(string host)
     {
         logger.LogDebug(nameof(AppServiceForwardProxy), nameof(CanForward), "Checking if host `{0}` can be forwarded.", host);
-        return host.EndsWith(".azurewebsites.topaz.local.dev");    
+        
+        // SCM/Kudu hostnames (.scm.azurewebsites.topaz.local.dev) must not be forwarded;
+        // they are served by the dedicated Kudu endpoints, not by Docker containers.
+        return !host.Contains(".scm.azurewebsites.topaz.local.dev") && host.EndsWith(".azurewebsites.topaz.local.dev");
     }
     
     public async Task<HttpResponseMessage> Send(HttpContext context)
