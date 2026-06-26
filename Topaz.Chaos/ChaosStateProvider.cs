@@ -1,6 +1,6 @@
 namespace Topaz.Chaos;
 
-internal sealed class ChaosStateProvider
+public sealed class ChaosStateProvider
 {
-    public static bool IsEnabled { get; set; }
+    public static bool IsEnabled { get; internal set; }
 }

@@ -210,13 +210,20 @@ public class Host
 
         new BackgroundServiceOrchestrator(backgroundServices, _logger).StartAll(cancellationToken);
 
-        if (!Service.ContainerRegistry.AcrDockerExecutor.IsAvailable())
+        if (!AcrDockerExecutor.IsAvailable())
         {
             _logger.LogDebug(nameof(Host), nameof(StartAsync),
                 "Docker is not available — ACR DockerBuildRequest runs will use immediate-Succeeded emulation.");
             Console.WriteLine();
             Console.WriteLine("  [warning] Docker not detected. ACR DockerBuildRequest runs will report");
             Console.WriteLine("            immediate Succeeded without real execution.");
+        }
+
+        if (ChaosStateProvider.IsEnabled)
+        {
+            Console.WriteLine();
+            AnsiConsole.MarkupLine("  [yellow]WARNING![/] Chaos is enabled. This will cause random failures.");
+            Console.WriteLine();
         }
 
         Console.WriteLine();
@@ -227,27 +234,27 @@ public class Host
         await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
     }
 
-    private static void Bootstrap()
+    private void Bootstrap()
     {
         if (Directory.Exists(GlobalSettings.MainEmulatorDirectory))
         {
-            Console.WriteLine("Emulator directory already exists.");
+            _logger.LogDebug(nameof(Host), nameof(Bootstrap), "Emulator directory already exists.");
         }
         else
         {
             Directory.CreateDirectory(GlobalSettings.MainEmulatorDirectory);
-            Console.WriteLine("Emulator directory created.");
+            _logger.LogDebug(nameof(Host), nameof(Bootstrap), "Emulator directory created.");
         }
 
         if (File.Exists(GlobalSettings.GlobalDnsEntriesFilePath))
         {
-            Console.WriteLine("Global DNS entries file already exists.");
+            _logger.LogDebug(nameof(Host), nameof(Bootstrap), "Global DNS entries file already exists.");
             return;
         }
 
         File.WriteAllText(GlobalSettings.GlobalDnsEntriesFilePath,
             JsonSerializer.Serialize(new GlobalDnsEntries()));
-        Console.WriteLine("Global DNS entries file created.");
+        _logger.LogDebug(nameof(Host), nameof(Bootstrap), "Global DNS entries file created.");
     }
 
     private void CreateAmqpListenersForAmpqEndpoints(IEndpointDefinition[] endpoints)

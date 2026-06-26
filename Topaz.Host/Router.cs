@@ -1,9 +1,9 @@
 using System.Net;
-using System.Security.Claims;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using Topaz.Chaos;
 using Topaz.EventPipeline;
 using Topaz.Service.Authorization;
 using Topaz.Service.ResourceManager;
@@ -16,6 +16,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
 {
     private readonly AzureAuthorizationAdapter _authorizationAdapter = new(eventPipeline, logger);
     private readonly ResourceManagerResourceProvider _resourceManagerResourceProvider = new(logger);
+    private readonly ChaosProvider _chaosProvider = new(logger);
     
     internal async Task MatchAndExecuteEndpoint(IEndpointDefinition[] httpEndpoints, HttpContext context)
     {
@@ -40,7 +41,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         // Normalize consecutive slashes (some clients, e.g. `az resource`, emit
         // paths like `/providers/Microsoft.Compute//virtualMachines/` with a double
         // slash between the provider namespace and resource type).
-        // Also write back to context.Request.Path so endpoint handlers see clean segments.
+        // Also, write back to context.Request.Path so endpoint handlers see clean segments.
         while (path.Contains("//"))
             path = path.Replace("//", "/");
         context.Request.Path = path;
@@ -140,7 +141,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "The selected handler for an endpoint will be {0}", endpoint.GetType().Name);
         logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "[{0}] {1}{2}", method, path, query);
 
-        var response = CallEndpoint(endpoint, context);
+        var response = await CallEndpoint(endpoint, context);
         // Ensure Content is never null — a missing body returns empty string so downstream
         // code can always call ReadAsByteArrayAsync() without a NullReferenceException.
         response.Content ??= new StringContent(string.Empty);
@@ -193,7 +194,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
         }
     }
 
-    private HttpResponseMessage CallEndpoint(IEndpointDefinition endpoint, HttpContext context)
+    private async Task<HttpResponseMessage> CallEndpoint(IEndpointDefinition endpoint, HttpContext context)
     {
         var response = new HttpResponseMessage();
         string? requestBodyContent = null;
@@ -207,7 +208,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
             {
                 using (var reader = new StreamReader(context.Request.Body, leaveOpen: true))
                 {
-                    requestBodyContent = reader.ReadToEnd();
+                    requestBodyContent = await reader.ReadToEndAsync();
                 }
                 
                 context.Request.Body.Position = 0; // Reset for endpoint to read
@@ -245,6 +246,13 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
                 }
             }
 
+            var chaosResult = await _chaosProvider.GetChaosResponse(endpoint.ProviderNamespace);
+            if (chaosResult.isFaulted)
+            {
+                response = chaosResult.response;
+                return response!;
+            }
+
             context.User = principal;
             endpoint.GetResponse(context, response, options);
         }
@@ -256,14 +264,14 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
                 logger.LogDebug(nameof(Router), nameof(MatchAndExecuteEndpoint), "Request body: {0}", requestBodyContent);
             }
             
-            response.Content = new StringContent(ex.Message);
+            response!.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }
         catch(Exception ex)
         {
             logger.LogError(ex);
             
-            response.Content = new StringContent(ex.Message);
+            response!.Content = new StringContent(ex.Message);
             response.StatusCode = HttpStatusCode.InternalServerError;
         }
         
