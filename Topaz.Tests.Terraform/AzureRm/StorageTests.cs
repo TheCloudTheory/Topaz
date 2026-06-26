@@ -27,4 +27,10 @@ public class StorageTests : AzureRmBatchFixture
             Assert.That(GetOutput<string>("stor_table_entity_row_key"), Is.EqualTo("rk1"));
         });
     }
+
+    [Test]
+    public void StorageBlobContainer_CreateAndDestroy_Succeeds()
+    {
+        Assert.That(GetOutput<string>("stor_container_name"), Is.EqualTo("demo"));
+    }
 }

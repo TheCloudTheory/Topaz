@@ -268,6 +268,24 @@ resource "azurerm_storage_table_entity" "stor_table_entity" {
   }
 }
 
+resource "azurerm_resource_group" "stor_container_rg" {
+  name     = "tf-rm-stor-container-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_storage_account" "stor_container" {
+  name                     = "tfrmstorcontainer"
+  resource_group_name      = azurerm_resource_group.stor_container_rg.name
+  location                 = azurerm_resource_group.stor_container_rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+}
+
+resource "azurerm_storage_container" "stor_container" {
+  name               = "demo"
+  storage_account_id = azurerm_storage_account.stor_container.id
+}
+
 # ── Managed Identity ───────────────────────────────────────────────────────────
 
 resource "azurerm_resource_group" "id_rg" {
@@ -439,6 +457,7 @@ output "stor_primary_blob_endpoint" { value = azurerm_storage_account.stor.prima
 output "stor_tls_account_name"      { value = azurerm_storage_account.stor_tls.name }
 output "stor_table_entity_partition_key" { value = azurerm_storage_table_entity.stor_table_entity.partition_key }
 output "stor_table_entity_row_key"       { value = azurerm_storage_table_entity.stor_table_entity.row_key }
+output "stor_container_name"            { value = azurerm_storage_container.stor_container.name }
 
 output "id_name"                    { value = azurerm_user_assigned_identity.id.name }
 output "id_client_id"               { value = azurerm_user_assigned_identity.id.client_id }
