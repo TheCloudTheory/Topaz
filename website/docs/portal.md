@@ -78,6 +78,21 @@ docker run -d \
 | **Virtual Networks** | View virtual networks |
 | **Insights** | Observability and diagnostics information |
 
+## Topaz CLI terminal
+
+The Portal includes a built-in CLI terminal panel. Click the **Topaz CLI** button in the navigation bar to open it.
+
+![Topaz CLI terminal panel showing command suggestions and output](/img/topaz-cli-portal.png)
+
+From there you can run any `topaz` command — create resources, inspect state, manage subscriptions — without leaving the browser.
+
+- **Suggestions** — start typing and the panel surfaces matching commands with descriptions and usage examples.
+- **Tab / Enter** — auto-completes the selected suggestion, pre-filling required options as placeholders.
+- **↑ / ↓** — browse command history when no suggestions are open.
+- **Resize** — drag the top edge of the panel to adjust its height.
+
+The terminal connects to the same emulator instance the Portal is already talking to, so no extra configuration is needed.
+
 ## Versioning
 
 Portal images are tagged identically to the main Topaz release (e.g. `v1.0.500-alpha`). Always use a matching tag for the Portal and emulator to avoid compatibility issues:
