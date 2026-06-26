@@ -26,6 +26,8 @@ docker run -p 8899:8899 thecloudtheory/topaz-host:nightly
 > New to Topaz? Start here:
 > - [Getting started](https://topaz.thecloudtheory.com/docs/intro/)
 > - [Using Topaz CLI](https://topaz.thecloudtheory.com/docs/using-cli/)
+> - [Features overview](https://topaz.thecloudtheory.com/features/)
+> - [Pricing](https://topaz.thecloudtheory.com/pricing/)
 
 ## What is Topaz?
 
@@ -119,7 +121,7 @@ If you need emulation for a single Azure service, these official Microsoft tools
 * [Azure Cosmos DB Emulator](https://github.com/Azure/azure-cosmos-db-emulator-docker) — Cosmos DB only
 * [Azure Service Bus Emulator](https://github.com/Azure/azure-service-bus-emulator-installer) — Service Bus only
 
-If you need multiple services, RBAC, or ARM deployments locally, that's where Topaz fits.
+If you need multiple services, RBAC, or ARM deployments locally, that's where Topaz fits. See the [Topaz vs. Azurite comparison](https://topaz.thecloudtheory.com/docs/comparisons/azurite-alternative/) for a detailed breakdown, or the [blog post](https://topaz.thecloudtheory.com/blog/topaz-vs-azurite/) for a narrative walkthrough.
 
 If you're coming from AWS and already use [LocalStack](https://github.com/localstack/localstack), Topaz is the equivalent for Azure — one process, multiple services, RBAC, Bicep deployments, and Entra ID emulation, all without an Azure account.
 
