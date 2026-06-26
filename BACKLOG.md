@@ -369,40 +369,6 @@ TODO: Azure Blob Storage: enforce authentication on private containers
   labels: enhancement, storage, good first issue
 -->
 
-### Azure App Service — transparent request forwarding
-
-<!--
-TODO: Azure App Service: transparent HTTP request forwarding (data-plane hosting)
-  Implement a new data-plane forwarding endpoint on DefaultAppServicePort (8895) that
-  proxies all HTTP traffic to the user's actual application container, enabling Docker
-  Compose setups where Topaz emulates the App Service hosting layer.
-  Behaviour:
-  1. Extract the site name from the incoming Host header:
-       {siteName}.azurewebsites.topaz.local.dev:{8895}
-  2. Load the AppServiceSiteResource via AppServiceSiteResourceProvider and read the
-     WEBSITES_PORT app setting from SiteConfig.AppSettings (default: 80 if not set).
-     This mirrors real Azure App Service behaviour for custom-port containers.
-  3. Build the forwarding target URL:
-       http://{siteName}:{WEBSITES_PORT}{path}{query}
-     where {siteName} is assumed to be the Docker Compose service name (convention:
-     the Compose service must be named identically to the App Service site).
-  4. Forward the request (method, headers, body) via HttpClient and stream the response
-     (status code, headers, body) back to the caller verbatim.
-  5. Propagate X-Forwarded-For and X-Forwarded-Host headers.
-  Design notes:
-  - Register a named HttpClient / IHttpClientFactory in Topaz.Host for connection pooling.
-  - Add the forwarding endpoint to AppServiceSiteService.Endpoints on DefaultAppServicePort.
-  - IEndpointDefinition.GetResponse is currently synchronous; evaluate whether an async
-    overload should be introduced before beginning this work, or accept .GetAwaiter().GetResult()
-    as a temporary approach for the dev-emulator context.
-  Compose integration:
-  - Add port 8895 to Examples/Compose/docker-compose.yml.
-  - Add an extra_hosts entry mapping {siteName}.azurewebsites.topaz.local.dev to Topaz's IP.
-  - Document WEBSITES_PORT usage in the example.
-  milestone: v1.8-preview
-  labels: enhancement, app-service
--->
-
 ### Azure App Service — Kudu SCM — individual deployment GET endpoint
 
 <!--
