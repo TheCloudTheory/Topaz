@@ -421,26 +421,6 @@ TODO: Azure App Service: Kudu SCM — individual deployment GET endpoint
   labels: enhancement, app-service
 -->
 
-### Chaos Engineering — controllable fault injection
-
-<!--
-TODO: Chaos Engineering: Router-level fault injection middleware
-  Integrate fault injection into the Topaz router pipeline so that when chaos mode is
-  enabled and a fault rule matches an incoming request, the router injects the configured
-  fault before dispatching to the endpoint handler:
-  - Timeout fault: delay the response by a configurable duration (default 30 s) before
-    returning 408 Request Timeout or simply dropping the connection.
-  - TransientError fault: return 500 Internal Server Error with a stock Azure-style JSON
-    error body ({ "error": { "code": "InternalServerError", "message": "..." } }).
-  - Throttle fault: return 429 Too Many Requests with a Retry-After header (default 5 s).
-  - ServiceUnavailable fault: return 503 Service Unavailable.
-  The faultRate field is respected: generate a random float per request; only inject
-  the fault when the value is below faultRate (so 0.1 = 10% of requests are faulted).
-  Log every injected fault at Information level so tests can observe it.
-  milestone: v1.8-preview
-  labels: enhancement, chaos-engineering
--->
-
 ### Azure App Configuration — initial control plane and data plane
 
 <!--
