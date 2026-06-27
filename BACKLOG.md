@@ -1085,6 +1085,33 @@ TODO: Azure Cosmos DB: VectorDistance query support (vector search stub)
   labels: enhancement, cosmos-db, ai-agents
 -->
 
+### Resource pre-seeding from existing Azure subscriptions
+
+<!--
+TODO: Resource pre-seeding — import existing Azure resources into Topaz state
+  Allow users to seed the Topaz local state from a live Azure subscription so that
+  deployments can be tested against resources that were manually created or provisioned
+  by a different template — without requiring a lower environment.
+
+  Proposed flow:
+  - `topaz seed --subscription <sub> [--resource-group <rg>] [--resource-type <type>]`
+    Calls the real Azure ARM API (via DefaultAzureCredential) to list resources in the
+    target scope and writes a metadata.json for each supported resource type into the
+    local .topaz/ directory tree, using the same filesystem layout as Topaz's own
+    CreateOrUpdate path.
+  - Only resource types that Topaz implements are seeded; unsupported types are listed
+    as warnings so the user knows what coverage gaps remain.
+  - Dry-run flag (`--dry-run`) prints the resources that would be seeded without
+    writing any files.
+  - Overwrite flag (`--overwrite`) controls whether existing local state is replaced.
+
+  This closes the primary gap identified by users who deploy templates against
+  pre-existing infrastructure: reference() expressions and incremental deployments
+  can be validated locally once the existing resource state is present in Topaz.
+  milestone: v1.11
+  labels: enhancement, good first issue
+-->
+
 ### ACR Tasks — multi-step task files
 
 <!--

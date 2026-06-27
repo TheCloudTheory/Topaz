@@ -188,6 +188,7 @@ public class TopazFixture
                 .WithExtraHost("tfrmstorageacct.blob.storage.topaz.local.dev", _containerTopaz.IpAddress)
                 .WithExtraHost("tfrmstoretls.blob.storage.topaz.local.dev", _containerTopaz.IpAddress)
                 .WithExtraHost("tfrmstortableacct.blob.storage.topaz.local.dev", _containerTopaz.IpAddress)
+                .WithExtraHost("tfrmstorcontainer.blob.storage.topaz.local.dev", _containerTopaz.IpAddress)
                 // Cosmos DB data-plane: azurerm_cosmosdb_account read-back checks the documentEndpoint.
                 .WithExtraHost("tf-rm-cosmos.documents.topaz.local.dev", _containerTopaz.IpAddress)
                 // Bind-mount host cache: providers + terraform binary are downloaded once and reused

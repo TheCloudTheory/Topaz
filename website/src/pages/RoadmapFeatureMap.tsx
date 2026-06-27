@@ -56,6 +56,7 @@ const MILESTONES: Milestone[] = [
     colorClass: styles.milestonePurple,
     features: [
       { service: 'Container Registry', summary: 'ACR Tasks multi-step execution (FileTaskRunRequest & EncodedTaskRunRequest)' },
+      { service: 'Resource pre-seeding', summary: 'Import existing Azure resources into local Topaz state via topaz seed CLI command' },
     ],
   },
 ];
