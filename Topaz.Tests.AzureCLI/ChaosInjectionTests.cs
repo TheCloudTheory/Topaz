@@ -93,7 +93,7 @@ public class ChaosInjectionTests : TopazFixture
         await RunAzureCliCommand(
             $"az rest --method put " +
             $"--uri \"{RulesBase}/{_ruleId}\" " +
-            $"--body '{{\"serviceNamespace\":\"*\",\"faultType\":\"TransientError\",\"faultRate\":0.9999}}' " +
+            $"--body '{{\"serviceNamespace\":\"Microsoft.Compute\",\"faultType\":\"TransientError\",\"faultRate\":0.9999}}' " +
             $"--headers Content-Type=application/json",
             null, 0);
 
@@ -115,11 +115,13 @@ public class ChaosInjectionTests : TopazFixture
     [Test]
     public async Task ChaosInjection_TopazEndpointsAreExempt_FromChaosInjection()
     {
-        // Wildcard rule with rate ≈ 1 — fires on any non-Topaz endpoint.
+        // Rule targeting the "Topaz" namespace — would match /topaz/* endpoints by namespace,
+        // but those endpoints are exempt via the early-return in ChaosProvider before rule
+        // matching runs. This proves Topaz exemption holds even for rules that name the namespace.
         await RunAzureCliCommand(
             $"az rest --method put " +
             $"--uri \"{RulesBase}/{_ruleId}\" " +
-            $"--body '{{\"serviceNamespace\":\"*\",\"faultType\":\"TransientError\",\"faultRate\":0.9999}}' " +
+            $"--body '{{\"serviceNamespace\":\"Topaz\",\"faultType\":\"TransientError\",\"faultRate\":0.9999}}' " +
             $"--headers Content-Type=application/json",
             null, 0);
 
