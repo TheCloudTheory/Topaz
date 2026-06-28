@@ -402,7 +402,8 @@ public sealed class TemplateDeploymentOrchestrator(
             var outputsJObject = _armTemplateEngineFacade.EvaluateOutputs(
                 deploymentSubscriptionId, deploymentResourceGroupName,
                 templateDeployment.Template, logger,
-                referenceResolver);
+                referenceResolver,
+                templateDeployment.SymbolicNameMap.Count > 0 ? templateDeployment.SymbolicNameMap : null);
             var outputsJson = outputsJObject.ToString(Newtonsoft.Json.Formatting.None);
             var outputs = JsonDocument.Parse(outputsJson).RootElement.Clone();
             templateDeployment.SetOutputs(outputs);
@@ -629,6 +630,25 @@ public sealed class TemplateDeploymentOrchestrator(
                 setError: error => nestedDeploymentResource.Properties.Error = error);
 
             innerJob.SetCancellationTokenSource(linkedCts);
+
+            // If the inner template uses dict-style resources (Bicep newer format), build a
+            // symbolic-name → resource-type map so that reference('symbolName') expressions
+            // in outputs can be resolved at evaluation time.
+            if (templateElement.TryGetProperty("resources", out var innerResElement) &&
+                innerResElement.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var prop in innerResElement.EnumerateObject())
+                {
+                    if (prop.Value.ValueKind == JsonValueKind.Object &&
+                        prop.Value.TryGetProperty("type", out var typeProp) &&
+                        typeProp.ValueKind == JsonValueKind.String)
+                    {
+                        var resourceType = typeProp.GetString();
+                        if (!string.IsNullOrEmpty(resourceType))
+                            innerJob.SymbolicNameMap[prop.Name] = resourceType;
+                    }
+                }
+            }
 
             // Step 7: Recursive execution + status propagation
             try

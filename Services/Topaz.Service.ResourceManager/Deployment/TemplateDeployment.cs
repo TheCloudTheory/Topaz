@@ -28,6 +28,14 @@ internal sealed class TemplateDeployment
     /// </summary>
     public Dictionary<string, System.Text.Json.JsonElement?> NestedDeploymentOutputs { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Maps Bicep symbolic resource names (dict-key in newer ARM templates) to their
+    /// resource type, enabling resolution of <c>reference('symbolicName')</c> expressions
+    /// in output evaluation.  Populated by <c>HandleNestedDeployment</c> when the inner
+    /// template uses the dict-style resources format.
+    /// </summary>
+    public Dictionary<string, string> SymbolicNameMap { get; } = new(StringComparer.OrdinalIgnoreCase);
+
     private CancellationTokenSource? _cts;
 
     private readonly Action _complete;

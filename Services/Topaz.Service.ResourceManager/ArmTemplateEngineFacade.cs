@@ -198,12 +198,18 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
     /// When the Azure SDK expression engine cannot evaluate an expression (e.g. <c>reference()</c>),
     /// <paramref name="referenceResolver"/> is tried before falling back to <c>null</c>.
     /// </summary>
+    /// <param name="symbolicNameMap">
+    /// Optional mapping from Bicep symbolic resource names (dict-key in newer ARM templates)
+    /// to their resource type.  Enables resolution of <c>reference('symbolicName')</c>
+    /// expressions that the ARM engine cannot resolve at output-evaluation time.
+    /// </param>
     public JObject EvaluateOutputs(
         string subscriptionId,
         string resourceGroupName,
         Template template,
         ITopazLogger logger,
-        Func<string, JToken?>? referenceResolver = null)
+        Func<string, JToken?>? referenceResolver = null,
+        IReadOnlyDictionary<string, string>? symbolicNameMap = null)
     {
         var metrics = new TemplateMetricsRecorder();
         var evalCtx = TemplateEngine.GetExpressionEvaluationContext(
@@ -262,6 +268,51 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
                                 catch { return m.Value; }
                             });
                             resolved = referenceResolver(preResolved);
+
+                            // If the whole expression wasn't a reference() call (e.g. it is
+                            // wrapped in format()), try substituting every reference(...)
+                            // sub-expression with its resolved string value and re-evaluating.
+                            if (resolved == null)
+                            {
+                                // If there are symbolic name references (reference('symbolName'))
+                                // expand them to resource-ID form using the symbolic name map.
+                                var withSymbolsExpanded = preResolved;
+                                if (symbolicNameMap != null)
+                                {
+                                    withSymbolsExpanded = SymbolicReferencePattern.Replace(preResolved, m =>
+                                    {
+                                        var sym = m.Groups[1].Value;
+                                        var propPath = m.Groups[2].Value; // e.g. ".defaultHostName"
+                                        if (!symbolicNameMap.TryGetValue(sym, out var resourceType))
+                                            return m.Value;
+                                        // Find the resolved resource name in the template
+                                        var match = template.Resources.FirstOrDefault(r =>
+                                            string.Equals(r.Type?.Value?.ToString(), resourceType,
+                                                StringComparison.OrdinalIgnoreCase));
+                                        if (match?.Name?.Value == null) return m.Value;
+                                        var resolvedName = match.Name.Value.ToString()!;
+                                        return $"reference(resourceId('{resourceType}', '{resolvedName}')){propPath}";
+                                    });
+                                }
+
+                                var withRefSubstituted = ReferenceSubExprPattern.Replace(withSymbolsExpanded, m =>
+                                {
+                                    var refExpr = m.Value;
+                                    // Wrap in [...] so TryResolve can strip the brackets
+                                    var inner = refExpr.StartsWith('[') ? refExpr : $"[{refExpr}]";
+                                    var refVal = referenceResolver(inner);
+                                    return refVal is JValue jvr && jvr.Value is string sr ? $"'{sr}'" : refExpr;
+                                });
+                                if (!string.Equals(withRefSubstituted, preResolved, StringComparison.Ordinal))
+                                {
+                                    try
+                                    {
+                                        resolved = ExpressionsEngine.EvaluateLanguageExpression(
+                                            withRefSubstituted, evalCtx, new TemplateErrorAdditionalInfo());
+                                    }
+                                    catch { /* leave resolved as null */ }
+                                }
+                            }
                         }
 
                         if (resolved != null)
@@ -295,4 +346,19 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
 
     private static readonly Regex VariablesCallPattern = new(
         @"variables\('([^']+)'\)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex SymbolicReferencePattern = new(
+        @"reference\('([^']+)'\)((?:\.[a-zA-Z0-9_]+)+)",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    /// <summary>
+    /// Matches a <c>reference(...)</c> sub-expression (with an optional property
+    /// accessor suffix like <c>.defaultHostName</c>) that may appear nested within
+    /// a larger ARM expression such as <c>format('https://{0}', reference(...).prop)</c>.
+    /// Uses a simple heuristic: matches <c>reference(</c> followed by everything up to
+    /// the last <c>)</c> that still has a trailing <c>.propertyName</c> accessor.
+    /// </summary>
+    private static readonly Regex ReferenceSubExprPattern = new(
+        @"reference\((?:[^()]*|\((?:[^()]*|\([^()]*\))*\))*\)(?:\.[a-zA-Z0-9_]+)+",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
 }
