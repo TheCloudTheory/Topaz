@@ -13,8 +13,7 @@ public class ChaosRuleTests : TopazFixture
     [TearDown]
     public async Task TearDown()
     {
-        try { await RunAzureCliCommand($"az rest --method delete --uri \"https://topaz.local.dev:8899/topaz/chaos/rules/{_ruleId}\""); }
-        catch { /* ignored — rule may have been deleted by the test */ }
+        await TryRunAzureCliCommand($"az rest --method delete --uri \"https://topaz.local.dev:8899/topaz/chaos/rules/{_ruleId}\"");
     }
 
     [Test]

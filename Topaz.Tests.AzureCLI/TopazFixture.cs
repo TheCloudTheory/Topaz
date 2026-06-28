@@ -176,4 +176,15 @@ public class TopazFixture
  
         assertion?.Invoke(JsonNode.Parse(result.Stdout)!);
     }
+
+    protected async Task TryRunAzureCliCommand(string command)
+    {
+        if (_containerAzureCli != null && _containerTopaz != null)
+        {
+            await KeyVaultHostMapper.EnsureVaultHostsMapped(_containerAzureCli, _containerTopaz, command);
+            await StorageHostMapper.EnsureStorageHostsMapped(_containerAzureCli, _containerTopaz, command);
+        }
+
+        await _containerAzureCli!.ExecAsync(new List<string> { "/bin/sh", "-c", command });
+    }
 }
