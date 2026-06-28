@@ -52,6 +52,7 @@ For Azure Storage specifically, the two tools have different coverage and design
 | **Queue: SharedKey auth** | Always enforced | Optional |
 | **Queue: Entra ID / Bearer auth** | ✅ | Optional (with `--oauth`) |
 | **RA-GRS (secondary endpoints)** | ✅ — DNS registration, `GetServiceStats`, read-only enforcement (v1.4); general data reads on secondary endpoints (v1.6) | ✅ |
+| **Chaos engineering / fault injection** | ✅ — inject TransientError, Throttle, Timeout, ServiceUnavailable at configurable rates per service namespace | ❌ |
 
 Topaz and Azurite are at near parity for Azure Storage data-plane operations. Features supported by Topaz include:
 

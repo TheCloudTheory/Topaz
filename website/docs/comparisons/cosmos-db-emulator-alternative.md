@@ -51,6 +51,7 @@ Topaz is written in .NET 10 and ships as a single binary or Docker image. It run
 | **Data Explorer UI** | ❌ | ✅ |
 | **TLS / HTTPS** | ✅ | ✅ |
 | **Co-located with other Azure services** | ✅ | ❌ |
+| **Chaos engineering / fault injection** | ✅ — inject TransientError, Throttle, Timeout, ServiceUnavailable at configurable rates per service namespace | ❌ |
 
 ## Apple Silicon and ARM64
 

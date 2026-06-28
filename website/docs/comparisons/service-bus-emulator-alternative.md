@@ -68,6 +68,7 @@ There is no restart cycle and no static configuration file.
 | **License** | Apache 2.0 | Proprietary EULA |
 | **External dependencies** | None | SQL Server Linux |
 | **Co-located with other Azure services** | ✅ | ❌ (standalone) |
+| **Chaos engineering / fault injection** | ✅ — inject TransientError, Throttle, Timeout, ServiceUnavailable at configurable rates per service namespace | ❌ |
 
 ## ARM control plane
 
