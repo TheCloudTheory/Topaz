@@ -236,8 +236,9 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
                         JToken? resolved = null;
                         if (referenceResolver != null && rawString.Contains("reference(", StringComparison.OrdinalIgnoreCase))
                         {
-                            // Pre-substitute parameters('name') → 'value' so the resolver sees a
-                            // literal name even when the output uses a parametrised resourceId().
+                            // Pre-substitute parameters('name') and variables('name') → 'value'
+                            // so the resolver sees a literal name even when the output uses a
+                            // parametrised or variable-based resourceId().
                             var preResolved = ParametersCallPattern.Replace(rawString, m =>
                             {
                                 var paramExpr = $"[parameters('{m.Groups[1].Value}')]";
@@ -245,6 +246,17 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
                                 {
                                     var val = ExpressionsEngine.EvaluateLanguageExpression(
                                         paramExpr, evalCtx, new TemplateErrorAdditionalInfo());
+                                    return val is JValue jv && jv.Value is string s ? $"'{s}'" : m.Value;
+                                }
+                                catch { return m.Value; }
+                            });
+                            preResolved = VariablesCallPattern.Replace(preResolved, m =>
+                            {
+                                var varExpr = $"[variables('{m.Groups[1].Value}')]";
+                                try
+                                {
+                                    var val = ExpressionsEngine.EvaluateLanguageExpression(
+                                        varExpr, evalCtx, new TemplateErrorAdditionalInfo());
                                     return val is JValue jv && jv.Value is string s ? $"'{s}'" : m.Value;
                                 }
                                 catch { return m.Value; }
@@ -280,4 +292,7 @@ internal sealed class ArmTemplateEngineFacade(ITopazLogger logger)
     /// </summary>
     private static readonly Regex ParametersCallPattern = new(
         @"parameters\('([^']+)'\)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex VariablesCallPattern = new(
+        @"variables\('([^']+)'\)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 }

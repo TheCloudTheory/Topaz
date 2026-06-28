@@ -127,9 +127,26 @@ internal static class ReferenceExpressionResolver
             foreach (var segment in segments)
             {
                 if (current is JObject obj && obj.TryGetValue(segment, StringComparison.OrdinalIgnoreCase, out var next))
+                {
                     current = next;
+                }
                 else
-                    return null;
+                {
+                    // In real Azure, reference() returns the resource's properties object, so
+                    // "reference(...).principalId" maps to metadata.json → properties.principalId.
+                    // If the top-level lookup fails, retry from the properties sub-object.
+                    if (current == resource &&
+                        resource.TryGetValue("properties", StringComparison.OrdinalIgnoreCase, out var props) &&
+                        props is JObject propsObj &&
+                        propsObj.TryGetValue(segment, StringComparison.OrdinalIgnoreCase, out var propsNext))
+                    {
+                        current = propsNext;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
             }
 
             return current;

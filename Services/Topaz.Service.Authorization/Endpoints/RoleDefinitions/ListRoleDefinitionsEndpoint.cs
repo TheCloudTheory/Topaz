@@ -22,6 +22,7 @@ public class ListRoleDefinitionsEndpoint(Pipeline eventPipeline, ITopazLogger lo
     [
         "GET /subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions",
         "GET /{subscriptionId}/providers/Microsoft.Authorization/roleDefinitions",
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{providerNamespace}/{resourceType}/{resourceName}/providers/Microsoft.Authorization/roleDefinitions",
     ];
 
     public string[] Permissions => ["Microsoft.Authorization/roleDefinitions/read"];
@@ -140,8 +141,9 @@ public class ListRoleDefinitionsEndpoint(Pipeline eventPipeline, ITopazLogger lo
     private static string? ExtractRoleNamerFromFilter(string? filter)
     {
         if (string.IsNullOrEmpty(filter)) return null;
-        var segments = filter.Split(' ');
-
-        return segments.Length > 1 ? segments[2].Replace("'", string.Empty) : null;
+        // OData filter format: roleName eq 'Key Vault Secrets User'
+        var start = filter.IndexOf('\'');
+        var end = filter.LastIndexOf('\'');
+        return start >= 0 && end > start ? filter.Substring(start + 1, end - start - 1) : null;
     }
 }

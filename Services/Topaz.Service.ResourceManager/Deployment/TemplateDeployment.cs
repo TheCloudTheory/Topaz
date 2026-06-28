@@ -20,6 +20,14 @@ internal sealed class TemplateDeployment
     public InsensitiveDictionary<JToken> Metadata { get; }
     public System.Text.Json.JsonElement? Parameters { get; }
 
+    /// <summary>
+    /// Outputs from nested module deployments, keyed by deployment resource name.
+    /// Populated by <c>HandleNestedDeployment</c> so that subscription-scope output
+    /// expressions such as <c>reference('foundation-deployment').outputs.x.value</c>
+    /// can be resolved without a filesystem round-trip.
+    /// </summary>
+    public Dictionary<string, System.Text.Json.JsonElement?> NestedDeploymentOutputs { get; } = new(StringComparer.OrdinalIgnoreCase);
+
     private CancellationTokenSource? _cts;
 
     private readonly Action _complete;

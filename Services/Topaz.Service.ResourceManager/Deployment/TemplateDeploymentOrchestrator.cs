@@ -394,6 +394,7 @@ public sealed class TemplateDeploymentOrchestrator(
         if (templateDeployment.Template.Outputs != null)
         {
             Func<string, JToken?> referenceResolver = expr =>
+                ResolveNestedDeploymentOutput(expr, templateDeployment) ??
                 ReferenceExpressionResolver.TryResolve(
                     expr, deploymentSubscriptionId, deploymentResourceGroupName,
                     GlobalSettings.MainEmulatorDirectory);
@@ -651,6 +652,13 @@ public sealed class TemplateDeploymentOrchestrator(
             {
                 hasProvisioningFailed = true;
             }
+            else
+            {
+                // Propagate nested deployment outputs back to the parent so that
+                // reference('<deploymentName>').outputs.x.value expressions resolve.
+                parentDeployment.NestedDeploymentOutputs[genericResource.Name] =
+                    nestedDeploymentResource.Properties.Outputs;
+            }
 
             linkedCts.Dispose();
         }
@@ -660,5 +668,50 @@ public sealed class TemplateDeploymentOrchestrator(
                 "Failed to handle nested deployment '{0}': {1}", genericResource.Name, ex.Message);
             hasProvisioningFailed = true;
         }
+    }
+
+    // Matches 'Microsoft.Resources/deployments', '<deploymentName>' anywhere in a reference() expression
+    private static readonly System.Text.RegularExpressions.Regex NestedDeploymentNamePattern = new(
+        @"'Microsoft\.Resources/deployments',\s*'([^']+)'",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase |
+        System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    // Matches .outputs.<key>.value at the end of an ARM output expression
+    private static readonly System.Text.RegularExpressions.Regex DeploymentOutputKeyPattern = new(
+        @"\.outputs\.([^.\]\s]+)\.value\]?$",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase |
+        System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>
+    /// Resolves <c>reference(extensionResourceId(..., 'Microsoft.Resources/deployments', '&lt;name&gt;'), ...).outputs.&lt;key&gt;.value</c>
+    /// expressions using nested deployment outputs collected during this deployment run.
+    /// Returns <c>null</c> when the expression doesn't match or the output isn't available.
+    /// </summary>
+    private static JToken? ResolveNestedDeploymentOutput(string expression, TemplateDeployment deployment)
+    {
+        var expr = expression.Trim();
+        if (!expr.Contains("reference(", StringComparison.OrdinalIgnoreCase)) return null;
+        if (!expr.Contains("Microsoft.Resources/deployments", StringComparison.OrdinalIgnoreCase)) return null;
+
+        var nameMatch = NestedDeploymentNamePattern.Match(expr);
+        if (!nameMatch.Success) return null;
+
+        var keyMatch = DeploymentOutputKeyPattern.Match(expr);
+        if (!keyMatch.Success) return null;
+
+        var deploymentName = nameMatch.Groups[1].Value;
+        var outputKey = keyMatch.Groups[1].Value;
+
+        if (!deployment.NestedDeploymentOutputs.TryGetValue(deploymentName, out var outputs) || outputs == null)
+            return null;
+
+        // outputs is a JsonElement shaped as { keyVaultName: { type: "string", value: "..." }, ... }
+        if (outputs.Value.TryGetProperty(outputKey, out var outputEntry) &&
+            outputEntry.TryGetProperty("value", out var valueElement))
+        {
+            return JToken.Parse(valueElement.GetRawText());
+        }
+
+        return null;
     }
 }
