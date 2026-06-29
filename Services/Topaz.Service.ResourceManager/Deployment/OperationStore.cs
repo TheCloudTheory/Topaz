@@ -31,6 +31,16 @@ internal static class OperationStore
                 .Replace("{subscriptionId}", sub),
             deploymentName);
 
+    // Management-group deployments live at:
+    // .management-group/{groupId}/.resource-manager/{deploymentName}
+    internal static string GetMgScopeDirectory(string groupId, string deploymentName) =>
+        Path.Combine(
+            GlobalSettings.MainEmulatorDirectory,
+            ManagementGroupDeploymentService.LocalDirectoryPath,
+            groupId,
+            ".resource-manager",
+            deploymentName);
+
     internal static void Append(string dirPath, OperationRecord record)
     {
         var file = Path.Combine(dirPath, FileName);

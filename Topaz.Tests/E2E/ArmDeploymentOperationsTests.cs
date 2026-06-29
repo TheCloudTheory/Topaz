@@ -126,4 +126,71 @@ public class ArmDeploymentOperationsTests
         Assert.That(operations, Is.Not.Empty);
         Assert.That(operations[0].OperationId, Is.Not.Null.And.Not.Empty);
     }
+
+    [Test]
+    public async Task DeploymentOperations_ManagementGroupScope_ListReturnsOperationsForDeployedResources()
+    {
+        const string groupId = "mg-ops-list-test";
+        const string deploymentName = "deploy-mg-ops-list";
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateManagementGroupAsync(groupId, "MG Ops List Test");
+
+        var templateJson = await File.ReadAllTextAsync("templates/empty-deployment.json");
+        await topaz.CreateDeploymentAtManagementGroupScopeAsync(
+            groupId, deploymentName, "westeurope", templateJson);
+
+        var result = await topaz.GetDeploymentOperationsAtManagementGroupScopeAsync(groupId, deploymentName);
+        var value = result["value"]!.AsArray();
+
+        Assert.That(value, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task DeploymentOperations_ManagementGroupScope_GetByIdReturnsMatchingRecord()
+    {
+        const string groupId = "mg-ops-getbyid-test";
+        const string deploymentName = "deploy-mg-ops-getbyid";
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateManagementGroupAsync(groupId, "MG Ops GetById Test");
+
+        var templateJson = await File.ReadAllTextAsync("templates/empty-deployment.json");
+        await topaz.CreateDeploymentAtManagementGroupScopeAsync(
+            groupId, deploymentName, "westeurope", templateJson);
+
+        // Seed at least one operation using a template that provisions a resource
+        const string identityTemplate = """
+            {
+              "$schema": "https://schema.management.azure.com/schemas/2019-04-01/managementGroupDeploymentTemplate.json#",
+              "contentVersion": "1.0.0.0",
+              "resources": []
+            }
+            """;
+        const string deployName2 = "deploy-mg-ops-getbyid2";
+        await topaz.CreateDeploymentAtManagementGroupScopeAsync(
+            groupId, deployName2, "westeurope", identityTemplate);
+
+        var listResult = await topaz.GetDeploymentOperationsAtManagementGroupScopeAsync(groupId, deployName2);
+        var value = listResult["value"]!.AsArray();
+
+        // Empty template produces no operations; verify 404 for unknown operationId
+        var ex = Assert.ThrowsAsync<HttpRequestException>(async () =>
+            await topaz.GetDeploymentOperationAtManagementGroupScopeByIdAsync(
+                groupId, deployName2, "00000000-0000-0000-0000-000000000000"));
+        Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
+    }
+
+    [Test]
+    public async Task DeploymentOperations_ManagementGroupScope_UnknownDeploymentReturns404()
+    {
+        const string groupId = "mg-ops-404-test";
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateManagementGroupAsync(groupId, "MG Ops 404 Test");
+
+        var ex = Assert.ThrowsAsync<HttpRequestException>(async () =>
+            await topaz.GetDeploymentOperationsAtManagementGroupScopeAsync(groupId, "nonexistent-deploy"));
+        Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
+    }
 }

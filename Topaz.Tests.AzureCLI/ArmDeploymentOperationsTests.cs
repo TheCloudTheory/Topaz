@@ -66,4 +66,34 @@ public class ArmDeploymentOperationsTests : TopazFixture
                     "Expected at least one operation record for subscription-scope deployment.");
             });
     }
+
+    // --- management group scope ---
+
+    [Test]
+    public async Task DeploymentOperations_ManagementGroupScope_ListReturnsEmptyForEmptyTemplate()
+    {
+        await RunAzureCliCommand(
+            "az account management-group create --name mg-ops-cli-list");
+        await RunAzureCliCommand(
+            "az deployment mg create --name deploy-ops-mg-list --management-group-id mg-ops-cli-list --location westeurope --template-file \"/templates/empty-deployment.json\"");
+
+        await RunAzureCliCommand(
+            "az deployment operation mg list --name deploy-ops-mg-list --management-group-id mg-ops-cli-list",
+            response =>
+            {
+                Assert.That(response.AsArray(), Is.Not.Null,
+                    "Expected a valid (possibly empty) operations array for management-group-scope deployment.");
+            });
+    }
+
+    [Test]
+    public async Task DeploymentOperations_ManagementGroupScope_UnknownDeploymentReturns404()
+    {
+        await RunAzureCliCommand(
+            "az account management-group create --name mg-ops-cli-404");
+
+        await RunAzureCliCommand(
+            "az rest --method GET --url 'https://topaz.local.dev:8899/providers/Microsoft.Management/managementGroups/mg-ops-cli-404/providers/Microsoft.Resources/deployments/nonexistent-deploy/operations?api-version=2021-04-01' --skip-authorization-header",
+            exitCode: 1);
+    }
 }

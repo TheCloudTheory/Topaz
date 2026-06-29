@@ -567,6 +567,63 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         return JsonNode.Parse(content)!;
     }
 
+    public async Task<JsonNode> CreateDeploymentAtManagementGroupScopeAsync(
+        string groupId, string deploymentName, string location, string templateJson)
+    {
+        var body = new
+        {
+            location,
+            properties = new
+            {
+                mode = "Incremental",
+                template = System.Text.Json.JsonSerializer.Deserialize<object>(templateJson)
+            }
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Put,
+            $"providers/Microsoft.Management/managementGroups/{groupId}/providers/Microsoft.Resources/deployments/{deploymentName}")
+        {
+            Content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(body),
+                System.Text.Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonNode.Parse(content)!;
+    }
+
+    public async Task<JsonNode> GetDeploymentOperationsAtManagementGroupScopeAsync(string groupId, string deploymentName)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            $"providers/Microsoft.Management/managementGroups/{groupId}/providers/Microsoft.Resources/deployments/{deploymentName}/operations");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
+    }
+
+    public async Task<JsonNode> GetDeploymentOperationAtManagementGroupScopeByIdAsync(
+        string groupId, string deploymentName, string operationId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            $"providers/Microsoft.Management/managementGroups/{groupId}/providers/Microsoft.Resources/deployments/{deploymentName}/operations/{operationId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
+    }
+
     public async Task<HttpResponseMessage> RegisterProviderAsync(Guid subscriptionId, string providerNamespace)
     {
         var request = new HttpRequestMessage(HttpMethod.Post,

@@ -51,6 +51,19 @@ public sealed record DeploymentValidateResult
         };
     }
 
+    internal static DeploymentValidateResult FromRequestAtManagementGroupScope(
+        string groupId,
+        string deploymentName,
+        CreateDeploymentRequest request)
+    {
+        return new DeploymentValidateResult
+        {
+            Id = $"/providers/Microsoft.Management/managementGroups/{groupId}/providers/Microsoft.Resources/deployments/{deploymentName}",
+            Name = deploymentName,
+            Properties = DeploymentResourceProperties.ForValidate(request)
+        };
+    }
+
     public override string ToString()
     {
         return JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);

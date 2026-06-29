@@ -44,6 +44,33 @@ internal sealed class ManagementGroupDeploymentControlPlane(
             OperationResult.Success, resources, null, null);
     }
 
+    public ControlPlaneOperationResult<ManagementGroupDeploymentResource> Get(string groupId, string deploymentName)
+    {
+        logger.LogDebug(nameof(ManagementGroupDeploymentControlPlane), nameof(Get),
+            "Getting management-group-scope deployment '{0}' in management group '{1}'.",
+            deploymentName, groupId);
+
+        if (!provider.ManagementGroupExists(groupId))
+        {
+            return new ControlPlaneOperationResult<ManagementGroupDeploymentResource>(
+                OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, groupId),
+                NotFoundCode);
+        }
+
+        var resource = provider.GetDeployment(groupId, deploymentName);
+        if (resource == null)
+        {
+            return new ControlPlaneOperationResult<ManagementGroupDeploymentResource>(
+                OperationResult.NotFound, null,
+                string.Format(DeploymentNotFoundMessageTemplate, deploymentName),
+                DeploymentNotFoundCode);
+        }
+
+        return new ControlPlaneOperationResult<ManagementGroupDeploymentResource>(
+            OperationResult.Success, resource, null, null);
+    }
+
     public OperationResult CancelDeployment(string groupId, string deploymentName)
     {
         logger.LogDebug(nameof(ManagementGroupDeploymentControlPlane), nameof(CancelDeployment),
@@ -59,6 +86,38 @@ internal sealed class ManagementGroupDeploymentControlPlane(
 
         return orchestrator.CancelDeployment(
             $"/providers/Microsoft.Management/managementGroups/{groupId}/providers/Microsoft.Resources/deployments/{deploymentName}");
+    }
+
+    public ControlPlaneOperationResult<DeploymentValidateResult> ValidateDeployment(
+        string groupId,
+        string deploymentName,
+        CreateDeploymentRequest request)
+    {
+        if (!provider.ManagementGroupExists(groupId))
+        {
+            return new ControlPlaneOperationResult<DeploymentValidateResult>(
+                OperationResult.NotFound, null,
+                string.Format(NotFoundMessageTemplate, groupId),
+                NotFoundCode);
+        }
+
+        try
+        {
+            var template = request.ToTemplate();
+            _templateEngineFacade.Validate(template);
+
+            return new ControlPlaneOperationResult<DeploymentValidateResult>(OperationResult.Success,
+                DeploymentValidateResult.FromRequestAtManagementGroupScope(groupId, deploymentName, request),
+                null, null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(nameof(ManagementGroupDeploymentControlPlane), nameof(ValidateDeployment),
+                "Template validation failed: {0}", ex.Message);
+
+            return new ControlPlaneOperationResult<DeploymentValidateResult>(OperationResult.Failed,
+                null, ex.Message, "InvalidTemplate");
+        }
     }
 
     public ControlPlaneOperationResult<ManagementGroupDeploymentResource> CreateOrUpdate(
