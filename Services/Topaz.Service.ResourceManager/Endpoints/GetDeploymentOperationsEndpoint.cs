@@ -24,7 +24,10 @@ public sealed class GetDeploymentOperationsEndpoint(
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/deployments/{deploymentName}/operations"
+        // Legacy path used by Azure PowerShell
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/deployments/{deploymentName}/operations",
+        // Path used by the Azure SDK and Azure CLI
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}/operations"
     ];
 
     public string[] Permissions => ["Microsoft.Resources/deployments/read"];
@@ -37,7 +40,11 @@ public sealed class GetDeploymentOperationsEndpoint(
         var path = context.Request.Path.Value!;
         var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(path.ExtractValueFromPath(4));
-        var deploymentName = path.ExtractValueFromPath(6);
+        // Legacy path: .../deployments/{name}/operations  → name at index 6
+        // SDK path:    .../providers/Microsoft.Resources/deployments/{name}/operations → name at index 8
+        var deploymentName = path.Contains("/providers/Microsoft.Resources/", StringComparison.OrdinalIgnoreCase)
+            ? path.ExtractValueFromPath(8)
+            : path.ExtractValueFromPath(6);
 
         logger.LogDebug(nameof(GetDeploymentOperationsEndpoint), nameof(GetResponse),
             "Get deployment operations: subscription `{0}`, resource group `{1}`, deployment `{2}`",
@@ -51,15 +58,15 @@ public sealed class GetDeploymentOperationsEndpoint(
             return;
         }
 
-        // Return an empty operations list — Topaz does not track per-resource operations.
-        // An empty list tells the cmdlet the deployment exists; it then uses provisioningState
-        // on the deployment itself to determine whether it is still running.
-        response.CreateJsonContentResponse(new DeploymentOperationsListResult([]));
+        var dir = Deployment.OperationStore.GetRgScopeDirectory(
+            subscriptionIdentifier.Value.ToString(), resourceGroupIdentifier.Value, deploymentName!);
+        var operations = Deployment.OperationStore.GetAll(dir);
+        response.CreateJsonContentResponse(new DeploymentOperationsListResult(operations));
     }
 
-    private sealed class DeploymentOperationsListResult(object[] value)
+    private sealed class DeploymentOperationsListResult(IReadOnlyList<Models.OperationRecord> value)
     {
-        public object[] Value { get; } = value;
+        public IReadOnlyList<Models.OperationRecord> Value { get; } = value;
 
         public override string ToString() =>
             System.Text.Json.JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);

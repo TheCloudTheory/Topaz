@@ -22,7 +22,7 @@ Fault injection is available in the nightly build today and will ship as a stabl
 docker pull thecloudtheory/topaz-host:nightly
 ```
 
-[Chaos engineering docs →](https://topaz.thecloudtheory.com/docs/chaos-engineering/) · [Star on GitHub →](https://github.com/TheCloudTheory/Topaz)
+[Chaos engineering docs →](https://topaz.thecloudtheory.com/docs/next/chaos-engineering/) · [Star on GitHub →](https://github.com/TheCloudTheory/Topaz)
 :::
 
 ## Where the real SDK retry pipeline lives
@@ -196,4 +196,4 @@ The fault injection engine targets the control and data planes of emulated Azure
 
 What it does replace is the class of mock-based tests that return fault responses from a fake handler. If your retry logic depends on `Azure.Core`'s pipeline, those tests give you false confidence. Fault injection at the protocol boundary tests the thing you actually care about.
 
-The full reference for chaos mode, fault types, and the REST API is in the [chaos engineering docs](https://topaz.thecloudtheory.com/docs/chaos-engineering/). The CLI reference covers every flag. If you find a fault type that would be useful and is not there yet, the issue tracker is open.
+The full reference for chaos mode, fault types, and the REST API is in the [chaos engineering docs](https://topaz.thecloudtheory.com/docs/next/chaos-engineering/). The CLI reference covers every flag. If you find a fault type that would be useful and is not there yet, the issue tracker is open.

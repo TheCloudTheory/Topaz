@@ -285,6 +285,12 @@ public sealed class TemplateDeploymentOrchestrator(
         var deploymentResourceGroupName = idParts.Length > 3 && idParts[2] == "resourceGroups" ? idParts[3] : string.Empty;
 
         var hasProvisioningFailed = false;
+
+        // Compute the directory that holds metadata.json (and operations.json) for this deployment.
+        var operationsDirPath = string.IsNullOrEmpty(deploymentResourceGroupName)
+            ? OperationStore.GetSubScopeDirectory(deploymentSubscriptionId, templateDeployment.Name)
+            : OperationStore.GetRgScopeDirectory(deploymentSubscriptionId, deploymentResourceGroupName, templateDeployment.Name);
+
         // Process resource groups first to ensure they exist before dependent resources are deployed
         var orderedResources = templateDeployment.Template.Resources
             .OrderByDescending(r => (r.Type?.Value ?? string.Empty).Equals("Microsoft.Resources/resourceGroups", StringComparison.OrdinalIgnoreCase))
@@ -375,8 +381,22 @@ public sealed class TemplateDeploymentOrchestrator(
                     break;
             }
 
+            var operationStart = DateTimeOffset.UtcNow;
             var result = controlPlane?.Deploy(genericResource);
             logger.LogInformation($"Deployment of {genericResource.Id} completed with status {result}.");
+
+            if (controlPlane != null)
+            {
+                var record = Models.OperationRecord.Create(
+                    templateDeployment.Id,
+                    genericResource.Id ?? string.Empty,
+                    resourceType ?? string.Empty,
+                    genericResource.Name ?? string.Empty,
+                    succeeded: result != OperationResult.Failed,
+                    start: operationStart,
+                    end: DateTimeOffset.UtcNow);
+                OperationStore.Append(operationsDirPath, record);
+            }
 
             if (result == OperationResult.Failed)
                 hasProvisioningFailed = true;

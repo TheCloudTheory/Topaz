@@ -8,12 +8,7 @@ using Topaz.Shared.Extensions;
 
 namespace Topaz.Service.ResourceManager.Endpoints;
 
-/// <summary>
-/// Returns the list of operations for a subscription-scope deployment.
-/// Azure PowerShell's Stop-AzDeployment calls this endpoint to check whether the
-/// deployment is still running before issuing the cancel request.
-/// </summary>
-public sealed class GetDeploymentOperationsAtSubscriptionScopeEndpoint(
+public sealed class GetDeploymentOperationAtSubscriptionScopeByIdEndpoint(
     ITopazLogger logger,
     TemplateDeploymentOrchestrator orchestrator) : IEndpointDefinition
 {
@@ -22,7 +17,7 @@ public sealed class GetDeploymentOperationsAtSubscriptionScopeEndpoint(
 
     public string[] Endpoints =>
     [
-        "GET /subscriptions/{subscriptionId}/providers/Microsoft.Resources/deployments/{deploymentName}/operations"
+        "GET /subscriptions/{subscriptionId}/providers/Microsoft.Resources/deployments/{deploymentName}/operations/{operationId}"
     ];
 
     public string[] Permissions => ["Microsoft.Resources/deployments/read"];
@@ -35,10 +30,11 @@ public sealed class GetDeploymentOperationsAtSubscriptionScopeEndpoint(
         var path = context.Request.Path.Value!;
         var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
         var deploymentName = path.ExtractValueFromPath(6);
+        var operationId = path.ExtractValueFromPath(8);
 
-        logger.LogDebug(nameof(GetDeploymentOperationsAtSubscriptionScopeEndpoint), nameof(GetResponse),
-            "Get subscription-scope deployment operations: subscription `{0}`, deployment `{1}`",
-            subscriptionIdentifier, deploymentName);
+        logger.LogDebug(nameof(GetDeploymentOperationAtSubscriptionScopeByIdEndpoint), nameof(GetResponse),
+            "Get subscription-scope deployment operation: subscription `{0}`, deployment `{1}`, operationId `{2}`",
+            subscriptionIdentifier, deploymentName, operationId);
 
         var deploymentOp = _controlPlane.Get(subscriptionIdentifier, deploymentName!);
         if (deploymentOp.Result == OperationResult.NotFound)
@@ -48,17 +44,20 @@ public sealed class GetDeploymentOperationsAtSubscriptionScopeEndpoint(
             return;
         }
 
-        var dir = Deployment.OperationStore.GetSubScopeDirectory(
+        var dir = OperationStore.GetSubScopeDirectory(
             subscriptionIdentifier.Value.ToString(), deploymentName!);
-        var operations = Deployment.OperationStore.GetAll(dir);
-        response.CreateJsonContentResponse(new DeploymentOperationsListResult(operations));
-    }
+        var record = OperationStore.GetAll(dir)
+            .FirstOrDefault(r => string.Equals(r.OperationId, operationId, StringComparison.OrdinalIgnoreCase));
 
-    private sealed class DeploymentOperationsListResult(IReadOnlyList<Models.OperationRecord> value)
-    {
-        public IReadOnlyList<Models.OperationRecord> Value { get; } = value;
+        if (record == null)
+        {
+            response.StatusCode = HttpStatusCode.NotFound;
+            response.Content = new ByteArrayContent([]);
+            return;
+        }
 
-        public override string ToString() =>
-            System.Text.Json.JsonSerializer.Serialize(this, GlobalSettings.JsonOptions);
+        response.CreateJsonContentResponse(record);
+        response.Content.Headers.ContentType =
+            System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
     }
 }
