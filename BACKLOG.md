@@ -317,17 +317,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 ### ARM Deployments — deployment operations tracking
 
 <!--
-TODO: ARM Deployments: Deployment Operations — List and Get at management group scope
-  Implement deployment operations endpoints for management-group-scope deployments:
-  - GET /providers/Microsoft.Management/managementGroups/{groupId}/providers/Microsoft.Resources/deployments/{name}/operations
-  - GET /providers/Microsoft.Management/managementGroups/{groupId}/providers/Microsoft.Resources/deployments/{name}/operations/{operationId}
-  Follows the same pattern as the existing resource-group and subscription scope list endpoints.
-  Prerequisite: operation tracking work from the resource-group/subscription scope item above.
-  milestone: v1.8-preview
-  labels: enhancement
--->
-
-<!--
 TODO: ARM Deployments: Deployment Operations — List and Get at tenant scope
   Implement deployment operations endpoints for tenant-scope deployments:
   - GET /providers/Microsoft.Resources/deployments/{name}/operations
