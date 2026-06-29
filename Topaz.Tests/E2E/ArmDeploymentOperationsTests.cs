@@ -208,6 +208,8 @@ public class ArmDeploymentOperationsTests
         var value = result["value"]!.AsArray();
 
         Assert.That(value, Is.Not.Null);
+
+        await topaz.DeleteDeploymentAtTenantScopeAsync(deploymentName);
     }
 
     [Test]
@@ -224,6 +226,8 @@ public class ArmDeploymentOperationsTests
             await topaz.GetDeploymentOperationAtTenantScopeByIdAsync(
                 deploymentName, "00000000-0000-0000-0000-000000000000"));
         Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
+
+        await topaz.DeleteDeploymentAtTenantScopeAsync(deploymentName);
     }
 
     [Test]
