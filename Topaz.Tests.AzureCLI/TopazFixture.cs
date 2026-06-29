@@ -86,6 +86,7 @@ public class TopazFixture
             .WithResourceMapping(Encoding.UTF8.GetBytes(await File.ReadAllTextAsync(Path.Combine(templatesPath, "deployment-cancel.json"))), "/templates/deployment-cancel.json")
             .WithResourceMapping(Encoding.UTF8.GetBytes(await File.ReadAllTextAsync(Path.Combine(templatesPath, "deployment-resourcegroup.json"))), "/templates/deployment-resourcegroup.json")
             .WithResourceMapping(Encoding.UTF8.GetBytes(await File.ReadAllTextAsync(Path.Combine(templatesPath, "deployment-nested.json"))), "/templates/deployment-nested.json")
+            .WithResourceMapping(Encoding.UTF8.GetBytes(await File.ReadAllTextAsync(Path.Combine(templatesPath, "deployment-with-identity.json"))), "/templates/deployment-with-identity.json")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CloudEnvironmentConfiguration), "cloud.json")
             .WithResourceMapping(Encoding.UTF8.GetBytes(CertificateFile), "/tmp/topaz.crt")
             .WithEnvironment("REQUESTS_CA_BUNDLE", "/usr/lib64/az/lib/python3.12/site-packages/certifi/cacert.pem")

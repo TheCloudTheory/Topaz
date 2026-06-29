@@ -19,3 +19,6 @@ Topaz.Tests.Portal
 Topaz.Tests.MCP
 Topaz.Tests.Isolated
 Topaz.Tests.AzurePowerShell
+Topaz.Tests.Isolated
+Topaz.Tests.Go
+Topaz.Tests.NodeJS
