@@ -624,6 +624,32 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
     }
 
+    public async Task<JsonNode> GetDeploymentOperationsAtTenantScopeAsync(string deploymentName)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            $"providers/Microsoft.Resources/deployments/{deploymentName}/operations");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
+    }
+
+    public async Task<JsonNode> GetDeploymentOperationAtTenantScopeByIdAsync(string deploymentName, string operationId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            $"providers/Microsoft.Resources/deployments/{deploymentName}/operations/{operationId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
+    }
+
     public async Task<HttpResponseMessage> RegisterProviderAsync(Guid subscriptionId, string providerNamespace)
     {
         var request = new HttpRequestMessage(HttpMethod.Post,

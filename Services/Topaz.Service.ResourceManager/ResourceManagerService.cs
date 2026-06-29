@@ -76,6 +76,8 @@ public sealed class ResourceManagerService : IServiceDefinition
         new CheckExistenceAtTenantScopeEndpoint(_logger, _deploymentOrchestrator!),
         new ExportDeploymentTemplateAtTenantScopeEndpoint(_logger, _deploymentOrchestrator!),
         new WhatIfDeploymentAtTenantScopeEndpoint(_logger, _deploymentOrchestrator!),
+        new GetDeploymentOperationsAtTenantScopeEndpoint(_logger, _deploymentOrchestrator!),
+        new GetDeploymentOperationAtTenantScopeByIdEndpoint(_logger, _deploymentOrchestrator!),
         new WhatIfDeploymentEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new WhatIfDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new ListSubscriptionResourcesEndpoint(_eventPipeline, _logger),

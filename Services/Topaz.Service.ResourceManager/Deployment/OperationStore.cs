@@ -41,6 +41,15 @@ internal static class OperationStore
             ".resource-manager",
             deploymentName);
 
+    // Tenant-scope deployments live at:
+    // .tenant/.resource-manager/{deploymentName}
+    internal static string GetTenantScopeDirectory(string deploymentName) =>
+        Path.Combine(
+            GlobalSettings.MainEmulatorDirectory,
+            TenantDeploymentService.LocalDirectoryPath,
+            ".resource-manager",
+            deploymentName);
+
     internal static void Append(string dirPath, OperationRecord record)
     {
         var file = Path.Combine(dirPath, FileName);

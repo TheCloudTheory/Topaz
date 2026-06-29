@@ -193,4 +193,47 @@ public class ArmDeploymentOperationsTests
             await topaz.GetDeploymentOperationsAtManagementGroupScopeAsync(groupId, "nonexistent-deploy"));
         Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
     }
+
+    [Test]
+    public async Task DeploymentOperations_TenantScope_ListReturnsValueForKnownDeployment()
+    {
+        const string deploymentName = "deploy-tenant-ops-list";
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+
+        var templateJson = await File.ReadAllTextAsync("templates/empty-deployment.json");
+        await topaz.CreateDeploymentAtTenantScopeAsync(deploymentName, "westeurope", templateJson);
+
+        var result = await topaz.GetDeploymentOperationsAtTenantScopeAsync(deploymentName);
+        var value = result["value"]!.AsArray();
+
+        Assert.That(value, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task DeploymentOperations_TenantScope_GetByIdReturns404ForUnknownOperation()
+    {
+        const string deploymentName = "deploy-tenant-ops-getbyid";
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+
+        var templateJson = await File.ReadAllTextAsync("templates/empty-deployment.json");
+        await topaz.CreateDeploymentAtTenantScopeAsync(deploymentName, "westeurope", templateJson);
+
+        var ex = Assert.ThrowsAsync<HttpRequestException>(async () =>
+            await topaz.GetDeploymentOperationAtTenantScopeByIdAsync(
+                deploymentName, "00000000-0000-0000-0000-000000000000"));
+        Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
+    }
+
+    [Test]
+    public async Task DeploymentOperations_TenantScope_UnknownDeploymentReturns404()
+    {
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        using var topaz = new TopazArmClient(credentials);
+
+        var ex = Assert.ThrowsAsync<HttpRequestException>(async () =>
+            await topaz.GetDeploymentOperationsAtTenantScopeAsync("nonexistent-tenant-deploy"));
+        Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
+    }
 }

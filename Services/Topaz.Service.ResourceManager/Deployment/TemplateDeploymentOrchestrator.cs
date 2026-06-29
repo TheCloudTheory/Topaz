@@ -287,9 +287,19 @@ public sealed class TemplateDeploymentOrchestrator(
         var hasProvisioningFailed = false;
 
         // Compute the directory that holds metadata.json (and operations.json) for this deployment.
-        var operationsDirPath = string.IsNullOrEmpty(deploymentResourceGroupName)
-            ? OperationStore.GetSubScopeDirectory(deploymentSubscriptionId, templateDeployment.Name)
-            : OperationStore.GetRgScopeDirectory(deploymentSubscriptionId, deploymentResourceGroupName, templateDeployment.Name);
+        // Tenant scope:  /providers/Microsoft.Resources/deployments/{name}      → idParts[0]=="providers", [1]=="Microsoft.Resources"
+        // MG scope:      /providers/Microsoft.Management/managementGroups/{id}… → idParts[0]=="providers", [1]=="Microsoft.Management"
+        // Sub scope:     /subscriptions/{sub}/providers/…                       → idParts[0]=="subscriptions", rg empty
+        // RG scope:      /subscriptions/{sub}/resourceGroups/{rg}/…             → idParts[0]=="subscriptions", rg present
+        string operationsDirPath;
+        if (idParts[0] == "providers" && idParts.Length > 1 && idParts[1] == "Microsoft.Management")
+            operationsDirPath = OperationStore.GetMgScopeDirectory(idParts[3], templateDeployment.Name);
+        else if (idParts[0] == "providers")
+            operationsDirPath = OperationStore.GetTenantScopeDirectory(templateDeployment.Name);
+        else if (string.IsNullOrEmpty(deploymentResourceGroupName))
+            operationsDirPath = OperationStore.GetSubScopeDirectory(deploymentSubscriptionId, templateDeployment.Name);
+        else
+            operationsDirPath = OperationStore.GetRgScopeDirectory(deploymentSubscriptionId, deploymentResourceGroupName, templateDeployment.Name);
 
         // Process resource groups first to ensure they exist before dependent resources are deployed
         var orderedResources = templateDeployment.Template.Resources

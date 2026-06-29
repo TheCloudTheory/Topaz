@@ -59,14 +59,14 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| List At Resource Group Scope | ✅ | GET .../resourceGroups/&#123;rg&#125;/deployments/&#123;name&#125;/operations; returns empty list (per-resource tracking not yet implemented) |
-| List At Subscription Scope | ✅ | GET .../providers/Microsoft.Resources/deployments/&#123;name&#125;/operations; returns empty list |
-| Get At Resource Group Scope | ❌ | |
-| Get At Subscription Scope | ❌ | |
-| List At Management Group Scope | ❌ | |
-| Get At Management Group Scope | ❌ | |
-| List At Tenant Scope | ❌ | |
-| Get At Tenant Scope | ❌ | |
+| List At Resource Group Scope | ✅ | GET .../resourceGroups/&#123;rg&#125;/deployments/&#123;name&#125;/operations |
+| List At Subscription Scope | ✅ | GET .../providers/Microsoft.Resources/deployments/&#123;name&#125;/operations |
+| Get At Resource Group Scope | ✅ | |
+| Get At Subscription Scope | ✅ | |
+| List At Management Group Scope | ✅ | |
+| Get At Management Group Scope | ✅ | |
+| List At Tenant Scope | ✅ | GET /providers/Microsoft.Resources/deployments/&#123;name&#125;/operations |
+| Get At Tenant Scope | ✅ | GET /providers/Microsoft.Resources/deployments/&#123;name&#125;/operations/&#123;operationId&#125; |
 
 ### Providers
 

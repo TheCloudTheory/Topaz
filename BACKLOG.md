@@ -314,19 +314,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 
 ## v1.8-preview
 
-### ARM Deployments — deployment operations tracking
-
-<!--
-TODO: ARM Deployments: Deployment Operations — List and Get at tenant scope
-  Implement deployment operations endpoints for tenant-scope deployments:
-  - GET /providers/Microsoft.Resources/deployments/{name}/operations
-  - GET /providers/Microsoft.Resources/deployments/{name}/operations/{operationId}
-  Follows the same pattern as the existing resource-group and subscription scope list endpoints.
-  Prerequisite: operation tracking work from the resource-group/subscription scope item above.
-  milestone: v1.8-preview
-  labels: enhancement
--->
-
 ### Azure Storage — Blob authentication enforcement
 
 <!--
