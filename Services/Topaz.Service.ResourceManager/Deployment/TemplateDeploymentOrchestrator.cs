@@ -306,7 +306,7 @@ public sealed class TemplateDeploymentOrchestrator(
             // resource.Type.Value may be null after subscription-scope template processing for
             // certain resource types (e.g. Microsoft.Resources/deployments); fall back to the
             // type string preserved in the deserialized GenericResource.
-            var resourceType = resource.Type?.Value ?? genericResource.Type ?? string.Empty;
+            var resourceType = resource.Type?.Value ?? genericResource.Type;
 
             switch (resourceType)
             {
@@ -381,28 +381,26 @@ public sealed class TemplateDeploymentOrchestrator(
             if (result == OperationResult.Failed)
                 hasProvisioningFailed = true;
 
-            if (templateDeployment.CancellationToken.IsCancellationRequested)
-            {
-                templateDeployment.Cancel();
-                templateDeployment.Persist();
-                logger.LogInformation($"Deployment {templateDeployment.Id} was cancelled mid-flight after provisioning {genericResource.Id}.");
-                return;
-            }
+            if (!templateDeployment.CancellationToken.IsCancellationRequested) continue;
+            
+            templateDeployment.Cancel();
+            templateDeployment.Persist();
+            logger.LogInformation($"Deployment {templateDeployment.Id} was cancelled mid-flight after provisioning {genericResource.Id}.");
+            return;
         }
 
         // Evaluate and set template outputs on the deployment
         if (templateDeployment.Template.Outputs != null)
         {
-            Func<string, JToken?> referenceResolver = expr =>
-                ResolveNestedDeploymentOutput(expr, templateDeployment) ??
-                ReferenceExpressionResolver.TryResolve(
-                    expr, deploymentSubscriptionId, deploymentResourceGroupName,
-                    GlobalSettings.MainEmulatorDirectory);
+            JToken? ReferenceResolver(string expr) => ResolveNestedDeploymentOutput(expr, templateDeployment) ??
+                                                      ReferenceExpressionResolver.TryResolve(expr,
+                                                          deploymentSubscriptionId, deploymentResourceGroupName,
+                                                          GlobalSettings.MainEmulatorDirectory);
 
             var outputsJObject = _armTemplateEngineFacade.EvaluateOutputs(
                 deploymentSubscriptionId, deploymentResourceGroupName,
                 templateDeployment.Template, logger,
-                referenceResolver,
+                ReferenceResolver,
                 templateDeployment.SymbolicNameMap.Count > 0 ? templateDeployment.SymbolicNameMap : null);
             var outputsJson = outputsJObject.ToString(Newtonsoft.Json.Formatting.None);
             var outputs = JsonDocument.Parse(outputsJson).RootElement.Clone();
@@ -416,60 +414,6 @@ public sealed class TemplateDeploymentOrchestrator(
 
         templateDeployment.Persist();
         logger.LogInformation($"Deployment {templateDeployment.Id} completed.");
-    }
-
-    /// <summary>
-    /// Extracts the evaluated output values from template outputs.
-    /// After ProcessTemplateLanguageExpressions, the output values are evaluated in place.
-    /// This method builds the outputs in the format { type, value } that Azure expects.
-    /// </summary>
-    private static Dictionary<string, object?> ExtractEvaluatedOutputs(InsensitiveDictionary<TemplateOutputParameter> outputs)
-    {
-        var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        
-        foreach (var output in outputs)
-        {
-            var extractedOutput = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-            
-            // Get type and value from TemplateOutputParameter
-            // Both Type and Value are TemplateGenericProperty<T> wrappers
-            if (output.Value.Type?.Value != null)
-            {
-                extractedOutput["type"] = output.Value.Type.Value.ToString().ToLowerInvariant();
-            }
-            else
-            {
-                extractedOutput["type"] = "object";
-            }
-            
-            // The value is stored in output.Value.Value which is TemplateGenericProperty<JToken>
-            // We need to extract the JToken from it
-            var valueGenericProperty = output.Value.Value;
-            if (valueGenericProperty != null)
-            {
-                // Try to get the actual value
-                var jtoken = valueGenericProperty.Value;
-                if (jtoken != null)
-                {
-                    // The JToken may contain a value at a nested property
-                    // Check if it's structured as { value: {...}, type: {...}, ... }
-                    if (jtoken is JObject jo && jo.TryGetValue("value", out var innerValue))
-                    {
-                        // Extract the inner value
-                        extractedOutput["value"] = innerValue;
-                    }
-                    else
-                    {
-                        // Use the JToken directly
-                        extractedOutput["value"] = jtoken;
-                    }
-                }
-            }
-            
-            result[output.Key] = extractedOutput;
-        }
-        
-        return result;
     }
 
     private void HandleNestedDeployment(
@@ -535,7 +479,7 @@ public sealed class TemplateDeploymentOrchestrator(
             // Extract optional parameters and mode
             JsonElement? innerParams = propsObj.TryGetValue("parameters", out var paramsElement) 
                 ? paramsElement 
-                : (JsonElement?)null;
+                : null;
             var innerMode = propsObj.TryGetValue("mode", out var modeElement) 
                 ? modeElement.GetString() ?? "Incremental" 
                 : "Incremental";
@@ -639,14 +583,12 @@ public sealed class TemplateDeploymentOrchestrator(
             {
                 foreach (var prop in innerResElement.EnumerateObject())
                 {
-                    if (prop.Value.ValueKind == JsonValueKind.Object &&
-                        prop.Value.TryGetProperty("type", out var typeProp) &&
-                        typeProp.ValueKind == JsonValueKind.String)
-                    {
-                        var resourceType = typeProp.GetString();
-                        if (!string.IsNullOrEmpty(resourceType))
-                            innerJob.SymbolicNameMap[prop.Name] = resourceType;
-                    }
+                    if (prop.Value.ValueKind != JsonValueKind.Object ||
+                        !prop.Value.TryGetProperty("type", out var typeProp) ||
+                        typeProp.ValueKind != JsonValueKind.String) continue;
+                    var resourceType = typeProp.GetString();
+                    if (!string.IsNullOrEmpty(resourceType))
+                        innerJob.SymbolicNameMap[prop.Name] = resourceType;
                 }
             }
 
@@ -725,7 +667,7 @@ public sealed class TemplateDeploymentOrchestrator(
         if (!deployment.NestedDeploymentOutputs.TryGetValue(deploymentName, out var outputs) || outputs == null)
             return null;
 
-        // outputs is a JsonElement shaped as { keyVaultName: { type: "string", value: "..." }, ... }
+        // output is a JsonElement shaped as { keyVaultName: { type: "string", value: "..." }, ... }
         if (outputs.Value.TryGetProperty(outputKey, out var outputEntry) &&
             outputEntry.TryGetProperty("value", out var valueElement))
         {
