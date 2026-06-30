@@ -1095,9 +1095,318 @@ TODO: ACR Tasks: Multi-step task file execution (EncodedTaskRunRequest)
 
 ---
 
-## Unplanned / Ideas
+## v1.11
 
-_Rough ideas not yet tied to a specific version._
+### Azure Event Grid — initial control plane and delivery
+
+<!--
+TODO: Azure Event Grid: New service scaffold
+  Add Topaz.Service.EventGrid project with EventGridTopicResource, EventGridTopicResourceProperties,
+  resource provider, control plane (including Deploy()), host registration, and RouteDeployment()
+  case for Microsoft.EventGrid/topics.
+  milestone: v1.11
+  labels: enhancement, event-grid, good first issue
+-->
+
+<!--
+TODO: Azure Event Grid: Topic CRUD
+  Create, get, update (tags, inputSchema, publicNetworkAccess), delete, list by resource group,
+  and list by subscription; endpoint emitted as https://{name}.eventgrid.topaz.local.dev:<port>/;
+  access keys generated on creation and exposed via listKeys / regenerateKey.
+  milestone: v1.11
+  labels: enhancement, event-grid
+-->
+
+<!--
+TODO: Azure Event Grid: Event Subscriptions CRUD
+  Create, get, update, delete, and list event subscriptions per topic; fields: destination
+  (WebHook, ServiceBus, EventHub), filter, eventDeliverySchema; persisted as subresources.
+  milestone: v1.11
+  labels: enhancement, event-grid
+-->
+
+<!--
+TODO: Azure Event Grid: Event publishing
+  POST /api/events on the topic data-plane endpoint accepts CloudEvents and EventGrid schema arrays;
+  persists events and delivers synchronously to WebHook destinations via HTTP POST.
+  milestone: v1.11
+  labels: enhancement, event-grid
+-->
+
+<!--
+TODO: Azure Event Grid: System Topics CRUD
+  Create, get, delete, and list Microsoft.EventGrid/systemTopics; source and topicType stored and
+  returned verbatim; event subscriptions on system topics follow the same model as custom topics.
+  milestone: v1.11
+  labels: enhancement, event-grid
+-->
+
+<!--
+TODO: Azure Event Grid: MCP provisioning tool
+  Add CreateEventGridTopic MCP tool; extend GetConnectionStrings with Event Grid endpoint and key.
+  milestone: v1.11
+  labels: enhancement, event-grid, mcp
+-->
+
+### App Configuration — advanced data plane features
+
+<!--
+TODO: App Configuration: Snapshots API
+  Implement PUT/GET/DELETE /snapshots/{name} — capture a point-in-time copy of key-values matching
+  a filter; archiveSnapshot and recoverSnapshot transitions; snapshot status (provisioning → ready /
+  archived); list snapshots with ?name=, ?status= filtering.
+  milestone: v1.11
+  labels: enhancement, app-configuration
+-->
+
+<!--
+TODO: App Configuration: Key Vault references
+  Key-values with content type application/vnd.microsoft.appconfig.keyvaultref+json resolved on
+  GET /kv/{key}?resolve=true via the local Topaz Key Vault instance; compatible with
+  AzureAppConfigurationOptions.ConfigureKeyVault() in the .NET SDK.
+  milestone: v1.11
+  labels: enhancement, app-configuration, key-vault
+-->
+
+<!--
+TODO: App Configuration: Change notification via EventGrid integration
+  On any key-value write or delete, publish a Microsoft.AppConfiguration.KeyValueModified /
+  Microsoft.AppConfiguration.KeyValueDeleted event to any EventGrid topic subscription wired to
+  the store's system topic.
+  Prerequisite: Event Grid system topics and event publishing (above).
+  milestone: v1.11
+  labels: enhancement, app-configuration, event-grid
+-->
+
+### Application Insights & Log Analytics — richer KQL
+
+<!--
+TODO: Application Insights / Log Analytics: Extended KQL operators
+  Add join (inner/leftouter), mv-expand, bin(), ago(), and time-range filter (between, datetime())
+  to both the Application Insights query API and Log Analytics query API introduced in v1.9.
+  milestone: v1.11
+  labels: enhancement, application-insights, log-analytics
+-->
+
+<!--
+TODO: Log Analytics: Cross-workspace query
+  POST /v1/workspaces/{id}/query accepts a workspaces() expression referencing other emulated
+  Log Analytics workspaces within the same Topaz instance.
+  milestone: v1.11
+  labels: enhancement, log-analytics
+-->
+
+### Azure Redis Cache — data plane
+
+<!--
+TODO: Azure Redis Cache: RESP2 protocol listener
+  In-process TCP listener on port 6379 (configurable) implementing the RESP2 wire protocol;
+  backed by a ConcurrentDictionary per-cache instance; supports SET, GET, DEL, EXISTS, EXPIRE,
+  TTL, KEYS, HSET, HGET, HGETALL, HDEL, LPUSH, RPUSH, LPOP, RPOP, LRANGE, SADD, SMEMBERS,
+  SREM, INCR, DECR, PING, SELECT, FLUSHDB.
+  milestone: v1.11
+  labels: enhancement, redis
+-->
+
+<!--
+TODO: Azure Redis Cache: TLS listener
+  Optional TLS-wrapped RESP2 listener on port 6380 using the existing Topaz dev certificate;
+  enabled when enableNonSslPort is false on the cache resource.
+  milestone: v1.11
+  labels: enhancement, redis
+-->
+
+<!--
+TODO: Azure Redis Cache: Connection string in GetConnectionStrings
+  MCP and CLI GetConnectionStrings emit {host}:{port},password={key},ssl={true|false},abortConnect=False
+  format compatible with StackExchange.Redis.ConfigurationOptions.Parse().
+  milestone: v1.11
+  labels: enhancement, redis, mcp
+-->
+
+---
+
+## v1.12
+
+### API Management — policy execution subset
+
+<!--
+TODO: API Management: rate-limit policy
+  Enforce call-rate and bandwidth quotas per subscription key; 429 response with Retry-After header
+  when the limit is exceeded; in-memory per-process counter.
+  milestone: v1.12
+  labels: enhancement, api-management
+-->
+
+<!--
+TODO: API Management: set-header / set-body / rewrite-uri policies
+  Transform inbound and outbound headers, replace the request body, and rewrite the upstream URL
+  before forwarding to the backend.
+  milestone: v1.12
+  labels: enhancement, api-management
+-->
+
+<!--
+TODO: API Management: validate-jwt policy
+  Validate Authorization: Bearer tokens against a configurable JWKS URI or inline signing key;
+  reject with 401 on invalid or expired tokens.
+  milestone: v1.12
+  labels: enhancement, api-management
+-->
+
+<!--
+TODO: API Management: Backend request forwarding
+  When a matching API + operation is found and a backend is configured, forward the request to
+  backend.url and stream the response back; honours rewrite-uri and set-header transforms.
+  milestone: v1.12
+  labels: enhancement, api-management
+-->
+
+### Service Bus — dead-letter queue and scheduled messages
+
+<!--
+TODO: Service Bus: Dead-letter queue (DLQ)
+  AMQP and HTTP sub-queue path /$DeadLetterQueue per queue and per subscription;
+  DeadLetter() receiver API moves messages with DeadLetterReason and DeadLetterErrorDescription
+  annotations; maxDeliveryCount enforcement auto-dead-letters after threshold.
+  milestone: v1.12
+  labels: enhancement, service-bus, amqp
+-->
+
+<!--
+TODO: Service Bus: Scheduled message delivery
+  ScheduledEnqueueTimeUtc broker property respected on send; background scheduler enqueues messages
+  at the specified time; CancelScheduledMessage cancels by sequence number before delivery.
+  milestone: v1.12
+  labels: enhancement, service-bus
+-->
+
+<!--
+TODO: Service Bus: Message deferral
+  Defer() receiver API parks a message by sequence number; ReceiveDeferred(sequenceNumber) retrieves
+  it explicitly; deferred messages invisible to normal Receive().
+  milestone: v1.12
+  labels: enhancement, service-bus, amqp
+-->
+
+### Event Hub — consumer groups and offset checkpointing
+
+<!--
+TODO: Event Hub: Consumer group epoch tracking
+  Each consumer group tracks the AMQP receiver epoch; attaches with a higher epoch steal the link
+  from a lower-epoch receiver; ReceiverDisconnectedException raised on the evicted client.
+  milestone: v1.12
+  labels: enhancement, event-hub, amqp
+-->
+
+<!--
+TODO: Event Hub: Checkpoint Store simulation
+  In-process checkpoint store compatible with BlobCheckpointStore; EventProcessorClient can read
+  and write partition ownership and offsets without a real Storage account; backed by the emulated
+  Blob Storage service when a storage account is configured.
+  milestone: v1.12
+  labels: enhancement, event-hub
+-->
+
+<!--
+TODO: Event Hub: Partition cursor persistence
+  Sequence number and offset per partition per consumer group persisted across restarts;
+  EventPosition.FromSequenceNumber, FromOffset, FromEnqueuedTime, and Earliest/Latest all respected.
+  milestone: v1.12
+  labels: enhancement, event-hub
+-->
+
+---
+
+## v1.13
+
+### Azure Container Instances — real Docker execution
+
+<!--
+TODO: Azure Container Instances: Docker-backed container group execution
+  When the local Docker daemon is available, Create container group spawns real containers via the
+  Docker API; instanceView.state reflects actual container status (Pending → Running → Terminated);
+  opt-in via TOPAZ_ACI_USE_DOCKER=true environment variable.
+  milestone: v1.13
+  labels: enhancement, container-instances
+-->
+
+<!--
+TODO: Azure Container Instances: Container log streaming
+  GET .../containers/{name}/logs streams stdout/stderr from the running Docker container;
+  ?tail=N and ?timestamps=true query parameters supported.
+  milestone: v1.13
+  labels: enhancement, container-instances
+-->
+
+<!--
+TODO: Azure Container Instances: Local Container Registry integration
+  Container image names resolved against the emulated Container Registry (port 8892) before
+  pulling from the public registry; enables end-to-end az acr build → az container create workflows.
+  milestone: v1.13
+  labels: enhancement, container-instances, container-registry
+-->
+
+### Azure Functions — deeper App Service integration
+
+<!--
+TODO: Azure Functions: Function App resource type
+  Microsoft.Web/sites with kind: functionapp — distinct provisioning path that emits a
+  function-specific hostNames pattern and validates required app settings
+  (AzureWebJobsStorage, FUNCTIONS_EXTENSION_VERSION).
+  milestone: v1.13
+  labels: enhancement, app-service, functions
+-->
+
+<!--
+TODO: Azure Functions: Admin management API
+  GET /admin/functions lists deployed functions with trigger type and invoke URL;
+  POST /admin/functions/{name} manually invokes a function (requires the app to be forwarded
+  via the App Service proxy).
+  milestone: v1.13
+  labels: enhancement, functions
+-->
+
+<!--
+TODO: Azure Functions: host.json parsing and validation
+  Read FUNCTIONS_EXTENSION_VERSION and AzureWebJobsStorage from app settings; validate that the
+  referenced Storage account exists in the emulator and surface a warning in the Topaz portal if not.
+  milestone: v1.13
+  labels: enhancement, functions
+-->
+
+### Chaos Engineering — AMQP-level fault injection
+
+<!--
+TODO: Chaos Engineering: AMQP link detach injection
+  Chaos rules with faultType: AmqpLinkDetach forcibly close AMQP sender/receiver links at the
+  configured faultRate; clients receive an AMQP detach frame with
+  error.condition = amqp:resource-limit-exceeded.
+  milestone: v1.13
+  labels: enhancement, chaos, service-bus, event-hub, amqp
+-->
+
+<!--
+TODO: Chaos Engineering: Credit starvation
+  faultType: AmqpCreditStarvation suspends flow-frame credit grants on a link, causing the
+  client's send buffer to fill; tests client-side timeout and retry logic.
+  milestone: v1.13
+  labels: enhancement, chaos, service-bus, event-hub, amqp
+-->
+
+<!--
+TODO: Chaos Engineering: Session timeout injection
+  faultType: AmqpSessionTimeout closes the AMQP session (not just the link) after a configurable
+  delay, simulating broker-side session expiry.
+  milestone: v1.13
+  labels: enhancement, chaos, service-bus, event-hub, amqp
+-->
+
+---
+
+## v1.14
+
+### OpenTofu — verified compatibility
 
 <!--
 TODO: OpenTofu integration — verified compatibility and dedicated test suite
@@ -1109,5 +1418,43 @@ TODO: OpenTofu integration — verified compatibility and dedicated test suite
   - Add a build-opentofu-container.sh script.
   - Add an OpenTofu integration guide to website/docs/integrations/.
   - Flip the relevant cells in website/docs/api-coverage/ to note OpenTofu support.
+  milestone: v1.14
   labels: enhancement, good first issue
+-->
+
+### Azure Service Health / Resource Health stubs
+
+<!--
+TODO: Azure Service Health: Resource Health availability statuses
+  GET /subscriptions/{sub}/providers/Microsoft.ResourceHealth/availabilityStatuses and per-resource
+  GET .../providers/Microsoft.ResourceHealth/availabilityStatuses/current always return Available;
+  unblocks SDK health-check decorators and ARM health-check extensions in production apps.
+  milestone: v1.14
+  labels: enhancement, resource-health
+-->
+
+<!--
+TODO: Azure Service Health: Service Health events
+  GET /subscriptions/{sub}/providers/Microsoft.ResourceHealth/events returns an empty list by
+  default; controllable via chaos mode to inject a synthetic ServiceIssue or PlannedMaintenance event.
+  milestone: v1.14
+  labels: enhancement, resource-health, chaos
+-->
+
+### IaC state export
+
+<!--
+TODO: IaC state export: topaz export --format bicep
+  Introspects the current emulator state and generates a Bicep file describing all provisioned
+  resources across a subscription; respects resource dependencies for module ordering.
+  milestone: v1.14
+  labels: enhancement, cli
+-->
+
+<!--
+TODO: IaC state export: topaz export --format terraform
+  Same introspection emitting HCL with azurerm provider resource blocks; includes a
+  terraform.tfvars stub for subscription and tenant IDs.
+  milestone: v1.14
+  labels: enhancement, cli, terraform
 -->

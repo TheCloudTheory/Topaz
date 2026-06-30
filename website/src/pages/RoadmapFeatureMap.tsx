@@ -57,6 +57,10 @@ const MILESTONES: Milestone[] = [
     features: [
       { service: 'Container Registry', summary: 'ACR Tasks multi-step execution (FileTaskRunRequest & EncodedTaskRunRequest)' },
       { service: 'Resource pre-seeding', summary: 'Import existing Azure resources into local Topaz state via topaz seed CLI command' },
+      { service: 'Azure Event Grid', summary: 'Initial control plane · event subscriptions · event publishing · system topics · MCP tool' },
+      { service: 'App Configuration', summary: 'Snapshots · Key Vault references · EventGrid change notifications' },
+      { service: 'Application Insights / Log Analytics', summary: 'Extended KQL: join, mv-expand, bin(), ago(), cross-workspace query' },
+      { service: 'Redis Cache', summary: 'RESP2 data plane · TLS listener · connection string in GetConnectionStrings' },
     ],
   },
 ];
