@@ -8,6 +8,9 @@ public sealed class OperationRecord
     public string OperationId { get; init; } = string.Empty;
     public OperationRecordProperties Properties { get; init; } = new();
 
+    public override string ToString() =>
+        System.Text.Json.JsonSerializer.Serialize(this, Topaz.Shared.GlobalSettings.JsonOptions);
+
     public static OperationRecord Create(
         string deploymentId,
         string resourceId,

@@ -17,6 +17,9 @@ public sealed class GetDeploymentOperationByIdEndpoint(
 
     public string[] Endpoints =>
     [
+        // Legacy path used by Azure CLI
+        "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/deployments/{deploymentName}/operations/{operationId}",
+        // Path used by the Azure SDK
         "GET /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Resources/deployments/{deploymentName}/operations/{operationId}"
     ];
 
@@ -30,8 +33,11 @@ public sealed class GetDeploymentOperationByIdEndpoint(
         var path = context.Request.Path.Value!;
         var subscriptionIdentifier = SubscriptionIdentifier.From(path.ExtractValueFromPath(2));
         var resourceGroupIdentifier = ResourceGroupIdentifier.From(path.ExtractValueFromPath(4));
-        var deploymentName = path.ExtractValueFromPath(8);
-        var operationId = path.ExtractValueFromPath(10);
+        // Legacy path: .../deployments/{name}/operations/{id}  → name at index 6, id at index 8
+        // SDK path:    .../providers/Microsoft.Resources/deployments/{name}/operations/{id} → name at index 8, id at index 10
+        var isLegacyPath = !path.Contains("/providers/Microsoft.Resources/", StringComparison.OrdinalIgnoreCase);
+        var deploymentName = isLegacyPath ? path.ExtractValueFromPath(6) : path.ExtractValueFromPath(8);
+        var operationId = isLegacyPath ? path.ExtractValueFromPath(8) : path.ExtractValueFromPath(10);
 
         logger.LogDebug(nameof(GetDeploymentOperationByIdEndpoint), nameof(GetResponse),
             "Get deployment operation: subscription `{0}`, resource group `{1}`, deployment `{2}`, operationId `{3}`",
