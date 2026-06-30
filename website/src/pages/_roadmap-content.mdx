@@ -167,7 +167,7 @@
 |--|---------|-------------|
 | <span class="badge--preview">Preview</span> | RESP2 protocol listener | In-process TCP listener on port `6379` (configurable) implementing the RESP2 wire protocol; backed by a `ConcurrentDictionary` per-cache instance; supports `SET`, `GET`, `DEL`, `EXISTS`, `EXPIRE`, `TTL`, `KEYS`, `HSET`, `HGET`, `HGETALL`, `HDEL`, `LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LRANGE`, `SADD`, `SMEMBERS`, `SREM`, `INCR`, `DECR`, `PING`, `SELECT`, `FLUSHDB` |
 | <span class="badge--preview">Preview</span> | TLS listener | Optional TLS-wrapped RESP2 listener on port `6380` using the existing Topaz dev certificate; enabled when `enableNonSslPort` is `false` on the cache resource |
-| <span class="badge--preview">Preview</span> | Connection string in `GetConnectionStrings` | MCP and CLI `GetConnectionStrings` emit `{host}:{port},password={key},ssl={true|false},abortConnect=False` format compatible with `StackExchange.Redis.ConfigurationOptions.Parse()` |
+| <span class="badge--preview">Preview</span> | Connection string in `GetConnectionStrings` | MCP and CLI `GetConnectionStrings` emit `host:port,password=key,ssl=true\|false,abortConnect=False` format compatible with `StackExchange.Redis.ConfigurationOptions.Parse()` |
 
 ### Container Registry — ACR Tasks multi-step execution
 
