@@ -838,15 +838,22 @@ public class ResourceManagerTests
     public async Task ResourceManagerTest_WhenListAtTenantScopeIsCalled_ShouldReturnEmptyList()
     {
         // Arrange
+        const string deploymentName = "tenant-list-empty-test";
         var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
         using var topaz = new TopazArmClient(credentials);
+        var templateJson = await File.ReadAllTextAsync("templates/empty-deployment.json");
+
+        await topaz.CreateDeploymentAtTenantScopeAsync(deploymentName, "westeurope", templateJson);
 
         // Act
         var result = await topaz.ListDeploymentsAtTenantScopeAsync();
 
-        // Assert
+        // Assert — the deployment we just created must appear in the list
         var value = result["value"]!.AsArray();
-        Assert.That(value, Is.Empty);
+        Assert.That(value.Any(v => v!["name"]!.GetValue<string>() == deploymentName), Is.True);
+
+        // Cleanup
+        await topaz.DeleteDeploymentAtTenantScopeAsync(deploymentName);
     }
 
     [Test]
