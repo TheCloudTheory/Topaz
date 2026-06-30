@@ -36,7 +36,7 @@ public class RouterTests
                 Host = HostString.FromUriComponent($"localhost:{GlobalSettings.DefaultResourceManagerPort}"),
             }
         };
-        context.Request.Headers.Add("Authorization",
+        context.Request.Headers.Append("Authorization",
             $"Bearer {(await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token}");
 
         // Act
