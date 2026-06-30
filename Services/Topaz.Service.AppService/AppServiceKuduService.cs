@@ -17,6 +17,7 @@ public sealed class AppServiceKuduService(ITopazLogger logger) : IServiceDefinit
     public IReadOnlyCollection<IEndpointDefinition> Endpoints =>
     [
         new PostZipDeployEndpoint(logger),
-        new GetDeploymentsEndpoint(logger)
+        new GetDeploymentsEndpoint(logger),
+        new GetDeploymentByIdEndpoint(logger)
     ];
 }

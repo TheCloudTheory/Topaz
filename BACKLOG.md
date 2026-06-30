@@ -19,8 +19,6 @@ T0DO: Short issue title (required)
 -->
 ```
 
----
-
 ## v1.1-beta
 
 ### Key Vault — full secrets support

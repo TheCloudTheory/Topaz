@@ -314,6 +314,10 @@ internal sealed class AppServiceSiteControlPlane(
         return id;
     }
 
+    public Models.DeploymentRecord? GetDeployment(
+        SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string siteName, string id) =>
+        provider.GetDeploymentRecord(sub, rg, siteName, id);
+
     public IReadOnlyList<Models.DeploymentRecord> ListDeployments(
         SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string siteName) =>
         provider.ListDeploymentRecords(sub, rg, siteName);

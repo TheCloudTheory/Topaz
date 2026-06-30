@@ -102,6 +102,50 @@ public class AppServiceKuduTests
     }
 
     [Test]
+    public async Task GetDeploymentById_ReturnsRecord()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var resourceGroup = armClient.GetDefaultSubscription().GetResourceGroup(ResourceGroupName).Value;
+
+        var siteData = new WebSiteData(AzureLocation.WestEurope) { Kind = "app" };
+        resourceGroup.GetWebSites().CreateOrUpdate(WaitUntil.Completed, "kudu-test-getbyid", siteData);
+
+        using var http = CreateKuduHttpClient();
+        var deployRequest = new HttpRequestMessage(HttpMethod.Post, $"{KuduBaseUrl("kudu-test-getbyid")}/api/zipdeploy")
+        {
+            Content = new ByteArrayContent([])
+        };
+        deployRequest.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
+        var deployResponse = await http.SendAsync(deployRequest);
+        Assert.That(deployResponse.StatusCode, Is.EqualTo(HttpStatusCode.Accepted));
+
+        var location = deployResponse.Headers.Location!.ToString(); // e.g. /api/deployments/{id}
+        var getResponse = await http.GetAsync($"{KuduBaseUrl("kudu-test-getbyid")}{location}");
+        Assert.That(getResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        var body = await getResponse.Content.ReadAsStringAsync();
+        var record = System.Text.Json.JsonDocument.Parse(body).RootElement;
+        Assert.That(record.GetProperty("status").GetString(), Is.EqualTo("succeeded"));
+        Assert.That(record.GetProperty("deployer").GetString(), Is.EqualTo("Push Deployer"));
+    }
+
+    [Test]
+    public async Task GetDeploymentById_UnknownId_Returns404()
+    {
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var resourceGroup = armClient.GetDefaultSubscription().GetResourceGroup(ResourceGroupName).Value;
+
+        var siteData = new WebSiteData(AzureLocation.WestEurope) { Kind = "app" };
+        resourceGroup.GetWebSites().CreateOrUpdate(WaitUntil.Completed, "kudu-test-getbyid-404", siteData);
+
+        using var http = CreateKuduHttpClient();
+        var response = await http.GetAsync($"{KuduBaseUrl("kudu-test-getbyid-404")}/api/deployments/{Guid.NewGuid()}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
+
+    [Test]
     public async Task GetDeployments_WhenNoDeployments_ReturnsEmptyArray()
     {
         var credential = new AzureLocalCredential(Globals.GlobalAdminId);

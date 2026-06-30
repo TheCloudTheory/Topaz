@@ -65,6 +65,14 @@ internal sealed class AppServiceSiteResourceProvider(ITopazLogger logger)
         File.WriteAllText(metadataPath, JsonSerializer.Serialize(record, GlobalSettings.JsonOptions));
     }
 
+    public DeploymentRecord? GetDeploymentRecord(SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
+        string siteName, string id)
+    {
+        var metadataPath = Path.Combine(GetDeploymentsDirectory(sub, rg, siteName), id, "metadata.json");
+        if (!File.Exists(metadataPath)) return null;
+        return JsonSerializer.Deserialize<DeploymentRecord>(File.ReadAllText(metadataPath), GlobalSettings.JsonOptions);
+    }
+
     public IReadOnlyList<DeploymentRecord> ListDeploymentRecords(SubscriptionIdentifier sub, ResourceGroupIdentifier rg,
         string siteName)
     {
