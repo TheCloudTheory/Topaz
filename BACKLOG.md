@@ -426,22 +426,6 @@ TODO: Azure App Configuration: MCP Server provisioning tool
   labels: enhancement, app-configuration, mcp
 -->
 
-### Azure Disks — SAS access LRO polling
-
-<!--
-TODO: Azure Disks: SAS access — LRO polling for beginGetAccess
-  Upgrade beginGetAccess from synchronous 200 OK to a proper long-running operation:
-  - POST .../disks/{name}/beginGetAccess returns 202 Accepted with Azure-AsyncOperation header.
-  - GET on polling URL returns {"status":"InProgress"} then {"status":"Succeeded","properties":{"output":{"accessSAS":"..."}}}
-  - Implement polling URL as new endpoint on DefaultResourceManagerPort.
-  - Store pending LRO state in-memory per disk; garbage-collect after completion.
-  - The accessSAS value remains the Topaz-hosted stub URL.
-  milestone: v1.8-preview
-  labels: enhancement
--->
-
----
-
 ## v1.9-preview
 
 ### Azure App Service — Kudu / SCM authentication

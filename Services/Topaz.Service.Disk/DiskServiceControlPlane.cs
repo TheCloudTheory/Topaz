@@ -207,7 +207,7 @@ internal sealed class DiskServiceControlPlane(
         return new ControlPlaneOperationResult<DiskResource[]>(OperationResult.Success, resources, null, null);
     }
 
-    public ControlPlaneOperationResult<AccessUriResult> GrantAccess(
+    public ControlPlaneOperationResult<(Guid OperationId, string AccessSAS)> GrantAccess(
         SubscriptionIdentifier subscriptionIdentifier,
         ResourceGroupIdentifier resourceGroupIdentifier,
         string diskName,
@@ -217,18 +217,18 @@ internal sealed class DiskServiceControlPlane(
 
         if (resource == null)
         {
-            return new ControlPlaneOperationResult<AccessUriResult>(
+            return new ControlPlaneOperationResult<(Guid, string)>(
                 OperationResult.NotFound,
-                null,
+                default,
                 string.Format(DiskNotFoundMessageTemplate, diskName),
                 DiskNotFoundCode);
         }
 
         if (resource.Properties.DiskState == "ActiveSAS")
         {
-            return new ControlPlaneOperationResult<AccessUriResult>(
+            return new ControlPlaneOperationResult<(Guid, string)>(
                 OperationResult.Conflict,
-                null,
+                default,
                 $"Disk '{diskName}' already has an active SAS access grant.",
                 "OperationNotAllowed");
         }
@@ -237,10 +237,12 @@ internal sealed class DiskServiceControlPlane(
         provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, diskName, resource);
 
         var sasUrl = $"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/disk-sas/{resource.Properties.UniqueId}";
+        var operationId = Guid.NewGuid();
+        DiskAccessLroStore.Instance.Add(operationId, sasUrl);
 
-        return new ControlPlaneOperationResult<AccessUriResult>(
+        return new ControlPlaneOperationResult<(Guid, string)>(
             OperationResult.Success,
-            new AccessUriResult { AccessSAS = sasUrl },
+            (operationId, sasUrl),
             null,
             null);
     }

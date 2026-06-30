@@ -361,6 +361,7 @@ public class Host
         var host = new WebHostBuilder()
             .UseKestrel((_, hostOptions) =>
             {
+                hostOptions.AllowSynchronousIO = true;
                 var usedPorts = new List<int>();
                 hostOptions.Listen(IPAddress.Parse(_topazIpAddress), ForwardProxySettings.DefaultPort, listenOptions =>
                 {

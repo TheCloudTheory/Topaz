@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using JetBrains.Annotations;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -15,15 +16,59 @@ internal sealed class GrantDiskAccessCommand(HttpClient httpClient, DefaultsProv
 {
     public override async Task<int> ExecuteAsync(CommandContext context, GrantDiskAccessCommandSettings settings)
     {
-        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Compute/disks/{settings.Name}/beginGetAccess";
-        var (success, body) = await PostAsync(url, new
+        var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Compute/disks/{settings.Name}/beginGetAccess?api-version=2023-04-02";
+        using var content = JsonContent.Create(new
         {
             access = settings.Access,
             durationInSeconds = settings.DurationInSeconds
         });
-        if (!success) return 1;
-        AnsiConsole.WriteLine(body);
-        return 0;
+        var response = await HttpClient.PostAsync(url, content);
+        if (!response.IsSuccessStatusCode)
+        {
+            await Console.Error.WriteLineAsync($"Error {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+            return 1;
+        }
+
+        if (response.StatusCode != System.Net.HttpStatusCode.Accepted)
+        {
+            AnsiConsole.WriteLine(await response.Content.ReadAsStringAsync());
+            return 0;
+        }
+
+        // LRO: poll Azure-AsyncOperation until Succeeded
+        var pollingUrl = response.Headers.TryGetValues("Azure-AsyncOperation", out var values)
+            ? values.FirstOrDefault()
+            : null;
+
+        if (pollingUrl == null)
+        {
+            await Console.Error.WriteLineAsync("Error: missing Azure-AsyncOperation header.");
+            return 1;
+        }
+
+        while (true)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            var poll = await HttpClient.GetAsync(pollingUrl);
+            if (!poll.IsSuccessStatusCode)
+            {
+                await Console.Error.WriteLineAsync($"Polling error {(int)poll.StatusCode}: {await poll.Content.ReadAsStringAsync()}");
+                return 1;
+            }
+
+            var status = await poll.Content.ReadFromJsonAsync<OperationStatus>();
+            if (status?.Status == "Succeeded")
+            {
+                AnsiConsole.WriteLine(status.Properties?.Output?.AccessSAS ?? string.Empty);
+                return 0;
+            }
+
+            if (status?.Status is "Failed" or "Canceled")
+            {
+                await Console.Error.WriteLineAsync($"Operation {status.Status}.");
+                return 1;
+            }
+        }
     }
 
     public override ValidationResult Validate(CommandContext context, GrantDiskAccessCommandSettings settings)
@@ -64,5 +109,21 @@ internal sealed class GrantDiskAccessCommand(HttpClient httpClient, DefaultsProv
         [CommandOptionDefinition("(Required) Duration of SAS access in seconds.", required: true)]
         [CommandOption("--duration-in-seconds")]
         public int DurationInSeconds { get; set; } = 3600;
+    }
+
+    private sealed class OperationStatus
+    {
+        public string? Status { get; init; }
+        public OperationStatusProperties? Properties { get; init; }
+    }
+
+    private sealed class OperationStatusProperties
+    {
+        public OperationStatusOutput? Output { get; init; }
+    }
+
+    private sealed class OperationStatusOutput
+    {
+        public string? AccessSAS { get; init; }
     }
 }
