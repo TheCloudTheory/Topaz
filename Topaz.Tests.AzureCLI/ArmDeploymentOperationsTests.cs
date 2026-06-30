@@ -56,7 +56,7 @@ public class ArmDeploymentOperationsTests : TopazFixture
     public async Task DeploymentOperations_SubscriptionScope_ListReturnsOperations()
     {
         await RunAzureCliCommand(
-            "az deployment sub create --name deploy-ops-sub-list --location westeurope --template-file \"/templates/deployment-with-identity.json\"");
+            "az deployment sub create --name deploy-ops-sub-list --location westeurope --template-file \"/templates/subscription-scope-deployment.json\"");
 
         await RunAzureCliCommand(
             "az deployment operation sub list --name deploy-ops-sub-list",
