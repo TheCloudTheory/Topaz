@@ -143,6 +143,30 @@ public class StorageTests : TopazFixture
     }
 
     [Test]
+    public async Task StorageAccount_ShowConnectionString_ReturnsValidConnectionString()
+    {
+        const string storageAccountName = "topazstorconn01";
+        const string resourceGroup = "test-storage-conn-rg";
+
+        await RunAzureCliCommand($"az group create -n {resourceGroup} -l westeurope");
+        await RunAzureCliCommand(
+            $"az storage account create --name {storageAccountName} --resource-group {resourceGroup} --location westeurope --sku Standard_LRS");
+
+        await RunAzureCliCommand(
+            $"az storage account show-connection-string --name {storageAccountName} --resource-group {resourceGroup}",
+            (resp) =>
+            {
+                var connectionString = resp["connectionString"]!.GetValue<string>();
+                Assert.That(connectionString, Is.Not.Null.And.Not.Empty);
+                Assert.That(connectionString, Does.Contain($"AccountName={storageAccountName}"));
+                Assert.That(connectionString, Does.Contain("AccountKey="));
+            });
+
+        await RunAzureCliCommand($"az storage account delete --name {storageAccountName} --resource-group {resourceGroup} --yes");
+        await RunAzureCliCommand($"az group delete -n {resourceGroup} --yes");
+    }
+
+    [Test]
     public async Task TableEntity_Delete_RemovesEntityFromTable()
     {
         const string storageAccountName = "topazstortblentdel01";

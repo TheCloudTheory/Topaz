@@ -7,22 +7,6 @@ converted to a GitHub Issue by CI when new lines are committed.
 > To bulk-import existing items, run the _TODO to Issue_ workflow manually from the
 > **Actions** tab.
 
----
-
-<!--
-TODO: Storage — Fix List Keys endpoint for Azure CLI show-connection-string
-  `az storage account show-connection-string` (and the underlying automatic key-lookup
-  path used by `az storage container create --account-name` without explicit credentials)
-  returns 404 from Topaz. Investigate the exact ARM path and API version the Azure CLI
-  sends for this call and ensure the existing List Keys handler matches it.
-  Workaround until fixed: callers must pass --connection-string, --account-key, or
-  --sas-token explicitly on all az storage data-plane commands.
-  milestone: v1.8-preview
-  labels: bug, storage
--->
-
----
-
 ## Format reference
 
 ```
