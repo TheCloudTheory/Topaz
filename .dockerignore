@@ -1,24 +1,3 @@
-.config
-.github
-.vscode
-certificate
-static
-**/bin/**
-**/obj**
-.gitignore
-LICENSE
-README.md
-todo.js
-**/node_modules/**
-website
-Documentation
-Examples
-Topaz.Tests.AzureCLI
-Topaz.Tests.Terraform
-Topaz.Tests.Portal
-Topaz.Tests.MCP
-Topaz.Tests.Isolated
-Topaz.Tests.AzurePowerShell
-Topaz.Tests.Isolated
-Topaz.Tests.Go
-Topaz.Tests.NodeJS
+# Exclude everything, then allow only what the Dockerfile needs
+**
+!publish/**
