@@ -1,0 +1,7 @@
+# Dedicated .dockerignore for the Python test container.
+# Docker 20.10+ uses <Dockerfile>.dockerignore when -f is specified,
+# so this takes precedence over the root .dockerignore.
+# Build context is the repository root.
+**
+!sdk/python/**
+!Topaz.Tests.Python/tests/**
