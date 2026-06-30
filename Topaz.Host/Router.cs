@@ -253,7 +253,7 @@ internal sealed class Router(Pipeline eventPipeline, GlobalOptions options, ITop
                 return response!;
             }
 
-            context.User = principal;
+            context.User = principal!;
             endpoint.GetResponse(context, response, options);
         }
         catch (JsonException ex)

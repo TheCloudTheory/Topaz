@@ -7,7 +7,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <DebugType>embedded</DebugType>
-    <NoWarn>$(NoWarn);CS0436</NoWarn>
+    <NoWarn>$(NoWarn);CS0436;ASPDEPR004;ASPDEPR008;ASP0019</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,8 +38,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AMQPNetLite" Version="2.5.3" />
-    <PackageReference Include="Microsoft.AspNetCore" Version="2.3.9" />
     <PackageReference Include="Microsoft.Azure.Amqp" Version="2.7.0" />
     <PackageReference Include="Spectre.Console" Version="0.52.0" />
     <PackageReference Update="Nerdbank.GitVersioning">
