@@ -537,7 +537,16 @@ public class Host
 
     private static void PrintServicesTable(IServiceDefinition[] services)
     {
-        static Table BuildTable(IEnumerable<IServiceDefinition> subset)
+        var azureServices = new List<IServiceDefinition>();
+        var topazServices = new List<IServiceDefinition>();
+
+        foreach (var s in services)
+        {
+            if (s.IsTopazService) topazServices.Add(s);
+            else azureServices.Add(s);
+        }
+
+        static Table BuildTable(List<IServiceDefinition> subset)
         {
             var t = new Table()
                 .Border(TableBorder.Rounded)
@@ -561,18 +570,15 @@ public class Host
             return t;
         }
 
-        var azureServices = services.Where(s => !s.IsTopazService).ToArray();
-        var topazServices = services.Where(s => s.IsTopazService).ToArray();
-
         AnsiConsole.WriteLine();
 
-        if (azureServices.Length > 0)
+        if (azureServices.Count > 0)
         {
             AnsiConsole.MarkupLine("[bold]Azure Services[/]");
             AnsiConsole.Write(BuildTable(azureServices));
         }
 
-        if (topazServices.Length > 0)
+        if (topazServices.Count > 0)
         {
             AnsiConsole.MarkupLine("[bold]Topaz Services[/]");
             AnsiConsole.Write(BuildTable(topazServices));
