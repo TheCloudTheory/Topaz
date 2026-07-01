@@ -14,7 +14,7 @@ This page lists the tool and SDK versions that Topaz is tested against in CI. Us
 |---|---|---|---|
 | AzureRM | `hashicorp/azurerm` | `= 4.67.0` | Pinned exactly — other 4.x versions may work but are not tested |
 | AzAPI | `azure/azapi` | `~> 2.0` | Any 2.x release |
-| AzureAD | `hashicorp/azuread` | `~> 3.0` | Any 3.x release |
+| AzureAD | `hashicorp/azuread` | `~> 3.8.0` | 3.9.0 has a TLS segfault on linux/amd64 |
 
 ## Azure SDK for .NET
 
