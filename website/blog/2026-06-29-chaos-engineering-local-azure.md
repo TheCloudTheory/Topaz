@@ -27,9 +27,9 @@ docker pull thecloudtheory/topaz-host:nightly
 
 ## Where the real SDK retry pipeline lives
 
-The Azure SDK for .NET (and its equivalents in Python, Java, and Go) runs every outgoing request through a pipeline of policies. `RetryPolicy` sits in that pipeline. When a response comes back with a 429, `RetryPolicy` checks the `Retry-After` header, waits the specified duration, and retries. It does this transparently, below the level of the code that called `GetSecretAsync` or `SendMessageAsync`.
+The Azure SDK — whether you are using .NET, Python, Java, or JavaScript — runs every outgoing request through a pipeline of policies. `RetryPolicy` sits in that pipeline. When a response comes back with a 429, `RetryPolicy` checks the `Retry-After` header, waits the specified duration, and retries. It does this transparently, below the level of the code that called `GetSecretAsync` or `get_secret`.
 
-For that pipeline to actually exercise your retry logic, the 429 has to arrive through it. A fake `HttpMessageHandler` intercepts the request before it reaches the pipeline's transport step. Some policies still run. Others do not, depending on exactly where you injected the handler. The end result is that your retry test may be exercising a different code path than the one that runs in production.
+For that pipeline to actually exercise your retry logic, the 429 has to arrive through it. A fake `HttpMessageHandler` in .NET, a patched `httpx` transport in Python, or a stubbed `HttpClient` in JavaScript intercepts the request before it reaches the pipeline's transport step. Some policies still run. Others do not, depending on exactly where you injected the handler. The end result is that your retry test may be exercising a different code path than the one that runs in production.
 
 What you actually want is something that lets the full SDK stack run, including pipeline initialization, token acquisition, and the retry machinery, and then injects the fault at the protocol boundary, after all of that setup, but before the real endpoint handler responds.
 
@@ -154,7 +154,26 @@ public class KeyVaultRetryTests
 
 The test asserts that the secret is eventually returned correctly. If the retry policy is wired up, it passes. If `Retry-After` is being ignored, or the SDK is not retrying the exception type that 429 produces, it fails with a `RequestFailedException` instead. That is the thing the mock-based version never caught: it was asserting that your retry wrapper returned the right value, not that `Azure.Core`'s policy fired at all.
 
-Two things worth noting about the setup. `DisableChallengeResourceVerification = true` is required on the `SecretClientOptions` when connecting to any non-Azure endpoint — without it, the SDK sends a bearer challenge to `vault.azure.net` and rejects the local token. `AzureLocalCredential` is from the Topaz SDK and issues real JWT tokens for the given principal OID; it works the same way as `DefaultAzureCredential` from the application's perspective, just without hitting an Entra tenant.
+Two things worth noting about the .NET setup. `DisableChallengeResourceVerification = true` is required on the `SecretClientOptions` when connecting to any non-Azure endpoint — without it, the SDK sends a bearer challenge to `vault.azure.net` and rejects the local token. `AzureLocalCredential` is from the Topaz SDK and issues real JWT tokens for the given principal OID; it works the same way as `DefaultAzureCredential` from the application's perspective, just without hitting an Entra tenant.
+
+The same pattern works in Python using the `topaz_sdk` package:
+
+```python
+from azure.keyvault.secrets import SecretClient
+from topaz_sdk import AzureLocalCredential, TopazResourceHelpers, GLOBAL_ADMIN_ID
+
+client = SecretClient(
+    vault_url=TopazResourceHelpers.get_key_vault_endpoint("retry-test-vault"),
+    credential=AzureLocalCredential(GLOBAL_ADMIN_ID)
+)
+
+# azure-keyvault-secrets uses azure-core's retry pipeline.
+# With the throttle rule active, get_secret retries on 429 automatically.
+secret = client.get_secret("db-password")
+assert secret.value == "s3cr3t"
+```
+
+The fault injection is the same regardless of language — it fires at the HTTP layer after authentication, so every SDK's retry pipeline is exercised under identical conditions.
 
 ## Scoping rules to a service
 
