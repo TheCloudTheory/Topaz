@@ -25,6 +25,7 @@ using Topaz.Service.Disk.Commands;
 using Topaz.Service.LoadBalancer.Commands;
 using Topaz.Service.Sql.Commands;
 using Topaz.Service.CosmosDb.Commands;
+using Topaz.Service.AppConfiguration.Commands;
 using Topaz.FinOps.Commands;
 using Topaz.Chaos.Commands;
 using Topaz.Shared;
@@ -152,6 +153,7 @@ internal class Program
             typeof(GenericSqlCommand),
             typeof(GenericCosmosDbCommand),
             typeof(GenericDiskCommand),
+            typeof(GenericAppConfigurationCommand),
             typeof(GenericLoadBalancerCommand),
             typeof(GenericFinOpsCommand),
             typeof(GenericChaosCommand)
