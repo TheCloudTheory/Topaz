@@ -535,53 +535,55 @@ public class Host
         return X509Certificate2.CreateFromPem(certPem, keyPem);
     }
 
-    private static void PrintServicesTable(IServiceDefinition[] services)
+    private static Table BuildServicesTable(IServiceDefinition[] services, bool topazServices)
     {
-        var azureServices = new List<IServiceDefinition>();
-        var topazServices = new List<IServiceDefinition>();
+        var t = new Table()
+            .Border(TableBorder.Rounded)
+            .AddColumn("[bold]Service[/]")
+            .AddColumn("[bold]Endpoints[/]");
 
         foreach (var s in services)
         {
-            if (s.IsTopazService) topazServices.Add(s);
-            else azureServices.Add(s);
+            if (s.IsTopazService != topazServices) continue;
+
+            var grouped = s.Endpoints
+                .GroupBy(e => e.PortsAndProtocol.Protocol)
+                .Select(g =>
+                {
+                    var ports = g.SelectMany(e => e.PortsAndProtocol.Ports)
+                        .Distinct()
+                        .OrderBy(p => p);
+                    return $"{g.Key}: {string.Join(", ", ports)}";
+                });
+            t.AddRow(s.Name, string.Join("  |  ", grouped));
         }
 
-        static Table BuildTable(List<IServiceDefinition> subset)
+        return t;
+    }
+
+    private static void PrintServicesTable(IServiceDefinition[] services)
+    {
+        var hasAzure = false;
+        var hasTopaz = false;
+
+        foreach (var s in services)
         {
-            var t = new Table()
-                .Border(TableBorder.Rounded)
-                .AddColumn("[bold]Service[/]")
-                .AddColumn("[bold]Endpoints[/]");
-
-            foreach (var s in subset)
-            {
-                var grouped = s.Endpoints
-                    .GroupBy(e => e.PortsAndProtocol.Protocol)
-                    .Select(g =>
-                    {
-                        var ports = g.SelectMany(e => e.PortsAndProtocol.Ports)
-                            .Distinct()
-                            .OrderBy(p => p);
-                        return $"{g.Key}: {string.Join(", ", ports)}";
-                    });
-                t.AddRow(s.Name, string.Join("  |  ", grouped));
-            }
-
-            return t;
+            if (s.IsTopazService) hasTopaz = true;
+            else hasAzure = true;
         }
 
         AnsiConsole.WriteLine();
 
-        if (azureServices.Count > 0)
+        if (hasAzure)
         {
             AnsiConsole.MarkupLine("[bold]Azure Services[/]");
-            AnsiConsole.Write(BuildTable(azureServices));
+            AnsiConsole.Write(BuildServicesTable(services, topazServices: false));
         }
 
-        if (topazServices.Count > 0)
+        if (hasTopaz)
         {
             AnsiConsole.MarkupLine("[bold]Topaz Services[/]");
-            AnsiConsole.Write(BuildTable(topazServices));
+            AnsiConsole.Write(BuildServicesTable(services, topazServices: true));
         }
 
         AnsiConsole.WriteLine();
