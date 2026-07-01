@@ -12,6 +12,7 @@
     <PackageReference Include="Azure.Messaging.EventHubs" Version="5.12.2" />
     <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.12.2" />
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
+    <PackageReference Include="Azure.ResourceManager.AppConfiguration" Version="1.4.1" />
     <PackageReference Include="Azure.ResourceManager.Authorization" Version="1.1.6" />
     <PackageReference Include="Azure.ResourceManager.Compute" Version="1.14.0" />
     <PackageReference Include="Azure.ResourceManager.ContainerRegistry" Version="1.4.0" />
