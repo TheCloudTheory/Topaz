@@ -537,27 +537,47 @@ public class Host
 
     private static void PrintServicesTable(IServiceDefinition[] services)
     {
-        var table = new Table()
-            .Border(TableBorder.Rounded)
-            .AddColumn("[bold]Service[/]")
-            .AddColumn("[bold]Endpoints[/]");
-
-        foreach (var s in services)
+        static Table BuildTable(IEnumerable<IServiceDefinition> subset)
         {
-            var grouped = s.Endpoints
-                .GroupBy(e => e.PortsAndProtocol.Protocol)
-                .Select(g =>
-                {
-                    var ports = g.SelectMany(e => e.PortsAndProtocol.Ports)
-                        .Distinct()
-                        .OrderBy(p => p);
-                    return $"{g.Key}: {string.Join(", ", ports)}";
-                });
-            table.AddRow(s.Name, string.Join("  |  ", grouped));
+            var t = new Table()
+                .Border(TableBorder.Rounded)
+                .AddColumn("[bold]Service[/]")
+                .AddColumn("[bold]Endpoints[/]");
+
+            foreach (var s in subset)
+            {
+                var grouped = s.Endpoints
+                    .GroupBy(e => e.PortsAndProtocol.Protocol)
+                    .Select(g =>
+                    {
+                        var ports = g.SelectMany(e => e.PortsAndProtocol.Ports)
+                            .Distinct()
+                            .OrderBy(p => p);
+                        return $"{g.Key}: {string.Join(", ", ports)}";
+                    });
+                t.AddRow(s.Name, string.Join("  |  ", grouped));
+            }
+
+            return t;
         }
 
+        var azureServices = services.Where(s => !s.IsTopazService).ToArray();
+        var topazServices = services.Where(s => s.IsTopazService).ToArray();
+
         AnsiConsole.WriteLine();
-        AnsiConsole.Write(table);
+
+        if (azureServices.Length > 0)
+        {
+            AnsiConsole.MarkupLine("[bold]Azure Services[/]");
+            AnsiConsole.Write(BuildTable(azureServices));
+        }
+
+        if (topazServices.Length > 0)
+        {
+            AnsiConsole.MarkupLine("[bold]Topaz Services[/]");
+            AnsiConsole.Write(BuildTable(topazServices));
+        }
+
         AnsiConsole.WriteLine();
     }
 
