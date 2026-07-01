@@ -1,0 +1,9 @@
+# Dedicated .dockerignore for the NodeJS test container.
+# Docker 20.10+ uses <Dockerfile>.dockerignore when -f is specified,
+# so this takes precedence over the root .dockerignore.
+# Build context is the repository root.
+**
+!Topaz.Tests.NodeJS/package.json
+!Topaz.Tests.NodeJS/package-lock.json
+!Topaz.Tests.NodeJS/smoke-service-bus.mjs
+!Topaz.Tests.NodeJS/smoke-event-hub.mjs
