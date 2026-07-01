@@ -315,24 +315,6 @@ TODO: Azure Blob Storage: enforce authentication on private containers
   labels: enhancement, storage, good first issue
 -->
 
-### Azure App Service — Kudu SCM — individual deployment GET endpoint
-
-<!--
-TODO: Azure App Service: Kudu SCM — individual deployment GET endpoint
-  Implement the single-deployment lookup endpoint for the Kudu/SCM data-plane
-  (prerequisite: Kudu SCM data plane from v1.7-beta).
-  - GET /api/deployments/{id}
-    Parse siteName from the Host header ({siteName}.scm.azurewebsites.topaz.local.dev).
-    Read .topaz/{sub}/{rg}/.azure-web-sites/{name}/deployments/{id}/metadata.json
-    and return the DeploymentRecord as JSON (200 OK), or 404 if the deployment ID
-    does not exist for the resolved site.
-  Add GetDeploymentByIdEndpoint.cs under Services/Topaz.Service.AppService/Endpoints/Kudu/
-  and register it in AppServiceKuduService.Endpoints.
-  Includes E2E test and Azure CLI test.
-  milestone: v1.8-preview
-  labels: enhancement, app-service
--->
-
 ### Azure App Configuration — initial control plane and data plane
 
 <!--
