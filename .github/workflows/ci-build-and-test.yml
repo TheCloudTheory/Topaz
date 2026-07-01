@@ -390,6 +390,8 @@ jobs:
           --filter "$FILTER"
     - name: Python Tests
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.py_skip != 'true'
+      env:
+        TOPAZ_PYTHON_TEST_IMAGE: topaz-python-test
       run: |
         FILTER="${{ steps.test_filter.outputs.py_filter }}"
         if [[ -z "$FILTER" ]]; then

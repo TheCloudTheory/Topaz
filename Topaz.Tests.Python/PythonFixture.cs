@@ -2,7 +2,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
-using DotNet.Testcontainers.Images;
 using DotNet.Testcontainers.Networks;
 
 namespace Topaz.Tests.Python;
@@ -13,10 +12,12 @@ public class PythonFixture
     private static readonly string TopazContainerImage =
         Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "topaz/host";
 
+    private static readonly string PythonTestImage =
+        Environment.GetEnvironmentVariable("TOPAZ_PYTHON_TEST_IMAGE") ?? "topaz-python-test";
+
     private static readonly string CertificateFile = File.ReadAllText("topaz.crt");
     private static readonly string CertificateKey = File.ReadAllText("topaz.key");
 
-    private IFutureDockerImage? _pythonImage;
     private IContainer? _containerTopaz;
     private INetwork? _network;
 
@@ -26,8 +27,6 @@ public class PythonFixture
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
-        var repoRoot = FindRepoRoot();
-
         _network = new NetworkBuilder()
             .WithName(Guid.NewGuid().ToString("D"))
             .Build();
@@ -59,18 +58,10 @@ public class PythonFixture
         // proceeding, instead of relying on a fixed delay.
         await WaitForContainerReady(_containerTopaz, 8899).ConfigureAwait(false);
 
-        _pythonImage = new ImageFromDockerfileBuilder()
-            .WithDockerfileDirectory(repoRoot)
-            .WithDockerfile("Topaz.Tests.Python/docker/Dockerfile")
-            .WithBuildArgument("BUILDKIT_INLINE_CACHE", "1")
-            .Build();
-
-        await _pythonImage.CreateAsync().ConfigureAwait(false);
-
         var topazIp = _containerTopaz.IpAddress;
 
         var pythonContainer = new ContainerBuilder()
-            .WithImage(_pythonImage)
+            .WithImage(PythonTestImage)
             .WithNetwork(_network)
             .WithEntrypoint("/bin/sh")
             .WithCommand("-c", "tail -f /dev/null")
@@ -107,7 +98,6 @@ public class PythonFixture
     {
         if (PythonContainer != null) await PythonContainer.DisposeAsync();
         if (_containerTopaz != null) await _containerTopaz.DisposeAsync();
-        if (_pythonImage != null) await _pythonImage.DisposeAsync();
         if (_network != null) await _network.DisposeAsync();
     }
 
@@ -190,16 +180,5 @@ public class PythonFixture
 
         throw new TimeoutException(
             $"Topaz container did not become ready on port {containerPort} within {timeoutSeconds} seconds.");
-    }
-
-    private static string FindRepoRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "Topaz.sln")))
-            directory = directory.Parent;
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   "Repository root (directory containing Topaz.sln) could not be located.");
     }
 }
