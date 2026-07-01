@@ -26,7 +26,9 @@ public sealed class AppConfigurationService(Pipeline eventPipeline, ITopazLogger
         new ListConfigurationStoresByResourceGroupEndpoint(_eventPipeline, _logger),
         new ListConfigurationStoresBySubscriptionEndpoint(_eventPipeline, _logger),
         new ListKeysConfigurationStoreEndpoint(_eventPipeline, _logger),
-        new RegenerateKeyConfigurationStoreEndpoint(_eventPipeline, _logger)
+        new RegenerateKeyConfigurationStoreEndpoint(_eventPipeline, _logger),
+        new ListConfigurationStoreReplicasEndpoint(_eventPipeline, _logger),
+        new GetDeletedConfigurationStoreEndpoint()
     ];
 
     public void Bootstrap() { }

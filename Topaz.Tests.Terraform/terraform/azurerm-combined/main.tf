@@ -673,3 +673,21 @@ output "cosmos_sql_db_name"           { value = azurerm_cosmosdb_sql_database.co
 output "cosmos_sql_container_name"    { value = azurerm_cosmosdb_sql_container.cosmos_container.name }
 output "cosmos_sql_container_pk"      { value = tostring(azurerm_cosmosdb_sql_container.cosmos_container.partition_key_paths[0]) }
 output "cosmos_sql_container_throughput" { value = azurerm_cosmosdb_sql_container.cosmos_container.throughput }
+
+# ── App Configuration ─────────────────────────────────────────────────────────
+
+resource "azurerm_resource_group" "appconfig_rg" {
+  name     = "tf-rm-appconfig-rg"
+  location = "westeurope"
+}
+
+resource "azurerm_app_configuration" "appconfig" {
+  name                = "tf-rm-appconfig"
+  resource_group_name = azurerm_resource_group.appconfig_rg.name
+  location            = azurerm_resource_group.appconfig_rg.location
+  sku                 = "free"
+}
+
+output "appconfig_name"     { value = azurerm_app_configuration.appconfig.name }
+output "appconfig_endpoint" { value = azurerm_app_configuration.appconfig.endpoint }
+output "appconfig_sku"      { value = azurerm_app_configuration.appconfig.sku }

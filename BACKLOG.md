@@ -318,25 +318,6 @@ TODO: Azure Blob Storage: enforce authentication on private containers
 ### Azure App Configuration — initial control plane and data plane
 
 <!--
-TODO: Azure App Configuration: ConfigurationStore control plane endpoints
-  Implement the ARM-level ConfigurationStore resource surface
-  (Microsoft.AppConfiguration/configurationStores):
-  - PUT    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.AppConfiguration/configurationStores/{name}  – create or update
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.AppConfiguration/configurationStores/{name}  – get
-  - DELETE /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.AppConfiguration/configurationStores/{name}  – delete
-  - PATCH  /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.AppConfiguration/configurationStores/{name}  – update (tags, sku, publicNetworkAccess)
-  - GET    /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.AppConfiguration/configurationStores          – list by resource group
-  - GET    /subscriptions/{sub}/providers/Microsoft.AppConfiguration/configurationStores                              – list all
-  Also implement access key management:
-  - POST .../configurationStores/{name}/listKeys              – return primary and secondary read-write and read-only keys
-  - POST .../configurationStores/{name}/regenerateKey         – regenerate one key by id
-  Generate and persist two read-write and two read-only key pairs (id, value, connectionString)
-  on first creation.
-  milestone: v1.8-preview
-  labels: enhancement, app-configuration, good first issue
--->
-
-<!--
 TODO: Azure App Configuration: Data plane — key-value store API
   Implement the App Configuration data-plane REST API on DefaultAppConfigurationPort (8896).
   Authentication: validate the HMAC-SHA256 credential scheme used by the Azure SDK
@@ -628,6 +609,27 @@ TODO: Virtual Machines: Complete Microsoft.Compute/skus SKU catalogue
 ---
 
 ## v1.10-preview
+
+<!--
+TODO: App Configuration: Replicas companion endpoint
+  The azurerm Terraform provider calls GET .../configurationStores/{name}/replicas after
+  creation. Add a stub endpoint that returns {"value":[]} (Topaz does not emulate replicas).
+  Endpoint:
+  - GET /subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.AppConfiguration/configurationStores/{name}/replicas
+  milestone: v1.10-preview
+  labels: enhancement, app-configuration
+-->
+
+<!--
+TODO: App Configuration: Soft-delete companion endpoints
+  The azurerm Terraform provider calls soft-delete endpoints during destroy. Add stubs that
+  return 404 (Topaz does not emulate soft-delete / purge protection):
+  - GET /subscriptions/{sub}/providers/Microsoft.AppConfiguration/locations/{location}/deletedConfigurationStores/{name}
+  - GET /subscriptions/{sub}/providers/Microsoft.AppConfiguration/locations/{location}/deletedConfigurationStores
+  - POST .../deletedConfigurationStores/{name}/purge
+  milestone: v1.10-preview
+  labels: enhancement, app-configuration
+-->
 
 <!--
 TODO: Azure API Management: New service project scaffold
