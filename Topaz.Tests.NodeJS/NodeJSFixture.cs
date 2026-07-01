@@ -2,7 +2,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
-using DotNet.Testcontainers.Images;
 using DotNet.Testcontainers.Networks;
 
 namespace Topaz.Tests.NodeJS;
@@ -13,10 +12,12 @@ public class NodeJSFixture
     private static readonly string TopazContainerImage =
         Environment.GetEnvironmentVariable("TOPAZ_HOST_CONTAINER_IMAGE") ?? "topaz/host";
 
+    private static readonly string NodeTestImage =
+        Environment.GetEnvironmentVariable("TOPAZ_NODEJS_TEST_IMAGE") ?? "topaz-nodejs-test";
+
     private string _certificateFile = "";
     private string _certificateKey = "";
 
-    private IFutureDockerImage? _nodeImage;
     private IContainer? _containerTopaz;
     private INetwork? _network;
 
@@ -26,8 +27,6 @@ public class NodeJSFixture
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
-        var repoRoot = FindRepoRoot();
-
         _certificateFile = File.ReadAllText("topaz.crt");
         _certificateKey = File.ReadAllText("topaz.key");
 
@@ -60,18 +59,10 @@ public class NodeJSFixture
 
         await WaitForContainerReady(_containerTopaz, 8899).ConfigureAwait(false);
 
-        _nodeImage = new ImageFromDockerfileBuilder()
-            .WithDockerfileDirectory(repoRoot)
-            .WithDockerfile("Topaz.Tests.NodeJS/docker/Dockerfile")
-            .WithBuildArgument("BUILDKIT_INLINE_CACHE", "1")
-            .Build();
-
-        await _nodeImage.CreateAsync().ConfigureAwait(false);
-
         var topazIp = _containerTopaz.IpAddress;
 
         var nodeContainer = new ContainerBuilder()
-            .WithImage(_nodeImage)
+            .WithImage(NodeTestImage)
             .WithNetwork(_network)
             .WithEntrypoint("/bin/sh")
             .WithCommand("-c", "tail -f /dev/null")
@@ -92,7 +83,6 @@ public class NodeJSFixture
     {
         if (NodeContainer != null) await NodeContainer.DisposeAsync();
         if (_containerTopaz != null) await _containerTopaz.DisposeAsync();
-        if (_nodeImage != null) await _nodeImage.DisposeAsync();
         if (_network != null) await _network.DisposeAsync();
     }
 
@@ -137,14 +127,6 @@ public class NodeJSFixture
 
         Assert.That(result.ExitCode, Is.EqualTo(0),
             $"Failed to register host mapping for {hostname}. STDERR: {result.Stderr}");
-    }
-
-    private static string FindRepoRoot()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "Topaz.sln")))
-            dir = dir.Parent;
-        return dir?.FullName ?? throw new InvalidOperationException("Could not find repo root (Topaz.sln).");
     }
 
     private static async Task WaitForContainerReady(IContainer container, int port)

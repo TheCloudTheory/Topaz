@@ -403,6 +403,8 @@ jobs:
           --filter "$FILTER"
     - name: NodeJS Tests
       if: steps.build.outcome == 'success' && steps.test_filter.outputs.nodejs_skip != 'true'
+      env:
+        TOPAZ_NODEJS_TEST_IMAGE: topaz-nodejs-test
       run: |
         FILTER="${{ steps.test_filter.outputs.nodejs_filter }}"
         if [[ -z "$FILTER" ]]; then
