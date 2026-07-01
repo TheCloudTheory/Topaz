@@ -318,27 +318,6 @@ TODO: Azure Blob Storage: enforce authentication on private containers
 ### Azure App Configuration — initial control plane and data plane
 
 <!--
-TODO: Azure App Configuration: New service project scaffold
-  Create Topaz.Service.AppConfiguration following existing service conventions:
-  - ConfigurationStoreResourceProperties + ConfigurationStoreResource (ArmResource<T>)
-    capturing: sku (Free/Standard), provisioningState (always Succeeded), endpoint
-    (https://{name}.azconfig.topaz.local.dev:<AppConfigPort>/), publicNetworkAccess,
-    disableLocalAuth, createMode, softDeleteRetentionInDays, enablePurgeProtection.
-  - ConfigurationStoreResourceProvider (ResourceProviderBase<T>) for filesystem persistence
-    under .topaz/app-configuration/{subscriptionId}/{resourceGroup}/{storeName}/.
-  - AppConfigurationServiceControlPlane implementing IControlPlane with a working Deploy()
-    that maps GenericResource → ConfigurationStoreResource via resource.As<T,TProps>().
-  - IServiceDefinition registration and wiring in Topaz.Host.
-  - ProjectReference in Topaz.Service.ResourceManager.csproj and a
-    case "Microsoft.AppConfiguration/configurationStores": entry in
-    TemplateDeploymentOrchestrator.RouteDeployment().
-  - Add GlobalSettings.DefaultAppConfigurationPort constant (8896).
-  See: https://learn.microsoft.com/en-us/rest/api/appconfiguration/
-  milestone: v1.8-preview
-  labels: enhancement, app-configuration, good first issue
--->
-
-<!--
 TODO: Azure App Configuration: ConfigurationStore control plane endpoints
   Implement the ARM-level ConfigurationStore resource surface
   (Microsoft.AppConfiguration/configurationStores):

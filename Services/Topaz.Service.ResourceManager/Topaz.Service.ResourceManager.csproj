@@ -22,6 +22,7 @@
       <ProjectReference Include="..\Topaz.Service.ManagementGroup\Topaz.Service.ManagementGroup.csproj" />
       <ProjectReference Include="..\Topaz.Service.CosmosDb\Topaz.Service.CosmosDb.csproj" />
       <ProjectReference Include="..\Topaz.Service.Disk\Topaz.Service.Disk.csproj" />
+      <ProjectReference Include="..\Topaz.Service.AppConfiguration\Topaz.Service.AppConfiguration.csproj" />
       <ProjectReference Include="..\Topaz.Service.LoadBalancer\Topaz.Service.LoadBalancer.csproj" />
       <ProjectReference Include="..\..\Topaz.CLI.Infrastructure\Topaz.CLI.Infrastructure.csproj" />
     </ItemGroup>

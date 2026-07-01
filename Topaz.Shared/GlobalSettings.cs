@@ -66,6 +66,7 @@ public static class GlobalSettings
     public const string DocumentsDnsSuffix = "documents.topaz.local.dev";
     public const string AzureWebsitesDnsSuffix = "azurewebsites.topaz.local.dev";
     public const ushort DefaultAppServiceKuduPort = 8896;
+    public const ushort DefaultAppConfigurationPort = 8893;
     public const string AppServiceKuduDnsSuffix = "scm.azurewebsites.topaz.local.dev";
 
     public static string GetWebSiteDefaultHostName(string siteName) => $"{siteName}.{AzureWebsitesDnsSuffix}";

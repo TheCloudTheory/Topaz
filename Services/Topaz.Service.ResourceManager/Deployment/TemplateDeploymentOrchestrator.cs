@@ -22,6 +22,7 @@ using Topaz.Service.Storage;
 using Topaz.Service.Sql;
 using Topaz.Service.CosmosDb;
 using Topaz.Service.Disk;
+using Topaz.Service.AppConfiguration;
 using Topaz.Service.LoadBalancer;
 using Topaz.Service.VirtualMachine;
 using Topaz.Service.VirtualNetwork;
@@ -352,6 +353,9 @@ public sealed class TemplateDeploymentOrchestrator(
                     break;
                 case "Microsoft.Compute/disks":
                     controlPlane = DiskServiceControlPlane.New(eventPipeline, logger);
+                    break;
+                case "Microsoft.AppConfiguration/configurationStores":
+                    controlPlane = AppConfigurationServiceControlPlane.New(eventPipeline, logger);
                     break;
                 case "Microsoft.ManagedIdentity/userAssignedIdentities":
                     controlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
