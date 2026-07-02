@@ -1,5 +1,6 @@
 using Azure;
 using Azure.Core;
+using Azure.Data.AppConfiguration;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppConfiguration;
 using Azure.ResourceManager.AppConfiguration.Models;
@@ -7,6 +8,7 @@ using Azure.ResourceManager.Resources;
 using Topaz.CLI;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -180,5 +182,168 @@ public class AppConfigurationTests
             Assert.That(primaryAfter, Is.Not.EqualTo(primaryBefore));
             Assert.That(secondaryAfter, Is.EqualTo(secondaryBefore));
         });
+    }
+
+    private async Task<ConfigurationClient> CreateDataPlaneClient(string storeName)
+    {
+        var armClient = CreateClient();
+        var rg = await GetResourceGroup(armClient);
+        var store = (await rg.GetAppConfigurationStores().GetAsync(storeName)).Value;
+
+        var keys = new List<AppConfigurationStoreApiKey>();
+        await foreach (var key in store.GetKeysAsync())
+            keys.Add(key);
+
+        var connectionString = keys.Single(k => k.Id == "Primary").ConnectionString!;
+        var options = new ConfigurationClientOptions();
+        options.Retry.MaxRetries = 0;
+        return new ConfigurationClient(connectionString, options);
+    }
+
+    [Test]
+    public async Task AppConfiguration_DataPlane_SetAndGet_RoundTrip()
+    {
+        var armClient = CreateClient();
+        var rg = await GetResourceGroup(armClient);
+        const string storeName = "e2e-appconfig-dp-set";
+
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, MinimalStoreData());
+
+        var configClient = await CreateDataPlaneClient(storeName);
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("MyApp:FontSize", "16"));
+
+        var retrieved = (await configClient.GetConfigurationSettingAsync("MyApp:FontSize")).Value;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(retrieved.Key, Is.EqualTo("MyApp:FontSize"));
+            Assert.That(retrieved.Value, Is.EqualTo("16"));
+        });
+    }
+
+    [Test]
+    public async Task AppConfiguration_DataPlane_List_ContainsAllSettings()
+    {
+        var armClient = CreateClient();
+        var rg = await GetResourceGroup(armClient);
+        const string storeName = "e2e-appconfig-dp-list";
+
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, MinimalStoreData());
+
+        var configClient = await CreateDataPlaneClient(storeName);
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Key1", "Value1"));
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Key2", "Value2"));
+
+        var settings = new List<ConfigurationSetting>();
+        await foreach (var s in configClient.GetConfigurationSettingsAsync(new SettingSelector()))
+            settings.Add(s);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(settings.Any(s => s.Key == "Key1" && s.Value == "Value1"), Is.True);
+            Assert.That(settings.Any(s => s.Key == "Key2" && s.Value == "Value2"), Is.True);
+        });
+    }
+
+    [Test]
+    public async Task AppConfiguration_DataPlane_Delete_SettingNotFoundAfterDelete()
+    {
+        var armClient = CreateClient();
+        var rg = await GetResourceGroup(armClient);
+        const string storeName = "e2e-appconfig-dp-delete";
+
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, MinimalStoreData());
+
+        var configClient = await CreateDataPlaneClient(storeName);
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("ToDelete", "val"));
+        await configClient.DeleteConfigurationSettingAsync("ToDelete");
+
+        Assert.That(
+            async () => await configClient.GetConfigurationSettingAsync("ToDelete"),
+            Throws.InstanceOf<RequestFailedException>().With.Property("Status").EqualTo(404));
+    }
+
+    [Test]
+    public async Task AppConfiguration_DataPlane_Update_ValueIsUpdated()
+    {
+        var armClient = CreateClient();
+        var rg = await GetResourceGroup(armClient);
+        const string storeName = "e2e-appconfig-dp-update";
+
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, MinimalStoreData());
+
+        var configClient = await CreateDataPlaneClient(storeName);
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Counter", "1"));
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Counter", "2"));
+
+        var retrieved = (await configClient.GetConfigurationSettingAsync("Counter")).Value;
+        Assert.That(retrieved.Value, Is.EqualTo("2"));
+    }
+
+    [Test]
+    public async Task AppConfiguration_DataPlane_Label_IsolatesSettings()
+    {
+        var armClient = CreateClient();
+        var rg = await GetResourceGroup(armClient);
+        const string storeName = "e2e-appconfig-dp-label";
+
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, MinimalStoreData());
+
+        var configClient = await CreateDataPlaneClient(storeName);
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Env", "prod") { Label = "production" });
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Env", "dev") { Label = "development" });
+
+        var prod = (await configClient.GetConfigurationSettingAsync("Env", "production")).Value;
+        var dev = (await configClient.GetConfigurationSettingAsync("Env", "development")).Value;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(prod.Value, Is.EqualTo("prod"));
+            Assert.That(dev.Value, Is.EqualTo("dev"));
+        });
+    }
+
+    [Test]
+    public async Task AppConfiguration_DataPlane_SetReadOnly_PreventsMutation()
+    {
+        var armClient = CreateClient();
+        var rg = await GetResourceGroup(armClient);
+        const string storeName = "e2e-appconfig-dp-readonly";
+
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, MinimalStoreData());
+
+        var configClient = await CreateDataPlaneClient(storeName);
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Locked", "original"));
+        await configClient.SetReadOnlyAsync("Locked", isReadOnly: true);
+
+        Assert.That(
+            async () => await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Locked", "mutated")),
+            Throws.InstanceOf<RequestFailedException>().With.Property("Status").EqualTo(409));
+    }
+
+    [Test]
+    public async Task AppConfiguration_DataPlane_ClearReadOnly_AllowsMutationAgain()
+    {
+        var armClient = CreateClient();
+        var rg = await GetResourceGroup(armClient);
+        const string storeName = "e2e-appconfig-dp-clearreadonly";
+
+        await rg.GetAppConfigurationStores()
+            .CreateOrUpdateAsync(WaitUntil.Completed, storeName, MinimalStoreData());
+
+        var configClient = await CreateDataPlaneClient(storeName);
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Locked", "original"));
+        await configClient.SetReadOnlyAsync("Locked", isReadOnly: true);
+        await configClient.SetReadOnlyAsync("Locked", isReadOnly: false);
+
+        await configClient.SetConfigurationSettingAsync(new ConfigurationSetting("Locked", "mutated"));
+        var retrieved = (await configClient.GetConfigurationSettingAsync("Locked")).Value;
+        Assert.That(retrieved.Value, Is.EqualTo("mutated"));
     }
 }

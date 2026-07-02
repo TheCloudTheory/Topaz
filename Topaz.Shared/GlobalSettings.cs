@@ -68,6 +68,10 @@ public static class GlobalSettings
     public const ushort DefaultAppServiceKuduPort = 8896;
     public const ushort DefaultAppConfigurationPort = 8893;
     public const string AppServiceKuduDnsSuffix = "scm.azurewebsites.topaz.local.dev";
+    public const string AppConfigurationDnsSuffix = "azconfig.topaz.local.dev";
+
+    public static string GetAppConfigurationEndpoint(string storeName) =>
+        $"https://{storeName}.{AppConfigurationDnsSuffix}:{DefaultAppConfigurationPort}/";
 
     public static string GetWebSiteDefaultHostName(string siteName) => $"{siteName}.{AzureWebsitesDnsSuffix}";
     public static readonly string DefaultsPath = Path.Combine(MainEmulatorDirectory, "defaults.json");

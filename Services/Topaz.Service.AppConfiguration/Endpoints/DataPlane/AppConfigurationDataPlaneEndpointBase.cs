@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Topaz.EventPipeline;
 using Topaz.Service.AppConfiguration.Models;
 using Topaz.Service.Shared;
@@ -65,7 +66,7 @@ internal abstract class AppConfigurationDataPlaneEndpointBase(Pipeline eventPipe
 
         // Bearer tokens (Topaz CLI / Entra ID) bypass HMAC validation.
         if (!authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) &&
-            !TryValidateHmac(authHeader, context, ControlPlane.GetAccessKeys(sub, rg, storeName)))
+            !TryValidateHmac(authHeader, context, ControlPlane.GetAccessKeys(sub, rg, storeName), logger))
         {
             response.StatusCode = HttpStatusCode.Unauthorized;
             return (false, null);
@@ -80,7 +81,7 @@ internal abstract class AppConfigurationDataPlaneEndpointBase(Pipeline eventPipe
     protected static AppConfigurationStoreContext GetStoreContext(HttpContext context) =>
         (AppConfigurationStoreContext)context.Items[StoreContextKey]!;
 
-    private static bool TryValidateHmac(string authHeader, HttpContext context, AppConfigurationAccessKeyStore? keyStore)
+    private static bool TryValidateHmac(string authHeader, HttpContext context, AppConfigurationAccessKeyStore? keyStore, ITopazLogger log)
     {
         if (keyStore == null) return false;
 
@@ -95,27 +96,47 @@ internal abstract class AppConfigurationDataPlaneEndpointBase(Pipeline eventPipe
             .ToDictionary(p => p[0], p => p[1], StringComparer.OrdinalIgnoreCase);
 
         if (!parts.TryGetValue("Credential", out var keyId) ||
+            !parts.TryGetValue("SignedHeaders", out var signedHeadersValue) ||
             !parts.TryGetValue("Signature", out var signature))
             return false;
 
         var key = keyStore.Keys.FirstOrDefault(k =>
             string.Equals(k.Id, keyId, StringComparison.OrdinalIgnoreCase));
-        if (key?.Value == null) return false;
+        if (key?.Value == null)
+        {
+            log.LogDebug(nameof(AppConfigurationDataPlaneEndpointBase), nameof(TryValidateHmac),
+                "Key ID '{0}' not found in store. Available IDs: {1}", keyId, string.Join(", ", keyStore.Keys.Select(k => k.Id)));
+            return false;
+        }
 
-        var date = context.Request.Headers["x-ms-date"].ToString();
-        var host = context.Request.Host.Value;
-        var contentHash = context.Request.Headers["x-ms-content-sha256"].ToString();
-        var pathAndQuery = context.Request.Path.Value + context.Request.QueryString.Value;
+        // Build the signed header values in the order declared by SignedHeaders.
+        var signedHeaders = signedHeadersValue.Split(';');
+        var headerValues = signedHeaders.Select(name => name.Equals("host", StringComparison.OrdinalIgnoreCase)
+            ? context.Request.Host.Value
+            : context.Request.Headers[name].ToString()).ToArray();
 
-        var stringToSign = $"{context.Request.Method}\n{pathAndQuery}\n{date};{host};{contentHash}";
+        // Use the raw (percent-encoded) request target so it matches what the SDK signed.
+        var pathAndQuery = context.Features.Get<IHttpRequestFeature>()?.RawTarget
+            ?? (context.Request.Path.Value + context.Request.QueryString.Value);
+        var stringToSign = $"{context.Request.Method}\n{pathAndQuery}\n{string.Join(';', headerValues)}";
 
         byte[] keyBytes;
         try { keyBytes = Convert.FromBase64String(key.Value); }
-        catch { return false; }
+        catch (Exception ex)
+        {
+            log.LogDebug(nameof(AppConfigurationDataPlaneEndpointBase), nameof(TryValidateHmac),
+                "Failed to base64-decode key secret: {0}", ex.Message);
+            return false;
+        }
 
         using var hmac = new HMACSHA256(keyBytes);
         var computed = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(stringToSign)));
 
-        return string.Equals(computed, signature, StringComparison.Ordinal);
+        var match = string.Equals(computed, signature, StringComparison.Ordinal);
+        log.LogDebug(nameof(AppConfigurationDataPlaneEndpointBase), nameof(TryValidateHmac),
+            "HMAC validation: method={0} path={1} signedHeaders={2} stringToSign={3} computed={4} received={5} match={6}",
+            context.Request.Method, pathAndQuery, signedHeadersValue, stringToSign, computed, signature, match);
+
+        return match;
     }
 }
