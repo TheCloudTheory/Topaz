@@ -30,4 +30,10 @@ internal readonly record struct StorageAuthorizationResult(bool IsAuthorized, st
     /// Shorthand for a 403 source IP mismatch (caller IP falls outside the sip= range in the SAS token).
     /// </summary>
     public static StorageAuthorizationResult SourceIPMismatch() => Denied("AuthorizationSourceIPMismatch");
+
+    /// <summary>
+    /// No authentication information was provided and the target container is private.
+    /// Maps to 401 with the standard Azure Storage WWW-Authenticate challenge.
+    /// </summary>
+    public static StorageAuthorizationResult NoAuthenticationInformation() => Denied("NoAuthenticationInformation");
 }

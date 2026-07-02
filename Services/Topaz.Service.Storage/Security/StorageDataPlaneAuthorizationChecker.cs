@@ -23,6 +23,15 @@ internal sealed class StorageDataPlaneAuthorizationChecker(Pipeline eventPipelin
         $" resource=\"https://storage.azure.com\"";
 
     /// <summary>
+    /// WWW-Authenticate challenge emitted when a request reaches a private container with no
+    /// authentication at all (no Authorization header, no SAS). Matches the header real Azure
+    /// returns in this case so that SDK clients and applications behave identically.
+    /// </summary>
+    public static string PrivateContainerWwwAuthenticateChallenge =>
+        $"Bearer authorization_uri=\"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/{GlobalSettings.DefaultTenantId}/oauth2/authorize\"," +
+        $" resource_id=\"https://storage.azure.com\"";
+
+    /// <summary>
     /// Returns true when the caller's JWT identifies a principal that holds one of
     /// <paramref name="requiredPermissions"/> in the given subscription.
     /// </summary>

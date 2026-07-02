@@ -62,8 +62,8 @@ internal sealed class BlobStorageSecurityProvider(Pipeline eventPipeline, ITopaz
             }
 
             return IsAnonymousAccessAllowed(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, absolutePath, query, method)
-                ? StorageAuthorizationResult.Authorized() 
-                : StorageAuthorizationResult.AuthenticationFailed();
+                ? StorageAuthorizationResult.Authorized()
+                : StorageAuthorizationResult.NoAuthenticationInformation();
         }
 
         var headerValue = value.ToString();

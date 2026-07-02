@@ -67,6 +67,15 @@ internal abstract class BlobDataPlaneEndpointBase(Pipeline eventPipeline, ITopaz
                 response.StatusCode = System.Net.HttpStatusCode.Forbidden;
                 response.Content = new StringContent(error.ToXml(), Encoding.UTF8, "application/xml");
             }
+            else if (authResult.ErrorCode == "NoAuthenticationInformation")
+            {
+                // No credentials at all on a private container — use the challenge format
+                // that real Azure emits so SDK clients and applications behave identically.
+                var error = StorageErrorResponse.AuthenticationFailed();
+                response.StatusCode = System.Net.HttpStatusCode.Unauthorized;
+                response.Headers.TryAddWithoutValidation("WWW-Authenticate", StorageDataPlaneAuthorizationChecker.PrivateContainerWwwAuthenticateChallenge);
+                response.Content = new StringContent(error.ToXml(), Encoding.UTF8, "application/xml");
+            }
             else
             {
                 // Authentication failure (bad signature, expired token, etc.)
