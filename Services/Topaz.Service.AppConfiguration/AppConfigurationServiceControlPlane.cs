@@ -244,15 +244,32 @@ internal sealed class AppConfigurationServiceControlPlane(
 
     public AppConfigurationKeyValue[] ListKvs(SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string storeName, string? keyFilter, string? labelFilter)
     {
+        logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(ListKvs), "Listing KVs for store '{0}'...", storeName);
         var all = provider.ListSubresourcesAs<AppConfigurationKeyValue>(sub, rg, storeName, KvSubresource);
+        logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(ListKvs), "Found {0} KVs.", all.Length);
+        
         if (!string.IsNullOrEmpty(keyFilter) && keyFilter != "*")
-            all = all.Where(kv => MatchesGlob(kv.Key, keyFilter)).ToArray();
-        if (labelFilter != null)
         {
-            var labels = labelFilter.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            all = all.Where(kv => labels.Any(l =>
-                l == "\0" || l == "\u0000" ? kv.Label == null : string.Equals(kv.Label, l, StringComparison.Ordinal))).ToArray();
+            logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(ListKvs), "keyFilter is not null, filtering KVs.");
+            all = all.Where(kv => MatchesGlob(kv.Key, keyFilter)).ToArray();
         }
+            
+        if (labelFilter == null || labelFilter == "*")
+        {
+            logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(ListKvs), "labelFilter is null, returning all KVs.");
+            return all;
+        }
+        
+        logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(ListKvs), "labelFilter is not null, filtering KVs.");
+        
+        var labels = labelFilter.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(ListKvs), "Split labels: {0}", string.Join(", ", labels));
+        
+        all = all.Where(kv => labels.Any(l =>
+            l is "\0" or $"\u0000" ? kv.Label == null : string.Equals(kv.Label, l, StringComparison.Ordinal))).ToArray();
+        
+        logger.LogDebug(nameof(AppConfigurationServiceControlPlane), nameof(ListKvs), "Filtered KVs: {0}", all.Length);
+        
         return all;
     }
 
