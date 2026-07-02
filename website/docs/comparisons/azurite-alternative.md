@@ -34,7 +34,7 @@ For Azure Storage specifically, the two tools have different coverage and design
 | **Blob: page blobs** (put-page, get-page-ranges) | ✅ | ✅ |
 | **Blob: copy operations** | ✅ | ✅ |
 | **Blob: snapshots** | ✅ | ✅ |
-| **Blob: authentication** | Not enforced | Optional (enforced with `--oauth`) |
+| **Blob: authentication** | Private containers enforced (401 + challenge); public-access containers permit anonymous reads | Optional (enforced with `--oauth`) |
 | **Blob / Table / Queue: SAS token validation** (Account SAS, Service SAS) | ✅ | ✅ |
 | **Blob: User Delegation Key + User Delegation SAS** | ✅ | ✅ |
 | **Blob / Table / Queue: stored access policy enforcement** | ✅ | ✅ |
@@ -64,7 +64,7 @@ Topaz and Azurite are at near parity for Azure Storage data-plane operations. Fe
 - **RA-GRS secondary endpoints** — DNS registration, `GetServiceStats`, read-only enforcement, and general data reads through secondary endpoints for RA-GRS/RA-GZRS accounts
 - **Full OData query support for Table** — `$filter`, `$select`, `$top`, `$skiptoken` on a stable, GA-quality implementation
 
-Blob authentication is not fully enforced — unauthenticated requests to private containers are permitted. Azurite's Table Storage is still in preview.
+Blob authentication is enforced for private containers — unauthenticated requests (no `Authorization` header, no SAS) receive a `401 Unauthorized` with a `WWW-Authenticate` challenge. Containers configured with public access continue to permit anonymous reads. Azurite's Table Storage is still in preview.
 
 ## Endpoint and URL format
 
@@ -118,7 +118,7 @@ Both emulators support SharedKey authentication. The difference is in how strict
 
 | | Topaz | Azurite |
 |---|---|---|
-| Blob auth enforcement | Not enforced | Optional (`--oauth` flag) |
+| Blob auth enforcement | Private containers enforced | Optional (`--oauth` flag) |
 | Table auth enforcement | Always enforced | Optional |
 | Queue auth enforcement | Always enforced | Optional |
 | Entra ID Bearer tokens (Table, Queue) | ✅ | Optional (`--oauth` flag) |
