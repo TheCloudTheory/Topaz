@@ -1,0 +1,29 @@
+using System.Net;
+using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using Topaz.EventPipeline;
+using Topaz.Service.Shared;
+using Topaz.Shared;
+
+namespace Topaz.Service.AppConfiguration.Endpoints.DataPlane;
+
+internal sealed class ListKeyValuesEndpoint(Pipeline eventPipeline, ITopazLogger logger)
+    : AppConfigurationDataPlaneEndpointBase(eventPipeline, logger)
+{
+    public override string[] Endpoints => ["GET /kv"];
+
+    public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)
+    {
+        var ctx = GetStoreContext(context);
+        var keyFilter = context.Request.Query["key"].ToString();
+        var labelFilter = context.Request.Query["label"].ToString();
+
+        var kvs = ControlPlane.ListKvs(ctx.Sub, ctx.Rg, ctx.StoreName,
+            string.IsNullOrEmpty(keyFilter) ? null : keyFilter,
+            string.IsNullOrEmpty(labelFilter) ? null : labelFilter);
+
+        var result = new { items = kvs };
+        response.CreateJsonContentResponse(result);
+        response.StatusCode = HttpStatusCode.OK;
+    }
+}

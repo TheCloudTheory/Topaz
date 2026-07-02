@@ -1,6 +1,7 @@
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.AppConfiguration.Models;
+using Topaz.Service.AppConfiguration.Models.DataPlane;
 using Topaz.Service.AppConfiguration.Models.Requests;
 using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
@@ -19,6 +20,7 @@ internal sealed class AppConfigurationServiceControlPlane(
     private const string NotFoundMessage = "Configuration store '{0}' could not be found";
     private const string AccessKeysSubresource = "access-keys";
     private const string AccessKeysId = "keys";
+    private const string KvSubresource = "kv";
 
     private readonly ResourceGroupControlPlane _resourceGroupControlPlane =
         new(new ResourceGroupResourceProvider(logger), SubscriptionControlPlane.New(eventPipeline, logger), logger);
@@ -218,5 +220,89 @@ internal sealed class AppConfigurationServiceControlPlane(
         provider.CreateOrUpdateSubresource(sub, rg, AccessKeysId, name, AccessKeysSubresource, keyStore);
 
         return new ControlPlaneOperationResult<ConfigurationStoreAccessKey>(OperationResult.Success, key, null, null);
+    }
+
+    public ControlPlaneOperationResult<ConfigurationStoreResource> FindByName(string storeName)
+    {
+        var identifiers = Dns.GlobalDnsEntries.GetEntry(AppConfigurationService.UniqueName, storeName);
+        if (identifiers == null)
+            return new ControlPlaneOperationResult<ConfigurationStoreResource>(
+                OperationResult.NotFound, null, string.Format(NotFoundMessage, storeName), NotFoundCode);
+
+        return Get(SubscriptionIdentifier.From(identifiers.Value.subscription),
+            ResourceGroupIdentifier.From(identifiers.Value.resourceGroup!), storeName);
+    }
+
+    public AppConfigurationAccessKeyStore? GetAccessKeys(SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string storeName) =>
+        provider.GetSubresourceAs<AppConfigurationAccessKeyStore>(sub, rg, AccessKeysId, storeName, AccessKeysSubresource);
+
+    public AppConfigurationKeyValue? GetKv(SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string storeName, string key, string? label)
+    {
+        var id = AppConfigurationKeyValue.ToFileId(key, label);
+        return provider.GetSubresourceAs<AppConfigurationKeyValue>(sub, rg, id, storeName, KvSubresource);
+    }
+
+    public AppConfigurationKeyValue[] ListKvs(SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string storeName, string? keyFilter, string? labelFilter)
+    {
+        var all = provider.ListSubresourcesAs<AppConfigurationKeyValue>(sub, rg, storeName, KvSubresource);
+        if (!string.IsNullOrEmpty(keyFilter) && keyFilter != "*")
+            all = all.Where(kv => MatchesGlob(kv.Key, keyFilter)).ToArray();
+        if (labelFilter != null)
+        {
+            var labels = labelFilter.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            all = all.Where(kv => labels.Any(l =>
+                l == "\0" ? kv.Label == null : string.Equals(kv.Label, l, StringComparison.Ordinal))).ToArray();
+        }
+        return all;
+    }
+
+    public AppConfigurationKeyValue SetKv(SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string storeName, string key, string? label, string? value, string? contentType, Dictionary<string, string>? tags)
+    {
+        var id = AppConfigurationKeyValue.ToFileId(key, label);
+        var existing = provider.GetSubresourceAs<AppConfigurationKeyValue>(sub, rg, id, storeName, KvSubresource);
+        if (existing != null)
+        {
+            existing.Update(value, contentType, tags);
+            provider.CreateOrUpdateSubresource(sub, rg, id, storeName, KvSubresource, existing);
+            return existing;
+        }
+        var kv = AppConfigurationKeyValue.Create(key, label, value, contentType, tags);
+        provider.CreateOrUpdateSubresource(sub, rg, id, storeName, KvSubresource, kv);
+        return kv;
+    }
+
+    public AppConfigurationKeyValue? DeleteKv(SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string storeName, string key, string? label)
+    {
+        var id = AppConfigurationKeyValue.ToFileId(key, label);
+        var existing = provider.GetSubresourceAs<AppConfigurationKeyValue>(sub, rg, id, storeName, KvSubresource);
+        if (existing == null) return null;
+        provider.DeleteSubresource(sub, rg, id, storeName, KvSubresource);
+        return existing;
+    }
+
+    public AppConfigurationKeyValue? SetKvLock(SubscriptionIdentifier sub, ResourceGroupIdentifier rg, string storeName, string key, string? label, bool locked)
+    {
+        var id = AppConfigurationKeyValue.ToFileId(key, label);
+        var existing = provider.GetSubresourceAs<AppConfigurationKeyValue>(sub, rg, id, storeName, KvSubresource);
+        if (existing == null) return null;
+        existing.Locked = locked;
+        provider.CreateOrUpdateSubresource(sub, rg, id, storeName, KvSubresource, existing);
+        return existing;
+    }
+
+    private static bool MatchesGlob(string value, string pattern)
+    {
+        if (pattern == "*") return true;
+        if (!pattern.Contains('*')) return string.Equals(value, pattern, StringComparison.Ordinal);
+        var parts = pattern.Split('*');
+        var pos = 0;
+        foreach (var part in parts)
+        {
+            if (string.IsNullOrEmpty(part)) continue;
+            var idx = value.IndexOf(part, pos, StringComparison.Ordinal);
+            if (idx < 0) return false;
+            pos = idx + part.Length;
+        }
+        return true;
     }
 }
