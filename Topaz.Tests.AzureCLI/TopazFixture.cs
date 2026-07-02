@@ -152,6 +152,7 @@ public class TopazFixture
         {
             await KeyVaultHostMapper.EnsureVaultHostsMapped(_containerAzureCli, _containerTopaz, command);
             await StorageHostMapper.EnsureStorageHostsMapped(_containerAzureCli, _containerTopaz, command);
+            await AppConfigurationHostMapper.EnsureAppConfigHostsMapped(_containerAzureCli, _containerTopaz, command);
         }
 
         var result = await _containerAzureCli!.ExecAsync(new List<string>()
@@ -185,6 +186,7 @@ public class TopazFixture
         {
             await KeyVaultHostMapper.EnsureVaultHostsMapped(_containerAzureCli, _containerTopaz, command);
             await StorageHostMapper.EnsureStorageHostsMapped(_containerAzureCli, _containerTopaz, command);
+            await AppConfigurationHostMapper.EnsureAppConfigHostsMapped(_containerAzureCli, _containerTopaz, command);
         }
 
         await _containerAzureCli!.ExecAsync(new List<string> { "/bin/sh", "-c", command });

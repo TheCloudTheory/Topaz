@@ -251,7 +251,7 @@ internal sealed class AppConfigurationServiceControlPlane(
         {
             var labels = labelFilter.Split(',', StringSplitOptions.RemoveEmptyEntries);
             all = all.Where(kv => labels.Any(l =>
-                l == "\0" ? kv.Label == null : string.Equals(kv.Label, l, StringComparison.Ordinal))).ToArray();
+                l == "\0" || l == "\u0000" ? kv.Label == null : string.Equals(kv.Label, l, StringComparison.Ordinal))).ToArray();
         }
         return all;
     }
