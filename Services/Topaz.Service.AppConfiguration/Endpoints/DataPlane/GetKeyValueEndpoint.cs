@@ -34,8 +34,8 @@ internal sealed class GetKeyValueEndpoint(Pipeline eventPipeline, ITopazLogger l
         }
 
         response.CreateJsonContentResponse(kv);
-        response.Headers.Add("ETag", $"\"{kv.Etag}\"");
-        response.Headers.Add("Last-Modified", kv.LastModified.ToString("R"));
+        response.Headers.ETag = new System.Net.Http.Headers.EntityTagHeaderValue($"\"{kv.Etag}\"");
+        response.Content.Headers.LastModified = kv.LastModified;
         response.StatusCode = HttpStatusCode.OK;
     }
 }

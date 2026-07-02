@@ -34,6 +34,10 @@ public abstract class TopazHttpCommand<TSettings>(HttpClient httpClient) : Async
     protected string TableDataPlaneUrl(string accountName) =>
         $"https://{accountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}";
 
+    /// <summary>Base URL for App Configuration data-plane operations.</summary>
+    protected string AppConfigDataPlaneUrl(string storeName) =>
+        $"https://{storeName}.azconfig.topaz.local.dev:{GlobalSettings.DefaultAppConfigurationPort}";
+
     /// <summary>Sends GET; returns (true, responseBody) on success or (false, body) on error.</summary>
     protected async Task<(bool Success, string Body)> GetAsync(
         string url, CancellationToken cancellationToken = default)

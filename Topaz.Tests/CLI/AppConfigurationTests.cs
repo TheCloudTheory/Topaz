@@ -124,4 +124,196 @@ public class AppConfigurationTests
 
         Assert.That(code, Is.EqualTo(0));
     }
+
+    [Test]
+    public async Task AppConfiguration_WhenKeyValueIsSet_CommandShouldSucceed()
+    {
+        var code = await Program.RunAsync([
+            "appconfig", "kv", "set",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize",
+            "--value", "16"
+        ]);
+
+        Assert.That(code, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task AppConfiguration_WhenKeyValueIsRetrieved_CommandShouldSucceed()
+    {
+        await Program.RunAsync([
+            "appconfig", "kv", "set",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize",
+            "--value", "16"
+        ]);
+
+        var code = await Program.RunAsync([
+            "appconfig", "kv", "show",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize"
+        ]);
+
+        Assert.That(code, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task AppConfiguration_WhenKeyValuesAreListed_CommandShouldSucceed()
+    {
+        await Program.RunAsync([
+            "appconfig", "kv", "set",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize",
+            "--value", "16"
+        ]);
+
+        var code = await Program.RunAsync([
+            "appconfig", "kv", "list",
+            "--name", StoreName
+        ]);
+
+        Assert.That(code, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task AppConfiguration_WhenKeyValueIsDeleted_CommandShouldSucceed()
+    {
+        await Program.RunAsync([
+            "appconfig", "kv", "set",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize",
+            "--value", "16"
+        ]);
+
+        var code = await Program.RunAsync([
+            "appconfig", "kv", "delete",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize"
+        ]);
+
+        Assert.That(code, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task AppConfiguration_WhenKeyValueIsLocked_SubsequentWriteShouldFail()
+    {
+        await Program.RunAsync([
+            "appconfig", "kv", "set",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize",
+            "--value", "16"
+        ]);
+
+        await Program.RunAsync([
+            "appconfig", "kv", "lock",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize"
+        ]);
+
+        var code = await Program.RunAsync([
+            "appconfig", "kv", "set",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize",
+            "--value", "32"
+        ]);
+
+        Assert.That(code, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task AppConfiguration_WhenKeyValueIsUnlocked_SubsequentWriteShouldSucceed()
+    {
+        await Program.RunAsync([
+            "appconfig", "kv", "set",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize",
+            "--value", "16"
+        ]);
+
+        await Program.RunAsync([
+            "appconfig", "kv", "lock",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize"
+        ]);
+
+        await Program.RunAsync([
+            "appconfig", "kv", "unlock",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize"
+        ]);
+
+        var code = await Program.RunAsync([
+            "appconfig", "kv", "set",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize",
+            "--value", "32"
+        ]);
+
+        Assert.That(code, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task AppConfiguration_WhenLabelsAreListed_CommandShouldSucceed()
+    {
+        await Program.RunAsync([
+            "appconfig", "kv", "set",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize",
+            "--value", "16",
+            "--label", "production"
+        ]);
+
+        var code = await Program.RunAsync([
+            "appconfig", "kv", "list-labels",
+            "--name", StoreName
+        ]);
+
+        Assert.That(code, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task AppConfiguration_WhenRevisionsAreListed_CommandShouldSucceed()
+    {
+        await Program.RunAsync([
+            "appconfig", "kv", "set",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize",
+            "--value", "16"
+        ]);
+
+        var code = await Program.RunAsync([
+            "appconfig", "kv", "list-revisions",
+            "--name", StoreName
+        ]);
+
+        Assert.That(code, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task AppConfiguration_WhenKeyValueIsFilteredByLabel_OnlyMatchingShouldReturn()
+    {
+        await Program.RunAsync([
+            "appconfig", "kv", "set",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize",
+            "--value", "16",
+            "--label", "production"
+        ]);
+
+        await Program.RunAsync([
+            "appconfig", "kv", "set",
+            "--name", StoreName,
+            "--key", "MyApp:Settings:FontSize",
+            "--value", "12",
+            "--label", "staging"
+        ]);
+
+        var code = await Program.RunAsync([
+            "appconfig", "kv", "list",
+            "--name", StoreName,
+            "--label", "production"
+        ]);
+
+        Assert.That(code, Is.EqualTo(0));
+    }
 }

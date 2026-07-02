@@ -63,7 +63,9 @@ internal abstract class AppConfigurationDataPlaneEndpointBase(Pipeline eventPipe
             return (false, null);
         }
 
-        if (!TryValidateHmac(authHeader, context, ControlPlane.GetAccessKeys(sub, rg, storeName)))
+        // Bearer tokens (Topaz CLI / Entra ID) bypass HMAC validation.
+        if (!authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) &&
+            !TryValidateHmac(authHeader, context, ControlPlane.GetAccessKeys(sub, rg, storeName)))
         {
             response.StatusCode = HttpStatusCode.Unauthorized;
             return (false, null);

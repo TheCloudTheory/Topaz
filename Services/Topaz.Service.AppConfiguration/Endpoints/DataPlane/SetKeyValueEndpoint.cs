@@ -25,7 +25,9 @@ internal sealed class SetKeyValueEndpoint(Pipeline eventPipeline, ITopazLogger l
         if (existing is { Locked: true })
         {
             response.StatusCode = HttpStatusCode.Conflict;
-            response.CreateJsonContentResponse(new { type = "https://azconfig.io/errors/key-locked", title = "The key is read-only." });
+            response.Content = new System.Net.Http.StringContent(
+                """{"type":"https://azconfig.io/errors/key-locked","title":"The key is read-only."}""",
+                System.Text.Encoding.UTF8, "application/json");
             return;
         }
 
@@ -36,8 +38,8 @@ internal sealed class SetKeyValueEndpoint(Pipeline eventPipeline, ITopazLogger l
             body?.Value, body?.ContentType, body?.Tags);
 
         response.CreateJsonContentResponse(kv);
-        response.Headers.Add("ETag", $"\"{kv.Etag}\"");
-        response.Headers.Add("Last-Modified", kv.LastModified.ToString("R"));
+        response.Headers.ETag = new System.Net.Http.Headers.EntityTagHeaderValue($"\"{kv.Etag}\"");
+        response.Content.Headers.LastModified = kv.LastModified;
         response.StatusCode = HttpStatusCode.OK;
     }
 

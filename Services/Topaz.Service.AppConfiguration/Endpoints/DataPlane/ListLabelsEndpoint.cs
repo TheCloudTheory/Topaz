@@ -1,4 +1,6 @@
 using System.Net;
+using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
@@ -22,7 +24,7 @@ internal sealed class ListLabelsEndpoint(Pipeline eventPipeline, ITopazLogger lo
             .Select(l => new { name = l })
             .ToArray();
 
-        response.CreateJsonContentResponse(new { items = labels });
+        response.Content = new StringContent(JsonSerializer.Serialize(new { items = labels }, GlobalSettings.JsonOptions), Encoding.UTF8, "application/json");
         response.StatusCode = HttpStatusCode.OK;
     }
 }

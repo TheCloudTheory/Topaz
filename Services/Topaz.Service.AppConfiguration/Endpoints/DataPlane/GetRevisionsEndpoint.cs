@@ -1,4 +1,6 @@
 using System.Net;
+using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.Service.Shared;
@@ -22,7 +24,7 @@ internal sealed class GetRevisionsEndpoint(Pipeline eventPipeline, ITopazLogger 
             string.IsNullOrEmpty(keyFilter) ? null : keyFilter,
             string.IsNullOrEmpty(labelFilter) ? null : labelFilter);
 
-        response.CreateJsonContentResponse(new { items = kvs });
+        response.Content = new StringContent(JsonSerializer.Serialize(new { items = kvs }, GlobalSettings.JsonOptions), Encoding.UTF8, "application/json");
         response.StatusCode = HttpStatusCode.OK;
     }
 }

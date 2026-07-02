@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
@@ -22,8 +23,7 @@ internal sealed class ListKeyValuesEndpoint(Pipeline eventPipeline, ITopazLogger
             string.IsNullOrEmpty(keyFilter) ? null : keyFilter,
             string.IsNullOrEmpty(labelFilter) ? null : labelFilter);
 
-        var result = new { items = kvs };
-        response.CreateJsonContentResponse(result);
+        response.Content = new StringContent(JsonSerializer.Serialize(new { items = kvs }, GlobalSettings.JsonOptions), Encoding.UTF8, "application/json");
         response.StatusCode = HttpStatusCode.OK;
     }
 }
