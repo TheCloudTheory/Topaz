@@ -292,8 +292,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
   labels: enhancement, service-bus, event-hub, amqp
 -->
 
----
-
 ## v1.8-preview
 
 ### Azure Storage — Blob authentication enforcement
@@ -316,28 +314,6 @@ TODO: Azure Blob Storage: enforce authentication on private containers
 -->
 
 ### Azure App Configuration — initial control plane and data plane
-
-<!--
-TODO: Azure App Configuration: Data plane — key-value store API
-  Implement the App Configuration data-plane REST API on DefaultAppConfigurationPort (8896).
-  Authentication: validate the HMAC-SHA256 credential scheme used by the Azure SDK
-  (Authorization: HMAC-SHA256 Credential={keyId}&SignedHeaders=...&Signature=...).
-  Endpoints:
-  - GET    /kv                          – list key-values; support ?key=, ?label=, ?after= (pagination), $select= (field projection)
-  - GET    /kv/{key}                    – get a single key-value (optional ?label= qualifier)
-  - PUT    /kv/{key}                    – create or update a key-value (body: {"value":"...","contentType":"...","tags":{}})
-  - DELETE /kv/{key}                    – delete a key-value (optional ?label=)
-  - GET    /labels                      – list all labels in the store
-  - GET    /revisions                   – list key-value change history (simplified: return current values only)
-  - PUT    /locks/{key}                 – lock (read-only) a key-value
-  - DELETE /locks/{key}                 – unlock a key-value
-  Key-values are persisted as JSON files under the store's data directory.
-  Support content types: plain string, application/json, application/vnd.microsoft.appconfig.ff+json
-  (feature flags). Feature flag key-values use the key prefix .appconfig.featureflag/.
-  Return ETag and Last-Modified headers on every key-value response.
-  milestone: v1.8-preview
-  labels: enhancement, app-configuration
--->
 
 <!--
 TODO: Azure App Configuration: MCP Server provisioning tool
