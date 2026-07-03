@@ -164,13 +164,13 @@ Deployments with output values that use `reference()` will see those outputs ret
 
 Deployments with outputs using only `parameters()`, `variables()`, `resourceId()`, `concat()`, `uniqueString()`, or literal values work correctly.
 
-**Workaround:** none required as of v1.8.
+**Workaround:** avoid using `reference()` in deployment outputs. Refactor templates to output only `resourceId()` or literal values, and have the caller fetch resource properties directly if needed.
 
-### Fixed in v1.8
+### Planned fix — v1.8-preview
 
-`TemplateDeploymentOrchestrator.RouteDeployment` now collects all `reference()` calls from the outputs map, resolves them by reading from the respective control planes, and substitutes the evaluated values back into the outputs before calling `SetOutputs()`.
+Extend `TemplateDeploymentOrchestrator.RouteDeployment` to collect all `reference()` calls from the outputs map, resolve them by reading from the respective control planes, and substitute the evaluated values back into the outputs before calling `SetOutputs()`. This requires mapping template resource types to their control planes, similar to the existing resource routing logic.
 
-The following `reference()` patterns are supported:
+The following `reference()` patterns are supported by the v1.8-preview resolver:
 
 - `reference(resourceId('TYPE', 'NAME'), 'API-VERSION').property` — 2-arg `resourceId`
 - `reference(resourceId('SUB', 'RG', 'TYPE', 'NAME'), 'API-VERSION').property` — 4-arg `resourceId` (sub/rg overrides are accepted but ignored; the calling deployment's own subscription and resource group are always used for the lookup)
