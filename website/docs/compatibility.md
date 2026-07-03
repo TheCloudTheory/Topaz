@@ -45,6 +45,8 @@ This page lists the tool and SDK versions that Topaz is tested against in CI. Us
 | `Azure.Messaging.EventHubs` | `5.12.2` |
 | `Azure.Messaging.EventHubs.Processor` | `5.12.2` |
 | `Azure.Containers.ContainerRegistry` | `1.3.0` |
+| `Azure.Data.AppConfiguration` | `1.10.0` |
+| `Azure.ResourceManager.AppConfiguration` | `1.4.1` |
 | `Microsoft.Graph` | `5.103.0` |
 
 ## Runtime
