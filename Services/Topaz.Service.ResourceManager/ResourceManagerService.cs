@@ -82,6 +82,7 @@ public sealed class ResourceManagerService : IServiceDefinition
         new WhatIfDeploymentAtSubscriptionScopeEndpoint(_eventPipeline, _logger, _deploymentOrchestrator!),
         new ListSubscriptionResourcesEndpoint(_eventPipeline, _logger),
         new ListResourceGroupResourcesEndpoint(_eventPipeline, _logger),
+        new ListResourceProvidersByTenantEndpoint(_eventPipeline, _logger),
     ];
 
     public void Bootstrap()

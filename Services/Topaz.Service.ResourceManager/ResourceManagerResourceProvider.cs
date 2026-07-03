@@ -20,6 +20,8 @@ public sealed class ResourceManagerResourceProvider(ITopazLogger logger) : Resou
         "Microsoft.Insights",
         "Microsoft.ContainerRegistry",
         "Microsoft.Compute",
+        "Microsoft.DocumentDB",
+        "Microsoft.AppConfiguration",
     };
 
     private static string GetRegistrationsFilePath(Guid subscriptionId) =>

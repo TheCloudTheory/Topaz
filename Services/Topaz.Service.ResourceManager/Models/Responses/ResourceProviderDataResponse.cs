@@ -22,6 +22,9 @@ public sealed class ResourceProviderDataResponse(string providerName)
         ["Microsoft.Compute"]           = ["virtualMachines", "disks"],
         ["Microsoft.Resources"]         = ["resourceGroups", "deployments", "subscriptions"],
         ["Microsoft.ManagedIdentity"]   = ["userAssignedIdentities"],
+        ["Microsoft.Insights"]          = ["components"],
+        ["Microsoft.DocumentDB"]         = ["databaseAccounts"],
+        ["Microsoft.AppConfiguration"]  = ["configurationStores"],
     };
 
     public string? Id { get; init; }

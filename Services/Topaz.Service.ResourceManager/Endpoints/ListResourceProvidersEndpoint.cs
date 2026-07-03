@@ -16,6 +16,7 @@ public sealed class ListResourceProvidersEndpoint(Pipeline eventPipeline, ITopaz
         SubscriptionControlPlane.New(eventPipeline, logger);
 
     private readonly ResourceManagerResourceProvider _resourceProvider = new(logger);
+    private readonly ResourceManagerControlPlane _controlPlane = ResourceManagerControlPlane.New(eventPipeline, logger);
 
     public string[] Endpoints =>
     [
@@ -40,21 +41,9 @@ public sealed class ListResourceProvidersEndpoint(Pipeline eventPipeline, ITopaz
             return;
         }
 
-        var providerNames = new[]
-        {
-            "Microsoft.Resources",
-            "Microsoft.Authorization",
-            "Microsoft.Storage",
-            "Microsoft.KeyVault",
-            "Microsoft.ManagedIdentity",
-            "Microsoft.Network",
-            "Microsoft.ServiceBus",
-            "Microsoft.EventHub",
-            "Microsoft.Insights",
-            "Microsoft.ContainerRegistry"
-        };
+        var providerNames = _controlPlane.GetAllProviders();
 
-        var providers = providerNames
+        var providers = providerNames.Resource!
             .Select(providerName => new ResourceProviderDataResponse(providerName)
             {
                 Id = $"/subscriptions/{subscriptionIdentifier}/providers/{providerName}",

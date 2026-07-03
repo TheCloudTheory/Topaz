@@ -1,12 +1,12 @@
 using Azure.Deployments.Core.Definitions.Schema;
 using Azure.Deployments.Core.Entities;
-using Azure.ResourceManager.Resources.Models;
 using Microsoft.WindowsAzure.ResourceStack.Common.Collections;
 using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using Newtonsoft.Json.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Topaz.EventPipeline;
 using Topaz.ResourceManager;
 using Topaz.Service.ContainerRegistry;
 using Topaz.Service.EventHub;
@@ -39,7 +39,16 @@ internal sealed class ResourceManagerControlPlane(
 {
     private const string DeploymentNotFoundMessageTemplate = "Deployment {0} not found";
     private const string DeploymentNotFoundCode = "DeploymentNotFound";
-
+    
+    public static ResourceManagerControlPlane New(Pipeline eventPipeline, ITopazLogger logger)
+    {
+        return new ResourceManagerControlPlane(
+            new ResourceManagerResourceProvider(logger),
+            new TemplateDeploymentOrchestrator(eventPipeline, new ResourceManagerResourceProvider(logger),
+                new SubscriptionDeploymentResourceProvider(logger), new TenantDeploymentResourceProvider(logger),
+                new ManagementGroupDeploymentResourceProvider(logger), logger), logger);
+    }
+    
     private readonly ArmTemplateEngineFacade _templateEngineFacade = new(logger);
 
     public (OperationResult result, DeploymentResource resource) CreateOrUpdateDeployment(
@@ -700,4 +709,26 @@ internal sealed class ResourceManagerControlPlane(
         bool IncludeComments = false,
         bool SkipResourceNameParameterization = false,
         bool SkipAllParameterization = false);
+
+    public ControlPlaneOperationResult<string[]> GetAllProviders()
+    {
+        var providerNames = new[]
+        {
+            "Microsoft.Resources",
+            "Microsoft.Authorization",
+            "Microsoft.Storage",
+            "Microsoft.KeyVault",
+            "Microsoft.ManagedIdentity",
+            "Microsoft.Network",
+            "Microsoft.ServiceBus",
+            "Microsoft.EventHub",
+            "Microsoft.Insights",
+            "Microsoft.ContainerRegistry",
+            "Microsoft.Compute",
+            "Microsoft.DocumentDB",
+            "Microsoft.AppConfiguration"
+        };
+        
+        return new ControlPlaneOperationResult<string[]>(OperationResult.Success, providerNames, null, null);
+    }
 }
