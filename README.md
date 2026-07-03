@@ -64,6 +64,7 @@ See the [roadmap](https://topaz.thecloudtheory.com/roadmap/) for what's coming n
 | Azure Event Hub | ✅ | ✅ | Preview |
 | Azure Virtual Machines | ✅ | — | Preview |
 | Azure Virtual Network | ✅ | — | Preview |
+| Azure App Configuration | ✅ | ✅ | Preview |
 | Azure Resource Manager | ✅ | — | Preview |
 | Microsoft Entra ID | ✅ | — | Preview |
 | Azure App Service | ✅ | — | Preview |
