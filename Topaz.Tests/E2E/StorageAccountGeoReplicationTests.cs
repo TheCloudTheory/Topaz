@@ -401,4 +401,69 @@ public class StorageAccountGeoReplicationTests
         // Assert
         Assert.That(entities.Any(e => e.PartitionKey == "pk" && e.RowKey == "rk"), Is.True);
     }
+
+    [Test]
+    public async Task BlobStorage_GetServiceStats_LastSyncTime_IsInThePast()
+    {
+        // Arrange — freshly-created RA-GRS account has LastGeoSyncTime set to UtcNow-30s on creation
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        var beforeStats = DateTimeOffset.UtcNow;
+
+        var secondaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
+            $"BlobEndpoint=https://{RagrsAccountName}-secondary.blob.storage.topaz.local.dev:{GlobalSettings.DefaultBlobStoragePort}/;";
+        var client = new BlobServiceClient(secondaryConnectionString);
+
+        // Act
+        var stats = await client.GetStatisticsAsync();
+
+        // Assert — LastSyncedOn must be strictly before the moment we queried stats
+        Assert.That(stats.Value.GeoReplication.LastSyncedOn, Is.LessThan(beforeStats));
+    }
+
+    [Test]
+    public async Task QueueStorage_GetServiceStats_LastSyncTime_IsInThePast()
+    {
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        var beforeStats = DateTimeOffset.UtcNow;
+
+        var secondaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
+            $"QueueEndpoint=https://{RagrsAccountName}-secondary.queue.storage.topaz.local.dev:{GlobalSettings.DefaultQueueStoragePort}/;";
+        var client = new QueueServiceClient(secondaryConnectionString);
+
+        var stats = await client.GetStatisticsAsync();
+
+        Assert.That(stats.Value.GeoReplication.LastSyncedOn, Is.LessThan(beforeStats));
+    }
+
+    [Test]
+    public async Task TableStorage_GetServiceStats_LastSyncTime_IsInThePast()
+    {
+        var armClient = CreateArmClient();
+        var resourceGroup = GetResourceGroup(armClient);
+        var storageAccount = CreateStorageAccount(resourceGroup, RagrsAccountName, StorageSkuName.StandardRagrs);
+        var key = storageAccount.GetKeys().First().Value;
+
+        var beforeStats = DateTimeOffset.UtcNow;
+
+        // TableServiceClient.GetStatisticsAsync() derives the secondary endpoint from the primary
+        // by appending "-secondary" to the account name — use the primary endpoint here.
+        var primaryConnectionString =
+            $"DefaultEndpointsProtocol=https;AccountName={RagrsAccountName};AccountKey={key};" +
+            $"TableEndpoint=https://{RagrsAccountName}.table.storage.topaz.local.dev:{GlobalSettings.DefaultTableStoragePort}/;";
+        var client = new TableServiceClient(primaryConnectionString);
+
+        var stats = await client.GetStatisticsAsync();
+
+        Assert.That(stats.Value.GeoReplication.LastSyncedOn, Is.LessThan(beforeStats));
+    }
 }

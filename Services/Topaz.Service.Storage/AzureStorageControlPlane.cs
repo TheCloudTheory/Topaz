@@ -181,7 +181,7 @@ internal sealed class AzureStorageControlPlane(
             SecondaryEndpoints = raGrs ? StorageAccountSecondaryEndpoints.For(storageAccountName) : null,
             StatusOfSecondary = raGrs ? "available" : null,
             CreationTime = existingCreationTime ?? DateTimeOffset.UtcNow,
-            LastGeoSyncTime = raGrs ? existingLastGeoSyncTime ?? DateTimeOffset.UtcNow.AddSeconds(30) : null
+            LastGeoSyncTime = raGrs ? existingLastGeoSyncTime ?? DateTimeOffset.UtcNow.AddSeconds(-30) : null
         };
 
         if (existingAccount != null && existingKeys != null)
