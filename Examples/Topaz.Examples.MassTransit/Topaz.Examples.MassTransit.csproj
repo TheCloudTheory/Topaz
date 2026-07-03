@@ -13,9 +13,7 @@
         <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.4" />
         <PackageReference Include="Testcontainers" Version="4.12.0" />
         <PackageReference Include="TheCloudTheory.Topaz.AspNetCore.Extensions" Version="1.4.36-beta" />
-        <PackageReference Update="Nerdbank.GitVersioning">
-          <Version>3.9.50</Version>
-        </PackageReference>
+
     </ItemGroup>
 
     <ItemGroup>

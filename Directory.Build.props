@@ -8,7 +8,7 @@
   <ItemGroup>
     <PackageReference Include="Nerdbank.GitVersioning" Condition="!Exists('packages.config')">
       <PrivateAssets>all</PrivateAssets>
-      <Version>3.7.115</Version>
+      <Version>3.10.85</Version>
     </PackageReference>
     <!-- Pin to a version that resolves GHSA-7j59-v9qr-6fq9 (high severity vulnerability in 1.21.3 and earlier) -->
     <PackageReference Include="Microsoft.Kiota.Abstractions" Version="1.22.2" />

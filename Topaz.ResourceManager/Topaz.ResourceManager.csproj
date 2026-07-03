@@ -15,9 +15,7 @@
 
     <ItemGroup>
       <PackageReference Include="Azure.ResourceManager" Version="1.14.0" />
-      <PackageReference Update="Nerdbank.GitVersioning">
-        <Version>3.9.50</Version>
-      </PackageReference>
+
       <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
     </ItemGroup>
 

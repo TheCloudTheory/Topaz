@@ -16,9 +16,7 @@
         <PackageReference Include="TheCloudTheory.Topaz.AspNetCore.Extensions" Version="1.0.414-alpha" />
         <PackageReference Include="TheCloudTheory.Topaz.Identity" Version="1.4.20-beta" />
         <PackageReference Include="TheCloudTheory.Topaz.ResourceManager" Version="1.4.14-beta" />
-        <PackageReference Update="Nerdbank.GitVersioning">
-          <Version>3.9.50</Version>
-        </PackageReference>
+
     </ItemGroup>
 
 </Project>

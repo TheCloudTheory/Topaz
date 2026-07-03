@@ -15,9 +15,7 @@
       <PackageReference Include="Testcontainers" Version="4.10.0" />
       <PackageReference Include="TheCloudTheory.Topaz.Identity" Version="1.0.467-alpha" />
       <PackageReference Include="TheCloudTheory.Topaz.ResourceManager" Version="1.0.464-alpha" />
-      <PackageReference Update="Nerdbank.GitVersioning">
-        <Version>3.9.50</Version>
-      </PackageReference>
+
     </ItemGroup>
 
 </Project>
