@@ -112,6 +112,7 @@ All three tools accept an `objectId` parameter. `CreateOrUpdateTenantDeployment`
 | `CreateCosmosDbAccount` | Creates a Cosmos DB account (DatabaseAccount) with SQL API and returns the account endpoint and connection string |
 | `CreateCosmosDbDatabase` | Creates a SQL database inside an existing Cosmos DB account |
 | `CreateCosmosDbContainer` | Creates a SQL container inside an existing Cosmos DB database |
+| `CreateAppConfigurationStore` | Creates an App Configuration store and returns its endpoint URL and primary read-write connection string |
 
 All provisioning tools share these common parameters:
 
@@ -184,6 +185,14 @@ It also accepts one optional parameter:
 |---|---|---|
 | `throughput` | (serverless) | Optional throughput in RU/s for the container |
 
+`CreateAppConfigurationStore` requires the following parameters (in addition to the common parameters):
+
+| Parameter | Description |
+|---|---|
+| `storeName` | Name of the App Configuration store to create |
+
+The tool returns `endpoint` (the store's HTTPS endpoint URL) and `primaryReadWriteConnectionString` immediately.
+
 #### Delete
 
 | Tool | Description |
@@ -213,6 +222,7 @@ The tool scans every resource group in the subscription and returns connection i
 | Event Hub namespaces | `connectionString` |
 | Container Registries | `loginServer` |
 | Cosmos DB accounts | `accountEndpoint`, `primaryConnectionString` |
+| App Configuration stores | `endpoint`, `primaryReadWriteConnectionString` |
 
 ## Available prompts
 

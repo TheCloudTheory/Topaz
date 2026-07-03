@@ -30,6 +30,31 @@ public class StatusToolTests
     {
         var result = await StatusTool.GetTopazStatus();
 
-        Assert.That(result.Services, Has.Count.EqualTo(11));
+        Assert.That(result.Services, Has.Count.EqualTo(15));
+    }
+
+    [Test]
+    public async Task GetTopazStatus_ConnectProxyServiceIsPresent()
+    {
+        var result = await StatusTool.GetTopazStatus();
+
+        Assert.That(result.Services.Any(s => s.Port == GlobalSettings.ConnectProxyPort), Is.True);
+    }
+
+    [Test]
+    public async Task GetTopazStatus_AppServiceForwardProxyIsPresent()
+    {
+        var result = await StatusTool.GetTopazStatus();
+
+        Assert.That(result.Services.Any(s => s.Name == "App Service Forward Proxy"), Is.True);
+    }
+
+    [Test]
+    public async Task GetTopazStatus_ReturnsChaosEnabled()
+    {
+        var result = await StatusTool.GetTopazStatus();
+
+        // Chaos is disabled by default; just assert the field is present and readable.
+        Assert.That(result.ChaosEnabled, Is.False);
     }
 }

@@ -292,21 +292,6 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
   labels: enhancement, service-bus, event-hub, amqp
 -->
 
-## v1.8-preview
-
-### Azure App Configuration — initial control plane and data plane
-
-<!--
-TODO: Azure App Configuration: MCP Server provisioning tool
-  Extend Topaz.MCP with an App Configuration provisioning tool:
-  - CreateAppConfigurationStore — create a ConfigurationStore in a resource group and
-    return the endpoint URL and primary read-write connection string.
-  Extend GetConnectionStrings to include the App Configuration connection string for
-  provisioned stores.
-  milestone: v1.8-preview
-  labels: enhancement, app-configuration, mcp
--->
-
 ## v1.9-preview
 
 ### Azure App Service — Kudu / SCM authentication

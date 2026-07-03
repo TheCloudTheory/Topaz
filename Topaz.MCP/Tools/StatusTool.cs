@@ -22,20 +22,25 @@ public sealed class StatusTool
         ("Blob Storage",         GlobalSettings.DefaultBlobStoragePort),
         ("Queue Storage",        GlobalSettings.DefaultQueueStoragePort),
         ("Table Storage",        GlobalSettings.DefaultTableStoragePort),
-        ("File Storage",         GlobalSettings.DefaultFileStoragePort),
         ("Container Registry",   GlobalSettings.ContainerRegistryPort),
         ("Event Hub (HTTP)",     GlobalSettings.DefaultEventHubPort),
         ("Event Hub (AMQP)",     GlobalSettings.DefaultEventHubAmqpPort),
         ("Service Bus (AMQP)",   GlobalSettings.DefaultServiceBusAmqpPort),
         ("Service Bus (Extra)",  GlobalSettings.AdditionalServiceBusPort),
+        ("Cosmos DB",  GlobalSettings.DefaultCosmosDbPort),
+        ("App Configuration",  GlobalSettings.DefaultAppConfigurationPort),
+        ("App Service (Kudu)",         GlobalSettings.DefaultAppServiceKuduPort),
+        ("App Service Forward Proxy",  8900),
+        ("HTTP CONNECT Proxy",         GlobalSettings.ConnectProxyPort),
     ];
 
     [McpServerTool]
-    [Description("Calls the Topaz health-check endpoint and probes all service ports. Returns the running version, overall status, working directory, and which services are up. Useful for debugging when a setup fails partway through.")]
+    [Description("Calls the Topaz health-check endpoint and probes all service ports. Returns the running version, overall status, working directory, chaos mode state, and which services are up. Useful for debugging when a setup fails partway through.")]
     [UsedImplicitly]
     public static async Task<TopazStatusResult> GetTopazStatus()
     {
-        var healthUrl = $"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/health";
+        var healthUrl     = $"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/health";
+        var chaosUrl      = $"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/topaz/chaos/status";
 
         HttpResponseMessage httpResponse;
         try
@@ -57,17 +62,32 @@ public sealed class StatusTool
         var status           = root.TryGetProperty("status",           out var s)  ? s.GetString()  ?? "Unknown" : "Unknown";
         var workingDirectory = root.TryGetProperty("workingDirectory", out var wd) ? wd.GetString() ?? "Unknown" : "Unknown";
 
-        var serviceStatuses = await Task.WhenAll(
-            KnownServices.Select(svc => ProbePortAsync(svc.Name, svc.Port))
-        ).ConfigureAwait(false);
+        var serviceStatuses = await Task.WhenAll(KnownServices.Select(svc => ProbePortAsync(svc.Name, svc.Port))).ConfigureAwait(false);
+        var chaosEnabled    = await GetChaosEnabledAsync(chaosUrl).ConfigureAwait(false);
 
         return new TopazStatusResult
         {
             Version          = version,
             Status           = status,
             WorkingDirectory = workingDirectory,
+            ChaosEnabled     = chaosEnabled,
             Services         = [.. serviceStatuses],
         };
+    }
+
+    private static async Task<bool> GetChaosEnabledAsync(string chaosUrl)
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync(chaosUrl).ConfigureAwait(false);
+            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.TryGetProperty("enabled", out var e) && e.GetBoolean();
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static async Task<ServiceStatus> ProbePortAsync(string name, ushort port)
@@ -90,6 +110,7 @@ public sealed class StatusTool
         public required string Version          { [UsedImplicitly] get; init; }
         public required string Status           { [UsedImplicitly] get; init; }
         public required string WorkingDirectory { [UsedImplicitly] get; init; }
+        public required bool   ChaosEnabled     { [UsedImplicitly] get; init; }
         public required List<ServiceStatus> Services { [UsedImplicitly] get; init; }
     }
 
@@ -100,4 +121,3 @@ public sealed class StatusTool
         public required bool   IsUp  { [UsedImplicitly] get; init; }
     }
 }
-
