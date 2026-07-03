@@ -34,6 +34,7 @@ const SERVICES = [
   {name: 'Azure SQL', sub: 'Servers · Databases'},
   {name: 'Azure Cosmos DB', sub: 'Accounts · SQL Databases · Containers'},
   {name: 'Azure Disk', sub: 'Managed Disks · SAS Access'},
+  {name: 'Azure App Configuration', sub: 'Stores · Key-Values · Feature Flags'},
   {name: 'Azure Load Balancer', sub: 'Control Plane'},
   {name: 'Public IP Address', sub: 'Control Plane'},
   {name: 'Virtual Machines', sub: 'Control Plane'},

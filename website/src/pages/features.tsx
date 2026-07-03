@@ -41,6 +41,7 @@ const SERVICES: Service[] = [
   { abbr: 'DISK', bg: '#E8751A', name: 'Azure Disk',              description: 'Managed disk control plane and SAS access', preview: true },
   { abbr: 'LB',   bg: '#1B63EB', name: 'Azure Load Balancer',      description: 'Load balancer control plane', preview: true },
   { abbr: 'PIP',  bg: '#1B63EB', name: 'Public IP Address',         description: 'Public IP address resources', preview: true },
+  { abbr: 'AC',   bg: '#E8751A', name: 'Azure App Configuration',  description: 'Key-value store, feature flags, and access key management', preview: true },
 ];
 
 const TOOLING: Service[] = [
@@ -95,6 +96,16 @@ const CAPABILITIES: Capability[] = [
     icon: '🤖',
     title: 'AI-native management',
     body: 'The built-in MCP server lets GitHub Copilot, Claude, and other AI assistants provision and inspect Topaz resources through natural language — no CLI or REST calls needed.',
+  },
+  {
+    icon: '🎲',
+    title: 'Fault injection & chaos testing',
+    body: 'A built-in chaos engine sits inside the Topaz router and injects controllable faults — 429 throttling, 503 unavailability, timeouts — into any emulated Azure endpoint. Test retry logic and circuit breakers without mocking.',
+  },
+  {
+    icon: '🔀',
+    title: 'App Service forward proxy',
+    body: 'Topaz transparently routes HTTPS traffic for any *.azurewebsites.topaz.local.dev hostname to the matching Docker Compose container. Application code uses real Azure hostnames with zero changes.',
   },
 ];
 

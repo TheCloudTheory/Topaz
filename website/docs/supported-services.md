@@ -39,6 +39,7 @@ Cosmos DB|🚧|🚧
 Azure Disk|🚧|🚧
 Azure Load Balancer|✅|N/A
 Public IP Address|✅|N/A
+Azure App Configuration|🚧|🚧
 
 ✅ - fully supported (stable)
 
@@ -75,7 +76,9 @@ Azure Service Bus|8887, 8899|HTTPS
 Azure Service Bus (AMQP)|8889, 5671|AMQP, AMQP/TLS
 Container Registry (control plane)|8899|HTTPS
 Container Registry (data plane)|8892|HTTPS
+Azure App Configuration (data plane)|8893|HTTPS
 Azure App Service (Kudu/SCM)|8896|HTTPS
+Azure App Service (forward proxy)|8900|HTTPS
 
 :::note[Unified storage port]
 

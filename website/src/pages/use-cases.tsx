@@ -257,7 +257,7 @@ function MicroservicesVisual() {
           <div className={clsx(styles.topoBox, styles.topoBoxOrange)}>🆔 Managed Identity</div>
         </div>
         <div className={styles.topologyRow}>
-          <div className={clsx(styles.topoBox, styles.topoBoxBlue)}>🌐 App Service</div>
+          <div className={clsx(styles.topoBox, styles.topoBoxBlue)}>🌐 App Service + forward proxy :8900</div>
           <div className={clsx(styles.topoBox, styles.topoBoxBlue)}>🗄️ Azure SQL</div>
         </div>
 
@@ -387,6 +387,12 @@ const MORE_USE_CASES: UseCase[] = [
     title: 'Migration & refactoring',
     description:
       'Safely refactor how your application interacts with Azure services. Regression-test against Topaz before running against the real cloud.',
+  },
+  {
+    icon: '🎲',
+    title: 'Resilience & chaos testing',
+    description:
+      'Inject 429 throttling, 503 unavailability, and timeouts into any emulated Azure endpoint via the built-in chaos engine. Verify retry policies and circuit breakers without mocking — no real Azure required.',
   },
   {
     icon: '🤖',
