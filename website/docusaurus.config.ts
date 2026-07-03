@@ -161,6 +161,14 @@ const config: Config = {
               to: '/features',
             },
             {
+              label: 'Use Cases',
+              to: '/use-cases',
+            },
+            {
+              label: 'Demo',
+              to: '/demo',
+            },
+            {
               label: 'Roadmap',
               to: '/roadmap',
             },
@@ -190,8 +198,12 @@ const config: Config = {
               to: '/docs/category/tutorials',
             },
             {
-              label: 'Roadmap',
-              to: '/roadmap',
+              label: 'Azurite alternative',
+              to: '/docs/comparisons/azurite-alternative/',
+            },
+            {
+              label: 'Chaos Engineering',
+              to: '/docs/chaos-engineering',
             },
             {
               label: 'MCP server',
