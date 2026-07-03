@@ -1,6 +1,8 @@
 using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
+using Azure.ResourceManager.AppConfiguration;
+using Azure.ResourceManager.AppConfiguration.Models;
 using Azure.ResourceManager.ContainerRegistry;
 using Azure.ResourceManager.ContainerRegistry.Models;
 using Azure.ResourceManager.CosmosDB;
@@ -27,6 +29,7 @@ public class ConnectionStringsToolTests
     private const string EventHubNamespaceName = "mcp-test-eh";
     private const string RegistryName = "mcptestreg";
     private const string CosmosDbAccountName = "mcp-test-cosmos";
+    private const string AppConfigStoreName = "mcp-test-appconfig";
 
     [OneTimeSetUp]
     public async Task ProvisionResources()
@@ -81,6 +84,12 @@ public class ConnectionStringsToolTests
             CosmosDbAccountName,
             "eastus",
             McpTestFixture.ObjectId);
+
+        // App Configuration store
+        await rg.GetAppConfigurationStores().CreateOrUpdateAsync(
+            WaitUntil.Completed,
+            AppConfigStoreName,
+            new AppConfigurationStoreData(McpTestFixture.Location, new AppConfigurationSku("free")));
     }
 
     [Test]
@@ -173,6 +182,24 @@ public class ConnectionStringsToolTests
             Assert.That(entry?.PrimaryConnectionString, Does.Contain("AccountEndpoint="));
             Assert.That(entry?.PrimaryConnectionString, Does.Contain("AccountKey="));
             Assert.That(entry?.PrimaryConnectionString, Does.Contain(CosmosDbAccountName));
+        });
+    }
+
+    [Test]
+    public async Task GetConnectionStrings_AppConfigurationStore_ReturnsCorrectEndpointAndConnectionString()
+    {
+        var result = await ConnectionStringsTool.GetConnectionStrings(McpTestFixture.SubscriptionId, McpTestFixture.ObjectId);
+
+        var entry = result.AppConfigurationStores.Single(s => s.StoreName == AppConfigStoreName);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(entry.Endpoint,
+                Does.StartWith($"https://{AppConfigStoreName}.{GlobalSettings.AppConfigurationDnsSuffix}:{GlobalSettings.DefaultAppConfigurationPort}/"));
+            Assert.That(entry.PrimaryReadWriteConnectionString, Does.Contain("Endpoint="));
+            Assert.That(entry.PrimaryReadWriteConnectionString, Does.Contain("Id="));
+            Assert.That(entry.PrimaryReadWriteConnectionString, Does.Contain("Secret="));
+            Assert.That(entry.PrimaryReadWriteConnectionString, Does.Contain(AppConfigStoreName));
         });
     }
 }

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Azure.ResourceManager;
+using Azure.ResourceManager.AppConfiguration;
 using Azure.ResourceManager.ContainerRegistry;
 using Azure.ResourceManager.CosmosDB;
 using Azure.ResourceManager.EventHubs;
@@ -39,6 +40,7 @@ public sealed class ConnectionStringsTool
         var eventHubEntries = new List<EventHubConnectionStringEntry>();
         var registryEntries = new List<ContainerRegistryEntry>();
         var cosmosDbEntries = new List<CosmosDbEntry>();
+        var appConfigurationEntries = new List<AppConfigurationEntry>();
 
         await foreach (var resourceGroup in subscription.GetResourceGroups().GetAllAsync().ConfigureAwait(false))
         {
@@ -123,6 +125,28 @@ public sealed class ConnectionStringsTool
                     PrimaryConnectionString = TopazResourceHelpers.GetCosmosDbConnectionString(cosmosAccount.Data.Name!, primaryKey),
                 });
             }
+
+            // App Configuration stores
+            await foreach (var store in resourceGroup.GetAppConfigurationStores().GetAllAsync().ConfigureAwait(false))
+            {
+                var connectionString = string.Empty;
+                await foreach (var key in store.GetKeysAsync().ConfigureAwait(false))
+                {
+                    if (key.IsReadOnly == false)
+                    {
+                        connectionString = key.ConnectionString ?? string.Empty;
+                        break;
+                    }
+                }
+
+                appConfigurationEntries.Add(new AppConfigurationEntry
+                {
+                    ResourceGroup = resourceGroup.Data.Name,
+                    StoreName = store.Data.Name,
+                    Endpoint = store.Data.Endpoint ?? string.Empty,
+                    PrimaryReadWriteConnectionString = connectionString,
+                });
+            }
         }
 
         return new ConnectionStringsResult
@@ -133,6 +157,7 @@ public sealed class ConnectionStringsTool
             EventHubNamespaces = eventHubEntries,
             ContainerRegistries = registryEntries,
             CosmosDbAccounts = cosmosDbEntries,
+            AppConfigurationStores = appConfigurationEntries,
         };
     }
 
@@ -144,6 +169,7 @@ public sealed class ConnectionStringsTool
         public required List<EventHubConnectionStringEntry> EventHubNamespaces { [UsedImplicitly] get; init; }
         public required List<ContainerRegistryEntry> ContainerRegistries { [UsedImplicitly] get; init; }
         public required List<CosmosDbEntry> CosmosDbAccounts { [UsedImplicitly] get; init; }
+        public required List<AppConfigurationEntry> AppConfigurationStores { [UsedImplicitly] get; init; }
     }
 
     public sealed record StorageConnectionStringEntry
@@ -191,5 +217,13 @@ public sealed class ConnectionStringsTool
         public required string? AccountName { [UsedImplicitly] get; init; }
         public required string AccountEndpoint { [UsedImplicitly] get; init; }
         public required string PrimaryConnectionString { [UsedImplicitly] get; init; }
+    }
+
+    public sealed record AppConfigurationEntry
+    {
+        public required string ResourceGroup { [UsedImplicitly] get; init; }
+        public required string? StoreName { [UsedImplicitly] get; init; }
+        public required string Endpoint { [UsedImplicitly] get; init; }
+        public required string PrimaryReadWriteConnectionString { [UsedImplicitly] get; init; }
     }
 }
