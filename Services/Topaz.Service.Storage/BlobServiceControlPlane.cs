@@ -139,9 +139,9 @@ internal sealed class BlobServiceControlPlane(BlobResourceProvider provider)
         return new ControlPlaneOperationResult(OperationResult.Success);
     }
 
-    public static string GetBlobServiceStatsXml()
+    public static string GetBlobServiceStatsXml(DateTimeOffset? lastGeoSyncTime = null)
     {
-        var lastSyncTime = DateTimeOffset.UtcNow.ToString("R");
+        var lastSyncTime = (lastGeoSyncTime ?? DateTimeOffset.UtcNow).ToString("R");
         return $"""
                 <?xml version="1.0" encoding="utf-8"?>
                 <StorageServiceStats>

@@ -73,7 +73,7 @@ internal sealed class GetTableServicePropertiesEndpoint(Pipeline eventPipeline, 
             return;
         }
 
-        var statsXml = TableServiceControlPlane.GetTableServiceStatsXml();
+        var statsXml = TableServiceControlPlane.GetTableServiceStatsXml(storageAccount!.Properties.LastGeoSyncTime);
         response.Content = new StringContent(statsXml, Encoding.UTF8, "application/xml");
         response.StatusCode = HttpStatusCode.OK;
     }

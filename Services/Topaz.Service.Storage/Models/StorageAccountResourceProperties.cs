@@ -74,4 +74,5 @@ internal record StorageAccountResourceProperties
     public DateTimeOffset? CreationTime { get; set; }
     public StorageAccountPrimaryEndpoints? PrimaryEndpoints { get; set; }
     public StorageAccountSecondaryEndpoints? SecondaryEndpoints { get; set; }
+    public DateTimeOffset? LastGeoSyncTime { get; set; }
 }

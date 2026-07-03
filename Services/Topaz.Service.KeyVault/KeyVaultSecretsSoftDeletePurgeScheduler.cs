@@ -62,6 +62,7 @@ internal sealed class KeyVaultSecretsSoftDeletePurgeScheduler(
         }
         catch (Exception exception)
         {
+            logger.LogError(nameof(KeyVaultSecretsSoftDeletePurgeScheduler), nameof(ScanAndPurgeAsync), exception.Message);
             return Task.FromException(exception);
         }
     }

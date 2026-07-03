@@ -28,6 +28,7 @@ using Topaz.Service.ResourceManager;
 using Topaz.Service.ServiceBus;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
+using Topaz.Service.Storage;
 using Topaz.Service.Storage.Services;
 using Topaz.Service.Subscription;
 using Topaz.Service.Disk;
@@ -213,6 +214,11 @@ public class Host
                 SubscriptionControlPlane.New(_eventPipeline, _logger),
                 _logger,
                 GlobalSettings.SoftDeletePurgeSchedulerInterval),
+            new GeoReplicationSyncScheduler(
+                AzureStorageControlPlane.New(_logger),
+                SubscriptionControlPlane.New(_eventPipeline, _logger),
+                _logger,
+                TimeSpan.FromSeconds(30)),
         };
 
         new BackgroundServiceOrchestrator(backgroundServices, _logger).StartAll(cancellationToken);

@@ -164,9 +164,9 @@ internal sealed class QueueServiceControlPlane(QueueResourceProvider provider, I
         return new ControlPlaneOperationResult(OperationResult.Success);
     }
 
-    public static string GetQueueServiceStatsXml()
+    public static string GetQueueServiceStatsXml(DateTimeOffset? lastGeoSyncTime = null)
     {
-        var lastSyncTime = DateTimeOffset.UtcNow.ToString("R");
+        var lastSyncTime = (lastGeoSyncTime ?? DateTimeOffset.UtcNow).ToString("R");
         return $"""
                 <?xml version="1.0" encoding="utf-8"?>
                 <StorageServiceStats>

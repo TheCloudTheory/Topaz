@@ -38,7 +38,7 @@ internal sealed class GetBlobServiceStatsEndpoint(Pipeline eventPipeline, ITopaz
         if (!IsRequestAuthorized(subscriptionIdentifier, resourceGroupIdentifier, storageAccount!.Name, Permissions, context, response))
             return;
 
-        var statsXml = BlobServiceControlPlane.GetBlobServiceStatsXml();
+        var statsXml = BlobServiceControlPlane.GetBlobServiceStatsXml(storageAccount!.Properties.LastGeoSyncTime);
         response.Content = new StringContent(statsXml, Encoding.UTF8, "application/xml");
         response.StatusCode = HttpStatusCode.OK;
     }

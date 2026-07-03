@@ -171,6 +171,7 @@ internal sealed class AzureStorageControlPlane(
             : null;
         var existingKeys = existingDeserialized?.Keys;
         var existingCreationTime = existingDeserialized?.Properties.CreationTime;
+        var existingLastGeoSyncTime = existingDeserialized?.Properties.LastGeoSyncTime;
 
         var raGrs = IsRaGrsSkuName(request.Sku?.Name);
         var properties = (request.Properties ?? new StorageAccountResourceProperties()) with
@@ -179,7 +180,8 @@ internal sealed class AzureStorageControlPlane(
             StatusOfPrimary = "available",
             SecondaryEndpoints = raGrs ? StorageAccountSecondaryEndpoints.For(storageAccountName) : null,
             StatusOfSecondary = raGrs ? "available" : null,
-            CreationTime = existingCreationTime ?? DateTimeOffset.UtcNow
+            CreationTime = existingCreationTime ?? DateTimeOffset.UtcNow,
+            LastGeoSyncTime = raGrs ? existingLastGeoSyncTime ?? DateTimeOffset.UtcNow.AddSeconds(30) : null
         };
 
         if (existingAccount != null && existingKeys != null)
@@ -211,7 +213,19 @@ internal sealed class AzureStorageControlPlane(
                && storageAccountName.All(character => char.IsLower(character) || char.IsDigit(character));
     }
 
-    private static bool IsRaGrsSkuName(string? skuName) =>
+    public void UpdateLastGeoSyncTime(
+        SubscriptionIdentifier subscriptionIdentifier,
+        ResourceGroupIdentifier resourceGroupIdentifier,
+        string storageAccountName)
+    {
+        var existing = provider.GetAs<StorageAccountResource>(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName);
+        if (existing == null) return;
+
+        existing.Properties.LastGeoSyncTime = DateTimeOffset.UtcNow;
+        provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, storageAccountName, existing, false);
+    }
+
+    internal static bool IsRaGrsSkuName(string? skuName) =>
         string.Equals(skuName, StorageSkuName.StandardRagrs.ToString(), StringComparison.OrdinalIgnoreCase) ||
         string.Equals(skuName, StorageSkuName.StandardRagzrs.ToString(), StringComparison.OrdinalIgnoreCase);
 

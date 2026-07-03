@@ -103,9 +103,9 @@ internal sealed class TableServiceControlPlane(TableResourceProvider provider, I
             null, null);
     }
 
-    public static string GetTableServiceStatsXml()
+    public static string GetTableServiceStatsXml(DateTimeOffset? lastGeoSyncTime = null)
     {
-        var lastSyncTime = DateTimeOffset.UtcNow.ToString("R");
+        var lastSyncTime = (lastGeoSyncTime ?? DateTimeOffset.UtcNow).ToString("R");
         return $"""
                 <?xml version="1.0" encoding="utf-8"?>
                 <StorageServiceStats>
