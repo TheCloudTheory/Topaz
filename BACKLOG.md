@@ -294,6 +294,21 @@ TODO: AMQP: Investigate patching AMQPNetLite to emit full-length performatives
 
 ## v1.9-preview
 
+### Management Groups: `$expand=children` does not return subscriptions
+
+<!--
+TODO: Management Groups: $expand=children does not include child subscriptions
+  GET /providers/Microsoft.Management/managementGroups/{id}?$expand=children returns the
+  management group object but the `properties.children` array is missing (or null), so
+  subscriptions that belong to the management group are not surfaced when expanding the tree.
+  Expected: child subscriptions appear as entries with `type: "/subscriptions"` in the
+  `properties.children` array, matching the real Azure ARM behaviour.
+  Workaround: clients can fall back to GET /subscriptions and filter by management group,
+  but this should be fixed in the management groups endpoint itself.
+  milestone: v1.9-preview
+  labels: bug, management-groups
+-->
+
 ### Azure App Service — Kudu / SCM authentication
 
 <!--
