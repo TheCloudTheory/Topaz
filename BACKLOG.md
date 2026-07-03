@@ -1360,19 +1360,3 @@ TODO: IaC state export: topaz export --format terraform
   milestone: v1.14
   labels: enhancement, cli, terraform
 -->
-
-<!--
-TODO: Resource Providers — tenant-level GET /providers endpoint
-  The tenant-scoped `GET /providers?api-version=2021-04-01` endpoint is not implemented.
-  It should return all known resource provider namespaces (e.g. Microsoft.Storage,
-  Microsoft.ServiceBus, Microsoft.KeyVault) with their registered resource types, so that
-  tooling (e.g. the VS Code extension "By Service Type" view) can enumerate available
-  service types without requiring a subscription.
-  Expected response schema matches the ARM REST API:
-  {"value":[{"namespace":"Microsoft.Storage","resourceTypes":[{"resourceType":"storageAccounts",...},...]},...]}
-  This is the same shape already returned by the per-subscription endpoint
-  `GET /subscriptions/{sub}/providers` (implemented in v1.3-beta); the tenant variant simply
-  omits the subscription scope and aggregates all registered providers.
-  milestone: v1.9-preview
-  labels: enhancement, resource-providers
--->

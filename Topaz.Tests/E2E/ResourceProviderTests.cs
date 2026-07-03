@@ -149,4 +149,43 @@ public class ResourceProviderTests
         // Cleanup — re-register so other tests are not affected
         await topaz.RegisterProviderAsync(SubscriptionId, "Microsoft.KeyVault");
     }
+
+    [Test]
+    public async Task ResourceProvider_ListByTenant_ReturnsAllKnownProviders()
+    {
+        // Arrange
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
+        var tenant = armClient.GetTenants().First();
+
+        // Act
+        var providers = await tenant.GetTenantResourceProvidersAsync().ToListAsync();
+
+        // Assert
+        Assert.That(providers, Has.Count.GreaterThanOrEqualTo(10));
+
+        var namespaces = providers
+            .Select(p => p.Namespace)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(namespaces, Does.Contain("Microsoft.KeyVault"));
+            Assert.That(namespaces, Does.Contain("Microsoft.Storage"));
+            Assert.That(namespaces, Does.Contain("Microsoft.ContainerRegistry"));
+            Assert.That(namespaces, Does.Contain("Microsoft.ServiceBus"));
+            Assert.That(namespaces, Does.Contain("Microsoft.EventHub"));
+        }
+
+        foreach (var provider in providers)
+        {
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(provider.Namespace, Is.Not.Null.And.Not.Empty,
+                            "namespace field missing from tenant-level provider entry");
+                Assert.That(provider.ResourceTypes.Count, Is.GreaterThan(0),
+                    $"resourceTypes missing for namespace {provider.Namespace}");
+            }
+        }
+    }
 }
