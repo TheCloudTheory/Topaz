@@ -13,7 +13,7 @@ namespace Topaz.Service.AppConfiguration.Commands;
 internal sealed class CreateAppConfigurationStoreCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateAppConfigurationStoreCommand.Settings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.AppConfiguration/configurationStores/{settings.Name}";
         var (success, body) = await PutAsync(url, new
@@ -27,7 +27,7 @@ internal sealed class CreateAppConfigurationStoreCommand(HttpClient httpClient, 
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, Settings settings)
+    protected override ValidationResult Validate(CommandContext context, Settings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

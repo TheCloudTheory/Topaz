@@ -13,7 +13,7 @@ public sealed class DeleteContainerRegistryCommand(HttpClient httpClient, Defaul
     : TopazHttpCommand<DeleteContainerRegistryCommand.DeleteContainerRegistryCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteContainerRegistryCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteContainerRegistryCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ContainerRegistry/registries/{settings.Name}";
         var success = await DeleteAsync(url);
@@ -22,7 +22,7 @@ public sealed class DeleteContainerRegistryCommand(HttpClient httpClient, Defaul
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteContainerRegistryCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteContainerRegistryCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

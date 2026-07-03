@@ -11,7 +11,7 @@ namespace Topaz.Service.EventHub.Commands;
 [CommandExample("Creates Event Hub", "topaz eventhubs eventhub create \\\n    --resource-group rg-test \\\n    --namespace-name \"eh-namespace\" \\\n    --name \"hubtest\" \\\n    --subscription-id \"07CB2605-9C16-46E9-A2BD-0A8D39E049E8\"")]
 public sealed class CreateEventHubCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateEventHubCommand.CreateEventHubCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateEventHubCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateEventHubCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.EventHub/namespaces/{settings.NamespaceName}/eventhubs/{settings.Name}";
         var (success, body) = await PutAsync(url, new { properties = new { } });
@@ -20,7 +20,7 @@ public sealed class CreateEventHubCommand(HttpClient httpClient, DefaultsProvide
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateEventHubCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateEventHubCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

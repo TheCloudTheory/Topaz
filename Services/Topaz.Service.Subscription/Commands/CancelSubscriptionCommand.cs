@@ -13,7 +13,7 @@ namespace Topaz.Service.Subscription.Commands;
 public sealed class CancelSubscriptionCommand(HttpClient httpClient)
     : TopazHttpCommand<CancelSubscriptionCommand.CancelSubscriptionCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CancelSubscriptionCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CancelSubscriptionCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.Id}/providers/Microsoft.Subscription/cancel";
         var (success, body) = await PostAsync(url, new { });
@@ -22,7 +22,7 @@ public sealed class CancelSubscriptionCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CancelSubscriptionCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CancelSubscriptionCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Id))
         {

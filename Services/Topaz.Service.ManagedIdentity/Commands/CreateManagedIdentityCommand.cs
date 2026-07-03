@@ -11,7 +11,7 @@ namespace Topaz.Service.ManagedIdentity.Commands;
 [CommandExample("Creates a new managed identity", "topaz identity create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"myIdentity\" \\\n    --location \"westeurope\" \\\n    --resource-group \"rg-local\"")]
 public class CreateManagedIdentityCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateManagedIdentityCommand.CreateManagedIdentityCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateManagedIdentityCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateManagedIdentityCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{settings.Name}";
 
@@ -33,7 +33,7 @@ public class CreateManagedIdentityCommand(HttpClient httpClient, DefaultsProvide
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateManagedIdentityCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateManagedIdentityCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

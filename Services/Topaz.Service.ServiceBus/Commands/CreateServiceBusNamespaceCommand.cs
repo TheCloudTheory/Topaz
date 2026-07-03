@@ -11,7 +11,7 @@ namespace Topaz.Service.ServiceBus.Commands;
 [CommandExample("Create a namespace", "topaz servicebus namespace create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"sblocal\"")]
 public sealed class CreateServiceBusNamespaceCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateServiceBusNamespaceCommand.CreateServiceBusNamespaceCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateServiceBusNamespaceCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateServiceBusNamespaceCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ServiceBus/namespaces/{settings.Name}";
         var (success, body) = await PutAsync(url, new { location = settings.Location, properties = new { } });
@@ -20,7 +20,7 @@ public sealed class CreateServiceBusNamespaceCommand(HttpClient httpClient, Defa
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateServiceBusNamespaceCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateServiceBusNamespaceCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

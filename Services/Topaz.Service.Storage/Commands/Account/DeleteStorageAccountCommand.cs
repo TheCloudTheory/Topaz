@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Commands;
 [CommandExample("Delete a storage account", "topaz storage account delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\"")]
 public class DeleteStorageAccountCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<DeleteStorageAccountCommand.DeleteStorageAccountCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteStorageAccountCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteStorageAccountCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.WriteLine("Deleting storage account...");
 
@@ -22,7 +22,7 @@ public class DeleteStorageAccountCommand(HttpClient httpClient, DefaultsProvider
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteStorageAccountCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteStorageAccountCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

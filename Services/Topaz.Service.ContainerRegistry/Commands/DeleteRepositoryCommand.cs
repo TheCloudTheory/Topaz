@@ -14,7 +14,7 @@ public sealed class DeleteRepositoryCommand(HttpClient httpClient)
     : TopazHttpCommand<DeleteRepositoryCommand.DeleteRepositoryCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteRepositoryCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteRepositoryCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"https://{settings.Registry}.azurecr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}/acr/v1/{settings.Name}";
         var success = await DeleteAsync(url);
@@ -23,7 +23,7 @@ public sealed class DeleteRepositoryCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteRepositoryCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteRepositoryCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Repository name can't be null.");

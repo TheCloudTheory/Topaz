@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Commands.Blob;
 [CommandExample("Show blob metadata", "topaz storage blob metadata show \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\"")]
 public sealed class GetBlobMetadataCommand(HttpClient httpClient) : TopazHttpCommand<GetBlobMetadataCommand.GetBlobMetadataCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, GetBlobMetadataCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, GetBlobMetadataCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{settings.BlobName}?comp=metadata";
         var (success, body) = await GetAsync(url);
@@ -20,7 +20,7 @@ public sealed class GetBlobMetadataCommand(HttpClient httpClient) : TopazHttpCom
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, GetBlobMetadataCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, GetBlobMetadataCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.AccountName))
             return ValidationResult.Error("Storage account name can't be null.");

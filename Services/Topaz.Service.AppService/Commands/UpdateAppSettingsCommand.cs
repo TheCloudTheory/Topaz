@@ -12,7 +12,7 @@ namespace Topaz.Service.AppService.Commands;
 public sealed class UpdateAppSettingsCommand(HttpClient httpClient)
     : TopazHttpCommand<UpdateAppSettingsCommand.UpdateAppSettingsCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, UpdateAppSettingsCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, UpdateAppSettingsCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Web/sites/{settings.Name}/config/appsettings";
 
@@ -27,7 +27,7 @@ public sealed class UpdateAppSettingsCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, UpdateAppSettingsCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, UpdateAppSettingsCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("App Service Site name can't be null.");

@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Commands.Message;
 [CommandExample("Enqueue a message", "topaz storage message put \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --queue-name \"myqueue\" \\\n    --content \"Hello World\"")]
 public sealed class SendMessageCommand(HttpClient httpClient) : TopazHttpCommand<SendMessageCommand.SendMessageCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, SendMessageCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, SendMessageCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{QueueDataPlaneUrl(settings.AccountName!)}/{settings.QueueName}/messages";
         if (settings.VisibilityTimeout > 0)
@@ -30,7 +30,7 @@ public sealed class SendMessageCommand(HttpClient httpClient) : TopazHttpCommand
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, SendMessageCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, SendMessageCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.QueueName))
             return ValidationResult.Error("Queue name can't be null.");

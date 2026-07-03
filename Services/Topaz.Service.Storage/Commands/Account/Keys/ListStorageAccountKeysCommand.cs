@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Commands;
 [CommandExample("List storage account keys", "topaz storage account keys list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\"")]
 public sealed class ListStorageAccountKeysCommand(HttpClient httpClient) : TopazHttpCommand<ListStorageAccountKeysCommand.ListStorageAccountKeysCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListStorageAccountKeysCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListStorageAccountKeysCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.WriteLine("Fetching storage account keys...");
 
@@ -22,7 +22,7 @@ public sealed class ListStorageAccountKeysCommand(HttpClient httpClient) : Topaz
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListStorageAccountKeysCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListStorageAccountKeysCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
         {

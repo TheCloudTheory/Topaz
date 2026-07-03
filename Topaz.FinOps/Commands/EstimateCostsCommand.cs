@@ -13,7 +13,7 @@ namespace Topaz.FinOps.Commands;
 public sealed class EstimateCostsCommand(HttpClient httpClient)
     : TopazHttpCommand<EstimateCostsCommand.EstimateCostsCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, EstimateCostsCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, EstimateCostsCommandSettings settings, CancellationToken cancellationToken)
     {
         var currency = string.IsNullOrWhiteSpace(settings.Currency) ? "USD" : settings.Currency;
         var url = $"{ArmBaseUrl}/topaz/subscriptions/{settings.SubscriptionId}/estimatedCosts?currency={currency}";
@@ -67,7 +67,7 @@ public sealed class EstimateCostsCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, EstimateCostsCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, EstimateCostsCommandSettings settings)
     {
         if (string.IsNullOrWhiteSpace(settings.SubscriptionId))
         {

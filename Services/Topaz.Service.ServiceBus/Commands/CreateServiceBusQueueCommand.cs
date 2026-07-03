@@ -11,7 +11,7 @@ namespace Topaz.Service.ServiceBus.Commands;
 [CommandExample("Create a queue", "topaz servicebus queue create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --namespace-name \"sblocal\" \\\n    --queue-name \"myqueue\"")]
 public class CreateServiceBusQueueCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateServiceBusQueueCommand.CreateServiceBusQueueCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateServiceBusQueueCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateServiceBusQueueCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ServiceBus/namespaces/{settings.NamespaceName}/queues/{settings.Name}";
         var (success, body) = await PutAsync(url, new { properties = new { } });
@@ -20,7 +20,7 @@ public class CreateServiceBusQueueCommand(HttpClient httpClient, DefaultsProvide
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateServiceBusQueueCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateServiceBusQueueCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

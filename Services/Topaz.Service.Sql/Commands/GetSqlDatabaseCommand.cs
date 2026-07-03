@@ -13,7 +13,7 @@ namespace Topaz.Service.Sql.Commands;
 internal sealed class GetSqlDatabaseCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<GetSqlDatabaseCommand.GetSqlDatabaseCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, GetSqlDatabaseCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, GetSqlDatabaseCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}" +
                   $"/providers/Microsoft.Sql/servers/{settings.Server}/databases/{settings.Name}";
@@ -23,7 +23,7 @@ internal sealed class GetSqlDatabaseCommand(HttpClient httpClient, DefaultsProvi
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, GetSqlDatabaseCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, GetSqlDatabaseCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

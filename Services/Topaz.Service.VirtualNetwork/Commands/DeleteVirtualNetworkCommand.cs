@@ -14,7 +14,7 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 internal sealed class DeleteVirtualNetworkCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteVirtualNetworkCommand.DeleteVirtualNetworkCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteVirtualNetworkCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteVirtualNetworkCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/virtualNetworks/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -22,7 +22,7 @@ internal sealed class DeleteVirtualNetworkCommand(HttpClient httpClient, Default
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteVirtualNetworkCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteVirtualNetworkCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

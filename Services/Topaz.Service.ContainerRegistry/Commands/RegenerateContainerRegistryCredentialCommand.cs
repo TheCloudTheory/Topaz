@@ -14,7 +14,7 @@ public sealed class RegenerateContainerRegistryCredentialCommand(HttpClient http
     : TopazHttpCommand<RegenerateContainerRegistryCredentialCommand.RegenerateCredentialCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, RegenerateCredentialCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, RegenerateCredentialCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ContainerRegistry/registries/{settings.Name}/regenerateCredential";
         var (success, body) = await PostAsync(url, new { name = settings.PasswordName });
@@ -23,7 +23,7 @@ public sealed class RegenerateContainerRegistryCredentialCommand(HttpClient http
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, RegenerateCredentialCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, RegenerateCredentialCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Registry name can't be null.");

@@ -11,7 +11,7 @@ namespace Topaz.Chaos.Commands.Rules;
 [CommandExample("List all chaos rules", "topaz chaos rule list")]
 public sealed class ListChaosRulesCommand(HttpClient httpClient) : AsyncCommand
 {
-    public override async Task<int> ExecuteAsync(CommandContext context)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
         var url = $"https://topaz.local.dev:{GlobalSettings.DefaultResourceManagerPort}/topaz/chaos/rules";
         var response = await httpClient.GetAsync(url);

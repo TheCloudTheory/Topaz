@@ -13,7 +13,7 @@ namespace Topaz.Service.Storage.Commands;
 public sealed class ShowStorageAccountCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ShowStorageAccountCommand.ShowStorageAccountCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ShowStorageAccountCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ShowStorageAccountCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.WriteLine("Fetching storage account...");
 
@@ -25,7 +25,7 @@ public sealed class ShowStorageAccountCommand(HttpClient httpClient, DefaultsPro
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ShowStorageAccountCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ShowStorageAccountCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

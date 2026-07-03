@@ -12,7 +12,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 public sealed class ListKeysDatabaseAccountCommand(HttpClient httpClient)
     : TopazHttpCommand<ListKeysDatabaseAccountCommand.ListKeysDatabaseAccountCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListKeysDatabaseAccountCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListKeysDatabaseAccountCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.DocumentDB/databaseAccounts/{settings.Name}/listKeys";
         var (success, body) = await PostAsync(url, new { });
@@ -21,7 +21,7 @@ public sealed class ListKeysDatabaseAccountCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListKeysDatabaseAccountCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListKeysDatabaseAccountCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Cosmos DB account name can't be null.");

@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Commands;
 public sealed class GenerateServiceSasCommand(HttpClient httpClient)
     : TopazHttpCommand<GenerateServiceSasCommand.GenerateServiceSasCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, GenerateServiceSasCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, GenerateServiceSasCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.WriteLine("Generating service SAS token...");
 
@@ -34,7 +34,7 @@ public sealed class GenerateServiceSasCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, GenerateServiceSasCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, GenerateServiceSasCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.AccountName))
             return ValidationResult.Error("Storage account name can't be null.");

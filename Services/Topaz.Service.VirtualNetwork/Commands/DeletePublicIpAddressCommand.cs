@@ -14,7 +14,7 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 internal sealed class DeletePublicIpAddressCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeletePublicIpAddressCommand.DeletePublicIpAddressCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeletePublicIpAddressCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeletePublicIpAddressCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/publicIPAddresses/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -22,7 +22,7 @@ internal sealed class DeletePublicIpAddressCommand(HttpClient httpClient, Defaul
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeletePublicIpAddressCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeletePublicIpAddressCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

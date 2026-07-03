@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Commands;
 [CommandExample("Show connection string", "topaz storage account show-connection-string \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\"")]
 public sealed class ShowStorageAccountConnectionStringCommand(HttpClient httpClient) : TopazHttpCommand<ShowStorageAccountConnectionStringCommand.ShowStorageAccountConnectionStringCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ShowStorageAccountConnectionStringCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ShowStorageAccountConnectionStringCommandSettings settings, CancellationToken cancellationToken)
     {
         var keysUrl = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.Name}/listKeys";
         var (success, body) = await PostAsync(keysUrl, new { });
@@ -27,7 +27,7 @@ public sealed class ShowStorageAccountConnectionStringCommand(HttpClient httpCli
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ShowStorageAccountConnectionStringCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ShowStorageAccountConnectionStringCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
         {

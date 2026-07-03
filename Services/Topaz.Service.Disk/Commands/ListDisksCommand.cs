@@ -13,7 +13,7 @@ namespace Topaz.Service.Disk.Commands;
 internal sealed class ListDisksCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListDisksCommand.ListDisksCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListDisksCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListDisksCommandSettings settings, CancellationToken cancellationToken)
     {
         string url;
         if (!string.IsNullOrWhiteSpace(settings.ResourceGroup))
@@ -27,7 +27,7 @@ internal sealed class ListDisksCommand(HttpClient httpClient, DefaultsProvider p
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListDisksCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListDisksCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

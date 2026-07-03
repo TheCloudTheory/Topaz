@@ -45,7 +45,7 @@
   <ItemGroup>
     <PackageReference Include="AMQPNetLite" Version="2.5.3" />
     <PackageReference Include="Microsoft.Azure.Amqp" Version="2.7.0" />
-    <PackageReference Include="Spectre.Console" Version="0.57.2" />
+    <PackageReference Include="Spectre.Console" Version="0.55.0" />
   </ItemGroup>
 
   <ItemGroup>

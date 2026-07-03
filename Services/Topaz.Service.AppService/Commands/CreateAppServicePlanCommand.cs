@@ -12,7 +12,7 @@ namespace Topaz.Service.AppService.Commands;
 public sealed class CreateAppServicePlanCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateAppServicePlanCommand.CreateAppServicePlanCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateAppServicePlanCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateAppServicePlanCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Web/serverfarms/{settings.Name}";
         var (success, body) = await PutAsync(url, new
@@ -26,7 +26,7 @@ public sealed class CreateAppServicePlanCommand(HttpClient httpClient, DefaultsP
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateAppServicePlanCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateAppServicePlanCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

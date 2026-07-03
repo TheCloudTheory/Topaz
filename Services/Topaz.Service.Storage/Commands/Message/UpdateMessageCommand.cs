@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Commands.Message;
 [CommandExample("Update message visibility", "topaz storage message update \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --queue-name \"myqueue\" \\\n    --message-id \"<id>\" \\\n    --pop-receipt \"<receipt>\" \\\n    --visibility-timeout 60")]
 public sealed class UpdateMessageCommand(HttpClient httpClient) : TopazHttpCommand<UpdateMessageCommand.UpdateMessageCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, UpdateMessageCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, UpdateMessageCommandSettings settings, CancellationToken cancellationToken)
     {
         var popEncoded = Uri.EscapeDataString(settings.PopReceipt!);
         var url = $"{QueueDataPlaneUrl(settings.AccountName!)}/{settings.QueueName}/messages/{settings.MessageId}?popreceipt={popEncoded}&visibilitytimeout={settings.VisibilityTimeout}";
@@ -29,7 +29,7 @@ public sealed class UpdateMessageCommand(HttpClient httpClient) : TopazHttpComma
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, UpdateMessageCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, UpdateMessageCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.QueueName))
             return ValidationResult.Error("Queue name can't be null.");

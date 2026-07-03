@@ -11,7 +11,7 @@ namespace Topaz.Service.KeyVault.Commands.Secrets;
 [CommandExample("List secrets", "topaz keyvault secret list --vault-name \"kvlocal\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
 public class ListSecretsCommand(HttpClient httpClient) : TopazHttpCommand<ListSecretsCommand.ListSecretsCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListSecretsCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListSecretsCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/secrets?api-version=7.4";
         var (success, body) = await GetAsync(url);
@@ -20,7 +20,7 @@ public class ListSecretsCommand(HttpClient httpClient) : TopazHttpCommand<ListSe
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListSecretsCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListSecretsCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

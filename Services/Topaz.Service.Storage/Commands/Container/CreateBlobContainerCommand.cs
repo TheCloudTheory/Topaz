@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Commands;
 [CommandExample("Create a container", "topaz storage container create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --name \"mycontainer\"")]
 public sealed class CreateBlobContainerCommand(HttpClient httpClient) : TopazHttpCommand<CreateBlobContainerCommand.CreateBlobContainerCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateBlobContainerCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateBlobContainerCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.WriteLine("Creating blob container...");
 
@@ -22,7 +22,7 @@ public sealed class CreateBlobContainerCommand(HttpClient httpClient) : TopazHtt
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateBlobContainerCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateBlobContainerCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
         {

@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Commands;
 public sealed class ListBlobContainersCommand(HttpClient httpClient)
     : TopazHttpCommand<ListBlobContainersCommand.ListBlobContainersCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListBlobContainersCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListBlobContainersCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.WriteLine("Listing blob containers...");
 
@@ -23,7 +23,7 @@ public sealed class ListBlobContainersCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListBlobContainersCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListBlobContainersCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.AccountName))
             return ValidationResult.Error("Storage account name can't be null.");

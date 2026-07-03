@@ -11,7 +11,7 @@ namespace Topaz.Service.ManagedIdentity.Commands;
 [CommandExample("Deletes a managed identity", "topaz identity delete --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"myIdentity\" \\\n    --resource-group \"rg-local\"")]
 public sealed class DeleteManagedIdentityCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<DeleteManagedIdentityCommand.DeleteManagedIdentityCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteManagedIdentityCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteManagedIdentityCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -19,7 +19,7 @@ public sealed class DeleteManagedIdentityCommand(HttpClient httpClient, Defaults
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteManagedIdentityCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteManagedIdentityCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

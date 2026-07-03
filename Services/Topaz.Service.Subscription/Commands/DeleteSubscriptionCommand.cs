@@ -12,7 +12,7 @@ namespace Topaz.Service.Subscription.Commands;
 [CommandExample("Delete a subscription", "topaz subscription delete \\\n    --id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
 public class DeleteSubscriptionCommand(HttpClient httpClient) : TopazHttpCommand<DeleteSubscriptionCommand.DeleteSubscriptionCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteSubscriptionCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteSubscriptionCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.Id}";
         if (!await DeleteAsync(url)) return 1;
@@ -20,7 +20,7 @@ public class DeleteSubscriptionCommand(HttpClient httpClient) : TopazHttpCommand
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteSubscriptionCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteSubscriptionCommandSettings settings)
     {
         return string.IsNullOrEmpty(settings.Id) ? ValidationResult.Error("Subscription ID can't be null.") : base.Validate(context, settings);
     }

@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Commands.Message;
 [CommandExample("Delete a message", "topaz storage message delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --queue-name \"myqueue\" \\\n    --message-id \"<id>\" \\\n    --pop-receipt \"<receipt>\"")]
 public sealed class DeleteMessageCommand(HttpClient httpClient) : TopazHttpCommand<DeleteMessageCommand.DeleteMessageCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteMessageCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteMessageCommandSettings settings, CancellationToken cancellationToken)
     {
         var popEncoded = Uri.EscapeDataString(settings.PopReceipt!);
         var url = $"{QueueDataPlaneUrl(settings.AccountName!)}/{settings.QueueName}/messages/{settings.MessageId}?popreceipt={popEncoded}";
@@ -21,7 +21,7 @@ public sealed class DeleteMessageCommand(HttpClient httpClient) : TopazHttpComma
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteMessageCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteMessageCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.QueueName))
             return ValidationResult.Error("Queue name can't be null.");

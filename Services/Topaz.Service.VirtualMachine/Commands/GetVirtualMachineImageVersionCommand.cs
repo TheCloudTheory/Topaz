@@ -13,7 +13,7 @@ namespace Topaz.Service.VirtualMachine.Commands;
 internal sealed class GetVirtualMachineImageVersionCommand(HttpClient httpClient)
     : TopazHttpCommand<GetVirtualMachineImageVersionCommand.GetVirtualMachineImageVersionCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, GetVirtualMachineImageVersionCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, GetVirtualMachineImageVersionCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/providers/Microsoft.Compute/locations/{settings.Location}/publishers/{settings.Publisher}/artifacttypes/vmimage/offers/{settings.Offer}/skus/{settings.Sku}/versions/{settings.Version}";
         var (success, body) = await GetAsync(url);
@@ -22,7 +22,7 @@ internal sealed class GetVirtualMachineImageVersionCommand(HttpClient httpClient
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, GetVirtualMachineImageVersionCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, GetVirtualMachineImageVersionCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.SubscriptionId))
             return ValidationResult.Error("Subscription ID can't be null.");

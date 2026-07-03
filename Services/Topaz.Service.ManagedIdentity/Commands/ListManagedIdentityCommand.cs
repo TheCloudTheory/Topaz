@@ -12,7 +12,7 @@ namespace Topaz.Service.ManagedIdentity.Commands;
 [CommandExample("Lists managed identities by subscription", "topaz identity list --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae")]
 public sealed class ListManagedIdentityCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<ListManagedIdentityCommand.ListManagedIdentityCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListManagedIdentityCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListManagedIdentityCommandSettings settings, CancellationToken cancellationToken)
     {
         string url;
         if (!string.IsNullOrEmpty(settings.ResourceGroup))
@@ -26,7 +26,7 @@ public sealed class ListManagedIdentityCommand(HttpClient httpClient, DefaultsPr
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListManagedIdentityCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListManagedIdentityCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

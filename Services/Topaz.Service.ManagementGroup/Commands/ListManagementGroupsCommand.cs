@@ -12,7 +12,7 @@ namespace Topaz.Service.ManagementGroup.Commands;
 public sealed class ListManagementGroupsCommand(HttpClient httpClient)
     : TopazHttpCommand<ListManagementGroupsCommand.Settings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups";
         var (success, body) = await GetAsync(url);

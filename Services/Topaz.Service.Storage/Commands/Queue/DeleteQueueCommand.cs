@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Commands;
 [CommandExample("Delete a queue", "topaz storage queue delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --name \"myqueue\"")]
 public sealed class DeleteQueueCommand(HttpClient httpClient) : TopazHttpCommand<DeleteQueueCommand.DeleteQueueCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteQueueCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteQueueCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/queueServices/default/queues/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -20,7 +20,7 @@ public sealed class DeleteQueueCommand(HttpClient httpClient) : TopazHttpCommand
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteQueueCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteQueueCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
         {

@@ -14,7 +14,7 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 internal sealed class GetPublicIpAddressCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<GetPublicIpAddressCommand.GetPublicIpAddressCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, GetPublicIpAddressCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, GetPublicIpAddressCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/publicIPAddresses/{settings.Name}";
         var (success, body) = await GetAsync(url);
@@ -23,7 +23,7 @@ internal sealed class GetPublicIpAddressCommand(HttpClient httpClient, DefaultsP
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, GetPublicIpAddressCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, GetPublicIpAddressCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

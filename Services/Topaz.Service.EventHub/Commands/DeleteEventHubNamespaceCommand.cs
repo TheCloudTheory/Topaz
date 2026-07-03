@@ -11,7 +11,7 @@ namespace Topaz.Service.EventHub.Commands;
 [CommandExample("Deletes Event Hub", "topaz eventhubs namespace delete \\\n    --name \"sb-namespace\" \\\n    --resource-group \"rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
 public class DeleteEventHubNamespaceCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<DeleteEventHubNamespaceCommand.DeleteEventHubNamespaceCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteEventHubNamespaceCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteEventHubNamespaceCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.EventHub/namespaces/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -19,7 +19,7 @@ public class DeleteEventHubNamespaceCommand(HttpClient httpClient, DefaultsProvi
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteEventHubNamespaceCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteEventHubNamespaceCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

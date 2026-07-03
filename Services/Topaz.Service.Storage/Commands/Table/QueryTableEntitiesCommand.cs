@@ -14,7 +14,7 @@ namespace Topaz.Service.Storage.Commands;
 public sealed class QueryTableEntitiesCommand(HttpClient httpClient)
     : TopazHttpCommand<QueryTableEntitiesCommand.QueryTableEntitiesCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, QueryTableEntitiesCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, QueryTableEntitiesCommandSettings settings, CancellationToken cancellationToken)
     {
         var qs = new List<string>();
         if (!string.IsNullOrEmpty(settings.Filter)) qs.Add($"$filter={Uri.EscapeDataString(settings.Filter)}");
@@ -25,7 +25,7 @@ public sealed class QueryTableEntitiesCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, QueryTableEntitiesCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, QueryTableEntitiesCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.TableName))
             return ValidationResult.Error("Table name can't be null.");

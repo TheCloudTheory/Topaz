@@ -12,7 +12,7 @@ namespace Topaz.Service.ResourceManager.Commands;
 [CommandDefinition("deployment group create", "deployment", "Creates a new deployment on a resource group level")]
 public class CreateGroupDeploymentCommand(HttpClient httpClient) : TopazHttpCommand<CreateGroupDeploymentCommand.CreateGroupDeploymentCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateGroupDeploymentCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateGroupDeploymentCommandSettings settings, CancellationToken cancellationToken)
     {
         var templateJson = GetTemplate(settings.TemplateFile);
         var template = JsonSerializer.Deserialize<JsonElement>(templateJson);
@@ -63,7 +63,7 @@ public class CreateGroupDeploymentCommand(HttpClient httpClient) : TopazHttpComm
         return reader.ReadToEnd();
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateGroupDeploymentCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateGroupDeploymentCommandSettings settings)
     {
         if(string.IsNullOrEmpty(settings.SubscriptionId))
         {

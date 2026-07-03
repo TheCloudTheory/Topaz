@@ -13,7 +13,7 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 public class SignKeyCommand(HttpClient httpClient) : TopazHttpCommand<SignKeyCommand.SignKeyCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, SignKeyCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, SignKeyCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}/{settings.Version ?? ""}/sign?api-version=7.4";
         var (success, body) = await PostAsync(url, new { alg = settings.Algorithm, value = settings.Value });
@@ -22,7 +22,7 @@ public class SignKeyCommand(HttpClient httpClient) : TopazHttpCommand<SignKeyCom
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, SignKeyCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, SignKeyCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

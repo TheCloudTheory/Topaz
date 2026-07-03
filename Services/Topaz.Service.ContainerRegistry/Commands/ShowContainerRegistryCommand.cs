@@ -13,7 +13,7 @@ public sealed class ShowContainerRegistryCommand(HttpClient httpClient, Defaults
     : TopazHttpCommand<ShowContainerRegistryCommand.ShowContainerRegistryCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, ShowContainerRegistryCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ShowContainerRegistryCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ContainerRegistry/registries/{settings.Name}";
         var (success, body) = await GetAsync(url);
@@ -22,7 +22,7 @@ public sealed class ShowContainerRegistryCommand(HttpClient httpClient, Defaults
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ShowContainerRegistryCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ShowContainerRegistryCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Commands;
 public sealed class RegenerateStorageAccountKeyCommand(HttpClient httpClient)
     : TopazHttpCommand<RegenerateStorageAccountKeyCommand.RegenerateStorageAccountKeyCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, RegenerateStorageAccountKeyCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, RegenerateStorageAccountKeyCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.WriteLine($"Regenerating storage account key '{settings.KeyName}'...");
 
@@ -23,7 +23,7 @@ public sealed class RegenerateStorageAccountKeyCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, RegenerateStorageAccountKeyCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, RegenerateStorageAccountKeyCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.AccountName))
             return ValidationResult.Error("Storage account name can't be null.");

@@ -10,7 +10,7 @@ namespace Topaz.Chaos.Commands;
 [CommandExample("Get chaos status", "topaz chaos status")]
 internal sealed class GetChaosStatusCommand(HttpClient httpClient) : AsyncCommand
 {
-    public override async Task<int> ExecuteAsync(CommandContext context)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
         var url = $"https://topaz.local.dev:{Topaz.Shared.GlobalSettings.DefaultResourceManagerPort}/topaz/chaos/status";
         var response = await httpClient.GetAsync(url);

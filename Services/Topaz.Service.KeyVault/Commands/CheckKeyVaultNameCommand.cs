@@ -11,7 +11,7 @@ namespace Topaz.Service.KeyVault.Commands;
 [CommandExample("Check Key Vault name", "topaz keyvault check-name \\\n    --name \"sb-namespace\" \\\n    --resource-group \"rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
 public class CheckKeyVaultNameCommand(HttpClient httpClient) : TopazHttpCommand<CheckKeyVaultNameCommand.CheckKeyVaultNameCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CheckKeyVaultNameCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CheckKeyVaultNameCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/providers/Microsoft.KeyVault/checkNameAvailability";
         var (success, body) = await PostAsync(url, new { name = settings.Name, type = "Microsoft.KeyVault/vaults" });
@@ -20,7 +20,7 @@ public class CheckKeyVaultNameCommand(HttpClient httpClient) : TopazHttpCommand<
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CheckKeyVaultNameCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CheckKeyVaultNameCommandSettings settings)
     {
         if(string.IsNullOrEmpty(settings.SubscriptionId))
         {

@@ -12,7 +12,7 @@ namespace Topaz.Service.KeyVault.Commands.Certificates;
 public class DeleteCertificateCommand(HttpClient httpClient) : TopazHttpCommand<DeleteCertificateCommand.DeleteCertificateCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteCertificateCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteCertificateCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/certificates/{settings.Name}?api-version=7.4";
         var success = await DeleteAsync(url);
@@ -21,7 +21,7 @@ public class DeleteCertificateCommand(HttpClient httpClient) : TopazHttpCommand<
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteCertificateCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteCertificateCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

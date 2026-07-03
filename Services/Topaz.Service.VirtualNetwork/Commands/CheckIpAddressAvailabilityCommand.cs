@@ -14,7 +14,7 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 internal sealed class CheckIpAddressAvailabilityCommand(HttpClient httpClient)
     : TopazHttpCommand<CheckIpAddressAvailabilityCommand.CheckIpAddressAvailabilityCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CheckIpAddressAvailabilityCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CheckIpAddressAvailabilityCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/virtualNetworks/{settings.Name}/CheckIPAddressAvailability?ipAddress={settings.IpAddress}";
         var (success, body) = await GetAsync(url);
@@ -23,7 +23,7 @@ internal sealed class CheckIpAddressAvailabilityCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CheckIpAddressAvailabilityCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CheckIpAddressAvailabilityCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Virtual network name can't be null.");

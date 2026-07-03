@@ -14,7 +14,7 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 internal sealed class ListPublicIpAddressesCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListPublicIpAddressesCommand.ListPublicIpAddressesCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListPublicIpAddressesCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListPublicIpAddressesCommandSettings settings, CancellationToken cancellationToken)
     {
         string url;
         if (!string.IsNullOrWhiteSpace(settings.ResourceGroup))
@@ -28,7 +28,7 @@ internal sealed class ListPublicIpAddressesCommand(HttpClient httpClient, Defaul
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListPublicIpAddressesCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListPublicIpAddressesCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

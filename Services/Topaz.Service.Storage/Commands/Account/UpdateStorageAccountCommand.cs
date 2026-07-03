@@ -13,7 +13,7 @@ namespace Topaz.Service.Storage.Commands;
 public sealed class UpdateStorageAccountCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<UpdateStorageAccountCommand.UpdateStorageAccountCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, UpdateStorageAccountCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, UpdateStorageAccountCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.WriteLine("Updating storage account...");
 
@@ -29,7 +29,7 @@ public sealed class UpdateStorageAccountCommand(HttpClient httpClient, DefaultsP
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, UpdateStorageAccountCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, UpdateStorageAccountCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

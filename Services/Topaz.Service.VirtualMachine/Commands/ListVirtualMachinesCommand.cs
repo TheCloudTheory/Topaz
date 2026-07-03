@@ -13,7 +13,7 @@ namespace Topaz.Service.VirtualMachine.Commands;
 internal sealed class ListVirtualMachinesCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListVirtualMachinesCommand.ListVirtualMachinesCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListVirtualMachinesCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListVirtualMachinesCommandSettings settings, CancellationToken cancellationToken)
     {
         string url;
         if (!string.IsNullOrWhiteSpace(settings.ResourceGroup))
@@ -27,7 +27,7 @@ internal sealed class ListVirtualMachinesCommand(HttpClient httpClient, Defaults
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListVirtualMachinesCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListVirtualMachinesCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

@@ -12,7 +12,7 @@ namespace Topaz.Service.AppService.Commands;
 public sealed class GetAppServiceSiteCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<GetAppServiceSiteCommand.GetAppServiceSiteCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, GetAppServiceSiteCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, GetAppServiceSiteCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Web/sites/{settings.Name}";
         var (success, body) = await GetAsync(url);
@@ -21,7 +21,7 @@ public sealed class GetAppServiceSiteCommand(HttpClient httpClient, DefaultsProv
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, GetAppServiceSiteCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, GetAppServiceSiteCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

@@ -11,7 +11,7 @@ namespace Topaz.Service.KeyVault.Commands.Secrets;
 [CommandExample("Set a secret", "topaz keyvault secret set --vault-name \"kvlocal\" --name \"my-secret\" --value \"my-value\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
 public class SetSecretCommand(HttpClient httpClient) : TopazHttpCommand<SetSecretCommand.SetSecretCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, SetSecretCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, SetSecretCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/secrets/{settings.Name}?api-version=7.4";
         var (success, body) = await PutAsync(url, new { value = settings.Value, attributes = new { enabled = true } });
@@ -20,7 +20,7 @@ public class SetSecretCommand(HttpClient httpClient) : TopazHttpCommand<SetSecre
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, SetSecretCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, SetSecretCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

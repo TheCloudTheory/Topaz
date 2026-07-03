@@ -9,7 +9,7 @@ namespace Topaz.Host;
 [UsedImplicitly]
 internal sealed class StartHostCommand : AsyncCommand<StartHostCommand.Settings>
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var logger = new PrettyTopazLogger();
 

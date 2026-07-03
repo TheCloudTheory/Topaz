@@ -14,7 +14,7 @@ namespace Topaz.Service.VirtualNetwork.Commands.Subnets;
 internal sealed class ListSubnetsCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListSubnetsCommand.ListSubnetsCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListSubnetsCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListSubnetsCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/virtualNetworks/{settings.VnetName}/subnets";
         var (success, body) = await GetAsync(url);
@@ -23,7 +23,7 @@ internal sealed class ListSubnetsCommand(HttpClient httpClient, DefaultsProvider
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListSubnetsCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListSubnetsCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

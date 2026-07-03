@@ -13,7 +13,7 @@ namespace Topaz.Chaos.Commands.Rules;
 public sealed class CreateChaosRuleCommand(HttpClient httpClient)
     : TopazHttpCommand<CreateChaosRuleCommand.Settings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/topaz/chaos/rules/{settings.RuleId}";
         var request = new CreateChaosRuleRequest
@@ -29,7 +29,7 @@ public sealed class CreateChaosRuleCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, Settings settings)
+    protected override ValidationResult Validate(CommandContext context, Settings settings)
     {
         if (string.IsNullOrWhiteSpace(settings.RuleId))
             return ValidationResult.Error("Rule ID (--rule-id) is required.");

@@ -13,7 +13,7 @@ namespace Topaz.Service.Disk.Commands;
 internal sealed class CreateDiskCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateDiskCommand.CreateDiskCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateDiskCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateDiskCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Compute/disks/{settings.Name}";
         var (success, body) = await PutAsync(url, new
@@ -31,7 +31,7 @@ internal sealed class CreateDiskCommand(HttpClient httpClient, DefaultsProvider 
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateDiskCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateDiskCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

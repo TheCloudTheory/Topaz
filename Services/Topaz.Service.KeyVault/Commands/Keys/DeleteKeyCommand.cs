@@ -12,7 +12,7 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 public class DeleteKeyCommand(HttpClient httpClient) : TopazHttpCommand<DeleteKeyCommand.DeleteKeyCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteKeyCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteKeyCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}?api-version=7.4";
         var success = await DeleteAsync(url);
@@ -21,7 +21,7 @@ public class DeleteKeyCommand(HttpClient httpClient) : TopazHttpCommand<DeleteKe
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteKeyCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteKeyCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

@@ -11,7 +11,7 @@ namespace Topaz.Service.KeyVault.Commands;
 [CommandExample("Creates a new Key Vault", "topaz keyvault create --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"kvlocal\" \\\n    --location \"westeurope\" \\\n    --resource-group \"rg-local\"")]
 public class CreateKeyVaultCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateKeyVaultCommand.CreateKeyVaultCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateKeyVaultCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateKeyVaultCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.KeyVault/vaults/{settings.Name}";
 
@@ -38,7 +38,7 @@ public class CreateKeyVaultCommand(HttpClient httpClient, DefaultsProvider provi
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateKeyVaultCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateKeyVaultCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

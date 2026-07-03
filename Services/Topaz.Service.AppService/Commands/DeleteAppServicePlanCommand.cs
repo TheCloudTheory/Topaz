@@ -12,7 +12,7 @@ namespace Topaz.Service.AppService.Commands;
 public sealed class DeleteAppServicePlanCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteAppServicePlanCommand.DeleteAppServicePlanCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteAppServicePlanCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteAppServicePlanCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Web/serverfarms/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -20,7 +20,7 @@ public sealed class DeleteAppServicePlanCommand(HttpClient httpClient, DefaultsP
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteAppServicePlanCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteAppServicePlanCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

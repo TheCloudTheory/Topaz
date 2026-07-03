@@ -13,7 +13,7 @@ namespace Topaz.Service.VirtualMachine.Commands;
 internal sealed class DeleteVirtualMachineCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteVirtualMachineCommand.DeleteVirtualMachineCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteVirtualMachineCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteVirtualMachineCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Compute/virtualMachines/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -21,7 +21,7 @@ internal sealed class DeleteVirtualMachineCommand(HttpClient httpClient, Default
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteVirtualMachineCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteVirtualMachineCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

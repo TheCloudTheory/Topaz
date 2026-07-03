@@ -13,7 +13,7 @@ namespace Topaz.Service.KeyVault.Commands.Secrets;
 [CommandExample("Backup a secret", "topaz keyvault secret backup --vault-name \"kvlocal\" --name \"my-secret\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
 public class BackupSecretCommand(HttpClient httpClient) : TopazHttpCommand<BackupSecretCommand.BackupSecretCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, BackupSecretCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, BackupSecretCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/secrets/{settings.Name}/backup?api-version=7.4";
         var (success, body) = await PostAsync(url, new { });
@@ -23,7 +23,7 @@ public class BackupSecretCommand(HttpClient httpClient) : TopazHttpCommand<Backu
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, BackupSecretCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, BackupSecretCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

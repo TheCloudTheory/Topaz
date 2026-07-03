@@ -14,7 +14,7 @@ namespace Topaz.Service.VirtualNetwork.Commands.Subnets;
 internal sealed class DeleteSubnetCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteSubnetCommand.DeleteSubnetCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteSubnetCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteSubnetCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/virtualNetworks/{settings.VnetName}/subnets/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -22,7 +22,7 @@ internal sealed class DeleteSubnetCommand(HttpClient httpClient, DefaultsProvide
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteSubnetCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteSubnetCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

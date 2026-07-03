@@ -13,7 +13,7 @@ namespace Topaz.Service.LoadBalancer.Commands;
 internal sealed class CreateLoadBalancerCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateLoadBalancerCommand.CreateLoadBalancerCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateLoadBalancerCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateLoadBalancerCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/loadBalancers/{settings.Name}";
         var (success, body) = await PutAsync(url, new
@@ -27,7 +27,7 @@ internal sealed class CreateLoadBalancerCommand(HttpClient httpClient, DefaultsP
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateLoadBalancerCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateLoadBalancerCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

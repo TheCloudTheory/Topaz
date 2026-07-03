@@ -13,7 +13,7 @@ namespace Topaz.Service.AppConfiguration.Commands;
 internal sealed class ListAppConfigurationStoresCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListAppConfigurationStoresCommand.Settings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         string url;
         if (!string.IsNullOrWhiteSpace(settings.ResourceGroup))
@@ -27,7 +27,7 @@ internal sealed class ListAppConfigurationStoresCommand(HttpClient httpClient, D
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, Settings settings)
+    protected override ValidationResult Validate(CommandContext context, Settings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

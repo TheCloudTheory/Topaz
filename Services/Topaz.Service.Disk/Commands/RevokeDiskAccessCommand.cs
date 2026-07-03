@@ -13,7 +13,7 @@ namespace Topaz.Service.Disk.Commands;
 internal sealed class RevokeDiskAccessCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<RevokeDiskAccessCommand.RevokeDiskAccessCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, RevokeDiskAccessCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, RevokeDiskAccessCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Compute/disks/{settings.Name}/endGetAccess";
         var (success, _) = await PostAsync(url, new { });
@@ -22,7 +22,7 @@ internal sealed class RevokeDiskAccessCommand(HttpClient httpClient, DefaultsPro
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, RevokeDiskAccessCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, RevokeDiskAccessCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

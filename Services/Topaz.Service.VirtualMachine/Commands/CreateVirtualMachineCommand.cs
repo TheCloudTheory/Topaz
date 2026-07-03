@@ -13,7 +13,7 @@ namespace Topaz.Service.VirtualMachine.Commands;
 internal sealed class CreateVirtualMachineCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateVirtualMachineCommand.CreateVirtualMachineCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateVirtualMachineCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateVirtualMachineCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Compute/virtualMachines/{settings.Name}";
         var (success, body) = await PutAsync(url, new
@@ -29,7 +29,7 @@ internal sealed class CreateVirtualMachineCommand(HttpClient httpClient, Default
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateVirtualMachineCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateVirtualMachineCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

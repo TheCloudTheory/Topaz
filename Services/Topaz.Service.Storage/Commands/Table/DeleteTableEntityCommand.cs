@@ -13,7 +13,7 @@ namespace Topaz.Service.Storage.Commands;
 public sealed class DeleteTableEntityCommand(HttpClient httpClient)
     : TopazHttpCommand<DeleteTableEntityCommand.DeleteTableEntityCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteTableEntityCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteTableEntityCommandSettings settings, CancellationToken cancellationToken)
     {
         var pk = Uri.EscapeDataString(settings.PartitionKey!);
         var rk = Uri.EscapeDataString(settings.RowKey!);
@@ -30,7 +30,7 @@ public sealed class DeleteTableEntityCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteTableEntityCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteTableEntityCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.TableName))
             return ValidationResult.Error("Table name can't be null.");

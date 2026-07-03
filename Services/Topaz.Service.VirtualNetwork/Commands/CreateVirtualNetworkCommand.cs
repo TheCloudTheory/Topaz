@@ -14,7 +14,7 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 internal sealed class CreateVirtualNetworkCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateVirtualNetworkCommand.CreateVirtualNetworkCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateVirtualNetworkCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateVirtualNetworkCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/virtualNetworks/{settings.Name}";
         var (success, body) = await PutAsync(url, new
@@ -33,7 +33,7 @@ internal sealed class CreateVirtualNetworkCommand(HttpClient httpClient, Default
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateVirtualNetworkCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateVirtualNetworkCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

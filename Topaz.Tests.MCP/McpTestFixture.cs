@@ -1,7 +1,9 @@
+using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
+using Azure.ResourceManager.Resources;
 using NUnit.Framework;
-using Topaz.CLI;
+using Topaz.Identity;
 using Topaz.ResourceManager;
 using Topaz.Service.Shared;
 using Topaz.Shared;
@@ -39,14 +41,16 @@ public class McpTestFixture
 
         await Task.Delay(1000);
 
-        await Program.RunAsync(["subscription", "create",
-            "--id", SubscriptionId.ToString(),
-            "--name", "mcp-test-subscription"]);
+        var credentials = new AzureLocalCredential(ObjectId);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(SubscriptionId, "mcp-test-subscription");
 
-        await Program.RunAsync(["group", "create",
-            "--name", ResourceGroupName,
-            "--location", "eastus",
-            "--subscription-id", SubscriptionId.ToString()]);
+        var armClient = new ArmClient(credentials, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        await subscription.GetResourceGroups().CreateOrUpdateAsync(
+            WaitUntil.Completed,
+            ResourceGroupName,
+            new ResourceGroupData(Location));
     }
 
     [OneTimeTearDown]

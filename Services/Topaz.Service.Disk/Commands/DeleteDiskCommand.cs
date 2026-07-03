@@ -13,7 +13,7 @@ namespace Topaz.Service.Disk.Commands;
 internal sealed class DeleteDiskCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteDiskCommand.DeleteDiskCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteDiskCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteDiskCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Compute/disks/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -21,7 +21,7 @@ internal sealed class DeleteDiskCommand(HttpClient httpClient, DefaultsProvider 
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteDiskCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteDiskCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

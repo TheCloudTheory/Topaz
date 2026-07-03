@@ -11,7 +11,7 @@ namespace Topaz.Service.ResourceGroup.Commands;
 [CommandExample("Create a resource group", "topaz group create \\\n    --name \"my-rg\" \\\n    --location \"eastus\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
 public sealed class CreateResourceGroupCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateResourceGroupCommand.CreateResourceGroupCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateResourceGroupCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateResourceGroupCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.Name}";
         var (success, body) = await PutAsync(url, new { location = settings.Location });
@@ -20,7 +20,7 @@ public sealed class CreateResourceGroupCommand(HttpClient httpClient, DefaultsPr
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateResourceGroupCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateResourceGroupCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

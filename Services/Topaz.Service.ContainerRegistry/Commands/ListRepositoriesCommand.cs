@@ -14,7 +14,7 @@ public sealed class ListRepositoriesCommand(HttpClient httpClient)
     : TopazHttpCommand<ListRepositoriesCommand.ListRepositoriesCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, ListRepositoriesCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListRepositoriesCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"https://{settings.Registry}.azurecr.topaz.local.dev:{GlobalSettings.ContainerRegistryPort}/acr/v1/_catalog";
         var (success, body) = await GetAsync(url);
@@ -23,7 +23,7 @@ public sealed class ListRepositoriesCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListRepositoriesCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListRepositoriesCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Registry))
             return ValidationResult.Error("Registry name can't be null.");

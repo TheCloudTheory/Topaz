@@ -13,7 +13,7 @@ namespace Topaz.Service.Storage.Commands;
 public sealed class InsertTableEntityCommand(HttpClient httpClient)
     : TopazHttpCommand<InsertTableEntityCommand.InsertTableEntityCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, InsertTableEntityCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, InsertTableEntityCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{TableDataPlaneUrl(settings.AccountName!)}/{settings.TableName}";
         using var content = new StringContent(settings.EntityJson!, System.Text.Encoding.UTF8, "application/json");
@@ -27,7 +27,7 @@ public sealed class InsertTableEntityCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, InsertTableEntityCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, InsertTableEntityCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.TableName))
             return ValidationResult.Error("Table name can't be null.");

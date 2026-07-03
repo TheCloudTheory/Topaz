@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Commands;
 public sealed class CheckStorageAccountNameAvailabilityCommand(HttpClient httpClient)
     : TopazHttpCommand<CheckStorageAccountNameAvailabilityCommand.CheckStorageAccountNameAvailabilityCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CheckStorageAccountNameAvailabilityCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CheckStorageAccountNameAvailabilityCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.WriteLine("Checking storage account name availability...");
 
@@ -23,7 +23,7 @@ public sealed class CheckStorageAccountNameAvailabilityCommand(HttpClient httpCl
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CheckStorageAccountNameAvailabilityCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CheckStorageAccountNameAvailabilityCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Storage account name can't be null.");

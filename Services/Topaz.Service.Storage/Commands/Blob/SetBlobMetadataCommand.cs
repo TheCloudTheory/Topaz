@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Commands.Blob;
 [CommandExample("Set blob metadata", "topaz storage blob metadata update \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\" \\\n    --metadata \"env=prod\" \"owner=team\"")]
 public sealed class SetBlobMetadataCommand(HttpClient httpClient) : TopazHttpCommand<SetBlobMetadataCommand.SetBlobMetadataCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, SetBlobMetadataCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, SetBlobMetadataCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{settings.BlobName}?comp=metadata";
         using var request = new HttpRequestMessage(HttpMethod.Put, url);
@@ -32,7 +32,7 @@ public sealed class SetBlobMetadataCommand(HttpClient httpClient) : TopazHttpCom
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, SetBlobMetadataCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, SetBlobMetadataCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.AccountName))
             return ValidationResult.Error("Storage account name can't be null.");

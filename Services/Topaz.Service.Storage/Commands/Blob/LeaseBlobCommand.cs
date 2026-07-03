@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Commands.Blob;
 [CommandExample("Acquire a lease", "topaz storage blob lease \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\" \\\n    --action \"acquire\" \\\n    --lease-duration 60")]
 public sealed class LeaseBlobCommand(HttpClient httpClient) : TopazHttpCommand<LeaseBlobCommand.LeaseBlobCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, LeaseBlobCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, LeaseBlobCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{settings.BlobName}?comp=lease";
         using var request = new HttpRequestMessage(HttpMethod.Put, url);
@@ -35,7 +35,7 @@ public sealed class LeaseBlobCommand(HttpClient httpClient) : TopazHttpCommand<L
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, LeaseBlobCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, LeaseBlobCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.AccountName))
             return ValidationResult.Error("Storage account name can't be null.");

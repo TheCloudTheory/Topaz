@@ -14,7 +14,7 @@ public sealed class UpdateContainerRegistryCommand(HttpClient httpClient, Defaul
     : TopazHttpCommand<UpdateContainerRegistryCommand.UpdateContainerRegistryCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, UpdateContainerRegistryCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, UpdateContainerRegistryCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ContainerRegistry/registries/{settings.Name}";
         var (success, body) = await PatchAsync(url, new
@@ -28,7 +28,7 @@ public sealed class UpdateContainerRegistryCommand(HttpClient httpClient, Defaul
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, UpdateContainerRegistryCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, UpdateContainerRegistryCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

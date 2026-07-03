@@ -12,7 +12,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 public sealed class ListDatabaseAccountsByResourceGroupCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListDatabaseAccountsByResourceGroupCommand.ListDatabaseAccountsByResourceGroupCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListDatabaseAccountsByResourceGroupCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListDatabaseAccountsByResourceGroupCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.DocumentDB/databaseAccounts";
         var (success, body) = await GetAsync(url);
@@ -21,7 +21,7 @@ public sealed class ListDatabaseAccountsByResourceGroupCommand(HttpClient httpCl
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListDatabaseAccountsByResourceGroupCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListDatabaseAccountsByResourceGroupCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

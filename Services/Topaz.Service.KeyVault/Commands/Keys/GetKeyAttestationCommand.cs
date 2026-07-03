@@ -15,7 +15,7 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 public class GetKeyAttestationCommand(HttpClient httpClient) : TopazHttpCommand<GetKeyAttestationCommand.GetKeyAttestationCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, GetKeyAttestationCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, GetKeyAttestationCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}/{settings.Version ?? ""}/attestation?api-version=7.4";
         var (success, body) = await GetAsync(url);
@@ -24,7 +24,7 @@ public class GetKeyAttestationCommand(HttpClient httpClient) : TopazHttpCommand<
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, GetKeyAttestationCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, GetKeyAttestationCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

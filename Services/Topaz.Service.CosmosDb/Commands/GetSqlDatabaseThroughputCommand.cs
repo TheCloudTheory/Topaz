@@ -12,7 +12,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 public sealed class GetSqlDatabaseThroughputCommand(HttpClient httpClient)
     : TopazHttpCommand<GetSqlDatabaseThroughputCommand.GetSqlDatabaseThroughputCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, GetSqlDatabaseThroughputCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, GetSqlDatabaseThroughputCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.DocumentDB/databaseAccounts/{settings.AccountName}/sqlDatabases/{settings.DatabaseName}/throughputSettings/default";
         var (success, body) = await GetAsync(url);
@@ -21,7 +21,7 @@ public sealed class GetSqlDatabaseThroughputCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, GetSqlDatabaseThroughputCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, GetSqlDatabaseThroughputCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.AccountName))
             return ValidationResult.Error("Cosmos DB account name can't be null.");

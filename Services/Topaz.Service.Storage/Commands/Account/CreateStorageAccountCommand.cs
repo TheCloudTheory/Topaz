@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Commands;
 [CommandExample("Create a storage account", "topaz storage account create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"salocal\" \\\n    --location \"westeurope\"")]
 public sealed class CreateStorageAccountCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<CreateStorageAccountCommand.CreateStorageAccountCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateStorageAccountCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateStorageAccountCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.WriteLine("Creating storage account...");
 
@@ -22,7 +22,7 @@ public sealed class CreateStorageAccountCommand(HttpClient httpClient, DefaultsP
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateStorageAccountCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateStorageAccountCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

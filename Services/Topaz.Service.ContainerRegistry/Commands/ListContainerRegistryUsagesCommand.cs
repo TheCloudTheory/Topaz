@@ -13,7 +13,7 @@ public sealed class ListContainerRegistryUsagesCommand(HttpClient httpClient)
     : TopazHttpCommand<ListContainerRegistryUsagesCommand.ListUsagesCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, ListUsagesCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListUsagesCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ContainerRegistry/registries/{settings.Name}/usages";
         var (success, body) = await GetAsync(url);
@@ -22,7 +22,7 @@ public sealed class ListContainerRegistryUsagesCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListUsagesCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListUsagesCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Registry name can't be null.");

@@ -13,7 +13,7 @@ namespace Topaz.Service.ResourceManager.Commands;
 public sealed class ExportGroupTemplateCommand(HttpClient httpClient)
     : TopazHttpCommand<ExportGroupTemplateCommand.ExportGroupTemplateCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ExportGroupTemplateCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ExportGroupTemplateCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.Name}/exportTemplate";
         var (success, body) = await PostAsync(url, new { resources = new[] { "*" } });
@@ -22,7 +22,7 @@ public sealed class ExportGroupTemplateCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ExportGroupTemplateCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ExportGroupTemplateCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.SubscriptionId))
             return ValidationResult.Error("Subscription ID can't be null.");

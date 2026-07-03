@@ -12,7 +12,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 public sealed class ListConnectionStringsDatabaseAccountCommand(HttpClient httpClient)
     : TopazHttpCommand<ListConnectionStringsDatabaseAccountCommand.ListConnectionStringsDatabaseAccountCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListConnectionStringsDatabaseAccountCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListConnectionStringsDatabaseAccountCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.DocumentDB/databaseAccounts/{settings.Name}/listConnectionStrings";
         var (success, body) = await PostAsync(url, new { });
@@ -21,7 +21,7 @@ public sealed class ListConnectionStringsDatabaseAccountCommand(HttpClient httpC
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListConnectionStringsDatabaseAccountCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListConnectionStringsDatabaseAccountCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Cosmos DB account name can't be null.");

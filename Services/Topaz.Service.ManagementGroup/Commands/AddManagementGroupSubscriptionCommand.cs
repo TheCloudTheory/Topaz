@@ -14,7 +14,7 @@ namespace Topaz.Service.ManagementGroup.Commands;
 public sealed class AddManagementGroupSubscriptionCommand(HttpClient httpClient)
     : TopazHttpCommand<AddManagementGroupSubscriptionCommand.Settings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.GroupId}/subscriptions/{settings.SubscriptionId}";
         var (success, body) = await PutAsync(url, new { });
@@ -23,7 +23,7 @@ public sealed class AddManagementGroupSubscriptionCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, Settings settings)
+    protected override ValidationResult Validate(CommandContext context, Settings settings)
     {
         if (string.IsNullOrWhiteSpace(settings.GroupId))
             return ValidationResult.Error("Management group ID (--group-id) is required.");

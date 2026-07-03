@@ -13,7 +13,7 @@ public sealed class ListContainerRegistryCredentialsCommand(HttpClient httpClien
     : TopazHttpCommand<ListContainerRegistryCredentialsCommand.ListCredentialsCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, ListCredentialsCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListCredentialsCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ContainerRegistry/registries/{settings.Name}/listCredentials";
         var (success, body) = await PostAsync(url, new { });
@@ -22,7 +22,7 @@ public sealed class ListContainerRegistryCredentialsCommand(HttpClient httpClien
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListCredentialsCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListCredentialsCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Registry name can't be null.");

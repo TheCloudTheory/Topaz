@@ -11,7 +11,7 @@ namespace Topaz.Service.ResourceGroup.Commands;
 [CommandExample("Update tags on a resource group", "topaz group update \\\n    --name \"my-rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\" \\\n    --tags '{\"env\":\"prod\"}'")]
 public sealed class UpdateResourceGroupCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<UpdateResourceGroupCommand.UpdateResourceGroupCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, UpdateResourceGroupCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, UpdateResourceGroupCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.Name}";
         var (success, body) = await PatchAsync(url, new { tags = settings.Tags });
@@ -20,7 +20,7 @@ public sealed class UpdateResourceGroupCommand(HttpClient httpClient, DefaultsPr
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, UpdateResourceGroupCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, UpdateResourceGroupCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

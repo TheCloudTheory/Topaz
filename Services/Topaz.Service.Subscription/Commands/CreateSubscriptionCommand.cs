@@ -13,7 +13,7 @@ namespace Topaz.Service.Subscription.Commands;
 public sealed class CreateSubscriptionCommand(HttpClient httpClient)
     : TopazHttpCommand<CreateSubscriptionCommand.CreateSubscriptionCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateSubscriptionCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateSubscriptionCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.Id}";
         var (success, body) = await PostAsync(url, new { subscriptionId = settings.Id, subscriptionName = settings.Name, tags = settings.Tags });
@@ -22,7 +22,7 @@ public sealed class CreateSubscriptionCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateSubscriptionCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateSubscriptionCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Id))
         {

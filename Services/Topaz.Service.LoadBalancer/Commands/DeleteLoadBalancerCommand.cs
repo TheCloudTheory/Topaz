@@ -13,7 +13,7 @@ namespace Topaz.Service.LoadBalancer.Commands;
 internal sealed class DeleteLoadBalancerCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteLoadBalancerCommand.DeleteLoadBalancerCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteLoadBalancerCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteLoadBalancerCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/loadBalancers/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -21,7 +21,7 @@ internal sealed class DeleteLoadBalancerCommand(HttpClient httpClient, DefaultsP
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteLoadBalancerCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteLoadBalancerCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

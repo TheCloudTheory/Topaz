@@ -11,7 +11,7 @@ namespace Topaz.Service.ManagedIdentity.Commands;
 [CommandExample("Shows a managed identity", "topaz identity show --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"myIdentity\" \\\n    --resource-group \"rg-local\"")]
 public sealed class ShowManagedIdentityCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<ShowManagedIdentityCommand.ShowManagedIdentityCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ShowManagedIdentityCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ShowManagedIdentityCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{settings.Name}";
         var (success, body) = await GetAsync(url);
@@ -20,7 +20,7 @@ public sealed class ShowManagedIdentityCommand(HttpClient httpClient, DefaultsPr
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ShowManagedIdentityCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ShowManagedIdentityCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

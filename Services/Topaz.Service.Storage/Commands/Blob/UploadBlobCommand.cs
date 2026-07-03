@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Commands.Blob;
 [CommandExample("Upload a file", "topaz storage blob upload \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --file \"/path/to/file.txt\"")]
 public sealed class UploadBlobCommand(HttpClient httpClient) : TopazHttpCommand<UploadBlobCommand.UploadBlobCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, UploadBlobCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, UploadBlobCommandSettings settings, CancellationToken cancellationToken)
     {
         var blobName = settings.BlobName ?? Path.GetFileName(settings.FilePath)!;
         var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{blobName}";
@@ -28,7 +28,7 @@ public sealed class UploadBlobCommand(HttpClient httpClient) : TopazHttpCommand<
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, UploadBlobCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, UploadBlobCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.AccountName))
             return ValidationResult.Error("Storage account name can't be null.");

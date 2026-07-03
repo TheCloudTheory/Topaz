@@ -12,7 +12,7 @@ namespace Topaz.Service.AppService.Commands;
 public sealed class CheckAppServiceSiteNameCommand(HttpClient httpClient)
     : TopazHttpCommand<CheckAppServiceSiteNameCommand.CheckAppServiceSiteNameCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CheckAppServiceSiteNameCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CheckAppServiceSiteNameCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/providers/Microsoft.Web/checknameavailability";
         var (success, body) = await PostAsync(url, new { name = settings.Name, type = "Microsoft.Web/sites" });
@@ -21,7 +21,7 @@ public sealed class CheckAppServiceSiteNameCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CheckAppServiceSiteNameCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CheckAppServiceSiteNameCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.SubscriptionId))
             return ValidationResult.Error("Subscription ID can't be null.");

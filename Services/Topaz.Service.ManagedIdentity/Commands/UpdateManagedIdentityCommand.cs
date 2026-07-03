@@ -11,7 +11,7 @@ namespace Topaz.Service.ManagedIdentity.Commands;
 [CommandExample("Updates a managed identity with tags", "topaz identity update --subscription-id 36a28ebb-9370-46d8-981c-84efe02048ae \\\n    --name \"myIdentity\" \\\n    --resource-group \"rg-local\" \\\n    --tags environment=production team=devops")]
 public sealed class UpdateManagedIdentityCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<UpdateManagedIdentityCommand.UpdateManagedIdentityCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, UpdateManagedIdentityCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, UpdateManagedIdentityCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{settings.Name}";
         var (success, body) = await PatchAsync(url, new
@@ -23,7 +23,7 @@ public sealed class UpdateManagedIdentityCommand(HttpClient httpClient, Defaults
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, UpdateManagedIdentityCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, UpdateManagedIdentityCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

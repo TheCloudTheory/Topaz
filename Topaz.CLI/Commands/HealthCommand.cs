@@ -12,7 +12,7 @@ namespace Topaz.CLI.Commands;
 [CommandExample("Check host health", "topaz health")]
 public sealed class HealthCommand(HttpClient httpClient) : AsyncCommand
 {
-    public override async Task<int> ExecuteAsync(CommandContext context)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
         try
         {

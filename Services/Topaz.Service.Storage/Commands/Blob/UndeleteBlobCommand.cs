@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Commands.Blob;
 [CommandExample("Undelete a blob", "topaz storage blob undelete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\"")]
 public sealed class UndeleteBlobCommand(HttpClient httpClient) : TopazHttpCommand<UndeleteBlobCommand.UndeleteBlobCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, UndeleteBlobCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, UndeleteBlobCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{settings.BlobName}?comp=undelete";
         using var request = new HttpRequestMessage(HttpMethod.Put, url);
@@ -26,7 +26,7 @@ public sealed class UndeleteBlobCommand(HttpClient httpClient) : TopazHttpComman
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, UndeleteBlobCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, UndeleteBlobCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.AccountName))
             return ValidationResult.Error("Storage account name can't be null.");

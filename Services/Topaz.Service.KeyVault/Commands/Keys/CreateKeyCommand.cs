@@ -13,7 +13,7 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 public class CreateKeyCommand(HttpClient httpClient) : TopazHttpCommand<CreateKeyCommand.CreateKeyCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateKeyCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateKeyCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}/create?api-version=7.4";
         var (success, body) = await PostAsync(url, new { kty = settings.KeyType, keySize = settings.KeySize, keyOps = (string[]?)null, crv = settings.Curve });
@@ -22,7 +22,7 @@ public class CreateKeyCommand(HttpClient httpClient) : TopazHttpCommand<CreateKe
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateKeyCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateKeyCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

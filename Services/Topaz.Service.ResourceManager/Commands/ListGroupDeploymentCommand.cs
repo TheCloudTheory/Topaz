@@ -10,7 +10,7 @@ namespace Topaz.Service.ResourceManager.Commands;
 [CommandDefinition("deployment group list", "deployment", "Returns a list of all deployments for the given resource group")]
 public class ListGroupDeploymentCommand(HttpClient httpClient) : TopazHttpCommand<ListGroupDeploymentCommand.ListGroupDeploymentCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListGroupDeploymentCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListGroupDeploymentCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Resources/deployments";
         var (success, body) = await GetAsync(url);
@@ -19,7 +19,7 @@ public class ListGroupDeploymentCommand(HttpClient httpClient) : TopazHttpComman
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListGroupDeploymentCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListGroupDeploymentCommandSettings settings)
     {
         if(string.IsNullOrEmpty(settings.SubscriptionId))
         {

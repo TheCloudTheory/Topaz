@@ -14,7 +14,7 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 public class ImportKeyCommand(HttpClient httpClient) : TopazHttpCommand<ImportKeyCommand.ImportKeyCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, ImportKeyCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ImportKeyCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}?api-version=7.4";
         var importRequest = BuildImportRequest(settings.PemFile!);
@@ -24,7 +24,7 @@ public class ImportKeyCommand(HttpClient httpClient) : TopazHttpCommand<ImportKe
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ImportKeyCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ImportKeyCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

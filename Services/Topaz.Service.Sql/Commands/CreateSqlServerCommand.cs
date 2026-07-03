@@ -13,7 +13,7 @@ namespace Topaz.Service.Sql.Commands;
 internal sealed class CreateSqlServerCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateSqlServerCommand.CreateSqlServerCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateSqlServerCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateSqlServerCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Sql/servers/{settings.Name}";
         var (success, body) = await PutAsync(url, new
@@ -31,7 +31,7 @@ internal sealed class CreateSqlServerCommand(HttpClient httpClient, DefaultsProv
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateSqlServerCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateSqlServerCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Commands;
 [CommandExample("Create a table", "topaz storage table create \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --name \"mytable\"")]
 public sealed class CreateTableCommand(HttpClient httpClient) : TopazHttpCommand<CreateTableCommand.CreateTableCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateTableCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateTableCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/tableServices/default/tables/{settings.Name}";
         var (success, body) = await PutAsync(url, new { });
@@ -21,7 +21,7 @@ public sealed class CreateTableCommand(HttpClient httpClient) : TopazHttpCommand
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateTableCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateTableCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
         {

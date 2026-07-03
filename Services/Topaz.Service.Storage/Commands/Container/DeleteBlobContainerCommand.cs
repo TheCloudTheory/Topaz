@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Commands;
 public sealed class DeleteBlobContainerCommand(HttpClient httpClient)
     : TopazHttpCommand<DeleteBlobContainerCommand.DeleteBlobContainerCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteBlobContainerCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteBlobContainerCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.WriteLine("Deleting blob container...");
 
@@ -23,7 +23,7 @@ public sealed class DeleteBlobContainerCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteBlobContainerCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteBlobContainerCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Container name can't be null.");

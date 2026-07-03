@@ -12,7 +12,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 public sealed class DeleteDatabaseAccountCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteDatabaseAccountCommand.DeleteDatabaseAccountCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteDatabaseAccountCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteDatabaseAccountCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.DocumentDB/databaseAccounts/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -20,7 +20,7 @@ public sealed class DeleteDatabaseAccountCommand(HttpClient httpClient, Defaults
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteDatabaseAccountCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteDatabaseAccountCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

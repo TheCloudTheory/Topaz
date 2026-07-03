@@ -11,7 +11,7 @@ namespace Topaz.Service.ResourceGroup.Commands;
 [CommandExample("Delete a resource group", "topaz group delete \\\n    --name \"my-rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
 public sealed class DeleteResourceGroupCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<DeleteResourceGroupCommand.DeleteResourceGroupCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteResourceGroupCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteResourceGroupCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -19,7 +19,7 @@ public sealed class DeleteResourceGroupCommand(HttpClient httpClient, DefaultsPr
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteResourceGroupCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteResourceGroupCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

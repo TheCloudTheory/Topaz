@@ -11,7 +11,7 @@ namespace Topaz.CLI.Commands;
 [CommandExample("Show current CLI defaults", "topaz configure show")]
 internal sealed class ShowDefaultsCommand(DefaultsProvider provider) : AsyncCommand
 {
-    public override Task<int> ExecuteAsync(CommandContext context)
+    protected override Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
         var defaults = provider.LoadDefaults();
         

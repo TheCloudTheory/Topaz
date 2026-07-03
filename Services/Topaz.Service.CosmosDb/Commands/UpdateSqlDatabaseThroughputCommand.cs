@@ -12,7 +12,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 public sealed class UpdateSqlDatabaseThroughputCommand(HttpClient httpClient)
     : TopazHttpCommand<UpdateSqlDatabaseThroughputCommand.UpdateSqlDatabaseThroughputCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, UpdateSqlDatabaseThroughputCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, UpdateSqlDatabaseThroughputCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.DocumentDB/databaseAccounts/{settings.AccountName}/sqlDatabases/{settings.DatabaseName}/throughputSettings/default";
         var body = new
@@ -28,7 +28,7 @@ public sealed class UpdateSqlDatabaseThroughputCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, UpdateSqlDatabaseThroughputCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, UpdateSqlDatabaseThroughputCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.AccountName))
             return ValidationResult.Error("Cosmos DB account name can't be null.");

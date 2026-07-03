@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Commands.Blob;
 [CommandExample("Copy blob within same account", "topaz storage blob copy \\\n    --source-subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --source-resource-group \"rg-local\" \\\n    --source-account-name \"salocal\" \\\n    --source-container \"src\" \\\n    --source-blob \"file.txt\" \\\n    --dest-subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --dest-resource-group \"rg-local\" \\\n    --dest-account-name \"salocal\" \\\n    --dest-container \"dst\" \\\n    --dest-blob \"file-copy.txt\"")]
 public sealed class CopyBlobCommand(HttpClient httpClient) : TopazHttpCommand<CopyBlobCommand.CopyBlobCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CopyBlobCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CopyBlobCommandSettings settings, CancellationToken cancellationToken)
     {
         var destUrl = $"{BlobDataPlaneUrl(settings.DestinationAccountName!)}/{settings.DestinationContainerName}/{settings.DestinationBlobName}";
         var sourceUrl = $"{BlobDataPlaneUrl(settings.SourceAccountName!)}/{settings.SourceContainerName}/{settings.SourceBlobName}";
@@ -28,7 +28,7 @@ public sealed class CopyBlobCommand(HttpClient httpClient) : TopazHttpCommand<Co
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CopyBlobCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CopyBlobCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.SourceAccountName))
             return ValidationResult.Error("Source storage account name can't be null.");

@@ -13,7 +13,7 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 public class VerifyKeyCommand(HttpClient httpClient) : TopazHttpCommand<VerifyKeyCommand.VerifyKeyCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, VerifyKeyCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, VerifyKeyCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}/{settings.Version ?? ""}/verify?api-version=7.4";
         var (success, body) = await PostAsync(url, new { alg = settings.Algorithm, value = settings.Value, signature = settings.Signature });
@@ -22,7 +22,7 @@ public class VerifyKeyCommand(HttpClient httpClient) : TopazHttpCommand<VerifyKe
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, VerifyKeyCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, VerifyKeyCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

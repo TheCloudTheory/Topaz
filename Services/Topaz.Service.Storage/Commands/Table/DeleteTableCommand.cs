@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Commands;
 [CommandExample("Delete a table", "topaz storage table delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --name \"mytable\"")]
 public sealed class DeleteTableCommand(HttpClient httpClient) : TopazHttpCommand<DeleteTableCommand.DeleteTableCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteTableCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteTableCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/tableServices/default/tables/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -20,7 +20,7 @@ public sealed class DeleteTableCommand(HttpClient httpClient) : TopazHttpCommand
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteTableCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteTableCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
         {

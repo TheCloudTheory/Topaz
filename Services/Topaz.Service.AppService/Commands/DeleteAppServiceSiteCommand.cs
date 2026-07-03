@@ -12,7 +12,7 @@ namespace Topaz.Service.AppService.Commands;
 public sealed class DeleteAppServiceSiteCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteAppServiceSiteCommand.DeleteAppServiceSiteCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteAppServiceSiteCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteAppServiceSiteCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Web/sites/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -20,7 +20,7 @@ public sealed class DeleteAppServiceSiteCommand(HttpClient httpClient, DefaultsP
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteAppServiceSiteCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteAppServiceSiteCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

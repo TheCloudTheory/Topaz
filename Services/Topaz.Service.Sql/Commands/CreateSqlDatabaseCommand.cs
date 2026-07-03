@@ -13,7 +13,7 @@ namespace Topaz.Service.Sql.Commands;
 internal sealed class CreateSqlDatabaseCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateSqlDatabaseCommand.CreateSqlDatabaseCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateSqlDatabaseCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateSqlDatabaseCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}" +
                   $"/providers/Microsoft.Sql/servers/{settings.Server}/databases/{settings.Name}";
@@ -27,7 +27,7 @@ internal sealed class CreateSqlDatabaseCommand(HttpClient httpClient, DefaultsPr
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateSqlDatabaseCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateSqlDatabaseCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

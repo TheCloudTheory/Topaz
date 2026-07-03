@@ -12,7 +12,7 @@ namespace Topaz.Service.KeyVault.Commands.Certificates;
 public class ImportCertificateCommand(HttpClient httpClient) : TopazHttpCommand<ImportCertificateCommand.ImportCertificateCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, ImportCertificateCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ImportCertificateCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/certificates/{settings.Name}/import?api-version=7.4";
         var (success, body) = await PostAsync(url, new { value = settings.Value, pwd = settings.Password });
@@ -21,7 +21,7 @@ public class ImportCertificateCommand(HttpClient httpClient) : TopazHttpCommand<
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ImportCertificateCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ImportCertificateCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

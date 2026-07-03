@@ -12,7 +12,7 @@ namespace Topaz.Service.Subscription.Commands;
 [CommandExample("List all subscriptions", "topaz subscription list")]
 public sealed class ListSubscriptionsCommand(HttpClient httpClient) : TopazHttpCommand<ListSubscriptionsCommand.ListSubscriptionsCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListSubscriptionsCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListSubscriptionsCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions";
         var (success, body) = await GetAsync(url);

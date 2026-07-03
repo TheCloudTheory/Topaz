@@ -12,7 +12,7 @@ namespace Topaz.Service.ManagementGroup.Commands;
 public sealed class ShowManagementGroupCommand(HttpClient httpClient)
     : TopazHttpCommand<ShowManagementGroupCommand.Settings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.Name}";
         var (success, body) = await GetAsync(url);
@@ -21,7 +21,7 @@ public sealed class ShowManagementGroupCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, Settings settings)
+    protected override ValidationResult Validate(CommandContext context, Settings settings)
     {
         if (string.IsNullOrWhiteSpace(settings.Name))
             return ValidationResult.Error("Management group name (--name) is required.");

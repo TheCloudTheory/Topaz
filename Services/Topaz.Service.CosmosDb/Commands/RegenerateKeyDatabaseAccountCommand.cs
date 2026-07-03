@@ -12,7 +12,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 public sealed class RegenerateKeyDatabaseAccountCommand(HttpClient httpClient)
     : TopazHttpCommand<RegenerateKeyDatabaseAccountCommand.RegenerateKeyDatabaseAccountCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, RegenerateKeyDatabaseAccountCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, RegenerateKeyDatabaseAccountCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.DocumentDB/databaseAccounts/{settings.Name}/regenerateKey";
         var body = new { keyKind = settings.KeyKind };
@@ -22,7 +22,7 @@ public sealed class RegenerateKeyDatabaseAccountCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, RegenerateKeyDatabaseAccountCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, RegenerateKeyDatabaseAccountCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Cosmos DB account name can't be null.");

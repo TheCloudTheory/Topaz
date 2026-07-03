@@ -14,7 +14,7 @@ namespace Topaz.Service.Disk.Commands;
 internal sealed class GrantDiskAccessCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<GrantDiskAccessCommand.GrantDiskAccessCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, GrantDiskAccessCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, GrantDiskAccessCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Compute/disks/{settings.Name}/beginGetAccess?api-version=2023-04-02";
         using var content = JsonContent.Create(new
@@ -71,7 +71,7 @@ internal sealed class GrantDiskAccessCommand(HttpClient httpClient, DefaultsProv
         }
     }
 
-    public override ValidationResult Validate(CommandContext context, GrantDiskAccessCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, GrantDiskAccessCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

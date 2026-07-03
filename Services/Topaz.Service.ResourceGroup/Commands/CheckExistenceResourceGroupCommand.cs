@@ -11,7 +11,7 @@ namespace Topaz.Service.ResourceGroup.Commands;
 [CommandExample("Check if a resource group exists", "topaz group exists \\\n    --name \"my-rg\" \\\n    --subscription-id \"6B1F305F-7C41-4E5C-AA94-AB937F2F530A\"")]
 public sealed class CheckExistenceResourceGroupCommand(HttpClient httpClient) : TopazHttpCommand<CheckExistenceResourceGroupCommand.CheckExistenceResourceGroupCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CheckExistenceResourceGroupCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CheckExistenceResourceGroupCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.Name}";
         var (success, _) = await GetAsync(url);
@@ -22,7 +22,7 @@ public sealed class CheckExistenceResourceGroupCommand(HttpClient httpClient) : 
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CheckExistenceResourceGroupCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CheckExistenceResourceGroupCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.SubscriptionId))
         {

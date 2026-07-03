@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Commands;
 public sealed class SetContainerMetadataCommand(HttpClient httpClient)
     : TopazHttpCommand<SetContainerMetadataCommand.SetContainerMetadataCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, SetContainerMetadataCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, SetContainerMetadataCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.WriteLine("Setting container metadata...");
 
@@ -26,7 +26,7 @@ public sealed class SetContainerMetadataCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, SetContainerMetadataCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, SetContainerMetadataCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Container name can't be null.");

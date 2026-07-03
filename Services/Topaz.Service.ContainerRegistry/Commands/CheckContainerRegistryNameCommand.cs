@@ -13,7 +13,7 @@ public sealed class CheckContainerRegistryNameCommand(HttpClient httpClient)
     : TopazHttpCommand<CheckContainerRegistryNameCommand.CheckNameCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, CheckNameCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CheckNameCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/providers/Microsoft.ContainerRegistry/checkNameAvailability";
         var (success, body) = await PostAsync(url, new { name = settings.Name, type = "Microsoft.ContainerRegistry/registries" });
@@ -22,7 +22,7 @@ public sealed class CheckContainerRegistryNameCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CheckNameCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CheckNameCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Registry name can't be null.");

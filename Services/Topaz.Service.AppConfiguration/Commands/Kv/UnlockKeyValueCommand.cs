@@ -13,7 +13,7 @@ namespace Topaz.Service.AppConfiguration.Commands.Kv;
 internal sealed class UnlockKeyValueCommand(HttpClient httpClient)
     : TopazHttpCommand<UnlockKeyValueCommand.Settings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var label = string.IsNullOrEmpty(settings.Label) ? string.Empty : $"?label={Uri.EscapeDataString(settings.Label)}";
         var url = $"{AppConfigDataPlaneUrl(settings.Name!)}/locks/{Uri.EscapeDataString(settings.Key!)}{label}";
@@ -23,7 +23,7 @@ internal sealed class UnlockKeyValueCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, Settings settings)
+    protected override ValidationResult Validate(CommandContext context, Settings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Store name can't be null.");

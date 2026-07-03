@@ -12,7 +12,7 @@ namespace Topaz.Service.ServiceBus.Commands;
 public sealed class DeleteServiceBusQueueCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteServiceBusQueueCommand.DeleteServiceBusQueueCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteServiceBusQueueCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteServiceBusQueueCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ServiceBus/namespaces/{settings.NamespaceName}/queues/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -20,7 +20,7 @@ public sealed class DeleteServiceBusQueueCommand(HttpClient httpClient, Defaults
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteServiceBusQueueCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteServiceBusQueueCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

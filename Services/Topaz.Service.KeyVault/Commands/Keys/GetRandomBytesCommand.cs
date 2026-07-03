@@ -13,7 +13,7 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 public class GetRandomBytesCommand(HttpClient httpClient) : TopazHttpCommand<GetRandomBytesCommand.GetRandomBytesCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, GetRandomBytesCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, GetRandomBytesCommandSettings settings, CancellationToken cancellationToken)
     {
         if (!string.IsNullOrEmpty(settings.VaultName))
         {
@@ -34,7 +34,7 @@ public class GetRandomBytesCommand(HttpClient httpClient) : TopazHttpCommand<Get
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, GetRandomBytesCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, GetRandomBytesCommandSettings settings)
     {
         if (settings.Count < 1 || settings.Count > 128)
             return ValidationResult.Error("Count must be between 1 and 128.");

@@ -13,7 +13,7 @@ namespace Topaz.Service.Subscription.Commands;
 public sealed class ListLocationsCommand(HttpClient httpClient)
     : TopazHttpCommand<ListLocationsCommand.ListLocationsCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListLocationsCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListLocationsCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.Id}/locations";
         var (success, body) = await GetAsync(url);
@@ -22,7 +22,7 @@ public sealed class ListLocationsCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListLocationsCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListLocationsCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Id))
         {

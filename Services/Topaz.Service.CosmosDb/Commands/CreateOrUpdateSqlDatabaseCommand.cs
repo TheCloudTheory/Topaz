@@ -12,7 +12,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 public sealed class CreateOrUpdateSqlDatabaseCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateOrUpdateSqlDatabaseCommand.CreateOrUpdateSqlDatabaseCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateOrUpdateSqlDatabaseCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateOrUpdateSqlDatabaseCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.DocumentDB/databaseAccounts/{settings.AccountName}/sqlDatabases/{settings.DatabaseName}";
         var body = new
@@ -31,7 +31,7 @@ public sealed class CreateOrUpdateSqlDatabaseCommand(HttpClient httpClient, Defa
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateOrUpdateSqlDatabaseCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateOrUpdateSqlDatabaseCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

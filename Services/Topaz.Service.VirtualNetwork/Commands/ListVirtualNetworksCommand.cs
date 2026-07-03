@@ -14,7 +14,7 @@ namespace Topaz.Service.VirtualNetwork.Commands;
 internal sealed class ListVirtualNetworksCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListVirtualNetworksCommand.ListVirtualNetworksCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListVirtualNetworksCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListVirtualNetworksCommandSettings settings, CancellationToken cancellationToken)
     {
         string url;
         if (!string.IsNullOrWhiteSpace(settings.ResourceGroup))
@@ -28,7 +28,7 @@ internal sealed class ListVirtualNetworksCommand(HttpClient httpClient, Defaults
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListVirtualNetworksCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListVirtualNetworksCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

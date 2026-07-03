@@ -12,7 +12,7 @@ namespace Topaz.Service.Storage.Commands;
 [CommandExample("List queues", "topaz storage queue list \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\"")]
 public sealed class ListQueuesCommand(HttpClient httpClient) : TopazHttpCommand<ListQueuesCommand.ListQueuesCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListQueuesCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListQueuesCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Storage/storageAccounts/{settings.AccountName}/queueServices/default/queues";
         var (success, body) = await GetAsync(url);
@@ -21,7 +21,7 @@ public sealed class ListQueuesCommand(HttpClient httpClient) : TopazHttpCommand<
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListQueuesCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListQueuesCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.AccountName))
             return ValidationResult.Error("Storage account name can't be null.");

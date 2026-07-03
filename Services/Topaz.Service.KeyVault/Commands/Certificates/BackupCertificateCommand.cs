@@ -14,7 +14,7 @@ namespace Topaz.Service.KeyVault.Commands.Certificates;
 public class BackupCertificateCommand(HttpClient httpClient) : TopazHttpCommand<BackupCertificateCommand.BackupCertificateCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, BackupCertificateCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, BackupCertificateCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/certificates/{settings.Name}/backup?api-version=7.4";
         var (success, body) = await PostAsync(url, new { });
@@ -24,7 +24,7 @@ public class BackupCertificateCommand(HttpClient httpClient) : TopazHttpCommand<
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, BackupCertificateCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, BackupCertificateCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

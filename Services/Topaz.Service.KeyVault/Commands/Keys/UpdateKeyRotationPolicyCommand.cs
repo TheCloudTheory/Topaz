@@ -13,7 +13,7 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 public class UpdateKeyRotationPolicyCommand(HttpClient httpClient) : TopazHttpCommand<UpdateKeyRotationPolicyCommand.UpdateKeyRotationPolicyCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, UpdateKeyRotationPolicyCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, UpdateKeyRotationPolicyCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}/rotationpolicy?api-version=7.4";
         var (success, body) = await PutAsync(url, new { attributes = new { expiryTime = settings.ExpiresIn }, lifetimeActions = Array.Empty<object>() });
@@ -22,7 +22,7 @@ public class UpdateKeyRotationPolicyCommand(HttpClient httpClient) : TopazHttpCo
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, UpdateKeyRotationPolicyCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, UpdateKeyRotationPolicyCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

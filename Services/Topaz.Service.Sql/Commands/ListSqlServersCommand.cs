@@ -13,7 +13,7 @@ namespace Topaz.Service.Sql.Commands;
 internal sealed class ListSqlServersCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListSqlServersCommand.ListSqlServersCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListSqlServersCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListSqlServersCommandSettings settings, CancellationToken cancellationToken)
     {
         string url;
         if (!string.IsNullOrWhiteSpace(settings.ResourceGroup))
@@ -27,7 +27,7 @@ internal sealed class ListSqlServersCommand(HttpClient httpClient, DefaultsProvi
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListSqlServersCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListSqlServersCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

@@ -13,7 +13,7 @@ namespace Topaz.Service.Disk.Commands;
 internal sealed class UpdateDiskCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<UpdateDiskCommand.UpdateDiskCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, UpdateDiskCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, UpdateDiskCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Compute/disks/{settings.Name}";
 
@@ -34,7 +34,7 @@ internal sealed class UpdateDiskCommand(HttpClient httpClient, DefaultsProvider 
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, UpdateDiskCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, UpdateDiskCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

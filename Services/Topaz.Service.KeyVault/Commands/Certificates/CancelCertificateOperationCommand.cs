@@ -12,7 +12,7 @@ namespace Topaz.Service.KeyVault.Commands.Certificates;
 public class CancelCertificateOperationCommand(HttpClient httpClient) : TopazHttpCommand<CancelCertificateOperationCommand.CancelCertificateOperationCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, CancelCertificateOperationCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CancelCertificateOperationCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/certificates/{settings.Name}/pending?api-version=7.4";
         var (success, body) = await PatchAsync(url, new { cancellationRequested = true });
@@ -21,7 +21,7 @@ public class CancelCertificateOperationCommand(HttpClient httpClient) : TopazHtt
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CancelCertificateOperationCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CancelCertificateOperationCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

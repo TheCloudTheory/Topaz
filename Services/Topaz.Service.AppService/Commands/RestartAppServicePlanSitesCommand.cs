@@ -12,7 +12,7 @@ namespace Topaz.Service.AppService.Commands;
 public sealed class RestartAppServicePlanSitesCommand(HttpClient httpClient)
     : TopazHttpCommand<RestartAppServicePlanSitesCommand.RestartAppServicePlanSitesCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, RestartAppServicePlanSitesCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, RestartAppServicePlanSitesCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Web/serverfarms/{settings.Name}/restartSites";
         var (success, _) = await PostAsync(url, new { });
@@ -21,7 +21,7 @@ public sealed class RestartAppServicePlanSitesCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, RestartAppServicePlanSitesCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, RestartAppServicePlanSitesCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("App Service Plan name can't be null.");

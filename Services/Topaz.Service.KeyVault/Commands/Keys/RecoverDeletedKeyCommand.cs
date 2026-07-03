@@ -12,7 +12,7 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 public class RecoverDeletedKeyCommand(HttpClient httpClient) : TopazHttpCommand<RecoverDeletedKeyCommand.RecoverDeletedKeyCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, RecoverDeletedKeyCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, RecoverDeletedKeyCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/deletedkeys/{settings.Name}/recover?api-version=7.4";
         var (success, body) = await PostAsync(url, new { });
@@ -21,7 +21,7 @@ public class RecoverDeletedKeyCommand(HttpClient httpClient) : TopazHttpCommand<
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, RecoverDeletedKeyCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, RecoverDeletedKeyCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

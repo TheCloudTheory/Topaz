@@ -14,7 +14,7 @@ public sealed class ListContainerRegistriesCommand(HttpClient httpClient, Defaul
     : TopazHttpCommand<ListContainerRegistriesCommand.ListContainerRegistriesCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, ListContainerRegistriesCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListContainerRegistriesCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = !string.IsNullOrEmpty(settings.ResourceGroup)
             ? $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ContainerRegistry/registries"
@@ -25,7 +25,7 @@ public sealed class ListContainerRegistriesCommand(HttpClient httpClient, Defaul
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListContainerRegistriesCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListContainerRegistriesCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

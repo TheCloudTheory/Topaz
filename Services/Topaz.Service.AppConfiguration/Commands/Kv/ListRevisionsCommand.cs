@@ -13,7 +13,7 @@ namespace Topaz.Service.AppConfiguration.Commands.Kv;
 internal sealed class ListRevisionsCommand(HttpClient httpClient)
     : TopazHttpCommand<ListRevisionsCommand.Settings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var query = string.Empty;
         if (!string.IsNullOrEmpty(settings.Key)) query += $"?key={Uri.EscapeDataString(settings.Key)}";
@@ -24,7 +24,7 @@ internal sealed class ListRevisionsCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, Settings settings)
+    protected override ValidationResult Validate(CommandContext context, Settings settings)
     {
         if (string.IsNullOrEmpty(settings.Name))
             return ValidationResult.Error("Store name can't be null.");

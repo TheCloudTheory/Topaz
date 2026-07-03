@@ -11,7 +11,7 @@ namespace Topaz.Service.KeyVault.Commands;
 [CommandExample("Delete a Key Vault", "topaz keyvault delete \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --name \"kvlocal\"")]
 public sealed class DeleteKeyVaultCommand(HttpClient httpClient, DefaultsProvider provider) : TopazHttpCommand<DeleteKeyVaultCommand.DeleteKeyVaultCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteKeyVaultCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteKeyVaultCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.KeyVault/vaults/{settings.Name}";
         var success = await DeleteAsync(url);
@@ -20,7 +20,7 @@ public sealed class DeleteKeyVaultCommand(HttpClient httpClient, DefaultsProvide
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteKeyVaultCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteKeyVaultCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

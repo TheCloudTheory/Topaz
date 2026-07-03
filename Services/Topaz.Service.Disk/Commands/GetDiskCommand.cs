@@ -13,7 +13,7 @@ namespace Topaz.Service.Disk.Commands;
 internal sealed class GetDiskCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<GetDiskCommand.GetDiskCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, GetDiskCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, GetDiskCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Compute/disks/{settings.Name}";
         var (success, body) = await GetAsync(url);
@@ -22,7 +22,7 @@ internal sealed class GetDiskCommand(HttpClient httpClient, DefaultsProvider pro
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, GetDiskCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, GetDiskCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

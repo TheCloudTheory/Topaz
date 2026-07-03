@@ -12,7 +12,7 @@ namespace Topaz.Service.ManagementGroup.Commands;
 public sealed class DeleteManagementGroupCommand(HttpClient httpClient)
     : TopazHttpCommand<DeleteManagementGroupCommand.Settings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/providers/Microsoft.Management/managementGroups/{settings.Name}";
         if (!await DeleteAsync(url)) return 1;
@@ -20,7 +20,7 @@ public sealed class DeleteManagementGroupCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, Settings settings)
+    protected override ValidationResult Validate(CommandContext context, Settings settings)
     {
         if (string.IsNullOrWhiteSpace(settings.Name))
             return ValidationResult.Error("Management group name (--name) is required.");

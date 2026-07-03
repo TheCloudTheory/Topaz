@@ -13,7 +13,7 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 public class UpdateKeyCommand(HttpClient httpClient) : TopazHttpCommand<UpdateKeyCommand.UpdateKeyCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, UpdateKeyCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, UpdateKeyCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/keys/{settings.Name}/{settings.Version ?? ""}?api-version=7.4";
         var body = new { attributes = settings.Enabled.HasValue ? new { enabled = settings.Enabled } : (object?)null };
@@ -23,7 +23,7 @@ public class UpdateKeyCommand(HttpClient httpClient) : TopazHttpCommand<UpdateKe
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, UpdateKeyCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, UpdateKeyCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

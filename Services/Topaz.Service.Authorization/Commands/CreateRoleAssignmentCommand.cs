@@ -30,7 +30,7 @@ namespace Topaz.Service.Authorization.Commands;
 public sealed class CreateRoleAssignmentCommand(HttpClient httpClient)
     : TopazHttpCommand<CreateRoleAssignmentCommand.CreateRoleAssignmentCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateRoleAssignmentCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateRoleAssignmentCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}{settings.Scope}/providers/Microsoft.Authorization/roleAssignments/{settings.Name}";
         var (success, body) = await PutAsync(url, new
@@ -48,7 +48,7 @@ public sealed class CreateRoleAssignmentCommand(HttpClient httpClient)
         return 0;
     }
     
-    public override ValidationResult Validate(CommandContext context, CreateRoleAssignmentCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateRoleAssignmentCommandSettings settings)
     {
         if (string.IsNullOrWhiteSpace(settings.Name))
             return ValidationResult.Error("Role assignment name can't be null.");

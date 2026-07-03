@@ -11,7 +11,7 @@ namespace Topaz.Service.Storage.Commands.Blob;
 [CommandExample("Show blob properties", "topaz storage blob show \\\n    --subscription-id \"00000000-0000-0000-0000-000000000000\" \\\n    --resource-group \"rg-local\" \\\n    --account-name \"salocal\" \\\n    --container-name \"mycontainer\" \\\n    --name \"file.txt\"")]
 public sealed class ShowBlobCommand(HttpClient httpClient) : TopazHttpCommand<ShowBlobCommand.ShowBlobCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ShowBlobCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ShowBlobCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{BlobDataPlaneUrl(settings.AccountName!)}/{settings.ContainerName}/{settings.BlobName}";
         var (success, body) = await GetAsync(url);
@@ -20,7 +20,7 @@ public sealed class ShowBlobCommand(HttpClient httpClient) : TopazHttpCommand<Sh
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ShowBlobCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ShowBlobCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.AccountName))
             return ValidationResult.Error("Storage account name can't be null.");

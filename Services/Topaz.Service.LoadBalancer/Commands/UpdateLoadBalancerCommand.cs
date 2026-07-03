@@ -13,7 +13,7 @@ namespace Topaz.Service.LoadBalancer.Commands;
 internal sealed class UpdateLoadBalancerCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<UpdateLoadBalancerCommand.UpdateLoadBalancerCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, UpdateLoadBalancerCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, UpdateLoadBalancerCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/loadBalancers/{settings.Name}";
 
@@ -31,7 +31,7 @@ internal sealed class UpdateLoadBalancerCommand(HttpClient httpClient, DefaultsP
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, UpdateLoadBalancerCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, UpdateLoadBalancerCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

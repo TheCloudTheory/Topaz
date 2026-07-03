@@ -10,7 +10,7 @@ namespace Topaz.Chaos.Commands;
 [CommandExample("Disable chaos mode", "topaz chaos disable")]
 internal sealed class DisableChaosCommand(HttpClient httpClient) : AsyncCommand
 {
-    public override async Task<int> ExecuteAsync(CommandContext context)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
     {
         var url = $"https://topaz.local.dev:{Shared.GlobalSettings.DefaultResourceManagerPort}/topaz/chaos/disable";
         var response = await httpClient.PostAsync(url, new StreamContent(Stream.Null));

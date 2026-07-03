@@ -14,7 +14,7 @@ namespace Topaz.Service.VirtualNetwork.Commands.Subnets;
 internal sealed class CreateSubnetCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<CreateSubnetCommand.CreateSubnetCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, CreateSubnetCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, CreateSubnetCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.Network/virtualNetworks/{settings.VnetName}/subnets/{settings.Name}";
         var (success, body) = await PutAsync(url, new { properties = new { addressPrefix = settings.AddressPrefix } });
@@ -23,7 +23,7 @@ internal sealed class CreateSubnetCommand(HttpClient httpClient, DefaultsProvide
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, CreateSubnetCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, CreateSubnetCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

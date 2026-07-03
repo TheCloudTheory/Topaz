@@ -11,7 +11,7 @@ namespace Topaz.Service.KeyVault.Commands.Secrets;
 [CommandExample("Recover a deleted secret", "topaz keyvault secret recover --vault-name \"kvlocal\" --name \"my-secret\" --resource-group \"rg-local\" --subscription-id \"36a28ebb-9370-46d8-981c-84efe02048ae\"")]
 public class RecoverDeletedSecretCommand(HttpClient httpClient) : TopazHttpCommand<RecoverDeletedSecretCommand.RecoverDeletedSecretCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, RecoverDeletedSecretCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, RecoverDeletedSecretCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/deletedsecrets/{settings.Name}/recover?api-version=7.4";
         var (success, body) = await PostAsync(url, new { });
@@ -20,7 +20,7 @@ public class RecoverDeletedSecretCommand(HttpClient httpClient) : TopazHttpComma
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, RecoverDeletedSecretCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, RecoverDeletedSecretCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

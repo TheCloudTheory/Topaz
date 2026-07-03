@@ -12,7 +12,7 @@ namespace Topaz.Service.CosmosDb.Commands;
 public sealed class ListSqlDatabasesCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<ListSqlDatabasesCommand.ListSqlDatabasesCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, ListSqlDatabasesCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ListSqlDatabasesCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.DocumentDB/databaseAccounts/{settings.AccountName}/sqlDatabases";
         var (success, body) = await GetAsync(url);
@@ -21,7 +21,7 @@ public sealed class ListSqlDatabasesCommand(HttpClient httpClient, DefaultsProvi
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, ListSqlDatabasesCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, ListSqlDatabasesCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;

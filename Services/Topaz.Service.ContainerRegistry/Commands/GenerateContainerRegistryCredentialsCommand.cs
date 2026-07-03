@@ -13,7 +13,7 @@ public class GenerateContainerRegistryCredentialsCommand(HttpClient httpClient)
     : TopazHttpCommand<GenerateContainerRegistryCredentialsCommand.GenerateCredentialsCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, GenerateCredentialsCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, GenerateCredentialsCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}/providers/Microsoft.ContainerRegistry/registries/{settings.RegistryName}/generateCredentials";
         var expiry = settings.Expiry ?? DateTimeOffset.UtcNow.AddYears(1);
@@ -28,7 +28,7 @@ public class GenerateContainerRegistryCredentialsCommand(HttpClient httpClient)
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, GenerateCredentialsCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, GenerateCredentialsCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.SubscriptionId))
             return ValidationResult.Error("Subscription ID can't be null.");

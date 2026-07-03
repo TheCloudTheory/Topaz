@@ -12,7 +12,7 @@ namespace Topaz.Service.KeyVault.Commands.Keys;
 public class PurgeDeletedKeyCommand(HttpClient httpClient) : TopazHttpCommand<PurgeDeletedKeyCommand.PurgeDeletedKeyCommandSettings>(httpClient)
 {
 
-    public override async Task<int> ExecuteAsync(CommandContext context, PurgeDeletedKeyCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, PurgeDeletedKeyCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{KvDataPlaneUrl(settings.VaultName!)}/deletedkeys/{settings.Name}?api-version=7.4";
         var success = await DeleteAsync(url);
@@ -21,7 +21,7 @@ public class PurgeDeletedKeyCommand(HttpClient httpClient) : TopazHttpCommand<Pu
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, PurgeDeletedKeyCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, PurgeDeletedKeyCommandSettings settings)
     {
         if (string.IsNullOrEmpty(settings.VaultName))
             return ValidationResult.Error("Vault name can't be null.");

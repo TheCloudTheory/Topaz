@@ -13,7 +13,7 @@ namespace Topaz.Service.Sql.Commands;
 internal sealed class DeleteSqlDatabaseCommand(HttpClient httpClient, DefaultsProvider provider)
     : TopazHttpCommand<DeleteSqlDatabaseCommand.DeleteSqlDatabaseCommandSettings>(httpClient)
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, DeleteSqlDatabaseCommandSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, DeleteSqlDatabaseCommandSettings settings, CancellationToken cancellationToken)
     {
         var url = $"{ArmBaseUrl}/subscriptions/{settings.SubscriptionId}/resourceGroups/{settings.ResourceGroup}" +
                   $"/providers/Microsoft.Sql/servers/{settings.Server}/databases/{settings.Name}";
@@ -22,7 +22,7 @@ internal sealed class DeleteSqlDatabaseCommand(HttpClient httpClient, DefaultsPr
         return 0;
     }
 
-    public override ValidationResult Validate(CommandContext context, DeleteSqlDatabaseCommandSettings settings)
+    protected override ValidationResult Validate(CommandContext context, DeleteSqlDatabaseCommandSettings settings)
     {
         var defaults = provider.LoadDefaults();
         settings.SubscriptionId ??= defaults.SubscriptionId;
