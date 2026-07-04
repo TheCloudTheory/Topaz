@@ -568,6 +568,25 @@ TODO: Virtual Machines: Complete Microsoft.Compute/skus SKU catalogue
 ## v1.10-preview
 
 <!--
+TODO: Storage Account — geo-replication lag on secondary reads
+  Secondary reads currently return the same data as the primary (perfectly in sync).
+  Simulate replication lag so secondary reads reflect the state at the last GeoReplicationSyncScheduler
+  tick rather than the live primary state:
+  - Journal writes to the primary data store with a timestamp (enqueue-time).
+  - Secondary read endpoints (blob container listing, queue listing, table entity reads on
+    {accountName}-secondary.* hosts) filter out writes whose enqueue-time is later than the
+    account's persisted LastGeoSyncTime, returning a snapshot of the data as it existed at
+    the last scheduler tick.
+  - After each GeoReplicationSyncScheduler tick (every 30 s), the visible secondary snapshot
+    advances to include all writes up to the new LastGeoSyncTime.
+  - Non-RA-GRS/RAGZRS accounts are unaffected.
+  Prerequisites: GeoReplicationSyncScheduler (v1.9-preview, done).
+  See also: website/docs/known-limitations.md — "Storage Account — secondary endpoint reads return primary data".
+  milestone: v1.10-preview
+  labels: enhancement, storage
+-->
+
+<!--
 TODO: App Configuration: Replicas companion endpoint
   The azurerm Terraform provider calls GET .../configurationStores/{name}/replicas after
   creation. Add a stub endpoint that returns {"value":[]} (Topaz does not emulate replicas).

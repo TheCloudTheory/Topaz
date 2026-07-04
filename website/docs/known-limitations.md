@@ -223,19 +223,21 @@ Replicating real HSM attestation behaviour requires generating hardware-backed k
 
 **Affected services:** Blob Storage, Queue Storage, Table Storage (RA-GRS / RA-GZRS accounts)
 
-For accounts created with `Standard_RAGRS` or `Standard_RAGZRS` SKUs, Topaz routes all read operations on `{accountName}-secondary.*` endpoints to the same in-memory data store as the primary endpoint. The secondary endpoint is fully reachable and returns real data — no 404s — but there is no actual replication process running in the background. Reads on the secondary are always perfectly in sync with the primary, which does not model the real-world replication lag of geo-redundant storage.
+For accounts created with `Standard_RAGRS` or `Standard_RAGZRS` SKUs, Topaz routes all read operations on `{accountName}-secondary.*` endpoints to the same in-memory data store as the primary endpoint. The secondary endpoint is fully reachable and returns real data — no 404s — but there is no separate secondary data store. Reads on the secondary are always perfectly in sync with the primary, which does not model the real-world replication lag of geo-redundant storage.
 
-Additionally, the `<LastSyncTime>` element returned by `GET ?restype=service&comp=stats` on secondary endpoints is set to the current wall-clock time rather than to a persisted scheduler tick, so it does not reflect a meaningful replication checkpoint.
+### `<LastSyncTime>` — fixed in v1.9-preview
+
+The `<LastSyncTime>` element returned by `GET ?restype=service&comp=stats` on secondary endpoints previously returned the current wall-clock time on every request. As of v1.9-preview, a `GeoReplicationSyncScheduler` background service runs every 30 seconds, updates a persisted `LastGeoSyncTime` field on each RA-GRS/RAGZRS account, and threads it through the blob, queue, and table service-stats XML responses. `<LastSyncTime>` now reflects a realistic scheduler tick — it starts ~30 seconds behind the account creation time and advances with each scheduler tick — rather than the instant of the request.
 
 ### Impact
 
-Tests or applications that rely on observing eventual-consistency behaviour (stale reads on secondary, `LastSyncTime` lagging behind writes) cannot be validated against Topaz in this release.
+Tests or applications that rely on observing eventual-consistency behaviour (stale reads on secondary) cannot be validated against Topaz. Secondary reads always reflect the latest primary state regardless of how long ago `<LastSyncTime>` was updated.
 
-**Workaround:** none. Secondary reads will always reflect the latest primary state.
+**Workaround:** none. Use `<LastSyncTime>` from the stats endpoint to observe simulated replication lag; do not rely on secondary reads returning stale data.
 
-### Planned fix — v1.9-preview
+### Planned improvement — v1.10-preview
 
-Introduce a `GeoReplicationSyncScheduler` background service that periodically updates a persisted `LastGeoSyncTime` field on each RA-GRS/RAGZRS account and threads it through the service-stats XML responses. This will make `<LastSyncTime>` reflect a realistic scheduler tick rather than wall-clock time, simulating replication lag without requiring a real secondary data store.
+Introduce a configurable replication lag on secondary reads: writes to the primary are journalled with a timestamp, and secondary reads return the data as it existed at `LastGeoSyncTime`, making secondary endpoints transiently stale until the next scheduler tick.
 
 ---
 
