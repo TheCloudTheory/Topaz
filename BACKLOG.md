@@ -527,22 +527,6 @@ TODO: Service Bus: Dead letter queue — session-filtered DLQ access
 -->
 
 <!--
-TODO: Storage Account — geo-replication sync simulation
-  Work required:
-  - Add a LastGeoSyncTime (DateTimeOffset?) field to StorageAccountResourceProperties; set to
-    UtcNow - 30s on RA-GRS/RAGZRS account creation; null for non-geo-replicated SKUs.
-  - Implement GeoReplicationSyncScheduler : ITopazBackgroundService that iterates all RA-GRS/RAGZRS
-    accounts on a configurable periodic timer (default 30 s), updates LastGeoSyncTime = UtcNow,
-    and persists via StorageResourceProvider. Follow the KeyVaultSecretsSoftDeletePurgeScheduler pattern.
-  - Thread the persisted LastGeoSyncTime through GetBlobServiceStatsXml / GetQueueServiceStatsXml /
-    GetTableServiceStatsXml so the <LastSyncTime> element in stats responses reflects the scheduler
-    tick rather than the current wall-clock time.
-  - Register GeoReplicationSyncScheduler in Topaz.Host/Host.cs alongside other background services.
-  milestone: v1.9-preview
-  labels: enhancement, storage
--->
-
-<!--
 TODO: Virtual Machines: Complete Microsoft.Compute/skus SKU catalogue
   The current `GET /subscriptions/{sub}/providers/Microsoft.Compute/skus` stub returns only 17
   general-purpose VM SKUs. Real Azure returns 200–400+ SKUs per region covering all families
