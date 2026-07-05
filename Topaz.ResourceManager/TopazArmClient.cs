@@ -348,6 +348,20 @@ public sealed class TopazArmClient(AzureLocalCredential credentials) : IDisposab
         return JsonNode.Parse(json)!;
     }
 
+    public async Task<JsonNode> GetManagementGroupWithChildrenAsync(string groupId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            $"providers/Microsoft.Management/managementGroups/{groupId}?$expand=children");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await credentials.GetTokenAsync(new TokenRequestContext(), CancellationToken.None)).Token);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonNode.Parse(json)!;
+    }
+
     public async Task CreateManagementGroupWithParentAsync(string groupId, string displayName, string parentGroupId)
     {
         var request = new HttpRequestMessage(HttpMethod.Put,

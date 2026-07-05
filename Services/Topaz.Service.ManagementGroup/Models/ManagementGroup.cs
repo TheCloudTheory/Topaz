@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Topaz.Shared;
 
 namespace Topaz.Service.ManagementGroup.Models;
@@ -6,11 +7,8 @@ namespace Topaz.Service.ManagementGroup.Models;
 internal sealed class ManagementGroup
 {
     public string Id { get; init; } = string.Empty;
-
     public string Type => "Microsoft.Management/managementGroups";
-
     public string Name { get; init; } = string.Empty;
-
     public ManagementGroupProperties Properties { get; set; } = new();
 
     public static ManagementGroup Create(string groupId, string displayName, ParentGroupInfo? parent)
@@ -47,10 +45,29 @@ internal sealed class ManagementGroup
 internal sealed class ManagementGroupProperties
 {
     public string TenantId { get; set; } = string.Empty;
-
     public string DisplayName { get; set; } = string.Empty;
-
     public ManagementGroupDetails Details { get; set; } = new();
+    
+    [JsonIgnore]
+    public ManagementGroupChild[]? Children { get; set; }
+    
+    internal class ManagementGroupChild
+    {
+        public string Id { get; init; } = string.Empty;
+        public string Type => "Microsoft.Management/managementGroups";
+        public string Name { get; init; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+
+        public static ManagementGroupChild From(ManagementGroup managementGroup)
+        {
+            return new ManagementGroupChild()
+            {
+                Id = managementGroup.Id,
+                Name = managementGroup.Name,
+                DisplayName = managementGroup.Properties.DisplayName
+            };
+        }
+    }
 }
 
 internal sealed class ManagementGroupDetails

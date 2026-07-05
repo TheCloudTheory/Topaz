@@ -14,7 +14,7 @@ internal sealed class DescendantInfo
 
     public DescendantInfoProperties Properties { get; init; } = new();
 
-    public static DescendantInfo FromManagementGroup(Models.ManagementGroup mg, string parentArmId) =>
+    public static DescendantInfo FromManagementGroup(ManagementGroup mg, string parentArmId) =>
         new()
         {
             Id = mg.Id,
@@ -27,7 +27,7 @@ internal sealed class DescendantInfo
             }
         };
 
-    public static DescendantInfo FromSubscription(Models.ManagementGroupSubscription sub, string parentArmId) =>
+    public static DescendantInfo FromSubscription(ManagementGroupSubscription sub, string parentArmId) =>
         new()
         {
             Id = $"/subscriptions/{sub.Name}",

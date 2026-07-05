@@ -50,7 +50,7 @@ public sealed class ManagementGroupService(Pipeline eventPipeline, ITopazLogger 
                 if (data == null) return;
 
                 // Idempotently create the root management group.
-                if (mgControlPlane.Get(data.TenantId).Result == OperationResult.NotFound)
+                if (mgControlPlane.Get(data.TenantId, false).Result == OperationResult.NotFound)
                 {
                     mgControlPlane.CreateOrUpdate(data.TenantId,
                         new CreateOrUpdateManagementGroupRequest
@@ -97,7 +97,7 @@ public sealed class ManagementGroupService(Pipeline eventPipeline, ITopazLogger 
                 if (alreadyAssigned) return;
 
                 var rootGroupId = GlobalSettings.DefaultTenantId;
-                if (mgControlPlane.Get(rootGroupId).Result == OperationResult.NotFound) return;
+                if (mgControlPlane.Get(rootGroupId, false).Result == OperationResult.NotFound) return;
 
                 var subResult = subControlPlane.Get(SubscriptionIdentifier.From(data.SubscriptionId));
                 var displayName = subResult.Result == OperationResult.Success ? subResult.Resource?.DisplayName : null;

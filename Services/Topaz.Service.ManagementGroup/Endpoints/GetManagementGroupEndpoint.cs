@@ -1,5 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
+using Topaz.Service.ManagementGroup.Models.Responses;
 using Topaz.Service.Shared;
 using Topaz.Shared;
 using Topaz.Shared.Extensions;
@@ -25,14 +26,23 @@ internal sealed class GetManagementGroupEndpoint(ITopazLogger logger) : IEndpoin
             response.StatusCode = HttpStatusCode.BadRequest;
             return;
         }
+        
+        // The request may contain an optional parameter `$expand`. Per docs,
+        // the parameter may contain one of the two values:
+        // - `children`
+        // - `path`
+        // For now, only the former is supported.
+        var expandChildren = context.Request.Query.ContainsKey("$expand") &&
+                             context.Request.Query["$expand"] == "children";
 
-        var operation = _controlPlane.Get(groupId);
+        var operation = _controlPlane.Get(groupId,  expandChildren);
         if (operation.Result == OperationResult.NotFound || operation.Resource == null)
         {
-            response.CreateJsonContentResponse(new { error = new { code = operation.Code, message = operation.Reason } }, HttpStatusCode.NotFound);
+            response.CreateJsonContentResponse(
+                new { error = new { code = operation.Code, message = operation.Reason } }, HttpStatusCode.NotFound);
             return;
         }
 
-        response.CreateJsonContentResponse(operation.Resource);
+        response.CreateJsonContentResponse(GetManagementGroupResponse.From(operation.Resource));
     }
 }

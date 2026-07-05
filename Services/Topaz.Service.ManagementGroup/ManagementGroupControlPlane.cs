@@ -18,13 +18,24 @@ internal sealed class ManagementGroupControlPlane(ManagementGroupResourceProvide
     public static ManagementGroupControlPlane New(ITopazLogger logger) =>
         new(new ManagementGroupResourceProvider(logger), logger);
 
-    public ControlPlaneOperationResult<Models.ManagementGroup> Get(string groupId)
+    public ControlPlaneOperationResult<Models.ManagementGroup> Get(string groupId, bool expandChildren)
     {
         var mg = provider.GetManagementGroup(groupId);
         if (mg == null)
             return new ControlPlaneOperationResult<Models.ManagementGroup>(OperationResult.NotFound, null,
                 string.Format(NotFoundMessageTemplate, groupId), NotFoundCode);
 
+        if (expandChildren)
+        {
+            var parentArmId = $"/providers/Microsoft.Management/managementGroups/{groupId}";
+            var allGroups = provider.ListManagementGroups().ToArray();
+            var childGroups = allGroups.Where(g =>
+                g.Properties.Details.Parent != null &&
+                string.Equals(g.Properties.Details.Parent.Id, parentArmId, StringComparison.OrdinalIgnoreCase)).ToArray();
+            
+            mg.Properties.Children = childGroups.Select(ManagementGroupProperties.ManagementGroupChild.From).ToArray();
+        }
+        
         return new ControlPlaneOperationResult<Models.ManagementGroup>(OperationResult.Success, mg, null, null);
     }
 
@@ -157,10 +168,8 @@ internal sealed class ManagementGroupControlPlane(ManagementGroupResourceProvide
         }
 
         // Direct subscriptions under this group
-        foreach (var sub in provider.ListSubscriptionAssociationsForGroup(groupId))
-        {
-            result.Add(DescendantInfo.FromSubscription(sub, parentArmId));
-        }
+        result.AddRange(provider.ListSubscriptionAssociationsForGroup(groupId)
+            .Select(sub => DescendantInfo.FromSubscription(sub, parentArmId)));
     }
 
     public ControlPlaneOperationResult<EntityInfo[]> GetEntities()
