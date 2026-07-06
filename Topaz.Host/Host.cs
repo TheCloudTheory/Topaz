@@ -196,6 +196,8 @@ public class Host
                 ? $"    set HTTPS_PROXY=http://127.0.0.1:{GlobalSettings.ConnectProxyPort}"
                 : $"    export HTTPS_PROXY=http://127.0.0.1:{GlobalSettings.ConnectProxyPort}");
             Console.WriteLine();
+
+            HostState.HttpsConnectProxyAvailable = true;
         }
 
         await CreateWebserverForHttpEndpointsAsync([.. httpEndpoints], idFactory, cancellationToken);
