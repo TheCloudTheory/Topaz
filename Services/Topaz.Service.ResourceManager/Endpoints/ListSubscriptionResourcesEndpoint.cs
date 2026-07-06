@@ -2,9 +2,19 @@ using System.Net;
 using Microsoft.AspNetCore.Http;
 using Topaz.EventPipeline;
 using Topaz.ResourceManager;
+using Topaz.Service.AppConfiguration;
+using Topaz.Service.AppService;
 using Topaz.Service.ContainerRegistry;
+using Topaz.Service.CosmosDb;
 using Topaz.Service.Disk;
+using Topaz.Service.EventHub;
 using Topaz.Service.KeyVault;
+using Topaz.Service.LoadBalancer;
+using Topaz.Service.ManagedIdentity;
+using Topaz.Service.ServiceBus;
+using Topaz.Service.Sql;
+using Topaz.Service.Storage;
+using Topaz.Service.VirtualNetwork;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription.Models.Responses;
@@ -27,6 +37,19 @@ internal sealed class ListSubscriptionResourcesEndpoint(Pipeline eventPipeline, 
     private readonly ContainerRegistryControlPlane _acrControlPlane = ContainerRegistryControlPlane.New(eventPipeline, logger);
     private readonly VirtualMachineServiceControlPlane _vmControlPlane = VirtualMachineServiceControlPlane.New(eventPipeline, logger);
     private readonly DiskServiceControlPlane _diskControlPlane = DiskServiceControlPlane.New(eventPipeline, logger);
+    private readonly AppConfigurationServiceControlPlane _appConfigControlPlane = AppConfigurationServiceControlPlane.New(eventPipeline, logger);
+    private readonly AppServicePlanControlPlane _appServicePlanControlPlane = AppServicePlanControlPlane.New(logger);
+    private readonly AppServiceSiteControlPlane _appServiceSiteControlPlane = AppServiceSiteControlPlane.New(logger);
+    private readonly CosmosDbServiceControlPlane _cosmosDbControlPlane = CosmosDbServiceControlPlane.New(eventPipeline, logger);
+    private readonly EventHubServiceControlPlane _eventHubControlPlane = EventHubServiceControlPlane.New(logger);
+    private readonly LoadBalancerControlPlane _lbControlPlane = LoadBalancerControlPlane.New(eventPipeline, logger);
+    private readonly ManagedIdentityControlPlane _managedIdentityControlPlane = ManagedIdentityControlPlane.New(eventPipeline, logger);
+    private readonly ServiceBusServiceControlPlane _serviceBusControlPlane = ServiceBusServiceControlPlane.New(eventPipeline, logger);
+    private readonly SqlServiceControlPlane _sqlControlPlane = SqlServiceControlPlane.New(eventPipeline, logger);
+    private readonly AzureStorageControlPlane _storageControlPlane = AzureStorageControlPlane.New(logger);
+    private readonly VirtualNetworkControlPlane _vnetControlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
+    private readonly NetworkInterfaceControlPlane _nicControlPlane = NetworkInterfaceControlPlane.New(eventPipeline, logger);
+    private readonly PublicIpAddressControlPlane _pipControlPlane = PublicIpAddressControlPlane.New(eventPipeline, logger);
 
     public string? ProviderNamespace => null;
 
@@ -58,6 +81,19 @@ internal sealed class ListSubscriptionResourcesEndpoint(Pipeline eventPipeline, 
                 "Microsoft.ContainerRegistry/registries" => Map(_acrControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
                 "Microsoft.Compute/virtualMachines" => Map(_vmControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
                 "Microsoft.Compute/disks" => Map(_diskControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
+                "Microsoft.AppConfiguration/configurationStores" => Map(_appConfigControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
+                "Microsoft.Web/serverfarms" => Map(_appServicePlanControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
+                "Microsoft.Web/sites" => Map(_appServiceSiteControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
+                "Microsoft.DocumentDB/databaseAccounts" => Map(_cosmosDbControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
+                "Microsoft.EventHub/namespaces" => Map(_eventHubControlPlane.ListNamespacesBySubscription(subscriptionIdentifier).Resource ?? []),
+                "Microsoft.Network/loadBalancers" => Map(_lbControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
+                "Microsoft.ManagedIdentity/userAssignedIdentities" => Map(_managedIdentityControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
+                "Microsoft.ServiceBus/namespaces" => Map(_serviceBusControlPlane.ListNamespacesBySubscription(subscriptionIdentifier).Resource ?? []),
+                "Microsoft.Sql/servers" => Map(_sqlControlPlane.ListBySubscription(subscriptionIdentifier)),
+                "Microsoft.Storage/storageAccounts" => Map(_storageControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
+                "Microsoft.Network/virtualNetworks" => Map(_vnetControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
+                "Microsoft.Network/networkInterfaces" => Map(_nicControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
+                "Microsoft.Network/publicIPAddresses" => Map(_pipControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
                 _ => []
             };
 
