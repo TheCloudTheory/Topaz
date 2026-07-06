@@ -119,4 +119,35 @@ public class ArmDeploymentOutputsTests
         Assert.That(outputsJson, Does.Contain("parameterOutput"), "Expected 'parameterOutput' output in deployment outputs.");
         Assert.That(outputsJson, Does.Contain("test-parameter"), "Expected evaluated parameter value in deployment outputs.");
     }
+
+    [Test]
+    public async Task ArmDeployment_WithTenantFunctionAsParameterDefault_ReturnsDefaultTenantId()
+    {
+        // Arrange — template uses tenant().tenantId as a parameter default value
+        var subscriptionId = Guid.NewGuid();
+        var credentials = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credentials, subscriptionId.ToString(), ArmClientOptions);
+        using var topaz = new TopazArmClient(credentials);
+        await topaz.CreateSubscriptionAsync(subscriptionId, "arm-outputs-tenant");
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var rg = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, "rg-outputs-tenant",
+            new ResourceGroupData(AzureLocation.WestEurope));
+
+        var template = await File.ReadAllTextAsync("templates/deployment-tenant-param.json");
+
+        // Act
+        await rg.Value.GetArmDeployments().CreateOrUpdateAsync(WaitUntil.Completed, "deploy-tenant-param",
+            new ArmDeploymentContent(new ArmDeploymentProperties(ArmDeploymentMode.Incremental)
+            {
+                Template = BinaryData.FromString(template)
+            }));
+
+        var deployment = await rg.Value.GetArmDeploymentAsync("deploy-tenant-param");
+
+        // Assert
+        Assert.That(deployment.Value.Data.Properties.ProvisioningState, Is.EqualTo(ResourcesProvisioningState.Succeeded));
+        var outputsJson = Encoding.UTF8.GetString(deployment.Value.Data.Properties.Outputs!.ToMemory().ToArray());
+        Assert.That(outputsJson, Does.Contain(Topaz.Shared.GlobalSettings.DefaultTenantId),
+            "Expected tenant().tenantId default parameter to resolve to Topaz default tenant ID.");
+    }
 }
