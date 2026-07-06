@@ -77,28 +77,9 @@ internal sealed class ListSubscriptionResourcesEndpoint(Pipeline eventPipeline, 
         {
             var subscriptionIdentifier = SubscriptionIdentifier.From(context.Request.Path.Value.ExtractValueFromPath(2));
 
-            ListSubscriptionResourcesResponse.GenericResourceExpanded[] items = resourceType switch
-            {
-                "Microsoft.KeyVault/vaults" => Map(_kvControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.ContainerRegistry/registries" => Map(_acrControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.Compute/virtualMachines" => Map(_vmControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.Compute/disks" => Map(_diskControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.AppConfiguration/configurationStores" => Map(_appConfigControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.Web/serverfarms" => Map(_appServicePlanControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.Web/sites" => Map(_appServiceSiteControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.DocumentDB/databaseAccounts" => Map(_cosmosDbControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.EventHub/namespaces" => Map(_eventHubControlPlane.ListNamespacesBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.Network/loadBalancers" => Map(_lbControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.ManagedIdentity/userAssignedIdentities" => Map(_managedIdentityControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.ServiceBus/namespaces" => Map(_serviceBusControlPlane.ListNamespacesBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.Sql/servers" => Map(_sqlControlPlane.ListBySubscription(subscriptionIdentifier)),
-                "Microsoft.Storage/storageAccounts" => Map(_storageControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.Network/virtualNetworks" => Map(_vnetControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.Network/networkInterfaces" => Map(_nicControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.Network/publicIPAddresses" => Map(_pipControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
-                "Microsoft.Resources/resourceGroups" => Map(_rgControlPlane.List(subscriptionIdentifier).resources),
-                _ => []
-            };
+            var items = resourceType is not null
+                ? ListByType(subscriptionIdentifier, resourceType)
+                : ListAll(subscriptionIdentifier);
 
             response.CreateJsonContentResponse(new ListSubscriptionResourcesResponse { Value = items });
         }
@@ -108,6 +89,54 @@ internal sealed class ListSubscriptionResourcesEndpoint(Pipeline eventPipeline, 
             response.StatusCode = HttpStatusCode.InternalServerError;
             response.Content = new StringContent(ex.Message);
         }
+    }
+
+    private ListSubscriptionResourcesResponse.GenericResourceExpanded[] ListByType(
+        SubscriptionIdentifier sub, string resourceType) => resourceType switch
+    {
+        "Microsoft.KeyVault/vaults" => Map(_kvControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.ContainerRegistry/registries" => Map(_acrControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.Compute/virtualMachines" => Map(_vmControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.Compute/disks" => Map(_diskControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.AppConfiguration/configurationStores" => Map(_appConfigControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.Web/serverfarms" => Map(_appServicePlanControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.Web/sites" => Map(_appServiceSiteControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.DocumentDB/databaseAccounts" => Map(_cosmosDbControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.EventHub/namespaces" => Map(_eventHubControlPlane.ListNamespacesBySubscription(sub).Resource ?? []),
+        "Microsoft.Network/loadBalancers" => Map(_lbControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.ManagedIdentity/userAssignedIdentities" => Map(_managedIdentityControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.ServiceBus/namespaces" => Map(_serviceBusControlPlane.ListNamespacesBySubscription(sub).Resource ?? []),
+        "Microsoft.Sql/servers" => Map(_sqlControlPlane.ListBySubscription(sub)),
+        "Microsoft.Storage/storageAccounts" => Map(_storageControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.Network/virtualNetworks" => Map(_vnetControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.Network/networkInterfaces" => Map(_nicControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.Network/publicIPAddresses" => Map(_pipControlPlane.ListBySubscription(sub).Resource ?? []),
+        "Microsoft.Resources/resourceGroups" => Map(_rgControlPlane.List(sub).resources),
+        _ => []
+    };
+
+    private ListSubscriptionResourcesResponse.GenericResourceExpanded[] ListAll(SubscriptionIdentifier sub)
+    {
+        var results = new List<ListSubscriptionResourcesResponse.GenericResourceExpanded>();
+        results.AddRange(Map(_kvControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_acrControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_vmControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_diskControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_appConfigControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_appServicePlanControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_appServiceSiteControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_cosmosDbControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_eventHubControlPlane.ListNamespacesBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_lbControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_managedIdentityControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_serviceBusControlPlane.ListNamespacesBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_sqlControlPlane.ListBySubscription(sub)));
+        results.AddRange(Map(_storageControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_vnetControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_nicControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_pipControlPlane.ListBySubscription(sub).Resource ?? []));
+        results.AddRange(Map(_rgControlPlane.List(sub).resources));
+        return [.. results];
     }
 
     /// <summary>

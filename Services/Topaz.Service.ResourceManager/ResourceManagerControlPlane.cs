@@ -594,7 +594,7 @@ internal sealed class ResourceManagerControlPlane(
 
     private static readonly HashSet<string> ExcludedTypes = new(StringComparer.OrdinalIgnoreCase)
     {
-        "Microsoft.ResourceGroups/group",
+        "Microsoft.Resources/resourceGroups",
         "Microsoft.Resources/deployments",
     };
 
