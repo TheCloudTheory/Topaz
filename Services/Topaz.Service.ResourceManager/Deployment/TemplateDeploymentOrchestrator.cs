@@ -61,7 +61,7 @@ public sealed class TemplateDeploymentOrchestrator(
         {
             resource.Id = new TemplateGenericProperty<string>
             {
-                Value = $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}/providers/{resource.Type}/{resource.Name}"
+                Value = $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resourceGroupIdentifier}/providers/{resource.Type.Value}/{resource.Name.Value}"
             };
         }
 
@@ -96,14 +96,14 @@ public sealed class TemplateDeploymentOrchestrator(
             {
                 resource.Id = new TemplateGenericProperty<string>
                 {
-                    Value = $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resource.Name}"
+                    Value = $"/subscriptions/{subscriptionIdentifier}/resourceGroups/{resource.Name.Value}"
                 };
             }
             else
             {
                 resource.Id = new TemplateGenericProperty<string>
                 {
-                    Value = $"/subscriptions/{subscriptionIdentifier}/providers/{resource.Type}/{resource.Name}"
+                    Value = $"/subscriptions/{subscriptionIdentifier}/providers/{resource.Type.Value}/{resource.Name.Value}"
                 };
             }
         }
@@ -135,7 +135,7 @@ public sealed class TemplateDeploymentOrchestrator(
         {
             resource.Id = new TemplateGenericProperty<string>
             {
-                Value = $"/providers/{resource.Type}/{resource.Name}"
+                Value = $"/providers/{resource.Type.Value}/{resource.Name.Value}"
             };
         }
 
@@ -166,7 +166,7 @@ public sealed class TemplateDeploymentOrchestrator(
         {
             resource.Id = new TemplateGenericProperty<string>
             {
-                Value = $"/providers/{resource.Type}/{resource.Name}"
+                Value = $"/providers/{resource.Type.Value}/{resource.Name.Value}"
             };
         }
 
