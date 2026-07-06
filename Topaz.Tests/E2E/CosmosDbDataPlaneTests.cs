@@ -800,4 +800,82 @@ public class CosmosDbDataPlaneTests
         Assert.That(allDocs.Count, Is.EqualTo(20));
         Assert.That(pageCount, Is.GreaterThanOrEqualTo(4));
     }
+
+    [Test]
+    public async Task Query_GroupBy_Count_ReturnsOneRowPerGroup()
+    {
+        var (_, key) = await SeedQueryContainer("q-grp-cnt-db", "q-grp-cnt-coll",
+        [
+            new { id = "g1", pk = "p1", category = "A" },
+            new { id = "g2", pk = "p2", category = "B" },
+            new { id = "g3", pk = "p3", category = "A" },
+            new { id = "g4", pk = "p4", category = "B" },
+            new { id = "g5", pk = "p5", category = "C" }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-grp-cnt-db", "q-grp-cnt-coll",
+            "SELECT c.category, COUNT(1) AS cnt FROM c GROUP BY c.category");
+        var docs = result["Documents"]!.AsArray();
+        Assert.That(docs.Count, Is.EqualTo(3));
+
+        var byCategory = docs
+            .Select(d => (d!["category"]!.GetValue<string>(), (int)d["cnt"]!.GetValue<double>()))
+            .OrderBy(t => t.Item1)
+            .ToArray();
+        Assert.That(byCategory[0], Is.EqualTo(("A", 2)));
+        Assert.That(byCategory[1], Is.EqualTo(("B", 2)));
+        Assert.That(byCategory[2], Is.EqualTo(("C", 1)));
+    }
+
+    [Test]
+    public async Task Query_GroupBy_SumAndAvg_ReturnsCorrectAggregates()
+    {
+        var (_, key) = await SeedQueryContainer("q-grp-sum-db", "q-grp-sum-coll",
+        [
+            new { id = "s1", pk = "p1", category = "X", amount = 10 },
+            new { id = "s2", pk = "p2", category = "X", amount = 20 },
+            new { id = "s3", pk = "p3", category = "Y", amount = 5  }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-grp-sum-db", "q-grp-sum-coll",
+            "SELECT c.category, SUM(c.amount) AS total, AVG(c.amount) AS avg FROM c GROUP BY c.category");
+        var docs = result["Documents"]!.AsArray();
+        Assert.That(docs.Count, Is.EqualTo(2));
+
+        var x = docs.First(d => d!["category"]!.GetValue<string>() == "X")!;
+        Assert.That(x["total"]!.GetValue<double>(), Is.EqualTo(30));
+        Assert.That(x["avg"]!.GetValue<double>(), Is.EqualTo(15));
+
+        var y = docs.First(d => d!["category"]!.GetValue<string>() == "Y")!;
+        Assert.That(y["total"]!.GetValue<double>(), Is.EqualTo(5));
+    }
+
+    [Test]
+    public async Task Query_GroupBy_MinMax_ReturnsCorrectAggregates()
+    {
+        var (_, key) = await SeedQueryContainer("q-grp-mm-db", "q-grp-mm-coll",
+        [
+            new { id = "m1", pk = "p1", category = "A", value = 3 },
+            new { id = "m2", pk = "p2", category = "A", value = 7 },
+            new { id = "m3", pk = "p3", category = "A", value = 5 }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-grp-mm-db", "q-grp-mm-coll",
+            "SELECT c.category, MIN(c.value) AS lo, MAX(c.value) AS hi FROM c GROUP BY c.category");
+        var docs = result["Documents"]!.AsArray();
+        Assert.That(docs.Count, Is.EqualTo(1));
+        Assert.That(docs[0]!["lo"]!.GetValue<double>(), Is.EqualTo(3));
+        Assert.That(docs[0]!["hi"]!.GetValue<double>(), Is.EqualTo(7));
+    }
+
+    [Test]
+    public async Task Query_GroupBy_EmptyCollection_ReturnsEmpty()
+    {
+        var (_, key) = await SeedQueryContainer("q-grp-empty-db", "q-grp-empty-coll", []);
+
+        var result = await ExecuteQueryAsync(key, "q-grp-empty-db", "q-grp-empty-coll",
+            "SELECT c.category, COUNT(1) AS cnt FROM c GROUP BY c.category");
+        var docs = result["Documents"]!.AsArray();
+        Assert.That(docs.Count, Is.EqualTo(0));
+    }
 }

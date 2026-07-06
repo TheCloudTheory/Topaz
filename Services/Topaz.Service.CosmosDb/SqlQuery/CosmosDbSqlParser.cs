@@ -5,7 +5,7 @@ namespace Topaz.Service.CosmosDb.SqlQuery;
 
 internal enum TokenKind
 {
-    Select, From, Where, Order, By, Asc, Desc, Offset, Limit,
+    Select, From, Where, Group, Order, By, Asc, Desc, Offset, Limit,
     And, Or, Not, In, Between, Value,
     Count, Sum, Min, Max, Avg,
     IsNull, IsDefined, IsString, IsNumber, IsBool,
@@ -29,6 +29,7 @@ internal sealed class ParsedQuery
     internal SelectClause Select { get; init; } = default!;
     internal string FromAlias { get; init; } = "c";
     internal SqlExpression? Where { get; init; }
+    internal string? GroupByField { get; init; }
     internal string? OrderByPath { get; init; }
     internal bool OrderByAscending { get; init; } = true;
     internal int Offset { get; init; }
@@ -201,6 +202,14 @@ internal sealed class CosmosDbSqlParser
             where = ParseOr();
         }
 
+        string? groupByField = null;
+        if (CurrentIs(TokenKind.Group))
+        {
+            Advance();
+            Expect(TokenKind.By);
+            groupByField = ParsePropertyPath();
+        }
+
         string? orderByPath = null;
         var orderByAsc = true;
         if (CurrentIs(TokenKind.Order))
@@ -232,6 +241,7 @@ internal sealed class CosmosDbSqlParser
             Select = select,
             FromAlias = _fromAlias,
             Where = where,
+            GroupByField = groupByField,
             OrderByPath = orderByPath,
             OrderByAscending = orderByAsc,
             Offset = offset,
@@ -339,7 +349,7 @@ internal sealed class CosmosDbSqlParser
         while (CurrentIs(TokenKind.Dot))
         {
             Advance();
-            parts.Add(ExpectIdentifier());
+            parts.Add(ExpectIdentifierOrKeyword());
         }
 
         // Strip the leading alias segment (always present for valid Cosmos DB SQL)
@@ -563,6 +573,7 @@ internal sealed class CosmosDbSqlParser
             "SELECT"     => new Token(TokenKind.Select,    word),
             "FROM"       => new Token(TokenKind.From,      word),
             "WHERE"      => new Token(TokenKind.Where,     word),
+            "GROUP"      => new Token(TokenKind.Group,     word),
             "ORDER"      => new Token(TokenKind.Order,     word),
             "BY"         => new Token(TokenKind.By,        word),
             "ASC"        => new Token(TokenKind.Asc,       word),
@@ -610,6 +621,17 @@ internal sealed class CosmosDbSqlParser
         if (t.Kind != TokenKind.Identifier)
             throw new InvalidOperationException(
                 $"Expected identifier but got '{t.Text}' at token position {_pos}");
+        Advance();
+        return t.Text;
+    }
+
+    // Like ExpectIdentifier, but also accepts keyword tokens used as field names (e.g. c.value, c.avg)
+    private string ExpectIdentifierOrKeyword()
+    {
+        var t = Current();
+        if (t.Kind == TokenKind.Eof)
+            throw new InvalidOperationException(
+                $"Expected identifier but got EOF at token position {_pos}");
         Advance();
         return t.Text;
     }

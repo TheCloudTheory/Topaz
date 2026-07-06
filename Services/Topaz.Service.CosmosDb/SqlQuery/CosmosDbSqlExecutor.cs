@@ -116,7 +116,44 @@ internal sealed class CosmosDbSqlExecutor
             ? docs
             : docs.Where(d => query.Where.Evaluate(d, parameters));
 
-        // 2. Aggregate mode — compute and return immediately (no pagination)
+        // 2. GROUP BY — partition then aggregate per group
+        if (query.GroupByField != null)
+        {
+            var groupField = query.GroupByField;
+            var groups = filtered
+                .GroupBy(d => GetProperty(d, groupField)?.ToJsonString() ?? "null")
+                .OrderBy(g => g.Key, StringComparer.Ordinal)
+                .ToArray();
+
+            var groupResults = new List<JsonNode>();
+            foreach (var group in groups)
+            {
+                var groupDocs = group.ToArray();
+                var row = new JsonObject();
+
+                // Inject the GROUP BY field value
+                var groupKeyNode = GetProperty(groupDocs[0], groupField);
+                var fieldName = groupField.Contains('.')
+                    ? groupField[(groupField.LastIndexOf('.') + 1)..]
+                    : groupField;
+                row[fieldName] = groupKeyNode?.DeepClone();
+
+                // Compute each aggregate
+                var idx = 1;
+                foreach (var item in query.Select.Items)
+                {
+                    if (item is not AggregateSelectItem agg) continue;
+                    var key = agg.Alias ?? $"${idx++}";
+                    row[key] = JsonValue.Create(ComputeAggregate(groupDocs, agg));
+                }
+
+                groupResults.Add(row);
+            }
+
+            return new ExecutionResult([.. groupResults], null);
+        }
+
+        // 3. Aggregate mode — compute and return immediately (no pagination)
         if (query.Select.Items.OfType<AggregateSelectItem>().Any())
         {
             var all = filtered.ToArray();
@@ -124,7 +161,7 @@ internal sealed class CosmosDbSqlExecutor
             return new ExecutionResult(results, null);
         }
 
-        // 3. Sort
+        // 4. Sort
         if (query.OrderByPath != null)
         {
             var path = query.OrderByPath;
@@ -133,7 +170,7 @@ internal sealed class CosmosDbSqlExecutor
                 : filtered.OrderByDescending(d => GetComparableValue(GetProperty(d, path)), NullFirstComparer.Instance);
         }
 
-        // 4. SQL-level OFFSET/LIMIT takes precedence over HTTP pagination
+        // 5. SQL-level OFFSET/LIMIT takes precedence over HTTP pagination
         if (query.Offset > 0 || query.Limit.HasValue)
         {
             filtered = filtered.Skip(query.Offset);
@@ -144,12 +181,12 @@ internal sealed class CosmosDbSqlExecutor
             return new ExecutionResult(limitedResults, null);
         }
 
-        // 5. HTTP continuation-token pagination
+        // 6. HTTP continuation-token pagination
         var filteredArray = filtered.ToArray();
         var page = filteredArray.Skip(skip).Take(maxCount).ToArray();
         int? nextSkip = (skip + page.Length < filteredArray.Length) ? skip + page.Length : null;
 
-        // 6. Project
+        // 7. Project
         var projected = page.Select(d => Project(d, query.Select)).ToArray();
         return new ExecutionResult(projected, nextSkip);
     }
