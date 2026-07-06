@@ -15,6 +15,7 @@ using Topaz.Service.ServiceBus;
 using Topaz.Service.Sql;
 using Topaz.Service.Storage;
 using Topaz.Service.VirtualNetwork;
+using Topaz.Service.ResourceGroup;
 using Topaz.Service.Shared;
 using Topaz.Service.Shared.Domain;
 using Topaz.Service.Subscription.Models.Responses;
@@ -50,6 +51,7 @@ internal sealed class ListSubscriptionResourcesEndpoint(Pipeline eventPipeline, 
     private readonly VirtualNetworkControlPlane _vnetControlPlane = VirtualNetworkControlPlane.New(eventPipeline, logger);
     private readonly NetworkInterfaceControlPlane _nicControlPlane = NetworkInterfaceControlPlane.New(eventPipeline, logger);
     private readonly PublicIpAddressControlPlane _pipControlPlane = PublicIpAddressControlPlane.New(eventPipeline, logger);
+    private readonly ResourceGroupControlPlane _rgControlPlane = ResourceGroupControlPlane.New(eventPipeline, logger);
 
     public string? ProviderNamespace => null;
 
@@ -94,6 +96,7 @@ internal sealed class ListSubscriptionResourcesEndpoint(Pipeline eventPipeline, 
                 "Microsoft.Network/virtualNetworks" => Map(_vnetControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
                 "Microsoft.Network/networkInterfaces" => Map(_nicControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
                 "Microsoft.Network/publicIPAddresses" => Map(_pipControlPlane.ListBySubscription(subscriptionIdentifier).Resource ?? []),
+                "Microsoft.Resources/resourceGroups" => Map(_rgControlPlane.List(subscriptionIdentifier).resources),
                 _ => []
             };
 
