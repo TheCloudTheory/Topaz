@@ -66,10 +66,12 @@ internal sealed class ResourceManagerControlPlane(
         var subscriptionMetadata = new SubscriptionMetadata(subscriptionIdentifier);
         var resourceGroupMetadata =
             new ResourceGroupMetadata(subscriptionIdentifier, resourceGroupIdentifier, location);
+        var tenantMetadata = new TenantMetadata();
         var metadata = new DeploymentMetadata
         {
             { DeploymentMetadata.SubscriptionKey, JToken.Parse(subscriptionMetadata.ToString()) },
-            { DeploymentMetadata.ResourceGroupKey,  JToken.Parse(resourceGroupMetadata.ToString())}
+            { DeploymentMetadata.ResourceGroupKey,  JToken.Parse(resourceGroupMetadata.ToString())},
+            { DeploymentMetadata.TenantKey, JToken.Parse(tenantMetadata.ToString()) }
         };
 
         var metadataInsensitive =
@@ -209,10 +211,12 @@ internal sealed class ResourceManagerControlPlane(
             var subscriptionMetadata = new SubscriptionMetadata(subscriptionIdentifier);
             var resourceGroupMetadata =
                 new ResourceGroupMetadata(subscriptionIdentifier, resourceGroupIdentifier, location);
+            var tenantMetadata = new TenantMetadata();
             var metadata = new DeploymentMetadata
             {
                 { DeploymentMetadata.SubscriptionKey, JToken.Parse(subscriptionMetadata.ToString()) },
-                { DeploymentMetadata.ResourceGroupKey, JToken.Parse(resourceGroupMetadata.ToString()) }
+                { DeploymentMetadata.ResourceGroupKey, JToken.Parse(resourceGroupMetadata.ToString()) },
+                { DeploymentMetadata.TenantKey, JToken.Parse(tenantMetadata.ToString()) }
             };
             var metadataInsensitive =
                 metadata.ToInsensitiveDictionary(meta => meta.Key, meta => meta.Value);
@@ -258,9 +262,11 @@ internal sealed class ResourceManagerControlPlane(
             var mode = request.Properties?.Mode ?? "Incremental";
 
             var subscriptionMetadata = new SubscriptionMetadata(subscriptionIdentifier);
+            var tenantMetadata = new TenantMetadata();
             var metadata = new DeploymentMetadata
             {
-                { DeploymentMetadata.SubscriptionKey, JToken.Parse(subscriptionMetadata.ToString()) }
+                { DeploymentMetadata.SubscriptionKey, JToken.Parse(subscriptionMetadata.ToString()) },
+                { DeploymentMetadata.TenantKey, JToken.Parse(tenantMetadata.ToString()) }
             };
             var metadataInsensitive =
                 metadata.ToInsensitiveDictionary(meta => meta.Key, meta => meta.Value);

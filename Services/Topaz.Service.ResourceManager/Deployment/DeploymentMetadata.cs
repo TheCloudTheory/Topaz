@@ -10,4 +10,5 @@ public sealed class DeploymentMetadata : Dictionary<string, JToken>
     public const string SubscriptionKey = "subscription";
     public const string ResourceGroupKey = "resourceGroup";
     public const string LocationKey = "location";
+    public const string TenantKey = "TENANT";
 }

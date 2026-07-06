@@ -563,7 +563,8 @@ public sealed class TemplateDeploymentOrchestrator(
             var innerMetadataDict = new Dictionary<string, JToken>
             {
                 { DeploymentMetadata.SubscriptionKey, JToken.Parse(subscriptionMetadata.ToString()) },
-                { DeploymentMetadata.ResourceGroupKey, JToken.Parse(resourceGroupMetadata.ToString()) }
+                { DeploymentMetadata.ResourceGroupKey, JToken.Parse(resourceGroupMetadata.ToString()) },
+                { DeploymentMetadata.TenantKey, JToken.Parse(new TenantMetadata().ToString()) }
             };
             var innerMetadata = innerMetadataDict.ToInsensitiveDictionary(x => x.Key, x => x.Value);
 
