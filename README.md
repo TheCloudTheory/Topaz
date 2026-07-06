@@ -93,6 +93,7 @@ Quick onboarding path:
 - **Azure CLI** — [Azure CLI integration guide](https://topaz.thecloudtheory.com/docs/azure-cli-integration/)
 - **Azure PowerShell** — [Azure PowerShell integration guide](https://topaz.thecloudtheory.com/docs/azure-powershell-integration/)
 - **Azure SDKs (.NET, Python, Java, JS)** — [Getting started](https://topaz.thecloudtheory.com/docs/intro/)
+- **VS Code** — [VS Code extension](https://github.com/TheCloudTheory/topaz-vscode-extension) (experimental, requires Topaz 1.9+)
 
 See the [documentation](https://topaz.thecloudtheory.com/) for connection strings, DNS setup, and service-specific quickstarts.
 
