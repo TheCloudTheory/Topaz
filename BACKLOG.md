@@ -190,16 +190,6 @@ TODO: Azure Cosmos DB: SQL Container — container-level RBAC
 -->
 
 <!--
-TODO: Azure Cosmos DB: SQL query — GROUP BY aggregates
-  Extend the SQL query engine (v1.7-beta) to support GROUP BY on a single field:
-  - SELECT c.category, COUNT(1) FROM c GROUP BY c.category
-  - Partition filtered documents by the specified field before applying aggregate
-    functions (COUNT, SUM, MIN, MAX, AVG) and return one result row per unique value.
-  milestone: v1.9-preview
-  labels: enhancement, cosmos-db
--->
-
-<!--
 TODO: Azure Cosmos DB: SQL query — ORDER BY on aggregate results
   Extend the SQL query engine (v1.7-beta) to support ORDER BY applied to aggregate
   output columns:

@@ -297,7 +297,7 @@ internal sealed class CosmosDbSqlParser
         if (CurrentIs(TokenKind.As))
         {
             Advance();
-            alias = ExpectIdentifier();
+            alias = ExpectIdentifierOrKeyword();
         }
 
         return new PropertySelectItem { PropertyPath = path, Alias = alias };
@@ -333,7 +333,7 @@ internal sealed class CosmosDbSqlParser
         if (CurrentIs(TokenKind.As))
         {
             Advance();
-            alias = ExpectIdentifier();
+            alias = ExpectIdentifierOrKeyword();
         }
 
         return new AggregateSelectItem { Function = fn, PropertyPath = propertyPath, Alias = alias };
