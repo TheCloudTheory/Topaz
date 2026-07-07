@@ -1,6 +1,6 @@
 ---
 slug: 15-months-building-oss-with-and-without-ai
-title: "15 months of building OSS software — with and without AI"
+title: "15 months of building OSS software - with and without AI"
 description: A retrospective on building Topaz, a local Azure emulator, over 15 months. What LLMs actually helped with, where they fell short, and why affordable models are still sophisticated code generators rather than engineers.
 keywords: [llm development, ai coding, oss development ai, copilot coding, claude coding, local azure emulator, topaz, ai software engineering]
 authors: kamilmrzyglod
@@ -11,7 +11,7 @@ When I started working on Topaz 15 months ago (I pushed the first commit in the 
 
 {/* truncate */}
 
-## April 2025 — warming up
+## April 2025 - warming up
 
 I decided to start working on Topaz as a challenge. It was a time when I was heavily involved in an AWS-based project, where I was able to mock the underlying infrastructure not by writing the mocks myself — I discovered LocalStack and quickly fell in love with it. Local emulation of AWS infrastructure helped me test my changes quickly, with minimal effort and, what's the most important, without involvement from the infra team. I asked myself: "Why we don't have a similar platform for Azure?". Sure, there was Azurite, Service Bus Emulator, Cosmos DB Emulator — that wasn't the same though. No single binary, no unified interface — it was (and still is) hardly what's achievable in 15 minutes using LocalStack.
 
@@ -32,7 +32,7 @@ With a right approach I was able to produce all the necessary code in a matter o
 
 There was however one more challenge, which none of the used models could solve — AMQP implementation in Topaz. The initial version was done 100% manually based on the AMQP protocol spec and AMQPNetLite examples, which, to be fair, were far from ideal. Event Hub implementation worked so-so, but Service Bus interface was buggy and missed many details. Any try to straighten it with LLM was a complete miss — models were hallucinating as hell, proposing non-existent methods or breaking the protocol specification. I decided to postpone it for the future and focus on broadening the catalogue of supported services and features (e.g. adding support for Azure Resource Manager deployments).
 
-## Ramping up efforts (January — April 2026)
+## Ramping up efforts (January - April 2026)
 
 For several weeks Topaz was not getting lots of attention from myself, mostly because of other projects and initiatives I was involved in. However, as I was about to cover for a colleague who wasn't able to attend his talk during AzureDay 2026, I wanted to do a couple of additional Proof-of-Concepts. I proposed a talk about Topaz during CFP, so it made sense to make meaningful improvements, even if they would be just for the sake of the conference. This is where the initial versions of new features were added:
 - RBAC support
@@ -40,7 +40,7 @@ For several weeks Topaz was not getting lots of attention from myself, mostly be
 
 I was still hesitant to use LLMs during that period, mostly because they lacked the quality to do the job and follow the rules. There was something though, which started to change the game — it was possible to quickly analyze and challenge ideas. Preparing boilerplate code was also easier, quicker and more polished. I again gained time to focus on the hard stuff because I was able to offload the boring things (setting up new services, writing more test cases, generating docs) to a model.
 
-## Accelerating (May 2026 — now)
+## Accelerating (May 2026 - now)
 
 During the last couple of months I've given lots of thought regarding which model, which setting and which approach suits me the most. I was using various models, different thinking effort and testing smaller and bigger context windows. Interesting thing? For over a month and a half I am using Claude Sonnet 4.6 with low thinking effort with really good results. Smaller models (like Haiku) are unable to grasp the architecture and "feel" the conventions. Bigger models are simply overkill for most of the tasks. Sonnet 4.6 with medium / high thinking effort simply overthinks. My sweet spot is a "capable model which just does things instead of thinking about doing".
 
@@ -59,16 +59,16 @@ Still, unique features, core logic, low-level patterns are not worth being gener
 By incorporating LLMs and coding assistants in Topaz, I was able to deeply test various approaches and patterns and find the one, which fits me the most. Let's summarize them in detail.
 
 ### Using "Plan" mode instead of pure agentic approach
-I would not say that using "Plan" mode is a jack-of-all-trades when it comes to implementing a polished solution, but it definitely helps you catch all the strange decisions a model may make. From the credits-spent POV I don't feel it changes anything - yeah, the model will follow the plan but the plan needs to be inferred from the context. 
+I would not say that using "Plan" mode is a silver bullet when it comes to implementing a polished solution, but it definitely helps you catch all the strange decisions a model may make. From the credits-spent POV I don't feel it changes anything - yeah, the model will follow the plan but the plan needs to be inferred from the context. I use it for larger tasks where the blast radius of a wrong decision is high.
 
 ### Reasoning effort just bloats the context window
-The more LLM thinks, to more information it tries to fetch and more options it tries to consider. I rarely expect a model to present me all the possibilities. Most of the really heavy queries I faced were caused by LLM overthinking and trying to find a golden solution, which was never expected.
-
-### KISS
-Yes, the old-and-gold IT rule of keeping thing simple is still valid. Do things piece by piece, expect simplicity, avoid elaborating too much. I know that models are capable of writing poems - the thing is I don't want them.
+The more LLM thinks, the more information it tries to fetch and more options it tries to consider. I rarely expect a model to present me all the possibilities. Most of the really heavy queries I faced were caused by LLM overthinking and trying to find a golden solution, which was never expected.
 
 ### Introduce a harness via test suite
-As of now, Topaz has over 1500 tests running on daily basis. Anything LLM implements can be automatically validated with little effort. A model can also auto-validate their approach if needed thought there's a catch - it all depends on a scenario. In more sophisticated cases, which require carefully tracing that actually happened, LLMs tend to get lost. Too much context, too many conventions, too specific problem. A human intervention is still part of the loop.
+As of now, Topaz has over 1500 tests running on a daily basis. Anything LLM implements can be automatically validated with little effort. A model can also auto-validate their approach if needed though there's a catch - it all depends on a scenario. In more sophisticated cases, which require carefully tracing that actually happened, LLMs tend to get lost. Too much context, too many conventions, too specific problem. A human intervention is still part of the loop.
+
+### KISS
+Yes, the tried and true IT rule of keeping things simple is still valid. Do things piece by piece, expect simplicity, avoid elaborating too much. I know that models are capable of writing poems - the thing is I don't want them.
 
 ## Conclusions
 
