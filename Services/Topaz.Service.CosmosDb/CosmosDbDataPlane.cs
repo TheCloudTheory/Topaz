@@ -19,13 +19,18 @@ namespace Topaz.Service.CosmosDb;
 /// (e.g. <c>myaccount</c> from <c>myaccount.documents.topaz.local.dev:8895</c>) and
 /// looked up in the global DNS registry.
 /// </summary>
-internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider, ITopazLogger logger)
+internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider, ITopazLogger logger) : ICosmosDbDataPlane
 {
     private const string SqlDatabasesSubresource = "sqldatabases";
     private const string SqlContainersSubresource = "sqlcontainers";
 
     private static string SqlContainerParentId(string accountName, string databaseName) =>
         $"{accountName}/{SqlDatabasesSubresource}/{databaseName}";
+
+    DataPlaneOperationResult<SqlDatabaseInnerResource[]> ICosmosDbDataPlane.ListDatabases(CosmosDbAccountContext ctx) => ListDatabases(ctx);
+    DataPlaneOperationResult<SqlContainerInnerResource[]> ICosmosDbDataPlane.ListCollections(CosmosDbAccountContext ctx, string databaseName) => ListCollections(ctx, databaseName);
+    DataPlaneOperationResult<JsonObject[]> ICosmosDbDataPlane.ListDocuments(CosmosDbAccountContext ctx, string databaseName, string collectionName) => ListDocuments(ctx, databaseName, collectionName);
+    DataPlaneOperationResult ICosmosDbDataPlane.DeleteDocument(CosmosDbAccountContext ctx, string databaseName, string collectionName, string docId, string partitionKeyHeader, string? ifMatchEtag) => DeleteDocument(ctx, databaseName, collectionName, docId, partitionKeyHeader, ifMatchEtag);
 
     /// <summary>
     /// Resolves the Cosmos DB account associated with the incoming request.
@@ -131,7 +136,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     internal DataPlaneOperationResult<SqlDatabaseInnerResource[]> ListDatabases(CosmosDbAccountContext ctx)
     {
         var databases = provider.ListSubresourcesAs<SqlDatabaseResource>(ctx.Sub, ctx.Rg, ctx.Account.Name, SqlDatabasesSubresource);
-        return new DataPlaneOperationResult<SqlDatabaseInnerResource[]>(OperationResult.Success, databases.Select(d => d.Properties.Resource).ToArray(), null, null);
+        return new DataPlaneOperationResult<SqlDatabaseInnerResource[]>(OperationResult.Success, databases.Where(d => d.Properties?.Resource != null).Select(d => d.Properties.Resource).ToArray(), null, null);
     }
 
     /// <summary>
@@ -344,7 +349,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
 
         var parentId = SqlContainerParentId(ctx.Account.Name, databaseName);
         var containers = provider.ListSubresourcesAs<SqlContainerResource>(ctx.Sub, ctx.Rg, parentId, SqlContainersSubresource);
-        return new DataPlaneOperationResult<SqlContainerInnerResource[]>(OperationResult.Success, containers.Select(c => c.Properties.Resource).ToArray(), null, null);
+        return new DataPlaneOperationResult<SqlContainerInnerResource[]>(OperationResult.Success, containers.Where(c => c.Properties?.Resource != null).Select(c => c.Properties.Resource).ToArray(), null, null);
     }
 
     private static string DocFileName(string docId) =>
@@ -550,10 +555,10 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
 
         var doc = JsonNode.Parse(File.ReadAllText(filePath))!.AsObject();
 
-        // Validate partition key header
+        // Validate partition key header — skip when header is absent (e.g. internal callers)
         var headerPkValue = ParsePartitionKeyHeader(partitionKeyHeader);
         var storedPkValue = ExtractPartitionKeyValue(doc, container.Properties.Resource);
-        if (storedPkValue != null && headerPkValue != storedPkValue)
+        if (storedPkValue != null && headerPkValue != null && headerPkValue != storedPkValue)
             return new DataPlaneOperationResult(OperationResult.BadRequest,
                 "The partition key value in the request header does not match the stored document.", "BadRequest");
 

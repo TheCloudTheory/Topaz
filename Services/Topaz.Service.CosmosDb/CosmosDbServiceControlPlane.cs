@@ -16,7 +16,7 @@ namespace Topaz.Service.CosmosDb;
 internal sealed class CosmosDbServiceControlPlane(
     Pipeline eventPipeline,
     DatabaseAccountResourceProvider provider,
-    ITopazLogger logger) : IControlPlane
+    ITopazLogger logger) : IControlPlane, ICosmosDbControlPlane
 {
     private const string DatabaseAccountNotFoundCode = "DatabaseAccountNotFound";
     private const string DatabaseAccountNotFoundMessageTemplate = "Database account '{0}' could not be found.";
@@ -154,6 +154,9 @@ internal sealed class CosmosDbServiceControlPlane(
 
         return new ControlPlaneOperationResult<DatabaseAccountResource[]>(OperationResult.Success, resources, null, null);
     }
+
+    ControlPlaneOperationResult<DatabaseAccountResource[]> ICosmosDbControlPlane.ListBySubscription(SubscriptionIdentifier subscriptionIdentifier) =>
+        ListBySubscription(subscriptionIdentifier);
 
     public ControlPlaneOperationResult<SqlDatabaseResource> CreateOrUpdateSqlDatabase(
         SubscriptionIdentifier subscriptionIdentifier,

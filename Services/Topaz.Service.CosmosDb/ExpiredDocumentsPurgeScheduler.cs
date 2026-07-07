@@ -5,20 +5,45 @@ using Topaz.Shared;
 
 namespace Topaz.Service.CosmosDb;
 
-internal sealed class ExpiredDocumentsPurgeScheduler(Pipeline eventPipeline, TimeSpan interval, ITopazLogger logger) : ITopazBackgroundService
+internal sealed class ExpiredDocumentsPurgeScheduler : ITopazBackgroundService
 {
-    private readonly CosmosDbDataPlane _dataPlane = new(new DatabaseAccountResourceProvider(logger), logger);
-    private readonly CosmosDbServiceControlPlane _controlPlane = CosmosDbServiceControlPlane.New(eventPipeline, logger);
-    private readonly SubscriptionControlPlane _subscriptionControlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
+    private readonly ICosmosDbDataPlane _dataPlane;
+    private readonly ICosmosDbControlPlane _controlPlane;
+    private readonly ISubscriptionLister _subscriptionControlPlane;
+    private readonly ITopazLogger _logger;
+    private readonly TimeSpan _interval;
+
+    public ExpiredDocumentsPurgeScheduler(Pipeline eventPipeline, TimeSpan interval, ITopazLogger logger)
+    {
+        _dataPlane = new CosmosDbDataPlane(new DatabaseAccountResourceProvider(logger), logger);
+        _controlPlane = CosmosDbServiceControlPlane.New(eventPipeline, logger);
+        _subscriptionControlPlane = SubscriptionControlPlane.New(eventPipeline, logger);
+        _logger = logger;
+        _interval = interval;
+    }
+
+    internal ExpiredDocumentsPurgeScheduler(
+        ICosmosDbDataPlane dataPlane,
+        ICosmosDbControlPlane controlPlane,
+        ISubscriptionLister subscriptionLister,
+        ITopazLogger logger,
+        TimeSpan interval)
+    {
+        _dataPlane = dataPlane;
+        _controlPlane = controlPlane;
+        _subscriptionControlPlane = subscriptionLister;
+        _logger = logger;
+        _interval = interval;
+    }
     
-    public string Name => $"Cosmos DB — expired documents purge (interval: {interval})";
+    public string Name => $"Cosmos DB — expired documents purge (interval: {_interval})";
 
     public Task ScanAndUpdateAsync()
     {
         var subscriptions = _subscriptionControlPlane.List();
         if (subscriptions.Resource == null)
         {
-            logger.LogDebug(nameof(ExpiredDocumentsPurgeScheduler), nameof(ScanAndUpdateAsync), "No subscriptions found");
+            _logger.LogDebug(nameof(ExpiredDocumentsPurgeScheduler), nameof(ScanAndUpdateAsync), "No subscriptions found");
             return Task.CompletedTask;    
         }
         
@@ -30,7 +55,7 @@ internal sealed class ExpiredDocumentsPurgeScheduler(Pipeline eventPipeline, Tim
 
             if (accounts.Resource == null)
             {
-                logger.LogDebug(nameof(ExpiredDocumentsPurgeScheduler), nameof(ScanAndUpdateAsync), "No accounts found");
+                _logger.LogDebug(nameof(ExpiredDocumentsPurgeScheduler), nameof(ScanAndUpdateAsync), "No accounts found");
                 continue;
             }
 
@@ -41,7 +66,7 @@ internal sealed class ExpiredDocumentsPurgeScheduler(Pipeline eventPipeline, Tim
                 
                 if (databases.Resource == null)
                 {
-                    logger.LogDebug(nameof(ExpiredDocumentsPurgeScheduler), nameof(ScanAndUpdateAsync), "No databases found");
+                    _logger.LogDebug(nameof(ExpiredDocumentsPurgeScheduler), nameof(ScanAndUpdateAsync), "No databases found");
                     continue;
                 }
                 
@@ -51,7 +76,7 @@ internal sealed class ExpiredDocumentsPurgeScheduler(Pipeline eventPipeline, Tim
                     
                     if (containers.Resource == null)
                     {
-                        logger.LogDebug(nameof(ExpiredDocumentsPurgeScheduler), nameof(ScanAndUpdateAsync), "No containers found");
+                        _logger.LogDebug(nameof(ExpiredDocumentsPurgeScheduler), nameof(ScanAndUpdateAsync), "No containers found");
                         continue;   
                     }
 
@@ -61,7 +86,7 @@ internal sealed class ExpiredDocumentsPurgeScheduler(Pipeline eventPipeline, Tim
                         
                         if (documents.Resource == null)
                         {
-                            logger.LogDebug(nameof(ExpiredDocumentsPurgeScheduler), nameof(ScanAndUpdateAsync), "No documents found");
+                            _logger.LogDebug(nameof(ExpiredDocumentsPurgeScheduler), nameof(ScanAndUpdateAsync), "No documents found");
                             continue;
                         }
                         
@@ -82,14 +107,14 @@ internal sealed class ExpiredDocumentsPurgeScheduler(Pipeline eventPipeline, Tim
                         var documentsWithTtl = documents.Resource.Where(d => d["ttl"] != null);
                         foreach (var document in documentsWithTtl)
                         {
-                            if (!document.ContainsKey("ttl") || !(document["ttl"]?.GetValue<int?>() > 0)) continue;
+                            if (document["ttl"]?.GetValue<int?>() is not > 0) continue;
                             
-                            var ttl = document["ttl"]?.GetValue<int>();
-                            if (ttl <= 0)
+                            var ttl = document["ttl"]!.GetValue<int>();
+                            var ts = document["_ts"]?.GetValue<long>() ?? 0;
+                            if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() > ts + ttl)
                             {
                                 _dataPlane.DeleteDocument(context, database.Id, container.Id, document["id"]?.ToString()!, string.Empty, null);
                             }
-
                         }
                     }
                 }
@@ -101,13 +126,13 @@ internal sealed class ExpiredDocumentsPurgeScheduler(Pipeline eventPipeline, Tim
     
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        logger.LogDebug(
+        _logger.LogDebug(
             nameof(ExpiredDocumentsPurgeScheduler),
             nameof(StartAsync),
             "Expired documents purge scheduler started (interval: {0})",
-            interval);
+            _interval);
 
-        using var timer = new PeriodicTimer(interval);
+        using var timer = new PeriodicTimer(_interval);
         try
         {
             while (await timer.WaitForNextTickAsync(cancellationToken))

@@ -8,7 +8,7 @@ using Topaz.Shared;
 
 namespace Topaz.Service.Subscription;
 
-public sealed class SubscriptionControlPlane(Pipeline eventPipeline, SubscriptionResourceProvider provider, ITopazLogger logger)
+public sealed class SubscriptionControlPlane(Pipeline eventPipeline, SubscriptionResourceProvider provider, ITopazLogger logger) : ISubscriptionLister
 {
     private const string SubscriptionNotFoundMessageTemplate = "Subscription {0} not found";
     private const string SubscriptionNotFoundCode = "SubscriptionNotFound";

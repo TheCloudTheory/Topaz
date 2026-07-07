@@ -174,14 +174,6 @@ _Implemented in v1.6-beta: `TheCloudTheory.AzureCostEstimator.Core` NuGet packag
 Implemented: SQL container control plane endpoints (Create/Update, Get, Delete, List, Get Throughput, Update Throughput) with partition key, indexing policy, unique key policy and throughput support.
 
 <!--
-TODO: Azure Cosmos DB: SQL Container — TTL enforcement
-  Background scheduler that purges expired documents from SQL containers where defaultTtl is set.
-  Prerequisite: data-plane document store (v1.7-beta).
-  milestone: v1.9-preview
-  labels: enhancement, cosmos-db
--->
-
-<!--
 TODO: Azure Cosmos DB: SQL Container — container-level RBAC
   Per-container access policy enforcement integrated with the data-plane auth layer.
   Prerequisite: data-plane authentication surface (v1.7-beta).

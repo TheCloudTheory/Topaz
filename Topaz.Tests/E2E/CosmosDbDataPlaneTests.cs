@@ -5,8 +5,12 @@ using Azure.ResourceManager.CosmosDB;
 using Azure.ResourceManager.CosmosDB.Models;
 using Microsoft.Azure.Cosmos;
 using Topaz.CLI;
+using Topaz.EventPipeline;
 using Topaz.Identity;
 using Topaz.ResourceManager;
+using Topaz.Service.CosmosDb;
+using Topaz.Service.Subscription;
+using Topaz.Shared;
 
 namespace Topaz.Tests.E2E;
 
@@ -877,5 +881,60 @@ public class CosmosDbDataPlaneTests
             "SELECT c.category, COUNT(1) AS cnt FROM c GROUP BY c.category");
         var docs = result["Documents"]!.AsArray();
         Assert.That(docs.Count, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task ExpiredDocumentsPurgeScheduler_WhenDocumentTtlHasExpired_DocumentShouldBePurged()
+    {
+        // Arrange — create account, database, container via ARM so the scheduler can find them
+        var armClient = CreateArmClient();
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        var accountResult = await resourceGroup.Value.GetCosmosDBAccounts()
+            .CreateOrUpdateAsync(WaitUntil.Completed, AccountName, MinimalAccountContent());
+        var account = accountResult.Value;
+
+        var dbContent = new CosmosDBSqlDatabaseCreateOrUpdateContent(
+            AzureLocation.WestEurope,
+            new CosmosDBSqlDatabaseResourceInfo("scheduler-ttl-db"));
+        await account.GetCosmosDBSqlDatabases()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "scheduler-ttl-db", dbContent);
+
+        var containerContent = new CosmosDBSqlContainerCreateOrUpdateContent(
+            AzureLocation.WestEurope,
+            new CosmosDBSqlContainerResourceInfo("scheduler-ttl-coll")
+            {
+                PartitionKey = new CosmosDBContainerPartitionKey { Paths = { "/pk" } },
+                DefaultTtl = -1  // enable TTL on the container without a default
+            });
+        await account.GetCosmosDBSqlDatabases().Get("scheduler-ttl-db").Value
+            .GetCosmosDBSqlContainers()
+            .CreateOrUpdateAsync(WaitUntil.Completed, "scheduler-ttl-coll", containerContent);
+
+        // Insert a document with ttl=1 via the Cosmos SDK data plane
+        var keys = await account.GetKeysAsync();
+        using var cosmosClient = CreateCosmosClient(account.Data.DocumentEndpoint!, keys.Value.PrimaryMasterKey!);
+        _ownedClients.Add(cosmosClient);
+        var container = cosmosClient.GetDatabase("scheduler-ttl-db").GetContainer("scheduler-ttl-coll");
+        var doc = new { id = "expiring-doc", pk = "p1", ttl = 1 };
+        await container.CreateItemAsync(doc, new PartitionKey("p1"));
+
+        // Wait for the TTL to elapse
+        await Task.Delay(TimeSpan.FromSeconds(2));
+
+        var logger = new PrettyTopazLogger();
+        var eventPipeline = new Pipeline(logger);
+        var scheduler = new ExpiredDocumentsPurgeScheduler(
+            eventPipeline,
+            GlobalSettings.SoftDeletePurgeSchedulerInterval,
+            logger);
+
+        // Act
+        await scheduler.ScanAndUpdateAsync();
+
+        // Assert — reading the expired document should now throw NotFound
+        var ex = Assert.ThrowsAsync<CosmosException>(async () =>
+            await container.ReadItemAsync<dynamic>("expiring-doc", new PartitionKey("p1")));
+        Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
     }
 }

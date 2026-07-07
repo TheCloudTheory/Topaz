@@ -128,6 +128,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.ForwardProxy", "Topaz
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Service.AppConfiguration", "Services\Topaz.Service.AppConfiguration\Topaz.Service.AppConfiguration.csproj", "{9DC5C19C-DC79-49B4-B1B2-EA145F44DA4D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topaz.Tests.Unit", "Topaz.Tests.Unit\Topaz.Tests.Unit.csproj", "{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -780,6 +782,18 @@ Global
 		{9DC5C19C-DC79-49B4-B1B2-EA145F44DA4D}.Release|x64.Build.0 = Release|Any CPU
 		{9DC5C19C-DC79-49B4-B1B2-EA145F44DA4D}.Release|x86.ActiveCfg = Release|Any CPU
 		{9DC5C19C-DC79-49B4-B1B2-EA145F44DA4D}.Release|x86.Build.0 = Release|Any CPU
+		{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}.Debug|x64.Build.0 = Debug|Any CPU
+		{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}.Debug|x86.Build.0 = Debug|Any CPU
+		{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}.Release|x64.ActiveCfg = Release|Any CPU
+		{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}.Release|x64.Build.0 = Release|Any CPU
+		{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}.Release|x86.ActiveCfg = Release|Any CPU
+		{6ED6F1B6-42BC-409C-BBA0-4D2370A792EB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
