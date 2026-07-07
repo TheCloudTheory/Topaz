@@ -35,7 +35,10 @@ internal sealed class DeleteDocumentEndpoint : CosmosDataPlaneEndpointBase
         var partitionKeyHeader = context.Request.Headers["x-ms-documentdb-partitionkey"].ToString();
         var ifMatch = context.Request.Headers["If-Match"].ToString();
 
-        var result = _dataPlane.DeleteDocument(context, databaseName, collectionName, docId,
+        var ctx = _dataPlane.ResolveAccountContext(context);
+        if (ctx == null) { response.StatusCode = HttpStatusCode.NotFound; return; }
+
+        var result = _dataPlane.DeleteDocument(ctx, databaseName, collectionName, docId,
             partitionKeyHeader, string.IsNullOrEmpty(ifMatch) ? null : ifMatch);
 
         switch (result.Result)

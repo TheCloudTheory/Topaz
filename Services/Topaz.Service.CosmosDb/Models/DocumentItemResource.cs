@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 using Topaz.Shared;
 
 namespace Topaz.Service.CosmosDb.Models;
@@ -9,6 +10,7 @@ namespace Topaz.Service.CosmosDb.Models;
 /// Represents a Cosmos DB document item as stored on disk.
 /// The document body is arbitrary user JSON; system fields are injected alongside it.
 /// </summary>
+[UsedImplicitly]
 public sealed class DocumentItemResource
 {
     [JsonPropertyName("id")]
@@ -25,6 +27,9 @@ public sealed class DocumentItemResource
 
     [JsonPropertyName("_ts")]
     public long Timestamp { get; set; }
+    
+    [JsonPropertyName("ttl")]
+    public int? Ttl { get; set; }
 
     /// <summary>
     /// Injects system fields into an arbitrary user-supplied JSON object and returns the merged

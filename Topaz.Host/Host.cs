@@ -221,6 +221,7 @@ public class Host
                 SubscriptionControlPlane.New(_eventPipeline, _logger),
                 _logger,
                 TimeSpan.FromSeconds(30)),
+            new ExpiredDocumentsPurgeScheduler(_eventPipeline, TimeSpan.FromSeconds(60), _logger)
         };
 
         new BackgroundServiceOrchestrator(backgroundServices, _logger).StartAll(cancellationToken);

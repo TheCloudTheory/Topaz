@@ -37,4 +37,6 @@ public sealed class DatabaseAccountResource : ArmResource<DatabaseAccountResourc
     public override ResourceSku? Sku { get; init; }
     public override string? Kind { get; init; } = "GlobalDocumentDB";
     public sealed override DatabaseAccountResourceProperties Properties { get; init; }
+    
+    public ResourceGroupIdentifier GetResourceGroupIdentifier() => ResourceGroupIdentifier.From(Id.Split('/')[4]);
 }

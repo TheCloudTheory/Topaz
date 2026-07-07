@@ -28,7 +28,10 @@ internal sealed class ListDatabasesEndpoint : CosmosDataPlaneEndpointBase
     {
         if (!IsRequestAuthorized(context, response)) return;
 
-        var result = _dataPlane.ListDatabases(context);
+        var ctx = _dataPlane.ResolveAccountContext(context);
+        if (ctx == null) { response.StatusCode = HttpStatusCode.NotFound; return; }
+
+        var result = _dataPlane.ListDatabases(ctx);
         if (result.Result == OperationResult.NotFound || result.Resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;

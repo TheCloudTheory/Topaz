@@ -95,7 +95,7 @@ internal sealed class CosmosDbServiceControlPlane(
 
         if (existing != null)
         {
-            existing.Location = request.Location?.ToString() ?? existing.Location;
+            existing.Location = request.Location ?? existing.Location;
             existing.Tags = request.Tags ?? existing.Tags;
             DatabaseAccountResourceProperties.UpdateFromRequest(existing.Properties, request);
             provider.CreateOrUpdate(subscriptionIdentifier, resourceGroupIdentifier, accountName, existing);

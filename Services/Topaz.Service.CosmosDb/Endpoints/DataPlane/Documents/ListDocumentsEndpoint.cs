@@ -32,7 +32,10 @@ internal sealed class ListDocumentsEndpoint : CosmosDataPlaneEndpointBase
         var databaseName = segments[1];
         var collectionName = segments[3];
 
-        var result = _dataPlane.ListDocuments(context, databaseName, collectionName);
+        var ctx = _dataPlane.ResolveAccountContext(context);
+        if (ctx == null) { response.StatusCode = HttpStatusCode.NotFound; return; }
+
+        var result = _dataPlane.ListDocuments(ctx, databaseName, collectionName);
 
         if (result.Result == OperationResult.NotFound)
         {

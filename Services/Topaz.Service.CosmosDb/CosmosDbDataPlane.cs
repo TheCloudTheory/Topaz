@@ -56,7 +56,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         return resource;
     }
 
-    private (DatabaseAccountResource Account, SubscriptionIdentifier Sub, ResourceGroupIdentifier Rg)? ResolveAccountContext(HttpContext context)
+    internal CosmosDbAccountContext? ResolveAccountContext(HttpContext context)
     {
         var accountName = context.Request.Host.Host.Split('.')[0];
         var identifiers = GlobalDnsEntries.GetEntry(CosmosDbService.UniqueName, accountName);
@@ -67,7 +67,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
         var account = provider.GetAs<DatabaseAccountResource>(sub, rg, accountName);
         if (account == null) return null;
 
-        return (account, sub, rg);
+        return new CosmosDbAccountContext(account, sub, rg);
     }
 
     /// <summary>Creates or updates a SQL database and returns its inner resource representation.</summary>
@@ -75,7 +75,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     {
         var ctx = ResolveAccountContext(context);
         if (ctx == null) return new DataPlaneOperationResult<SqlDatabaseInnerResource>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         var request = new CreateOrUpdateSqlDatabaseRequest
         {
@@ -105,7 +105,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     {
         var ctx = ResolveAccountContext(context);
         if (ctx == null) return new DataPlaneOperationResult<SqlDatabaseInnerResource>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         var database = provider.GetSubresourceAs<SqlDatabaseResource>(sub, rg, databaseName, account.Name, SqlDatabasesSubresource);
         return database == null
@@ -118,7 +118,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     {
         var ctx = ResolveAccountContext(context);
         if (ctx == null) return new DataPlaneOperationResult(OperationResult.NotFound, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         var database = provider.GetSubresourceAs<SqlDatabaseResource>(sub, rg, databaseName, account.Name, SqlDatabasesSubresource);
         if (database == null) return new DataPlaneOperationResult(OperationResult.NotFound, $"Database '{databaseName}' not found.", "DatabaseNotFound");
@@ -128,13 +128,9 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     }
 
     /// <summary>Lists all SQL databases for the account resolved from the request host.</summary>
-    internal DataPlaneOperationResult<SqlDatabaseInnerResource[]> ListDatabases(HttpContext context)
+    internal DataPlaneOperationResult<SqlDatabaseInnerResource[]> ListDatabases(CosmosDbAccountContext ctx)
     {
-        var ctx = ResolveAccountContext(context);
-        if (ctx == null) return new DataPlaneOperationResult<SqlDatabaseInnerResource[]>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
-
-        var databases = provider.ListSubresourcesAs<SqlDatabaseResource>(sub, rg, account.Name, SqlDatabasesSubresource);
+        var databases = provider.ListSubresourcesAs<SqlDatabaseResource>(ctx.Sub, ctx.Rg, ctx.Account.Name, SqlDatabasesSubresource);
         return new DataPlaneOperationResult<SqlDatabaseInnerResource[]>(OperationResult.Success, databases.Select(d => d.Properties.Resource).ToArray(), null, null);
     }
 
@@ -202,7 +198,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     {
         var ctx = ResolveAccountContext(context);
         if (ctx == null) return new DataPlaneOperationResult<SqlContainerInnerResource>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         var database = provider.GetSubresourceAs<SqlDatabaseResource>(sub, rg, databaseName, account.Name, SqlDatabasesSubresource);
         if (database == null) return new DataPlaneOperationResult<SqlContainerInnerResource>(OperationResult.NotFound, null, $"Database '{databaseName}' not found.", "DatabaseNotFound");
@@ -239,7 +235,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     {
         var ctx = ResolveAccountContext(context);
         if (ctx == null) return new DataPlaneOperationResult<SqlContainerInnerResource>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         var parentId = SqlContainerParentId(account.Name, databaseName);
         var container = provider.GetSubresourceAs<SqlContainerResource>(sub, rg, collectionName, parentId, SqlContainersSubresource);
@@ -253,7 +249,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     {
         var ctx = ResolveAccountContext(context);
         if (ctx == null) return new DataPlaneOperationResult(OperationResult.NotFound, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         var parentId = SqlContainerParentId(account.Name, databaseName);
         var container = provider.GetSubresourceAs<SqlContainerResource>(sub, rg, collectionName, parentId, SqlContainersSubresource);
@@ -270,7 +266,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     {
         var ctx = ResolveAccountContext(context);
         if (ctx == null) return new DataPlaneOperationResult<SqlContainerInnerResource>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         var parentId = SqlContainerParentId(account.Name, databaseName);
         var existing = provider.GetSubresourceAs<SqlContainerResource>(sub, rg, collectionName, parentId, SqlContainersSubresource);
@@ -300,7 +296,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
 
         var ctx = ResolveAccountContext(context);
         if (ctx == null) return null;
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         byte[]? segmentBytes = null;
         try { segmentBytes = Convert.FromBase64String(ridSegment); }
@@ -341,17 +337,13 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     }
 
     /// <summary>Lists all collections for the given database resolved from the request host.</summary>
-    internal DataPlaneOperationResult<SqlContainerInnerResource[]> ListCollections(HttpContext context, string databaseName)
+    internal DataPlaneOperationResult<SqlContainerInnerResource[]> ListCollections(CosmosDbAccountContext ctx, string databaseName)
     {
-        var ctx = ResolveAccountContext(context);
-        if (ctx == null) return new DataPlaneOperationResult<SqlContainerInnerResource[]>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
-
-        var database = provider.GetSubresourceAs<SqlDatabaseResource>(sub, rg, databaseName, account.Name, SqlDatabasesSubresource);
+        var database = provider.GetSubresourceAs<SqlDatabaseResource>(ctx.Sub, ctx.Rg, databaseName, ctx.Account.Name, SqlDatabasesSubresource);
         if (database == null) return new DataPlaneOperationResult<SqlContainerInnerResource[]>(OperationResult.NotFound, null, $"Database '{databaseName}' not found.", "DatabaseNotFound");
 
-        var parentId = SqlContainerParentId(account.Name, databaseName);
-        var containers = provider.ListSubresourcesAs<SqlContainerResource>(sub, rg, parentId, SqlContainersSubresource);
+        var parentId = SqlContainerParentId(ctx.Account.Name, databaseName);
+        var containers = provider.ListSubresourcesAs<SqlContainerResource>(ctx.Sub, ctx.Rg, parentId, SqlContainersSubresource);
         return new DataPlaneOperationResult<SqlContainerInnerResource[]>(OperationResult.Success, containers.Select(c => c.Properties.Resource).ToArray(), null, null);
     }
 
@@ -390,7 +382,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     {
         var ctx = ResolveAccountContext(context);
         if (ctx == null) return new DataPlaneOperationResult<JsonObject>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         var parentId = SqlContainerParentId(account.Name, databaseName);
         var container = provider.GetSubresourceAs<SqlContainerResource>(sub, rg, collectionName, parentId, SqlContainersSubresource);
@@ -424,7 +416,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     {
         var ctx = ResolveAccountContext(context);
         if (ctx == null) return new DataPlaneOperationResult<JsonObject>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         var parentId = SqlContainerParentId(account.Name, databaseName);
         var container = provider.GetSubresourceAs<SqlContainerResource>(sub, rg, collectionName, parentId, SqlContainersSubresource);
@@ -454,7 +446,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     {
         var ctx = ResolveAccountContext(context);
         if (ctx == null) return new DataPlaneOperationResult<JsonObject>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         var docsDir = provider.GetDocumentDirectory(sub, rg, account.Name, databaseName, collectionName);
         var filePath = Path.Combine(docsDir, DocFileName(docId));
@@ -489,7 +481,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
     {
         var ctx = ResolveAccountContext(context);
         if (ctx == null) return new DataPlaneOperationResult<JsonObject>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         var docsDir = provider.GetDocumentDirectory(sub, rg, account.Name, databaseName, collectionName);
         var filePath = Path.Combine(docsDir, DocFileName(docId));
@@ -542,12 +534,10 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
 
     /// <summary>Deletes a document. Validates the partition key header and respects <c>If-Match</c>.</summary>
     internal DataPlaneOperationResult DeleteDocument(
-        HttpContext context, string databaseName, string collectionName, string docId,
+        CosmosDbAccountContext ctx, string databaseName, string collectionName, string docId,
         string partitionKeyHeader, string? ifMatchEtag)
     {
-        var ctx = ResolveAccountContext(context);
-        if (ctx == null) return new DataPlaneOperationResult(OperationResult.NotFound, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         var parentId = SqlContainerParentId(account.Name, databaseName);
         var container = provider.GetSubresourceAs<SqlContainerResource>(sub, rg, collectionName, parentId, SqlContainersSubresource);
@@ -597,7 +587,7 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
             return new DataPlaneOperationResult<QueryDocumentsResponse>(
                 OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
 
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         var parentId = SqlContainerParentId(account.Name, databaseName);
         var container = provider.GetSubresourceAs<SqlContainerResource>(
@@ -657,11 +647,9 @@ internal sealed class CosmosDbDataPlane(DatabaseAccountResourceProvider provider
 
     /// <summary>Lists all documents in a collection (full scan, no pagination).</summary>
     internal DataPlaneOperationResult<JsonObject[]> ListDocuments(
-        HttpContext context, string databaseName, string collectionName)
+        CosmosDbAccountContext ctx, string databaseName, string collectionName)
     {
-        var ctx = ResolveAccountContext(context);
-        if (ctx == null) return new DataPlaneOperationResult<JsonObject[]>(OperationResult.NotFound, null, "Account not found.", "AccountNotFound");
-        var (account, sub, rg) = ctx.Value;
+        var (account, sub, rg) = ctx;
 
         var parentId = SqlContainerParentId(account.Name, databaseName);
         var container = provider.GetSubresourceAs<SqlContainerResource>(sub, rg, collectionName, parentId, SqlContainersSubresource);

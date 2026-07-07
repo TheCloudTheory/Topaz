@@ -31,7 +31,10 @@ internal sealed class ListCollectionsEndpoint : CosmosDataPlaneEndpointBase
         var segments = context.Request.Path.Value!.Trim('/').Split('/');
         var databaseName = segments[1];
 
-        var result = _dataPlane.ListCollections(context, databaseName);
+        var ctx = _dataPlane.ResolveAccountContext(context);
+        if (ctx == null) { response.StatusCode = HttpStatusCode.NotFound; return; }
+
+        var result = _dataPlane.ListCollections(ctx, databaseName);
         if (result.Result == OperationResult.NotFound || result.Resource == null)
         {
             response.StatusCode = HttpStatusCode.NotFound;
