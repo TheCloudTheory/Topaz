@@ -16,6 +16,7 @@ type Service = {
   description: string;
   preview?: boolean;
   comingSoon?: boolean;
+  iconImg?: string;
 };
 
 const SERVICES: Service[] = [
@@ -237,10 +238,12 @@ const PORTAL_FEATURES: Capability[] = [
 
 // ── Sub-components ────────────────────────────────────────────────
 
-function ServiceCard({abbr, bg, name, description, preview, comingSoon}: Service) {
+function ServiceCard({abbr, bg, name, description, preview, comingSoon, iconImg}: Service) {
   return (
     <div className={clsx(styles.serviceCard, comingSoon && styles.serviceCardMuted)}>
-      <div className={styles.serviceAbbr} style={{background: comingSoon ? '#9ca3af' : bg}}>{abbr}</div>
+      {iconImg
+        ? <img src={iconImg} alt={name} className={styles.serviceIcon} />
+        : <div className={styles.serviceAbbr} style={{background: comingSoon ? '#9ca3af' : bg}}>{abbr}</div>}
       <div>
         <div className={styles.serviceName}>{name}</div>
         <div className={styles.serviceDesc}>{description}</div>
@@ -337,6 +340,36 @@ export default function FeaturesPage(): ReactNode {
           </p>
           <div className={styles.capabilityGrid}>
             {PORTAL_FEATURES.map((c) => <CapabilityItem key={c.title} {...c} />)}
+          </div>
+        </div>
+      </section>
+
+      {/* VS Code Extension */}
+      <section className={clsx(styles.section, styles.sectionAlt)}>
+        <div className="container">
+          <div className={styles.vscodeSplit}>
+            <div className={styles.vscodeText}>
+              <Heading as="h2" className={styles.sectionTitle}>VS Code Extension</Heading>
+              <p className={styles.sectionSubtitle}>
+                Manage your local Topaz environment without leaving the editor.
+                Install the extension, start the emulator, and browse resources — all from the VS Code sidebar.
+              </p>
+              <ul className={styles.vscodeFeatureList}>
+                <li>Start and stop the Topaz emulator from the extension itself</li>
+                <li>Browse subscriptions, resource groups, and resources in a tree view</li>
+                <li>Inspect resource details and connection strings inline</li>
+                <li>Deploy ARM templates and Bicep files with a single click</li>
+                <li>See the cost estimates for your resources</li>
+              </ul>
+              <div style={{marginTop: '1.5rem'}}>
+                <Link href="vscode:extension/TheCloudTheory.topaz-azure-emulator" className={clsx('button button--primary')}>
+                  Install in VS Code
+                </Link>
+              </div>
+            </div>
+            <div className={styles.vscodeImageWrapper}>
+              <img src="/img/topaz-vscode.png" alt="Topaz VS Code Extension" className={styles.vscodeImage} />
+            </div>
           </div>
         </div>
       </section>

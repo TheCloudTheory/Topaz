@@ -103,6 +103,69 @@
   flex-shrink: 0;
 }
 
+.serviceIcon {
+  min-width: 42px;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.serviceIcon {
+  min-width: 42px;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* ── VS Code Extension section ─────────────────────────────────── */
+.vscodeSplit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .vscodeSplit {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vscodeText {
+  display: flex;
+  flex-direction: column;
+}
+
+.vscodeFeatureList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.vscodeFeatureList li::before {
+  content: '✓ ';
+  color: var(--ifm-color-primary);
+  font-weight: 700;
+}
+
+.vscodeImageWrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+.vscodeImage {
+  width: 100%;
+  display: block;
+}
+
 .serviceName {
   font-weight: 600;
   font-size: 0.88rem;
