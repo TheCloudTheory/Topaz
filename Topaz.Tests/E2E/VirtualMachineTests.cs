@@ -304,4 +304,23 @@ public class VirtualMachineTests
             Assert.That(updateResult.Value.Data.NetworkProfile, Is.Not.Null);
         });
     }
+
+    [Test]
+    public async Task VirtualMachineTests_WhenComputeSkusAreListed_ShouldReturnNonEmptyListWithPremiumIoCapability()
+    {
+        // Arrange
+        var credential = new AzureLocalCredential(Globals.GlobalAdminId);
+        var armClient = new ArmClient(credential, SubscriptionId.ToString(), ArmClientOptions);
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+
+        // Act
+        var skus = await subscription.GetComputeResourceSkusAsync(
+            filter: "location eq 'eastus'").ToListAsync();
+
+        // Assert
+        Assert.That(skus, Is.Not.Empty);
+        Assert.That(skus, Has.Some.Matches<ComputeResourceSku>(
+            s => s.ResourceType == "virtualMachines"
+              && s.Capabilities.Any(c => c.Name == "PremiumIO" && c.Value == "True")));
+    }
 }
