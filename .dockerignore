@@ -1,3 +1,4 @@
 # Exclude everything, then allow only what the Dockerfile needs
 **
 !publish/**
+!certificate/topaz.crt
