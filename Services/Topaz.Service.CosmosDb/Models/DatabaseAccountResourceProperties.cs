@@ -74,6 +74,7 @@ public sealed class DatabaseAccountResourceProperties
     public string ProvisioningState => "Succeeded";
     public string? DocumentEndpoint { get; set; }
     public string? AccountName { get; set; }
+    public bool DisableLocalAuth { get; set; }
 
     public DatabaseAccountLocation[] ReadLocations => Locations
         .Select(l => new DatabaseAccountLocation
@@ -146,7 +147,8 @@ public sealed class DatabaseAccountResourceProperties
             PrimaryMasterKey = GenerateMasterKey(),
             SecondaryMasterKey = GenerateMasterKey(),
             PrimaryReadonlyMasterKey = GenerateMasterKey(),
-            SecondaryReadonlyMasterKey = GenerateMasterKey()
+            SecondaryReadonlyMasterKey = GenerateMasterKey(),
+            DisableLocalAuth = request.Properties?.DisableLocalAuth ?? false
         };
     }
 
@@ -176,6 +178,8 @@ public sealed class DatabaseAccountResourceProperties
             properties.EnableAnalyticalStorage = request.Properties.EnableAnalyticalStorage.Value;
         if (request.Properties?.ApiProperties != null)
             properties.ApiProperties = request.Properties.ApiProperties;
+        if (request.Properties?.DisableLocalAuth != null)
+            properties.DisableLocalAuth = request.Properties.DisableLocalAuth.Value;
     }
 
     private static string GenerateMasterKey() =>

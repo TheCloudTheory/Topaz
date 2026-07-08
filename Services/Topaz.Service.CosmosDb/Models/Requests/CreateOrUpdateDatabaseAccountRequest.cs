@@ -20,7 +20,8 @@ public sealed class CreateOrUpdateDatabaseAccountRequest
                 PublicNetworkAccess = account.Properties.PublicNetworkAccess,
                 EnableFreeTier = account.Properties.EnableFreeTier,
                 EnableAnalyticalStorage = account.Properties.EnableAnalyticalStorage,
-                ApiProperties = account.Properties.ApiProperties
+                ApiProperties = account.Properties.ApiProperties,
+                DisableLocalAuth = account.Properties.DisableLocalAuth
             }
         };
 
@@ -42,5 +43,6 @@ public sealed class CreateOrUpdateDatabaseAccountRequest
         public bool? EnableFreeTier { get; set; }
         public bool? EnableAnalyticalStorage { get; set; }
         public ApiProperties? ApiProperties { get; set; }
+        public bool? DisableLocalAuth { get; set; }
     }
 }

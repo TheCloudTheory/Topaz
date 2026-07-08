@@ -1024,4 +1024,32 @@ public class CosmosDbDataPlaneTests
             await container.ReadItemAsync<dynamic>("expiring-doc", new PartitionKey("p1")));
         Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.NotFound));
     }
+
+    [Test]
+    public async Task DataPlane_WhenDisableLocalAuthIsTrue_Returns401()
+    {
+        // Arrange
+        var armClient = CreateArmClient();
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string accountName = "test-cosmos-dp-disable-local-auth";
+
+        var content = MinimalAccountContent();
+        content.DisableLocalAuth = true;
+
+        var accountResult = await resourceGroup.Value.GetCosmosDBAccounts()
+            .CreateOrUpdateAsync(WaitUntil.Completed, accountName, content);
+
+        var keys = await accountResult.Value.GetKeysAsync();
+        var endpoint = accountResult.Value.Data.DocumentEndpoint!;
+        var primaryKey = keys.Value.PrimaryMasterKey!;
+
+        using var cosmosClient = CreateCosmosClient(endpoint, primaryKey);
+        _ownedClients.Add(cosmosClient);
+
+        // Act & Assert — master-key auth must be rejected when local auth is disabled
+        var ex = Assert.ThrowsAsync<CosmosException>(async () =>
+            await cosmosClient.CreateDatabaseAsync("some-db"));
+        Assert.That(ex!.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Unauthorized));
+    }
 }

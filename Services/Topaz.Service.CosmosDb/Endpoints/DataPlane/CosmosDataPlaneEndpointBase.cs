@@ -58,8 +58,6 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
     /// </summary>
     protected bool IsRequestAuthorized(HttpContext context, HttpResponseMessage response)
     {
-
-        // ── 1. Parse Authorization header ──────────────────────────────────────
         var authHeader = context.Request.Headers["Authorization"].ToString();
         if (string.IsNullOrEmpty(authHeader))
         {
@@ -91,6 +89,15 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
         if (account?.Properties == null)
         {
             WriteUnauthorized(response, "The Cosmos DB account could not be resolved from the request host.");
+            return false;
+        }
+
+        if (account.Properties.DisableLocalAuth)
+        {
+            logger.LogDebug(nameof(CosmosDataPlaneEndpointBase), nameof(IsRequestAuthorized),
+                "Local authentication is disabled for account '{0}'", account.Name);
+            
+            WriteUnauthorized(response, "Local authentication is disabled for this Cosmos DB account.");
             return false;
         }
 

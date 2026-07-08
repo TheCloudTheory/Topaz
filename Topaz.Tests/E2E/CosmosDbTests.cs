@@ -692,4 +692,41 @@ public class CosmosDbTests
                 Is.True, "Expected northeurope as secondary (failoverPriority=1)");
         }
     }
+
+    [Test]
+    public async Task DatabaseAccount_WhenCreated_DisableLocalAuthIsFalseByDefault()
+    {
+        // Arrange
+        var armClient = CreateArmClient();
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string accountName = "test-cosmos-disable-local-auth-default";
+
+        // Act
+        var createResult = await resourceGroup.Value.GetCosmosDBAccounts()
+            .CreateOrUpdateAsync(WaitUntil.Completed, accountName, MinimalAccountContent());
+
+        // Assert
+        Assert.That(createResult.Value.Data.DisableLocalAuth, Is.False);
+    }
+
+    [Test]
+    public async Task DatabaseAccount_WhenCreatedWithDisableLocalAuthTrue_PropertyIsStored()
+    {
+        // Arrange
+        var armClient = CreateArmClient();
+        var subscription = await armClient.GetDefaultSubscriptionAsync();
+        var resourceGroup = await subscription.GetResourceGroupAsync(ResourceGroupName);
+        const string accountName = "test-cosmos-disable-local-auth-configured";
+
+        var content = MinimalAccountContent();
+        content.DisableLocalAuth = true;
+
+        // Act
+        var createResult = await resourceGroup.Value.GetCosmosDBAccounts()
+            .CreateOrUpdateAsync(WaitUntil.Completed, accountName, content);
+
+        // Assert
+        Assert.That(createResult.Value.Data.DisableLocalAuth, Is.True);
+    }
 }
