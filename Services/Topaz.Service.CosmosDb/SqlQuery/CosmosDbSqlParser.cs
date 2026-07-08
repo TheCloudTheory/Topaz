@@ -100,13 +100,7 @@ internal sealed class InExpression(string propertyPath, SqlValue[] values) : Sql
     internal override bool Evaluate(JsonObject doc, IReadOnlyDictionary<string, JsonNode?> parameters)
     {
         var left = CosmosDbSqlExecutor.GetProperty(doc, propertyPath);
-        foreach (var v in values)
-        {
-            if (CosmosDbSqlExecutor.Compare(left, ComparisonOp.Eq, v.Resolve(parameters)))
-                return true;
-        }
-
-        return false;
+        return values.Any(v => CosmosDbSqlExecutor.Compare(left, ComparisonOp.Eq, v.Resolve(parameters)));
     }
 }
 
@@ -157,12 +151,10 @@ internal sealed class ParameterSqlValue(string name) : SqlValue
     {
         if (!parameters.TryGetValue(name, out var node)) return null;
         if (node == null) return null;
-        if (node is JsonValue jv)
-        {
-            if (jv.TryGetValue<double>(out var d)) return d;
-            if (jv.TryGetValue<string>(out var s)) return s;
-            if (jv.TryGetValue<bool>(out var b)) return b;
-        }
+        if (node is not JsonValue jv) return node.ToString();
+        if (jv.TryGetValue<double>(out var d)) return d;
+        if (jv.TryGetValue<string>(out var s)) return s;
+        if (jv.TryGetValue<bool>(out var b)) return b;
 
         return node.ToString();
     }

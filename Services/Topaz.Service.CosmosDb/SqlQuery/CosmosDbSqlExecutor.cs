@@ -112,7 +112,7 @@ internal sealed class CosmosDbSqlExecutor
         int maxCount)
     {
         // 1. Filter
-        IEnumerable<JsonObject> filtered = query.Where == null
+        var filtered = query.Where == null
             ? docs
             : docs.Where(d => query.Where.Evaluate(d, parameters));
 
@@ -150,50 +150,58 @@ internal sealed class CosmosDbSqlExecutor
                 groupResults.Add(row);
             }
 
-            return new ExecutionResult([.. groupResults], null);
+            return ApplyOrderOffsetPagination([.. groupResults], query, skip, maxCount, applySort: true);
         }
 
         // 3. Aggregate mode — compute and return immediately (no pagination)
         if (query.Select.Items.OfType<AggregateSelectItem>().Any())
         {
-            var all = filtered.ToArray();
-            var results = ComputeAggregates(all, query.Select);
+            var results = ComputeAggregates(filtered.ToArray(), query.Select);
             return new ExecutionResult(results, null);
         }
 
-        // 4. Sort
-        if (query.OrderByPath != null)
+        // 4. Sort before projection (ORDER BY may reference fields not in SELECT)
+        if (query.OrderByPath == null)
+            return ApplyOrderOffsetPagination(
+                filtered.Select(d => Project(d, query.Select)).ToArray(),
+                query, skip, maxCount, applySort: false);
+        
+        var path = query.OrderByPath;
+        filtered = query.OrderByAscending
+            ? filtered.OrderBy(d => GetComparableValue(GetProperty(d, path)), NullFirstComparer.Instance)
+            : filtered.OrderByDescending(d => GetComparableValue(GetProperty(d, path)), NullFirstComparer.Instance);
+
+        // 5–7. Project then apply OFFSET/LIMIT or HTTP pagination
+        return ApplyOrderOffsetPagination(
+            filtered.Select(d => Project(d, query.Select)).ToArray(),
+            query, skip, maxCount, applySort: false);
+    }
+
+    private static ExecutionResult ApplyOrderOffsetPagination(JsonNode[] results, ParsedQuery query, int skip, int maxCount, bool applySort)
+    {
+        if (applySort && query.OrderByPath != null)
         {
             var path = query.OrderByPath;
-            filtered = query.OrderByAscending
-                ? filtered.OrderBy(d => GetComparableValue(GetProperty(d, path)), NullFirstComparer.Instance)
-                : filtered.OrderByDescending(d => GetComparableValue(GetProperty(d, path)), NullFirstComparer.Instance);
+            results = query.OrderByAscending
+                ? [.. results.OrderBy(r => GetComparableValue(r[path]), NullFirstComparer.Instance)]
+                : [.. results.OrderByDescending(r => GetComparableValue(r[path]), NullFirstComparer.Instance)];
         }
 
-        // 5. SQL-level OFFSET/LIMIT takes precedence over HTTP pagination
         if (query.Offset > 0 || query.Limit.HasValue)
         {
-            filtered = filtered.Skip(query.Offset);
-            if (query.Limit.HasValue) filtered = filtered.Take(query.Limit.Value);
-            var limitedResults = filtered
-                .Select(d => Project(d, query.Select))
-                .ToArray();
-            return new ExecutionResult(limitedResults, null);
+            var limited = results.Skip(query.Offset);
+            if (query.Limit.HasValue) limited = limited.Take(query.Limit.Value);
+            return new ExecutionResult([.. limited], null);
         }
 
-        // 6. HTTP continuation-token pagination
-        var filteredArray = filtered.ToArray();
-        var page = filteredArray.Skip(skip).Take(maxCount).ToArray();
-        int? nextSkip = (skip + page.Length < filteredArray.Length) ? skip + page.Length : null;
-
-        // 7. Project
-        var projected = page.Select(d => Project(d, query.Select)).ToArray();
-        return new ExecutionResult(projected, nextSkip);
+        var page = results.Skip(skip).Take(maxCount).ToArray();
+        int? nextSkip = (skip + page.Length < results.Length) ? skip + page.Length : null;
+        return new ExecutionResult(page, nextSkip);
     }
 
     private static JsonNode[] ComputeAggregates(JsonObject[] docs, SelectClause select)
     {
-        if (select.Items.Length == 1 && select.Items[0] is AggregateSelectItem single)
+        if (select.Items is [AggregateSelectItem single])
         {
             var value = ComputeAggregate(docs, single);
             if (select.IsValue)
@@ -236,7 +244,7 @@ internal sealed class CosmosDbSqlExecutor
         if (select.IsWildcard) return doc.DeepClone();
 
         // VALUE property — return the raw field value
-        if (select.IsValue && select.Items.Length == 1 && select.Items[0] is PropertySelectItem pi)
+        if (select is { IsValue: true, Items: [PropertySelectItem pi] })
         {
             var val = GetProperty(doc, pi.PropertyPath);
             return val?.DeepClone() ?? JsonValue.Create((string?)null)!;
@@ -272,10 +280,12 @@ internal sealed class CosmosDbSqlExecutor
 
         public int Compare(IComparable? x, IComparable? y)
         {
-            if (x == null && y == null) return 0;
-            if (x == null) return -1;
-            if (y == null) return 1;
-            return x.CompareTo(y);
+            return x switch
+            {
+                null when y == null => 0,
+                null => -1,
+                _ => y == null ? 1 : x.CompareTo(y)
+            };
         }
     }
 }
