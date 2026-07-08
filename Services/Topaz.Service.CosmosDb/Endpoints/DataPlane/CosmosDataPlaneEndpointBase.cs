@@ -79,18 +79,23 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
             return false;
         }
 
-        if (!TryParseCosmosAuth(authHeader, out var sig))
+        if (!TryParseCosmosAuth(authHeader, out var authParsed))
         {
             WriteUnauthorized(response, "The Authorization header is malformed or does not use master-key authentication.");
             return false;
         }
 
+        // Parsing of the x-ms-date header is required only if the auth header type is master.
+        // For Entra ID type, the header is absent.
         var dateHeader = context.Request.Headers["x-ms-date"].ToString();
-        if (string.IsNullOrEmpty(dateHeader) ||
-            !TryParseHttpDate(dateHeader, out var requestDate) ||
-            Math.Abs((DateTimeOffset.UtcNow - requestDate).TotalMinutes) > ReplayWindow.TotalMinutes)
+        var isEntraIdAuth = authParsed.type == "aad";
+        if (!isEntraIdAuth && (string.IsNullOrEmpty(dateHeader) ||
+                  !TryParseHttpDate(dateHeader, out var requestDate) ||
+                  Math.Abs((DateTimeOffset.UtcNow - requestDate).TotalMinutes) >
+                  ReplayWindow.TotalMinutes))
         {
-            WriteUnauthorized(response, "The x-ms-date header is missing, unparseable, or outside the 15-minute replay-attack window.");
+            WriteUnauthorized(response,
+                "The x-ms-date header is missing, unparseable, or outside the 15-minute replay-attack window.");
             return false;
         }
 
@@ -106,10 +111,7 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
             return false;
         }
 
-        var parts = authHeader.Split(' ', 2);
-        var scheme = parts[0];
-
-        if (account.Properties.DisableLocalAuth && scheme != "Bearer")
+        if (account.Properties.DisableLocalAuth && !isEntraIdAuth)
         {
             logger.LogDebug(nameof(CosmosDataPlaneEndpointBase), nameof(IsRequestAuthorized),
                 "Local authentication is disabled for account '{0}'", account.Name);
@@ -118,18 +120,22 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
             return false;
         }
 
-        if(scheme == "Bearer")
+        if(isEntraIdAuth)
         {
             logger.LogDebug(nameof(CosmosDataPlaneEndpointBase), nameof(IsRequestAuthorized),
                 "Checking bearer authentication for '{0}'", account.Name);
 
-            return _bearerChecker.IsAuthorizedForBearer(subscriptionIdentifier, requiredPermissions, authHeader);
+            if (_bearerChecker.IsAuthorizedForBearer(subscriptionIdentifier, requiredPermissions, authParsed.sig))
+                return true;
+
+            WriteUnauthorized(response, "The request is not authorized to perform this operation.");
+            return false;
         }
         
-        if (TryVerifySignature(account.Properties.PrimaryMasterKey, payload, sig, logger))
+        if (TryVerifySignature(account.Properties.PrimaryMasterKey, payload, authParsed.sig, logger))
             return true;
 
-        if (TryVerifySignature(account.Properties.SecondaryMasterKey, payload, sig, logger))
+        if (TryVerifySignature(account.Properties.SecondaryMasterKey, payload, authParsed.sig, logger))
             return true;
 
         logger.LogDebug(nameof(CosmosDataPlaneEndpointBase), nameof(IsRequestAuthorized),
@@ -144,9 +150,9 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
     /// <c>type=master&amp;ver=1.0&amp;sig=&lt;base64&gt;</c>
     /// Returns <c>false</c> when the type is not <c>master</c> or sig is absent.
     /// </summary>
-    private static bool TryParseCosmosAuth(string header, out string sig)
+    private bool TryParseCosmosAuth(string header, out (string sig, string type) result)
     {
-        sig = string.Empty;
+        var sig = string.Empty;
         // The SDK URL-encodes the header value; decode it first.
         var decoded = Uri.UnescapeDataString(header);
         var parts = decoded.Split('&');
@@ -158,10 +164,27 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
                 dict[part[..eq]] = part[(eq + 1)..];
         }
 
-        if (!dict.TryGetValue("type", out var type) || !string.Equals(type, "master", StringComparison.OrdinalIgnoreCase))
+        // Note that if Entra ID token is used for authorization, 
+        // the header will be "type=aad&amp;ver=1.0&amp;sig=ey..."
+        if (dict.TryGetValue("type", out var type) &&
+            (string.Equals(type, "master", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(type, "aad", StringComparison.OrdinalIgnoreCase)))
+        {
+            var sigResult= dict.TryGetValue("sig", out sig!) && !string.IsNullOrEmpty(sig);
+            if(sigResult)
+            {
+                result = (sig, type);
+                return true;
+            }
+            
+            result = (sig, type);
             return false;
+        }
 
-        return dict.TryGetValue("sig", out sig!) && !string.IsNullOrEmpty(sig);
+        logger.LogDebug(nameof(CosmosDataPlaneEndpointBase), nameof(TryParseCosmosAuth), $"Invalid Cosmos auth type: {type}");
+        result = (string.Empty, string.Empty);
+        return false;
+
     }
 
     private static bool TryParseHttpDate(string value, out DateTimeOffset result)
