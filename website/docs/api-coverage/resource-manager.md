@@ -100,6 +100,8 @@ This page tracks which Azure Resource Manager REST API operations are implemente
 | Create | ✅ | Topaz-specific; not a standard ARM operation in Azure |
 | Get | ✅ | |
 | List | ✅ | |
+| Update | ✅ | `PATCH /subscriptions/{subscriptionId}` |
+| Delete | ✅ | Topaz-specific; `DELETE /subscriptions/{subscriptionId}` |
 | Rename | ✅ | POST providers/Microsoft.Subscription/rename |
 | List Locations | ✅ | Returns a static list of Azure regions |
 | Cancel | ✅ | POST providers/Microsoft.Subscription/cancel; sets subscription state to Disabled |

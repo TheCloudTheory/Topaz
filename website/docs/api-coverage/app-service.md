@@ -38,6 +38,7 @@ This page tracks which Azure App Service REST API operations are implemented in 
 | Operation | Status | Notes |
 |-----------|--------|-------|
 | Check Name Availability | ✅ | `POST /subscriptions/{subscriptionId}/providers/Microsoft.Web/checknameavailability`; always returns available |
+| Get Web App Stacks | ✅ | `GET /providers/Microsoft.Web/webAppStacks` — returns supported runtime stacks |
 
 ---
 
@@ -61,3 +62,24 @@ This page tracks which Azure App Service REST API operations are implemented in 
 | Update Configuration | ✅ | `PUT .../config/web` |
 | Update Application Settings | ✅ | `PUT .../config/appsettings` |
 | List Application Settings | ✅ | `POST .../config/appsettings/list` |
+| Get Slot Config Names | ✅ | `GET .../config/slotConfigNames` |
+
+---
+
+## Control Plane — Deployment Profile (`Microsoft.Web/sites`)
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| List Publish Profiles | ✅ | `POST .../publishxml` — returns publishing profile XML |
+
+---
+
+## Data Plane — Kudu API
+
+> [Kudu REST API reference](https://github.com/projectkudu/kudu/wiki/REST-API)
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| List Deployments | ✅ | `GET /api/deployments` |
+| Get Deployment | ✅ | `GET /api/deployments/{id}` |
+| Zip Deploy | ✅ | `POST /api/zipdeploy` — deploys a zip archive to the site |
