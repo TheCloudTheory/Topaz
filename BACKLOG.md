@@ -181,16 +181,6 @@ TODO: Azure Cosmos DB: SQL Container — container-level RBAC
   labels: enhancement, cosmos-db
 -->
 
-<!--
-TODO: Azure Cosmos DB: SQL query — ORDER BY on aggregate results
-  Extend the SQL query engine (v1.7-beta) to support ORDER BY applied to aggregate
-  output columns:
-  - SELECT c.category, COUNT(1) AS cnt FROM c GROUP BY c.category ORDER BY cnt DESC
-  - Prerequisite: GROUP BY support (above).
-  milestone: v1.9-preview
-  labels: enhancement, cosmos-db
--->
-
 ### Azure Disks — initial control plane
 
 _Implemented in v1.6-beta: service scaffold — `DiskResourceProperties`, `DiskResource`, `DiskResourceProvider`, `DiskServiceControlPlane` (with working `Deploy()`), and `DiskService` registered in `Topaz.Host`. `Microsoft.Compute/disks` is wired into `TemplateDeploymentOrchestrator.RouteDeployment()`. Control-plane endpoints and SAS access endpoints are tracked separately below._
