@@ -21,7 +21,7 @@ internal sealed class ReplaceDocumentEndpoint : CosmosDataPlaneEndpointBase
     }
 
     public override string[] Endpoints => ["PUT /dbs/{db}/colls/{coll}/docs/{docId}"];
-    public override string[] Permissions => [];
+    public override string[] Permissions => ["Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/write"];
     public override string? ProviderNamespace => null;
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)

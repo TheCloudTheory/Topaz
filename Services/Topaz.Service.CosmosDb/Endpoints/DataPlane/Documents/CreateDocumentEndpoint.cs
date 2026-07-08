@@ -25,7 +25,7 @@ internal sealed class CreateDocumentEndpoint : CosmosDataPlaneEndpointBase
     }
 
     public override string[] Endpoints => ["POST /dbs/{db}/colls/{coll}/docs"];
-    public override string[] Permissions => [];
+    public override string[] Permissions => ["Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/write"];
     public override string? ProviderNamespace => null;
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)

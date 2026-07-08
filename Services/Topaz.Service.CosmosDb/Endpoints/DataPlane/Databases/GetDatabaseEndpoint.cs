@@ -20,7 +20,7 @@ internal sealed class GetDatabaseEndpoint : CosmosDataPlaneEndpointBase
     }
 
     public override string[] Endpoints => ["GET /dbs/{db}"];
-    public override string[] Permissions => [];
+    public override string[] Permissions => ["Microsoft.DocumentDB/databaseAccounts/sqlDatabases/read"];
     public override string? ProviderNamespace => null;
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)

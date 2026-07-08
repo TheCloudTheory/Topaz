@@ -20,7 +20,7 @@ internal sealed class DeleteDocumentEndpoint : CosmosDataPlaneEndpointBase
     }
 
     public override string[] Endpoints => ["DELETE /dbs/{db}/colls/{coll}/docs/{docId}"];
-    public override string[] Permissions => [];
+    public override string[] Permissions => ["Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/delete"];
     public override string? ProviderNamespace => null;
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)

@@ -21,7 +21,7 @@ internal sealed class ListCollectionsEndpoint : CosmosDataPlaneEndpointBase
     }
 
     public override string[] Endpoints => ["GET /dbs/{db}/colls"];
-    public override string[] Permissions => [];
+    public override string[] Permissions => ["Microsoft.DocumentDB/databaseAccounts/readMetadata"];
     public override string? ProviderNamespace => null;
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)

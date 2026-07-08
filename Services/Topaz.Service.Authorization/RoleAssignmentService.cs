@@ -26,6 +26,7 @@ public sealed class RoleAssignmentService(Pipeline eventPipeline, ITopazLogger l
         new CreateUpdateRoleAssignmentEndpoint(eventPipeline, logger),
         new CreateUpdateRoleAssignmentAtResourceGroupEndpoint(eventPipeline, logger),
         new CreateUpdateRoleAssignmentAtResourceEndpoint(eventPipeline, logger),
+        new CreateUpdateRoleAssignmentAtNestedResourceEndpoint(eventPipeline, logger),
         new CreateUpdateRoleAssignmentAtManagementGroupEndpoint(eventPipeline, logger),
         new ListRoleAssignmentsEndpoint(eventPipeline, logger),
         new GetRoleAssignmentEndpoint(eventPipeline, logger),

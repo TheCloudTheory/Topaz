@@ -25,7 +25,7 @@ internal sealed class GetPartitionKeyRangesEndpoint : CosmosDataPlaneEndpointBas
     }
 
     public override string[] Endpoints => ["GET /dbs/{dbRid}/colls/{collRid}/pkranges"];
-    public override string[] Permissions => [];
+    public override string[] Permissions => ["Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/read"];
     public override string? ProviderNamespace => null;
 
     public override void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options)

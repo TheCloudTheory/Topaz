@@ -57,13 +57,17 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
     public abstract void GetResponse(HttpContext context, HttpResponseMessage response, GlobalOptions options);
 
     /// <summary>
-    /// Convenience overload: resolves the subscription from the request host and delegates to
-    /// <see cref="IsRequestAuthorized(HttpContext,SubscriptionIdentifier,string[],HttpResponseMessage)"/>.
+    /// Convenience overload: resolves the subscription and resource scope from the request host
+    /// and path, then delegates to the full overload.
     /// </summary>
     protected bool IsRequestAuthorized(HttpContext context, HttpResponseMessage response)
     {
         var ctx = dataPlane.ResolveAccountContext(context);
-        return IsRequestAuthorized(context, ctx?.Sub ?? SubscriptionIdentifier.From(string.Empty), Permissions, response);
+        var sub = ctx?.Sub ?? SubscriptionIdentifier.From(string.Empty);
+        var scope = ctx != null
+            ? ComputeResourceScope(ctx, context.Request.Path.Value ?? string.Empty)
+            : string.Empty;
+        return IsRequestAuthorized(context, sub, Permissions, scope, response);
     }
 
     /// <summary>
@@ -71,6 +75,15 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
     /// Writes a 401 JSON response and returns <c>false</c> on any auth failure.
     /// </summary>
     protected bool IsRequestAuthorized(HttpContext context, SubscriptionIdentifier subscriptionIdentifier, string[] requiredPermissions, HttpResponseMessage response)
+    {
+        var ctx = dataPlane.ResolveAccountContext(context);
+        var scope = ctx != null
+            ? ComputeResourceScope(ctx, context.Request.Path.Value ?? string.Empty)
+            : string.Empty;
+        return IsRequestAuthorized(context, subscriptionIdentifier, requiredPermissions, scope, response);
+    }
+
+    private bool IsRequestAuthorized(HttpContext context, SubscriptionIdentifier subscriptionIdentifier, string[] requiredPermissions, string resourceScope, HttpResponseMessage response)
     {
         var authHeader = context.Request.Headers["Authorization"].ToString();
         if (string.IsNullOrEmpty(authHeader))
@@ -125,7 +138,7 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
             logger.LogDebug(nameof(CosmosDataPlaneEndpointBase), nameof(IsRequestAuthorized),
                 "Checking bearer authentication for '{0}'", account.Name);
 
-            if (_bearerChecker.IsAuthorizedForBearer(subscriptionIdentifier, requiredPermissions, authParsed.sig))
+            if (_bearerChecker.IsAuthorizedForBearerWithScope(requiredPermissions, authParsed.sig, resourceScope))
                 return true;
 
             WriteUnauthorized(response, "The request is not authorized to perform this operation.");
@@ -150,6 +163,34 @@ internal abstract class CosmosDataPlaneEndpointBase(CosmosDbDataPlane dataPlane,
     /// <c>type=master&amp;ver=1.0&amp;sig=&lt;base64&gt;</c>
     /// Returns <c>false</c> when the type is not <c>master</c> or sig is absent.
     /// </summary>
+    /// <summary>
+    /// Computes the ARM resource scope for the Cosmos DB resource being accessed.
+    /// Examples:
+    ///   /             → .../databaseAccounts/{account}
+    ///   /dbs/{db}     → .../databaseAccounts/{account}/sqlDatabases/{db}
+    ///   /dbs/{db}/colls/{coll}/... → .../databaseAccounts/{account}/sqlDatabases/{db}/containers/{coll}
+    /// </summary>
+    private static string ComputeResourceScope(CosmosDbAccountContext ctx, string path)
+    {
+        var accountScope =
+            $"/subscriptions/{ctx.Sub.Value}/resourceGroups/{ctx.Rg.Value}" +
+            $"/providers/Microsoft.DocumentDB/databaseAccounts/{ctx.Account.Name}";
+
+        var segments = path.TrimStart('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        // segments[0]="dbs", segments[1]=dbName, segments[2]="colls", segments[3]=collName
+        if (segments.Length >= 2 &&
+            string.Equals(segments[0], "dbs", StringComparison.OrdinalIgnoreCase))
+        {
+            var dbScope = $"{accountScope}/sqlDatabases/{segments[1]}";
+            if (segments.Length >= 4 &&
+                string.Equals(segments[2], "colls", StringComparison.OrdinalIgnoreCase))
+                return $"{dbScope}/containers/{segments[3]}";
+            return dbScope;
+        }
+
+        return accountScope;
+    }
+
     private bool TryParseCosmosAuth(string header, out (string sig, string type) result)
     {
         var sig = string.Empty;
