@@ -344,8 +344,9 @@ internal sealed class CosmosDbSqlParser
             parts.Add(ExpectIdentifierOrKeyword());
         }
 
-        // Strip the leading alias segment (always present for valid Cosmos DB SQL)
-        return parts.Count > 1 ? string.Join(".", parts.Skip(1)) : string.Empty;
+        // Strip the leading alias segment (always present for valid Cosmos DB SQL like c.field).
+        // A bare identifier (e.g. an aggregate alias like "cnt") has no dot, so return it as-is.
+        return parts.Count > 1 ? string.Join(".", parts.Skip(1)) : parts[0];
     }
 
     private SqlExpression ParseOr()

@@ -884,6 +884,93 @@ public class CosmosDbDataPlaneTests
     }
 
     [Test]
+    public async Task Query_GroupBy_OrderByAggregateAscending_ReturnsSortedResults()
+    {
+        var (_, key) = await SeedQueryContainer("q-grp-oba-db", "q-grp-oba-coll",
+        [
+            new { id = "o1", pk = "p1", category = "B" },
+            new { id = "o2", pk = "p2", category = "A" },
+            new { id = "o3", pk = "p3", category = "A" },
+            new { id = "o4", pk = "p4", category = "C" },
+            new { id = "o5", pk = "p5", category = "C" },
+            new { id = "o6", pk = "p6", category = "C" }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-grp-oba-db", "q-grp-oba-coll",
+            "SELECT c.category, COUNT(1) AS cnt FROM c GROUP BY c.category ORDER BY cnt ASC");
+        var docs = result["Documents"]!.AsArray();
+
+        Assert.That(docs.Count, Is.EqualTo(3));
+        Assert.That(docs[0]!["cnt"]!.GetValue<double>(), Is.EqualTo(1)); // B
+        Assert.That(docs[1]!["cnt"]!.GetValue<double>(), Is.EqualTo(2)); // A
+        Assert.That(docs[2]!["cnt"]!.GetValue<double>(), Is.EqualTo(3)); // C
+    }
+
+    [Test]
+    public async Task Query_GroupBy_OrderByAggregateDescending_ReturnsSortedResults()
+    {
+        var (_, key) = await SeedQueryContainer("q-grp-obd-db", "q-grp-obd-coll",
+        [
+            new { id = "d1", pk = "p1", category = "B" },
+            new { id = "d2", pk = "p2", category = "A" },
+            new { id = "d3", pk = "p3", category = "A" },
+            new { id = "d4", pk = "p4", category = "C" },
+            new { id = "d5", pk = "p5", category = "C" },
+            new { id = "d6", pk = "p6", category = "C" }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-grp-obd-db", "q-grp-obd-coll",
+            "SELECT c.category, COUNT(1) AS cnt FROM c GROUP BY c.category ORDER BY cnt DESC");
+        var docs = result["Documents"]!.AsArray();
+
+        Assert.That(docs.Count, Is.EqualTo(3));
+        Assert.That(docs[0]!["cnt"]!.GetValue<double>(), Is.EqualTo(3)); // C
+        Assert.That(docs[1]!["cnt"]!.GetValue<double>(), Is.EqualTo(2)); // A
+        Assert.That(docs[2]!["cnt"]!.GetValue<double>(), Is.EqualTo(1)); // B
+    }
+
+    [Test]
+    public async Task Query_GroupBy_OrderByGroupField_ReturnsSortedResults()
+    {
+        var (_, key) = await SeedQueryContainer("q-grp-obf-db", "q-grp-obf-coll",
+        [
+            new { id = "f1", pk = "p1", category = "C" },
+            new { id = "f2", pk = "p2", category = "A" },
+            new { id = "f3", pk = "p3", category = "B" }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-grp-obf-db", "q-grp-obf-coll",
+            "SELECT c.category, COUNT(1) AS cnt FROM c GROUP BY c.category ORDER BY c.category ASC");
+        var docs = result["Documents"]!.AsArray();
+
+        Assert.That(docs.Count, Is.EqualTo(3));
+        Assert.That(docs[0]!["category"]!.GetValue<string>(), Is.EqualTo("A"));
+        Assert.That(docs[1]!["category"]!.GetValue<string>(), Is.EqualTo("B"));
+        Assert.That(docs[2]!["category"]!.GetValue<string>(), Is.EqualTo("C"));
+    }
+
+    [Test]
+    public async Task Query_GroupBy_OrderBySum_ReturnsSortedResults()
+    {
+        var (_, key) = await SeedQueryContainer("q-grp-obs-db", "q-grp-obs-coll",
+        [
+            new { id = "s1", pk = "p1", category = "A", amount = 5  },
+            new { id = "s2", pk = "p2", category = "B", amount = 20 },
+            new { id = "s3", pk = "p3", category = "A", amount = 10 }
+        ]);
+
+        var result = await ExecuteQueryAsync(key, "q-grp-obs-db", "q-grp-obs-coll",
+            "SELECT c.category, SUM(c.amount) AS total FROM c GROUP BY c.category ORDER BY total DESC");
+        var docs = result["Documents"]!.AsArray();
+
+        Assert.That(docs.Count, Is.EqualTo(2));
+        Assert.That(docs[0]!["category"]!.GetValue<string>(), Is.EqualTo("B"));
+        Assert.That(docs[0]!["total"]!.GetValue<double>(), Is.EqualTo(20));
+        Assert.That(docs[1]!["category"]!.GetValue<string>(), Is.EqualTo("A"));
+        Assert.That(docs[1]!["total"]!.GetValue<double>(), Is.EqualTo(15));
+    }
+
+    [Test]
     public async Task ExpiredDocumentsPurgeScheduler_WhenDocumentTtlHasExpired_DocumentShouldBePurged()
     {
         // Arrange — create account, database, container via ARM so the scheduler can find them
