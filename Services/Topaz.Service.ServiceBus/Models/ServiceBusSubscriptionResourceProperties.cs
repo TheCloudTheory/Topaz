@@ -13,6 +13,7 @@ public sealed class ServiceBusSubscriptionResourceProperties
     public bool? EnableBatchedOperations { get; set; } = false;
     public int? MaxDeliveryCount { get; set; } = 10;
     public string? Status { get; set; }
+    public string? ForwardDeadLetteredMessagesTo { get; set; }
 
     public static ServiceBusSubscriptionResourceProperties From(CreateOrUpdateServiceBusSubscriptionRequest request)
     {
@@ -24,7 +25,8 @@ public sealed class ServiceBusSubscriptionResourceProperties
             DeadLetteringOnFilterEvaluationExceptions  = properties?.DeadLetteringOnFilterEvaluationExceptions ?? true,
             EnableBatchedOperations = properties?.EnableBatchedOperations  ?? false,
             MaxDeliveryCount = properties?.MaxDeliveryCount ?? 10,
-            Status = properties?.Status
+            Status = properties?.Status,
+            ForwardDeadLetteredMessagesTo = properties?.ForwardDeadLetteredMessagesTo
         };
     }
     
@@ -43,7 +45,10 @@ public sealed class ServiceBusSubscriptionResourceProperties
         
         if (requestProps.Status != null)
             properties.Status = requestProps.Status;
-        
+
+        if (requestProps.ForwardDeadLetteredMessagesTo != null)
+            properties.ForwardDeadLetteredMessagesTo = requestProps.ForwardDeadLetteredMessagesTo;
+
         properties.UpdatedAt = DateTimeOffset.UtcNow;
     }
 }

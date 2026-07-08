@@ -14,7 +14,8 @@ public class CreateOrUpdateServiceBusSubscriptionRequestProperties
     [XmlElement("DeadLetteringOnMessageExpiration")] public bool DeadLetteringOnMessageExpiration { get; init; }
     [XmlElement("DeadLetteringOnFilterEvaluationExceptions")]
     public bool DeadLetteringOnFilterEvaluationExceptions { get; init; } = true;
-    
+    [XmlElement("ForwardDeadLetteredMessagesTo")] public string? ForwardDeadLetteredMessagesTo { get; init; }
+
     [XmlElement("DefaultRuleDescription")] public DefaultRuleDescriptionData? DefaultRuleDescription { get; init; }
 
     public class DefaultRuleDescriptionData

@@ -444,23 +444,6 @@ TODO: Azure Disks: Full azcopy-compatible disk streaming via SAS URL
 -->
 
 <!--
-TODO: Service Bus: Dead letter queue — ForwardDeadLetteredMessagesTo
-  When a queue or topic subscription has ForwardDeadLetteredMessagesTo set to another
-  entity name, automatically forward messages that land in the DLQ to the target entity
-  instead of keeping them in <entity>/$deadletterqueue.
-  Prerequisite: dead-letter queue support (v1.7-beta).
-  Required changes:
-  - Read ForwardDeadLetteredMessagesTo from ServiceBusQueueResourceProperties /
-    ServiceBusSubscriptionResourceProperties when a message is routed to the DLQ.
-  - If the property is set, enqueue the message to the target entity's main queue
-    (resolve via ServiceBusRuleLoader or SubscriptionMessageStore) instead of
-    <entity>/$deadletterqueue.
-  - If the forwarding target does not exist, fall back to the local DLQ.
-  milestone: v1.9-preview
-  labels: enhancement, service-bus
--->
-
-<!--
 TODO: Service Bus: Dead letter queue — session-filtered DLQ access
   Allow SDK callers to receive dead-lettered messages from session-enabled entities via a
   session-filtered receiver on the DLQ address.
@@ -1288,4 +1271,23 @@ TODO: IaC state export: topaz export --format terraform
   terraform.tfvars stub for subscription and tenant IDs.
   milestone: v1.14
   labels: enhancement, cli, terraform
+-->
+
+<!--
+TODO: Service Bus: Chained DLQ forwarding (A → B DLQ → C)
+  When ForwardDeadLetteredMessagesTo is set on the target entity B, messages forwarded
+  from A's DLQ to B that subsequently land in B's DLQ should themselves be forwarded
+  to C (B's ForwardDeadLetteredMessagesTo target), and so on recursively.
+  The current v1.9-preview implementation (single-hop forwarding) does not follow the
+  chain: a message forwarded to B and then dead-lettered in B stays in B/$deadletterqueue.
+  Prerequisite: ForwardDeadLetteredMessagesTo single-hop support (v1.9-preview).
+  Required changes:
+  - In InFlightMessageStore.DeadLetterCore, after resolving the first forwarding target,
+    loop (up to a bounded depth, e.g. 5 hops) to follow subsequent
+    ForwardDeadLetteredMessagesTo links on each intermediate entity.
+  - Break the loop when no further ForwardDeadLetteredMessagesTo is set, the target
+    does not exist, or the hop limit is reached; enqueue to the final entity's main queue
+    or to its local DLQ if the entity does not forward.
+  milestone: v1.14
+  labels: enhancement, service-bus
 -->

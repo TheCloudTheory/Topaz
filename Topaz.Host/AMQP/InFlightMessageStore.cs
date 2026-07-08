@@ -1,6 +1,7 @@
 using Amqp;
 using Amqp.Framing;
 using Amqp.Types;
+using Topaz.Service.ServiceBus.Filtering;
 
 namespace Topaz.Host.AMQP;
 
@@ -15,18 +16,23 @@ namespace Topaz.Host.AMQP;
 internal static class InFlightMessageStore
 {
     // Primary index: lock-token (Guid) → (entityAddress, message)
-    private static readonly Dictionary<Guid, (string EntityAddress, Message Message)> _byLockToken = new();
+    private static readonly Dictionary<Guid, (string EntityAddress, Message Message)> ByLockToken = new();
 
     // Reverse index: message reference → lock-token, for disposition callbacks where only the
     // Message object is available (AMQPNetLite resolves the Message from the delivery-id).
-    private static readonly Dictionary<Message, Guid> _byMessage =
+    private static readonly Dictionary<Message, Guid> ByMessage =
         new(ReferenceEqualityComparer.Instance);
 
-    /// <summary>Registers a newly-delivered message under the given lock token.</summary>
+    private static ServiceBusRuleLoader? _ruleLoader;
+
+    /// <summary>Supplies the rule loader used to resolve ForwardDeadLetteredMessagesTo targets.</summary>
+    internal static void SetRuleLoader(ServiceBusRuleLoader ruleLoader) => _ruleLoader = ruleLoader;
+
+    /// <summary>Registers a newly delivered message under the given lock token.</summary>
     internal static void Track(Guid lockToken, string entityAddress, Message message)
     {
-        _byLockToken[lockToken] = (entityAddress, message);
-        _byMessage[message] = lockToken;
+        ByLockToken[lockToken] = (entityAddress, message);
+        ByMessage[message] = lockToken;
     }
 
     /// <summary>
@@ -35,9 +41,9 @@ internal static class InFlightMessageStore
     /// </summary>
     internal static bool TryCompleteByLockToken(Guid lockToken)
     {
-        if (!_byLockToken.Remove(lockToken, out var entry))
+        if (!ByLockToken.Remove(lockToken, out var entry))
             return false;
-        _byMessage.Remove(entry.Message);
+        ByMessage.Remove(entry.Message);
         return true;
     }
 
@@ -47,9 +53,9 @@ internal static class InFlightMessageStore
     /// </summary>
     internal static bool TryCompleteByMessage(Message message)
     {
-        if (!_byMessage.Remove(message, out var lockToken))
+        if (!ByMessage.Remove(message, out var lockToken))
             return false;
-        _byLockToken.Remove(lockToken);
+        ByLockToken.Remove(lockToken);
         return true;
     }
 
@@ -60,7 +66,7 @@ internal static class InFlightMessageStore
     /// </summary>
     internal static void HandleAbandonByLockToken(Guid lockToken, int maxDeliveryCount)
     {
-        if (!_byLockToken.TryGetValue(lockToken, out var entry))
+        if (!ByLockToken.TryGetValue(lockToken, out var entry))
             return;
         TryCompleteByLockToken(lockToken);
         AbandonCore(entry.EntityAddress, entry.Message, maxDeliveryCount);
@@ -71,9 +77,9 @@ internal static class InFlightMessageStore
     /// </summary>
     internal static void HandleAbandonByMessage(Message message, int maxDeliveryCount)
     {
-        if (!_byMessage.TryGetValue(message, out var lockToken))
+        if (!ByMessage.TryGetValue(message, out var lockToken))
             return;
-        var entityAddress = _byLockToken[lockToken].EntityAddress;
+        var entityAddress = ByLockToken[lockToken].EntityAddress;
         TryCompleteByMessage(message);
         AbandonCore(entityAddress, message, maxDeliveryCount);
     }
@@ -83,7 +89,7 @@ internal static class InFlightMessageStore
     /// </summary>
     internal static void HandleDeadLetterByLockToken(Guid lockToken, string? reason, string? description)
     {
-        if (!_byLockToken.TryGetValue(lockToken, out var entry))
+        if (!ByLockToken.TryGetValue(lockToken, out var entry))
             return;
         TryCompleteByLockToken(lockToken);
         DeadLetterCore(entry.EntityAddress, entry.Message, reason, description);
@@ -94,9 +100,9 @@ internal static class InFlightMessageStore
     /// </summary>
     internal static void HandleDeadLetterByMessage(Message message, string? reason, string? description)
     {
-        if (!_byMessage.TryGetValue(message, out var lockToken))
+        if (!ByMessage.TryGetValue(message, out var lockToken))
             return;
-        var entityAddress = _byLockToken[lockToken].EntityAddress;
+        var entityAddress = ByLockToken[lockToken].EntityAddress;
         TryCompleteByMessage(message);
         DeadLetterCore(entityAddress, message, reason, description);
     }
@@ -125,8 +131,17 @@ internal static class InFlightMessageStore
         message.MessageAnnotations[new Symbol("x-opt-deadletter-reason")] = reason ?? "Unspecified";
         message.MessageAnnotations[new Symbol("x-opt-deadletter-error-description")] = description ?? string.Empty;
 
-        var dlqAddress = $"{SubscriptionMessageStore.Normalize(entityAddress)}/$deadletterqueue";
-        SubscriptionMessageStore.Enqueue(dlqAddress, message);
+        var forwardTarget = _ruleLoader?.GetForwardDeadLetteredMessagesTo(entityAddress);
+        if (!string.IsNullOrEmpty(forwardTarget) && (_ruleLoader?.IsKnownQueue(forwardTarget) ?? false))
+        {
+            SubscriptionMessageStore.Enqueue(SubscriptionMessageStore.Normalize(forwardTarget), message);
+        }
+        else
+        {
+            var dlqAddress = $"{SubscriptionMessageStore.Normalize(entityAddress)}/$deadletterqueue";
+            SubscriptionMessageStore.Enqueue(dlqAddress, message);
+        }
+
         OutgoingLinkEndpoint.NotifyMessageEnqueued();
     }
 }

@@ -228,6 +228,9 @@ public class Host
                 TimeSpan.FromSeconds(30)),
         };
 
+        InFlightMessageStore.SetRuleLoader(
+            new Service.ServiceBus.Filtering.ServiceBusRuleLoader(GlobalSettings.MainEmulatorDirectory, _logger));
+
         new BackgroundServiceOrchestrator(backgroundServices, _logger).StartAll(cancellationToken);
 
         if (!AcrDockerExecutor.IsAvailable())
@@ -323,6 +326,9 @@ public class Host
         listener.RegisterRequestProcessor("$management", new ManagementProcessor(_logger));
         listener.RegisterLinkProcessor(new LinkProcessor(_logger,
             new Service.ServiceBus.Filtering.ServiceBusRuleLoader(GlobalSettings.MainEmulatorDirectory, _logger)));
+
+        InFlightMessageStore.SetRuleLoader(
+            new Service.ServiceBus.Filtering.ServiceBusRuleLoader(GlobalSettings.MainEmulatorDirectory, _logger));
 
         // Frame traces should be enabled only if LogLevel is set to Debug
         if (_logger.LogLevel == LogLevel.Debug)

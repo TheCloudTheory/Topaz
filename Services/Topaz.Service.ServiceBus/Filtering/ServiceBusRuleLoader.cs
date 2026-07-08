@@ -373,6 +373,71 @@ public sealed class ServiceBusRuleLoader
         }
     }
 
+    /// <summary>
+    /// Returns the <c>ForwardDeadLetteredMessagesTo</c> target entity name for the given entity
+    /// address, or <c>null</c> when the property is absent or the entity cannot be found.
+    /// </summary>
+    public string? GetForwardDeadLetteredMessagesTo(string entityAddress)
+    {
+        var address = entityAddress;
+        if (address.EndsWith("/$deadletterqueue", StringComparison.OrdinalIgnoreCase))
+            address = address[..^"/$deadletterqueue".Length];
+
+        try
+        {
+            var subscriptionsIdx = address.IndexOf("/subscriptions/", StringComparison.OrdinalIgnoreCase);
+            if (subscriptionsIdx > 0)
+            {
+                var topicName = address[..subscriptionsIdx];
+                var subscriptionName = address[(subscriptionsIdx + "/subscriptions/".Length)..];
+
+                foreach (var topicDir in EnumerateTopicDirectories(topicName))
+                {
+                    var metadataFile = Path.Combine(topicDir, "subscriptions", subscriptionName, "metadata.json");
+                    if (!File.Exists(metadataFile)) continue;
+
+                    var resource = JsonSerializer.Deserialize<ServiceBusSubscriptionResource>(
+                        File.ReadAllText(metadataFile), GlobalSettings.JsonOptions);
+                    if (!string.IsNullOrEmpty(resource?.Properties?.ForwardDeadLetteredMessagesTo))
+                        return resource.Properties.ForwardDeadLetteredMessagesTo;
+                }
+                return null;
+            }
+
+            foreach (var queueDir in EnumerateQueueDirectories(address))
+            {
+                var metadataFile = Path.Combine(queueDir, "metadata.json");
+                if (!File.Exists(metadataFile)) continue;
+
+                var resource = JsonSerializer.Deserialize<ServiceBusQueueResource>(
+                    File.ReadAllText(metadataFile), GlobalSettings.JsonOptions);
+                if (!string.IsNullOrEmpty(resource?.Properties?.ForwardDeadLetteredMessagesTo))
+                    return resource.Properties.ForwardDeadLetteredMessagesTo;
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogDebug(nameof(ServiceBusRuleLoader), nameof(GetForwardDeadLetteredMessagesTo),
+                "Could not read ForwardDeadLetteredMessagesTo for '{0}': {1}", entityAddress, ex.Message);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Returns <c>true</c> when a queue with the given name exists anywhere under the emulator
+    /// data directory.  Used to validate a <c>ForwardDeadLetteredMessagesTo</c> target before routing.
+    /// </summary>
+    public bool IsKnownQueue(string queueName)
+    {
+        foreach (var dir in EnumerateQueueDirectories(queueName))
+        {
+            if (File.Exists(Path.Combine(dir, "metadata.json")))
+                return true;
+        }
+        return false;
+    }
+
     // Produces all `{emulatorRoot}/.../queues/{queueName}` directories.
     private IEnumerable<string> EnumerateQueueDirectories(string queueName)
     {
