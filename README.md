@@ -4,6 +4,8 @@
   <img src="./static/topaz-logo.png" />
 
   <b>One binary. Multiple Azure services. No cloud required.</b>
+
+  <img src="./website/static/img/demos/start-emulator.gif" alt="Topaz emulator demo" />
 </div>
 
 ```bash
